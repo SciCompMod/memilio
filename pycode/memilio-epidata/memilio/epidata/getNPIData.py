@@ -890,7 +890,7 @@ def get_npi_data(fine_resolution=2,
     df_count_joint_codes = copy.deepcopy(df_npis_combinations)
     for maincode in df_count_joint_codes.keys():
         df_count_joint_codes[maincode][1] *= 0
-    df_counted_joint_codes = count_code_multiplicities_init(df_npis_old, df_count_joint_codes,
+    df_counted_joint_codes = count_code_multiplicities(df_npis_old, df_count_joint_codes,
                                                             counties_considered=counties_considered)
     save_interaction_matrix(df_counted_joint_codes, 'joint_codes', directory)
     plot_interaction_matrix('joint_codes', directory)
@@ -1152,11 +1152,11 @@ def get_npi_data(fine_resolution=2,
                                                                        nocombi_code] += len(days_deact)
 
             # count joint codes from after strictness based deactivation
-            df_count_active = count_code_multiplicities_merged(df_local_new_merged, df_count_active, countyID)
+            df_count_active = count_code_multiplicities(df_local_new_merged, df_count_active, [countyID], False)
 
             # count joint codes from after incidence based activation
-            df_count_incid_depend = count_code_multiplicities_merged(
-                df_incid_depend, df_count_incid_depend, countyID)
+            df_count_incid_depend = count_code_multiplicities(
+                df_incid_depend, df_count_incid_depend, [countyID], False)
 
             # for fine resolution = 1 only consider merged dataframe
             if fine_resolution == 1:
@@ -1255,7 +1255,7 @@ def get_npi_data(fine_resolution=2,
     return df_npis
 
 
-def count_code_multiplicities_init(df_npis_input, df_count, counties_considered):
+def count_code_multiplicities(df_npis_input, df_count, counties_considered, initial_data_frame=True):
     """! Count for all pairs of NPI codes how many times they were
     mentioned at the same day in the initial data frame.
 
@@ -1264,6 +1264,8 @@ def count_code_multiplicities_init(df_npis_input, df_count, counties_considered)
          matrix (to be filled) for all codes under main code in df_count[maincode][1].
     @param[in] counties_considered County IDs for which initial data frame is 
         considered.
+    @param[in] initial_data_frame Defines where initial data frame structure is 
+        input.
     """
     for county in counties_considered:
         df_local = df_npis_input[df_npis_input[dd.EngEng['idCounty']] == county]
@@ -1278,17 +1280,30 @@ def count_code_multiplicities_init(df_npis_input, df_count, counties_considered)
             code_list = df_count[maincode][1].columns
             # iterate over code/row indices 0 to n
             for code_idx in range(len(code_list)):
-                # get dates where NPI is mentioned as existing in potential intervention set
-                npi_rows = df_local.NPI_code.str.contains(code_list[code_idx])
-                npi_dates_in_df = np.where(
-                    df_local[npi_rows].iloc[:, npi_start_col:].max() > 0)[0]
-                # store non-transforemed dates in code_dict
-                code_dates[code_list[code_idx]] = df_local.iloc[:,
-                                                                npi_start_col + npi_dates_in_df].columns
+                
+                # initial data frame (df_npis_old) and reworked new data frames
+                # are transposed (NPIs and dates in rows and columns switched)
+                if initial_data_frame:
+                    # get dates where NPI is mentioned as existing in potential intervention set
+                    npi_rows = df_local.NPI_code.str.contains(code_list[code_idx])
+                    npi_dates_in_df = np.where(
+                        df_local[npi_rows].iloc[:, npi_start_col:].max() > 0)[0]
+                    # store non-transformed dates in code_dict
+                    code_dates[code_list[code_idx]] = df_local.iloc[:,
+                                                                    npi_start_col + npi_dates_in_df].columns 
+                    # count number of multiply mentionned NPIs with different incidence thresholds for the same day
+                    df_count[maincode][1].iloc[code_idx, code_idx] += df_local[npi_rows].iloc[:,
+                                                                                            npi_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)                                       
+                else:
+                    # get dates where NPI is mentioned as existing in potential intervention set
+                    npi_cols = df_local.columns.str.contains(
+                        code_list[code_idx])
+                    npi_dates_in_df = np.where(
+                        df_local.loc[:, npi_cols].max(axis=1) > 0)[0]
+                    # store transformed dates in code_dict
+                    code_dates[code_list[code_idx]
+                               ] = df_local.iloc[npi_dates_in_df, 0].to_list()
 
-                # count number of multiply mentionned NPIs with different incidence thresholds for the same day
-                df_count[maincode][1].iloc[code_idx, code_idx] += df_local[npi_rows].iloc[:,
-                                                                                          npi_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
 
         # offdiagonal entries (as before, use that code_dates has been filled for all diagonal entries, i.e., all codes)
         for maincode in df_count.keys():
@@ -1303,36 +1318,7 @@ def count_code_multiplicities_init(df_npis_input, df_count, counties_considered)
                         code_dates[code_list[code_idx]]).intersection(set(code_dates[code_list[code_idx_other]])))
 
     return df_count
-
-
-def count_code_multiplicities_merged(df_npis_input, df_count, county):
-    """! Count for all pairs of NPI codes how many times they were
-    mentioned or active at the same day in a transformed data frame.
-
-    @param[in] df_npis_input Initial data frame read from Corona Datenplattform.
-    @param[in,out] df_count Dictionnary of main NPI codes with empty interaction
-         matrix (to be filled) for all codes under main code in df_count[maincode][1].
-    @param[in] County CountyID with which input data frame df_count is changed.
-    """    
-    df_local = df_npis_input[df_npis_input[dd.EngEng['idCounty']] == county]
-    code_dict = {}
-    for maincode in df_count.keys():
-        for column in df_count[maincode][1].columns:
-            code_dict[column] = df_local.iloc[np.where(
-                df_local.loc[:, df_local.columns.str.contains(column)].max(axis=1) > 0)[0], 0].to_list()
-
-    # iterate over code/column indices 0 to code_idx-1 (not filling diagonal)
-    # Note that the upper diagonal part of the matrix does not
-    # need to be considered as matrix is symmetric.
-    for maincode in df_count.keys():
-        column_list = df_count[maincode][1].columns
-        for column in range(len(column_list)):
-            for column_other in range(column):
-                df_count[maincode][1].iloc[column, column_other] += len(set(
-                    code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
-
-    return df_count
-
+            
 
 def save_interaction_matrix(df_interactions, filename, directory):
     """! Saves interaction matrices for all subcodes in provided main codes.
