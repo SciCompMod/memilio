@@ -461,7 +461,7 @@ def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
         raise gd.DataError('Unexpected length of combination DataFrame.')
     # combination part should have values NaN and x
     for column in df_npis_combinations_pre.columns[5:]:
-        if not np.array_equal(np.sort(df_npis_combinations_pre[column].unique().astype(str)), np.array([np.nan, 'x']):
+        if not np.array_equal(np.sort(df_npis_combinations_pre[column].unique().astype(str)), np.array([np.nan, 'x'])):
             raise gd.DataError('Unexpected values in combination matrix.')
     
 
