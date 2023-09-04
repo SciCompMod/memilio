@@ -25,6 +25,7 @@
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/metaprogramming.h"
+#include "memilio/math/eigen_util.h"
 
 #include "pybind11/pybind11.h"
 
@@ -32,7 +33,16 @@ namespace pymio
 {
 
 template <class IOContext, class T>
-using is_serializable = mio::conjunction<mio::has_serialize<IOContext, T>, mio::has_deserialize<IOContext, T>>;
+using has_seriliazion_functions = mio::conjunction<mio::has_serialize<IOContext, T>, mio::has_deserialize<IOContext, T>>;
+
+template <class Tup>
+using is_tuple = mio::is_expression_valid<mio::details::tuple_size_value_t, Tup>;
+
+template <class M>
+using is_eigen_matrix = std::is_base_of<Eigen::EigenBase<M>, M>;
+
+template <class IOContext, class T>
+using is_serializable = mio::conjunction<has_seriliazion_functions<IOContext, T>, is_tuple<T>, is_eigen_matrix<T>, std::is_enum<T>, mio::is_container<T>>;
 
 template <class T, class... Args>
 void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
@@ -57,31 +67,6 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
             }
         }));
 }
-/// @brief 
-// template <class Target, class... Args>
-// struct Serializable {
-//     template <class T>
-//     using serialize_expr = decltype(mio::serialize_pickle(std::declval<T&>()));
-
-//     template <class T>
-//     using deserialize_expr = decltype(mio::deserialize_pickle(std::declval<pybind11::tuple>(), std::declval<mio::Tag<T>>()));
-
-//     template <class T>
-//     constexpr static bool is_serializable_v = mio::conjunction_v<mio::is_expression_valid<serialize_expr, T>, mio::is_expression_valid<deserialize_expr, T>>;
-
-//     template <class T = Target>
-//     static const std::enable_if_t<is_serializable_v<T>, std::string> get(pybind11::class_<T, Args...>& cls)
-//     {
-//         pybind_pickle_class<T, Args...>(cls);
-//         return "";
-//     }
-
-//     template <class T = Target>
-//     static const std::enable_if_t<!is_serializable_v<T>, std::string> get(pybind11::class_<T, Args...>& cls)
-//     {
-//         return "";
-//     }
-// };
 
 // Bind classes with optional support for pickling
 template <class T, class... Args>
