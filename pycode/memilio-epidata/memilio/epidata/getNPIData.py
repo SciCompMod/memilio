@@ -723,8 +723,8 @@ def get_npi_data(fine_resolution=2,
                 key: val for key, val in df_npis_combinations[code][0].items()
                 if key in npis['NPI_code'].values}
             # remove columns of combinations
-            df_npis_combinations[code][1] = df_npis_combinations[code][1].loc[local_codes_used_rows,
-                                                                              local_codes_used_cols].reset_index(drop=True).copy()
+            df_npis_combinations[code][1] = copy.deepcopy(df_npis_combinations[code][1].loc[local_codes_used_rows,
+                                                                              local_codes_used_cols].reset_index(drop=True))
 
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
@@ -1083,7 +1083,7 @@ def get_npi_data(fine_resolution=2,
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
 
             # merge incidence dependent NPIs to have only one column for each subcode
-            df_local_new_merged = df_local_new.iloc[:, :2].copy()
+            df_local_new_merged = copy.deepcopy(df_local_new.iloc[:, :2])
             for subcode in all_subcodes:
                 # extract columns which have the subcode as part of the column 
                 # name and sum over all these subcodes
@@ -1160,7 +1160,7 @@ def get_npi_data(fine_resolution=2,
 
             # for fine resolution = 1 only consider merged dataframe
             if fine_resolution == 1:
-                df_local_new = df_local_new_merged.copy()
+                df_local_new = copy.deepcopy(df_local_new_merged)
             else:
                 # multiply subcode columns with incidence dependent subcode columns in df_local_new
                 for subcode in all_subcodes:
@@ -1173,10 +1173,9 @@ def get_npi_data(fine_resolution=2,
 
         start_time = time.perf_counter()
 
-        df_npis = pd.concat(
-            [df_npis.copy(),
-             df_local_new.copy()],
-            ignore_index=True)
+        df_npis = copy.deepcopy(pd.concat(
+            [df_npis, df_local_new],
+            ignore_index=True))
         counters[cid] += time.perf_counter()-start_time
         cid += 1
 
@@ -1458,7 +1457,7 @@ def plot_activation(df_npis_old, df_final, directory, maincode, subcodes):
         plt.xticks(tick_range)
         plt.plot(mentions.index, mentions, c='firebrick',
                  label=name + ' mentioned')
-        implementations = mentions[54:].copy()
+        implementations = copy.deepcopy(mentions[54:])
         implementations *= 0
         for county in counties:
             implementations += df_final[df_final.ID_County ==
