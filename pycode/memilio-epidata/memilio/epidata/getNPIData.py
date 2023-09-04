@@ -461,7 +461,7 @@ def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
         raise gd.DataError('Unexpected length of combination DataFrame.')
     # combination part should have values NaN and x
     for column in df_npis_combinations_pre.columns[5:]:
-        if (len(df_npis_combinations_pre[column].unique()) != 2) | ('x' not in df_npis_combinations_pre[column].unique()):
+        if not np.array_equal(np.sort(df_npis_combinations_pre[column].unique().astype(str)), np.array([np.nan, 'x']):
             raise gd.DataError('Unexpected values in combination matrix.')
     
 
@@ -752,8 +752,8 @@ def get_npi_data(fine_resolution=2,
                 key: val for key, val in df_npis_combinations[code][0].items()
                 if key in npis['NPI_code'].values}
             # remove columns of combinations
-            df_npis_combinations[code][1] = copy.deepcopy(df_npis_combinations[code][1].loc[local_codes_used_rows,
-                                                                              local_codes_used_cols].reset_index(drop=True))
+            df_npis_combinations[code][1] = df_npis_combinations[code][1].loc[local_codes_used_rows,
+                                                                              local_codes_used_cols].reset_index(drop=True)
 
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
