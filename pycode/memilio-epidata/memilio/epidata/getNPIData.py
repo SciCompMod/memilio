@@ -434,6 +434,35 @@ def drop_codes_and_categories(
 
     return codes_dropped, npi_codes_prior, df_npis_old
 
+def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
+    # Check if all counties are in df_npis_old
+    if not np.array_equal(df_npis_old.ID_County.unique().astype(int), np.array(geoger.get_county_ids(merge_eisenach=False)).astype(int)):
+        raise gd.DataError('Not all counties found in DataFrame.')
+    # Check if all NPIs are in df_npis_old
+    if len(df_npis_old.NPI_code.unique()) != 1152:
+        raise gd.DataError('Missing NPIs in DataFrame.')
+    # check columns of df_npis_old (6 columns with info, 883 dates until 2022/07/31)
+    if len(df_npis_old.columns) != 889:
+        raise gd.DataError('Unexpected length of DataFrame.')
+    # check if Variablenname, Variable and Beschreibung are in df_npis_desc columns
+    if not ('Variablenname' in df_npis_desc.columns):
+        raise gd.DataError('Column Variablenname not found.')
+    if not ('Variable' in df_npis_desc.columns):
+        raise gd.DataError('Column Variable not found.')
+    if not ('Beschreibung' in df_npis_desc.columns):
+        raise gd.DataError('Column Beschreibung not found.')
+    # df_npis_desc should have 1124 rows
+    if len(df_npis_desc)!=1224:
+        raise gd.DataError('Unexpected length of description DataFrame.')
+    # df_npis_combinations_pre should habe 204 rows (1224/6)
+    if len(df_npis_combinations_pre)!=204:
+        raise gd.DataError('Unexpected length of combination DataFrame.')
+    # combination part should have values NaN and x
+    for column in df_npis_combinations_pre.columns[5:]:
+        if (len(df_npis_combinations_pre[column].unique()) != 2) | ('x' not in df_npis_combinations_pre[column].unique()):
+            raise gd.DataError('Unexpected values in combination matrix.')
+    
+
 
 def get_npi_data(fine_resolution=2,
                  file_format=dd.defaultDict['file_format'],
@@ -513,6 +542,8 @@ def get_npi_data(fine_resolution=2,
         directory, fine_resolution)
 
     print('Download completed.')
+
+    npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
 
     # Compute column index of NPI start (columns with NPIs start with days 
     # which are provided in format dYYYYMMDD).
@@ -654,8 +685,8 @@ def get_npi_data(fine_resolution=2,
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
                     print('Error in combination matrix.')
                 del df_in_valid
-            except:
-                pass
+            except FileNotFoundError:
+                print('No verification matrix found. Continuing without verifying combination matrix.')
 
             if write_file:
                 df_out.to_excel(
@@ -849,7 +880,7 @@ def get_npi_data(fine_resolution=2,
         try:
             df_population = pd.read_json(
                 directory + "county_current_population.json")
-        except:
+        except FileNotFoundError:
             df_population = gpd.get_population_data()
         min_date.append(
             df_infec_rki[dd.EngEng['date']].min().to_pydatetime())
@@ -1054,7 +1085,7 @@ def get_npi_data(fine_resolution=2,
                 df_local_new[dd.EngEng['date']] <= end_date_new), :].reset_index()
             try:
                 df_local_new = df_local_new.drop(columns='index')
-            except:
+            except TypeError:
                 pass
             # get index of first NPI column in local data frame
             npis_idx_start = list(
@@ -1217,11 +1248,11 @@ def get_npi_data(fine_resolution=2,
     df_npis.reset_index(inplace=True)
     try:
         df_npis = df_npis.drop(columns='index')
-    except:
+    except TypeError:
         pass
     try:
         df_npis = df_npis.drop(columns='level_0')
-    except:
+    except TypeError:
         pass
 
     #### start validation ####
@@ -1356,7 +1387,7 @@ def plot_interaction_matrix(filename, directory):
     try:   
         codelist = pd.ExcelFile(os.path.join(
             directory, filename + '.xlsx'), engine='openpyxl').sheet_names
-    except:
+    except FileNotFoundError:
         raise FileNotFoundError('File ' + filename + ' not found.')
 
     # invert color map elements for tab20c such that subcolors are shown
@@ -1444,32 +1475,6 @@ def plot_interaction_matrix(filename, directory):
                 code)), dpi=300)
         plt.close()
 
-
-def plot_activation(df_npis_old, df_final, directory, maincode, subcodes):
-    counties = df_final.ID_County.unique()
-    for scode in subcodes:
-        name = maincode+scode
-        mentions = df_npis_old[df_npis_old.NPI_code ==
-                               name].iloc[:, 6:].sum(axis=0)
-        for inc_idx in ['_1', '_2', '_3', '_4', '_5']:
-            mentions += df_npis_old[df_npis_old.NPI_code ==
-                                    name+inc_idx].iloc[:, 6:].sum(axis=0)
-        tick_range = (np.arange(int(len(mentions) / 100) + 1) * 100)
-        plt.xticks(tick_range)
-        plt.plot(mentions.index, mentions, c='firebrick',
-                 label=name + ' mentioned')
-        implementations = mentions[54:].copy()
-        implementations *= 0
-        for county in counties:
-            implementations += df_final[df_final.ID_County ==
-                                        county].filter(regex=name).sum(axis=1).values
-        plt.plot(implementations.index, implementations,
-                 c='g', label=name + ' active')
-        plt.grid(True)
-        plt.legend(loc='best')
-        plt.tight_layout
-        plt.savefig(directory+'npi_plots/'+name)
-        plt.clf()
 
 
 def main():
