@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
+import matplotlib.colors as mcolors
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -143,10 +144,13 @@ def extract_data(
 
         # Set no filtering if filters were set to None.
         if filters == None:
-            filters['Group'] = list(h5file[regions[i]].keys())[
+            filters['Group'] = list(h5file[regions[0]].keys())[
                 :-2]  # Remove 'Time' and 'Total'.
             filters['InfectionState'] = list(
                 range(h5file[regions[i]]['Group1'].shape[1]))
+
+        if filters['Group'] == None:
+            filters['Group'] = list(h5file[regions[0]].keys())[:-2]
 
         InfectionStateList = [j for j in filters['InfectionState']]
 
@@ -225,7 +229,7 @@ def scale_dataframe_relative(df, age_groups, df_population):
     """
 
     # Merge population data of Eisenach (if counted separately) with Wartburgkreis.
-    if 16056 in df_population[df.columns[0]].values:
+    if 16056 in df_population['ID_County'].values:
         for i in range(1, len(df_population.columns)):
             df_population.loc[df_population[df.columns[0]] == 16063, df_population.columns[i]
                               ] += df_population.loc[df_population.ID_County == 16056, df_population.columns[i]]
@@ -235,12 +239,12 @@ def scale_dataframe_relative(df, age_groups, df_population):
         columns=[df_population.columns[0]] + age_groups)
     # Extrapolate on oldest age group with maximumg age 100.
     for region_id in df.iloc[:, 0]:
-        df_population_agegroups.loc[len(df_population_agegroups.index), :] = [region_id] + list(
-            mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == region_id].iloc[:, 2:], age_groups))
+        df_population_agegroups.loc[len(df_population_agegroups.index), :] = [int(region_id)] + list(
+            mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == int(region_id)].iloc[:, 2:], age_groups))
 
     def scale_row(elem):
         population_local_sum = df_population_agegroups[
-            df_population_agegroups[df.columns[0]] == elem[0]].iloc[
+            df_population_agegroups['ID_County'] == int(elem[0])].iloc[
                 :, 1:].sum(axis=1)
         return elem['Count'] / population_local_sum.values[0]
 
@@ -290,10 +294,11 @@ def plot_map(data: pd.DataFrame,
     @param[in] outercolor Background color of the plot image.
     """
     region_classifier = data.columns[0]
+    region_data = data[region_classifier].to_numpy().astype(int)
 
     data_columns = data.columns[1:]
     # Read and filter map data.
-    if data[region_classifier].isin(geoger.get_county_ids()).all():
+    if np.isin(region_data, geoger.get_county_ids()).all():
         try:
             map_data = geopandas.read_file(
                 os.path.join(
@@ -349,16 +354,21 @@ def plot_map(data: pd.DataFrame,
     else:
         cax = None
 
+    # log scale of colorbar.
+    # norm = mcolors.LogNorm(vmin=scale_colors[0], vmax=scale_colors[1])
+
     for i in range(len(data_columns)):
 
         ax = fig.add_subplot(gs[:, i+2])
         if cax is not None:
             map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
                           vmin=scale_colors[0], vmax=scale_colors[1])
+            # map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True, norm=norm)
         else:
             # Do not plot colorbar.
             map_data.plot(data_columns[i], ax=ax, legend=False,
                           vmin=scale_colors[0], vmax=scale_colors[1])
+            # map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True, norm=norm)
 
         ax.set_title(legend[i], fontsize=12)
         ax.set_axis_off()
