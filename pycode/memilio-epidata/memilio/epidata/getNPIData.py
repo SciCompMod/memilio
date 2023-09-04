@@ -257,6 +257,8 @@ def read_files(directory, fine_resolution):
         print('File not found.')
         raise FileNotFoundError
 
+    npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
+
     return df_npis_old, df_npis_desc, df_npis_combinations_pre
 
 
@@ -543,8 +545,6 @@ def get_npi_data(fine_resolution=2,
 
     print('Download completed.')
 
-    npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
-
     # Compute column index of NPI start (columns with NPIs start with days 
     # which are provided in format dYYYYMMDD).
     npi_start_col = np.where(
@@ -676,7 +676,8 @@ def get_npi_data(fine_resolution=2,
                 [desc
                  for desc in npi_codes_prior_desc
                  [npi_codes_prior.isin(codes_local)].values])
-            try:
+            # validate if combinations cleanout file exists, else write this file
+            if write_file == False:
                 # store verified output
                 df_in_valid = pd.read_excel(
                     os.path.join(
@@ -685,10 +686,7 @@ def get_npi_data(fine_resolution=2,
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
                     print('Error in combination matrix.')
                 del df_in_valid
-            except FileNotFoundError:
-                print('No verification matrix found. Continuing without verifying combination matrix.')
-
-            if write_file:
+            else:
                 df_out.to_excel(
                     writer, sheet_name=npi_groups_combinations_unique[i])
             del df_out
@@ -1085,7 +1083,7 @@ def get_npi_data(fine_resolution=2,
                 df_local_new[dd.EngEng['date']] <= end_date_new), :].reset_index()
             try:
                 df_local_new = df_local_new.drop(columns='index')
-            except TypeError:
+            except KeyError:
                 pass
             # get index of first NPI column in local data frame
             npis_idx_start = list(
@@ -1247,11 +1245,11 @@ def get_npi_data(fine_resolution=2,
     df_npis.reset_index(inplace=True)
     try:
         df_npis = df_npis.drop(columns='index')
-    except TypeError:
+    except KeyError:
         pass
     try:
         df_npis = df_npis.drop(columns='level_0')
-    except TypeError:
+    except KeyError:
         pass
 
     #### start validation ####
@@ -1299,9 +1297,10 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
     """
     for county in counties_considered:
         df_local = df_npis_input[df_npis_input[dd.EngEng['idCounty']] == county]
-        # get column where dates start
-        npi_start_col = np.where(
-            df_local.columns.str.startswith('d2') == True)[0][0]
+        if initial_data_frame:
+            # get column where dates start
+            npi_start_col = np.where(
+                df_local.columns.str.startswith('d2') == True)[0][0]
         # prepare dictionnary for dates when code was mentioned
         code_dates = {}
         # run through all maincodes (i.e., first 3-4 characters like M01a or M11)

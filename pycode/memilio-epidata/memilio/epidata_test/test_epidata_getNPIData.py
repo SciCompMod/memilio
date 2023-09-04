@@ -336,7 +336,7 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
             npis_test.M1_1_1.to_list(),
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-        self.assertEqual(mock_plot.call_count, 5)
+        self.assertEqual(mock_plot.call_count, 4)
 
 
 if __name__ == '__main__':
