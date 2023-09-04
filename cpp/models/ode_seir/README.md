@@ -6,4 +6,4 @@ This model is a very simple ODE model with only four compartments and few parame
 - Infected, will recover after some time
 - Recovered
 
-An example can be found in [examples/seir.cpp](../../examples/seir.cpp)
+An example can be found in [examples/ode_seir.cpp](../../examples/ode_seir.cpp)

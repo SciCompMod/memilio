@@ -109,30 +109,80 @@ public:
     }
 
     /**
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
+     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
+     *
+     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
+     *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
+     *            function can and will not set Parameters to meaningful values in an epidemiological or virological context,
+     *            as all models are designed to be transferable to multiple diseases. Consequently, only acceptable
+     *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
+     *            may often be necessary to have set meaningful values.
+     *
+     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     */
+    bool apply_constraints()
+    {
+        double tol_times = 1e-4;
+
+        int corrected = false;
+        if (this->get<TimeExposed>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->get<TimeExposed>(), tol_times);
+            this->get<TimeExposed>() = tol_times;
+            corrected                = true;
+        }
+        if (this->get<TimeInfected>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->get<TimeInfected>(), tol_times);
+            this->get<TimeInfected>() = tol_times;
+            corrected                 = true;
+        }
+        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                        this->get<TransmissionProbabilityOnContact>(), 0.0);
+            this->get<TransmissionProbabilityOnContact>() = 0.0;
+            corrected                                     = true;
+        }
+        return corrected;
+    }
+
+    /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
      * if constraints are not satisfied.
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
+     * @return Returns true if one constraint is not satisfied, otherwise false.   
      */
-    int check_constraints() const
+    bool check_constraints() const
     {
-        if (this->get<TimeExposed>() <= 0.0) {
-            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
+        double tol_times = 1e-4;
+
+        if (this->get<TimeExposed>() < tol_times) {
+            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
+                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                      "and reset parameters.",
                       this->get<TimeExposed>(), 0.0);
-            return 1;
+            return true;
         }
-        if (this->get<TimeInfected>() <= 0.0) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
+        if (this->get<TimeInfected>() < tol_times) {
+            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                      "and reset parameters.",
                       this->get<TimeInfected>(), 0.0);
-            return 1;
+            return true;
         }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
                 this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
-            return 1;
+            return true;
         }
-        return 0;
+        return false;
     }
 
 private:
