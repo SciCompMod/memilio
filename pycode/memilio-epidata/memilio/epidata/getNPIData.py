@@ -283,7 +283,7 @@ def activate_npis_based_on_incidence(
     the incidence-dependent NPI is activated or lifted two days after the threshold
     is/is not anymore exceeded, additionally considering the number of consecutive
     days to implement or lift (see second paragraph above). 
-    
+
     Please see the examples for a better understanding.
 
     Example 1 (Threshold=3.5):
@@ -436,6 +436,7 @@ def drop_codes_and_categories(
 
     return codes_dropped, npi_codes_prior, df_npis_old
 
+
 def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
     # Check if all counties are in df_npis_old
     if not np.array_equal(df_npis_old.ID_County.unique().astype(int), np.array(geoger.get_county_ids(merge_eisenach=False)).astype(int)):
@@ -454,16 +455,15 @@ def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
     if not ('Beschreibung' in df_npis_desc.columns):
         raise gd.DataError('Column Beschreibung not found.')
     # df_npis_desc should have 1124 rows
-    if len(df_npis_desc)!=1224:
+    if len(df_npis_desc) != 1224:
         raise gd.DataError('Unexpected length of description DataFrame.')
     # df_npis_combinations_pre should habe 204 rows (1224/6)
-    if len(df_npis_combinations_pre)!=204:
+    if len(df_npis_combinations_pre) != 204:
         raise gd.DataError('Unexpected length of combination DataFrame.')
     # combination part should have values NaN and x
     for column in df_npis_combinations_pre.columns[5:]:
         if (len(df_npis_combinations_pre[column].unique()) != 2) | ('x' not in df_npis_combinations_pre[column].unique()):
             raise gd.DataError('Unexpected values in combination matrix.')
-    
 
 
 def get_npi_data(fine_resolution=2,
@@ -545,7 +545,7 @@ def get_npi_data(fine_resolution=2,
 
     print('Download completed.')
 
-    # Compute column index of NPI start (columns with NPIs start with days 
+    # Compute column index of NPI start (columns with NPIs start with days
     # which are provided in format dYYYYMMDD).
     npi_start_col = np.where(
         df_npis_old.columns.str.contains('d2') == True)[0][0]
@@ -602,7 +602,8 @@ def get_npi_data(fine_resolution=2,
         # rename essential columns and throw away others
         columns_used = np.where(
             (df_npis_combinations_pre == 'x').any() == True)[0]
-        column_names = list(df_npis_combinations_pre.columns[[i for i in columns_used]])
+        column_names = list(
+            df_npis_combinations_pre.columns[[i for i in columns_used]])
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
         df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
         df_npis_combinations_pre = df_npis_combinations_pre[[
@@ -753,7 +754,7 @@ def get_npi_data(fine_resolution=2,
                 if key in npis['NPI_code'].values}
             # remove columns of combinations
             df_npis_combinations[code][1] = copy.deepcopy(df_npis_combinations[code][1].loc[local_codes_used_rows,
-                                                                              local_codes_used_cols].reset_index(drop=True))
+                                                                                            local_codes_used_cols].reset_index(drop=True))
 
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
@@ -920,7 +921,7 @@ def get_npi_data(fine_resolution=2,
     for maincode in df_count_joint_codes.keys():
         df_count_joint_codes[maincode][1] *= 0
     df_counted_joint_codes = count_code_multiplicities(df_npis_old, df_count_joint_codes,
-                                                            counties_considered=counties_considered)
+                                                       counties_considered=counties_considered)
     save_interaction_matrix(df_counted_joint_codes, 'joint_codes', directory)
     plot_interaction_matrix('joint_codes', directory)
 
@@ -953,7 +954,7 @@ def get_npi_data(fine_resolution=2,
         cid = 0
         countyidx += 1
 
-        ## compute incidence for given county and store in other data frame
+        # compute incidence for given county and store in other data frame
         if fine_resolution > 0:
             # compute incidence based on previous data frames
             df_infec_local = copy.deepcopy(
@@ -997,11 +998,12 @@ def get_npi_data(fine_resolution=2,
 
         # Consistency of incidence independent and dependent NPIs:
         # The same NPI should not be prescribed multiple times at the same day
-        # for different incidence-dependent thresholds or incidence-independently. 
+        # for different incidence-dependent thresholds or incidence-independently.
         # In order to avoid contradictions, only retain the strictest mentioned
         # implementation. Incidence-independent is always stricter than any
         # incidence-dependent implementation.
-        print_details = True # define if details are printed (probably to be deactivated)
+        # define if details are printed (probably to be deactivated)
+        print_details = True
         for i in range(int(len(df_local_old)/inc_codes)):
 
             # check if access is correct
@@ -1011,7 +1013,7 @@ def get_npi_data(fine_resolution=2,
                  [inc_codes * i: inc_codes * (i + 1),
                   npi_start_col - 1].to_list()]):
                 raise gd.DataError('Wrong NPI rows aggregated.')
-            
+
             sum_npi_inc = np.where(
                 df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col:].sum() > 1)
             if (len(sum_npi_inc[0]) > 0) and print_details:
@@ -1089,7 +1091,7 @@ def get_npi_data(fine_resolution=2,
             npis_idx_start = list(
                 df_local_new.columns).index(
                 npis[dd.EngEng['npiCode']][0])
-            
+
             # extract local incidence from local frame
             local_incid = copy.deepcopy(df_infec_local['Incidence'])
 
@@ -1114,7 +1116,7 @@ def get_npi_data(fine_resolution=2,
             # merge incidence dependent NPIs to have only one column for each subcode
             df_local_new_merged = copy.deepcopy(df_local_new.iloc[:, :2])
             for subcode in all_subcodes:
-                # extract columns which have the subcode as part of the column 
+                # extract columns which have the subcode as part of the column
                 # name and sum over all these subcodes
                 df_local_new_merged[subcode] = df_local_new.filter(
                     regex=subcode).sum(axis=1)
@@ -1123,17 +1125,19 @@ def get_npi_data(fine_resolution=2,
             df_incid_depend = pd.concat(
                 [df_incid_depend, copy.deepcopy(df_local_new_merged)])
 
-            if df_local_new_merged.iloc[:,2:].max().max() > 1:
+            if df_local_new_merged.iloc[:, 2:].max().max() > 1:
                 raise gd.DataError('Error in merging...')
 
-            ## Remove conflicting NPIs according to strictness index of Corona-
-            ## Datenplattform and exclusion criteria defined in df_npis_combinations
+            # Remove conflicting NPIs according to strictness index of Corona-
+            # Datenplattform and exclusion criteria defined in df_npis_combinations
             for maincode in df_npis_combinations.keys():
                 # get all subcodes
                 subcodes = list(df_npis_combinations[maincode][0].keys())
-                subcodes_strictness_values = list(df_npis_combinations[maincode][0].values())
+                subcodes_strictness_values = list(
+                    df_npis_combinations[maincode][0].values())
                 if len(subcodes) != len(subcodes_strictness_values):
-                    raise gd.DataError('Subcode and strictness array inconsistent.')
+                    raise gd.DataError(
+                        'Subcode and strictness array inconsistent.')
                 # sort index reversely with the strictest (highest) index first
                 idx_strictness_sorted_rev = np.argsort(
                     subcodes_strictness_values)[::-1]
@@ -1144,7 +1148,8 @@ def get_npi_data(fine_resolution=2,
                     subcode = subcodes[idx_strictness]
 
                     # get indices of days where subcode is active
-                    subcode_active = np.where(df_local_new_merged.loc[:, subcode] > 0)[0]
+                    subcode_active = np.where(
+                        df_local_new_merged.loc[:, subcode] > 0)[0]
 
                     if len(subcode_active) > 0:
                         # get indices of less strict NPIs
@@ -1162,7 +1167,7 @@ def get_npi_data(fine_resolution=2,
                             list(set(codes_less_strict).intersection(subcodes_nocombi)))
 
                         for nocombi_code in subcodes_deactivation:
-                            # check where the less strict NPI is mentioned, only 
+                            # check where the less strict NPI is mentioned, only
                             # considering rows where the stricter NPI is mentioned.
                             days_deact = np.where(
                                 df_local_new_merged.loc[subcode_active, nocombi_code] > 0)[0]
@@ -1173,15 +1178,17 @@ def get_npi_data(fine_resolution=2,
                                       str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
                                 print('\n')
                                 # take subcode_active rows as days_deact is
-                                # numbering inside subcode_active rows only, 
+                                # numbering inside subcode_active rows only,
                                 # not numbering on the whole df_local_new_merged
                                 # data frame
-                                df_local_new_merged.loc[subcode_active, nocombi_code] = 0
+                                df_local_new_merged.loc[subcode_active,
+                                                        nocombi_code] = 0
                                 df_count_deactivation[maincode][1].loc[idx_strictness,
                                                                        nocombi_code] += len(days_deact)
 
             # count joint codes from after strictness based deactivation
-            df_count_active = count_code_multiplicities(df_local_new_merged, df_count_active, [countyID], False)
+            df_count_active = count_code_multiplicities(
+                df_local_new_merged, df_count_active, [countyID], False)
 
             # count joint codes from after incidence based activation
             df_count_incid_depend = count_code_multiplicities(
@@ -1194,7 +1201,8 @@ def get_npi_data(fine_resolution=2,
                 # multiply subcode columns with incidence dependent subcode columns in df_local_new
                 for subcode in all_subcodes:
                     for incidcode in ['', '_1', '_2', '_3', '_4', '_5']:
-                        df_local_new[subcode+incidcode] *= df_local_new_merged[subcode]
+                        df_local_new[subcode +
+                                     incidcode] *= df_local_new_merged[subcode]
 
         counters[cid] += time.perf_counter()-start_time
         cid += 1
@@ -1220,7 +1228,8 @@ def get_npi_data(fine_resolution=2,
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
 
-    save_interaction_matrix(df_count_deactivation, 'count_deactivation', directory)
+    save_interaction_matrix(df_count_deactivation,
+                            'count_deactivation', directory)
     plot_interaction_matrix('count_deactivation', directory)
 
     if counter_cases_start >= len(counties_considered)*0.05:
@@ -1231,7 +1240,8 @@ def get_npi_data(fine_resolution=2,
               'Please consider a start date of some weeks ahead of the '
               'time window to be analyzed for NPI\'s effects.')
 
-    save_interaction_matrix(df_count_incid_depend, 'joint_codes_incid_depend', directory)
+    save_interaction_matrix(df_count_incid_depend,
+                            'joint_codes_incid_depend', directory)
     plot_interaction_matrix('joint_codes_incid_depend', directory)
 
     save_interaction_matrix(df_count_active, 'joint_codes_active', directory)
@@ -1309,20 +1319,21 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
             code_list = df_count[maincode][1].columns
             # iterate over code/row indices 0 to n
             for code_idx in range(len(code_list)):
-                
+
                 # initial data frame (df_npis_old) and reworked new data frames
                 # are transposed (NPIs and dates in rows and columns switched)
                 if initial_data_frame:
                     # get dates where NPI is mentioned as existing in potential intervention set
-                    npi_rows = df_local.NPI_code.str.contains(code_list[code_idx])
+                    npi_rows = df_local.NPI_code.str.contains(
+                        code_list[code_idx])
                     npi_dates_in_df = np.where(
                         df_local[npi_rows].iloc[:, npi_start_col:].max() > 0)[0]
                     # store non-transformed dates in code_dict
                     code_dates[code_list[code_idx]] = df_local.iloc[:,
-                                                                    npi_start_col + npi_dates_in_df].columns 
+                                                                    npi_start_col + npi_dates_in_df].columns
                     # count number of multiply mentionned NPIs with different incidence thresholds for the same day
                     df_count[maincode][1].iloc[code_idx, code_idx] += df_local[npi_rows].iloc[:,
-                                                                                            npi_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)                                       
+                                                                                              npi_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
                 else:
                     # get dates where NPI is mentioned as existing in potential intervention set
                     npi_cols = df_local.columns.str.contains(
@@ -1332,7 +1343,6 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
                     # store transformed dates in code_dict
                     code_dates[code_list[code_idx]
                                ] = df_local.iloc[npi_dates_in_df, 0].to_list()
-
 
         # offdiagonal entries (as before, use that code_dates has been filled for all diagonal entries, i.e., all codes)
         for maincode in df_count.keys():
@@ -1347,7 +1357,7 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
                         code_dates[code_list[code_idx]]).intersection(set(code_dates[code_list[code_idx_other]])))
 
     return df_count
-            
+
 
 def save_interaction_matrix(df_interactions, filename, directory):
     """! Saves interaction matrices for all subcodes in provided main codes.
@@ -1377,12 +1387,12 @@ def plot_interaction_matrix(filename, directory):
 
     @param[in] filename Filename to read results from.
     @param[in] directory Directory where to read and save data.
-    """    
+    """
     target_directory = os.path.join(directory, 'heatmaps_' + filename)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
 
-    try:   
+    try:
         codelist = pd.ExcelFile(os.path.join(
             directory, filename + '.xlsx'), engine='openpyxl').sheet_names
     except FileNotFoundError:
@@ -1442,11 +1452,11 @@ def plot_interaction_matrix(filename, directory):
         else:
             raise gd.DataError('Unknown filename: ' + filename)
 
-        ## plot offdiagonal (interactions between NPIs)
+        # plot offdiagonal (interactions between NPIs)
         # Set vmin = 1 so that only combinations that are simultaneously active
         # at least on one day are in color, else use white.
         # Set vmax = 1e6 to be adjusted with colormap, this value is larger
-        # than the maximum in all dataframes, this way colors of heatmaps are 
+        # than the maximum in all dataframes, this way colors of heatmaps are
         # comparable across different visualizations
         # (e.g. between codes or between joint_codes and exclusions)
         plt.imshow(array_exclusion, cmap=cmap,
@@ -1458,7 +1468,7 @@ def plot_interaction_matrix(filename, directory):
                 code)), dpi=300)
         plt.close()
 
-        ## plot diagonal (interactions between incidence levels of one NPIs)
+        # plot diagonal (interactions between incidence levels of one NPIs)
         plt.figure()
         positions = [i for i in range(len(df.columns)-1)]
         plt.yticks(positions, df.columns.to_list()[1:])
@@ -1472,7 +1482,6 @@ def plot_interaction_matrix(filename, directory):
             os.path.join(target_directory, 'IntraNPIs_' + filename + '_{}'.format(
                 code)), dpi=300)
         plt.close()
-
 
 
 def main():
