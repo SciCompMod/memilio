@@ -453,7 +453,7 @@ def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
         raise gd.DataError('Column Variable not found.')
     if not ('Beschreibung' in df_npis_desc.columns):
         raise gd.DataError('Column Beschreibung not found.')
-    # df_npis_desc should have 1124 rows
+    # df_npis_desc should have 1224 rows
     if len(df_npis_desc)!=1224:
         raise gd.DataError('Unexpected length of description DataFrame.')
     # df_npis_combinations_pre should habe 204 rows (1224/6)
@@ -461,7 +461,7 @@ def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
         raise gd.DataError('Unexpected length of combination DataFrame.')
     # combination part should have values NaN and x
     for column in df_npis_combinations_pre.columns[5:]:
-        if not np.array_equal(np.sort(df_npis_combinations_pre[column].unique().astype(str)), np.array([np.nan, 'x'])):
+        if not set(df_npis_combinations_pre[column].unique().astype(str)).issubset(set(['nan','x'])):
             raise gd.DataError('Unexpected values in combination matrix.')
     
 
@@ -637,9 +637,8 @@ def get_npi_data(fine_resolution=2,
 
         # run through all groups and set possible combinations according to
         # read combination matrix
-        # find begin of combination matrix
-        # there may be multiple columns named '0', so find first '1' column
-        start_comb_matrix = list(df_npis_combinations_pre.columns).index(1)-1
+        # find begin of combination matrix (find first '0' column)
+        start_comb_matrix = list(df_npis_combinations_pre.columns).index(0)
         for i in range(len(npi_groups_idx)):
             codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
                                                        'Variablenname'].values
