@@ -42,7 +42,8 @@ defaultDict = {
     'read_data': False,
     'make_plot': False,
     'out_folder': default_file_path,
-    'start_date': date(2020, 4, 24),
+    'update_data': False,
+    'start_date': date(2020, 1, 1),
     'end_date': date.today(),
     'split_berlin': False,
     'impute_dates': False,
@@ -103,7 +104,9 @@ EngEng = {
     'nuts3': 'NUTS3',
     'total_volume': 'Unique_trips',
     'region_name': 'County',
-    'region_id': 'ID_County'
+    'region_id': 'ID_County',
+    'desc': 'Description',
+    'incidence': 'Incidence'
 }
 
 GerEng = {
