@@ -1,13 +1,12 @@
-## Changes
+# Changes and Information
 
-Please briefly list the changes made:
+Please **briefly list the changes** made, additional Information and what the Reviewer should look out for:
 
-[Describe here in 2-3 lines. For details, reference to issues to avoid redundant information.]
+-
 
-## Merge Request - GuideLine Checklist
+## Merge Request - Guideline Checklist
 
-- *Check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) before opening a Pull request/Merge request.*
-- *Request a reviewer when your work is ready to review, before this please use the draft feature.*
+Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
 
 ### Checks by code author
 
@@ -24,7 +23,3 @@ Please briefly list the changes made:
 - [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.)
 - [ ] Appropriate **unit tests** have been added, CI passes and code coverage is acceptable (did not decrease)
 - [ ] No large data files added in the whole history of commits(files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
-
-### Additional context
-
-Please list additional information or things a reviewer should look out for.

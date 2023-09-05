@@ -43,7 +43,7 @@ defaultDict = {
     'make_plot': False,
     'out_folder': default_file_path,
     'update_data': False,
-    'start_date': date(2020, 4, 24),
+    'start_date': date(2020, 1, 1),
     'end_date': date.today(),
     'split_berlin': False,
     'impute_dates': False,
