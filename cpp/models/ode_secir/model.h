@@ -434,6 +434,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
     std::cout << "Matrix A(0,0): time" << t_idx << ": " << F(0, num_groups) << std::endl;
 
+    std::cout << "Matrix C(0,0): time" << t_idx << ": " << V(0, 0) << std::endl;
+
     //Initialize the matrix V
     for (Eigen::Index i = 0; i < (Eigen::Index)num_groups; i++) {
 
