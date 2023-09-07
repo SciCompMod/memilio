@@ -30,6 +30,7 @@
 #include "ode_secir/parameters.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
+#include <iomanip>
 
 namespace mio
 {
@@ -469,6 +470,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
             }
         }
     }
+
     //Try to invert V
     Eigen::FullPivLU<Eigen::MatrixXd> lu(V); //Check invertibility via LU Decomposition
     if (!lu.isInvertible()) {

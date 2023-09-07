@@ -954,16 +954,6 @@ TEST(Secir, get_reproduction_number)
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 0;
 
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()  = 0.05;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>() = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>()              = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
-
     for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_groups; i++) {
         model.parameters.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.8;
@@ -1006,13 +996,13 @@ TEST(Secir, get_reproduction_number)
 
     result_6 << 2700, 600, 100, 100, 0, 0, 0, 0, 4000, 300, 0, 200, 0, 0, 0, 0, 1300, 400, 100, 100, 0, 100, 0, 0;
 
-    result.add_time_point(0, result_0);
+    result.add_time_point(0.0, result_0);
     result.add_time_point(0.1000000000000000000, result_1);
     result.add_time_point(0.2000000000000000000, result_2);
     result.add_time_point(0.4000000000000000000, result_3);
     result.add_time_point(0.6000000000000000000, result_4);
     result.add_time_point(0.8000000000000000000, result_5);
-    result.add_time_point(1, result_6);
+    result.add_time_point(1.0, result_6);
 
     mio::osecir::Simulation<> sim(model, 0.0);
     sim.get_result() = result;
@@ -1024,22 +1014,16 @@ TEST(Secir, get_reproduction_number)
     EXPECT_EQ(mio::osecir::get_reproduction_number((size_t)0, sim).value(),
               mio::osecir::get_reproduction_number(0.0, sim).value());
 
-    std::cout << std::setprecision(20);
-    std::cout << "lul1 " << mio::osecir::get_reproduction_number((size_t)0, sim).value();
-    std::cout << "lul2 " << mio::osecir::get_reproduction_number((size_t)4, sim).value();
-    std::cout << "lul3 " << mio::osecir::get_reproduction_number((size_t)6, sim).value();
+    //Test one function for integer timepoints
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571,
+                1e-12); //Calculated by hand
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)4, sim).value(), 3.4678495894266841, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 3.4060279836965339,
+                1e-12); //Calculated by hand
 
-    std::cout << "lul4 " << mio::osecir::get_reproduction_number(0.05, sim).value();
-    std::cout << "lul2 " << mio::osecir::get_reproduction_number(0.5, sim).value();
-    std::cout << "lul2 " << mio::osecir::get_reproduction_number(0.85, sim).value();
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.5175469781728519,
-                1e-12); //Test one function for integer timepoints
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)4, sim).value(), 3.0242627259311611887, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 2.9470037894725229499, 1e-12);
-
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.493202389068264857, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.0719242621131641613, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 2.9985324856106601032, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.7153740911442856, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.4833316698917707, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 3.4450376807796337, 1e-12);
 }
 
 TEST(Secir, get_migration_factors)
