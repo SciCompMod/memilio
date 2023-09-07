@@ -37,176 +37,6 @@ class InterventionLevel(Enum):
 
 class Simulation:
 
-    def __init__(self, data_dir):
-
-        self.start_date = mio.Date(2020, 5, 15)
-        start_day = (datetime.date(year=2020, month=5,
-                                   day=15) - datetime.date(year=2020, month=1, day=1)).days
-
-        self.end_date = mio.Date(2020, 9, 1)
-
-        num_groups = 6
-
-        model = Model(num_groups)
-
-        def array_assign_uniform_distribution(param, min, max, num_groups=6):
-            if isinstance(
-                    min, (int, float)) and isinstance(
-                        max, (int, float)):
-                min = min * np.ones(num_groups)
-                max = max * np.ones(num_groups)
-            elif not (isinstance(min, (list, tuple)) and isinstance(
-                    max, (list, tuple))):
-                raise TypeError(
-                    "Invalid type for parameter 'min' or 'max. \
-                            Expected a scalar or a vector. Must be the same for both.")
-            for i in range(num_groups):
-                param[secir.AgeGroup(i)] = mio.UncertainValue(
-                    0.5 * (max[i] + min[i]))
-                param[secir.AgeGroup(i)].set_distribution(
-                    mio.ParameterDistributionUniform(min[i], max[i]))
-
-        t_incubation = 5.2
-        t_serial_interval_min = 0.5 * 2.67 + 0.5 * 5.2
-        t_serial_interval_max = 0.5 * 4.00 + 0.5 * 5.2
-        timeInfectedSymptomsMin = [
-            5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465]
-        timeInfectedSymptomsMax = [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]
-        timeInfectedSevereMin = [3.925, 3.925, 4.85, 6.4, 7.2, 9.]
-        timeInfectedSevereMax = [6.075, 6.075, 7., 8.7, 9.8, 13.]
-        timeInfectedCriticalMin = [4.95, 4.95, 4.86, 14.14, 14.4, 10.]
-        timeInfectedCriticalMax = [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]
-
-        array_assign_uniform_distribution(
-            model.parameters.IncubationTime, t_incubation, t_incubation)
-
-        array_assign_uniform_distribution(
-            model.parameters.SerialInterval, t_serial_interval_min,
-            t_serial_interval_max)
-
-        array_assign_uniform_distribution(
-            model.parameters.TimeInfectedSymptoms, timeInfectedSymptomsMin,
-            timeInfectedSymptomsMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.TimeInfectedSevere, timeInfectedSevereMin,
-            timeInfectedSevereMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.TimeInfectedCritical, timeInfectedCriticalMin,
-            timeInfectedCriticalMax)
-
-        # probabilities
-        transmissionProbabilityOnContactMin = [
-            0.02, 0.05, 0.05, 0.05, 0.08, 0.15]
-        transmissionProbabilityOnContactMax = [
-            0.04, 0.07, 0.07, 0.07, 0.10, 0.20]
-        relativeTransmissionNoSymptomsMin = 1
-        relativeTransmissionNoSymptomsMax = 1
-
-        # The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
-        # depends on incidence and test and trace capacity
-        riskOfInfectionFromSymptomaticMin = 0.1
-        riskOfInfectionFromSymptomaticMax = 0.3
-        maxRiskOfInfectionFromSymptomaticMin = 0.3
-        maxRiskOfInfectionFromSymptomaticMax = 0.5
-        recoveredPerInfectedNoSymptomsMin = [0.2, 0.2, 0.15, 0.15, 0.15, 0.15]
-        recoveredPerInfectedNoSymptomsMax = [0.3, 0.3, 0.25, 0.25, 0.25, 0.25]
-        severePerInfectedSymptomsMin = [0.006, 0.006, 0.015, 0.049, 0.15, 0.20]
-        severePerInfectedSymptomsMax = [0.009, 0.009, 0.023, 0.074, 0.18, 0.25]
-        criticalPerSevereMin = [0.05, 0.05, 0.05, 0.10, 0.25, 0.35]
-        criticalPerSevereMax = [0.10, 0.10, 0.10, 0.20, 0.35, 0.45]
-        deathsPerCriticalMin = [0.00, 0.00, 0.10, 0.10, 0.30, 0.5]
-        deathsPerCriticalMax = [0.10, 0.10, 0.18, 0.18, 0.50, 0.7]
-
-        array_assign_uniform_distribution(
-            model.parameters.TransmissionProbabilityOnContact,
-            transmissionProbabilityOnContactMin,
-            transmissionProbabilityOnContactMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.RelativeTransmissionNoSymptoms,
-            relativeTransmissionNoSymptomsMin,
-            relativeTransmissionNoSymptomsMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.RiskOfInfectionFromSymptomatic,
-            riskOfInfectionFromSymptomaticMin,
-            riskOfInfectionFromSymptomaticMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.MaxRiskOfInfectionFromSymptomatic,
-            maxRiskOfInfectionFromSymptomaticMin,
-            maxRiskOfInfectionFromSymptomaticMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.RecoveredPerInfectedNoSymptoms,
-            recoveredPerInfectedNoSymptomsMin,
-            recoveredPerInfectedNoSymptomsMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.SeverePerInfectedSymptoms,
-            severePerInfectedSymptomsMin,
-            severePerInfectedSymptomsMax)
-
-        array_assign_uniform_distribution(
-            model.parameters.CriticalPerSevere,
-            criticalPerSevereMin,
-            criticalPerSevereMax)
-        array_assign_uniform_distribution(
-            model.parameters.DeathsPerCritical,
-            deathsPerCriticalMin,
-            deathsPerCriticalMax)
-
-        contact_matrices = mio.ContactMatrixGroup(
-            num_groups, len(list(Location)))
-        contact_matrices[0] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "baseline_home.txt")),
-            mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "minimum_home.txt")))
-        contact_matrices[1] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                path.join(
-                    data_dir, "contacts", "baseline_school_pf_eig.txt")),
-            mio.secir.read_mobility_plain(
-                path.join(
-                    data_dir, "contacts", "minimum_school_pf_eig.txt")))
-        contact_matrices[2] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "baseline_work.txt")),
-            mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "minimum_work.txt")))
-        contact_matrices[3] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "baseline_other.txt")),
-            mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "minimum_other.txt")))
-
-        params = model.parameters
-        params.ContactPatterns.cont_freq_mat = contact_matrices
-        params.StartDay = start_day
-        params.Seasonality.value = 0.2
-
-        graph = secir.ModelGraph()
-
-        scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
-        scaling_factor_icu = 1.0
-        tnt_capacity_factor = 7.5 / 100000.
-
-        path_population_data = path.join(
-            data_dir, "pydata", "Germany", "county_current_population.json")
-
-        mio.secir.set_nodes(
-            params, self.start_date, self.end_date, data_dir,
-            path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, 0, False)
-
-        mio.secir.set_edges(
-            data_dir, graph, len(Location))
-
-        self.graph = graph
-
     def set_npis(params, start_date, end_date):
         contacts = params.ContactPatterns
         dampings = contacts.dampings()
@@ -399,28 +229,197 @@ class Simulation:
                     physical_distancing_work_other(after_xmas, min, max))
 
             # local dynamic NPIs
-            # dynamic_npis = params.DynamicNPIsInfectedSymptoms
-            # auto dynamic_npi_dampings = std:: vector < mio: : DampingSampling > ()
-            # dynamic_npi_dampings.push_back(
-            #     contacts_at_home(mio:: SimulationTime(0), 0.6, 0.8)) // increased from [0.4, 0.6] in Nov
-            # dynamic_npi_dampings.push_back(school_closure(mio:: SimulationTime(0), 0.25, 0.25)) // see paper
-            # dynamic_npi_dampings.push_back(home_office(mio:: SimulationTime(0), 0.2, 0.3)) // ...
-            # dynamic_npi_dampings.push_back(social_events(mio:: SimulationTime(0), 0.6, 0.8))
-            # dynamic_npi_dampings.push_back(social_events_work(mio:: SimulationTime(0), 0.1, 0.2))
-            # dynamic_npi_dampings.push_back(physical_distancing_home_school(mio:: SimulationTime(0), 0.6, 0.8))
-            # dynamic_npi_dampings.push_back(physical_distancing_work_other(mio:: SimulationTime(0), 0.6, 0.8))
-            # dynamic_npi_dampings.push_back(senior_awareness(mio:: SimulationTime(0), 0.0, 0.0))
-            # dynamic_npis.set_interval(3.0)
-            # dynamic_npis.set_duration(14.0)
-            # dynamic_npis.set_base_value(100000)
-            # dynamic_npis.set_threshold(200.0, dynamic_npi_dampings)
+            dynamic_npis = params.DynamicNPIsInfectedSymptoms
+            local_npis = []
+            # increased from [0.4, 0.6] in Nov
+            local_npis.append(contacts_at_home(0, 0.6, 0.8))
+            local_npis.append(school_closure(0, 0.2, 0.3))  # see paper
+            local_npis.append(home_office(0, 0.2, 0.3))
+            local_npis.append(social_events(0, 0.6, 0.8))
+            local_npis.append(social_events_work(0, 0.1, 0.2))
+            local_npis.append(physical_distancing_home_school(0, 0.6, 0.8))
+            local_npis.append(physical_distancing_work_other(0, 0.6, 0.8))
+            local_npis.append(senior_awareness(0, 0.0, 0.0))
 
-            # # school holidays(holiday periods are set per node, see set_nodes)
+            dynamic_npis.set_interval(3.0)
+            dynamic_npis.set_duration(14.0)
+            dynamic_npis.set_base_value(100000)
+            dynamic_npis.set_threshold(200.0, local_npis)
+
+            # school holidays(holiday periods are set per node, see set_nodes)
             # contacts.get_school_holiday_damping() = damping_helper(0, 1.0, 1.0, lvl_h, typ_s, [loc_s])
 
-            # mio: : DampingSampling(school_holiday_value, mio: : DampingLevel(int(InterventionLevel: : Holidays)),
-            #                       mio: : DampingType(int(Intervention: : SchoolClosure)), mio: : SimulationTime(0.0),
-            #                       {size_t(ContactLocation: : School)}, group_weights_all)
+    def __init__(self, data_dir):
+
+        self.start_date = mio.Date(2020, 5, 15)
+        start_day = (datetime.date(year=2020, month=5,
+                                   day=15) - datetime.date(year=2020, month=1, day=1)).days
+
+        self.end_date = mio.Date(2020, 9, 1)
+
+        num_groups = 6
+
+        model = Model(num_groups)
+
+        def array_assign_uniform_distribution(param, min, max, num_groups=6):
+            if isinstance(
+                    min, (int, float)) and isinstance(
+                        max, (int, float)):
+                min = min * np.ones(num_groups)
+                max = max * np.ones(num_groups)
+            elif not (isinstance(min, (list, tuple)) and isinstance(
+                    max, (list, tuple))):
+                raise TypeError(
+                    "Invalid type for parameter 'min' or 'max. \
+                            Expected a scalar or a vector. Must be the same for both.")
+            for i in range(num_groups):
+                param[secir.AgeGroup(i)] = mio.UncertainValue(
+                    0.5 * (max[i] + min[i]))
+                param[secir.AgeGroup(i)].set_distribution(
+                    mio.ParameterDistributionUniform(min[i], max[i]))
+
+        t_incubation = 5.2
+        t_serial_interval_min = 0.5 * 2.67 + 0.5 * 5.2
+        t_serial_interval_max = 0.5 * 4.00 + 0.5 * 5.2
+        timeInfectedSymptomsMin = [
+            5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465]
+        timeInfectedSymptomsMax = [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]
+        timeInfectedSevereMin = [3.925, 3.925, 4.85, 6.4, 7.2, 9.]
+        timeInfectedSevereMax = [6.075, 6.075, 7., 8.7, 9.8, 13.]
+        timeInfectedCriticalMin = [4.95, 4.95, 4.86, 14.14, 14.4, 10.]
+        timeInfectedCriticalMax = [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]
+
+        array_assign_uniform_distribution(
+            model.parameters.IncubationTime, t_incubation, t_incubation)
+
+        array_assign_uniform_distribution(
+            model.parameters.SerialInterval, t_serial_interval_min,
+            t_serial_interval_max)
+
+        array_assign_uniform_distribution(
+            model.parameters.TimeInfectedSymptoms, timeInfectedSymptomsMin,
+            timeInfectedSymptomsMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.TimeInfectedSevere, timeInfectedSevereMin,
+            timeInfectedSevereMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.TimeInfectedCritical, timeInfectedCriticalMin,
+            timeInfectedCriticalMax)
+
+        # probabilities
+        transmissionProbabilityOnContactMin = [
+            0.02, 0.05, 0.05, 0.05, 0.08, 0.15]
+        transmissionProbabilityOnContactMax = [
+            0.04, 0.07, 0.07, 0.07, 0.10, 0.20]
+        relativeTransmissionNoSymptomsMin = 1
+        relativeTransmissionNoSymptomsMax = 1
+
+        # The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
+        # depends on incidence and test and trace capacity
+        riskOfInfectionFromSymptomaticMin = 0.1
+        riskOfInfectionFromSymptomaticMax = 0.3
+        maxRiskOfInfectionFromSymptomaticMin = 0.3
+        maxRiskOfInfectionFromSymptomaticMax = 0.5
+        recoveredPerInfectedNoSymptomsMin = [0.2, 0.2, 0.15, 0.15, 0.15, 0.15]
+        recoveredPerInfectedNoSymptomsMax = [0.3, 0.3, 0.25, 0.25, 0.25, 0.25]
+        severePerInfectedSymptomsMin = [0.006, 0.006, 0.015, 0.049, 0.15, 0.20]
+        severePerInfectedSymptomsMax = [0.009, 0.009, 0.023, 0.074, 0.18, 0.25]
+        criticalPerSevereMin = [0.05, 0.05, 0.05, 0.10, 0.25, 0.35]
+        criticalPerSevereMax = [0.10, 0.10, 0.10, 0.20, 0.35, 0.45]
+        deathsPerCriticalMin = [0.00, 0.00, 0.10, 0.10, 0.30, 0.5]
+        deathsPerCriticalMax = [0.10, 0.10, 0.18, 0.18, 0.50, 0.7]
+
+        array_assign_uniform_distribution(
+            model.parameters.TransmissionProbabilityOnContact,
+            transmissionProbabilityOnContactMin,
+            transmissionProbabilityOnContactMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.RelativeTransmissionNoSymptoms,
+            relativeTransmissionNoSymptomsMin,
+            relativeTransmissionNoSymptomsMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.RiskOfInfectionFromSymptomatic,
+            riskOfInfectionFromSymptomaticMin,
+            riskOfInfectionFromSymptomaticMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.MaxRiskOfInfectionFromSymptomatic,
+            maxRiskOfInfectionFromSymptomaticMin,
+            maxRiskOfInfectionFromSymptomaticMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.RecoveredPerInfectedNoSymptoms,
+            recoveredPerInfectedNoSymptomsMin,
+            recoveredPerInfectedNoSymptomsMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.SeverePerInfectedSymptoms,
+            severePerInfectedSymptomsMin,
+            severePerInfectedSymptomsMax)
+
+        array_assign_uniform_distribution(
+            model.parameters.CriticalPerSevere,
+            criticalPerSevereMin,
+            criticalPerSevereMax)
+        array_assign_uniform_distribution(
+            model.parameters.DeathsPerCritical,
+            deathsPerCriticalMin,
+            deathsPerCriticalMax)
+
+        contact_matrices = mio.ContactMatrixGroup(
+            num_groups, len(list(Location)))
+        contact_matrices[0] = mio.ContactMatrix(
+            mio.secir.read_mobility_plain(
+                path.join(data_dir, "contacts", "baseline_home.txt")),
+            mio.secir.read_mobility_plain(
+                path.join(data_dir, "contacts", "minimum_home.txt")))
+        contact_matrices[1] = mio.ContactMatrix(
+            mio.secir.read_mobility_plain(
+                path.join(
+                    data_dir, "contacts", "baseline_school_pf_eig.txt")),
+            mio.secir.read_mobility_plain(
+                path.join(
+                    data_dir, "contacts", "minimum_school_pf_eig.txt")))
+        contact_matrices[2] = mio.ContactMatrix(
+            mio.secir.read_mobility_plain(
+                path.join(data_dir, "contacts", "baseline_work.txt")),
+            mio.secir.read_mobility_plain(
+                path.join(data_dir, "contacts", "minimum_work.txt")))
+        contact_matrices[3] = mio.ContactMatrix(
+            mio.secir.read_mobility_plain(
+                path.join(data_dir, "contacts", "baseline_other.txt")),
+            mio.secir.read_mobility_plain(
+                path.join(data_dir, "contacts", "minimum_other.txt")))
+
+        params = model.parameters
+        params.ContactPatterns.cont_freq_mat = contact_matrices
+        params.StartDay = start_day
+        params.Seasonality.value = 0.2
+
+        set_npis(params, self.start_date, self.end_date)
+
+        graph = secir.ModelGraph()
+
+        scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+        scaling_factor_icu = 1.0
+        tnt_capacity_factor = 7.5 / 100000.
+
+        path_population_data = path.join(
+            data_dir, "pydata", "Germany", "county_current_population.json")
+
+        mio.secir.set_nodes(
+            params, self.start_date, self.end_date, data_dir,
+            path_population_data, True, graph, scaling_factor_infected,
+            scaling_factor_icu, tnt_capacity_factor, 0, False)
+
+        mio.secir.set_edges(
+            data_dir, graph, len(Location))
+
+        self.graph = graph
 
     def run(self, num_runs=10):
         mio.set_log_level(mio.LogLevel.Off)
