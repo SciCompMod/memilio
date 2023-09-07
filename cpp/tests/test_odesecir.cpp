@@ -33,6 +33,7 @@
 #include <iomanip>
 
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -838,6 +839,8 @@ TEST(Secir, get_reproduction_numbers)
         model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
         model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
         model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+        model.parameters.get<mio::osecir::ICUCapacity>()                          = std::numeric_limits<double>::max();
+        model.parameters.get<mio::osecir::TestAndTraceCapacity>()                 = std::numeric_limits<double>::max();
     }
 
     mio::TimeSeries<ScalarType> result((int)mio::osecir::InfectionState::Count * num_groups);
@@ -969,6 +972,8 @@ TEST(Secir, get_reproduction_number)
         model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
         model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
         model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+        model.parameters.get<mio::osecir::ICUCapacity>()                          = std::numeric_limits<double>::max();
+        model.parameters.get<mio::osecir::TestAndTraceCapacity>()                 = std::numeric_limits<double>::max();
     }
 
     mio::TimeSeries<ScalarType> result((int)mio::osecir::InfectionState::Count * num_groups);
