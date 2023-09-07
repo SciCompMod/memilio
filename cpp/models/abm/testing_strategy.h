@@ -24,6 +24,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
+#include <iostream>
 
 namespace mio
 {
@@ -47,16 +48,16 @@ public:
      */
     TestingCriteria() = default;
 
-    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<Location>& locations,
-                    const std::vector<InfectionState>& infection_states)
+    TestingCriteria(const std::bitset<(size_t)AgeGroup::Count>& ages, const std::vector<Location>& locations,
+                    const std::bitset<(size_t)InfectionState::Count>& infection_states)
         : m_ages(ages)
         , m_locations(locations)
         , m_infection_states(infection_states)
     {
     }
 
-    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<LocationType>& locations,
-                    const std::vector<InfectionState>& infection_states)
+    TestingCriteria(const std::bitset<(size_t)AgeGroup::Count>& ages, const std::vector<LocationType>& locations,
+                    const std::bitset<(size_t)InfectionState::Count>& infection_states)
         : m_ages(ages)
         , m_locations(locations)
         , m_infection_states(infection_states)
@@ -72,10 +73,6 @@ public:
         auto to_compare_infection_states = this->m_infection_states;
         auto to_compare_locations        = this->m_locations;
 
-        std::sort(to_compare_ages.begin(), to_compare_ages.end());
-        std::sort(other.m_ages.begin(), other.m_ages.end());
-        std::sort(to_compare_infection_states.begin(), to_compare_infection_states.end());
-        std::sort(other.m_infection_states.begin(), other.m_infection_states.end());
         std::sort(to_compare_locations.begin(), to_compare_locations.end());
         std::sort(other.m_locations.begin(), other.m_locations.end());
 
@@ -89,9 +86,7 @@ public:
      */
     void add_age_group(const AgeGroup age_group)
     {
-        if (std::find(m_ages.begin(), m_ages.end(), age_group) == m_ages.end()) {
-            m_ages.push_back(age_group);
-        }
+        m_ages.set((size_t)age_group, true);
     }
 
     /**
@@ -100,8 +95,7 @@ public:
      */
     void remove_age_group(const AgeGroup age_group)
     {
-        auto last = std::remove(m_ages.begin(), m_ages.end(), age_group);
-        m_ages.erase(last, m_ages.end());
+        m_ages.set((size_t)age_group, false);
     }
 
     /**
@@ -131,10 +125,7 @@ public:
      */
     void add_infection_state(const InfectionState infection_state)
     {
-        if (std::find(m_infection_states.begin(), m_infection_states.end(), infection_state) ==
-            m_infection_states.end()) {
-            m_infection_states.push_back(infection_state);
-        }
+        m_infection_states.set((size_t)infection_state, true);
     }
 
     /**
@@ -144,8 +135,7 @@ public:
      */
     void remove_infection_state(const InfectionState infection_state)
     {
-        auto last = std::remove(m_infection_states.begin(), m_infection_states.end(), infection_state);
-        m_infection_states.erase(last, m_infection_states.end());
+        m_infection_states.set((size_t)infection_state, false);
     }
 
     /**
@@ -166,10 +156,11 @@ private:
      */
     bool has_requested_age(const Person& p) const
     {
-        if (m_ages.empty()) {
-            return true; // no condition on the age
+        if (m_ages.none()) {
+            std::cout << "Here" << '\n';
+            return true; // no condition on the AgeGroup
         }
-        return std::find(m_ages.begin(), m_ages.end(), p.get_age()) != m_ages.end();
+        return m_ages[(size_t)p.get_age()];
     }
 
     /**
@@ -179,6 +170,7 @@ private:
     bool is_requested_location_type(const Location& l) const
     {
         if (m_locations.empty()) {
+            std::cout << "Here" << '\n';
             return true; // no condition on the location
         }
         return std::find(m_locations.begin(), m_locations.end(), l.get_type()) != m_locations.end();
@@ -191,17 +183,19 @@ private:
      */
     bool has_requested_infection_state(const Person& p, TimePoint t) const
     {
-        if (m_infection_states.empty()) {
-            return true; // no condition on infection state
+        if (m_infection_states.none()) {
+            std::cout << "Here" << '\n';
+            return true; // no condition on the InfectionState
         }
-        return std::find(m_infection_states.begin(), m_infection_states.end(), p.get_infection_state(t)) !=
-               m_infection_states.end();
+        return m_infection_states[(size_t)p.get_infection_state(t)];
     }
 
-    std::vector<AgeGroup> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
+    std::bitset<(size_t)AgeGroup::Count>
+        m_ages; ///< BitSet of #AgeGroup%s that are either allowed or required to be tested.
     std::vector<L> m_locations; /**< Set of #Location%s or #LocationState%s that are either allowed or required to be 
     tested.*/
-    std::vector<InfectionState> m_infection_states; /**< Set of #InfectionState%s that are either allowed or required to
+    std::bitset<(size_t)InfectionState::Count>
+        m_infection_states; /**< BitSet of #InfectionState%s that are either allowed or required to
     be tested.*/
 };
 
