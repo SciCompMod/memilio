@@ -401,6 +401,16 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         }
     }
 
+    std::cout << "riskFromInfectedSymptomatic_derivatives(k, j), time " << t_idx << ": "
+              << riskFromInfectedSymptomatic_derivatives(0, 0) << std::endl;
+    std::cout << "divN[k], time:" << t_idx << ": " << divN[0] << std::endl;
+    std::cout << "sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms "
+                 "+(Eigen::Index)InfectionState::Count * (size_t)k], time: "
+              << t_idx << ": "
+              << sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms]
+              << std::endl;
+    std::cout << "cont_freq_eff(i, k), time: " << t_idx << ": " << cont_freq_eff(0, 0) << std::endl;
+
     //Initialize the matrix F
     for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
 
