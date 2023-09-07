@@ -184,8 +184,6 @@ public:
 
     const TestingStrategy& get_testing_strategy() const;
 
-    void move_persons_to_start_location(const mio::abm::TimePoint& t0);
-
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.

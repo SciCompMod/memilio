@@ -176,7 +176,9 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
     std::map<uint32_t, mio::abm::LocationId> locations = {};
     std::map<uint32_t, mio::abm::Person&> persons      = {};
-    std::map<uint32_t, std::pair<uint32_t, uint32_t>> starting_locations;
+    std::map<uint32_t, uint32_t> person_ids            = {};
+    std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
+    std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
     // For the world we need: One Hospital, One ICU, One Home for each unique householdID, One Person for each person_id with respective age and home_id
 
@@ -190,49 +192,69 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
     // First we create the persons and their homes and also the locations
     int number_of_persons = 0;
-    int number_lines      = 0;
-    int number_trips      = 0;
 
-    while (std::getline(fin, line) && number_of_persons < max_number_persons) {
+    while (std::getline(fin, line)) {
         row.clear();
 
         // read columns in this row
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id          = row[index["puid"]];
-        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
-        uint32_t trip_start         = row[index["start_time"]];
-
-        auto it_person = starting_locations.find(person_id);
-        if (it_person == starting_locations.end()) {
-            starting_locations.insert({person_id, std::make_pair(target_location_id, trip_start)});
+        uint32_t person_id = row[index["puid"]];
+        auto it_person_id  = person_ids.find(person_id);
+        if (it_person_id == person_ids.end()) {
+            if (number_of_persons >= max_number_persons)
+                continue;
+            person_ids.insert({person_id, number_of_persons});
             number_of_persons++;
         }
-        else {
-            if (it_person->second.second <= trip_start && trip_start <= t0.hours()) {
-                it_person->second.first  = target_location_id;
-                it_person->second.second = trip_start;
+
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        int trip_start              = row[index["start_time"]];
+        if (trip_start < t0.hour_of_day()) {
+            auto it_person = locations_before.find(person_id);
+            if (it_person == locations_before.end()) {
+                locations_before.insert({person_id, std::make_pair(target_location_id, trip_start)});
+            }
+            else {
+                if (it_person->second.second <= trip_start) {
+                    it_person->second.first  = target_location_id;
+                    it_person->second.second = trip_start;
+                }
             }
         }
-        number_lines++;
+        else {
+            auto it_person = locations_after.find(person_id);
+            if (it_person == locations_after.end()) {
+                locations_after.insert({person_id, std::make_pair(target_location_id, trip_start)});
+            }
+            else {
+                if (it_person->second.second <= trip_start) {
+                    it_person->second.first  = target_location_id;
+                    it_person->second.second = trip_start;
+                }
+            }
+        }
     }
 
     fin.clear();
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
 
-    while (std::getline(fin, line) && number_trips < number_lines) {
+    while (std::getline(fin, line)) {
         row.clear();
 
         // read columns in this row
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
+        uint32_t person_id = row[index["puid"]];
+        if (person_ids.find(person_id) == person_ids.end())
+            continue;
+
         uint32_t home_id            = row[index["huid"]];
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
         uint32_t activity_end       = row[index["activity_end"]];
-
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
         if (it_home == locations.end()) {
@@ -252,22 +274,22 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
                 1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
         }
-        number_trips++;
     }
     fin.clear();
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
 
-    number_trips = 0;
-
-    while (std::getline(fin, line) && number_trips < number_lines) {
+    while (std::getline(fin, line)) {
         row.clear();
 
         // read columns in this row
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id          = row[index["puid"]];
+        uint32_t person_id = row[index["puid"]];
+        if (person_ids.find(person_id) == person_ids.end())
+            continue;
+
         uint32_t age                = row[index["age"]];
         uint32_t home_id            = row[index["huid"]];
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
@@ -281,16 +303,18 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         auto it_person = persons.find(person_id);
 
         if (it_person == persons.end()) {
-            auto starting_location_id = starting_locations.find(person_id)->second.first;
+            auto it_starting_location_id = locations_before.find(person_id);
+            if (it_starting_location_id == locations_before.end()) {
+                it_starting_location_id = locations_after.find(person_id);
+            }
+            auto starting_location_id = it_starting_location_id->second.first;
             auto starting_location    = locations.find(starting_location_id)->second;
             auto& person              = world.add_person(starting_location, determine_age_group(age));
             auto home                 = locations.find(home_id)->second;
-            person.set_assigned_location(starting_location);
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
             persons.insert({person_id, person});
-            number_of_persons++;
             it_person = persons.find(person_id);
         }
 
@@ -304,9 +328,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         world.get_trip_list().add_trip(mio::abm::Trip(it_person->second.get_person_id(),
                                                       mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
                                                       target_location, start_location));
-        number_trips++;
     }
-
     world.get_trip_list().use_weekday_trips_on_weekend();
 }
 
@@ -636,11 +658,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "../../data/mobility/bs.csv");
+    create_world_from_data(world, "../../data/mobility/bs.csv", t0);
     world.use_migration_rules(false);
-
-    // Move persons to starting locations
-    world.move_persons_to_start_location(t0);
 
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
