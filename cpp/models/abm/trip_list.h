@@ -43,8 +43,7 @@ struct Trip {
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
     LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t>
-        cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
 
     /**
@@ -88,11 +87,13 @@ public:
 
     /**
      * @brief Get the next Trip.
+     * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
     const Trip& get_next_trip(bool weekend) const;
 
     /**
      * @brief Get the time at which the next Trip will happen.
+     * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
     TimePoint get_next_trip_time(bool weekend) const;
 
@@ -126,6 +127,7 @@ public:
 
     /**
      * @brief Get the length of the TripList.
+     * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
     size_t num_trips(bool weekend = false) const
     {
