@@ -131,7 +131,7 @@ public:
      */
     size_t num_trips(bool weekend = false) const
     {
-        return weekend ? m_trips_weekday.size() : m_trips_weekend.size();
+        return weekend ? m_trips_weekend.size() : m_trips_weekday.size();
     }
 
     /**
