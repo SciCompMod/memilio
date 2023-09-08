@@ -622,6 +622,34 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     F = Eigen::MatrixXd::Zero(15 * num_groups, 15 * num_groups); //Initialize matrices F and V with zeroes
     V = Eigen::MatrixXd::Zero(15 * num_groups, 15 * num_groups);
 
+    //Initialize F
+    for (Eigen::Index l = 0; l < 3; l++) {
+        for (Eigen::Index i = 0; i < (Eigen::Index)num_groups; i++) {
+            double Susceptibles                   = 0;
+            double transmission_probability_reduc = 0;
+            if (l == 0) {
+                Susceptibles = sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                    {(mio::AgeGroup)i, InfectionState::SusceptibleNaive})];
+                transmission_probability_reduc = 1;
+            }
+            if (l == 1) {
+                Susceptibles = sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                    {(mio::AgeGroup)i, InfectionState::SusceptiblePartialImmunity})];
+                transmission_probability_reduc = params.template get<ReducExposedPartialImmunity>()[i];
+            }
+            if (l == 2) {
+                Susceptibles = sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                    {(mio::AgeGroup)i, InfectionState::SusceptibleImprovedImmunity})];
+                transmission_probability_reduc = params.template get<ReducExposedImprovedImmunity>()[i];
+            }
+            std::cout << Susceptibles;
+            std::cout << transmission_probability_reduc;
+
+            for (Eigen::Index j = 0; j < (Eigen::Index)num_groups; j++) {
+            }
+        }
+    }
+
     sim.get_model();
     return mio::success(t_idx);
 }
