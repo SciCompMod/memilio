@@ -400,21 +400,6 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                 season_val * contact_matrix.get_matrix_at(static_cast<double>(t_idx))(
                                  static_cast<Eigen::Index>((size_t)l), static_cast<Eigen::Index>((size_t)k));
         }
-
-        std::cout << "Index Susceptible k: " << k << ": "
-                  << sim.get_model().populations.get_flat_index({k, InfectionState::Susceptible});
-        std::cout << "Index Exposed k: " << k << ": "
-                  << sim.get_model().populations.get_flat_index({k, InfectionState::Exposed});
-        std::cout << "Index InfectedNoSymptoms k: " << k << ": "
-                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedNoSymptoms});
-        std::cout << "Index InfectedSymptoms k: " << k << ": "
-                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedSymptoms});
-        std::cout << "Index Severe k: " << k << ": "
-                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedSevere});
-        std::cout << "Index Critical k: " << k << ": "
-                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedCritical});
-        std::cout << "Index Recovered k: " << k << ": "
-                  << sim.get_model().populations.get_flat_index({k, InfectionState::Recovered});
     }
 
     //Initialize the matrix F
