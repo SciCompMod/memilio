@@ -384,5 +384,5 @@ TEST(TestLocation, getGeographicalLocation)
     mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
 
-    // ASSERT_EQ(location.get_geographical_location(), geographical_location);
+    ASSERT_EQ(location.get_geographical_location(), geographical_location);
 }
