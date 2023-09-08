@@ -24,13 +24,11 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/io/io.h"
 #include "memilio/math/interpolation.h"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/parameters.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
-#include <iomanip>
 
 namespace mio
 {

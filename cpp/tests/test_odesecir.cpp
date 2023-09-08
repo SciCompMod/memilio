@@ -31,11 +31,6 @@
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
-#include <fstream>
-#include <limits>
-#include <sstream>
-#include <string>
-
 TEST(TestOdeSecir, compareWithPreviousRun)
 {
     double t0   = 0;
