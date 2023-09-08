@@ -196,8 +196,8 @@ def extract_data(
 
                     k += 1
             else:
-                raise gd.ValueError(
-                    "Time point not found for region " + str(regions[i]) + ".")
+                raise gd.DataError(
+                    "Time point " + str(date) + " not found for region " + str(regions[i]) + ".")
 
         # Aggregated or matrix output.
         if output == 'sum':
@@ -209,6 +209,29 @@ def extract_data(
 
     else:
         raise gd.DataError("Data could not be read in.")
+
+
+def extract_time_steps(file, file_format='json'):
+    """ Reads data from a general json or specific hdf5 file as output by the 
+    MEmilio simulation framework and extracts the number of days used.
+
+    @param[in] file Path and filename of file to be read in, relative from current
+        directory.
+    @param[in] file_format File format; either json or h5.
+    @return Number of time steps.
+    """
+    input_file = os.path.join(os.getcwd(), str(file))
+    if file_format == 'json':
+        df = pd.read_json(input_file + '.' + file_format)
+        if 'Date' in df.columns:
+            time_steps = df['Date'].nunique()
+        else:
+            time_steps = 1
+    elif file_format == 'h5':
+        h5file = h5py.File(input_file + '.' + file_format, 'r')
+        regions = list(h5file.keys())
+        time_steps = len(h5file[regions[0]]['Time'])
+    return time_steps
 
 
 def scale_dataframe_relative(df, age_groups, df_population):
