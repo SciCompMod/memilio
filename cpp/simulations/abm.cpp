@@ -639,7 +639,7 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
             {{0, 0.5}, {30, 0.91}, {60, 0.92}, {90, 0.88}, {120, 0.84}, {150, 0.81}, {180, 0.88}, {450, 0.5}}, days);
     };
 
-    // Set up personal severe protection levels, based on:
+    // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
         mio::abm::ExposureType::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
@@ -715,7 +715,7 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.91}, {60, 0.92}, {90, 0.88}, {120, 0.84}, {150, 0.81}, {180, 0.88}, {450, 0.5}}, days);
     };
-    // Set up personal severe protection levels, based on:
+    // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
         mio::abm::ExposureType::NaturalInfection, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
@@ -791,7 +791,7 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.89}, {60, 0.84}, {90, 0.78}, {120, 0.68}, {150, 0.57}, {180, 0.39}, {450, 0.1}}, days);
     };
-    // Set up personal severe protection levels, based on:
+    // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
         mio::abm::ExposureType::NaturalInfection, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
@@ -867,7 +867,7 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.89}, {60, 0.84}, {90, 0.78}, {120, 0.68}, {150, 0.57}, {180, 0.39}, {450, 0.1}}, days);
     };
-    // Set up personal severe protection levels, based on:
+    // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
         mio::abm::ExposureType::NaturalInfection, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
