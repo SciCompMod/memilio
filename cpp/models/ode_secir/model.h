@@ -366,8 +366,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                           t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedSevere})] +
                       sim.get_result().get_value(
                           t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedCritical})] +
-                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Recovered +
-                                                        (Eigen::Index)InfectionState::Count * (size_t)k];
+                      sim.get_result().get_value(
+                          t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Recovered})];
         divN[(size_t)k] = 1 / temp;
 
         riskFromInfectedSymptomatic[(size_t)k] = smoother_cosine(
@@ -400,9 +400,22 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                 season_val * contact_matrix.get_matrix_at(static_cast<double>(t_idx))(
                                  static_cast<Eigen::Index>((size_t)l), static_cast<Eigen::Index>((size_t)k));
         }
-    }
 
-    std::cout << "divN[k], time:" << t_idx << ": " << divN[0] << std::endl;
+        std::cout << "Index Susceptible k: " << k << ": "
+                  << sim.get_model().populations.get_flat_index({k, InfectionState::Susceptible});
+        std::cout << "Index Exposed k: " << k << ": "
+                  << sim.get_model().populations.get_flat_index({k, InfectionState::Exposed});
+        std::cout << "Index InfectedNoSymptoms k: " << k << ": "
+                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedNoSymptoms});
+        std::cout << "Index InfectedSymptoms k: " << k << ": "
+                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedSymptoms});
+        std::cout << "Index Severe k: " << k << ": "
+                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedSevere});
+        std::cout << "Index Critical k: " << k << ": "
+                  << sim.get_model().populations.get_flat_index({k, InfectionState::InfectedCritical});
+        std::cout << "Index Recovered k: " << k << ": "
+                  << sim.get_model().populations.get_flat_index({k, InfectionState::Recovered});
+    }
 
     //Initialize the matrix F
     for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
@@ -472,9 +485,6 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
             }
         }
     }
-
-    std::cout << "Matrix A(0,0): time" << t_idx << ": " << F(0, num_groups) << std::endl;
-    std::cout << "Matrix C(0,0): time" << t_idx << ": " << V(0, 0) << std::endl;
 
     //Try to invert V
     Eigen::FullPivLU<Eigen::MatrixXd> lu(V); //Check invertibility via LU Decomposition
