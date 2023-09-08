@@ -30,7 +30,6 @@
 #include "ode_secir/parameters.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
-#include <iomanip>
 
 #include <fstream>
 #include <limits>
