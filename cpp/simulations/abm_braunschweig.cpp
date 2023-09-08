@@ -190,7 +190,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     world.get_individualized_location(icu).set_capacity(30, 1350);
 
-    // First we create the persons and their homes and also the locations
+    // First we determine the persons number and their starting locations
     int number_of_persons = 0;
 
     while (std::getline(fin, line)) {
@@ -209,6 +209,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             number_of_persons++;
         }
 
+        // The starting location of a person is the end location of the last trip he made, either on the same day or on
+        // the day before
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
         int trip_start              = row[index["start_time"]];
         if (trip_start < t0.hour_of_day()) {
@@ -241,6 +243,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
 
+    // Add all locations to the world
     while (std::getline(fin, line)) {
         row.clear();
 
@@ -279,6 +282,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
 
+    // Add the persons and trips
     while (std::getline(fin, line)) {
         row.clear();
 
@@ -303,14 +307,14 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         auto it_person = persons.find(person_id);
 
         if (it_person == persons.end()) {
-            auto it_starting_location_id = locations_before.find(person_id);
-            if (it_starting_location_id == locations_before.end()) {
-                it_starting_location_id = locations_after.find(person_id);
+            auto it_first_location_id = locations_before.find(person_id);
+            if (it_first_location_id == locations_before.end()) {
+                it_first_location_id = locations_after.find(person_id);
             }
-            auto starting_location_id = it_starting_location_id->second.first;
-            auto starting_location    = locations.find(starting_location_id)->second;
-            auto& person              = world.add_person(starting_location, determine_age_group(age));
-            auto home                 = locations.find(home_id)->second;
+            auto first_location_id = it_first_location_id->second.first;
+            auto first_location    = locations.find(first_location_id)->second;
+            auto& person           = world.add_person(first_location, determine_age_group(age));
+            auto home              = locations.find(home_id)->second;
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
