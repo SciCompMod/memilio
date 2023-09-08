@@ -358,7 +358,7 @@ public:
 
     /**
      * @brief Add a new #Vaccination
-     * @param[in] v ExposureType (i.e vaccine type) that the person has.  
+     * @param[in] v ExposureType (i. e. vaccine) the person takes.  
      * @param[in] t TimePoint of the Vaccination.
     */
     void add_new_vaccination(ExposureType v, TimePoint t)

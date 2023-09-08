@@ -51,32 +51,29 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
  * @param[out] unnamed Interpolation result.
  */
 template <typename X, typename Y>
-Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>> vector, const X& x_eval)
+Y linear_interpolation_of_data_set(std::vector<std::pair<X, Y>> vector, const X& x_eval)
 {
-    // If the vector is empty or has only 1 node, return 0
+    // If the vector is empty or has only 1 node, throw an error
     if (vector.empty() || vector.size() == 1) {
-        log_error("The vector provided in linear_interpolation_of_data_set() must have larger than 2 nodes");
+        log_error("The vector provided in linear_interpolation_of_data_set() must have more than 1 node.");
         return 0.0;
     }
 
-    std::vector<std::pair<X, Y>> copy_vector(vector);
-    sort(copy_vector.begin(), copy_vector.end());
-
     // Find the corresponding upper position of the node in the data set
-    size_t upper_pos = std::upper_bound(copy_vector.begin(), copy_vector.end(), x_eval,
+    size_t upper_pos = std::upper_bound(vector.begin(), vector.end(), x_eval,
                                         [](double value, const std::pair<X, Y>& node) {
                                             return value <= node.first;
                                         }) -
-                       copy_vector.begin();
+                       vector.begin();
 
     if (upper_pos == 0) {
-        return copy_vector[upper_pos].second;
+        return vector[upper_pos].second;
     }
 
-    // If the x_eval are between two identifiable nodes in the dataset.
-    if (upper_pos < copy_vector.size()) {
-        return linear_interpolation(x_eval, copy_vector[upper_pos - 1].first, copy_vector[upper_pos].first,
-                                    copy_vector[upper_pos - 1].second, copy_vector[upper_pos].second);
+    // If the x_eval is between two identifiable nodes in the dataset.
+    if (upper_pos < vector.size()) {
+        return linear_interpolation(x_eval, vector[upper_pos - 1].first, vector[upper_pos].first,
+                                    vector[upper_pos - 1].second, vector[upper_pos].second);
     }
     return 0;
 }
