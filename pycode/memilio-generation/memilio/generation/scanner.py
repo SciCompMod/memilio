@@ -77,7 +77,7 @@ class Scanner:
                     file_args.append(argument)
         file_args = file_args[1:-4]
         clang_cmd = [
-            "clang", self.config.source_file,
+            "clang-14", self.config.source_file,
             "-std=c++17", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 

@@ -50,7 +50,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
                   out_folder=dd.defaultDict['out_folder'],
                   no_raw=dd.defaultDict['no_raw'],
-                  start_date=dd.defaultDict['start_date'],
+                  start_date=date(2020, 4, 24),
                   end_date=dd.defaultDict['end_date'],
                   impute_dates=dd.defaultDict['impute_dates'],
                   moving_average=dd.defaultDict['moving_average'],
@@ -207,8 +207,10 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
             raise gd.DataError("Error: Data categories have changed.")
     # check if size of dataframe is not unusal
     # data colletion starts at 24.04.2020
+    # TODO: Number of reporting counties get less with time.
+    # Maybe we should look for a new method to sanitize the size of the DataFrame.
     num_dates = (date.today() - date(2020, 4, 24)).days
-    min_num_data = 390*num_dates  # not all 400 counties report every day
+    min_num_data = 380*num_dates  # not all 400 counties report every day
     max_num_data = 400*num_dates
     if (len(df) < min_num_data) or (len(df) > max_num_data):
         raise gd.DataError("Error: unexpected length of dataframe.")

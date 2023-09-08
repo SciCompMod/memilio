@@ -34,6 +34,8 @@ namespace abm
 
 /**
  * @brief Models the ViralLoad for an Infection, modelled on a log_10 scale.
+ * Based on https://www.science.org/doi/full/10.1126/science.abi5273
+ * Examplary ViralLoad courses can be seen for example in Fig. 4 B.
  */
 struct ViralLoad {
     TimePoint start_date; ///< Start date of the ViralLoad concentration in the Person.
@@ -68,6 +70,10 @@ public:
      * @brief Get infectivity at a given time.
      * Computed depending on current ViralLoad and individual invlogit function of each Person
      * corresponding to https://www.science.org/doi/full/10.1126/science.abi5273
+     * The mapping corresponds to Fig. 2 C.
+     * Formula of invlogit function can be found here:
+     * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+     * in ExtendedMethods.html, Section 3.1.2.1.
      * @param[in] t TimePoint of the querry.
      * @return Infectivity at given TimePoint.
      */

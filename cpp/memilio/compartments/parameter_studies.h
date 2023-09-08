@@ -128,7 +128,7 @@ public:
      * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraph and an index of type size_t.
      */
     template <class SampleGraphFunction, class HandleSimulationResultFunction>
-    std::vector<std::result_of_t<HandleSimulationResultFunction(SimulationGraph, size_t)>>
+    std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>>
     run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
     {
         int num_procs, rank;
@@ -144,7 +144,7 @@ public:
         auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        std::vector<std::result_of_t<HandleSimulationResultFunction(SimulationGraph, size_t)>> ensemble_result;
+        std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {

@@ -412,14 +412,21 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         d = {'Date': [d1, d2], 'col2': ["d1", "d2"]}
         df = pd.DataFrame(data=d)
 
-        gd.write_dataframe(df, self.path, "test_json", 'json')
+        gd.write_dataframe(df, self.path, "test_csv", 'csv')
 
-        file = "test_json.json"
+        file0 = "test_csv.csv"
 
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(os.listdir(self.path), [file])
+        self.assertEqual(os.listdir(self.path), [file0])
 
-        file_with_path = os.path.join(self.path, file)
+        gd.write_dataframe(df, self.path, "test_json", 'json')
+
+        file1 = "test_json.json"
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path), [file0, file1])
+
+        file_with_path = os.path.join(self.path, file1)
         f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json)
@@ -436,8 +443,9 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         file2 = "test_json_timeasstring.json"
 
-        self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path).sort(), [file, file2].sort())
+        self.assertEqual(len(os.listdir(self.path)), 3)
+        self.assertEqual(os.listdir(self.path).sort(),
+                         [file0, file1, file2].sort())
 
         file_with_path = os.path.join(self.path, file2)
         f = open(file_with_path)
@@ -466,7 +474,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             gd.write_dataframe(df, self.path, "test_json", 'wrong')
 
         error_message = "Error: The file format: " + 'wrong' + \
-                        " does not exist. Use json, json_timeasstring, hdf5 or txt."
+                        " does not exist. Use json, json_timeasstring, hdf5, csv or txt."
         self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDIVIData.get_divi_data')
@@ -508,13 +516,15 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
 
+        arg_dict_popul = {**arg_dict_all, "username": None, "password": None}
+
         getVaccinationData.main()
         mock_vaccination.assert_called()
         mock_vaccination.assert_called_with(**arg_dict_vaccination)
 
         getPopulationData.main()
         mock_popul.assert_called()
-        mock_popul.assert_called_with(**arg_dict_all)
+        mock_popul.assert_called_with(**arg_dict_popul)
 
         getCaseData.main()
         mock_cases.assert_called()
