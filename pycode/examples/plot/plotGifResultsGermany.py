@@ -1,6 +1,7 @@
 import datetime as dt
 import os.path
 import imageio
+import tempfile
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,9 @@ import pandas as pd
 import memilio.epidata.getPopulationData as gpd
 import memilio.plot.plotMap as pm
 from memilio.epidata import geoModificationGermany as geoger
+import memilio.epidata.progress_indicator as progind
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def create_plot_map(day, age_groups, relative, filename, file_format, files_input, output_path):
@@ -64,7 +68,7 @@ def create_plot_map(day, age_groups, relative, filename, file_format, files_inpu
     pm.plot_map(
         dfs_all_sorted, scale_colors=np.array([min_val, max_val]),
         legend=['', ''],
-        title='Synthetic data (relative) day ' + str(day), plot_colorbar=True,
+        title='Synthetic data (relative) day ' + f'{day:2d}', plot_colorbar=True,
         output_path=output_path,
         fig_name=filename, dpi=300,
         outercolor=[205 / 255, 238 / 255, 251 / 255])
@@ -90,19 +94,23 @@ if __name__ == '__main__':
             filter_age = ['Group' + str(key) for key in age_groups.keys()]
 
     relative = True
-    time_steps = pm.extract_time_steps(
+    num_days = pm.extract_time_steps(
         files_input[list(files_input.keys())[0]], file_format=file_format)
-    filename = "file"
 
     # create gif
     frames = []
+    filename = 'tempplot'
     output_path = "plot_gif"
 
-    for day in range(0, time_steps):
-        create_plot_map(day, age_groups, relative, filename,
-                        file_format, files_input, output_path)
-        image = imageio.v2.imread(os.path.join(output_path, filename + ".png"))
-        frames.append(image)
+    with progind.Percentage() as indicator:
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            for day in range(0, num_days):
+                create_plot_map(day, age_groups, relative, filename,
+                                file_format, files_input, tmpdirname)
+                image = imageio.v2.imread(
+                    os.path.join(tmpdirname, filename + ".png"))
+                frames.append(image)
+                indicator.set_progress((day+1)/num_days)
 
     imageio.mimsave(os.path.join(output_path, 'sim.gif'),  # output gif
                     frames,          # array of input frames
