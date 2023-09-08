@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen, Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -376,4 +376,13 @@ TEST(TestLocation, setNPIActive)
 
     location.set_npi_active(true);
     ASSERT_TRUE(location.get_npi_active());
+}
+
+TEST(TestLocation, getGeographicalLocation)
+{
+    auto location                                        = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
+    location.set_geographical_location(geographical_location);
+
+    // ASSERT_EQ(location.get_geographical_location(), geographical_location);
 }

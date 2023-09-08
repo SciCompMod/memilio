@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen, Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/time.h"
 #include "abm_helpers.h"
 
 TEST(TestWorld, init)
@@ -297,11 +296,14 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(home.get_number_persons(), 1);
         EXPECT_EQ(hospital.get_number_persons(), 1);
 
-        t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
+        t            = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
         bool weekend = true;
-        mio::abm::Trip tripweekend1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9), event_id, work_id);
-        mio::abm::Trip tripweekend2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9), home_id, event_id);
-        mio::abm::Trip tripweekend3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9), work_id, event_id);
+        mio::abm::Trip tripweekend1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9),
+                                    event_id, work_id);
+        mio::abm::Trip tripweekend2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9),
+                                    home_id, event_id);
+        mio::abm::Trip tripweekend3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9),
+                                    work_id, event_id);
         data.add_trip(tripweekend1, weekend);
         data.add_trip(tripweekend2, weekend);
         data.add_trip(tripweekend3, weekend);
