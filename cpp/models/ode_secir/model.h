@@ -333,11 +333,12 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     auto icu_occupancy           = 0.0;
     for (auto i = AgeGroup(0); i < (mio::AgeGroup)num_groups; ++i) {
         auto rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
-        test_and_trace_required += (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
-                                   sim.get_result().get_value(t_idx)[(Eigen::Index)InfectionState::InfectedNoSymptoms +
-                                                                     (Eigen::Index)InfectionState::Count * (size_t)i];
-        icu_occupancy += sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical +
-                                                           (Eigen::Index)InfectionState::Count * (size_t)i];
+        test_and_trace_required +=
+            (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+            sim.get_result().get_value(
+                t_idx)[sim.get_model().populations.get_flat_index({i, InfectionState::InfectedNoSymptoms})];
+        icu_occupancy += sim.get_result().get_value(
+            t_idx)[sim.get_model().populations.get_flat_index({i, InfectionState::InfectedCritical})];
     }
 
     double season_val =
@@ -353,18 +354,18 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     Eigen::VectorXd rateINS(num_groups);
 
     for (mio::AgeGroup k = 0; k < (mio::AgeGroup)num_groups; k++) {
-        double temp = sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
-                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
-                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Exposed +
-                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
-                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms +
-                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
-                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms +
-                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
-                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere +
-                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
-                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical +
-                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
+        double temp = sim.get_result().get_value(
+                          t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Susceptible})] +
+                      sim.get_result().get_value(
+                          t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Exposed})] +
+                      sim.get_result().get_value(
+                          t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedNoSymptoms})] +
+                      sim.get_result().get_value(
+                          t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedSymptoms})] +
+                      sim.get_result().get_value(
+                          t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedSevere})] +
+                      sim.get_result().get_value(
+                          t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedCritical})] +
                       sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Recovered +
                                                         (Eigen::Index)InfectionState::Count * (size_t)k];
         divN[(size_t)k] = 1 / temp;
@@ -401,15 +402,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         }
     }
 
-    std::cout << "riskFromInfectedSymptomatic_derivatives(k, j), time " << t_idx << ": "
-              << riskFromInfectedSymptomatic_derivatives(0, 0) << std::endl;
     std::cout << "divN[k], time:" << t_idx << ": " << divN[0] << std::endl;
-    std::cout << "sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms "
-                 "+(Eigen::Index)InfectionState::Count * (size_t)k], time: "
-              << t_idx << ": "
-              << sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms]
-              << std::endl;
-    std::cout << "cont_freq_eff(i, k), time: " << t_idx << ": " << cont_freq_eff(0, 0) << std::endl;
 
     //Initialize the matrix F
     for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
@@ -419,14 +412,14 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
             double temp = 0;
             for (Eigen::Index k = 0; k < (Eigen::Index)num_groups; k++) {
                 temp += cont_freq_eff(i, k) *
-                        sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms +
-                                                          (Eigen::Index)InfectionState::Count * (size_t)k] *
+                        sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                            {(mio::AgeGroup)k, InfectionState::InfectedSymptoms})] *
                         riskFromInfectedSymptomatic_derivatives(k, j) * divN[k];
             }
 
             F(i, j + num_groups) =
-                sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
-                                                  (Eigen::Index)InfectionState::Count * (size_t)i] *
+                sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                    {(mio::AgeGroup)i, InfectionState::Susceptible})] *
                 params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] *
                 (cont_freq_eff(i, j) * params.template get<RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)j] *
                      divN[(size_t)j] +
@@ -434,17 +427,12 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         }
 
         for (size_t j = 0; j < num_groups; j++) {
-            F(i, j + 2 * num_groups) =
-                sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
-                                                  (Eigen::Index)InfectionState::Count * (size_t)i] *
-                params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] * cont_freq_eff(i, j) *
-                riskFromInfectedSymptomatic[(size_t)j] * divN[(size_t)j];
+            F(i, j + 2 * num_groups) = sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                                           {(mio::AgeGroup)i, InfectionState::Susceptible})] *
+                                       params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] *
+                                       cont_freq_eff(i, j) * riskFromInfectedSymptomatic[(size_t)j] * divN[(size_t)j];
         }
     }
-
-    std::cout << "Matrix A(0,0): time" << t_idx << ": " << F(0, num_groups) << std::endl;
-
-    std::cout << "Matrix C(0,0): time" << t_idx << ": " << V(0, 0) << std::endl;
 
     //Initialize the matrix V
     for (Eigen::Index i = 0; i < (Eigen::Index)num_groups; i++) {
@@ -474,8 +462,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
               icu_occupancy > (double)(params.template get<ICUCapacity>()))) {
             for (size_t j = 0; j < num_groups; j++) {
                 V(i + 4 * num_groups, j + 4 * num_groups) -=
-                    sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere +
-                                                      (Eigen::Index)InfectionState::Count * (size_t)i] /
+                    sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                        {(mio::AgeGroup)i, InfectionState::InfectedSevere})] /
                     params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i] * 0.5 *
                     params.template get<CriticalPerSevere>()[(mio::AgeGroup)i] * 3.141592653589793 /
                     (0.1 * params.template get<ICUCapacity>()) *
@@ -484,6 +472,9 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
             }
         }
     }
+
+    std::cout << "Matrix A(0,0): time" << t_idx << ": " << F(0, num_groups) << std::endl;
+    std::cout << "Matrix C(0,0): time" << t_idx << ": " << V(0, 0) << std::endl;
 
     //Try to invert V
     Eigen::FullPivLU<Eigen::MatrixXd> lu(V); //Check invertibility via LU Decomposition
