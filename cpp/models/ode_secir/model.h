@@ -479,9 +479,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     //Try to invert V
     Eigen::FullPivLU<Eigen::MatrixXd> lu(V); //Check invertibility via LU Decomposition
     if (!lu.isInvertible()) {
-        return mio::failure(
-            mio::StatusCode::UnknownError,
-            "Matrix V is not invertible"); //Maybe create status code for MathError ? Or maybe in this exotic case, use the simpler model, where we have guaranteed invertibility
+        return mio::failure(mio::StatusCode::UnknownError, "Matrix V is not invertible");
     }
     V = V.inverse();
 
