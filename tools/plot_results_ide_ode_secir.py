@@ -46,7 +46,8 @@ def compare_results(files, legendplot, save=True):
     """
 
     fig, axs = plt.subplots(4, 2, sharex='all', num='Compare files')
-
+    # helmholtzdarkblue, helmholtzclaim
+    colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
     # add results to plot
     for file in range(len(files)):
         # load data
@@ -74,7 +75,7 @@ def compare_results(files, legendplot, save=True):
         # plot data
         for i in range(8):
             axs[int(i/2), i % 2].plot(dates,
-                                      total[:, i], label=legendplot[file])
+                                      total[:, i], label=legendplot[file], color=colors[file])
 
         h5file.close()
 
@@ -86,7 +87,7 @@ def compare_results(files, legendplot, save=True):
         axs[int(i/2), i % 2].grid(True, linestyle='--')
         axs[int(i/2), i % 2].legend(fontsize=8)
 
-    fig.supxlabel('Time')
+    fig.supxlabel('           Time')
     fig.supylabel('Number of persons')
     plt.tight_layout(pad=0, w_pad=0.5, h_pad=0)
 
@@ -94,7 +95,7 @@ def compare_results(files, legendplot, save=True):
     if save:
         if not os.path.isdir('Plots'):
             os.makedirs('Plots')
-        fig.savefig('Plots/ide_ode_compare.png',
+        fig.savefig('Plots/ide_ode_compare_dt=1e-3_setting2.png',
                     bbox_inches='tight', dpi=500)
     plt.show()
 
@@ -166,10 +167,10 @@ if __name__ == '__main__':
         data_dir, "result_lct_subcompartments"), save=True)"""
 
     # compare ide and ode model
-    compare_results([os.path.join(data_dir, "result_ode"), os.path.join(data_dir, "result_ide")],
+    compare_results([os.path.join(data_dir, "result_ode_dt=1e-3_setting2"), os.path.join(data_dir, "result_ide_dt=1e-3_setting2")],
                     legendplot=list(["ODE", "IDE"]), save=True)
-    """plot_new_infections([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
-                        legendplot=list(["LCT", "ODE"]), save=True)"""
+    # """plot_new_infections([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
+    #                     legendplot=list(["LCT", "ODE"]), save=True)"""
     # plot_new_infections([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_10")],
     #                     legendplot=list(["LCT1", "LCT10"]), save=True)
 

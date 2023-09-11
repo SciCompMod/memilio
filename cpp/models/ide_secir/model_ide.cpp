@@ -65,31 +65,32 @@ void Model::initialize_solver(ScalarType dt)
     std::cout << "Force of infection at -dt: " << m_forceofinfection << "\n";
 
     if (m_forceofinfection > 0) {
-        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
-        //     m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
-        //     (dt * m_forceofinfection);
-        // std::cout << "Flow from S to E at time 0: "
-        //           << m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] << "\n";
-        //calculate other compartment sizes for t=0
-        std::cout << "Setting compartments at time 0. \n";
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)]        = m_SECIHUR0[0];
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)]            = m_SECIHUR0[1];
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedNoSymptoms)] = m_SECIHUR0[2];
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSymptoms)]   = m_SECIHUR0[3];
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSevere)]     = m_SECIHUR0[4];
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)]   = m_SECIHUR0[5];
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)]          = m_SECIHUR0[6];
-        // other_compartments_current_timestep(dt);
+        std::cout << "Computing compartments at time 0. \n";
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
+            m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
+            (dt * m_forceofinfection);
 
-        // //R; need an initial value for R, therefore do not calculate via compute_recovered()
-        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] =
-        //     m_N - m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] -
-        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)] -
-        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedNoSymptoms)] -
-        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSymptoms)] -
-        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSevere)] -
-        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)] -
-        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
+        //calculate other compartment sizes for t=0
+        other_compartments_current_timestep(dt);
+
+        //R; need an initial value for R, therefore do not calculate via compute_recovered()
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] =
+            m_N - m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] -
+            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)] -
+            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedNoSymptoms)] -
+            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSymptoms)] -
+            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSevere)] -
+            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)] -
+            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
+
+        // Set compartments directly from results of ODE.
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)]        = m_SECIHUR0[0];
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)]            = m_SECIHUR0[1];
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedNoSymptoms)] = m_SECIHUR0[2];
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSymptoms)]   = m_SECIHUR0[3];
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSevere)]     = m_SECIHUR0[4];
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)]   = m_SECIHUR0[5];
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)]          = m_SECIHUR0[6];
     }
     else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] > 1e-12) {
         //take initialized value for Susceptibles if value can't be calculated via the standard formula

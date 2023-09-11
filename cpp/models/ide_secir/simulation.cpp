@@ -41,6 +41,8 @@ void Simulation::advance(ScalarType tmax)
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
 
+        std::cout << "Time: " << m_model->m_transitions.get_last_time() << "\n";
+
         // compute_S:
         m_model->compute_susceptibles(m_dt);
 

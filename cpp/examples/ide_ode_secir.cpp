@@ -51,14 +51,14 @@ int main()
 
     // Set up.
     ScalarType t0   = 0;
-    ScalarType tmax = 140.00;
-    ScalarType dt   = 0.01;
+    ScalarType tmax = 70.00;
+    ScalarType dt   = 1e-4;
 
-    ScalarType cont_freq = 0.9;
+    ScalarType cont_freq = 1.0;
 
     // ODE simulation
 
-    ScalarType nb_total_t0 = 10000, nb_exp_t0 = 20, nb_inf_t0 = 20, nb_car_t0 = 20, nb_hosp_t0 = 15, nb_icu_t0 = 5,
+    ScalarType nb_total_t0 = 10000, nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1,
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     mio::osecir::Model model_ode(1);
@@ -72,12 +72,12 @@ int main()
     model_ode.parameters.get<mio::osecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Parameters needed to determine transition rates
-    model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 5.4;
-    model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 4.0;
+    model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 2.6; //5.2
+    model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 2.0; //4.0
 
-    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = 2.;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]   = 2.;
-    model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 2.;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = 0.3;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]   = 0.3;
+    model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 0.3;
 
     // Set initial values for compartments
     model_ode.populations.set_total(nb_total_t0);
@@ -100,9 +100,9 @@ int main()
     model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.5;
 
     // Further model parameters
-    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 0.5;
-    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.;
-    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.;
+    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.0;
+    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.0;
+    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.0;
     // Choose TestAndTraceCapacity very large so that riskFromInfectedSymptomatic = RiskOfInfectionFromSymptomatic
     model_ode.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<ScalarType>::max();
     // Choose ICUCapacity very large so that CriticalPerSevereAdjusted=CriticalPerSevere and deathsPerSevereAdjusted = 0
@@ -153,7 +153,7 @@ int main()
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType N           = nb_total_t0;
-    ScalarType t0_ide      = 70.0;
+    ScalarType t0_ide      = 35.0;
     ScalarType Dead_before = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 2]
                                          [(int)mio::osecir::InfectionState::Dead];
     std::vector<ScalarType> SECIHUR0(7, 0);
@@ -210,7 +210,7 @@ int main()
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     // SusceptibleToExposed
     // TransitionDistribution from S to E is never used, use a large parameter so that maximum support if this distribution is small
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(100);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(1000);
     // ExposedToInfectedNoSymptoms
     // see definition of rate_E in model.h of ODE; set parameter to rate_E
     ScalarType rate_E = 1 / (2 * model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] -
@@ -273,7 +273,7 @@ int main()
     // ScalarType t0_ide = 6 * model_ide.get_global_support_max(dt);
     std::cout << "t0_ide: " << t0_ide << "\n";
 
-    // Compute initial flows from results of ODE simulation
+    // Compute initial flows from results of ODE simulation.
     model_ide.compute_initial_flows_from_compartments2(secihurd_ode, t0_ide, dt);
 
     model_ide.check_constraints(dt);
@@ -288,8 +288,24 @@ int main()
     }
     mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
 
+    std::cout << "Compartments at last time step of ODE:\n";
+    std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
+    for (Eigen::Index j = 0; j < secihurd_ode.get_num_elements(); ++j) {
+        std::cout << "  |  " << std::fixed << std::setprecision(8) << secihurd_ode.get_last_value()[j];
+    }
+    std::cout << "\n" << std::endl;
+
+    std::cout << "Compartments at last time step of IDE:\n";
+    std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
+    for (Eigen::Index j = 0; j < secihurd_ide.get_num_elements(); ++j) {
+        std::cout << "  |  " << std::fixed << std::setprecision(8) << secihurd_ide.get_last_value()[j];
+    }
+    std::cout << "\n" << std::endl;
+
     if (save_result) {
-        auto save_result_status_ode = mio::save_result({secihurd_ode}, {0}, 1, "../../examples/result_ode.h5");
-        auto save_result_status_ide = mio::save_result({secihurd_ide}, {0}, 1, "../../examples/result_ide.h5");
+        auto save_result_status_ode =
+            mio::save_result({secihurd_ode}, {0}, 1, "../../examples/result_ode_dt=1e-4_setting2.h5");
+        auto save_result_status_ide =
+            mio::save_result({secihurd_ide}, {0}, 1, "../../examples/result_ide_dt=1e-4_setting2.h5");
     }
 }
