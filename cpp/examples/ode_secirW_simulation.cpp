@@ -580,7 +580,7 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
     }
 
     // Edges
-    ScalarType theshold_edges   = 4e-3; //4e-5
+    ScalarType theshold_edges   = 4e-5;
     auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                    mio::osecirvvs::InfectionState::ExposedNaive,
                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,

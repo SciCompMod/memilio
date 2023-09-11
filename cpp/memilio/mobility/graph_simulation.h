@@ -26,6 +26,7 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -114,6 +115,81 @@ public:
 
             size_t indx_schedule = 0;
             while (t_begin + 1 > m_t + 1e-10) {
+                size_t indx_edge = 0;
+                for (auto& e : m_graph.edges()) {
+                    auto current_node_indx = schedule_edges[indx_edge][indx_schedule];
+                    bool in_mobility_node  = std::binary_search(mb_int_schedule[current_node_indx].begin(),
+                                                               mb_int_schedule[current_node_indx].end(), indx_schedule);
+                    if (!in_mobility_node &&
+                        !std::binary_search(ln_int_schedule[current_node_indx].begin(),
+                                            ln_int_schedule[current_node_indx].end(), indx_schedule)) {
+                        indx_edge++;
+                        continue;
+                    }
+                    size_t first_mobility = std::distance(mobility_schedule_edges[indx_edge].begin(),
+                                                          std::find(mobility_schedule_edges[indx_edge].begin(),
+                                                                    mobility_schedule_edges[indx_edge].end(), true));
+
+                    if (first_mobility <= indx_schedule) {
+
+                        auto& integrator_schedule_row = ln_int_schedule[current_node_indx];
+                        if (in_mobility_node)
+                            integrator_schedule_row = mb_int_schedule[current_node_indx];
+
+                        // determine when the last update of the mobility was done
+                        const size_t indx_current =
+                            std::distance(integrator_schedule_row.begin(),
+                                          std::lower_bound(integrator_schedule_row.begin(),
+                                                           integrator_schedule_row.end(), indx_schedule));
+
+                        auto next_dt = (indx_current == 0)
+                                           ? 0.01
+                                           : round_second_decimal((static_cast<double>(indx_schedule) -
+                                                                   integrator_schedule_row[indx_current - 1]) /
+                                                                      100 +
+                                                                  epsilon);
+                        if (indx_schedule == 0 && first_mobility == 0) {
+                            mio::log_error("undefined behavior");
+                            // m_edge_func(m_t, next_dt, e.property, node_from, node_to, 0);
+                        }
+                        else if ((schedule_edges[indx_edge][indx_schedule] !=
+                                  schedule_edges[indx_edge][indx_schedule - 1]) ||
+                                 (mobility_schedule_edges[indx_edge][indx_schedule] !=
+                                  mobility_schedule_edges[indx_edge][indx_schedule - 1])) {
+
+                            auto& node_from =
+                                mobility_schedule_edges[indx_edge][indx_schedule - 1]
+                                    ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule - 1]].node_pt
+                                    : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule - 1]].property;
+
+                            auto& node_to = mobility_schedule_edges[indx_edge][indx_schedule]
+                                                ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].node_pt
+                                                : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property;
+
+                            if (indx_schedule == first_mobility)
+                                m_edge_func(m_t, next_dt, e.property, node_from, node_to, 0);
+                            else if (indx_schedule > first_mobility &&
+                                     indx_schedule < mobility_schedule_edges[indx_edge].size() - 1)
+                                m_edge_func(m_t, next_dt, e.property, node_from, node_to, 1);
+                            else
+                                m_edge_func(m_t, next_dt, e.property, node_from,
+                                            m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property, 2);
+                        }
+                        else {
+                            auto& node_from =
+                                mobility_schedule_edges[indx_edge][indx_schedule - 1]
+                                    ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule - 1]].node_pt
+                                    : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule - 1]].property;
+
+                            auto& node_to = mobility_schedule_edges[indx_edge][indx_schedule]
+                                                ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].node_pt
+                                                : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property;
+                            m_edge_func(m_t, next_dt, e.property, node_from, node_to, 3);
+                        }
+                    }
+                    indx_edge++;
+                }
+
                 size_t indx_node = 0;
                 for (auto& n : m_graph.nodes()) {
                     if (std::binary_search(ln_int_schedule[indx_node].begin(), ln_int_schedule[indx_node].end(),
@@ -153,77 +229,6 @@ public:
                     indx_node++;
                 }
 
-                size_t indx_edge = 0;
-                for (auto& e : m_graph.edges()) {
-                    auto current_node_indx = schedule_edges[indx_edge][indx_schedule];
-                    bool in_mobility_node  = std::binary_search(mb_int_schedule[current_node_indx].begin(),
-                                                               mb_int_schedule[current_node_indx].end(), indx_schedule);
-                    if (!in_mobility_node &&
-                        !std::binary_search(ln_int_schedule[current_node_indx].begin(),
-                                            ln_int_schedule[current_node_indx].end(), indx_schedule)) {
-                        indx_edge++;
-                        continue;
-                    }
-                    size_t first_mobility = std::distance(mobility_schedule_edges[indx_edge].begin(),
-                                                          std::find(mobility_schedule_edges[indx_edge].begin(),
-                                                                    mobility_schedule_edges[indx_edge].end(), true));
-
-                    if (first_mobility <= indx_schedule) {
-
-                        auto& integrator_schedule_row = ln_int_schedule[current_node_indx];
-                        if (in_mobility_node)
-                            integrator_schedule_row = mb_int_schedule[current_node_indx];
-
-                        // determine when the last update of the mobility was done
-                        const size_t indx_current =
-                            std::distance(integrator_schedule_row.begin(),
-                                          std::lower_bound(integrator_schedule_row.begin(),
-                                                           integrator_schedule_row.end(), indx_schedule));
-
-                        auto next_dt = (indx_current == 0)
-                                           ? 0.01
-                                           : round_second_decimal((static_cast<double>(indx_schedule) -
-                                                                   integrator_schedule_row[indx_current - 1]) /
-                                                                      100 +
-                                                                  epsilon);
-
-                        if ((schedule_edges[indx_edge][indx_schedule] !=
-                             schedule_edges[indx_edge][indx_schedule + 1]) ||
-                            (mobility_schedule_edges[indx_edge][indx_schedule] !=
-                             mobility_schedule_edges[indx_edge][indx_schedule + 1])) {
-
-                            auto& node_from = mobility_schedule_edges[indx_edge][indx_schedule]
-                                                  ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].node_pt
-                                                  : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property;
-
-                            auto& node_to =
-                                mobility_schedule_edges[indx_edge][indx_schedule + 1]
-                                    ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].node_pt
-                                    : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].property;
-
-                            if (indx_schedule == first_mobility)
-                                m_edge_func(m_t, next_dt, e.property, node_from, node_to, 0);
-                            else if (indx_schedule > first_mobility &&
-                                     indx_schedule < mobility_schedule_edges[indx_edge].size() - 1)
-                                m_edge_func(m_t, next_dt, e.property, node_from, node_to, 1);
-                            else
-                                m_edge_func(m_t, next_dt, e.property, node_from,
-                                            m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property, 2);
-                        }
-                        else {
-                            auto& node_from = mobility_schedule_edges[indx_edge][indx_schedule]
-                                                  ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].node_pt
-                                                  : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property;
-
-                            auto& node_to =
-                                mobility_schedule_edges[indx_edge][indx_schedule + 1]
-                                    ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].node_pt
-                                    : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].property;
-                            m_edge_func(m_t, next_dt, e.property, node_from, node_to, 3);
-                        }
-                    }
-                    indx_edge++;
-                }
                 indx_schedule++;
                 m_t += min_dt;
             }
