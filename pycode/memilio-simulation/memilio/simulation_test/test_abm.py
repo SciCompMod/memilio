@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
 #
-# Authors: Daniel Abele
+# Authors: Daniel Abele, Khoa Nguyen
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -102,10 +102,10 @@ class TestAbm(unittest.TestCase):
 
         social_event = world.locations[social_event_id.index]
 
-        world.infection_parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4,
-                                                            abm.VaccinationState.Unvaccinated] = 0.0
-        world.infection_parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4,
-                                                               abm.VaccinationState.Unvaccinated] = 0.0
+        world.infection_parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype,
+                                                            abm.AgeGroup.Age0to4] = 0.0
+        world.infection_parameters.InfectedSymptomsToRecovered[
+            abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4] = 0.0
 
         # trips
         trip_list = abm.TripList()
@@ -116,6 +116,12 @@ class TestAbm(unittest.TestCase):
         world.trip_list = trip_list
         world.use_migration_rules = False
         self.assertEqual(world.trip_list.num_trips, 2)
+
+        # vaccination
+        vaccine = abm.Vaccination(
+            abm.ExposureType.GenericVaccine, abm.TimePoint(0))
+        self.assertEqual(vaccine.exposure_type,
+                         abm.ExposureType.GenericVaccine)
 
         # run
         t1 = t0 + abm.days(1)
