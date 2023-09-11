@@ -226,7 +226,7 @@ TEST(TestPerson, setWearMask)
     ASSERT_TRUE(person.get_wear_mask());
 }
 
-TEST(TestPerson, getProtectiveFactor)
+TEST(TestPerson, getMaskProtectiveFactor)
 {
     auto location         = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
     auto person_community = make_test_person(location);
@@ -250,4 +250,24 @@ TEST(TestPerson, getProtectiveFactor)
     ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
     ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
     ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
+}
+
+TEST(TestPerson, getLatestProtection)
+{
+    auto location               = mio::abm::Location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
+    auto person                 = mio::abm::Person(location, AGE_GROUP_15_TO_34);
+    mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
+
+    auto t = mio::abm::TimePoint(0);
+    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
+    auto latest_protection = person.get_latest_protection();
+    ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
+    ASSERT_EQ(latest_protection.second.days(), t.days());
+
+    t = mio::abm::TimePoint(40 * 24 * 60 * 60);
+    person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), AGE_GROUP_15_TO_34, params, t,
+                                                 mio::abm::InfectionState::Exposed));
+    latest_protection = person.get_latest_protection();
+    ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
+    ASSERT_EQ(latest_protection.second.days(), t.days());
 }

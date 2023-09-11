@@ -80,7 +80,7 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const Paramete
                 (std::min(m_parameters.get<MaximumContacts>(),
                           transmission_contacts_per_day(cell_index, virus, age_receiver)) +
                  transmission_air_per_day(cell_index, virus)) *
-                (1 - mask_protection) * dt.days() * person.get_protection_factor(virus, t);
+                (1 - mask_protection) * dt.days() * (1 - person.get_protection_factor(t, virus, global_params));
 
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
@@ -88,8 +88,9 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const Paramete
             random_transition(VirusVariant::Count, dt,
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
-            person.add_new_infection(
-                Infection(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
+            person.add_new_infection(Infection(virus, age_receiver, global_params, t + dt / 2,
+                                               mio::abm::InfectionState::Exposed, person.get_latest_protection(),
+                                               false)); // Starting time in first approximation
         }
     }
 }

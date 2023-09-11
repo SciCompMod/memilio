@@ -452,15 +452,23 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
     for (auto& person : persons) {
         auto infection_state =
             determine_infection_state(exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
-        if (infection_state != mio::abm::InfectionState::Susceptible)
+        if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.parameters, t, infection_state));
+                                                         world.parameters, t, infection_state,
+                                                         person.get_latest_protection(), false));
+        }
     }
 }
 
 void set_parameters(mio::abm::Parameters params)
 {
     params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
+
+    // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
+            {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
+    };
 
     //0-4
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]  = 0.276;
@@ -534,7 +542,8 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_80_PLUS}]              = 0.052;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_80_PLUS}]      = 0.;
 
-    // Set each parameter for vaccinated people
+    // Set each parameter for vaccinated people including personal infection and vaccine protection levels.
+    // Summary: https://doi.org/10.1038/s41577-021-00550-x,
 
     //0-4
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]  = 0.161;

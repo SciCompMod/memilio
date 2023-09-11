@@ -117,6 +117,12 @@ class TestAbm(unittest.TestCase):
         world.use_migration_rules = False
         self.assertEqual(world.trip_list.num_trips, 2)
 
+        # vaccination
+        vaccine = abm.Vaccination(
+            abm.ExposureType.GenericVaccine, abm.TimePoint(0))
+        self.assertEqual(vaccine.exposure_type,
+                         abm.ExposureType.GenericVaccine)
+
         # run
         t1 = t0 + abm.days(1)
         sim.advance(t1)

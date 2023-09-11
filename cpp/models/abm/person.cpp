@@ -262,5 +262,31 @@ bool Person::apply_mask_intervention(const Location& target)
     return true;
 }
 
+std::pair<ExposureType, TimePoint> Person::get_latest_protection() const
+{
+    ExposureType latest_exposure_type = ExposureType::NoProtection;
+    TimePoint infection_time          = TimePoint(0);
+    if (!m_infections.empty()) {
+        latest_exposure_type = ExposureType::NaturalInfection;
+        infection_time       = m_infections.back().get_start_date();
+    }
+    if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
+        latest_exposure_type = m_vaccinations.back().exposure_type;
+        infection_time       = m_vaccinations.back().time;
+    }
+    return std::make_pair(latest_exposure_type, infection_time);
+}
+
+ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
+{
+    auto latest_protection = get_latest_protection();
+    // If there is no previous protection or vaccination, return 0.
+    if (latest_protection.first == ExposureType::NoProtection) {
+        return 0;
+    }
+    return params.get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
+        t.days() - latest_protection.second.days());
+}
+
 } // namespace abm
 } // namespace mio

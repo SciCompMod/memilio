@@ -224,7 +224,7 @@ struct DetectInfection {
 };
 
 /**
- * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
+ * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue, MaskType>;
@@ -235,6 +235,61 @@ struct MaskProtection {
     static std::string name()
     {
         return "MaskProtection";
+    }
+};
+
+using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
+
+/**
+ * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on type of vaccine,
+ * age group and virus variant. Its value is between 0 and 1.
+ */
+struct InfectionProtectionFactor {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    static auto get_default(AgeGroup size)
+    {
+        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "InfectionProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against severe symptoms after #Infection and #Vaccination, which depends on type of vaccine,
+ * age group and virus variant. Its value is between 0 and 1.
+ */
+struct SeverityProtectionFactor {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    static auto get_default(AgeGroup size)
+    {
+        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "SeverityProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against high viral load. Its value is between 0 and 1.
+ */
+struct HighViralLoadProtectionFactor {
+    using Type = InputFunctionForProtectionLevel;
+    static auto get_default()
+    {
+        return Type([](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "HighViralLoadProtectionFactor";
     }
 };
 
@@ -510,7 +565,8 @@ using ParametersBase =
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
                  InfectivityDistributions, DetectInfection, MaskProtection, LockdownDate, SocialEventRate,
                  BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork>;
+                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.
