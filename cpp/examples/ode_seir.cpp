@@ -24,10 +24,10 @@
 #include "memilio/utils/logging.h"
 
 int main()
-
+{
 //perform multiple iterations for more accurate likwid measurements
 for (int iter = 0; iter < 10000; iter++) {
-{
+
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
