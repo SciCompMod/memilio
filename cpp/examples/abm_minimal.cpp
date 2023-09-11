@@ -23,6 +23,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <likwid-marker.h>
 
 void write_results_to_file(const mio::abm::Simulation& sim)
 {
@@ -157,7 +158,18 @@ int main()
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-    sim.advance(tmax);
+    
+
+    LIKWID_MARKER_INIT;
+    
+    LIKWID_MARKER_START("region 1");
+
+        sim.advance(tmax);
+
+    LIKWID_MARKER_STOP("region 1");
+
+    LIKWID_MARKER_CLOSE;
+   
 
     write_results_to_file(sim);
 }

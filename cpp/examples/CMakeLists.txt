@@ -39,8 +39,9 @@ target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_seci
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(abm_minimal_example abm_minimal.cpp)
-target_link_libraries(abm_minimal_example PRIVATE memilio abm)
-target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_link_libraries(abm_minimal_example PRIVATE memilio abm likwid)
+target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
+                                           PRIVATE "-lstdc++;-DLIKWID PERFMON;-llikwid")
 
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)
