@@ -94,7 +94,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
 
     filename = "FullData_DIVI"
-    url = "https://raw.githubusercontent.com/robert-koch-institut/Intensivkapazitaeten_und_COVID-19-Intensivbettenbelegung_in_Deutschland/main/Intensivregister_Landkreise_Kapazitaeten.csv"
+    url = "https://raw.githubusercontent.com/robert-koch-institut/"\
+        "Intensivkapazitaeten_und_COVID-19-Intensivbettenbelegung_in_Deutschland/"\
+        "main/Intensivregister_Landkreise_Kapazitaeten.csv"
     path = os.path.join(directory + filename + ".json")
     df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
@@ -194,7 +196,9 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
 
     # These strings need to be in the header
     test_strings = {
-        "datum", "bundesland_id", "landkreis_id", "bundesland_name", "landkreis_name", "faelle_covid_aktuell", "faelle_covid_aktuell_invasiv_beatmet"}
+        "datum", "bundesland_id", "landkreis_id", "bundesland_name",
+        "landkreis_name", "faelle_covid_aktuell",
+        "faelle_covid_aktuell_invasiv_beatmet"}
 
     # check if headers are those we want
     for name in test_strings:
