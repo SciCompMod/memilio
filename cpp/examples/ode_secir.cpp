@@ -23,6 +23,8 @@
 
 int main()
 {
+    for(int iter = 0; iter < 10000; iter++) {
+
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
@@ -105,4 +107,5 @@ int main()
         printf("number total: %f",
                res_j[0] + res_j[1] + res_j[2] + res_j[3] + res_j[4] + res_j[5] + res_j[6] + res_j[7]);
     }
+}
 }

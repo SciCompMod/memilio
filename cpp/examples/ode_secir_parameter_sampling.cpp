@@ -81,9 +81,6 @@ int main()
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
     params.get<mio::osecir::ContactPatterns>() = cm_group;
 
-    double t0   = 0;
-    double tmax = 100;
-
     params.get<mio::osecir::ContactPatterns>().get_dampings().push_back(mio::DampingSampling(
         mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(30.),
         std::vector<size_t>(1, size_t(0)), Eigen::VectorXd::Constant(Eigen::Index(nb_groups.get()), 1.0)));

@@ -20,9 +20,11 @@
 #include "abm/mask_type.h"
 #include "abm/mask.h"
 #include "abm/location.h"
-#include "memilio/utils/random_number_generator.h"
 #include "abm/random_events.h"
-
+#include "abm/infection.h"
+#include "memilio/config.h"
+#include "memilio/utils/random_number_generator.h"
+#include <mutex>
 #include <numeric>
 
 namespace mio
@@ -56,7 +58,8 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
            m_parameters.get<AerosolTransmissionRates>()[{virus}];
 }
 
-void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
+void Location::interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                        const GlobalInfectionParameters& global_params) const
 {
     // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
@@ -76,58 +79,89 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalIn
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
         VirusVariant virus =
-            random_transition(VirusVariant::Count, dt,
+            random_transition(rng, VirusVariant::Count, dt,
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
             person.add_new_infection(
-                Infection(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
+                Infection(rng, virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
         }
     }
 }
 
-void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
+// void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
+// {
+//     //cache for next step so it stays constant during the step while subpopulations change
+//     //otherwise we would have to cache all state changes during a step which uses more memory
+//     for (auto& cell : m_cells) {
+//         cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup::Count}, 0.};
+//         cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
+//         for (auto&& p : cell.m_persons) {
+//             if (p->is_infected(t)) {
+//                 auto& inf  = p->get_infection();
+//                 auto virus = inf.get_virus_variant();
+//                 auto age   = p->get_age();
+//                 /* average infectivity over the time step 
+//                  *  to second order accuracy using midpoint rule
+//                 */
+//                 cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
+//                 cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2);
+//             }
+//         }
+//         if (m_capacity_adapted_transmission_risk) {
+//             cell.m_cached_exposure_rate_air.array() *= cell.compute_space_per_person_relative();
+//         }
+//     }
+// }
+
+void Location::lock()
 {
-    //cache for next step so it stays constant during the step while subpopulations change
-    //otherwise we would have to cache all state changes during a step which uses more memory
-    for (auto& cell : m_cells) {
-        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup::Count}, 0.};
-        cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
-        for (auto&& p : cell.m_persons) {
-            if (p->is_infected(t)) {
-                auto inf   = p->get_infection();
-                auto virus = inf.get_virus_variant();
-                auto age   = p->get_age();
-                /* average infectivity over the time step 
-                 *  to second order accuracy using midpoint rule
-                */
-                cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
-                cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2);
-            }
-        }
-        if (m_capacity_adapted_transmission_risk) {
-            cell.m_cached_exposure_rate_air.array() *= cell.compute_space_per_person_relative();
-        }
-    }
+    m_mut.lock();
 }
 
-void Location::add_person(Person& p, std::vector<uint32_t> cells)
+void Location::unlock()
 {
-    m_persons.push_back(&p);
-    for (uint32_t cell_idx : cells)
-        m_cells[cell_idx].m_persons.push_back(&p);
+    m_mut.unlock();
 }
 
-void Location::remove_person(Person& p)
-{
-    m_persons.erase(std::remove(m_persons.begin(), m_persons.end(), &p), m_persons.end());
-    for (auto&& cell : m_cells) {
-        cell.m_persons.erase(std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p), cell.m_persons.end());
-    }
-}
+// void Location::add_person(Person& p, std::vector<uint32_t> cells)
+// {
+//     std::lock_guard<Location> lk(*this);
+//     m_persons.push_back(&p);
+//     for (uint32_t cell_idx : cells)
+//         m_cells[cell_idx].m_persons.push_back(&p);
+// }
 
-size_t Location::get_number_persons()
+// void Location::add_remove_persons(const std::vector<std::unique_ptr<Person>> &)
+// {
+//     //remove
+//     // m_persons.erase(std::remove_if(m_persons.begin(), m_persons.end(), [this](auto&& p) { return p->m_location != this; }), m_persons.end());
+//     // for (auto&& cell : m_cells) {
+//     //     cell.m_persons.erase(std::remove_if(cell.m_persons.begin(), cell.m_persons.end(), [this](auto&& p) { return p->m_location != this; }), cell.m_persons.end());
+//     // }
+
+//     //add
+//     // for (auto&& p : persons) {
+//     //     if (p->m_location == this && p->m_old_location != this) {
+//     //         m_persons.push_back(p.get());
+//     //         for (uint32_t cell_idx : p->m_cells) {
+//     //             m_cells[cell_idx].m_persons.push_back(p.get());
+//     //         }
+//     //     }
+//     // }
+// }
+
+// void Location::remove_person(Person& p)
+// {
+//     std::lock_guard<Location> lk(*this);
+//     m_persons.erase(std::remove(m_persons.begin(), m_persons.end(), &p), m_persons.end());
+//     for (auto&& cell : m_cells) {
+//         cell.m_persons.erase(std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p), cell.m_persons.end());
+//     }
+// }
+
+size_t Location::get_number_persons() const
 {
-    return m_persons.size();
+    return m_num_persons;
 }
 
 /*
@@ -144,44 +178,44 @@ ScalarType Cell::compute_space_per_person_relative()
     }
 }
 
-size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
-{
-    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
-        return p->get_infection_state(t) == state;
-    });
-}
+// size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
+// {
+//     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
+//         return p->get_infection_state(t) == state;
+//     });
+// }
 
-size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
-{
-    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
-        return p->get_infection_state(t) == state;
-    });
-}
+// size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
+// {
+//     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
+//         return p->get_infection_state(t) == state;
+//     });
+// }
 
-void Location::store_subpopulations(const TimePoint t)
-{
-    m_subpopulations.add_time_point(t.days());
-    Eigen::VectorXd subpopulations(Eigen::VectorXd::Zero((size_t)InfectionState::Count));
-    for (auto p : m_persons)
-        ++subpopulations[(size_t)p->get_infection_state(t)];
-    m_subpopulations.get_last_value() = subpopulations;
-}
+// void Location::store_subpopulations(const TimePoint t)
+// {
+//     m_subpopulations.add_time_point(t.days());
+//     m_subpopulations.get_last_value().setZero();
+//     for (auto p : m_persons)
+//         m_subpopulations.get_last_value()[(Eigen::Index)p->get_infection_state(t)] += 1;
+// }
 
-void Location::initialize_subpopulations(const TimePoint t)
-{
-    if (m_subpopulations.get_num_time_points() == 0) {
-        store_subpopulations(t);
-    }
-    else {
-        if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
-            store_subpopulations(t);
-        }
-    }
-}
-const TimeSeries<ScalarType>& Location::get_subpopulations() const
-{
-    return m_subpopulations;
-}
+// void Location::initialize_subpopulations(const TimePoint t)
+// {
+//     if (m_subpopulations.get_num_time_points() == 0) {
+//         store_subpopulations(t);
+//     }
+//     else {
+//         if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
+//             store_subpopulations(t);
+//         }
+//     }
+// }
+
+// const TimeSeries<ScalarType>& Location::get_subpopulations() const
+// {
+//     return m_subpopulations;
+// }
 
 } // namespace abm
 } // namespace mio
