@@ -135,9 +135,9 @@ int main()
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), start_date,
-                                                         infection_state));
+            person.add_new_infection(mio::abm::Infection(
+                mio::abm::VirusVariant::Wildtype, person.get_age(), world.get_global_infection_parameters(), start_date,
+                infection_state));
     }
 
     // Assign locations to the people
