@@ -165,7 +165,7 @@ int main()
         auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
         auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-        LIKWID_MARKER_END("initialization");
+        LIKWID_MARKER_STOP("initialization");
 
         LIKWID_MARKER_START("simulation");
 
