@@ -56,7 +56,7 @@ int main()
 
     auto seir = simulate(t0, tmax, dt, model);
 
-    //hi
+    //test
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
