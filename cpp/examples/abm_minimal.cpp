@@ -161,12 +161,12 @@ int main()
     
 
     LIKWID_MARKER_INIT;
-    
-    LIKWID_MARKER_START("region 1");
+
+    LIKWID_MARKER_START("region_1");
 
         sim.advance(tmax);
 
-    LIKWID_MARKER_STOP("region 1");
+    LIKWID_MARKER_STOP("region_1");
 
     LIKWID_MARKER_CLOSE;
    
