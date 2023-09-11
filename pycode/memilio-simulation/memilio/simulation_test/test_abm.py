@@ -54,8 +54,7 @@ class TestAbm(unittest.TestCase):
 
         testing_locations = [abm.LocationType.Home]
         testing_inf_states = []
-        testing_crit = [abm.TestingCriteria(
-            testing_ages, testing_locations, testing_inf_states)]
+        testing_crit = abm.TestingCriteria(testing_ages, testing_locations, testing_inf_states)
         testing_scheme = abm.TestingScheme(testing_crit, abm.days(
             1), t0, t0 + abm.days(1), abm.AntigenTest(), 1.0)
         # initially false, will only active once simulation starts
