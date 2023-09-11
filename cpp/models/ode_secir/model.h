@@ -465,9 +465,9 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                 V(i + 4 * num_groups, j + 4 * num_groups) -=
                     sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
                         {(mio::AgeGroup)i, InfectionState::InfectedSevere})] /
-                    params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i] * 0.5 *
+                    params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i] * 5 *
                     params.template get<CriticalPerSevere>()[(mio::AgeGroup)i] * 3.141592653589793 /
-                    (0.1 * params.template get<ICUCapacity>()) *
+                    (params.template get<ICUCapacity>()) *
                     std::sin(3.141592653589793 / (0.1 * params.template get<ICUCapacity>()) *
                              (icu_occupancy - 0.9 * params.template get<ICUCapacity>()));
             }

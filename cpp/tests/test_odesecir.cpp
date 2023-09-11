@@ -848,6 +848,25 @@ TEST(Secir, get_reproduction_number)
     EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.7153740911442856, 1e-12);
     EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.4833316698917707, 1e-12);
     EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 3.4450376807796337, 1e-12);
+
+    //Test that V is not invertible for certain values.
+    mio::TimeSeries<ScalarType>::Vector result_7((int)mio::osecir::InfectionState::Count * num_groups);
+    double icu_occupancy = 0.95 * model.parameters.get<mio::osecir::ICUCapacity>();
+    double severe1       = model.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0] /
+                     (model.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] * 5 *
+                      model.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)1] * 3.141592653589793 /
+                      (model.parameters.get<mio::osecir::ICUCapacity>()) *
+                      std::sin(3.141592653589793 / (0.1 * model.parameters.get<mio::osecir::ICUCapacity>()) *
+                               (icu_occupancy - 0.9 * model.parameters.get<mio::osecir::ICUCapacity>())));
+
+    mio::TimeSeries<ScalarType> time_series((int)mio::osecir::InfectionState::Count * num_groups);
+    result_7 << 0, 0, 0, 0, 0, 0, severe1, 0.95 * model.parameters.get<mio::osecir::ICUCapacity>(), 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    time_series.add_time_point(0.0, result_7);
+    mio::osecir::Simulation<> sim2(model, 0.0);
+    sim2.get_result() = time_series;
+
+    EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)0, sim2));
 }
 
 TEST(Secir, get_migration_factors)
