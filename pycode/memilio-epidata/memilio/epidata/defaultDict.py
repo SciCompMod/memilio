@@ -110,12 +110,18 @@ EngEng = {
 }
 
 GerEng = {
+    'datum': EngEng['date'],
+    'date': EngEng['date'],
     'Geschlecht': EngEng['gender'],
     'AnzahlFall': EngEng['confirmed'],
     'AnzahlGenesen': EngEng['recovered'],
     'AnzahlTodesfall': EngEng['deaths'],
     'IdBundesland': EngEng['idState'],
     'Bundesland': EngEng['state'],
+    'bundesland_id': EngEng['idState'],
+    'landkreis_id': EngEng['idCounty'],
+    'bundesland_name': EngEng['state'],
+    'landkreis_name': EngEng['county'],
     'IdLandkreis': EngEng['idCounty'],
     'Landkreis': EngEng['county'],
     'Altersgruppe': EngEng['ageRKI'],
