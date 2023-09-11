@@ -24,6 +24,9 @@
 #include "memilio/utils/logging.h"
 
 int main()
+
+//perform multiple iterations for more accurate likwid measurements
+for (int iter = 0; iter < 10000; iter++) {
 {
     mio::set_log_level(mio::LogLevel::debug);
 
@@ -60,4 +63,6 @@ int main()
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
+
+ }
 }
