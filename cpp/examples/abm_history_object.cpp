@@ -122,8 +122,7 @@ int main()
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto test_type             = mio::abm::AntigenTest();
     auto test_at_work          = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work = std::vector<mio::abm::TestingCriteria<mio::abm::LocationType>>{
-        mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_at_work, {})};
+    auto testing_criteria_work = mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_at_work, {});
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);

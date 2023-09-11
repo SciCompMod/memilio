@@ -76,22 +76,23 @@ TEST(TestTestingScheme, runScheme)
     const auto probability      = 0.8;
     const auto test_type        = mio::abm::PCRTest();
 
-    auto testing_scheme =
-        mio::abm::TestingScheme(testing_criterias, testing_min_time, start_date, end_date, test_type, probability);
+    auto testing_scheme1 =
+        mio::abm::TestingScheme(testing_criteria1, testing_min_time, start_date, end_date, test_type, probability);
 
-    ASSERT_EQ(testing_scheme.is_active(), false);
-    testing_scheme.update_activity_status(mio::abm::TimePoint(10));
-    ASSERT_EQ(testing_scheme.is_active(), true);
-    testing_scheme.update_activity_status(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200));
-    ASSERT_EQ(testing_scheme.is_active(), false);
-    testing_scheme.update_activity_status(mio::abm::TimePoint(0));
+    ASSERT_EQ(testing_scheme1.is_active(), false);
+    testing_scheme1.update_activity_status(mio::abm::TimePoint(10));
+    ASSERT_EQ(testing_scheme1.is_active(), true);
+    testing_scheme1.update_activity_status(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200));
+    ASSERT_EQ(testing_scheme1.is_active(), false);
+    testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
 
     std::bitset<(size_t)mio::abm::InfectionState::Count> test_infection_states2;
     test_infection_states2.set((size_t)mio::abm::InfectionState::Recovered, true);
     std::vector<mio::abm::LocationType> test_location_types2 = {mio::abm::LocationType::Home};
     auto testing_criteria2 =
         mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_location_types2, test_infection_states2);
-    testing_scheme.add_testing_criteria(testing_criteria2);
+    auto testing_scheme2 =
+        mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
     auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
@@ -107,13 +108,9 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.9));
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date),
+    ASSERT_EQ(testing_scheme1.run_scheme(person1, loc_home, start_date), false); // Person tests and tests positive
+    ASSERT_EQ(testing_scheme1.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
+    ASSERT_EQ(testing_scheme2.run_scheme(person1, loc_home, start_date),
               true); // Person is in quarantine and wants to go home -> can do so
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
-
-    testing_scheme.add_testing_criteria(testing_criteria1);
-    testing_scheme.remove_testing_criteria(testing_criteria1);
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), true);
+    ASSERT_EQ(testing_scheme1.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
 }

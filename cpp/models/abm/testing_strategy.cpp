@@ -26,7 +26,7 @@ namespace mio
 namespace abm
 {
 
-TestingScheme::TestingScheme(const std::vector<TestingCriteria<LocationType>>& testing_criteria,
+TestingScheme::TestingScheme(const TestingCriteria<LocationType>& testing_criteria,
                              TimeSpan minimal_time_since_last_test, TimePoint start_date, TimePoint end_date,
                              const GenericTest& test_type, double probability)
     : m_testing_criteria(testing_criteria)
@@ -49,19 +49,6 @@ bool TestingScheme::operator==(const TestingScheme& other) const
     //To be adjusted and also TestType should be static.
 }
 
-void TestingScheme::add_testing_criteria(const TestingCriteria<LocationType> criteria)
-{
-    if (std::find(m_testing_criteria.begin(), m_testing_criteria.end(), criteria) == m_testing_criteria.end()) {
-        m_testing_criteria.push_back(criteria);
-    }
-}
-
-void TestingScheme::remove_testing_criteria(const TestingCriteria<LocationType> criteria)
-{
-    auto last = std::remove(m_testing_criteria.begin(), m_testing_criteria.end(), criteria);
-    m_testing_criteria.erase(last, m_testing_criteria.end());
-}
-
 bool TestingScheme::is_active() const
 {
     return m_is_active;
@@ -76,10 +63,7 @@ bool TestingScheme::run_scheme(Person& person, const Location& location, TimePoi
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
         double random = UniformDistribution<double>::get_instance()();
         if (random < m_probability) {
-            if (std::any_of(m_testing_criteria.begin(), m_testing_criteria.end(),
-                            [person, location, t](TestingCriteria<LocationType> tr) {
-                                return tr.evaluate(person, location, t);
-                            })) {
+            if (m_testing_criteria.evaluate(person, location, t)) {
                 return !person.get_tested(t, m_test_type.get_default());
             }
         }

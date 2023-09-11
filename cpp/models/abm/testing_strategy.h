@@ -24,7 +24,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
-#include <iostream>
+#include <bitset>
 
 namespace mio
 {
@@ -157,7 +157,6 @@ private:
     bool has_requested_age(const Person& p) const
     {
         if (m_ages.none()) {
-            std::cout << "Here" << '\n';
             return true; // no condition on the AgeGroup
         }
         return m_ages[(size_t)p.get_age()];
@@ -170,7 +169,6 @@ private:
     bool is_requested_location_type(const Location& l) const
     {
         if (m_locations.empty()) {
-            std::cout << "Here" << '\n';
             return true; // no condition on the location
         }
         return std::find(m_locations.begin(), m_locations.end(), l.get_type()) != m_locations.end();
@@ -184,7 +182,6 @@ private:
     bool has_requested_infection_state(const Person& p, TimePoint t) const
     {
         if (m_infection_states.none()) {
-            std::cout << "Here" << '\n';
             return true; // no condition on the InfectionState
         }
         return m_infection_states[(size_t)p.get_infection_state(t)];
@@ -215,7 +212,7 @@ public:
      * @param test_type The type of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
-    TestingScheme(const std::vector<TestingCriteria<LocationType>>& testing_criteria,
+    TestingScheme(const TestingCriteria<LocationType>& testing_criteria,
                   TimeSpan minimal_time_since_last_test, TimePoint start_date, TimePoint end_date,
                   const GenericTest& test_type, ScalarType probability);
 
@@ -223,18 +220,6 @@ public:
      * @brief Compares two TestingScheme%s for functional equality.
      */
     bool operator==(const TestingScheme& other) const;
-
-    /**
-     * @brief Add a TestingCriteria to the set of TestingCriteria that are checked for testing.
-     * @param[in] criteria TestingCriteria to be added.
-     */
-    void add_testing_criteria(const TestingCriteria<LocationType> criteria);
-
-    /**
-     * @brief Remove a TestingCriteria from the set of TestingCriteria that are checked for testing.
-     * @param[in] criteria TestingCriteria to be removed.
-     */
-    void remove_testing_criteria(const TestingCriteria<LocationType> criteria);
 
     /**
      * @brief Get the activity status of the scheme.
@@ -258,7 +243,7 @@ public:
     bool run_scheme(Person& person, const Location& location, TimePoint t) const;
 
 private:
-    std::vector<TestingCriteria<LocationType>> m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
+    TestingCriteria<LocationType> m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.
