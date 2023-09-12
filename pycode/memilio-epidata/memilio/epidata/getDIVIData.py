@@ -94,7 +94,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
 
     filename = "FullData_DIVI"
-    url = "https://diviexchange.blob.core.windows.net/%24web/zeitreihe-tagesdaten.csv"
+    url = "https://raw.githubusercontent.com/robert-koch-institut/"\
+        "Intensivkapazitaeten_und_COVID-19-Intensivbettenbelegung_in_Deutschland/"\
+        "main/Intensivregister_Landkreise_Kapazitaeten.csv"
     path = os.path.join(directory + filename + ".json")
     df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
@@ -105,7 +107,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         raise gd.DataError("Something went wrong, dataframe is empty.")
     df = df_raw.copy()
     divi_data_sanity_checks(df_raw)
-    df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
 
     try:
@@ -135,9 +136,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     for id in df.loc[df.isnull().any(axis=1), dd.EngEng['idCounty']].unique():
         stateid = countyid_to_stateid[id]
         df.loc[df[dd.EngEng['idCounty']] == id, dd.EngEng['idState']] = stateid
-
-    df = geoger.insert_names_of_states(df)
-    df = geoger.insert_names_of_counties(df)
 
     # extract subframe of dates
     df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
@@ -190,15 +188,18 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
 
     @param df The dataframe which has to be checked
     """
+    # there should be 13 headers
+    num_headers = 13
     # get actual headers
     actual_strings_list = df.columns.tolist()
     # check number of data categories
-    if len(actual_strings_list) != 11:
+    if len(actual_strings_list) != num_headers:
         raise gd.DataError("Error: Number of data categories changed.")
 
     # These strings need to be in the header
     test_strings = {
-        "date", "bundesland", "gemeindeschluessel", "faelle_covid_aktuell",
+        "datum", "bundesland_id", "landkreis_id", "bundesland_name",
+        "landkreis_name", "faelle_covid_aktuell",
         "faelle_covid_aktuell_invasiv_beatmet"}
 
     # check if headers are those we want
