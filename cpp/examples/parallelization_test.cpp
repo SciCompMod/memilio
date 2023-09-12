@@ -4,7 +4,7 @@
 
 int main()
 {
-    const int vectorSize = 100000000; // Größe der Vektoren anpassen
+    const int vectorSize = 1000000; // Größe der Vektoren anpassen
 
     std::vector<double> vectorA(vectorSize);
     std::vector<double> vectorB(vectorSize);
