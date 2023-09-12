@@ -59,6 +59,12 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
     age_groups = {0: '0-4', 1: '5-14', 2: '15-34',
                   3: '35-59', 4: '60-79', 5: '80+'}
 
+    def test_extract_time_steps(self):
+        for file in self.files_input.values():
+            num_days = pm.extract_time_steps(
+                file, file_format=self.file_format)
+            assert num_days == 1
+
     def test_extract_data(self):
         filter_age = None
         i = 0

@@ -370,7 +370,7 @@ def plot_map(data: pd.DataFrame,
     # Use top row for title.
     tax = fig.add_subplot(gs[0, :])
     tax.set_axis_off()
-    tax.set_title(title, fontsize=18)
+    tax.set_title(title, fontsize=16)
     if plot_colorbar:
         # Prepare colorbar.
         cax = fig.add_subplot(gs[1, 0])
