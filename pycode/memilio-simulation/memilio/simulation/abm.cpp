@@ -144,8 +144,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
     py::class_<mio::abm::TestingCriteria<mio::abm::LocationType>>(m, "TestingCriteria")
-        .def(py::init<const std::bitset<(size_t)mio::abm::AgeGroup::Count>&, const std::vector<mio::abm::LocationType>&,
-                      const std::bitset<(size_t)mio::abm::InfectionState::Count>&>(),
+        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
+                      const std::vector<mio::abm::InfectionState>&>(),
              py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
 
     py::class_<mio::abm::GenericTest>(m, "GenericTest").def(py::init<>());

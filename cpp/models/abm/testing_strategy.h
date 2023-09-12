@@ -48,20 +48,32 @@ public:
      */
     TestingCriteria() = default;
 
-    TestingCriteria(const std::bitset<(size_t)AgeGroup::Count>& ages, const std::vector<Location>& locations,
-                    const std::bitset<(size_t)InfectionState::Count>& infection_states)
-        : m_ages(ages)
+    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<Location>& locations,
+                    const std::vector<InfectionState>& infection_states)
+        : m_ages()
         , m_locations(locations)
-        , m_infection_states(infection_states)
+        , m_infection_states()
     {
+        for (auto age : ages) {
+            m_ages.set((size_t)age, true);
+        }
+        for (auto infection_state : infection_states) {
+            m_infection_states.set((size_t)infection_state, true);
+        }
     }
 
-    TestingCriteria(const std::bitset<(size_t)AgeGroup::Count>& ages, const std::vector<LocationType>& locations,
-                    const std::bitset<(size_t)InfectionState::Count>& infection_states)
-        : m_ages(ages)
+    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<LocationType>& locations,
+                    const std::vector<InfectionState>& infection_states)
+        : m_ages()
         , m_locations(locations)
-        , m_infection_states(infection_states)
+        , m_infection_states()
     {
+        for (auto age : ages) {
+            m_ages.set((size_t)age, true);
+        }
+        for (auto infection_state : infection_states) {
+            m_infection_states.set((size_t)infection_state, true);
+        }
     }
 
     /**
@@ -212,9 +224,8 @@ public:
      * @param test_type The type of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
-    TestingScheme(const TestingCriteria<LocationType>& testing_criteria,
-                  TimeSpan minimal_time_since_last_test, TimePoint start_date, TimePoint end_date,
-                  const GenericTest& test_type, ScalarType probability);
+    TestingScheme(const TestingCriteria<LocationType>& testing_criteria, TimeSpan minimal_time_since_last_test,
+                  TimePoint start_date, TimePoint end_date, const GenericTest& test_type, ScalarType probability);
 
     /**
      * @brief Compares two TestingScheme%s for functional equality.

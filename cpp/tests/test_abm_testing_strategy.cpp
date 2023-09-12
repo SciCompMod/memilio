@@ -50,9 +50,9 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     ASSERT_EQ(testing_criteria.evaluate(person, home, t), false);
 
     auto testing_criteria_manual = mio::abm::TestingCriteria<mio::abm::LocationType>(
-        {}, std::vector<mio::abm::LocationType>({mio::abm::LocationType::Work}), {});
-    testing_criteria_manual.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
-    testing_criteria_manual.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
+        {}, std::vector<mio::abm::LocationType>({mio::abm::LocationType::Work}),
+        std::vector<mio::abm::InfectionState>(
+            {mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::InfectionState::InfectedSymptoms}));
     ASSERT_EQ(testing_criteria == testing_criteria_manual, true);
     testing_criteria_manual.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     ASSERT_EQ(testing_criteria == testing_criteria_manual, false);
@@ -60,15 +60,13 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 
 TEST(TestTestingScheme, runScheme)
 {
-    std::bitset<(size_t)mio::abm::InfectionState::Count> test_infection_states1;
-    test_infection_states1.set((size_t)mio::abm::InfectionState::InfectedSymptoms, true);
-    test_infection_states1.set((size_t)mio::abm::InfectionState::InfectedNoSymptoms, true);
-    std::vector<mio::abm::LocationType> test_location_types1 = {mio::abm::LocationType::Home,
-                                                                mio::abm::LocationType::Work};
+    std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::InfectedSymptoms,
+                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
+    std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
+                                                                    mio::abm::LocationType::Work};
 
     auto testing_criteria1 =
         mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_location_types1, test_infection_states1);
-    std::vector<mio::abm::TestingCriteria<mio::abm::LocationType>> testing_criterias = {testing_criteria1};
 
     const auto testing_min_time = mio::abm::days(1);
     const auto start_date       = mio::abm::TimePoint(0);
@@ -86,9 +84,8 @@ TEST(TestTestingScheme, runScheme)
     ASSERT_EQ(testing_scheme1.is_active(), false);
     testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
 
-    std::bitset<(size_t)mio::abm::InfectionState::Count> test_infection_states2;
-    test_infection_states2.set((size_t)mio::abm::InfectionState::Recovered, true);
-    std::vector<mio::abm::LocationType> test_location_types2 = {mio::abm::LocationType::Home};
+    std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
+    std::vector<mio::abm::LocationType> test_location_types2     = {mio::abm::LocationType::Home};
     auto testing_criteria2 =
         mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_location_types2, test_infection_states2);
     auto testing_scheme2 =

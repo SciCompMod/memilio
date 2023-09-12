@@ -373,7 +373,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, test_type, probability);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time),
