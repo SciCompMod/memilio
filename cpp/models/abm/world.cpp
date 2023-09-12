@@ -59,7 +59,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
     //log_info("ABM World interaction.");
     interaction(t, dt);
     //log_info("ABM World migration.");
-    // migration(t, dt);
+    migration(t, dt);
     end_step(t, dt);
 }
 
@@ -67,7 +67,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for schedule(dynamic, 50)) //dynamic 20
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person = m_persons[i];
+        auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
         person->interact(personal_rng, t, dt, m_infection_parameters);
 
@@ -92,7 +92,8 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::prepare()
 {
-    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+                                           const MigrationParameters&),
                           std::vector<LocationType>>>
         enhanced_migration_rules;
     for (auto rule : m_migration_rules) {
@@ -161,42 +162,41 @@ void World::migration(TimePoint t, TimeSpan dt)
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
-    
+
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     PRAGMA_OMP(parallel for schedule(static)) //dynamic 20?
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
-        auto&& location = m_locations[i];
+        auto&& location         = m_locations[i];
         location->m_num_persons = 0;
         for (auto&& cell : location->m_cells) {
             cell.m_cached_exposure_rate_air.array().setZero();
             cell.m_cached_exposure_rate_contacts.array().setZero();
+        }
     }
-}
 
     PRAGMA_OMP(parallel for schedule(dynamic, 50)) //static?
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
-        auto&& loc = person->m_location;
-
+        auto&& loc    = person->m_location;
 
         if (person->is_infected(t)) {
-            auto&& inf  = person->get_infection();
+            auto&& inf = person->get_infection();
             auto virus = inf.get_virus_variant();
             auto age   = person->get_age();
 
 #ifdef MEMILIO_ENABLE_OPENMP
             std::lock_guard<Location> lk(*loc);
 #endif
-            for (auto&& cell_idx : person->m_cells)
-{
+            for (auto&& cell_idx : person->m_cells) {
                 auto&& cell = loc->m_cells[cell_idx];
 
                 /* average infectivity over the time step 
                  *  to second order accuracy using midpoint rule
                 */
                 cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
-                auto air_factor = loc->m_capacity_adapted_transmission_risk ? cell.compute_space_per_person_relative() : 1.0;
+                auto air_factor =
+                    loc->m_capacity_adapted_transmission_risk ? cell.compute_space_per_person_relative() : 1.0;
                 cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2) * air_factor;
             }
         }
@@ -205,12 +205,12 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::end_step(TimePoint , TimeSpan )
+void World::end_step(TimePoint, TimeSpan)
 {
     // bool immediate = true;
-// #ifdef MEMILIO_ENABLE_OPENMP
-//     immediate = omp_get_num_threads() == 1;
-// #endif
+    // #ifdef MEMILIO_ENABLE_OPENMP
+    //     immediate = omp_get_num_threads() == 1;
+    // #endif
 
     // if ((t + dt).time_since_midnight() < dt) {
     //     PRAGMA_OMP(parallel for schedule(dynamic, 20)) //dynamic 20?

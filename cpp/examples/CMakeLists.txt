@@ -59,6 +59,11 @@ add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+#parallelization cmake
+#add_executable(parallelization_test_example parallelization_test.cpp)
+#target_link_libraries(parallelization_test_example PRIVATE omp)
+#target_compile_options(parallelization_test_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
   target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
