@@ -26,7 +26,8 @@ from memilio.epidata import customPlot
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from scipy.cluster import hierarchy
-from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.metrics import silhouette_samples
+
 
 def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
     """! Computes a score for a particular clustering based on the
@@ -55,7 +56,7 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
     for ii in range(len(clusters)):
         clusters_perp[ii] = list(indices_all.difference(set(clusters[ii])))
 
-    ### old method
+    # old method
     '''
     # extract correlation values of block diagonals and offdiagonals separ.
     corr_diag = []
@@ -76,14 +77,18 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
 
     return clusters, p_diag.sum()+p_offdiag.sum()
     '''
-    ### new method
+    # new method
     if idx_to_cluster_idx.max() > 0:
-        sample_silhouette_values = silhouette_samples(corr_mat, idx_to_cluster_idx)
-
-    if (idx_to_cluster_idx.max() < 15):
-        return clusters, -1
+        sample_silhouette_values = silhouette_samples(
+            corr_mat, idx_to_cluster_idx)
     else:
-        return clusters, sample_silhouette_values.min()
+        return clusters, np.nan
+
+    # get minimal cluster size with at least weak structuring (silhouette value 0 or greater than 0.25) in all clusters
+    if not ((sample_silhouette_values > 0.25) | (sample_silhouette_values == 0)).all():
+        return clusters, np.nan
+    else:
+        return clusters, idx_to_cluster_idx.max()+1
 
 # TODO: Used name 'methods' instead of 'metrics'. This is conform with documentation of hierarchy.linkage
     # and does not lead to confusion with metric used in pdist. To discuss!
@@ -167,7 +172,7 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
         weights = [weights]
 
     total_eval_number = [[] for weight in weights]
-    n=0
+    n = 0
     # iterate over weights
     for weight in weights:
         # use the given weight to flatten the dendrogram
@@ -175,16 +180,23 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
             cluster_hierarch, weight, criterion='distance')
 
         # evaluate clustering
-        clusters, total_eval_number[n]=evaluate_clustering(corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
+        #clusters, total_eval_number[n] = evaluate_clustering(
+        #    corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
 
         # append new npi_idx to cluster_idx assignment to list of assignments
-        npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
-        n+=1
-    
-    # print scores on clustering
-    print("Number of clusters: " + str(len(clusters)) + "; evaluation number: " + str(round(np.nanmax(np.array(total_eval_number)), 4)))
+        #npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
+        #n += 1
+        # get around 55 clusters
+        if npi_idx_to_cluster_idx.max()>45:
+            if npi_idx_to_cluster_idx.max()<65:
+                print(npi_idx_to_cluster_idx.max())
+                return npi_idx_to_cluster_idx
 
-    return npi_idx_to_cluster_idx_list[total_eval_number.index(np.nanmax(np.array(total_eval_number)))]
+    # print scores on clustering
+    #print("Number of clusters: " + str(int(np.nanmin(np.array(total_eval_number)))))
+
+    return npi_idx_to_cluster_idx_list[total_eval_number.index(np.nanmin(np.array(total_eval_number)))]
+
 
 def silhouette(X, cluster_sizes, cluster_labels, label):
 
@@ -223,21 +235,23 @@ def silhouette(X, cluster_sizes, cluster_labels, label):
         plt.xlabel("The silhouette coefficient values")
         plt.ylabel("Cluster label")
 
-        plt.axvline(x=0, c='black', alpha = 0.3)
-        plt.axvline(x=0.25, c='black', alpha = 0.3)
-        plt.axvline(x=0.5, c='black', alpha = 0.3)
-        plt.axvline(x=0.75, c='black', alpha = 0.3)
+        plt.axvline(x=0, c='black', alpha=0.3)
+        plt.axvline(x=0.25, c='black', alpha=0.3)
+        plt.axvline(x=0.5, c='black', alpha=0.3)
+        plt.axvline(x=0.75, c='black', alpha=0.3)
 
         plt.yticks([])  # Clear the yaxis labels / ticks
-        plt.xticks([-0.4,-0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
+        plt.xticks([-0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
 
         plt.title(
-            "Silhouette analysis for " + label + " clustering with n_clusters = " + str(n_clusters),
+            "Silhouette analysis for " + label +
+            " clustering with n_clusters = " + str(n_clusters),
         )
-
-        plt.show(block=False)
+        plt.tight_layout()
+        plt.show()
 
         return sample_silhouette_values
+
 
 def analyze_npi_data(
         read_data, make_plot, fine_resolution, npis, directory, file_format,
@@ -270,16 +284,25 @@ def analyze_npi_data(
         df_npis = df_npis.drop('Unnamed: 0', axis=1)
     except KeyError:
         pass
-    #df_npis = mdfs.extract_subframe_based_on_dates(df_npis, date(2021,1,1), date(2021,6,1))
+    # df_npis = mdfs.extract_subframe_based_on_dates(df_npis, date(2021,1,1), date(2021,6,1))
     npis = pd.read_json(os.path.join(directory, 'npis.json'))
-        # get code levels (main/subcodes) and position of main codes
-        # code_level = [i.count('_') for i in npi_codes]
-        # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
+    # get code levels (main/subcodes) and position of main codes
+    # code_level = [i.count('_') for i in npi_codes]
+    # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
 
     # check if any other integer than 0: not implemented or 1: implemented is
     # used (maybe to specify the kind of implementation)
 
-    npi_codes_considered = npis.NPI_code.values.tolist()#[x for x in npis.NPI_code if len(x) <=8]
+    all_subcodes = [x for x in npis.NPI_code if len(x) <=8]
+    df_merged = df_npis.iloc[:, :2]
+    for subcode in all_subcodes:
+        # extract columns which have the subcode as part of the column
+        # name and sum over all these subcodes
+        df_merged[subcode] = df_npis.filter(
+            regex=subcode).sum(axis=1)
+    #npi_codes_considered = npis.NPI_code.values.tolist()
+    npi_codes_considered = all_subcodes
+    df_npis = df_merged.copy()
 
     if len(np.where(df_npis[npi_codes_considered] > 1)[0]) > 0:
 
@@ -304,14 +327,16 @@ def analyze_npi_data(
             if npi_codes_considered[i] in npi_codes_empty:
                 npi_unused_indices.append(i)
                 npi_unused_indices_all.append(
-                    np.where(npis[dd.EngEng['npiCode']] == 'M01a_010')[0][0])
+                    np.where(npis[dd.EngEng['npiCode']] == npi_codes_considered[i])[0][0])
             else:
                 npi_used_indices.append(i)
                 npi_used_indices_all.append(
-                    np.where(npis[dd.EngEng['npiCode']] == 'M01a_010')[0][0])
+                    np.where(npis[dd.EngEng['npiCode']] == npi_codes_considered[i])[0][0])
 
-        npis_unused = np.array(npis['Description'])[npi_unused_indices_all] # for all fr1 codes: len=153
-        npis_used = np.array(npis['Description'])[npi_used_indices_all] # for all fr1 codes: len=14
+        npis_unused = np.array(npis['Description'])[
+            npi_unused_indices_all]  # for all fr1 codes: len=12
+        npis_used = np.array(npis['Description'])[
+            npi_used_indices_all]  # for all fr1 codes: len=155
         npi_codes_used = list(np.array(npi_codes_considered)[npi_used_indices])
         npi_codes_unused = list(
             np.array(npi_codes_considered)[npi_unused_indices])
@@ -377,11 +402,11 @@ def analyze_npi_data(
         # TODO: difference between scipy.cluster.hierarchy.distance.pdist and scipy.spatial.distance.pdist?
         corr_pairwdist = hierarchy.distance.pdist(
             npis_corr, metric='euclidean')
-        
+
         npi_codes_used = np.asarray(df_npis_used.iloc[:, 2:].columns)
 
         # compute hierarchical clustering (via best-suited method)
-        compare_methods = True
+        compare_methods = False
         if compare_methods:
 
             # centroid
@@ -400,8 +425,9 @@ def analyze_npi_data(
                 abs(npis_corr), cluster_hierarch,
                 [wg * max_coph_dist
                  for wg in np.linspace(0.01, 1, 500)])
-            
-            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max()+1, npi_idx_to_cluster_idx, label = method)
+
+            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max(
+            )+1, npi_idx_to_cluster_idx, label=method)
 
             # ward
             method = 'ward'
@@ -416,8 +442,9 @@ def analyze_npi_data(
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
                 [wg * max_coph_dist for wg in np.linspace(0.01, 1, 500)])
-            
-            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max()+1, npi_idx_to_cluster_idx, label = method)
+
+            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max(
+            )+1, npi_idx_to_cluster_idx, label=method)
 
             # average
             method = 'average'
@@ -432,11 +459,12 @@ def analyze_npi_data(
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
                 npis_corr, cluster_hierarch,
                 [wg * max_coph_dist
-                 for wg in np.linspace(0.01, 1, 500)])       
-            
-            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max()+1, npi_idx_to_cluster_idx, label = method)
+                 for wg in np.linspace(0.01, 1, 500)])
 
-        # centroid
+            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max(
+            )+1, npi_idx_to_cluster_idx, label=method)
+
+        # centroid has less clusters
         method = 'centroid'
         cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
             corr_pairwdist,
@@ -448,20 +476,23 @@ def analyze_npi_data(
         plt.show()
         max_coph_dist = coph_dist_mat.max()
         npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-            npis_corr, cluster_hierarch,
-            [wg * max_coph_dist
-             for wg in [0.50]]) # 10 cluster
+                abs(npis_corr), cluster_hierarch,
+                [wg * max_coph_dist
+                 for wg in np.linspace(0.01, 1, 100)])
+        
+        silhouette(npis_corr, npi_idx_to_cluster_idx.max(
+            )+1, npi_idx_to_cluster_idx, label=method)
 
         cluster_dict = dict()
-        cluster_codes = [[] for i in range(npi_idx_to_cluster_idx.max()+1)]
-        cluster_desc = [[] for i in range(npi_idx_to_cluster_idx.max()+1)]
+        cluster_codes = [[] for i in range(npi_idx_to_cluster_idx.max())]
+        cluster_desc = [[] for i in range(npi_idx_to_cluster_idx.max())]
         for i in range(len(npi_idx_to_cluster_idx)):
             cluster_dict[npi_codes_used[i]
-                         ] = "CM_" + str(npi_idx_to_cluster_idx[i]).zfill(3)
+                            ] = "CM_" + str(npi_idx_to_cluster_idx[i]-1).zfill(3)
             cluster_codes[npi_idx_to_cluster_idx
-                          [i]].append(npi_codes_used[i])
+                            [i]-1].append(npi_codes_used[i])
             cluster_desc[npi_idx_to_cluster_idx
-                         [i]].append(str(npis_used[i]))
+                            [i]-1].append(str(npis_used[i]))
 
         # create clustered dataframe
         df_npis_clustered = df_npis[[
@@ -471,7 +502,7 @@ def analyze_npi_data(
             df_npis_clustered["CM_" + str(i).zfill(3)
                               ] = df_npis[cluster_codes[i]].max(axis=1).copy()
 
-        npis_corr_cluster = df_npis_clustered.corr()
+        npis_corr_cluster = df_npis_clustered.iloc[:,2:].corr()
         # npis_corr_cluster[abs(npis_corr_cluster)<0.25] = 0
         plt.imshow(abs(npis_corr_cluster), cmap='gray_r')
         plt.title('Absolute correlation>0.25 of clustered NPIs')
@@ -498,7 +529,7 @@ def analyze_npi_data(
         # Closing file
         file_npi.close()
 
-        npi_idx_new = np.argsort(npi_idx_to_cluster_idx[0])
+        npi_idx_new = np.argsort(npi_idx_to_cluster_idx)
         npis_corr_reorder = npis_corr[npi_idx_new, :][:, npi_idx_new]
 
         plt.imshow(abs(npis_corr_reorder), cmap='gray_r')
