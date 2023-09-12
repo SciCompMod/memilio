@@ -188,10 +188,12 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
 
     @param df The dataframe which has to be checked
     """
+    # there should be 13 headers
+    num_headers = 13
     # get actual headers
     actual_strings_list = df.columns.tolist()
     # check number of data categories
-    if len(actual_strings_list) != 13:
+    if len(actual_strings_list) != num_headers:
         raise gd.DataError("Error: Number of data categories changed.")
 
     # These strings need to be in the header
