@@ -14,6 +14,10 @@ target_link_libraries(adapt_rk_example PRIVATE memilio)
 add_executable(ode_seir_example ode_seir.cpp)
 target_link_libraries(ode_seir_example PRIVATE memilio ode_seir)
 
+add_executable(ode_sir_example ode_sir.cpp)
+target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
+
+
 add_executable(ode_secir_example ode_secir.cpp)
 target_link_libraries(ode_secir_example PRIVATE memilio ode_secir)
 
