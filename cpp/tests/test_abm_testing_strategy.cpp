@@ -99,15 +99,14 @@ TEST(TestTestingScheme, runScheme)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(5))
+        .Times(testing::Exactly(4))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5))
-        .WillOnce(testing::Return(0.9));
+        .WillOnce(testing::Return(0.5));
     ASSERT_EQ(testing_scheme1.run_scheme(person1, loc_home, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme1.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme2.run_scheme(person1, loc_home, start_date),
-              true); // Person is in quarantine and wants to go home -> can do so
-    ASSERT_EQ(testing_scheme1.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
+    ASSERT_EQ(testing_scheme2.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
+    ASSERT_EQ(testing_scheme1.run_scheme(person1, loc_home, start_date),
+              false); // Person is in quarantine and wants to go home -> can do so
+    ASSERT_EQ(testing_scheme2.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
 }

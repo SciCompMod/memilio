@@ -91,14 +91,15 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
             auto& target_location = find_location(target_type, *person);
             auto current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(*person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(target_location);
-                    if (wears_mask) {
-                        person->migrate_to(target_location);
+            if (target_location != current_location) {
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    if (target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(target_location);
+                        if (wears_mask) {
+                            person->migrate_to(target_location);
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }

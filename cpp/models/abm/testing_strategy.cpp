@@ -53,6 +53,7 @@ bool TestingScheme::is_active() const
 {
     return m_is_active;
 }
+
 void TestingScheme::update_activity_status(TimePoint t)
 {
     m_is_active = (m_start_date <= t && t <= m_end_date);
@@ -60,10 +61,10 @@ void TestingScheme::update_activity_status(TimePoint t)
 
 bool TestingScheme::run_scheme(Person& person, const Location& location, TimePoint t) const
 {
-    if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
-        double random = UniformDistribution<double>::get_instance()();
-        if (random < m_probability) {
-            if (m_testing_criteria.evaluate(person, location, t)) {
+    if (m_testing_criteria.evaluate(person, location, t)) {
+        if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
+            double random = UniformDistribution<double>::get_instance()();
+            if (random < m_probability) {
                 return !person.get_tested(t, m_test_type.get_default());
             }
         }

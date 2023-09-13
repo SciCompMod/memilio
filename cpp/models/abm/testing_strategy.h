@@ -48,25 +48,9 @@ public:
      */
     TestingCriteria() = default;
 
-    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<Location>& locations,
+    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<L>& locations,
                     const std::vector<InfectionState>& infection_states)
-        : m_ages()
-        , m_locations(locations)
-        , m_infection_states()
-    {
-        for (auto age : ages) {
-            m_ages.set((size_t)age, true);
-        }
-        for (auto infection_state : infection_states) {
-            m_infection_states.set((size_t)infection_state, true);
-        }
-    }
-
-    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<LocationType>& locations,
-                    const std::vector<InfectionState>& infection_states)
-        : m_ages()
-        , m_locations(locations)
-        , m_infection_states()
+        : m_locations(locations)
     {
         for (auto age : ages) {
             m_ages.set((size_t)age, true);
