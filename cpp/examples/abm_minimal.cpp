@@ -175,7 +175,7 @@ int main()
 
         LIKWID_MARKER_STOP("simulation");
 
-        LIKWID-MARKER_STOP("all");
+        LIKWID_MARKER_STOP("all");
 
         LIKWID_MARKER_CLOSE;
 
