@@ -27,6 +27,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
+#include "abm/vaccine.h"
 
 namespace fs = boost::filesystem;
 
