@@ -275,6 +275,8 @@ TEST(TestWorld, evolveMigration)
         data.add_trip(trip2);
         data.add_trip(trip3);
 
+        data.use_weekday_trips_on_weekend();
+
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
             mock_exponential_dist;
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
@@ -296,17 +298,34 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(home.get_number_persons(), 1);
         EXPECT_EQ(hospital.get_number_persons(), 1);
 
-        t            = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
+        p1.migrate_to(home);
+        p2.migrate_to(home);
+        p5.migrate_to(work);
+
+        t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
+
+        world.evolve(t, dt);
+
+        EXPECT_EQ(p1.get_location(), work);
+        EXPECT_EQ(p2.get_location(), event);
+        EXPECT_EQ(p4.get_location(), home);
+        EXPECT_EQ(p5.get_location(), event);
+        EXPECT_EQ(event.get_number_persons(), 2);
+        EXPECT_EQ(work.get_number_persons(), 1);
+        EXPECT_EQ(home.get_number_persons(), 1);
+
         bool weekend = true;
-        mio::abm::Trip tripweekend1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9),
-                                    event_id, work_id);
-        mio::abm::Trip tripweekend2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9),
-                                    home_id, event_id);
-        mio::abm::Trip tripweekend3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9),
-                                    work_id, event_id);
+        mio::abm::Trip tripweekend1(
+            p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id, work_id);
+        mio::abm::Trip tripweekend2(
+            p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id, event_id);
+        mio::abm::Trip tripweekend3(
+            p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id, event_id);
         data.add_trip(tripweekend1, weekend);
         data.add_trip(tripweekend2, weekend);
         data.add_trip(tripweekend3, weekend);
+
+        t += mio::abm::hours(1);
 
         world.evolve(t, dt);
 
