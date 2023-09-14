@@ -51,11 +51,13 @@ void write_results_to_file(const mio::abm::Simulation& sim)
 
 int main()
 {
-    for (int iter = 0; iter < 1000; iter++) {
+    for (int iter = 0; iter < 100000; iter++) {
 
         LIKWID_MARKER_INIT;
 
-        LIKWID_MARKER_START("region_1");
+        LIKWID_MARKER_START("all");
+
+        LIKWID_MARKER_START("initalization");
 
         // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
         mio::abm::GlobalInfectionParameters infection_params;
@@ -165,13 +167,15 @@ int main()
         auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
         auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-        LIKWID_MARKER_STOP("region_1");
+        LIKWID_MARKER_STOP("initalization");
 
-        LIKWID_MARKER_START("region_2");
+        LIKWID_MARKER_START("simulation");
 
         sim.advance(tmax);
 
-        LIKWID_MARKER_STOP("region_2");
+        LIKWID_MARKER_STOP("simulation");
+
+        LIKWID-MARKER_STOP("all");
 
         LIKWID_MARKER_CLOSE;
 
