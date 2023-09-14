@@ -25,8 +25,7 @@
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
 
-/*
-TEST(TestSeir, simulateDefault)
+TEST(TestSir, simulateDefault)
 {
     double t0   = 0;
     double tmax = 1;
@@ -38,7 +37,7 @@ TEST(TestSeir, simulateDefault)
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
 
-TEST(TestSeir, CompareSeirWithJS)
+TEST(TestSir, CompareSirWithJS)
 {
     // initialization
     double t0   = 0.;
@@ -49,22 +48,19 @@ TEST(TestSeir, CompareSeirWithJS)
 
     mio::osir::Model model;
 
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Exposed)}]   = 10000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}] = 1000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Exposed)}] -
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}];
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1.0);
-    model.parameters.set<mio::osir::TimeExposed>(5.2);
     model.parameters.set<mio::osir::TimeInfected>(2);
 
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    std::vector<std::vector<double>> refData = load_test_data_csv<double>("seir-js-compare.csv");
+    std::vector<std::vector<double>> refData = load_test_data_csv<double>("sir-js-compare.csv");
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
     auto result                              = mio::simulate<mio::osir::Model>(t0, tmax, dt, model, integrator);
 
@@ -95,7 +91,7 @@ TEST(TestSeir, CompareSeirWithJS)
     }
 }
 
-TEST(TestSeir, checkPopulationConservation)
+TEST(TestSir, checkPopulationConservation)
 {
     // initialization
     double t0   = 0.;
@@ -106,16 +102,13 @@ TEST(TestSeir, checkPopulationConservation)
 
     mio::osir::Model model;
 
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Exposed)}]   = 10000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}] = 1000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Exposed)}] -
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}];
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1.0);
-    model.parameters.set<mio::osir::TimeExposed>(5.2);
     model.parameters.set<mio::osir::TimeInfected>(2);
 
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
@@ -128,10 +121,9 @@ TEST(TestSeir, checkPopulationConservation)
     EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
 
-TEST(TestSeir, check_constraints_parameters)
+TEST(TestSir, check_constraints_parameters)
 {
     mio::osir::Model model;
-    model.parameters.set<mio::osir::TimeExposed>(5.2);
     model.parameters.set<mio::osir::TimeInfected>(6);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 10;
@@ -141,10 +133,8 @@ TEST(TestSeir, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
-    model.parameters.set<mio::osir::TimeExposed>(-5.2);k
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osir::TimeExposed>(5.2);
     model.parameters.set<mio::osir::TimeInfected>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -155,10 +145,9 @@ TEST(TestSeir, check_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(TestSeir, apply_constraints_parameters)
+TEST(TestSir, apply_constraints_parameters)
 {
     mio::osir::Model model;
-    model.parameters.set<mio::osir::TimeExposed>(5.2);
     model.parameters.set<mio::osir::TimeInfected>(6);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 10;
@@ -166,9 +155,7 @@ TEST(TestSeir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
-    model.parameters.set<mio::osir::TimeExposed>(-5.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osir::TimeExposed>(), 1e-4);
 
     model.parameters.set<mio::osir::TimeInfected>(1e-5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
@@ -180,5 +167,3 @@ TEST(TestSeir, apply_constraints_parameters)
 
     mio::set_log_level(mio::LogLevel::warn);
 }
-
-*/
