@@ -237,8 +237,8 @@ TEST(TestWorld, evolveMigration)
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
         auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
 
-        auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
-                                   mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto& p1 =
+            add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible, t);
         auto& p2 =
             add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible, t);
         auto& p3 =
@@ -264,7 +264,7 @@ TEST(TestWorld, evolveMigration)
         mio::abm::TripList& data = world.get_trip_list();
         mio::abm::Trip trip1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
         mio::abm::Trip trip2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
-        mio::abm::Trip trip3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, work_id);
+        mio::abm::Trip trip3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
         data.add_trip(trip1);
         data.add_trip(trip2);
         data.add_trip(trip3);
@@ -294,7 +294,7 @@ TEST(TestWorld, evolveMigration)
 
         p1.migrate_to(home);
         p2.migrate_to(home);
-        p5.migrate_to(work);
+        p5.migrate_to(home);
 
         t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
 
@@ -302,11 +302,12 @@ TEST(TestWorld, evolveMigration)
 
         EXPECT_EQ(p1.get_location(), work);
         EXPECT_EQ(p2.get_location(), event);
+        EXPECT_EQ(p3.get_location(), home);
         EXPECT_EQ(p4.get_location(), home);
         EXPECT_EQ(p5.get_location(), event);
         EXPECT_EQ(event.get_number_persons(), 2);
         EXPECT_EQ(work.get_number_persons(), 1);
-        EXPECT_EQ(home.get_number_persons(), 1);
+        EXPECT_EQ(home.get_number_persons(), 2);
 
         bool weekend = true;
         mio::abm::Trip tripweekend1(
@@ -325,11 +326,12 @@ TEST(TestWorld, evolveMigration)
 
         EXPECT_EQ(p1.get_location(), event);
         EXPECT_EQ(p2.get_location(), home);
+        EXPECT_EQ(p3.get_location(), home);
         EXPECT_EQ(p4.get_location(), home);
         EXPECT_EQ(p5.get_location(), work);
         EXPECT_EQ(event.get_number_persons(), 1);
         EXPECT_EQ(work.get_number_persons(), 1);
-        EXPECT_EQ(home.get_number_persons(), 2);
+        EXPECT_EQ(home.get_number_persons(), 3);
     }
 
     // Test that a dead person cannot make a movement
@@ -398,7 +400,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto& work        = world.get_individualized_location(work_id);
     auto current_time = mio::abm::TimePoint(0);
     auto person       = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
-                                  mio::abm::InfectionState::InfectedSymptoms, current_time);
+                                        mio::abm::InfectionState::InfectedSymptoms, current_time);
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
