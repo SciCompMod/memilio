@@ -1,0 +1,65 @@
+#include "pybind_util.h"
+#include "utils/index.h"
+#include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
+#include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/populations.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "memilio/data/analyze_result.h"
+
+namespace py = pybind11;
+
+namespace pymio
+{
+//specialization of pretty_name
+template <>
+std::string pretty_name<mio::osir::InfectionState>()
+{
+    return "InfectionState";
+}
+
+} // namespace pymio
+
+PYBIND11_MODULE(_simulation_osir, m)
+{
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("abs_tol") = 1e-14);
+
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("interpolation_times"));
+
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+
+    pymio::iterable_enum<mio::osir::InfectionState>(m, "InfectionState")
+        .value("Susceptible", mio::osir::InfectionState::Susceptible)
+        .value("Infected", mio::osir::InfectionState::Infected)
+        .value("Removed", mio::osir::InfectionState::Removed);
+
+    pymio::bind_ParameterSet<mio::osir::ParametersBase>(m, "ParametersBase");
+
+    py::class_<mio::osir::Parameters, mio::osir::ParametersBase>(m, "Parameters")
+        .def(py::init<>())
+        .def("check_constraints", &mio::osir::Parameters::check_constraints);
+
+    using Populations = mio::Populations<mio::osir::InfectionState>;
+    pymio::bind_Population(m, "Population", mio::Tag<mio::osir::Model::Populations>{});
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters>(m, "ModelBase");
+    py::class_<mio::osir::Model,
+               mio::CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters>>(m, "Model")
+        .def(py::init<>());
+
+    m.def(
+        "simulate",
+        [](double t0, double tmax, double dt, const mio::osir::Model& model) {
+            return mio::simulate(t0, tmax, dt, model);
+        },
+        "Simulates a osir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+
+    m.attr("__version__") = "dev";
+}
