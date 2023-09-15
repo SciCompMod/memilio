@@ -97,6 +97,17 @@ int main()
         severePerInfectedSymptoms += (age_group_sizes[i] / total) * severePerInfectedSymptomsdummy;
     }
 
+    // for IDE model
+    const double timeInfectedSymptomstoRecovered =
+        0.5 * (timeInfectedSymptomstoRecoveredMin + timeInfectedSymptomstoRecoveredMax);
+    double timeInfectedSymptomstoInfectedSevere = 0;
+
+    for (int i = 0; i < numagegroups; i++) {
+        timeInfectedSymptomstoInfectedSevere +=
+            (age_group_sizes[i] / total) * 0.5 *
+            (timeInfectedSymptomstoInfectedSevereMin[i] + timeInfectedSymptomstoInfectedSevereMax[i]);
+    }
+
     // C
     const double timeInfectedNoSymptomstoInfectedSymptoms = 5.2 - timeExposed;
     const double timeInfectedNoSymptomstoRecovered =
@@ -183,5 +194,14 @@ int main()
     if (printResult) {
         std::cout << "timeInfectedCritical: " << timeInfectedCritical << std::endl;
         std::cout << "deathsPerCritical: " << deathsPerCritical << std::endl;
+    }
+
+    if (printResult) {
+        std::cout << "\nFor IDE model: " << std::endl;
+        std::cout << "timeInfectedNoSymptomstoInfectedSymptoms: " << timeInfectedNoSymptomstoInfectedSymptoms
+                  << std::endl;
+        std::cout << "timeInfectedNoSymptomstoRecovered: " << timeInfectedNoSymptomstoRecovered << std::endl;
+        std::cout << "timeInfectedSymptomstoInfectedSevere: " << timeInfectedSymptomstoInfectedSevere << std::endl;
+        std::cout << "timeInfectedSymptomstoRecovered: " << timeInfectedSymptomstoRecovered << std::endl;
     }
 }

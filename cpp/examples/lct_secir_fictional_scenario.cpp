@@ -76,7 +76,6 @@ int main()
     at the beginning of the simulation. Therefore we initalize the flows accordingly constant for 
     SusceptiblesToExposed and derive matching values for the other flows.*/
     // 7-Tage-Inzidenz at 15.10.2020 was 34.1, see https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Okt_2020/2020-10-15-de.pdf?__blob=publicationFile.
-    // 1.5 are the undetected cases
     ScalarType SusceptibleToExposed_const = (34.1 / 7) * total_population / 100000;
     ScalarType total_confirmed_cases      = 341223;
     ScalarType deaths                     = 9710;
