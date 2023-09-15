@@ -96,6 +96,8 @@ int main()
         threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
         add_household_group_to_world(world, threePersonHousehold_group);
 
+        LIKWID_MARKER_START("social_events");
+        
         // Add one social event with 5 maximum contacts.
         // Maximum contacs limit the number of people that a person can infect while being at this location.
         auto event = world.add_location(mio::abm::LocationType::SocialEvent);
@@ -114,6 +116,8 @@ int main()
         // At every workplace, maximum contacts are 10.
         auto work = world.add_location(mio::abm::LocationType::Work);
         world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+
+        LIKWID_MARKER_STOP("social_events");
 
         // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
         auto testing_min_time = mio::abm::days(1);
