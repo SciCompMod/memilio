@@ -93,7 +93,6 @@ public:
         // set population to zero in mobility nodes before starting
         for (auto& n : m_graph.nodes()) {
             n.node_pt.get_result().get_last_value().setZero();
-            n.node_pt.get_simulation().get_model().populations.set_total(0);
         }
 
         auto min_dt    = 0.01;
@@ -119,13 +118,8 @@ public:
                 for (const auto& edge_indx : edges_mobility[indx_schedule]) {
                     auto& e = m_graph.edges()[edge_indx];
                     if (indx_schedule == first_mobility[edge_indx]) {
-                        auto& node_from = mobility_schedule_edges[edge_indx][indx_schedule - 1]
-                                              ? m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].node_pt
-                                              : m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
-
-                        auto& node_to = mobility_schedule_edges[edge_indx][indx_schedule]
-                                            ? m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt
-                                            : m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property;
+                        auto& node_from = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
+                        auto& node_to   = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt;
                         m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
                     }
                     else if (indx_schedule > first_mobility[edge_indx]) {
@@ -141,9 +135,20 @@ public:
                             std::distance(integrator_schedule_row.begin(),
                                           std::lower_bound(integrator_schedule_row.begin(),
                                                            integrator_schedule_row.end(), indx_schedule));
-                        const ScalarType dt_mobility = round_second_decimal(
-                            (integrator_schedule_row[indx_current] - integrator_schedule_row[indx_current - 1]) / 100 +
-                            epsilon);
+
+                        ScalarType dt_mobility;
+                        if (indx_current == 0) {
+                            dt_mobility = round_second_decimal(e.traveltime / e.path.size());
+                            if (dt_mobility < 0.01)
+                                dt_mobility = 0.01;
+                        }
+                        else {
+                            dt_mobility =
+                                round_second_decimal((static_cast<double>(integrator_schedule_row[indx_current]) -
+                                                      static_cast<double>(integrator_schedule_row[indx_current - 1])) /
+                                                         100 +
+                                                     epsilon);
+                        }
 
                         // We have two cases. Either, we want to send the individuals to the next node, or we just want
                         // to update their state since a syncronization step is necessary in the current node.
@@ -208,7 +213,7 @@ public:
                     }
 
                     // integration is only necessary if there are still people in the mobility node
-                    if (m_graph.nodes()[n_indx].node_pt.get_result().get_last_value().sum() > 10) {
+                    if (m_graph.nodes()[n_indx].node_pt.get_result().get_last_value().sum() > 100) {
                         const size_t indx_current =
                             std::distance(mb_int_schedule[n_indx].begin(),
                                           std::lower_bound(mb_int_schedule[n_indx].begin(),
@@ -240,7 +245,7 @@ public:
             // messe die zeit, wie lange eine iteration bis zu dieser stelle dauert
             auto end                                      = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsed_seconds = end - start;
-            std::cout << "Time (min) needed per Iteration is " << elapsed_seconds.count() / 60 << "s\n";
+            std::cout << "Time (min) needed per Iteration is " << elapsed_seconds.count() / 60 << "min\n";
         }
     }
 
@@ -460,11 +465,13 @@ private:
             indx_edge = 0;
             for (auto& e : m_graph.edges()) {
                 auto current_node_indx = schedule_edges[indx_edge][indx_current];
-                if (std::binary_search(mb_int_schedule[current_node_indx].begin(),
-                                       mb_int_schedule[current_node_indx].end(), indx_current) ||
-                    std::binary_search(ln_int_schedule[current_node_indx].begin(),
-                                       ln_int_schedule[current_node_indx].end(), indx_current)) {
-                    temp_edge_mobility.push_back(indx_edge);
+                if (indx_current >= first_mobility[indx_edge]) {
+                    if (std::binary_search(mb_int_schedule[current_node_indx].begin(),
+                                           mb_int_schedule[current_node_indx].end(), indx_current) ||
+                        std::binary_search(ln_int_schedule[current_node_indx].begin(),
+                                           ln_int_schedule[current_node_indx].end(), indx_current)) {
+                        temp_edge_mobility.push_back(indx_edge);
+                    }
                 }
                 indx_edge++;
             }

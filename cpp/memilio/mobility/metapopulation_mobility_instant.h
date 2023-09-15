@@ -493,9 +493,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
                 get_migration_factors(node_from, t, node_from.get_last_state()).array())
                    .matrix());
         m_return_times.add_time_point(t + dt);
-
-        // test_commuters(node_from, m_migrated.get_last_value(), t);
-
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
     }
@@ -506,7 +503,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
         update_status_mobility(m_migrated[idx], node_from.get_simulation(), integrator_node,
                                node_from.get_result().get_last_value(), t, dt);
-
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
 
