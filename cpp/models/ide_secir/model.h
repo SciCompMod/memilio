@@ -47,10 +47,11 @@ public:
     * @param[in] dt_init The size of the time step used for numerical simulation.
     * @param[in] N_init The population of the considered region.
     * @param[in] Dead_before The total number of deaths at the time point - dt_init.
+    * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
-          const ParameterSet& Parameterset_init = ParameterSet());
+          ScalarType total_confirmed_cases = 0, const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
     * @brief Checks constraints on model parameters.
@@ -206,6 +207,7 @@ private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
     ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
+    ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
 };
 
 } // namespace isecir
