@@ -57,8 +57,6 @@ int main()
 
         LIKWID_MARKER_START("all");
 
-        LIKWID_MARKER_START("initalization");
-
         // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
         mio::abm::GlobalInfectionParameters infection_params;
 
@@ -95,8 +93,6 @@ int main()
         threePersonHousehold_full.add_members(parent, 2);
         threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
         add_household_group_to_world(world, threePersonHousehold_group);
-
-        LIKWID_MARKER_START("social_events");
         
         // Add one social event with 5 maximum contacts.
         // Maximum contacs limit the number of people that a person can infect while being at this location.
@@ -116,8 +112,6 @@ int main()
         // At every workplace, maximum contacts are 10.
         auto work = world.add_location(mio::abm::LocationType::Work);
         world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
-
-        LIKWID_MARKER_STOP("social_events");
 
         // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
         auto testing_min_time = mio::abm::days(1);
@@ -170,8 +164,6 @@ int main()
         auto t0   = mio::abm::TimePoint(0);
         auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
         auto sim  = mio::abm::Simulation(t0, std::move(world));
-
-        LIKWID_MARKER_STOP("initalization");
 
         LIKWID_MARKER_START("simulation");
 
