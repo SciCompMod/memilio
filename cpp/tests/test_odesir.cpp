@@ -68,9 +68,8 @@ TEST(Testsir, ComparesirWithJS)
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
     auto result                              = mio::simulate<mio::osir::Model>(t0, tmax, dt, model, integrator);
 
-    //TEST SCHEINT HIER ZU FAILEN 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
-
+    
     
     for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
         double t     = refData[static_cast<size_t>(irow)][0];
@@ -83,18 +82,23 @@ TEST(Testsir, ComparesirWithJS)
         }
         else if (t > 13.0) {
             //minor divergence after damping
-            rel_tol = 1e-2;
+           rel_tol = 1e-2;
         }
 
         ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
-        for (size_t icol = 0; icol < 4; ++icol) {
+        
+        
+        for (size_t icol = 0; icol < 3; ++icol) {
             double ref    = refData[static_cast<size_t>(irow)][icol + 1];
             double actual = result[irow][icol];
 
             double tol = rel_tol * ref;
+            //PROBLEM HIER
             ASSERT_NEAR(ref, actual, tol) << "at row " << irow;
         }
+        
     }
+    
     
 }
 

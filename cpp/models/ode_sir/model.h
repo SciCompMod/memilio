@@ -40,11 +40,6 @@ public:
             - (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Removed] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        printf("S = %f\n", pop[(size_t)InfectionState::Susceptible]);
-        printf("I = %f\n", pop[(size_t)InfectionState::Infected]);
-        printf("R = %f\n", pop[(size_t)InfectionState::Removed]);  
-        printf("N = %f\n", pop[(size_t)InfectionState::Susceptible]+pop[(size_t)InfectionState::Infected]+pop[(size_t)InfectionState::Removed]);
-
 
     }
 };
