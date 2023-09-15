@@ -1,3 +1,4 @@
+
 #include "pybind_util.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
@@ -5,8 +6,8 @@
 #include "compartments/simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
-#include "ode_seir/model.h"
-#include "ode_seir/infection_state.h"
+#include "ode_sir/model.h"
+#include "ode_sir/infection_state.h"
 #include "memilio/data/analyze_result.h"
 
 namespace py = pybind11;
