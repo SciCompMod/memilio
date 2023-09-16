@@ -32,7 +32,7 @@
 int main()
 {
     bool save_result   = true;
-    bool print_result  = true;
+    bool print_result  = false;
     using Vec          = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet = mio::lsecir::Parameters;
 
@@ -45,13 +45,14 @@ int main()
     parameters.get<mio::lsecir::TimeExposed>()                      = 3.335;
     parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.31331;
     parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.94547;
-    parameters.get<mio::lsecir::TimeInfectedSevere>()               = 7.28196;
-    parameters.get<mio::lsecir::TimeInfectedCritical>()             = 13.066;
+    parameters.get<mio::lsecir::TimeInfectedSevere>()               = 11.634346;
+    parameters.get<mio::lsecir::TimeInfectedCritical>()             = 17.476959;
     parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
     mio::ContactMatrixGroup& contact_matrix = parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
+    //contact_matrix[0].add_damping(0., mio::SimulationTime(4.9));
+    //contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
     /*contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
     contact_matrix[0].add_damping(0.5, mio::SimulationTime(-10.));
     contact_matrix[0].add_damping(0.5, mio::SimulationTime(4.9));
@@ -65,7 +66,7 @@ int main()
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.173176;
     parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.217177;
 
-    // The initialization vector for the LCT model is calculated by defining transitions.
+    // --- first initialization method: The initialization vector for the LCT model is calculated by defining transitions.
     // Create TimeSeries with num_transitions elements.
     int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> init(num_transitions);
@@ -109,12 +110,11 @@ int main()
     init.add_time_point(-200, init_transitions);
     // add further time points until time 0
     while (init.get_last_time() < 0) {
-        //init_transitions *=  1.01;
         init.add_time_point(init.get_last_time() + dt_flows, init_transitions);
     }
 
     // Set vector that specifies the number of subcompartments.
-    int num_subcompartments = 10;
+    int num_subcompartments = 20;
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments;
@@ -131,23 +131,24 @@ int main()
 
     // Initialize model and perform simulation.
     mio::lsecir::Model model(std::move(init_compartments), infectionStates, std::move(parameters));
-    mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(
+    mio::TimeSeries<ScalarType> result_transitions = mio::lsecir::simulate(
         0, tmax, 0.5, model,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
                                                                                                          0.1));
     // Calculate result without division in subcompartments.
-    mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
+    mio::TimeSeries<ScalarType> populations_transitions = model.calculate_populations(result_transitions);
 
     if (print_result) {
-        mio::lsecir::print_TimeSeries(populations, model.get_heading_CompartmentsBase());
+        mio::lsecir::print_TimeSeries(populations_transitions, model.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        auto save_result_status_subcompartments =
-            mio::save_result({result}, {0}, 1, "result_lct_subcompartments_real.h5");
-        auto save_result_status = mio::save_result({populations}, {0}, 1, "result_lct_real.h5");
+        // auto save_result_status_subcompartments =
+        //  mio::save_result({result_transitions}, {0}, 1, "lct_init_transitions_subcompartments_real.h5");
+        auto save_result_status = mio::save_result({populations_transitions}, {0}, 1, "lct_init_transitions.h5");
     }
 
-    // Perform an other simulation with a different (mean values).
+    // --- second initialization method: The initialization vector for the LCT model is calculated by taking expected sojourn times.
+    // Because of the constant initialization, the constant value of SusceptibleToExposed is scaled by expected sojourn time
     Eigen::VectorXd init_vec((int)mio::lsecir::InfectionStateBase::Count);
     init_vec[(int)mio::lsecir::InfectionStateBase::Exposed] =
         SusceptibleToExposed_const * parameters.get<mio::lsecir::TimeExposed>();
@@ -177,6 +178,7 @@ int main()
         init_vec[(int)mio::lsecir::InfectionStateBase::Recovered] -
         init_vec[(int)mio::lsecir::InfectionStateBase::Dead];
 
+    // Constant initialization leads to equally distributed values accross substates
     Eigen::VectorXd init_mean(infectionStates.get_count());
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
         for (int j = infectionStates.get_firstindex(i);
@@ -198,23 +200,23 @@ int main()
         mio::lsecir::print_TimeSeries(populations2, model2.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        auto save_result_status_subcompartments2 =
-            mio::save_result({result2}, {0}, 1, "result_lct_subcompartments_initmean.h5");
-        auto save_result_status2 = mio::save_result({populations2}, {0}, 1, "result_lct_initmean.h5");
+        //auto save_result_status_subcompartments2 =
+        //    mio::save_result({result2}, {0}, 1, "result_lct_subcompartments_initmean.h5");
+        auto save_result_status2 = mio::save_result({populations2}, {0}, 1, "lct_init_mean.h5");
     }
 
-    // jump start initialization
-    Eigen::VectorXd init_jump(infectionStates.get_count());
+    // --- third initialization method: Initial values are distributed only in the first substates.
+    Eigen::VectorXd init_first = Eigen::VectorXd::Zero(infectionStates.get_count());
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
-        init_jump[infectionStates.get_firstindex(i)] = init_vec[i];
-        for (int j = infectionStates.get_firstindex(i) + 1;
+        init_first[infectionStates.get_firstindex(i)] = init_vec[i];
+        /*for (int j = infectionStates.get_firstindex(i) + 1;
              j < infectionStates.get_firstindex(i) + infectionStates.get_number(i); j++) {
-            init_jump[j] = 0;
-        }
+            init_first[j] = 0;
+        }*/
     }
 
     // Initialize model and perform simulation.
-    mio::lsecir::Model model3(std::move(init_jump), infectionStates, std::move(parameters));
+    mio::lsecir::Model model3(std::move(init_first), infectionStates, std::move(parameters));
     mio::TimeSeries<ScalarType> result3 = mio::lsecir::simulate(
         0, tmax, 0.5, model3,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
@@ -226,8 +228,8 @@ int main()
         mio::lsecir::print_TimeSeries(populations3, model3.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        auto save_result_status_subcompartments3 =
-            mio::save_result({result3}, {0}, 1, "result_lct_subcompartments_initjump.h5");
-        auto save_result_status2 = mio::save_result({populations3}, {0}, 1, "result_lct_initjump.h5");
+        //auto save_result_status_subcompartments3 =
+        //  mio::save_result({result3}, {0}, 1, "result_lct_subcompartments_initjump.h5");
+        auto save_result_status2 = mio::save_result({populations3}, {0}, 1, "lct_init_first.h5");
     }
 }

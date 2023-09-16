@@ -224,6 +224,8 @@ def plot_new_infections(files, legendplot, save=True):
     # define plot
     plt.figure(
         'Number of disease transmission compared for different models')
+    print(plt.style.available)
+    plt.style.use('seaborn-v0_8-dark-palette')
 
     # add results to plot
     for file in range(len(files)):
@@ -249,10 +251,10 @@ def plot_new_infections(files, legendplot, save=True):
 
         h5file.close()
 
-    plt.xlabel('Time', fontsize=14)
-    plt.ylabel('Number of disease transmission per day', fontsize=10)
+    plt.xlabel('Zeit', fontsize=14)
+    plt.ylabel('Neuansteckungen pro Tag', fontsize=10)
     plt.ylim(bottom=0)
-    plt.xlim(left=0)
+    plt.xlim(left=0, right=dates[-1])
     plt.legend(legendplot, fontsize=14)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
@@ -280,12 +282,14 @@ if __name__ == '__main__':
         data_dir, "result_lct_subcompartments"), save=True)"""
 
     # compare lct and ode model
-    compare_results([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_10")],
+    """compare_results([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_10")],
                     legendplot=list(["LCT1", "LCT10"]), save=True)
-    """plot_new_infections([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
-                        legendplot=list(["LCT", "ODE"]), save=True)"""
+    plot_new_infections([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
+                        legendplot=list(["LCT", "ODE"]), save=True)
     plot_new_infections([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_10")],
-                        legendplot=list(["LCT1", "LCT10"]), save=True)
+                        legendplot=list(["LCT1", "LCT10"]), save=True)"""
+    plot_new_infections([os.path.join(data_dir, "lct_init_transitions"), os.path.join(data_dir, "lct_init_mean"), os.path.join(data_dir, "lct_init_first")],
+                        legendplot=list(["transitions", "mean", "first"]), save=True)
 
     # plot_new_infections([os.path.join(data_dir, "result_lct_real"), os.path.join(data_dir, "result_lct_initmean"), os.path.join(data_dir, "result_lct_initjump")],
     #                    legendplot=list(["real", "mean", "jump"]), save=True)
