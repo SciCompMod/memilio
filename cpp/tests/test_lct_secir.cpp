@@ -96,13 +96,15 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     mio::osecir::Model model_ode(1);
 
     // Set population
-    model_ode.populations.set_total(init.sum());
+    //model_ode.populations.set_total(init.sum());
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::Exposed)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)];
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSymptoms)];
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSevere)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =
@@ -146,10 +148,27 @@ TEST(TestLCTSecir, compareWithOdeSecir)
                  std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     ASSERT_EQ(result_lct.get_num_time_points(), result_ode.get_num_time_points());
-    for (int i = 1; i < 4; ++i) {
-        for (int j = 0; j < model_lct.infectionStates.get_count(); ++j) {
-            ASSERT_NEAR(result_lct[i][j], result_ode[i][j], 1e-5);
-        }
+    for (int i = 0; i < 4; ++i) {
+        ASSERT_NEAR(result_lct.get_time(i), result_ode.get_time(i), 1e-5);
+
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::Susceptible],
+                    result_ode[i][(int)mio::osecir::InfectionState::Susceptible], 1e-5);
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::Exposed],
+                    result_ode[i][(int)mio::osecir::InfectionState::Exposed], 1e-5);
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms],
+                    result_ode[i][(int)mio::osecir::InfectionState::InfectedNoSymptoms], 1e-5);
+        ASSERT_NEAR(0, result_ode[i][(int)mio::osecir::InfectionState::InfectedNoSymptomsConfirmed], 1e-5);
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::InfectedSymptoms],
+                    result_ode[i][(int)mio::osecir::InfectionState::InfectedSymptoms], 1e-5);
+        ASSERT_NEAR(0, result_ode[i][(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed], 1e-5);
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::InfectedCritical],
+                    result_ode[i][(int)mio::osecir::InfectionState::InfectedCritical], 1e-5);
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::InfectedSevere],
+                    result_ode[i][(int)mio::osecir::InfectionState::InfectedSevere], 1e-5);
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::Recovered],
+                    result_ode[i][(int)mio::osecir::InfectionState::Recovered], 1e-5);
+        ASSERT_NEAR(result_lct[i][(int)mio::lsecir::InfectionStateBase::Dead],
+                    result_ode[i][(int)mio::osecir::InfectionState::Dead], 1e-5);
     }
 }
 
