@@ -29,29 +29,29 @@ namespace mio
 namespace isecir
 {
 
-Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before, ScalarType total_confirmed_cases,
+Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases,
              const ParameterSet& Parameterset_init)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
     , m_N{N_init}
-    , m_deaths_before{Dead_before}
     , m_total_confirmed_cases(total_confirmed_cases)
 {
+    m_deaths_before =
+        deaths - m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
     m_populations.add_time_point<Eigen::VectorXd>(
         0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
-    m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =
-        m_deaths_before + m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
+    m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = deaths;
 }
 
 void Model::initialize(ScalarType dt)
 {
-    if (m_total_confirmed_cases == 0) {
+    if (m_total_confirmed_cases < 1e-12) {
         // compute Susceptibles at time 0  and m_forceofinfection at time -m_dt as initial values for discretization scheme
         // use m_forceofinfection at -m_dt to be consistent with further calculations of S (see compute_susceptibles()),
         // where also the value of m_forceofinfection for the previous timestep is used
         update_forceofinfection(dt, true);
-        if (m_forceofinfection > 0) {
+        if (m_forceofinfection > 1e-12) {
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
                 m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
                 m_forceofinfection;
