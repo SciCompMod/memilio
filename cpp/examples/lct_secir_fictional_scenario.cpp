@@ -27,35 +27,39 @@
 #include "memilio/io/result_io.h"
 #include "memilio/utils/time_series.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include <math.h>
 #include <iostream>
 
 int main()
 {
-    bool save_result   = true;
+    bool save_result   = false;
     bool print_result  = false;
     using Vec          = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet = mio::lsecir::Parameters;
 
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
-    ScalarType tmax             = 100;
+    ScalarType tmax             = 20;
 
     // Define ParameterSet used for simulation and initialization.
     ParameterSet parameters;
     parameters.get<mio::lsecir::TimeExposed>()                      = 3.335;
     parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.31331;
     parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.94547;
-    parameters.get<mio::lsecir::TimeInfectedSevere>()               = 7.28196;
-    parameters.get<mio::lsecir::TimeInfectedCritical>()             = 13.066;
+    parameters.get<mio::lsecir::TimeInfectedSevere>()               = 11.634346;
+    parameters.get<mio::lsecir::TimeInfectedCritical>()             = 17.476959;
     parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
     mio::ContactMatrixGroup& contact_matrix = parameters.get<mio::lsecir::ContactPatterns>();
-    /*contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));*/
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(-10.));
+    // Perform simulation with dropping R0.
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+    contact_matrix[0].add_damping(0., mio::SimulationTime(4.9));
+    contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
+    // Perform simulation with rising R0.
+    /*contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
+    contact_matrix[0].add_damping(0.5, mio::SimulationTime(-200.));
     contact_matrix[0].add_damping(0.5, mio::SimulationTime(4.9));
-    contact_matrix[0].add_damping(0., mio::SimulationTime(5.));
+    contact_matrix[0].add_damping(0., mio::SimulationTime(5.));*/
 
     contact_matrix[0].finalize();
 
@@ -106,28 +110,39 @@ int main()
         (1 - parameters.get<mio::lsecir::DeathsPerCritical>());
     init_transitions = init_transitions * dt_flows;
 
-    // add initial time point to time series
+    // Add initial time point to time series.
     init.add_time_point(-200, init_transitions);
-    // add further time points until time 0
+    // Add further time points until time 0 with constant values.
     while (init.get_last_time() < 0) {
-        //init_transitions *=  1.01;
         init.add_time_point(init.get_last_time() + dt_flows, init_transitions);
     }
 
     // Set vector that specifies the number of subcompartments.
-    int num_subcompartments = 1;
+    /*int num_subcompartments = 20;
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = num_subcompartments;
+    mio::lsecir::InfectionState infectionStates(vec_subcompartments);*/
+
+    // For approximately soujourn time of one day in each Subcompartment
+    std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
+    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
+        round(parameters.get<mio::lsecir::TimeExposed>());
+    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
+        round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
+    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
+        round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
+    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
+        round(parameters.get<mio::lsecir::TimeInfectedSevere>());
+    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
+        round(parameters.get<mio::lsecir::TimeInfectedCritical>());
     mio::lsecir::InfectionState infectionStates(vec_subcompartments);
 
-    mio::TimeSeries<ScalarType> init_copy(init);
-
     // Get initialization vector for LCT model with num_subcompartments subcompartments.
-    mio::lsecir::Initializer initializer(std::move(init_copy), infectionStates, std::move(parameters));
+    mio::lsecir::Initializer initializer(std::move(init), infectionStates, std::move(parameters));
     auto init_compartments = initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
     // Initialize model and perform simulation.
@@ -143,42 +158,8 @@ int main()
         mio::lsecir::print_TimeSeries(populations, model.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        auto save_result_status_subcompartments =
-            mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_1.h5");
-        auto save_result_status = mio::save_result({populations}, {0}, 1, "result_lct_fictional_1.h5");
-    }
-
-    // Perform an other simulation with a different number of subcompartments.
-    // Set vector that specifies the number of subcompartments.
-    int num_subcompartments2 = 10;
-    std::vector<int> vec_subcompartments2((int)mio::lsecir::InfectionStateBase::Count, 1);
-    vec_subcompartments2[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments2;
-    vec_subcompartments2[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments2;
-    vec_subcompartments2[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = num_subcompartments2;
-    vec_subcompartments2[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = num_subcompartments2;
-    vec_subcompartments2[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = num_subcompartments2;
-    mio::lsecir::InfectionState infectionStates2(vec_subcompartments2);
-
-    // Get initialization vector for LCT model with num_subcompartments subcompartments.
-    mio::lsecir::Initializer initializer2(std::move(init), infectionStates2, std::move(parameters));
-    auto init_compartments2 =
-        initializer2.compute_initializationvector(total_population, deaths, total_confirmed_cases);
-
-    // Initialize model and perform simulation.
-    mio::lsecir::Model model2(std::move(init_compartments2), infectionStates2, std::move(parameters));
-    mio::TimeSeries<ScalarType> result2 = mio::lsecir::simulate(
-        0, tmax, 0.5, model2,
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
-                                                                                                         0.1));
-    // Calculate result without division in subcompartments.
-    mio::TimeSeries<ScalarType> populations2 = model2.calculate_populations(result2);
-
-    if (print_result) {
-        mio::lsecir::print_TimeSeries(populations2, model2.get_heading_CompartmentsBase());
-    }
-    if (save_result) {
-        auto save_result_status_subcompartments2 =
-            mio::save_result({result2}, {0}, 1, "result_lct_subcompartments_fictional_10.h5");
-        auto save_result_status2 = mio::save_result({populations2}, {0}, 1, "result_lct_fictional_10.h5");
+        //auto save_result_status_subcompartments =
+        //   mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_1.h5");
+        auto save_result_status = mio::save_result({populations}, {0}, 1, "result_lct_fictional_var.h5");
     }
 }
