@@ -580,7 +580,7 @@ public:
 private:
     Parameters(ParametersBase<FP>&& base)
         : ParametersBase<FP>(std::move(base))
-        , m_num_groups(get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
+        , m_num_groups(this->template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
     {
     }
 
