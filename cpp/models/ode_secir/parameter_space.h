@@ -198,9 +198,9 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
     draw_sample_infection(shared_params_model);
-    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns>();
+    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns<FP>>();
     shared_contacts.draw_sample_dampings();
-    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
+    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
     shared_dynamic_npis.draw_sample();
 
     for (auto& params_node : graph.nodes()) {
@@ -211,15 +211,15 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
 
         //copy global parameters
         //save demographic parameters so they aren't overwritten
-        auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
-        auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
-        auto local_holidays     = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
+        auto local_icu_capacity = node_model.parameters.template get<ICUCapacity<FP>>();
+        auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity<FP>>();
+        auto local_holidays     = node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays();
         node_model.parameters   = shared_params_model.parameters;
-        node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
-        node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
-        node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
+        node_model.parameters.template get<ICUCapacity<FP>>()                           = local_icu_capacity;
+        node_model.parameters.template get<TestAndTraceCapacity<FP>>()                  = local_tnt_capacity;
+        node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays() = local_holidays;
 
-        node_model.parameters.template get<ContactPatterns>().make_matrix();
+        node_model.parameters.template get<ContactPatterns<FP>>().make_matrix();
         node_model.apply_constraints();
 
         sampled_graph.add_node(params_node.id, node_model);
