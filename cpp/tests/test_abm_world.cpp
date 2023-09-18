@@ -108,6 +108,10 @@ TEST(TestWorld, findLocation)
     ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person), work);
     ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person), school);
     ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person), home);
+
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person).get_index(), work.get_index());
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person).get_index(), school.get_index());
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person).get_index(), home.get_index());
 }
 
 TEST(TestWorld, evolveStateTransition)
