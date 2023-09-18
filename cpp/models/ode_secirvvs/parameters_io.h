@@ -1127,29 +1127,26 @@ IOResult<void> export_input_data_county_timeseries(
                                      double(extrapolated_rki[county][day](
                                          (size_t)InfectionState::SusceptibleImprovedImmunity + age_group_offset))));
 
-                    extrapolated_rki[county][day]((size_t)InfectionState::ExposedImprovedImmunity + age_group_offset)
-
-                        extrapolated_rki[county][day]((size_t)InfectionState::SusceptiblePartialImmunity +
-                                                      age_group_offset) =
-                            std::max(
-                                0.0,
-                                S_pv -
-                                    extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity +
-                                                                  age_group_offset) -
-                                    extrapolated_rki[county][day](
-                                        (size_t)InfectionState::InfectedNoSymptomsPartialImmunity + age_group_offset) -
-                                    extrapolated_rki[county][day](
-                                        (size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
-                                        age_group_offset) -
-                                    extrapolated_rki[county][day](
-                                        (size_t)InfectionState::InfectedSymptomsPartialImmunity + age_group_offset) -
-                                    extrapolated_rki[county][day](
-                                        (size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
-                                        age_group_offset) -
-                                    extrapolated_rki[county][day](
-                                        (size_t)InfectionState::InfectedSeverePartialImmunity + age_group_offset) -
-                                    extrapolated_rki[county][day](
-                                        (size_t)InfectionState::InfectedCriticalPartialImmunity + age_group_offset));
+                    extrapolated_rki[county][day]((size_t)InfectionState::SusceptiblePartialImmunity +
+                                                  age_group_offset) =
+                        std::max(0.0,
+                                 S_pv -
+                                     extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity +
+                                                                   age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedNoSymptomsPartialImmunity + age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
+                                         age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedSymptomsPartialImmunity + age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
+                                         age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedSeverePartialImmunity + age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedCriticalPartialImmunity + age_group_offset));
 
                     extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleNaive + age_group_offset) =
                         num_population[county][age] -
