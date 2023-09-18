@@ -136,6 +136,10 @@ public:
                                           std::lower_bound(integrator_schedule_row.begin(),
                                                            integrator_schedule_row.end(), indx_schedule));
 
+                        if (integrator_schedule_row[indx_current] != indx_schedule)
+                            std::cout << "Error in schedule."
+                                      << "\n";
+
                         ScalarType dt_mobility;
                         if (indx_current == 0) {
                             dt_mobility = round_second_decimal(e.traveltime / e.path.size());
@@ -466,16 +470,18 @@ private:
             for (auto& e : m_graph.edges()) {
                 auto current_node_indx = schedule_edges[indx_edge][indx_current];
                 if (indx_current >= first_mobility[indx_edge]) {
-                    if (std::binary_search(mb_int_schedule[current_node_indx].begin(),
-                                           mb_int_schedule[current_node_indx].end(), indx_current) ||
-                        std::binary_search(ln_int_schedule[current_node_indx].begin(),
-                                           ln_int_schedule[current_node_indx].end(), indx_current)) {
+                    if (mobility_schedule_edges[indx_edge][indx_current] &&
+                        std::binary_search(mb_int_schedule[current_node_indx].begin(),
+                                           mb_int_schedule[current_node_indx].end(), indx_current))
                         temp_edge_mobility.push_back(indx_edge);
-                    }
+                    else if (!mobility_schedule_edges[indx_edge][indx_current] &&
+                             std::binary_search(ln_int_schedule[current_node_indx].begin(),
+                                                ln_int_schedule[current_node_indx].end(), indx_current))
+                        temp_edge_mobility.push_back(indx_edge);
                 }
                 indx_edge++;
             }
-            edges_mobility.push_back(std::move(temp_edge_mobility));
+            edges_mobility.push_back(temp_edge_mobility);
 
             // reset temp_nodes_mobility
             temp_nodes_mobility.clear();
@@ -495,6 +501,28 @@ private:
             }
             nodes_mobility.push_back(temp_nodes_mobility);
             nodes_mobility_m.push_back(temp_nodes_mobility_m);
+        }
+
+        // Finally, we want to count the number of interactions, when there a at least two edges within the same mobility node
+        // Count the number of intersections for each time points
+        std::vector<size_t> intersections_mobility(timesteps);
+        for (size_t indx_current = 0; indx_current < timesteps; ++indx_current) {
+            std::vector<size_t> num_groups_in_mobility_node(m_graph.nodes().size());
+            size_t inndx_edge = 0;
+            for (auto& e : m_graph.nodes()) {
+                if (mobility_schedule_edges[inndx_edge][indx_current]) {
+                    auto curr_node = schedule_edges[inndx_edge][indx_current];
+                    num_groups_in_mobility_node[curr_node]++;
+                }
+            }
+            // zähle die anzahl an einträgen größer 2 in num_groups_in_mobility_node
+            intersections_mobility[indx_current] =
+                std::count_if(num_groups_in_mobility_node.begin(), num_groups_in_mobility_node.end(), [](size_t i) {
+                    return i > 1;
+                });
+            num_groups_in_mobility_node.clear();
+
+            // TODO: SPEICHERE das in eine TXT datei im schönen Format
         }
     }
 }; // namespace mio
