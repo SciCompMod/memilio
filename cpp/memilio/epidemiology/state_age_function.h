@@ -27,7 +27,8 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include "boost/math/special_functions/gamma.hpp"
+#include <boost/math/distributions/gamma.hpp>
+#include "boost/math/distributions/lognormal.hpp"
 
 namespace mio
 {
@@ -380,7 +381,8 @@ struct GammaSurvivalFunction : public StateAgeFunction {
         if (state_age <= 0) {
             return 1;
         }
-        return 1 - boost::math::gamma_p<ScalarType>(m_parameter, m_rate * state_age);
+        boost::math::gamma_distribution gamma(m_parameter, 1. / m_rate);
+        return boost::math::cdf(boost::math::complement(gamma, state_age));
     }
 
     /**
@@ -421,6 +423,110 @@ protected:
     }
 
     ScalarType m_rate; ///< Rate parameter of the gamma distribution.
+};
+
+/**
+ * @brief Class that defines an LognormSurvivalFunction function depending on the state age.
+ * A survival function is defined as 1 - cumulative density function.
+ */
+struct LognormSurvivalFunction : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new LognormSurvivalFunction object.
+     * 
+     * Location and scale parameters are according to these parameters in the python package scipy.
+     *
+     * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] location Location paramter of LognormSurvivalFunction. The parameter can be
+     *       used to shift the function. Should be non-negative to fulfill the conditions of a 
+     *       StateAgeFunction.
+     * @param[in] scale Scale paramter of LognormSurvivalFunction.
+     */
+    LognormSurvivalFunction(ScalarType init_parameter, ScalarType location = 0, ScalarType scale = 0)
+        : StateAgeFunction(init_parameter)
+    {
+        m_loc   = location;
+        m_scale = scale;
+    }
+
+    /**
+     * @brief Defines the value of the LognormSurvivalFunction depending on state_age.
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        if (state_age < m_loc) {
+            return 1;
+        }
+        boost::math::lognormal_distribution logn(0., m_parameter);
+        return boost::math::cdf(boost::math::complement(logn, (state_age - m_loc) / m_scale));
+    }
+
+    /**
+     * @brief Get the m_loc object.
+     * 
+     * Can be used to access the m_loc object, which specifies the used shift of location of the LognormSurvivalFunction.
+     *
+     * @return ScalarType 
+     */
+    ScalarType get_location() const
+    {
+        return m_loc;
+    }
+
+    /**
+     * @brief Set the m_loc object.
+     * 
+     * Can be used to set the m_loc object, which specifies the used shift of location of the LognormSurvivalFunction.
+     *
+     *@param[in] new_loc New location parameter for the LognormSurvivalFunction.
+     */
+    void set_location(ScalarType new_loc)
+    {
+        m_loc         = new_loc;
+        m_support_max = -1.;
+        m_support_tol = -1.;
+    }
+    /**
+     * @brief Get the m_loc object.
+     * 
+     * Can be used to access the m_loc object of the LognormSurvivalFunction.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_scale() const
+    {
+        return m_scale;
+    }
+
+    /**
+     * @brief Set the m_scale object.
+     * 
+     * Can be used to set the m_scale object of the LognormSurvivalFunction.
+     *@param[in] new_scale New scale parameter for the LognormSurvivalFunction.
+     */
+    void set_scale(ScalarType new_scale)
+    {
+        m_scale       = new_scale;
+        m_support_max = -1.;
+        m_support_tol = -1.;
+    }
+
+protected:
+    /**
+     * @brief Implements clone for LognormSurvivalFunction.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new LognormSurvivalFunction(*this);
+    }
+
+    ScalarType m_loc; ///< Location parameter of exponential decay.
+    ScalarType m_scale; ///< Scale parameter of Lognorm.
 };
 
 /**

@@ -42,7 +42,7 @@ int main()
     bool save_result   = true;
     bool print_result  = false;
     bool simulate_ide  = true;
-    bool simulate_lct  = true;
+    bool simulate_lct  = false;
     using Vec          = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet = mio::lsecir::Parameters;
 
@@ -91,9 +91,8 @@ int main()
     SusceptiblesToExposed and derive matching values for the other flows.*/
     // 7-Tage-Inzidenz at 15.10.2020 was 34.1, see https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Okt_2020/2020-10-15-de.pdf?__blob=publicationFile.
     ScalarType SusceptibleToExposed_const = (34.1 / 7) * total_population / 100000;
-    std::cout << SusceptibleToExposed_const << std::endl;
-    ScalarType total_confirmed_cases = 341223;
-    ScalarType deaths                = 9710;
+    ScalarType total_confirmed_cases      = 341223;
+    ScalarType deaths                     = 9710;
     Vec init_transitions(num_transitions);
     init_transitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
@@ -122,7 +121,7 @@ int main()
     init_transitions = init_transitions * dt_flows;
 
     // Add initial time point to time series.
-    init.add_time_point(-250, init_transitions);
+    init.add_time_point(-350, init_transitions);
     // Add further time points until time 0 with constant values.
     while (init.get_last_time() < -1e-10) {
         init.add_time_point(init.get_last_time() + dt_flows, init_transitions);
@@ -192,9 +191,10 @@ int main()
         mio::ExponentialDecay expdecayInfectedSevereToInfectedCritical(1. / 9.36);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]
             .set_state_age_function(expdecayInfectedSevereToInfectedCritical);
-        //Platzhalter für lognorm
+
+        mio::LognormSurvivalFunction lognInfectedSevereToRecovered(0.76, -0.45, 9.41);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(
-            expdecayInfectedSevereToInfectedCritical);
+            lognInfectedSevereToRecovered);
 
         mio::ExponentialDecay expdecayInfectedCriticalToDeath(1. / 14.88, 1);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
