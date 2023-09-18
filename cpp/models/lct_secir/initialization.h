@@ -23,7 +23,7 @@
 
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
-#include <boost/math/special_functions/factorials.hpp>
+#include "boost/math/special_functions/factorials.hpp"
 #include "lct_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"

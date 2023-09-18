@@ -31,8 +31,8 @@
 
 int main()
 {
-    bool save_result   = true;
-    bool print_result  = false;
+    bool save_result   = false;
+    bool print_result  = true;
     using Vec          = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet = mio::lsecir::Parameters;
 
@@ -49,15 +49,10 @@ int main()
     parameters.get<mio::lsecir::TimeInfectedCritical>()             = 17.476959;
     parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
-    mio::ContactMatrixGroup& contact_matrix = parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-    //contact_matrix[0].add_damping(0., mio::SimulationTime(4.9));
-    //contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
-    /*contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(-10.));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(4.9));
-    contact_matrix[0].add_damping(0., mio::SimulationTime(5.));
-    contact_matrix[0].finalize();*/
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+    contact_matrix[0].finalize();
+    parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
     parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.3;
@@ -209,10 +204,6 @@ int main()
     Eigen::VectorXd init_first = Eigen::VectorXd::Zero(infectionStates.get_count());
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
         init_first[infectionStates.get_firstindex(i)] = init_vec[i];
-        /*for (int j = infectionStates.get_firstindex(i) + 1;
-             j < infectionStates.get_firstindex(i) + infectionStates.get_number(i); j++) {
-            init_first[j] = 0;
-        }*/
     }
 
     // Initialize model and perform simulation.

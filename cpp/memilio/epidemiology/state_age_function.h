@@ -27,7 +27,7 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include <boost/math/special_functions/gamma.hpp>
+#include "boost/math/special_functions/gamma.hpp"
 
 namespace mio
 {
@@ -223,10 +223,12 @@ struct ExponentialDecay : public StateAgeFunction {
      * @brief Constructs a new ExponentialDecay object
      * 
      * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] location Location paramter to shift the exponentialdecay function. Should be a positive number to fulfill 
      */
-    ExponentialDecay(ScalarType init_parameter)
+    ExponentialDecay(ScalarType init_parameter, ScalarType location = 0)
         : StateAgeFunction(init_parameter)
     {
+        m_loc = location;
     }
 
     /**
@@ -239,7 +241,36 @@ struct ExponentialDecay : public StateAgeFunction {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        return std::exp(-m_parameter * state_age);
+        if (state_age < m_loc) {
+            return 1;
+        }
+        return std::exp(-m_parameter * (state_age - m_loc));
+    }
+
+    /**
+     * @brief Get the m_loc object.
+     * 
+     * Can be used to access the m_rloc object, which specifies the used shift of location of the ExponentialDecay.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_location() const
+    {
+        return m_loc;
+    }
+
+    /**
+     * @brief Set the m_loc object.
+     * 
+     * Can be used to set the m_loc object, which specifies the used shift of location of the ExponentialDecay.
+     *
+     *@param[in] new_loc New location parameter for the ExponentialDecay.
+     */
+    void set_location(ScalarType new_loc)
+    {
+        m_loc         = new_loc;
+        m_support_max = -1.;
+        m_support_tol = -1.;
     }
 
 protected:
@@ -252,6 +283,8 @@ protected:
     {
         return new ExponentialDecay(*this);
     }
+
+    ScalarType m_loc; ///< Location parameter of exponential decay.
 };
 
 /**
@@ -351,7 +384,7 @@ struct GammaSurvivalFunction : public StateAgeFunction {
     }
 
     /**
-     * @brief Get the m_rate object
+     * @brief Get the m_rate object.
      * 
      * Can be used to access the m_rate object, which specifies the used Gamma distribution.
      * 
@@ -387,7 +420,7 @@ protected:
         return new GammaSurvivalFunction(*this);
     }
 
-    ScalarType m_rate;
+    ScalarType m_rate; ///< Rate parameter of the gamma distribution.
 };
 
 /**

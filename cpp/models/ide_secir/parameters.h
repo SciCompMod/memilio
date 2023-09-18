@@ -270,9 +270,9 @@ public:
             return true;
         }
 
-        for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
+        for (size_t i = 1; i < (int)InfectionTransition::Count; i++) {
             if (floating_point_less(this->get<TransitionDistributions>()[i].get_support_max(10), 0.0, 1e-14)) {
-                log_error("Constraint check: One parameter in TransitionDistributions has invalid support.");
+                log_error("Constraint check: One function in TransitionDistributions has invalid support.");
                 return true;
             }
         }
