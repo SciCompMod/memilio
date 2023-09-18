@@ -373,7 +373,7 @@ mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifie
 }
 
 /**
- * @brief Set the parameter given by identifer to the json value given by args.
+ * @brief Set the parameter given by identifier to the json value given by args.
  *
  * The identifier must start with either "--" if it is a parameter's name, or with "-" if it is an alias.
  * The function then recursively tries to match each parameter by this Field, and sets it accordningly.
