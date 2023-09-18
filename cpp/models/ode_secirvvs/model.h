@@ -49,8 +49,9 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    virtual void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop,
+                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y,
+                                  FP t, Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> dydt) const override
     {
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
@@ -583,11 +584,11 @@ template<typename FP=double>
 inline auto simulate(double t0, double tmax, double dt, const Model<FP>& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
-    return mio::simulate<Model, double, Simulation<>>(t0, tmax, dt, model, integrator);
+    return mio::simulate<Model<FP>, double, Simulation<>>(t0, tmax, dt, model, integrator);
 }
 
 //see declaration above.
-template <class Base>
+template <typename FP, class Base>
 double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     double sum_inf = 0;
