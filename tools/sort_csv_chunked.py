@@ -51,7 +51,7 @@ try:
         # Merge sort the chunks
         merged_data = []
         for chunk_file in chunk_files:
-            with open(chunk_file, 'r', newline='') as chunk:
+            with open(chunk_file, newline='') as chunk:
                 data = list(csv.reader(chunk))
                 merged_data.extend(data)
 
