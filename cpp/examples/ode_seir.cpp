@@ -63,15 +63,15 @@ for (int iter = 0; iter < 10000; iter++) {
     model.check_constraints();
     // print_seir_params(model);
 
-    LIKWID_MARKER_STOP("setup")
+    LIKWID_MARKER_STOP("setup");
 
-    LIKWID_MARKER_START("simulation")
+    LIKWID_MARKER_START("simulation");
 
     auto seir = simulate(t0, tmax, dt, model);
 
-    LIKWID_MARKER_STOP("simulation")
+    LIKWID_MARKER_STOP("simulation");
 
-    LIKWID_MARKER_CLOSE
+    LIKWID_MARKER_CLOSE;
 
     //test2
 

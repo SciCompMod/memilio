@@ -20,9 +20,17 @@
 #include "ode_secirvvs/model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include <likwid-marker.h>
+
 
 int main()
 {
+    LIKWID_MARKER_INIT;
+
+    LIKWID_MARKER_START("setup");
+
+    for(int iter = 0; iter < 10000; iter++) {
+
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
@@ -117,7 +125,16 @@ int main()
     // mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
 
     // use default Cash-Karp adaptive integrator
+
+    LIKWID_MARKER_STOP("setup");
+
+    LIKWID_MARKER_START("simulation");
+
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+
+    LIKWID_MARKER_STOP("simulation");
+
+    LIKWID_MARKER_CLOSE;
 
     bool print_to_terminal = true;
 
@@ -126,5 +143,7 @@ int main()
         for (size_t j = 0; j < (size_t)mio::osecirvvs::InfectionState::Count; j++) {
             printf("compartment %d: %.14f\n", (int)j, result.get_last_value()[j]);
         }
+    }
+
     }
 }
