@@ -78,7 +78,21 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
                                                          world.get_global_infection_parameters(), t, infection_state));
     }
 }
+int stringToMinutes(const std::string& input)
+{
+    size_t colonPos = input.find(":");
+    if (colonPos == std::string::npos) {
+        // Handle invalid input (no colon found)
+        return -1; // You can choose a suitable error code here.
+    }
 
+    std::string xStr = input.substr(0, colonPos);
+    std::string yStr = input.substr(colonPos + 1);
+
+    int x = std::stoi(xStr);
+    int y = std::stoi(yStr);
+    return x * 60 + y;
+}
 void split_line(std::string string, std::vector<int32_t>* row)
 {
     std::vector<std::string> strings;
@@ -90,7 +104,12 @@ void split_line(std::string string, std::vector<int32_t>* row)
     } // Temporary fix to handle empty cells.
     boost::split(strings, string, boost::is_any_of(","));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
-        return std::stoi(s);
+        if (s.find(":") != std::string::npos) {
+            return stringToMinutes(s);
+        }
+        else {
+            return std::stoi(s);
+        }
     });
 }
 
@@ -147,7 +166,7 @@ mio::abm::AgeGroup determine_age_group(uint32_t age)
 
 void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0)
 {
-    int max_number_persons = 10000;
+    int max_number_persons = 5;
     // Open File
     const fs::path p = filename;
     if (!fs::exists(p)) {
@@ -205,7 +224,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         auto it_person_id  = person_ids.find(person_id);
         if (it_person_id == person_ids.end()) {
             if (number_of_persons >= max_number_persons)
-                continue;
+                break; //This is okay because the data is sorted by person_id
             person_ids.insert({person_id, number_of_persons});
             number_of_persons++;
         }
@@ -254,7 +273,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         uint32_t person_id = row[index["puid"]];
         if (person_ids.find(person_id) == person_ids.end())
-            continue;
+            break;
 
         uint32_t home_id            = row[index["huid"]];
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
@@ -293,7 +312,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         uint32_t person_id = row[index["puid"]];
         if (person_ids.find(person_id) == person_ids.end())
-            continue;
+            break;
 
         uint32_t age                = row[index["age"]];
         uint32_t home_id            = row[index["huid"]];
@@ -331,7 +350,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
                               mio::abm::LocationType::Home};
         }
         world.get_trip_list().add_trip(mio::abm::Trip(it_person->second.get_person_id(),
-                                                      mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
+                                                      mio::abm::TimePoint(0) + mio::abm::minutes(trip_start),
                                                       target_location, start_location));
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
@@ -956,7 +975,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "../../data/mobility/bs.csv", t0);
+    create_world_from_data(world, "../../../../data/mobility/bs_sorted.csv", t0);
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
@@ -1067,7 +1086,8 @@ int main(int argc, char** argv)
         printf("abm_example <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
-        return 0;
+        printf("Running with numner of runs = 1.\n");
+        num_runs = 1;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
