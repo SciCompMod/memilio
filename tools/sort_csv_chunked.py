@@ -19,7 +19,7 @@ temp_dir = tempfile.mkdtemp()
 try:
     # Split the large CSV file into smaller chunks
     chunk_files = []
-    with open(input_file, 'r', newline='') as infile:
+    with open(input_file, newline='') as infile:
         reader = csv.reader(infile)
         header = next(reader)  # Save the header
         current_chunk = [header]
