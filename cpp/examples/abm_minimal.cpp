@@ -57,6 +57,8 @@ int main()
 
         LIKWID_MARKER_START("all");
 
+        LIKWID_MARKER_START("initialization");
+
         // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
         mio::abm::GlobalInfectionParameters infection_params;
 
@@ -160,6 +162,8 @@ int main()
         // During the lockdown, social events are closed for 90% of people.
         auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
         mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
+
+        LIKWID_MARKER_STOP("initialization");
 
         auto t0   = mio::abm::TimePoint(0);
         auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
