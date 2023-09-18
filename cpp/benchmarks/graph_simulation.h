@@ -34,10 +34,10 @@ struct GraphConfig {
     int num_agegroups, num_regions;
     double t0, t_max, dt;
     /**
-         * @brief creates configuration with default parameters for a secir model
-         * @param num_agegroups number of agegroups
-         * @return configuration for simulation benchmark
-         */
+     * @brief creates configuration with default parameters for a secir model
+     * @param num_agegroups number of agegroups
+     * @return configuration for simulation benchmark
+     */
     static GraphConfig initialize(int num_agegroups = 10)
     {
         return GraphConfig{
@@ -45,10 +45,10 @@ struct GraphConfig {
         };
     }
     /**
-         * @brief reads configuration from json file
-         * @param path the path of the configfile
-         * @return configuration for graph simulation benchmark
-         */
+     * @brief reads configuration from json file
+     * @param path the path of the configfile
+     * @return configuration for graph simulation benchmark
+     */
     static GraphConfig initialize(std::string path)
     {
         auto result = mio::read_json(path, mio::Tag<GraphConfig>{});
