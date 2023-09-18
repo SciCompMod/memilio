@@ -175,13 +175,13 @@ int main()
 
         LIKWID_MARKER_STOP("simulation");
 
-        LIKWID_MARKER_STOP("all");
-
         LIKWID_MARKER_START("write_results_to_files");
 
         write_results_to_file(sim);
 
-        LIKWID_MARKER_START("write_results_to_files");
+        LIKWID_MARKER_STOP("write_results_to_files");
+
+        LIKWID_MARKER_STOP("all");
 
         LIKWID_MARKER_CLOSE;
     }
