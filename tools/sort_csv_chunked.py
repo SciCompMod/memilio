@@ -6,8 +6,8 @@ import shutil
 chunk_size = 400000  # Adjust as needed based on available memory
 
 # Define the input and output file paths
-input_file = 'bs_sorted.csv'
-output_file = 'real_sorted_file.csv'
+input_file = r'./data/mobility/bs.csv'
+output_file = r'./data/mobility/bs_sorted.csv'
 
 # Define the primary and secondary columns to sort by (0-based indices)
 primary_sort_column = 2  # Replace with the desired primary column index

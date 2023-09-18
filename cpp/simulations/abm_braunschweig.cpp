@@ -166,7 +166,7 @@ mio::abm::AgeGroup determine_age_group(uint32_t age)
 
 void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0)
 {
-    int max_number_persons = 5;
+    int max_number_persons = 10000;
     // Open File
     const fs::path p = filename;
     if (!fs::exists(p)) {
@@ -975,7 +975,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "../../../../data/mobility/bs_sorted.csv", t0);
+    create_world_from_data(world, "../../data/mobility/bs_sorted.csv", t0);
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
@@ -1086,8 +1086,8 @@ int main(int argc, char** argv)
         printf("abm_example <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
-        printf("Running with numner of runs = 1.\n");
-        num_runs = 1;
+        printf("Running with number of runs = 1.\n");
+        return 0;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
