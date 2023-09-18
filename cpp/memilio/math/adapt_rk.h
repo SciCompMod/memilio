@@ -154,6 +154,7 @@ public:
     {
         m_tab       = tab;
         m_tab_final = final_tab;
+        m_kt_values.resize(Eigen::NoChange, m_tab_final.entries_low.size());
     }
 
     /**
