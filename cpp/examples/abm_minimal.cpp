@@ -51,7 +51,6 @@ void write_results_to_file(const mio::abm::Simulation& sim)
 
 int main()
 {
-    for (int iter = 0; iter < 100000; iter++) {
 
         LIKWID_MARKER_INIT;
 
@@ -184,5 +183,5 @@ int main()
         LIKWID_MARKER_STOP("all");
 
         LIKWID_MARKER_CLOSE;
-    }
+    
 }
