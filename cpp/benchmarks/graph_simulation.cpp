@@ -24,7 +24,7 @@
 #include "ode_secirvvs/model.h"
 #include <string>
 
-const std::string config_path = "../../benchmarks/graph_simulation.config";
+const std::string config_path = "/localdata1/code/memilio/cpp/benchmarks/graph_simulation.config";
 
 mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
 {
@@ -110,9 +110,8 @@ mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
 }
 
 template <class Integrator>
-void graph_sim_secirvvs(::benchmark::State& state)
+auto create_simulation()
 {
-    mio::set_log_level(mio::LogLevel::critical);
     auto cfg = mio::benchmark::GraphConfig::initialize(config_path);
 
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
@@ -134,27 +133,45 @@ void graph_sim_secirvvs(::benchmark::State& state)
         }
     }
 
-    auto sim = mio::make_migration_sim(cfg.t0, cfg.dt, std::move(g));
+    return mio::make_migration_sim(cfg.t0, cfg.dt, std::move(g));
+}
+
+template <class Integrator>
+void init_benchmark(::benchmark::State& state)
+{
+    for (auto _ : state) {
+        // This code gets timed
+        create_simulation<Integrator>();
+    }
+}
+
+template <class Integrator>
+void graph_sim_secirvvs(::benchmark::State& state)
+{
+    mio::set_log_level(mio::LogLevel::critical);
+    auto cfg = mio::benchmark::GraphConfig::initialize(config_path);
 
     for (auto _ : state) {
         // This code gets timed
+        auto sim = create_simulation<Integrator>();
         sim.advance(cfg.t_max);
     }
 }
 
 // register functions as a benchmarks and set a name
 // mitigate influence of cpu scaling
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt RK 1/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt RK 2/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt RK 3/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 1/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 2/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore)->Name("Graph Simulation simple explicit euler");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt_rk");
+BENCHMARK_TEMPLATE(init_benchmark, mio::RKIntegratorCore)->Name("Initialize Graph without simulation");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore)->Name("Graph Simulation - simple explicit euler");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation - adapt_rk");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>)
-    ->Name("Graph Simulation boost rk_ck54");
+    ->Name("Graph Simulation - rk_ck54 (boost)");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
-    ->Name("Graph Simulation boost rk_dopri5");
+    ->Name("Graph Simulation - rk_dopri5 (boost)");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>)
-    ->Name("Graph Simulation boost rkf78");
+    ->Name("Graph Simulation - rkf78 (boost)");
 // run all benchmarks
 BENCHMARK_MAIN();
