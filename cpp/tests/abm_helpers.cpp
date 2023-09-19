@@ -19,24 +19,24 @@
 */
 #include "abm_helpers.h"
 
-mio::abm::Person make_test_person(mio::abm::Location& location, mio::abm::AgeGroup age,
+mio::abm::Person<double> make_test_person(mio::abm::Location<double>& location, mio::abm::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
-                                  mio::abm::GlobalInfectionParameters params)
+                                  mio::abm::GlobalInfectionParameters<double> params)
 {
-    mio::abm::Person p = mio::abm::Person(location, age);
+    mio::abm::Person<double> p = mio::abm::Person<double>(location, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         p.add_new_infection(
-            mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
+            mio::abm::Infection<double>(static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
     }
     return p;
 }
 
-mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id, mio::abm::AgeGroup age,
+mio::abm::Person<double>& add_test_person(mio::abm::World<double>& world, mio::abm::LocationId loc_id, mio::abm::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
-    mio::abm::Person& p = world.add_person(loc_id, age);
+    mio::abm::Person<double>& p = world.add_person(loc_id, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age,
+        p.add_new_infection(mio::abm::Infection<double>(static_cast<mio::abm::VirusVariant>(0), age,
                                                 world.get_global_infection_parameters(), t, infection_state));
     }
     return p;
