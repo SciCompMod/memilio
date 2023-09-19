@@ -130,11 +130,11 @@ TEST(TestUncertain, uncertain_matrix)
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_baseline()(1, 1), 4);
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(1, 1), 0.7);
 
-    uncertain_mat.get_dampings().emplace_back(mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0),
+    uncertain_mat.get_dampings().emplace_back(mio::UncertainValue<double>(0.5), mio::DampingLevel(0), mio::DampingType(0),
                                               mio::SimulationTime(3.0), std::vector<size_t>(1, size_t(0)),
                                               Eigen::VectorXd::Constant(2, 1.0));
 
-    uncertain_mat.get_school_holiday_damping() = mio::DampingSampling(
+    uncertain_mat.get_school_holiday_damping() = mio::DampingSampling<double>(
         mio::UncertainValue<double>(1.), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime(0.0),
         std::vector<size_t>(1, size_t(0)), (Eigen::VectorXd(2) << 1.0, 0.0).finished());
     uncertain_mat.get_school_holidays().assign({{mio::SimulationTime(5.0), mio::SimulationTime(17.0)}});
