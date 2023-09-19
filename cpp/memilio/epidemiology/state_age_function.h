@@ -381,7 +381,7 @@ struct GammaSurvivalFunction : public StateAgeFunction {
         if (state_age <= 0) {
             return 1;
         }
-        boost::math::gamma_distribution gamma(m_parameter, 1. / m_rate);
+        boost::math::gamma_distribution<ScalarType, boost::math::policies::policy<>> gamma(m_parameter, 1. / m_rate);
         return boost::math::cdf(boost::math::complement(gamma, state_age));
     }
 
@@ -460,7 +460,7 @@ struct LognormSurvivalFunction : public StateAgeFunction {
         if (state_age < m_loc) {
             return 1;
         }
-        boost::math::lognormal_distribution logn(0., m_parameter);
+        boost::math::lognormal_distribution<ScalarType, boost::math::policies::policy<>> logn(0., m_parameter);
         return boost::math::cdf(boost::math::complement(logn, (state_age - m_loc) / m_scale));
     }
 
