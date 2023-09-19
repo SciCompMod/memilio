@@ -903,7 +903,8 @@ int main(int argc, char** argv)
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
+    LIKWID_MARKER_CLOSE;
     return 0;
 
-    LIKWID_MARKER_CLOSE;    
+        
 }
