@@ -327,7 +327,7 @@ TEST(TestJsonSerializer, uniform_distribution)
 
 TEST(TestJsonSerializer, serialize_uv)
 {
-    mio::UncertainValue uv(2.0);
+    mio::UncertainValue<double> uv(2.0);
     Json::Value expected_value;
     expected_value["Value"] = 2.0;
     auto js                 = mio::serialize_json(uv);
@@ -349,7 +349,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     Json::Value json_uv;
     json_uv["Value"] = 2.0;
     {
-        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue>{});
+        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});
         EXPECT_TRUE(r);
         EXPECT_EQ(double(r.value()), 2.0);
         EXPECT_EQ(r.value().get_distribution(), nullptr);
@@ -362,7 +362,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     json_uv["Distribution"]["StandardDev"]       = 0.1;
     json_uv["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     {
-        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue>{});
+        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});
         EXPECT_TRUE(r);
         EXPECT_EQ(double(r.value()), 2.0);
         EXPECT_NE(r.value().get_distribution(), nullptr);
