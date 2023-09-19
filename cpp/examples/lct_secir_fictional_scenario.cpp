@@ -39,16 +39,18 @@
 
 int main()
 {
-    bool save_result   = true;
-    bool print_result  = false;
-    bool simulate_ide  = true;
-    bool simulate_lct  = false;
-    using Vec          = mio::TimeSeries<ScalarType>::Vector;
-    using ParameterSet = mio::lsecir::Parameters;
+    bool save_result  = true;
+    bool print_result = false;
+    bool simulate_ide = false;
+    bool simulate_lct = true;
+    // Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
+    int num_subcompartments = 20;
+    using Vec               = mio::TimeSeries<ScalarType>::Vector;
+    using ParameterSet      = mio::lsecir::Parameters;
 
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
-    ScalarType tmax             = 20;
+    ScalarType tmax             = 10;
 
     // Define ParameterSet used for simulation and initialization.
     ParameterSet parameters_lct;
@@ -60,15 +62,19 @@ int main()
     parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    // Perform simulation with dropping R0.
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-    contact_matrix[0].add_damping(0., mio::SimulationTime(4.9));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
-    // Perform simulation with rising R0.
-    /*contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(-200.));
-    contact_matrix[0].add_damping(0.5, mio::SimulationTime(4.9));
-    contact_matrix[0].add_damping(0., mio::SimulationTime(5.));*/
+    if (true) {
+        // Perform simulation with dropping R0.
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+        contact_matrix[0].add_damping(0., mio::SimulationTime(4.9));
+        contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
+    }
+    else {
+        // Perform simulation with rising R0.
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
+        contact_matrix[0].add_damping(0.5, mio::SimulationTime(-350.));
+        contact_matrix[0].add_damping(0.5, mio::SimulationTime(1.9));
+        contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
+    }
 
     contact_matrix[0].finalize();
     parameters_lct.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
@@ -128,28 +134,29 @@ int main()
     }
 
     // Set vector that specifies the number of subcompartments.
-    /*int num_subcompartments = 20;
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments;
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments;
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = num_subcompartments;
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = num_subcompartments;
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = num_subcompartments;
-    mio::lsecir::InfectionState infectionStates(vec_subcompartments);*/
-
-    // For approximately soujourn time of one day in each Subcompartment
-    std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-        round(parameters_lct.get<mio::lsecir::TimeExposed>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-        round(parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-        round(parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-        round(parameters_lct.get<mio::lsecir::TimeInfectedSevere>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
-        round(parameters_lct.get<mio::lsecir::TimeInfectedCritical>());
+    if (!(num_subcompartments == 0)) {
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments;
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments;
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = num_subcompartments;
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = num_subcompartments;
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = num_subcompartments;
+    }
+    else {
+        // For approximately soujourn time of one day in each Subcompartment
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
+            round(parameters_lct.get<mio::lsecir::TimeExposed>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
+            round(parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
+            round(parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
+            round(parameters_lct.get<mio::lsecir::TimeInfectedSevere>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
+            round(parameters_lct.get<mio::lsecir::TimeInfectedCritical>());
+    }
     mio::lsecir::InfectionState infectionStates(vec_subcompartments);
+
     if (simulate_lct) {
         // Get initialization vector for LCT model with num_subcompartments subcompartments.
         mio::TimeSeries<ScalarType> init_copy(init);
@@ -171,9 +178,9 @@ int main()
             mio::lsecir::print_TimeSeries(populations, model.get_heading_CompartmentsBase());
         }
         if (save_result) {
-            //auto save_result_status_subcompartments =
-            //   mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_1.h5");
-            auto save_result_status = mio::save_result({populations}, {0}, 1, "result_lct_fictional_var.h5");
+            /*auto save_result_status_subcompartments =
+                mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_3.h5");*/
+            auto save_result_status = mio::save_result({populations}, {0}, 1, "fictional_drop_lct20.h5");
         }
     }
 
@@ -276,7 +283,7 @@ int main()
             sim.print_compartments();
         }
         if (save_result) {
-            auto save_result_status = mio::save_result({sim.get_result()}, {0}, 1, "result_ide_fictional.h5");
+            auto save_result_status = mio::save_result({sim.get_result()}, {0}, 1, "fictional_drop_idevar.h5");
         }
     }
 }

@@ -193,14 +193,16 @@ Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_popul
         //R
         // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
         init[infectionStates_count - 2] =
-            total_confirmed_cases - init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms),
-                                                 infectionStates.get_number(InfectionStateBase::InfectedSymptoms) +
-                                                     infectionStates.get_number(InfectionStateBase::InfectedSevere) +
-                                                     infectionStates.get_number(InfectionStateBase::InfectedCritical))
-                                        .sum();
+            total_confirmed_cases -
+            init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms),
+                         infectionStates.get_number(InfectionStateBase::InfectedSymptoms) +
+                             infectionStates.get_number(InfectionStateBase::InfectedSevere) +
+                             infectionStates.get_number(InfectionStateBase::InfectedCritical))
+                .sum() -
+            deaths;
 
         //S
-        init[0] = total_population - deaths - init.segment(1, infectionStates_count - 2).sum();
+        init[0] = total_population - init.segment(1, infectionStates_count - 2).sum() - deaths;
     }
 
     //D
