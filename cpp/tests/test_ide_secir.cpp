@@ -64,7 +64,7 @@ protected:
         }
 
         // Initialize model
-        model = new mio::isecir::Model(std::move(init), N, Dead_before);
+        model = new mio::isecir::Model<double>(std::move(init), N, Dead_before);
 
         // Set working parameters.
         model->parameters.set<mio::isecir::TransitionDistributions>(
@@ -75,7 +75,7 @@ protected:
         model->parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
         mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-        model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+        model->parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
         model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
         model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
         model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
@@ -87,14 +87,14 @@ protected:
     }
 
 public:
-    mio::isecir::Model* model = nullptr;
+    mio::isecir::Model<double>* model = nullptr;
     ScalarType dt             = 1;
 };
 
 // check if population stays constant over course of simulation
 TEST_F(ModelTestIdeSecir, checkPopulationConservation)
 {
-    mio::TimeSeries<ScalarType> compartments = simulate(0, 15, dt, *model);
+    mio::TimeSeries<ScalarType> compartments = mio::isecir::simulate<double>(0, 15, dt, *model);
 
     ScalarType num_persons_before = 0.0;
     ScalarType num_persons_after  = 0.0;
@@ -111,7 +111,7 @@ TEST_F(ModelTestIdeSecir, checkPopulationConservation)
 TEST_F(ModelTestIdeSecir, compareWithPreviousRun)
 {
     auto compare                             = load_test_data_csv<ScalarType>("ide-secir-compare.csv");
-    mio::TimeSeries<ScalarType> compartments = simulate(0, 5, dt, *model);
+    mio::TimeSeries<ScalarType> compartments = mio::isecir::simulate<double>(0, 5, dt, *model);
 
     ASSERT_EQ(compare.size(), static_cast<size_t>(compartments.get_num_time_points()));
     for (size_t i = 0; i < compare.size(); i++) {
@@ -128,7 +128,7 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
 {
     auto compare = load_test_data_csv<ScalarType>("ide-secir-transitions-compare.csv");
 
-    mio::isecir::Simulation sim(*model, 0, dt);
+    mio::isecir::Simulation<double> sim(*model, 0, dt);
     sim.advance(5);
 
     auto transitions = sim.get_transitions();
@@ -182,7 +182,7 @@ TEST(IdeSecir, checksimulationFunctions)
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model<double> model(std::move(init), N, Dead_before);
 
     // Set working parameters.
     // In our example we use m_max_support = 2 for all DelayDistribution%s
@@ -200,14 +200,14 @@ TEST(IdeSecir, checksimulationFunctions)
 
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation<double> sim(model, 0, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated    = sim.get_result();
     mio::TimeSeries<ScalarType> transitions_simulated = sim.get_transitions();
@@ -268,7 +268,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     }
 
     // Initialize two models.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model<double> model(std::move(init), N, Dead_before);
 
     // Set working parameters.
     std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
@@ -291,13 +291,13 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation<double> sim(model, 0, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated = sim.get_result();
 
@@ -354,8 +354,8 @@ TEST(IdeSecir, compareEquilibria)
     mio::TimeSeries<ScalarType> init2(init);
 
     // Initialize two models.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
-    mio::isecir::Model model2(std::move(init2), N, Dead_before);
+    mio::isecir::Model<double> model(std::move(init), N, Dead_before);
+    mio::isecir::Model<double> model2(std::move(init2), N, Dead_before);
 
     // Set working parameters.
     // Here we set the max_support for the DelayDistribution differently for both models
@@ -391,8 +391,8 @@ TEST(IdeSecir, compareEquilibria)
 
     mio::ContactMatrixGroup contact_matrix                = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                     = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
-    model.parameters.get<mio::isecir::ContactPatterns>()  = mio::UncertainContactMatrix(contact_matrix);
-    model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.get<mio::isecir::ContactPatterns<double>>()  = mio::UncertainContactMatrix<double>(contact_matrix);
+    model2.parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
     model2.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
@@ -402,11 +402,11 @@ TEST(IdeSecir, compareEquilibria)
     model2.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation<double> sim(model, 0, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated = sim.get_result();
 
-    mio::isecir::Simulation sim2(model2, 0, dt);
+    mio::isecir::Simulation<double> sim2(model2, 0, dt);
     sim2.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated2 = sim2.get_result();
 
