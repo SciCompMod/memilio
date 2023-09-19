@@ -270,15 +270,14 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'all_germany': [dateToUse, {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
                         None, {}, ['Confirmed', 'Deaths', 'Recovered']],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
-                           {dd.EngEng["idState"]: [k for k in dd.State.keys()]}, ['Confirmed']],
+                           {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                      [IdBundesland], {dd.EngEng["idState"]: [k for k in dd.State.keys()]},
+                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
-                            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],
+                            {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                       [IdLandkreis], {dd.EngEng["idCounty"]: sorted(
-                           set(df[dd.EngEng["idCounty"]].unique()))},
+                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
                        [Geschlecht], {dd.EngEng["gender"]: list(
@@ -293,24 +292,23 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'all_county_gender': [[dateToUse, IdLandkreis, Geschlecht],
                               {AnzahlFall: sum, AnzahlTodesfall: sum,
                                   AnzahlGenesen: sum}, [IdLandkreis, Geschlecht],
-                              {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique(
-                              ))), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
+                              {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(
+                              ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                    [Altersgruppe], {dd.EngEng["ageRKI"]: sorted(
-                        set(df[dd.EngEng["ageRKI"]].unique()))},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
                           {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
                               IdBundesland, Altersgruppe],
-                          {dd.EngEng["idState"]: geoger.get_state_ids(), dd.EngEng["ageRKI"]: sorted(
-                              set(df[dd.EngEng["ageRKI"]].unique()))},
+                          {dd.EngEng["idState"]: geoger.get_state_ids(
+                          ), dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                           ['Confirmed', 'Deaths', 'Recovered']],
         'all_county_age': [[dateToUse, IdLandkreis, Altersgruppe],
                            {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
                                IdLandkreis, Altersgruppe],
-                           {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique(
-                           ))), dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
+                           {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(),
+                           dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                            ['Confirmed', 'Deaths', 'Recovered']]
     }
     with progress_indicator.Spinner():
@@ -318,7 +316,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             if file not in dict_files.keys():
                 raise gd.DataError('Error: File '+file+' cannot be written.')
             # split berlin is only relevant for county level
-            if 'county' in file and split_berlin == True:
+            if ('county' in file) and (split_berlin == True):
                 split_berlin_local = True
             else:
                 # dont append _split_berlin to filename on germany/state level

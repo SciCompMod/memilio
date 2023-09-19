@@ -81,16 +81,14 @@ def impute_and_reduce_df(
     if isinstance(max_date, str) == True:
         max_date = datetime.strptime(max_date, "%Y-%m-%d")
 
-    start_date = min_date
-    end_date = max_date
     # shift start and end date for relevant dates to compute moving average.
     # if moving average is odd, both dates are shifted equaly.
     # if moving average is even, start date is shifted one day more than end date.
     if moving_average > 0:
-        end_date = end_date + timedelta(int(np.floor((moving_average-1)/2)))
-        start_date = start_date - timedelta(int(np.ceil((moving_average-1)/2)))
+        max_date = max_date + timedelta(int(np.floor((moving_average-1)/2)))
+        min_date = min_date - timedelta(int(np.ceil((moving_average-1)/2)))
 
-    idx = pd.date_range(start_date, end_date)
+    idx = pd.date_range(min_date, max_date)
 
     # create list of all possible groupby columns combinations
     unique_ids = [group_by_cols[group_key]
@@ -102,7 +100,8 @@ def impute_and_reduce_df(
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
         # filter df
-        df_local = df_old[(df_old[group_by] == ids).all(axis=1)]
+        locs = np.where(df_old[group_by]==ids)
+        df_local = df_old.loc[locs[0][locs[1]==0]]
 
         # create missing dates
         df_local.index = df_local.Date
@@ -167,8 +166,7 @@ def impute_and_reduce_df(
             # TODO: by this the corresponding columns will be zero-filled
             #       other entries such as names etc will get lost here
             #       any idea to introduce these names has to be found.
-            for keys, vals in values.items():
-                df_local_new[keys].fillna(vals, inplace=True)
+            df_local_new.fillna(values, inplace=True)
 
         # append current local entity (i.e., county or state)
         df_new = pd.concat([df_new, df_local_new])
