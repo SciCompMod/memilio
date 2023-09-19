@@ -834,6 +834,8 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
+        LIKWID_MARKER_INIT;
+
         LIKWID_MARKER_START("initialization");
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
@@ -848,6 +850,8 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
         // Advance the world to tmax
         sim.advance(tmax);
         LIKWID_MARKER_STOP("simulation");
+
+        LIKWID_MARKER_CLOSE;
 
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
@@ -866,9 +870,6 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
 
 int main(int argc, char** argv)
 {
-    LIKWID_MARKER_INIT;
-
-
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
@@ -903,7 +904,6 @@ int main(int argc, char** argv)
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
-    LIKWID_MARKER_CLOSE;
     return 0;
 
         
