@@ -27,7 +27,6 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getDIVIData as gdd
-from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):
@@ -204,7 +203,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         # second test
-        # get dataframe with 11 columns but different names
+        # get dataframe with 13 columns but different names
         df = pd.DataFrame(
             {'date_fake': [1, 2, 3],
              '6': [6, 7, 8],
@@ -214,6 +213,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              '9': [9, 0, 1],
              '10': [0, 1, 2],
              '11': [0, 0, 0],
+             'a': [0, 1, 2],
+             'b': [0, 0, 0],
              'gemeindeschluessel_fake': [3, 4, 5],
              'faelle_covid_aktuell_fake': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
@@ -223,16 +224,18 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         # third test
-        # get dataframe with 11 columns and same headers but only 3 rows
+        # get dataframe with 13 columns and same headers but only 3 rows
         df = pd.DataFrame(
-            {'date': [1, 2, 3],
+            {'datum': [1, 2, 3],
              '6': [6, 7, 8],
              '7': [7, 8, 9],
              '8': [8, 9, 0],
-             'bundesland': [2, 3, 4],
-             '9': [9, 0, 1],
-             '10': [0, 1, 2],
-             '11': [0, 0, 0],
+             'bundesland_name': ['a', 'b', 'c'],
+             'bundesland_id': [9, 0, 1],
+             'landkreis_name': ['def', 'asd', 'xyz'],
+             'landkreis_id': [182041, 767890, 1],
+             'a': [0, 1, 2],
+             'b': [0, 0, 0],
              'gemeindeschluessel': [3, 4, 5],
              'faelle_covid_aktuell': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})

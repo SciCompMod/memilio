@@ -80,6 +80,7 @@ setup(
         'numpy>=1.22,<1.25',
         'openpyxl',
         'xlrd',
+        'xlsxwriter',
         'requests',
         'pyxlsb',
         'wget',

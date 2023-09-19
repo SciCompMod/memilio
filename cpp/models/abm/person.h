@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -81,8 +81,8 @@ public:
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
-     * @brief Get the latest Infection of the Person.
-     * @return The latest Infection of the Person.
+     * @brief Get the latest #Infection of the Person.
+     * @return The latest #Infection of the Person.
      */
     Infection& get_infection()
     {
@@ -348,26 +348,28 @@ public:
     }
 
     /**
-     * @brief Get the multiplicative factor on how likely an Infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
+     * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
      * @param[in] t TimePoint of check.
-     * @return Protection factor of the immune system to the given VirusVariant at the given TimePoint.
+     * @param[in] virus VirusVariant to check
+     * @param[in] params GlobalInfectionParameters in the model.
+     * @returns Protection factor for general #Infection of the immune system to the given VirusVariant at the given TimePoint.
      */
-    ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
+
+    /**
+     * @brief Add a new #Vaccination
+     * @param[in] v ExposureType (i. e. vaccine) the person takes.  
+     * @param[in] t TimePoint of the Vaccination.
+    */
+    void add_new_vaccination(ExposureType v, TimePoint t)
     {
-        return 1.; // put implementation in .cpp
+        m_vaccinations.push_back(Vaccination(v, t));
     }
 
     /**
-     * @brief Get the multiplicative factor on how severe a new Infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
-     * @param[in] t TimePoint of check.
-     * @return Severity factor of a new Infection with the given VirusVariant at the given TimePoint.
-     */
-    ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-    {
-        return 1.; // put implementation in .cpp
-    }
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+    */
+    std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
