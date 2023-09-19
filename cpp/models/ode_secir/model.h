@@ -293,8 +293,8 @@ inline auto simulate(double t0, double tmax, double dt, const Model<FP>& model,
 }
 
 //see declaration above.
-template <class Base>
-double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
+template <typename FP, class Base>
+double get_infections_relative(const Simulation<FP,Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
