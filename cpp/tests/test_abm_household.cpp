@@ -33,7 +33,7 @@ TEST(TestHouseholds, test_add_household_to_world)
     household.add_members(member1, 2);
     household.add_members(member2, 2);
 
-    auto world = mio::abm::World();
+    auto world = mio::abm::World<double>();
 
     add_household_to_world(world, household);
     auto persons = world.get_persons();
@@ -73,7 +73,7 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     household2.add_members(member2, 2);
     household_group.add_households(household2, 10);
 
-    auto world = mio::abm::World();
+    auto world = mio::abm::World<double>();
 
     add_household_group_to_world(world, household_group);
     auto persons = world.get_persons();

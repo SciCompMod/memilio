@@ -21,7 +21,7 @@
 
 TEST(TestInfection, init)
 {
-    auto params             = mio::abm::GlobalInfectionParameters{};
+    auto params             = mio::abm::GlobalInfectionParameters<double>{};
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
     auto age_group_test     = mio::abm::AgeGroup::Age15to34;
     auto vac_state_test     = mio::abm::VaccinationState::Unvaccinated;
@@ -46,7 +46,7 @@ TEST(TestInfection, init)
                                       .infectivity_beta.params.a()))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto infection = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, params,
+    auto infection = mio::abm::Infection<double>(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, params,
                                          mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed, true);
 
     EXPECT_EQ(infection.get_virus_variant(), mio::abm::VirusVariant::Wildtype);
@@ -63,8 +63,8 @@ TEST(TestInfection, getInfectionState)
 {
     auto t = mio::abm::TimePoint(0);
     auto infection =
-        mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                            mio::abm::GlobalInfectionParameters{}, t, mio::abm::InfectionState::Exposed, true);
+        mio::abm::Infection<double>(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                            mio::abm::GlobalInfectionParameters<double>{}, t, mio::abm::InfectionState::Exposed, true);
     EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
 }
