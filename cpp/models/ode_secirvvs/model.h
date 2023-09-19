@@ -380,8 +380,8 @@ public:
     static IOResult<Model> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Model");
-        auto par = obj.expect_element("Parameters", Tag<ParameterSet<FP>>{});
-        auto pop = obj.expect_element("Populations", Tag<Populations<FP>>{});
+        auto par = obj.expect_element("Parameters", Tag<typename Base::ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations<FP,AgeGroup,InfectionState>>{});
         return apply(
             io,
             [](auto&& par_, auto&& pop_) {
