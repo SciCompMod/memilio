@@ -27,7 +27,10 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+
+MSVC_WARNING_DISABLE_PUSH(4702)
 #include <boost/math/distributions/gamma.hpp>
+MSVC_WARNING_POP()
 #include "boost/math/distributions/lognormal.hpp"
 
 namespace mio
