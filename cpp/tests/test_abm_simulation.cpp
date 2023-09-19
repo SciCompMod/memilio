@@ -22,7 +22,7 @@
 
 struct LogTimePoint : mio::LogAlways {
     using Type = double;
-    static Type log(const mio::abm::Simulation& sim)
+    static Type log(const mio::abm::Simulation<double>& sim)
     {
         return sim.get_time().hours();
     }
@@ -30,7 +30,7 @@ struct LogTimePoint : mio::LogAlways {
 
 TEST(TestSimulation, advance_random)
 {
-    auto world     = mio::abm::World();
+    auto world     = mio::abm::World<double>();
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
     auto& p1       = world.add_person(location1, mio::abm::AgeGroup::Age5to14);
@@ -42,7 +42,7 @@ TEST(TestSimulation, advance_random)
     p3.set_assigned_location(location2);
     p4.set_assigned_location(location2);
 
-    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    auto sim = mio::abm::Simulation<double>(mio::abm::TimePoint(0), std::move(world));
 
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
     ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
@@ -74,7 +74,7 @@ TEST(TestDiscreteDistribution, generate)
 
 TEST(TestSimulation, advance_subpopulation)
 {
-    auto world       = mio::abm::World();
+    auto world       = mio::abm::World<double>();
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
     auto person1 =
@@ -84,7 +84,7 @@ TEST(TestSimulation, advance_subpopulation)
     auto person3 =
         add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
 
-    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    auto sim = mio::abm::Simulation<double>(mio::abm::TimePoint(0), std::move(world));
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
 
     for (size_t i = 0; i < 51; i++) {
@@ -98,13 +98,13 @@ TEST(TestSimulation, advance_subpopulation)
 
 TEST(TestSimulation, initializeSubpopulation)
 {
-    auto world  = mio::abm::World();
+    auto world  = mio::abm::World<double>();
     auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
     auto loc    = world.get_individualized_location(loc_id);
     ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
 
     auto t   = mio::abm::TimePoint(0);
-    auto sim = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
+    auto sim = mio::abm::Simulation<double>(t + mio::abm::days(7), std::move(world));
 
     ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
 }
@@ -113,21 +113,21 @@ TEST(TestSimulation, getWorldAndTimeConst)
 {
 
     auto t     = mio::abm::TimePoint(0);
-    auto world = mio::abm::World();
-    auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
+    auto world = mio::abm::World<double>();
+    auto sim   = mio::abm::Simulation<double>(t + mio::abm::days(7), std::move(world));
 
     auto t_test = mio::abm::days(7);
     ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
 
-    const mio::abm::World world_test{std::move(sim.get_world())};
+    const mio::abm::World<double> world_test{std::move(sim.get_world())};
     EXPECT_EQ(world_test.get_locations().size(), 0);
 }
 
 TEST(TestSimulation, advanceWithHistory)
 {
 
-    auto world = mio::abm::World();
-    auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    auto world = mio::abm::World<double>();
+    auto sim   = mio::abm::Simulation<double>(mio::abm::TimePoint(0), std::move(world));
     mio::HistoryWithMemoryWriter<LogTimePoint> history;
 
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(2), history);
