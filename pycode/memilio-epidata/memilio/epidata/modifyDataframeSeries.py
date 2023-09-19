@@ -100,8 +100,11 @@ def impute_and_reduce_df(
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
         # filter df
-        df_local = df_old[np.all(
-            [df_old[col] == id_ for col, id_ in zip(group_by, ids)], axis=0)]
+        df_local = df_old.copy()
+        counter = 0
+        while counter < len(ids):
+            df_local = df_local[df_local[group_by[counter]] == ids[counter]]
+            counter += 1
 
         # create missing dates
         df_local.index = df_local.Date
