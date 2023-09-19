@@ -896,114 +896,114 @@ TEST(TestOdeSECIRVVS, test_commuters)
 
 TEST(TestOdeSECIRVVS, check_constraints_parameters)
 {
-    auto model = mio::osecirvvs::Model(1);
+    auto model = mio::osecirvvs::Model<double>(1);
     ASSERT_EQ(model.parameters.check_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
-    model.parameters.set<mio::osecirvvs::Seasonality>(-0.2);
+    model.parameters.set<mio::osecirvvs::Seasonality<double>>(-0.2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::Seasonality>(0.2);
-    model.parameters.set<mio::osecirvvs::ICUCapacity>(-2);
+    model.parameters.set<mio::osecirvvs::Seasonality<double>>(0.2);
+    model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ICUCapacity>(2);
-    model.parameters.set<mio::osecirvvs::IncubationTime>(-2);
+    model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(2);
+    model.parameters.set<mio::osecirvvs::IncubationTime<double>>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::IncubationTime>(2);
-    model.parameters.set<mio::osecirvvs::SerialInterval>(1);
+    model.parameters.set<mio::osecirvvs::IncubationTime<double>>(2);
+    model.parameters.set<mio::osecirvvs::SerialInterval<double>>(1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::SerialInterval>(5);
+    model.parameters.set<mio::osecirvvs::SerialInterval<double>>(5);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::SerialInterval>(1.5);
-    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(0);
+    model.parameters.set<mio::osecirvvs::SerialInterval<double>>(1.5);
+    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms<double>>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(2);
-    model.parameters.set<mio::osecirvvs::TimeInfectedSevere>(-1);
+    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms<double>>(2);
+    model.parameters.set<mio::osecirvvs::TimeInfectedSevere<double>>(-1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::TimeInfectedSevere>(2);
-    model.parameters.set<mio::osecirvvs::TimeInfectedCritical>(0);
+    model.parameters.set<mio::osecirvvs::TimeInfectedSevere<double>>(2);
+    model.parameters.set<mio::osecirvvs::TimeInfectedCritical<double>>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::TimeInfectedCritical>(2);
-    model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(2.0);
+    model.parameters.set<mio::osecirvvs::TimeInfectedCritical<double>>(2);
+    model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(2.0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms>(-1.0);
+    model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>(-1.0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms>(0.5);
-    model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>(3.0);
+    model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>(3.0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>(0.5);
-    model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic>(-0.8);
+    model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>(-0.8);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic>(0.5);
-    model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms>(-0.1);
+    model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms<double>>(-0.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms>(0.5);
-    model.parameters.set<mio::osecirvvs::CriticalPerSevere>(-1.0);
+    model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(-1.0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::CriticalPerSevere>(0.5);
-    model.parameters.set<mio::osecirvvs::DeathsPerCritical>(1.1);
+    model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::DeathsPerCritical>(0.5);
-    model.parameters.set<mio::osecirvvs::VaccinationGap>(0.2);
+    model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(0.2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::VaccinationGap>(2);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(-2);
+    model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(30);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(-0.2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(30);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(-0.2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(30);
-    model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity>(0);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(30);
+    model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity<double>>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity>(0.5);
-    model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity>(-0.2);
+    model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity<double>>(-0.2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity>(0.5);
-    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(0);
+    model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(0.5);
-    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(0.);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>(0.);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(0.5);
-    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(-4);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(0.5);
-    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(-4);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(0.5);
-    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(-0);
+    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild<double>>(-0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(1);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
+    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild<double>>(1);
+    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117<double>>(-0.5);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
+    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117<double>>(0.5);
+    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     mio::set_log_level(mio::LogLevel::warn);

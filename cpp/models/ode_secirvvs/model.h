@@ -439,9 +439,9 @@ public:
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
                 (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
-            this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                    this->get_model().parameters.template get<BaseInfectiousnessB117<FP>>()[(AgeGroup)i] +
+                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessB161<FP>>()[(AgeGroup)i];
+            this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] =
                 new_transmission;
         }
     }
@@ -463,14 +463,14 @@ public:
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}];
-                full_vacc  = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}];
+                first_vacc = params.template get<DailyFirstVaccination<FP>>()[{(AgeGroup)i, t_idx}];
+                full_vacc  = params.template get<DailyFullVaccination<FP>>()[{(AgeGroup)i, t_idx}];
             }
             else {
-                first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}] -
-                             params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
-                full_vacc = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
-                            params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                first_vacc = params.template get<DailyFirstVaccination<FP>>()[{(AgeGroup)i, t_idx}] -
+                             params.template get<DailyFirstVaccination<FP>>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                full_vacc = params.template get<DailyFullVaccination<FP>>()[{(AgeGroup)i, t_idx}] -
+                            params.template get<DailyFullVaccination<FP>>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
             }
 
             if (last_value(count * i + S) - first_vacc < 0) {
@@ -505,8 +505,8 @@ public:
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
-        auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
+        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+        auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
 
         double delay_lockdown;
         auto t        = Base::get_result().get_last_time();
@@ -618,16 +618,16 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 * @tparam FP floating point type, e.g., double
 * @tparam Base simulation type that uses a secir compartment model. see Simulation.
 */
-template <typename FP,class Base = mio::Simulation<Model<FP>,FP>>
+template <typename FP=double,class Base = mio::Simulation<Model<FP>,FP>>
 auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
-    auto& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
-    auto& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
-    auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
-    auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
-    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
+    auto& t_inc     = params.template get<IncubationTime<FP>>().array().template cast<double>();
+    auto& t_ser     = params.template get<SerialInterval<FP>>().array().template cast<double>();
+    auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms<FP>>().array().template cast<double>();
+    auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic<FP>>().array().template cast<double>();
+    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>().array().template cast<double>();
     //slice of InfectedNoSymptoms
     auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
@@ -640,8 +640,8 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     auto R3                      = 0.5 / (t_inc - t_ser);
     auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
     auto riskFromInfectedSymptomatic =
-        smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity>()),
-                        params.template get<TestAndTraceCapacity>() * 5, p_inf.matrix(), p_inf_max.matrix());
+        smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity<FP>>()),
+                        params.template get<TestAndTraceCapacity<FP>>() * 5, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
