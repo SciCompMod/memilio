@@ -317,7 +317,7 @@ if __name__ == '__main__':
     compartment_index = [1, 2, 3]
     plot_single_result(os.path.join(data_dir, "result_lct_fictional_3"),
                        compartment_idx=compartment_index, filename_plot="LCT_Compartments_3")"""
-
+    # dummy comment
     # compare lct and ode model
     # plot_new_infections([os.path.join(data_dir, "init", "lct_init_transitions"), os.path.join(data_dir, "init", "lct_init_mean"), os.path.join(data_dir, "init", "lct_init_first")],
     #                  legendplot=list(["Übergänge", "Mittelwerte", "Erstes Subkompartiment"]), filename_plot="compare_new_infections_initialization")
