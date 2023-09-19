@@ -444,8 +444,8 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
     auto persons = world.get_persons();
     for (auto& person : persons) {
         auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
-        auto infection_state =
-            determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
+        auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
+                                                         infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), t, infection_state));
@@ -775,7 +775,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
         printf("%u, ", s);
     }
     printf("\n");
-    
+
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
@@ -831,10 +831,10 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
 
+    LIKWID_MARKER_INIT;
+
     // Loop over a number of runs
     while (run_idx <= num_runs) {
-
-        LIKWID_MARKER_INIT;
 
         LIKWID_MARKER_START("initialization");
         // Create the sampled simulation with start time t0.
@@ -851,8 +851,6 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
         sim.advance(tmax);
         LIKWID_MARKER_STOP("simulation");
 
-        LIKWID_MARKER_CLOSE;
-
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
         // Push result of the simulation back to the result vector
@@ -864,6 +862,8 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
         }
         ++run_idx;
     }
+    LIKWID_MARKER_CLOSE;
+
     BOOST_OUTCOME_TRY(save_result_result);
     return mio::success();
 }
@@ -905,6 +905,4 @@ int main(int argc, char** argv)
         return -1;
     }
     return 0;
-
-        
 }
