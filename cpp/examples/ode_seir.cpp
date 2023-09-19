@@ -40,7 +40,7 @@ for (int iter = 0; iter < 10000; iter++) {
     double tmax = 1;
     double dt   = 0.001;
 
-    mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+    //mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::oseir::Model model;
 
@@ -73,10 +73,8 @@ for (int iter = 0; iter < 10000; iter++) {
 
     LIKWID_MARKER_CLOSE;
 
-    //test2
-
-    printf("\n number total: %f\n",
-           seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
+    //printf("\n number total: %f\n",
+    //       seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
 
  }
 }

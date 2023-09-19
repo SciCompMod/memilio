@@ -37,7 +37,7 @@ int main()
     double tmax = 50;
     double dt   = 0.1;
 
-    mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+    //mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     double cont_freq = 10; // see Polymod study
 
@@ -100,7 +100,7 @@ int main()
 
     LIKWID_MARKER_CLOSE;
 
-    bool print_to_terminal = true;
+    bool print_to_terminal = false;
 
     if (print_to_terminal) {
         std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};

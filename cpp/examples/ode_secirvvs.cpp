@@ -37,7 +37,7 @@ int main()
     double tmax = 30;
     double dt   = 0.1;
 
-    mio::log_info("Simulating SECIRVVS; t={} ... {} with dt = {}.", t0, tmax, dt);
+    //mio::log_info("Simulating SECIRVVS; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::osecirvvs::Model model(1);
 
@@ -136,7 +136,7 @@ int main()
 
     LIKWID_MARKER_CLOSE;
 
-    bool print_to_terminal = true;
+    bool print_to_terminal = false;
 
     if (print_to_terminal) {
         printf("\n%.14f ", result.get_last_time());
