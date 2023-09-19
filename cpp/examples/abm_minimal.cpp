@@ -46,7 +46,7 @@ void write_results_to_file(const mio::abm::Simulation& sim)
             myfile << "\n";
         }
     }
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
+    //std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
 int main()
