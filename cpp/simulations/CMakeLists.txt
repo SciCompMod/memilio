@@ -8,6 +8,7 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     target_compile_options(2021_vaccination_delta PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
     
     add_executable(abm_simulation abm.cpp)
-    target_link_libraries(abm_simulation PRIVATE memilio abm Boost::filesystem ${HDF5_C_LIBRARIES})
-    target_compile_options(abm_simulation PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    target_link_libraries(abm_simulation PRIVATE memilio abm Boost::filesystem ${HDF5_C_LIBRARIES} likwid)
+    target_compile_options(abm_simulation PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
+                                          PRIVATE "-lstdc++;-DLIKWID PERFMON;-llikwid")
 endif()
