@@ -32,6 +32,8 @@
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
+#include <likwid-marker.h>
+
 
 namespace fs = boost::filesystem;
 
@@ -606,6 +608,10 @@ int main(int argc, char** argv)
     //- log level
     //- ...
 
+    LIKWID_MARKER_INIT;
+
+    LIKWID_MARKER_START("main");
+
     mio::set_log_level(mio::LogLevel::warn);    
     mio::mpi::init();
 
@@ -670,5 +676,10 @@ int main(int argc, char** argv)
         return -1;
     }
     mio::mpi::finalize();
+
+    LIKWID_MARKER_STOP("main");
+
+    LIKWID_MARKER_CLOSE;
+
     return 0;
 }
