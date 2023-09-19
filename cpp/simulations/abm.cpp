@@ -23,6 +23,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
+#include <likwid-marker.h>
 
 namespace fs = boost::filesystem;
 
@@ -833,6 +834,7 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
+        LIKWID_MARKER_START("initialization");
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
         // Collect the id of location in world.
@@ -840,8 +842,13 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
+        LIKWID_MARKER_STOP("initialization");
+
+        LIKWID_MARKER_START("simulation");
         // Advance the world to tmax
         sim.advance(tmax);
+        LIKWID_MARKER_STOP("simulation");
+
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
         // Push result of the simulation back to the result vector
@@ -859,6 +866,8 @@ mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num
 
 int main(int argc, char** argv)
 {
+    LIKWID_MARKER_INIT;
+
 
     mio::set_log_level(mio::LogLevel::warn);
 
@@ -895,4 +904,6 @@ int main(int argc, char** argv)
         return -1;
     }
     return 0;
+
+    LIKWID_MARKER_CLOSE;    
 }
