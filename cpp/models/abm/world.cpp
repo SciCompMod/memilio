@@ -67,8 +67,6 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    //TODO: this function needs a refactor
-    int migrations = 0;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
         m_enhanced_migration_rules;
@@ -105,8 +103,6 @@ void World::migration(TimePoint t, TimeSpan dt)
                                                        mio::abm::TransportMode::Unknown, mio::abm::UnknownActivity,
                                                        person->get_infection_state(t)});
                             person->migrate_to(target_location);
-
-                            migrations++;
                         }
                         break;
                     }
@@ -136,13 +132,11 @@ void World::migration(TimePoint t, TimeSpan dt)
                                                target_location.get_index(), t, t, trip.trip_mode, trip.activity_type,
                                                person->get_infection_state(t)});
                     person->migrate_to(target_location);
-                    migrations++;
                 }
             }
             m_trip_list.increase_index();
         }
     }
-    printf("%d migrations\n", migrations);
 }
 
 void World::begin_step(TimePoint t, TimeSpan dt)
