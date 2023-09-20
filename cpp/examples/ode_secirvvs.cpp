@@ -130,7 +130,9 @@ int main()
 
     LIKWID_MARKER_START("simulation");
 
-    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model, integrator);
 
     LIKWID_MARKER_STOP("simulation");
 
