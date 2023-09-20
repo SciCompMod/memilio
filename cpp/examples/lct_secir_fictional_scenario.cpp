@@ -39,18 +39,18 @@
 
 int main()
 {
-    bool save_result  = true;
+    bool save_result  = false;
     bool print_result = false;
     bool simulate_ide = false;
-    bool simulate_lct = true;
+    bool simulate_lct = false;
     // Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
-    int num_subcompartments = 20;
+    int num_subcompartments = 3;
     using Vec               = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet      = mio::lsecir::Parameters;
 
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
-    ScalarType tmax             = 10;
+    ScalarType tmax             = 75;
 
     // Define ParameterSet used for simulation and initialization.
     ParameterSet parameters_lct;
@@ -62,17 +62,17 @@ int main()
     parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    if (true) {
+    if (false) {
         // Perform simulation with dropping R0.
         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-        contact_matrix[0].add_damping(0., mio::SimulationTime(4.9));
-        contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
+        contact_matrix[0].add_damping(0., mio::SimulationTime(1.9));
+        contact_matrix[0].add_damping(0.5, mio::SimulationTime(2.));
     }
     else {
         // Perform simulation with rising R0.
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
-        contact_matrix[0].add_damping(0.5, mio::SimulationTime(-350.));
-        contact_matrix[0].add_damping(0.5, mio::SimulationTime(1.9));
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 4 * 2.7463));
+        contact_matrix[0].add_damping(0.75, mio::SimulationTime(-1.));
+        contact_matrix[0].add_damping(0.75, mio::SimulationTime(1.9));
         contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
     }
 
@@ -180,7 +180,7 @@ int main()
         if (save_result) {
             /*auto save_result_status_subcompartments =
                 mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_3.h5");*/
-            auto save_result_status = mio::save_result({populations}, {0}, 1, "fictional_drop_lct20.h5");
+            auto save_result_status = mio::save_result({populations}, {0}, 1, "fictional_rise_lct3.h5");
         }
     }
 
@@ -211,28 +211,28 @@ int main()
             expdecayInfectedCriticalToDeath);
 
         mio::GammaSurvivalFunction erlangExposedToInfectedNoSymptoms(
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] / 3.335,
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]);
+            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed], 0,
+            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] / 3.335);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
             erlangExposedToInfectedNoSymptoms);
 
         mio::GammaSurvivalFunction erlangInfectedNoSymptomsToInfectedSymptoms(
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] / 1.865,
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms]);
+            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms], 0,
+            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] / 1.865);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
             .set_state_age_function(erlangInfectedNoSymptomsToInfectedSymptoms);
-        erlangInfectedNoSymptomsToInfectedSymptoms.set_rate(
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] / 8.865);
+        erlangInfectedNoSymptomsToInfectedSymptoms.set_scale(
+            8.865 / vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms]);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
             erlangInfectedNoSymptomsToInfectedSymptoms);
 
         mio::GammaSurvivalFunction erlangInfectedSymptomsToInfectedSevere(
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] / 7.64507,
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]);
+            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms], 0,
+            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] / 7.64507);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
             .set_state_age_function(erlangInfectedSymptomsToInfectedSevere);
-        erlangInfectedSymptomsToInfectedSevere.set_rate(
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] / 7.);
+        erlangInfectedSymptomsToInfectedSevere.set_scale(
+            7. / vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
             erlangInfectedSymptomsToInfectedSevere);
 
@@ -283,7 +283,7 @@ int main()
             sim.print_compartments();
         }
         if (save_result) {
-            auto save_result_status = mio::save_result({sim.get_result()}, {0}, 1, "fictional_drop_idevar.h5");
+            auto save_result_status = mio::save_result({sim.get_result()}, {0}, 1, "fictional_rise_idevar.h5");
         }
     }
 }

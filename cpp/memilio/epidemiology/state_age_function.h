@@ -53,7 +53,11 @@ namespace mio
  *  b) Arbitrary non-negative functions used for parameters such as TransmissionProbabilityOnContact.
  * 
  * Derived classes must implement the eval method which implements the actual function that is evaluated at some state age.
- * This function can depend on one parameter.
+ * This function can depend on the parameter scale to scale the function and on the parameter location to shift the function. 
+ * Location should be a positive number to fulfill the characteristics of a TransitionDistribution and shift has to be positive.
+ * For a Function F we normally use these parameters at state age x as F(x,location,scale)=F((x-location)/scale). 
+ * A derived class does not have to use these two parameters.
+ * Additionally there is one parameter which specifies the distribution.
  *
  * The derived classes must also implement the clone_impl method which allows to deepcopy the derived class.
  * 
@@ -71,12 +75,19 @@ struct StateAgeFunction {
      * @brief Constructs a new StateAgeFunction object
      * 
      * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_location Location paramter to shift the StateAgeFunction. 
+     * @param[in] init_scale Scale paramter to scale the StateAgeFunction. 
      */
-    StateAgeFunction(ScalarType init_parameter)
+    StateAgeFunction(ScalarType init_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
         : m_parameter{init_parameter}
+        , m_location{init_location}
+        , m_scale{init_scale}
         , m_support_max{-1.} // initialize support maximum as not set
         , m_support_tol{-1.} // initialize support tolerance as not set
     {
+        if (m_scale <= 0) {
+            log_error("The scale Parameter of a  StateAgeFunction has to be positive.");
+        }
     }
 
     /**
@@ -109,7 +120,8 @@ struct StateAgeFunction {
      */
     bool operator==(const StateAgeFunction& other) const
     {
-        return (typeid(*this).name() == typeid(other).name() && m_parameter == other.get_parameter());
+        return (typeid(*this).name() == typeid(other).name() && m_parameter == other.get_parameter() &&
+                m_location == other.get_location() && m_scale == other.get_scale());
     }
 
     /**
@@ -122,7 +134,7 @@ struct StateAgeFunction {
     virtual ScalarType eval(ScalarType state_age) = 0;
 
     /**
-     * @brief Get the m_parameter object
+     * @brief Get the m_parameter object.
      * 
      * Can be used to access the m_parameter object, which specifies the used function.
      * 
@@ -147,6 +159,66 @@ struct StateAgeFunction {
     void set_parameter(ScalarType new_parameter)
     {
         m_parameter   = new_parameter;
+        m_support_max = -1.;
+        m_support_tol = -1.;
+    }
+
+    /**
+     * @brief Get the m_location object.
+     * 
+     * Can be used to access the m_location object, which specifies the shift of the function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_location() const
+    {
+        return m_location;
+    }
+
+    /**
+     * @brief Set the m_location object.
+     * 
+     * Can be used to set the m_location object, which specifies the shift of the function.
+     * The maximum support of a function may be costly to evaluate. In order to not always reevaluate or recompute the
+     * support when the user asks for it, a cached value is used. If m_support_max is set to -1, the cached value is
+     * deleted and a recomputation is done the next time the user asks for the support. As the support (potentially)
+     * depends on the m_location object, the cached value has to be deleted. For details see get_support_max().
+     *
+     *@param[in] new_location New location for StateAgeFunction.
+     */
+    void set_location(ScalarType new_location)
+    {
+        m_location    = new_location;
+        m_support_max = -1.;
+        m_support_tol = -1.;
+    }
+
+    /**
+     * @brief Get the m_scale object.
+     * 
+     * Can be used to access the m_scale object, which is used to scale the function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_scale() const
+    {
+        return m_scale;
+    }
+
+    /**
+     * @brief Set the m_scale object.
+     * 
+     * Can be used to access the m_scale object, which is used to scale the function.
+     * The maximum support of a function may be costly to evaluate. In order to not always reevaluate or recompute the
+     * support when the user asks for it, a cached value is used. If m_support_max is set to -1, the cached value is
+     * deleted and a recomputation is done the next time the user asks for the support. As the support (potentially)
+     * depends on the m_scale object, the cached value has to be deleted. For details see get_support_max().
+     *
+     *@param[in] new_scale New Scale for StateAgeFunction.
+     */
+    void set_scale(ScalarType new_scale)
+    {
+        m_scale       = new_scale;
         m_support_max = -1.;
         m_support_tol = -1.;
     }
@@ -210,6 +282,8 @@ protected:
     virtual StateAgeFunction* clone_impl() const = 0;
 
     ScalarType m_parameter; ///< Parameter for function in derived class.
+    ScalarType m_location; ///< Location parameter for function in derived class.
+    ScalarType m_scale; ///< Scale parameter for function in derived class.
     ScalarType m_support_max; ///< Maximum of the support of the function.
     ScalarType m_support_tol; ///< Tolerance for computation of the support.
 };
@@ -224,15 +298,15 @@ protected:
 struct ExponentialDecay : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new ExponentialDecay object
+     * @brief Constructs a new ExponentialDecay object.
      * 
      * @param[in] init_parameter Specifies the initial function parameter of the function.
-     * @param[in] location Location paramter to shift the exponentialdecay function. Should be a positive number to fulfill 
+     * @param[in] init_location Location paramter to shift the exponentialdecay function. 
+     *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
      */
-    ExponentialDecay(ScalarType init_parameter, ScalarType location = 0)
-        : StateAgeFunction(init_parameter)
+    ExponentialDecay(ScalarType init_parameter, ScalarType init_location = 0)
+        : StateAgeFunction(init_parameter, init_location)
     {
-        m_loc = location;
     }
 
     /**
@@ -245,36 +319,10 @@ struct ExponentialDecay : public StateAgeFunction {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        if (state_age < m_loc) {
+        if (state_age <= m_location) {
             return 1;
         }
-        return std::exp(-m_parameter * (state_age - m_loc));
-    }
-
-    /**
-     * @brief Get the m_loc object.
-     * 
-     * Can be used to access the m_rloc object, which specifies the used shift of location of the ExponentialDecay.
-     * 
-     * @return ScalarType 
-     */
-    ScalarType get_location() const
-    {
-        return m_loc;
-    }
-
-    /**
-     * @brief Set the m_loc object.
-     * 
-     * Can be used to set the m_loc object, which specifies the used shift of location of the ExponentialDecay.
-     *
-     *@param[in] new_loc New location parameter for the ExponentialDecay.
-     */
-    void set_location(ScalarType new_loc)
-    {
-        m_loc         = new_loc;
-        m_support_max = -1.;
-        m_support_tol = -1.;
+        return std::exp(-m_parameter * (state_age - m_location));
     }
 
 protected:
@@ -287,8 +335,6 @@ protected:
     {
         return new ExponentialDecay(*this);
     }
-
-    ScalarType m_loc; ///< Location parameter of exponential decay.
 };
 
 /**
@@ -300,9 +346,11 @@ struct SmootherCosine : public StateAgeFunction {
      * @brief Constructs a new SmootherCosine object
      * 
      * @param[in] init_parameter specifies the initial parameter of the function.
+     * @param[in] init_location Location paramter to shift the SmootherCosine function. 
+     *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
      */
-    SmootherCosine(ScalarType init_parameter)
-        : StateAgeFunction(init_parameter)
+    SmootherCosine(ScalarType init_parameter, ScalarType init_location = 0)
+        : StateAgeFunction(init_parameter, init_location)
     {
     }
 
@@ -316,7 +364,10 @@ struct SmootherCosine : public StateAgeFunction {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        return smoother_cosine(state_age, 0.0, m_parameter, 1.0, 0.0);
+        if (state_age <= m_location) {
+            return 1;
+        }
+        return smoother_cosine(state_age - m_location, 0.0, m_parameter, 1.0, 0.0);
     }
 
     /**
@@ -332,7 +383,7 @@ struct SmootherCosine : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        m_support_max = m_parameter;
+        m_support_max = m_parameter + m_location;
         return m_support_max;
     }
 
@@ -351,67 +402,39 @@ protected:
 /**
  * @brief Class that defines an GammaSurvivalFunction function depending on the state age.
  * A survival function is defined as 1 - cumulative density function.
- * GammaSurvivalFunction is derived from StateAgeFunction but implements an additional parameter. 
- * The shape parameter of the Gamma function is the parameter of the StateAgeFunction and can be changed and accessed via the methods of StateAgeFunction. 
+ * GammaSurvivalFunction is derived from StateAgeFunction.
+ * The shape parameter of the Gamma function is the parameter of the StateAgeFunction. 
  * If shape is an unsigned Integer, the Gamma distribution is an Erlang function.
- * The rate parameter can be accessed via the mathods get_rate() and set_rate().
  */
 struct GammaSurvivalFunction : public StateAgeFunction {
 
     /**
      * @brief Constructs a new GammaSurvivalFunction object.
      *
-     * @param[in] rate Parameter rate of the GammaSurvivalFunction.
-     * @param[in] shape Parameter shape of the GammaSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
-     *  Choosing shape = 1 leads to an exponential function with parameter rate.
+     * @param[in] init_shape Parameter shape of the GammaSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
+     *  Choosing shape = 1 leads to an exponential function with parameter 1/scale.
+     * @param[in] init_location Location paramter to shift the GammaSurvivalFunction. 
+     *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
+     * @param[in] init_scale Parameter shape of the GammaSurvivalFunction. Corresponds to the inverse of the rate parameter of a Gamma distribution.
      */
-    GammaSurvivalFunction(ScalarType rate, ScalarType shape = 1)
-        : StateAgeFunction(shape)
+    GammaSurvivalFunction(ScalarType init_shape = 1, ScalarType init_location = 0, ScalarType init_scale = 1)
+        : StateAgeFunction(init_shape, init_location, init_scale)
     {
-        m_rate = rate;
     }
 
     /**
      * @brief Defines GammaSurvivalFunction depending on state_age.
-     *
-     * Parameters rate and shape are used.
      * 
      * @param[in] state_age Time at which the function is evaluated.
      * @return Evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) override
     {
-        if (state_age <= 0) {
+        if (state_age <= m_location) {
             return 1;
         }
-        boost::math::gamma_distribution<ScalarType, boost::math::policies::policy<>> gamma(m_parameter, 1. / m_rate);
-        return boost::math::cdf(boost::math::complement(gamma, state_age));
-    }
-
-    /**
-     * @brief Get the m_rate object.
-     * 
-     * Can be used to access the m_rate object, which specifies the used Gamma distribution.
-     * 
-     * @return ScalarType 
-     */
-    ScalarType get_rate() const
-    {
-        return m_rate;
-    }
-
-    /**
-     * @brief Set the m_rate object.
-     * 
-     * Can be used to set the m_rate object, which specifies the used Gamma distribution.
-     *
-     *@param[in] new_rate New rate parameter for the Gamma distribution.
-     */
-    void set_rate(ScalarType new_rate)
-    {
-        m_rate        = new_rate;
-        m_support_max = -1.;
-        m_support_tol = -1.;
+        boost::math::gamma_distribution<ScalarType, boost::math::policies::policy<>> gamma(m_parameter, m_scale);
+        return boost::math::cdf(boost::math::complement(gamma, state_age - m_location));
     }
 
 protected:
@@ -424,8 +447,6 @@ protected:
     {
         return new GammaSurvivalFunction(*this);
     }
-
-    ScalarType m_rate; ///< Rate parameter of the gamma distribution.
 };
 
 /**
@@ -440,16 +461,14 @@ struct LognormSurvivalFunction : public StateAgeFunction {
      * Location and scale parameters are according to these parameters in the python package scipy.
      *
      * @param[in] init_parameter Specifies the initial function parameter of the function.
-     * @param[in] location Location paramter of LognormSurvivalFunction. The parameter can be
+     * @param[in] init_location Location paramter of LognormSurvivalFunction. The parameter can be
      *       used to shift the function. Should be non-negative to fulfill the conditions of a 
      *       StateAgeFunction.
-     * @param[in] scale Scale paramter of LognormSurvivalFunction.
+     * @param[in] init_scale Scale paramter of LognormSurvivalFunction.
      */
-    LognormSurvivalFunction(ScalarType init_parameter, ScalarType location = 0, ScalarType scale = 0)
-        : StateAgeFunction(init_parameter)
+    LognormSurvivalFunction(ScalarType init_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
+        : StateAgeFunction(init_parameter, init_location, init_scale)
     {
-        m_loc   = location;
-        m_scale = scale;
     }
 
     /**
@@ -460,61 +479,11 @@ struct LognormSurvivalFunction : public StateAgeFunction {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        if (state_age < m_loc) {
+        if (state_age < m_location) {
             return 1;
         }
         boost::math::lognormal_distribution<ScalarType, boost::math::policies::policy<>> logn(0., m_parameter);
-        return boost::math::cdf(boost::math::complement(logn, (state_age - m_loc) / m_scale));
-    }
-
-    /**
-     * @brief Get the m_loc object.
-     * 
-     * Can be used to access the m_loc object, which specifies the used shift of location of the LognormSurvivalFunction.
-     *
-     * @return ScalarType 
-     */
-    ScalarType get_location() const
-    {
-        return m_loc;
-    }
-
-    /**
-     * @brief Set the m_loc object.
-     * 
-     * Can be used to set the m_loc object, which specifies the used shift of location of the LognormSurvivalFunction.
-     *
-     *@param[in] new_loc New location parameter for the LognormSurvivalFunction.
-     */
-    void set_location(ScalarType new_loc)
-    {
-        m_loc         = new_loc;
-        m_support_max = -1.;
-        m_support_tol = -1.;
-    }
-    /**
-     * @brief Get the m_loc object.
-     * 
-     * Can be used to access the m_loc object of the LognormSurvivalFunction.
-     * 
-     * @return ScalarType 
-     */
-    ScalarType get_scale() const
-    {
-        return m_scale;
-    }
-
-    /**
-     * @brief Set the m_scale object.
-     * 
-     * Can be used to set the m_scale object of the LognormSurvivalFunction.
-     *@param[in] new_scale New scale parameter for the LognormSurvivalFunction.
-     */
-    void set_scale(ScalarType new_scale)
-    {
-        m_scale       = new_scale;
-        m_support_max = -1.;
-        m_support_tol = -1.;
+        return boost::math::cdf(boost::math::complement(logn, (state_age - m_location) / m_scale));
     }
 
 protected:
@@ -527,9 +496,6 @@ protected:
     {
         return new LognormSurvivalFunction(*this);
     }
-
-    ScalarType m_loc; ///< Location parameter of exponential decay.
-    ScalarType m_scale; ///< Scale parameter of Lognorm.
 };
 
 /**
@@ -596,6 +562,84 @@ protected:
     StateAgeFunction* clone_impl() const override
     {
         return new ConstantFunction(*this);
+    }
+};
+
+/**
+ * @brief Class that defines an Erlang density function with the parameters shape and scale depending on the state age.
+ * Class is needed for the initialization of the subcompartments for LCT model.
+ * ErlangDensity is derived from StateAgeFunction. 
+ * The shape parameter of the Erlang function is the parameter of the Stateagefunction. 
+ * Attention: The density does not have the characteristics of a TransitionDistribution!!
+ */
+struct ErlangDensity : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new ErlangDensity object.
+     * 
+     * @param[in] init_shape Parameter shape of the ErlangDensity. For the Erlang distribution, shape has to be a positive integer.
+      * @param[in] init_scale Parameter scale of the ErlangDensity. Corresponds to the inverse rate parameter.
+     */
+    ErlangDensity(unsigned int init_shape, ScalarType init_scale)
+        : StateAgeFunction(init_shape, 0., init_scale)
+    {
+    }
+
+    /**
+     * @brief Defines ErlangDensity depending on state_age.
+     *
+     * Parameters scale and shape are used.
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        if (state_age < 0) {
+            return 0;
+        }
+        int shape = (int)m_parameter;
+        return std::pow(state_age / m_scale, shape - 1) / (m_scale * boost::math::factorial<ScalarType>(shape - 1)) *
+               std::exp(-state_age / m_scale);
+    }
+
+    /**
+     * @brief Computes the maximum of the support of the function. 
+     * 
+     * For small time steps and small variance of the density it is possible that dt is returned with the function of StateAgeFunction.
+     * StateAgeFunction is designed for survialfunctions, not for densities.
+     * Therefore with this function we calculate the smallest time value t where function(tau)=0 for all tau>t.
+     *
+     * @param[in] dt Time step size. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
+     * @return ScalarType support_max
+     */
+    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
+    { // We are looking for the smallest time value t where function(tau)=0 for all tau>t. Thus support max is bigger than the mean.
+        ScalarType mean        = m_parameter * m_scale;
+        ScalarType support_max = (ScalarType)dt * (int)(mean / dt);
+
+        if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
+            while (eval(support_max) >= tol) {
+                support_max += dt;
+            }
+
+            m_support_max = support_max;
+            m_support_tol = tol;
+        }
+
+        return m_support_max;
+    }
+
+protected:
+    /**
+     * @brief Implements clone for ErlangDensity.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new ErlangDensity(*this);
     }
 };
 
@@ -666,7 +710,8 @@ struct StateAgeFunctionWrapper {
     bool operator==(const StateAgeFunctionWrapper& other) const
     {
         return (m_function->get_state_age_function_type() == other.get_state_age_function_type() &&
-                m_function->get_parameter() == other.get_parameter());
+                m_function->get_parameter() == other.get_parameter() &&
+                m_function->get_location() == other.get_location() && m_function->get_scale() == other.get_scale());
     }
 
     /**
@@ -718,6 +763,44 @@ struct StateAgeFunctionWrapper {
     void set_parameter(ScalarType new_parameter)
     {
         m_function->set_parameter(new_parameter);
+    }
+    /**
+     * @brief Get the m_location object of m_function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_location() const
+    {
+        return m_function->get_location();
+    }
+
+    /**
+     * @brief Set the m_location object of m_function. 
+     * 
+     * @param[in] new_location New location for StateAgeFunction.
+     */
+    void set_location(ScalarType new_location)
+    {
+        m_function->set_location(new_location);
+    }
+    /**
+     * @brief Get the m_scale object of m_function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_scale() const
+    {
+        return m_function->get_scale();
+    }
+
+    /**
+     * @brief Set the m_scale object of m_function. 
+     * 
+     * @param[in] new_scale New scale for StateAgeFunction.
+     */
+    void set_scale(ScalarType new_scale)
+    {
+        m_function->set_scale(new_scale);
     }
 
     ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) const

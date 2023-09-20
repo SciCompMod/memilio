@@ -35,87 +35,6 @@ namespace lsecir
 {
 
 /**
- * @brief Class that defines an Erlang density function with the parameters rate and shape depending on the state age.
- * Class is needed for the initialization of the subcompartments for LCT model.
- * ErlangDensity is derived from StateAgeFunction but implements an additional parameter. 
- * The shape parameter of the Erlang function is the parameter of the Stateagefunction and can be changed via the methods of StateAgeFunction. 
- * The rate parameter is not designed to be changed.
- */
-struct ErlangDensity : public StateAgeFunction {
-
-    /**
-     * @brief Constructs a new ErlangDensity object.
-     * 
-     * @param[in] rate Parameter rate of the ErlangDensity.
-     * @param[in] shape Parameter shape of the ErlangDensity. For the Erlang distribution, shape has to be a positive integer.
-     */
-    ErlangDensity(ScalarType rate, unsigned int shape)
-        : StateAgeFunction(shape)
-    {
-        m_rate = rate;
-    }
-
-    /**
-     * @brief Defines ErlangDensity depending on state_age.
-     *
-     * Parameters rate and shape are used.
-     * 
-     * @param[in] state_age Time at which the function is evaluated.
-     * @return Evaluation of the function at state_age. 
-     */
-    ScalarType eval(ScalarType state_age) override
-    {
-        if (state_age < 0) {
-            return 0;
-        }
-        int shape = (int)m_parameter;
-        return m_rate * std::pow(m_rate * state_age, shape - 1) / (boost::math::factorial<ScalarType>(shape - 1)) *
-               std::exp(-m_rate * state_age);
-    }
-
-    /**
-     * @brief Computes the maximum of the support of the function. 
-     * 
-     * For small time steps and small variance of the density it is possible that dt is returned with the function of StateAgeFunction.
-     * StateAgeFunction is designed for survialfunctions, not for densities.
-     * Therefore with this function we calculate the smallest time value t where function(tau)=0 for all tau>t.
-     *
-     * @param[in] dt Time step size. 
-     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
-     * @return ScalarType support_max
-     */
-    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
-    { // We are looking for the smallest time value t where function(tau)=0 for all tau>t. Thus support max is bigger than the mean.
-        ScalarType mean        = m_parameter / m_rate;
-        ScalarType support_max = (ScalarType)dt * (int)(mean / dt);
-
-        if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
-            while (eval(support_max) >= tol) {
-                support_max += dt;
-            }
-
-            m_support_max = support_max;
-            m_support_tol = tol;
-        }
-
-        return m_support_max;
-    }
-
-protected:
-    /**
-     * @brief Implements clone for ErlangDensity.
-     * 
-     * @return Pointer to StateAgeFunction.
-     */
-    StateAgeFunction* clone_impl() const override
-    {
-        return new ErlangDensity(*this);
-    }
-
-    ScalarType m_rate;
-};
-
-/**
  * @brief Class that can be used to compute an initialization vector out of flows for a LCT Model.
  */
 class Initializer
@@ -151,7 +70,7 @@ public:
      * @return Vector with a possible initialization for an LCT model computed out of the flows.
      */
     Eigen::VectorXd compute_initializationvector(ScalarType total_population, ScalarType deaths,
-                                                 ScalarType total_confirmed_cases, bool old = false) const;
+                                                 ScalarType total_confirmed_cases) const;
 
     ParameterSet parameters{}; ///< ParameterSet with the Initalizers Parameters.
     InfectionState infectionStates; ///< InfectionState specifies number of subcompartments.

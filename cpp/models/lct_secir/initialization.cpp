@@ -25,6 +25,7 @@
 #include "memilio/math/floating_point.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
+#include "memilio/epidemiology/state_age_function.h"
 
 namespace mio
 {
@@ -57,7 +58,7 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
     Eigen::VectorXd subcompartments(num_infectionstates);
     // Initialize relevant density for the compartment base.
     // For the first subcompartment a shape parameter of one is needed.
-    ErlangDensity erlang(num_infectionstates * transition_rate, 1);
+    ErlangDensity erlang(1, 1. / (num_infectionstates * transition_rate));
 
     // Initialize other relevant parameters.
     ScalarType calc_time{0};
@@ -92,55 +93,8 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
     return subcompartments;
 }
 
-ScalarType Initializer::compute_susceptibles_old(ScalarType total_population, ScalarType deaths) const
-{
-    // --- Compute force of infection at time -dt ---
-    ScalarType force_of_infection = 0;
-    // Initialize transitionDistributions for C and I.
-    GammaSurvivalFunction transitionDistribution_InfectedNoSymptoms(
-        infectionStates.get_number(InfectionStateBase::InfectedNoSymptoms) *
-            (1 / parameters.get<TimeInfectedNoSymptoms>()),
-        infectionStates.get_number(InfectionStateBase::InfectedNoSymptoms));
-    GammaSurvivalFunction transitionDistribution_InfectedSymptoms(
-        infectionStates.get_number(InfectionStateBase::InfectedSymptoms) * (1 / parameters.get<TimeInfectedSymptoms>()),
-        infectionStates.get_number(InfectionStateBase::InfectedSymptoms));
-
-    // Determine the relevant calculation area = union of the supports of the relevant transitionDistributions.
-    ScalarType calc_time = std::max({transitionDistribution_InfectedNoSymptoms.get_support_max(m_dt, 1e-8),
-                                     transitionDistribution_InfectedSymptoms.get_support_max(m_dt, 1e-8)});
-    /* calc_time_index corresponds to the needed timesteps in sum. The -1 is because in the last summand all
-     transitionDistributions evaluate to 0 (by definition of support_max).*/
-    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
-
-    // Determine m_force_of_infection at time -m_dt which is the penultimate timepoint in m_flows.
-    Eigen::Index time_point_num_minusdt = m_flows.get_num_time_points() - 1;
-
-    if (time_point_num_minusdt < calc_time_index) {
-        log_error("Initialization failed. Not enough time points for the transitions are given.  {} are needed but "
-                  "just {} are given.",
-                  calc_time_index, time_point_num_minusdt);
-    }
-
-    for (Eigen::Index i = time_point_num_minusdt - calc_time_index; i < time_point_num_minusdt; i++) {
-        ScalarType state_age = (time_point_num_minusdt - i) * m_dt;
-        force_of_infection += parameters.get<TransmissionProbabilityOnContact>() *
-                              parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(-m_dt)(0, 0) *
-                              (parameters.get<RelativeTransmissionNoSymptoms>() *
-                                   transitionDistribution_InfectedNoSymptoms.eval(state_age) *
-                                   m_flows[i][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] +
-                               parameters.get<RiskOfInfectionFromSymptomatic>() *
-                                   transitionDistribution_InfectedSymptoms.eval(state_age) *
-                                   m_flows[i][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]);
-    }
-    // Here is assumed that D(-1) is approximately equal to D(0).
-    force_of_infection = 1 / (total_population - deaths) * force_of_infection;
-    // Return susceptibles computed with force_of_infection.
-    return m_flows.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
-           (m_dt * force_of_infection);
-}
-
 Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_population, ScalarType deaths,
-                                                          ScalarType total_confirmed_cases, bool old) const
+                                                          ScalarType total_confirmed_cases) const
 {
     check_constraints();
 
@@ -176,34 +130,18 @@ Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_popul
         compute_compartment(InfectionStateBase::InfectedCritical,
                             Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
                             1 / parameters.get<TimeInfectedCritical>());
+    //R
+    // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
+    init[infectionStates_count - 2] = total_confirmed_cases -
+                                      init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms),
+                                                   infectionStates.get_number(InfectionStateBase::InfectedSymptoms) +
+                                                       infectionStates.get_number(InfectionStateBase::InfectedSevere) +
+                                                       infectionStates.get_number(InfectionStateBase::InfectedCritical))
+                                          .sum() -
+                                      deaths;
 
-    if (old) {
-        //S
-        init[0] = compute_susceptibles_old(total_population, deaths);
-
-        //R
-        init[infectionStates_count - 2] = total_population - deaths - init.segment(0, infectionStates_count - 2).sum();
-        if (init[infectionStates_count - 2] < 0) {
-            log_warning(
-                "The calculation results in a negative number for the number of recoveries. Initializing with the "
-                "result may not make sense.");
-        }
-    }
-    else {
-        //R
-        // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
-        init[infectionStates_count - 2] =
-            total_confirmed_cases -
-            init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms),
-                         infectionStates.get_number(InfectionStateBase::InfectedSymptoms) +
-                             infectionStates.get_number(InfectionStateBase::InfectedSevere) +
-                             infectionStates.get_number(InfectionStateBase::InfectedCritical))
-                .sum() -
-            deaths;
-
-        //S
-        init[0] = total_population - init.segment(1, infectionStates_count - 2).sum() - deaths;
-    }
+    //S
+    init[0] = total_population - init.segment(1, infectionStates_count - 2).sum() - deaths;
 
     //D
     init[infectionStates_count - 1] = deaths;

@@ -31,8 +31,8 @@
 
 int main()
 {
-    bool save_result   = false;
-    bool print_result  = true;
+    bool save_result   = true;
+    bool print_result  = false;
     using Vec          = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet = mio::lsecir::Parameters;
 
@@ -109,7 +109,7 @@ int main()
     }
 
     // Set vector that specifies the number of subcompartments.
-    int num_subcompartments = 20;
+    int num_subcompartments = 3;
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments;
@@ -137,8 +137,8 @@ int main()
         mio::lsecir::print_TimeSeries(populations_transitions, model.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        // auto save_result_status_subcompartments =
-        //  mio::save_result({result_transitions}, {0}, 1, "lct_init_transitions_subcompartments_real.h5");
+        auto save_result_status_subcompartments =
+            mio::save_result({result_transitions}, {0}, 1, "lct_init_transitions_subcompartments.h5");
         auto save_result_status = mio::save_result({populations_transitions}, {0}, 1, "lct_init_transitions.h5");
     }
 

@@ -25,16 +25,16 @@
 
 #include <gtest/gtest.h>
 
-TEST(TestInitializer, testGamma)
+TEST(TestInitializer, compareWithPrevious)
 {
-    ScalarType rate[]  = {0.5, 0.8, 1, 3};
+    ScalarType rate[]  = {0.5, 0.8, 1., 3.};
     int shape[]        = {1, 3, 5, 10, 20};
     ScalarType times[] = {0, 0.5, 3, 5.555, 20, 70.34};
     for (int r = 0; r < 4; r++) {
         for (int s = 0; s < 5; s++) {
-            mio::GammaSurvivalFunction survival(rate[r], shape[s]);
+            mio::GammaSurvivalFunction survival(shape[s], 0, 1. / rate[r]);
             EXPECT_EQ(survival.eval(0), 1.0);
-            mio::lsecir::ErlangDensity density(rate[r], 1);
+            mio::ErlangDensity density(1, 1. / (rate[r]));
 
             for (int tau = 0; tau < 6; tau++) {
                 ScalarType f = 0;
