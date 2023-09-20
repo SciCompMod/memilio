@@ -195,8 +195,10 @@ private:
 
 namespace
 {
+#ifdef  __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
+#endif
 /**
  * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
  * @param[in] age_groups A CustomIndexArray with the weights.
@@ -208,7 +210,9 @@ AgeGroup pick_age_group_from_age_distribution(const CustomIndexArray<int, AgeGro
     size_t age_group       = DiscreteDistribution<size_t>::get_instance()(age_group_weights);
     return (AgeGroup)age_group;
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 } // namespace
 
 
