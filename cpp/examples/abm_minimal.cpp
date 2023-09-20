@@ -56,7 +56,7 @@ int main()
 
     LIKWID_MARKER_START("main");
 
-    for (int iter = 0; iter < 100000; iter++) {
+    for (int iter = 0; iter < 10000; iter++) {
 
         // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
         mio::abm::GlobalInfectionParameters infection_params;

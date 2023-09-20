@@ -79,14 +79,14 @@ void Simulation::store_result_at(TimePoint t)
         //thread local sum of subpopulations, computed in parallel
         //TODO: maybe we can use atomic increments instead of the reduction if necessary for scaling?
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(m_result.get_num_elements());
-        auto persons = m_world.get_persons();
-        
+        auto persons        = m_world.get_persons();
+
         PRAGMA_OMP(for schedule(dynamic, 50)) //static?
         for (auto i = size_t(0); i < persons.size(); ++i) {
             auto&& person = persons[i];
             sum[Eigen::Index(person.get_infection_state(t))] += 1;
         }
-        
+
         //synchronized total sum
         PRAGMA_OMP(critical)
         {
