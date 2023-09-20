@@ -89,23 +89,21 @@ void World::migration(TimePoint t, TimeSpan dt)
     for (auto& person : m_persons) {
         for (auto rule : m_enhanced_migration_rules) {
             //check if transition rule can be applied
-            auto target_type = rule.first(*person, t, dt, m_migration_parameters);
-            if (person->get_assigned_location_index(target_type) != INVALID_LOCATION_INDEX) {
-                auto& target_location = find_location(target_type, *person);
-                auto current_location = person->get_location();
-                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
-                    if (target_location != current_location &&
-                        target_location.get_number_persons() < target_location.get_capacity().persons) {
-                        bool wears_mask = person->apply_mask_intervention(target_location);
-                        if (wears_mask) {
-                            m_movement_data.push_back({person->get_person_id(), current_location.get_index(),
-                                                       target_location.get_index(), t, t + dt,
-                                                       mio::abm::TransportMode::Unknown, mio::abm::UnknownActivity,
-                                                       person->get_infection_state(t)});
-                            person->migrate_to(target_location);
-                        }
-                        break;
+            auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
+            auto& target_location = find_location(target_type, *person);
+            auto current_location = person->get_location();
+            if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                if (target_location != current_location &&
+                    target_location.get_number_persons() < target_location.get_capacity().persons) {
+                    bool wears_mask = person->apply_mask_intervention(target_location);
+                    if (wears_mask) {
+                        m_movement_data.push_back({person->get_person_id(), current_location.get_index(),
+                                                   target_location.get_index(), t, t + dt,
+                                                   mio::abm::TransportMode::Unknown, mio::abm::UnknownActivity,
+                                                   person->get_infection_state(t)});
+                        person->migrate_to(target_location);
                     }
+                    break;
                 }
             }
         }
@@ -124,7 +122,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& trip            = m_trip_list.get_next_trip(weekend);
             auto& person          = m_persons[trip.person_id];
             auto current_location = person->get_location();
-            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
+            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
+                person->get_location().get_type() != LocationType::Hospital) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                     person->apply_mask_intervention(target_location);
