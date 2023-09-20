@@ -33,18 +33,18 @@ namespace mio
 namespace osecirvvs
 {
 template<typename FP=double>
-class Model : public CompartmentalModel<InfectionState, Populations<FP,AgeGroup, InfectionState>, Parameters<FP>,FP>
+class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>,FP>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>,FP>;
+    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>,FP>;
 
 public:
-    Model(const Populations<FP,AgeGroup, InfectionState>& pop, const typename Base::ParameterSet& params)
+    Model(const mio::Populations<FP,AgeGroup, InfectionState>& pop, const typename Base::ParameterSet& params)
         : Base(pop, params)
     {
     }
 
     Model(int num_agegroups)
-        : Model(Populations<FP,AgeGroup, InfectionState>({AgeGroup(num_agegroups), InfectionState::Count}),
+        : Model(mio::Populations<FP,AgeGroup, InfectionState>({AgeGroup(num_agegroups), InfectionState::Count}),
                 typename Base::ParameterSet(AgeGroup(num_agegroups)))
     {
     }

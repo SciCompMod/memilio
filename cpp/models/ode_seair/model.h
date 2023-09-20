@@ -36,15 +36,15 @@ namespace oseair
     * define the model *
     ********************/
 template<typename FP=double>
-class Model : public CompartmentalModel<InfectionState, Populations<FP,InfectionState>,
+class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP,InfectionState>,
                                         Parameters<FP>, FP>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<FP,InfectionState>,
+    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP,InfectionState>,
                                     Parameters<FP>, FP>;
 
 public:
     Model()
-        : Base(Populations<FP,InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
+        : Base(mio::Populations<FP,InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
     {
     }
 
