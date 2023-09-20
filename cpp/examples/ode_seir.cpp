@@ -60,9 +60,10 @@ for(int iter = 0; iter < 10000; iter++) {
     model.check_constraints();
     // print_seir_params(model);
 
-    
+    auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
 
-    auto seir = simulate(t0, tmax, dt, model);
+
+    auto seir = simulate(t0, tmax, dt, integrator);
 
     
 
