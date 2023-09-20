@@ -27,12 +27,18 @@
 #include "abm/abm.h"
 
 struct LogLocationInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation, size_t, int>>;
     static Type log(const mio::abm::Simulation& sim)
     {
         Type location_information{};
         for (auto&& location : sim.get_world().get_locations()) {
-            location_information.push_back(std::make_tuple(location.get_index(), location.get_geographical_location()));
+            auto n_cells     = location.get_cells().size();
+            int loc_capacity = 0;
+            for (int i = 0; i < n_cells; i++) {
+                loc_capacity += location.get_capacity(i).persons;
+            }
+            location_information.push_back(
+                std::make_tuple(location.get_index(), location.get_geographical_location(), n_cells, loc_capacity));
         }
         return location_information;
     }
