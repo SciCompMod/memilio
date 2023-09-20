@@ -76,7 +76,7 @@ def create_plot_map(day, age_groups, relative, filename, file_format, files_inpu
 
 if __name__ == '__main__':
 
-    files_input = {'Data set 1': 'p75/Results'}
+    files_input = {'Data set': 'p75/Results'}
     file_format = 'h5'
     # Define age groups which will be considered through filtering
     # Keep keys and values as well as its assignment constant, remove entries
