@@ -22,15 +22,13 @@
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
-#include <likwid-marker.h>
 
 
 int main()
 {
 
-LIKWID_MARKER_INIT;
+for(int iter = 0; iter < 10000; iter++) {
 
-LIKWID_MARKER_START("setup");    
 //perform multiple iterations for more accurate likwid measurements
 
     mio::set_log_level(mio::LogLevel::debug);
@@ -62,18 +60,14 @@ LIKWID_MARKER_START("setup");
     model.check_constraints();
     // print_seir_params(model);
 
-    LIKWID_MARKER_STOP("setup");
-
-    LIKWID_MARKER_START("simulation");
+    
 
     auto seir = simulate(t0, tmax, dt, model);
 
-    LIKWID_MARKER_STOP("simulation");
-
-    LIKWID_MARKER_CLOSE;
+    
 
     //printf("\n number total: %f\n",
     //       seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
 
- 
+    }
 }
