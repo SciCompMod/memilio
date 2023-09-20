@@ -36,9 +36,9 @@ namespace osecir
 // Create template specializations for the age resolved
 // SECIHURD model
 template<typename FP=double>
-class Model : public CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>,FP>
+class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>,FP>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>, FP>;
+    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>, FP>;
 
 public:
     Model(const mio::Populations<FP,AgeGroup,InfectionState>& pop, const typename Base::ParameterSet& params)
