@@ -63,9 +63,8 @@ for(int iter = 0; iter < 10000; iter++) {
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
 
 
-    auto seir = simulate(t0, tmax, dt, integrator);
+    auto seir = simulate(t0, tmax, dt, model, integrator);
 
-    
 
     //printf("\n number total: %f\n",
     //       seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
