@@ -271,9 +271,6 @@ pycode/epidemiology/**/*.h5
 pycode/epi_venv/
 pycode/build_pylint/
 
-# Config file with credentials
-pycode/memilio-epidata/memilio/epidata/CredentialsRegio.ini
-
 # Docs
 docs/html
 docs/xml
