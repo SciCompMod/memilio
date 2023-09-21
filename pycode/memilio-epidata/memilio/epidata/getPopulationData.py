@@ -103,13 +103,16 @@ def read_credentials():
 
     '''
     # path where ini file is found
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'CredentialsRegio.ini')
+    path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), 'CredentialsRegio.ini')
 
     # check if .ini file exists
     if not os.path.exists(path):
         print('.ini file not found. Writing CredentialsRegio.ini...')
-        username = input("Please Enter Username for https://www.regionalstatistik.de/genesis/online\n")
-        password = getpass.getpass("Please Enter Password for https://www.regionalstatistik.de/genesis/online\n")
+        username = input(
+            "Please Enter Username for https://www.regionalstatistik.de/genesis/online\n")
+        password = getpass.getpass(
+            "Please Enter Password for https://www.regionalstatistik.de/genesis/online\n")
         # create file
         string = '[CREDENTIALS]\nUsername = '+username+'\nPassword = '+password
         with open(path, 'w+') as file:
