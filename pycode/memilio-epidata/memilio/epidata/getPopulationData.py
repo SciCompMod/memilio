@@ -93,10 +93,10 @@ def read_population_data(username, password, read_data, directory):
     return df_pop_raw
 
 
-def read_credentials():
+def read_credentials(username, password):
     '''! Reads credentials for regionalstatistik.de (needed for dowload).
 
-    A connfig file instide the epidata folder is needed with following format
+    A connfig file inside the epidata folder is written or read with following format
     [CREDENTIALS]
     Username = XXXXX
     Password = XXXXX
@@ -331,8 +331,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-    if (username == None) or (password == None):
-        username, password = read_credentials()
+    username, password = read_credentials(username, password)
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
