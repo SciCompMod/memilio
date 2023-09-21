@@ -96,7 +96,9 @@ def impute_and_reduce_df(
     unique_ids_comb = list(itertools.product(*unique_ids))
     # create list of keys/group_by column names
     group_by = list(group_by_cols.keys())
-
+    # create to store DataFrames in to be concatenated.
+    # pd.concat is not called inside the loop for performance reasons.
+    df_list = [df_new]
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
         # filter df
@@ -170,11 +172,10 @@ def impute_and_reduce_df(
             #       other entries such as names etc will get lost here
             #       any idea to introduce these names has to be found.
             df_local_new.fillna(values, inplace=True)
-
         # append current local entity (i.e., county or state)
-        df_new = pd.concat([df_new, df_local_new])
-        # rearrange indices from 0 to N
-        df_new.index = (range(len(df_new)))
+        df_list.append(df_local_new)
+
+    df_new = pd.concat(df_list, ignore_index=True)
 
     # extract min and max date
     df_new = extract_subframe_based_on_dates(df_new, min_date, max_date)
