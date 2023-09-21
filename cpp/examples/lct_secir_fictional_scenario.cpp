@@ -212,13 +212,13 @@ int main()
 
         mio::GammaSurvivalFunction erlangExposedToInfectedNoSymptoms(
             vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed], 0,
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] / 3.335);
+            3.335 / vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
             erlangExposedToInfectedNoSymptoms);
 
         mio::GammaSurvivalFunction erlangInfectedNoSymptomsToInfectedSymptoms(
             vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms], 0,
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] / 1.865);
+            1.865 / vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms]);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
             .set_state_age_function(erlangInfectedNoSymptomsToInfectedSymptoms);
         erlangInfectedNoSymptomsToInfectedSymptoms.set_scale(
@@ -228,7 +228,7 @@ int main()
 
         mio::GammaSurvivalFunction erlangInfectedSymptomsToInfectedSevere(
             vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms], 0,
-            vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] / 7.64507);
+            7.64507 / vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
             .set_state_age_function(erlangInfectedSymptomsToInfectedSevere);
         erlangInfectedSymptomsToInfectedSevere.set_scale(

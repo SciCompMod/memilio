@@ -254,71 +254,71 @@ public:
 
     /**
      * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not.
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0. 
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
-    int check_constraints() const
+    bool check_constraints() const
     {
         if (this->get<TimeExposed>() < 1.0) {
             log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
-            return 1;
+            return true;
         }
 
         if (this->get<TimeInfectedNoSymptoms>() < 1.0) {
             log_error("Constraint check: Parameter TimeInfectedNoSymptoms is smaller than {:.4f}", 1.0);
-            return 1;
+            return true;
         }
 
         if (this->get<TimeInfectedSymptoms>() < 1.0) {
             log_error("Constraint check: Parameter TimeInfectedSymptoms is smaller than {:.4f}", 1.0);
-            return 1;
+            return true;
         }
 
         if (this->get<TimeInfectedSevere>() < 1.0) {
             log_error("Constraint check: Parameter TimeInfectedSevere is smaller than {:.4f}", 1.0);
-            return 1;
+            return true;
         }
 
         if (this->get<TimeInfectedCritical>() < 1.0) {
             log_error("Constraint check: Parameter TimeInfectedCritical is smaller than {:.4f}", 1.0);
-            return 1;
+            return true;
         }
 
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
-            return 1;
+            return true;
         }
 
         if (this->get<RelativeTransmissionNoSymptoms>() < 0.0 || this->get<RelativeTransmissionNoSymptoms>() > 1.0) {
             log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return 1;
+            return true;
         }
 
         if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0 || this->get<RiskOfInfectionFromSymptomatic>() > 1.0) {
             log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
-            return 1;
+            return true;
         }
 
         if (this->get<RecoveredPerInfectedNoSymptoms>() < 0.0 || this->get<RecoveredPerInfectedNoSymptoms>() > 1.0) {
             log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return 1;
+            return true;
         }
 
         if (this->get<SeverePerInfectedSymptoms>() < 0.0 || this->get<SeverePerInfectedSymptoms>() > 1.0) {
             log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return 1;
+            return true;
         }
 
         if (this->get<CriticalPerSevere>() < 0.0 || this->get<CriticalPerSevere>() > 1.0) {
             log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
-            return 1;
+            return true;
         }
 
         if (this->get<DeathsPerCritical>() < 0.0 || this->get<DeathsPerCritical>() > 1.0) {
             log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
-            return 1;
+            return true;
         }
-        return 0;
+        return false;
     }
 
 private:

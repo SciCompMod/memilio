@@ -21,6 +21,7 @@
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
 #include "lct_secir/simulation.h"
+#include "lct_secir/parameters.h"
 #include "ode_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
@@ -336,4 +337,154 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
             ASSERT_NEAR(population.get_value(i)[j - 1], compare_population[i][j], 1e-7) << " at row " << i;
         }
     }
+}
+
+TEST(TestLCTSecir, testConstraints)
+{
+    // Check constraints of InfectionStates and Parameters.
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
+    // Number of subcompartments
+    std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Susceptible]        = 2;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 4;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 5;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 6;
+    std::vector<int> SubcompartmentNumbers1((int)mio::lsecir::InfectionStateBase::Count - 1, 1);
+    mio::lsecir::InfectionState InfState(SubcompartmentNumbers1);
+
+    // Check wrong size of vector.
+    bool constraint_check = InfState.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Check wrong number of Subcompartments for Susceptibles.
+    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
+    constraint_check = InfState.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Susceptible] = 1;
+
+    // For Recovered.
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Recovered] = 5;
+    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
+    constraint_check = InfState.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Recovered] = 1;
+
+    // For Dead.
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 3;
+    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
+    constraint_check = InfState.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 0;
+
+    // Check number of Subcompartments is zero.
+    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
+    constraint_check = InfState.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 1;
+
+    // Check with correct parameters.
+    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
+    constraint_check = InfState.check_constraints();
+    EXPECT_FALSE(constraint_check);
+
+    // Check for parameters.
+    mio::lsecir::Parameters parameters_lct;
+    parameters_lct.get<mio::lsecir::TimeExposed>()                      = 0;
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.1;
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.1;
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere>()               = 11.1;
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical>()             = 17.1;
+    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.01;
+    mio::ContactMatrixGroup contact_matrix                              = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0].finalize();
+    parameters_lct.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
+    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
+    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1;
+    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.1;
+    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.1;
+    parameters_lct.get<mio::lsecir::CriticalPerSevere>()              = 0.1;
+    parameters_lct.get<mio::lsecir::DeathsPerCritical>()              = 0.1;
+
+    // Check TimeExposed.
+    constraint_check = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::TimeExposed>() = 3.1;
+
+    // Check TimeInfectedNoSymptoms.
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>() = 0.1;
+    constraint_check                                          = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>() = 3.1;
+
+    // Check TimeInfectedSymptoms.
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>() = -0.1;
+    constraint_check                                        = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>() = 6.1;
+
+    // Check TimeInfectedSevere.
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere>() = 0.5;
+    constraint_check                                      = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere>() = 11.1;
+
+    // Check TimeInfectedCritical.
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical>() = 0.;
+    constraint_check                                        = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical>() = 17.1;
+
+    // Check TransmissionProbabilityOnContact.
+    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = -1;
+    constraint_check                                                    = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.01;
+
+    // Check RelativeTransmissionNoSymptoms.
+    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1.5;
+    constraint_check                                                  = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
+
+    // Check RiskOfInfectionFromSymptomatic.
+    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1.5;
+    constraint_check                                                  = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1;
+
+    // Check RecoveredPerInfectedNoSymptoms.
+    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 1.5;
+    constraint_check                                                  = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.1;
+
+    // Check SeverePerInfectedSymptoms.
+    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>() = -1;
+    constraint_check                                             = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>() = 0.1;
+
+    // Check CriticalPerSevere.
+    parameters_lct.get<mio::lsecir::CriticalPerSevere>() = -1;
+    constraint_check                                     = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::CriticalPerSevere>() = 0.1;
+
+    // Check DeathsPerCritical.
+    parameters_lct.get<mio::lsecir::DeathsPerCritical>() = -1;
+    constraint_check                                     = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::DeathsPerCritical>() = 0.1;
+
+    // Check with correct parameters.
+    constraint_check = parameters_lct.check_constraints();
+    EXPECT_FALSE(constraint_check);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
 }

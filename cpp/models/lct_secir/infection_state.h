@@ -164,31 +164,39 @@ public:
         return m_Count;
     }
 
-private:
     /**
      * @brief Checks constraints on infection states.
+     *
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
-    void check_constraints()
+    bool check_constraints() const
     {
         if (!(m_SubcompartmentNumbers.size() == (int)InfectionStateBase::Count)) {
             log_error("Vector for number of subcompartments has the wrong size.");
+            return true;
         }
         if (!(m_SubcompartmentNumbers[(int)InfectionStateBase::Susceptible] == 1)) {
             log_error("Susceptible compartment can not have Subcompartments.");
+            return true;
         }
         if (!(m_SubcompartmentNumbers[(int)InfectionStateBase::Recovered] == 1)) {
             log_error("Recovered compartment can not have Subcompartments.");
+            return true;
         }
         if (!(m_SubcompartmentNumbers[(int)InfectionStateBase::Dead] == 1)) {
             log_error("Dead compartment can not have Subcompartments.");
+            return true;
         }
         for (int i = 0; i < (int)InfectionStateBase::Count; ++i) {
             if (m_SubcompartmentNumbers[i] < 1) {
                 log_error("All compartments should have at least one Subcompartment.");
+                return true;
             }
         }
+        return false;
     }
 
+private:
     /**
      * @brief Calculates Index of the first Subcompartment for a vector with one entry per subcompartment.
      *

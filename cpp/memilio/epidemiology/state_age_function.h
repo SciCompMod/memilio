@@ -86,7 +86,8 @@ struct StateAgeFunction {
         , m_support_tol{-1.} // initialize support tolerance as not set
     {
         if (m_scale <= 0) {
-            log_error("The scale Parameter of a  StateAgeFunction has to be positive.");
+            log_error("The scale Parameter of a  StateAgeFunction has to be positive. Set scale to 1.");
+            m_scale = 1;
         }
     }
 
@@ -218,6 +219,10 @@ struct StateAgeFunction {
      */
     void set_scale(ScalarType new_scale)
     {
+        if (new_scale <= 0) {
+            log_error("The scale Parameter of a  StateAgeFunction has to be positive. Set scale to 1.");
+            new_scale = 1;
+        }
         m_scale       = new_scale;
         m_support_max = -1.;
         m_support_tol = -1.;

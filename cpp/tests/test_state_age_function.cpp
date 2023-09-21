@@ -18,26 +18,16 @@
 * limitations under the License.
 */
 
-#include "boost/fusion/functional/invocation/invoke.hpp"
-#include "load_test_data.h"
-#include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
-#include "ide_secir/parameters.h"
-#include "ide_secir/simulation.h"
-#include "memilio/math/eigen.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/utils/logging.h"
 #include "memilio/config.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/state_age_function.h"
-#include <iostream>
+
 #include <gtest/gtest.h>
 
 TEST(TestStateAgeFunction, testSpecialMember)
 { /* Copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes, therefore test for one Special Member.
     Constructors of other members will be tested in other tests. */
     ScalarType dt = 0.5;
-    mio::GammaSurvivalFunction gamma(1.0, 2.0, 3.0);
+    mio::GammaSurvivalFunction gamma(1.0, 2.0, 3);
 
     // constructor
     EXPECT_EQ(gamma.get_parameter(), 1.0);
@@ -95,7 +85,7 @@ TEST(TestStateAgeFunction, testSettersAndGettersForParameter)
 
     // test get and set for function parameter
     // only for GammaSurvivalfunction as set_parameter and get_parameter are equal for all derived classes
-    mio::GammaSurvivalFunction gamma(testvalue_before, testvalue_before, testvalue_before);
+    mio::GammaSurvivalFunction gamma(testvalue_before, testvalue_before, -1);
 
     EXPECT_EQ(gamma.get_parameter(), testvalue_before);
     gamma.set_parameter(testvalue_after);
@@ -105,7 +95,9 @@ TEST(TestStateAgeFunction, testSettersAndGettersForParameter)
     gamma.set_location(testvalue_after);
     EXPECT_EQ(gamma.get_location(), testvalue_after);
 
-    EXPECT_EQ(gamma.get_scale(), testvalue_before);
+    EXPECT_EQ(gamma.get_scale(), 1);
+    gamma.set_scale(-1);
+    EXPECT_EQ(gamma.get_scale(), 1);
     gamma.set_scale(testvalue_after);
     EXPECT_EQ(gamma.get_scale(), testvalue_after);
 }
@@ -328,6 +320,7 @@ TEST(TestStateAgeFunction, testGamma)
             mio::GammaSurvivalFunction survival(shape[s], 0, 1. / (rate[r]));
             EXPECT_EQ(survival.eval(0), 1.0);
             mio::ErlangDensity density(1, 1. / (rate[r]));
+            EXPECT_EQ(density.eval(-1), 0.0);
 
             for (int tau = 0; tau < 6; tau++) {
                 ScalarType f = 0;

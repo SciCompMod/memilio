@@ -32,23 +32,33 @@ namespace mio
 namespace lsecir
 {
 
-void Initializer::check_constraints() const
+bool Initializer::check_constraints() const
 {
     if (!((int)InfectionTransition::Count == (int)m_flows.get_num_elements())) {
         log_error("Initial condition size does not match Subcompartments.");
+        return true;
     }
 
     parameters.check_constraints();
+    infectionStates.check_constraints();
+
+    if (!(floating_point_equal(0., m_flows.get_last_time(), 1.0, 1e-14))) {
+        log_error("Last time point in flows has to be 0.");
+        return true;
+    }
 
     for (int i = 1; i < m_flows.get_num_time_points(); i++) {
         if (!(floating_point_equal(m_dt, m_flows.get_time(i) - m_flows.get_time(i - 1), 1.0, 1e-14))) {
             log_error("Time points in flows have to be equidistant.");
+            return true;
         }
     }
 
     if (!(m_dt < 1)) {
         log_warning("Step size was set very large. The result could be distorted.");
+        return true;
     }
+    return false;
 }
 
 Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen::Index idx_incoming_flow,
@@ -80,15 +90,18 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
             log_error("Initialization failed. Not enough time points for the transitions are given.  {} are needed but "
                       "just {} are given.",
                       calc_time_index, num_time_points);
+            subcompartments[j] = -1;
         }
+        else {
 
-        // Approximate integral with non-standard scheme.
-        for (Eigen::Index i = num_time_points - calc_time_index; i < num_time_points; i++) {
-            state_age = (num_time_points - i) * m_dt;
-            sum += erlang.eval(state_age) * m_flows[i][idx_incoming_flow];
+            // Approximate integral with non-standard scheme.
+            for (Eigen::Index i = num_time_points - calc_time_index; i < num_time_points; i++) {
+                state_age = (num_time_points - i) * m_dt;
+                sum += erlang.eval(state_age) * m_flows[i][idx_incoming_flow];
+            }
+            subcompartments[j] = 1 / (num_infectionstates * transition_rate) * sum;
         }
-        subcompartments[j] = 1 / (num_infectionstates * transition_rate) * sum;
-        sum                = 0;
+        sum = 0;
     }
     return subcompartments;
 }
