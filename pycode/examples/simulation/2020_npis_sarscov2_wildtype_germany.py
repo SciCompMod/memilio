@@ -37,218 +37,6 @@ class InterventionLevel(Enum):
 
 class Simulation:
 
-    def set_npis(params, start_date, end_date):
-        contacts = params.ContactPatterns
-        dampings = contacts.dampings()
-
-        num_groups = params.get_num_groups()
-
-        group_weights_all = np.ones(num_groups)
-        group_weights_seniors = np.vectorize(
-            lambda i: 1.0 if i == 5 else (0.5 if i == 4 else 0.0))(
-            np.arange(num_groups))
-
-        # d = mio.DampingSampling(
-        #     value=mio.UncertainValue(3.0),
-        #     level=1,
-        #     type=2,
-        #     time=10.0,
-        #     matrix_indices=[0, 1],
-        #     group_weights=np.r_[2.0, 1.0])
-
-        loc_h = Location.Home.value
-        loc_s = Location.School.value
-        loc_w = Location.Work.value
-        loc_o = Location.Other.value
-
-        lvl_m = InterventionLevel.Main.value
-        lvl_p = InterventionLevel.PhysicalDistanceAndMasks.value
-        lvl_s = InterventionLevel.SeniorAwareness.value
-        lvl_h = InterventionLevel.Holidays.value
-
-        typ_h = Intervention.Home.value
-        typ_s = Intervention.SchoolClosure.value
-        typ_ho = Intervention.HomeOffice.value
-        typ_g = Intervention.GatheringBanFacilitiesClosure.value
-        typ_p = Intervention.PhysicalDistanceAndMasks.value
-        typ_se = Intervention.SeniorAwareness.value
-
-        def damping_helper(t, min, max, damping_level, type, location):
-            v = mio.UncertainValue()
-            v.set_distribution(mio.ParameterDistributionUniform(min, max))
-            return mio.DampingSampling(
-                value=v,
-                level=damping_level,
-                type=type,
-                time=t,
-                matrix_indices=location,
-                group_weights=group_weights_all)
-
-        def contacts_at_home(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_m, typ_h, [loc_h])
-
-        def school_closure(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_m, typ_s, [loc_s])
-
-        def home_office(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_m, typ_ho, [loc_w])
-
-        def social_events(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_m, typ_g, [loc_o])
-
-        def social_events_work(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_m, typ_g, [loc_w])
-
-        def physical_distancing_home_school(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_m, typ_p, [loc_h, loc_s])
-
-        def physical_distancing_work_other(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_m, typ_p, [loc_w, loc_o])
-
-        def senior_awareness(t, min, max):
-            return damping_helper(
-                t, min, max, lvl_s, typ_se, [loc_h, loc_o])
-
-        # SPRING 2020 LOCKDOWN SCENARIO
-        start_spring_date = mio.Date(2020, 3, 18)
-        if start_spring_date < end_date:
-            # TODO: Evtl noch simulation time hinzufügen
-            start_spring = (start_spring_date - start_date).days
-            dampings.add(contacts_at_home(start_spring, 0.6, 0.8))
-            dampings.add(school_closure(start_spring, 1.0, 1.0))
-            dampings.add(home_office(start_spring, 0.2, 0.3))
-            dampings.add(social_events(start_spring, 0.6, 0.8))
-            dampings.add(social_events_work(start_spring, 0.1, 0.2))
-            dampings.add(
-                physical_distancing_home_school(
-                    start_spring, 0.4, 0.6))
-            dampings.add(
-                physical_distancing_work_other(
-                    start_spring, 0.4, 0.6))
-            dampings.add(senior_awareness(start_spring, 0.0, 0.0))
-
-        # SUMMER 2020 SCENARIO
-        start_summer_date = mio.date(year=2020, month=5, day=15)
-        if start_summer_date < end_date:
-            start_summer = (start_summer_date - start_date).days
-            school_reopen_time = (datetime.date(
-                2020, 6, 15) - start_date).days
-            dampings.add(contacts_at_home(start_summer, 0.0, 0.2))
-            # schools partially reopened
-            dampings.add(school_closure(start_summer, 0.5, 0.5))
-            # school fully reopened
-            dampings.add(school_closure(school_reopen_time, 0.0, 0.0))
-            dampings.add(home_office(start_summer, 0.2, 0.3))
-            dampings.add(social_events(start_summer, 0.0, 0.2))
-            dampings.add(social_events_work(start_summer, 0.0, 0.05))
-            dampings.add(
-                physical_distancing_home_school(
-                    start_summer, 0.0, 0.2))
-            dampings.add(
-                physical_distancing_work_other(
-                    start_summer, 0.0, 0.2))
-            dampings.add(senior_awareness(start_summer, 0.0, 0.0))
-
-            # autumn enforced attention
-            start_autumn_date = mio.date(year=2020, month=10, day=1)
-            if start_autumn_date < end_date:
-                start_autumn = (start_autumn_date - start_date).days
-                dampings.add(contacts_at_home(start_autumn, 0.2, 0.4))
-                dampings.add(
-                    physical_distancing_home_school(
-                        start_autumn, 0.2, 0.4))
-                dampings.add(
-                    physical_distancing_work_other(
-                        start_autumn, 0.2, 0.4))
-
-            # autumn lockdown light
-            start_autumn_lockdown_date = mio.Date(2020, 11, 1)
-            if (start_autumn_lockdown_date < end_date):
-                start_autumn_lockdown = (
-                    start_autumn_lockdown_date - start_date).days
-                dampings.add(contacts_at_home(start_autumn_lockdown, 0.4, 0.6))
-                dampings.add(school_closure(start_autumn_lockdown, 0.0, 0.0))
-                dampings.add(home_office(start_autumn_lockdown, 0.2, 0.3))
-                dampings.add(social_events(start_autumn_lockdown, 0.6, 0.8))
-                dampings.add(social_events_work(
-                    start_autumn_lockdown, 0.0, 0.1))
-                dampings.add(
-                    physical_distancing_home_school(
-                        start_autumn_lockdown, 0.2, 0.4))
-                dampings.add(
-                    physical_distancing_work_other(
-                        start_autumn_lockdown, 0.4, 0.6))
-                dampings.add(senior_awareness(start_autumn_lockdown, 0.0, 0.0))
-
-            # winter lockdown
-            start_winter_lockdown_date = mio.Date(2020, 12, 16)
-            if (start_winter_lockdown_date < end_date):
-                min = 0.6
-                max = 0.8  # for strictest scenario: 0.8 - 1.0
-                start_winter_lockdown = (
-                    start_winter_lockdown_date - start_date).days
-                dampings.add(contacts_at_home(start_winter_lockdown, min, max))
-                dampings.add(school_closure(start_winter_lockdown, 1.0, 1.0))
-                dampings.add(home_office(start_winter_lockdown, 0.2, 0.3))
-                dampings.add(social_events(start_winter_lockdown, min, max))
-                dampings.add(social_events_work(
-                    start_winter_lockdown, 0.1, 0.2))
-                dampings.add(
-                    physical_distancing_home_school(
-                        start_winter_lockdown, 0.2, 0.4))
-                dampings.add(
-                    physical_distancing_work_other(
-                        start_winter_lockdown, min, max))
-                dampings.add(senior_awareness(start_winter_lockdown, 0.0, 0.0))
-
-                # relaxing of restrictions over christmas days
-                xmas_date = mio.Date(2020, 12, 24)
-                xmas = (xmas_date - start_date).days
-                dampings.add(contacts_at_home(xmas, 0.0, 0.0))
-                dampings.add(home_office(xmas, 0.4, 0.5))
-                dampings.add(social_events(xmas, 0.4, 0.6))
-                dampings.add(physical_distancing_home_school(xmas, 0.0, 0.0))
-                dampings.add(physical_distancing_work_other(xmas, 0.4, 0.6))
-
-                # after christmas
-                after_xmas_date = mio.Date(2020, 12, 27)
-                after_xmas = (after_xmas_date - start_date).days
-                dampings.add(contacts_at_home(after_xmas, min, max))
-                dampings.add(home_office(after_xmas, 0.2, 0.3))
-                dampings.add(social_events(after_xmas, 0.6, 0.8))
-                dampings.add(
-                    physical_distancing_home_school(after_xmas, 0.2, 0.4))
-                dampings.add(
-                    physical_distancing_work_other(after_xmas, min, max))
-
-            # local dynamic NPIs
-            dynamic_npis = params.DynamicNPIsInfectedSymptoms
-            local_npis = []
-            # increased from [0.4, 0.6] in Nov
-            local_npis.append(contacts_at_home(0, 0.6, 0.8))
-            local_npis.append(school_closure(0, 0.2, 0.3))  # see paper
-            local_npis.append(home_office(0, 0.2, 0.3))
-            local_npis.append(social_events(0, 0.6, 0.8))
-            local_npis.append(social_events_work(0, 0.1, 0.2))
-            local_npis.append(physical_distancing_home_school(0, 0.6, 0.8))
-            local_npis.append(physical_distancing_work_other(0, 0.6, 0.8))
-            local_npis.append(senior_awareness(0, 0.0, 0.0))
-
-            dynamic_npis.set_interval(3.0)
-            dynamic_npis.set_duration(14.0)
-            dynamic_npis.set_base_value(100000)
-            dynamic_npis.set_threshold(200.0, local_npis)
-
-            # school holidays(holiday periods are set per node, see set_nodes)
-            # contacts.get_school_holiday_damping() = damping_helper(0, 1.0, 1.0, lvl_h, typ_s, [loc_s])
-
     def __init__(self, data_dir):
 
         self.start_date = mio.Date(2020, 5, 15)
@@ -257,9 +45,9 @@ class Simulation:
 
         self.end_date = mio.Date(2020, 9, 1)
 
-        num_groups = 6
+        self.num_groups = 6
 
-        model = Model(num_groups)
+        model = Model(self.num_groups)
 
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
             if isinstance(
@@ -371,7 +159,7 @@ class Simulation:
             deathsPerCriticalMax)
 
         contact_matrices = mio.ContactMatrixGroup(
-            num_groups, len(list(Location)))
+            self.num_groups, len(list(Location)))
         contact_matrices[0] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
                 path.join(data_dir, "contacts", "baseline_home.txt")),
@@ -400,7 +188,7 @@ class Simulation:
         params.StartDay = start_day
         params.Seasonality.value = 0.2
 
-        set_npis(params, self.start_date, self.end_date)
+        self.set_npis(params)
 
         graph = secir.ModelGraph()
 
@@ -420,6 +208,222 @@ class Simulation:
             data_dir, graph, len(Location))
 
         self.graph = graph
+
+    def set_npis(self, params):
+        contacts = params.ContactPatterns
+        dampings = contacts.dampings
+
+        group_weights_all = np.ones(self.num_groups)
+        group_weights_seniors = np.vectorize(
+            lambda i: 1.0 if i == 5 else (0.5 if i == 4 else 0.0))(
+            np.arange(self.num_groups))
+
+        loc_h = Location.Home.value
+        loc_s = Location.School.value
+        loc_w = Location.Work.value
+        loc_o = Location.Other.value
+
+        lvl_m = InterventionLevel.Main.value
+        lvl_p = InterventionLevel.PhysicalDistanceAndMasks.value
+        lvl_s = InterventionLevel.SeniorAwareness.value
+        lvl_h = InterventionLevel.Holidays.value
+
+        typ_h = Intervention.Home.value
+        typ_s = Intervention.SchoolClosure.value
+        typ_ho = Intervention.HomeOffice.value
+        typ_g = Intervention.GatheringBanFacilitiesClosure.value
+        typ_p = Intervention.PhysicalDistanceAndMasks.value
+        typ_se = Intervention.SeniorAwareness.value
+
+        def damping_helper(t, min, max, damping_level, type, location):
+            v = mio.UncertainValue()
+            v.set_distribution(mio.ParameterDistributionUniform(min, max))
+            return mio.DampingSampling(
+                value=v,
+                level=damping_level,
+                type=type,
+                time=t,
+                matrix_indices=location,
+                group_weights=group_weights_all)
+
+        def contacts_at_home(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_m, typ_h, [loc_h])
+
+        def school_closure(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_m, typ_s, [loc_s])
+
+        def home_office(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_m, typ_ho, [loc_w])
+
+        def social_events(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_m, typ_g, [loc_o])
+
+        def social_events_work(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_m, typ_g, [loc_w])
+
+        def physical_distancing_home_school(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_m, typ_p, [loc_h, loc_s])
+
+        def physical_distancing_work_other(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_m, typ_p, [loc_w, loc_o])
+
+        def senior_awareness(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_s, typ_se, [loc_h, loc_o])
+
+        # SPRING 2020 LOCKDOWN SCENARIO
+        start_spring_date = datetime.date(
+            2020, 3, 18)
+        end_date = datetime.date(
+            self.end_date.year, self.end_date.month, self.end_date.day)
+        start_date = datetime.date(
+            self.start_date.year, self.start_date.month, self.start_date.day)
+
+        if start_spring_date < end_date:
+            start_spring = (start_spring_date - start_date).days
+            dampings.append(contacts_at_home(start_spring, 0.6, 0.8))
+            dampings.append(school_closure(start_spring, 1.0, 1.0))
+            dampings.append(home_office(start_spring, 0.2, 0.3))
+            dampings.append(social_events(start_spring, 0.6, 0.8))
+            dampings.append(social_events_work(start_spring, 0.1, 0.2))
+            dampings.append(
+                physical_distancing_home_school(
+                    start_spring, 0.4, 0.6))
+            dampings.append(
+                physical_distancing_work_other(
+                    start_spring, 0.4, 0.6))
+            dampings.append(senior_awareness(start_spring, 0.0, 0.0))
+
+        # SUMMER 2020 SCENARIO
+        start_summer_date = datetime.date(year=2020, month=5, day=15)
+        if start_summer_date < end_date:
+            start_summer = (start_summer_date - start_date).days
+            school_reopen_time = (datetime.date(
+                2020, 6, 15) - start_date).days
+            dampings.append(contacts_at_home(start_summer, 0.0, 0.2))
+            # schools partially reopened
+            dampings.append(school_closure(start_summer, 0.5, 0.5))
+            # school fully reopened
+            dampings.append(school_closure(school_reopen_time, 0.0, 0.0))
+            dampings.append(home_office(start_summer, 0.2, 0.3))
+            dampings.append(social_events(start_summer, 0.0, 0.2))
+            dampings.append(social_events_work(start_summer, 0.0, 0.05))
+            dampings.append(
+                physical_distancing_home_school(
+                    start_summer, 0.0, 0.2))
+            dampings.append(
+                physical_distancing_work_other(
+                    start_summer, 0.0, 0.2))
+            dampings.append(senior_awareness(start_summer, 0.0, 0.0))
+
+            # autumn enforced attention
+            start_autumn_date = datetime.date(year=2020, month=10, day=1)
+            if start_autumn_date < end_date:
+                start_autumn = (start_autumn_date - start_date).days
+                dampings.append(contacts_at_home(start_autumn, 0.2, 0.4))
+                dampings.append(
+                    physical_distancing_home_school(
+                        start_autumn, 0.2, 0.4))
+                dampings.append(
+                    physical_distancing_work_other(
+                        start_autumn, 0.2, 0.4))
+
+            # autumn lockdown light
+            start_autumn_lockdown_date = datetime.date(2020, 11, 1)
+            if (start_autumn_lockdown_date < end_date):
+                start_autumn_lockdown = (
+                    start_autumn_lockdown_date - start_date).days
+                dampings.append(contacts_at_home(
+                    start_autumn_lockdown, 0.4, 0.6))
+                dampings.append(school_closure(
+                    start_autumn_lockdown, 0.0, 0.0))
+                dampings.append(home_office(start_autumn_lockdown, 0.2, 0.3))
+                dampings.append(social_events(start_autumn_lockdown, 0.6, 0.8))
+                dampings.append(social_events_work(
+                    start_autumn_lockdown, 0.0, 0.1))
+                dampings.append(
+                    physical_distancing_home_school(
+                        start_autumn_lockdown, 0.2, 0.4))
+                dampings.append(
+                    physical_distancing_work_other(
+                        start_autumn_lockdown, 0.4, 0.6))
+                dampings.append(senior_awareness(
+                    start_autumn_lockdown, 0.0, 0.0))
+
+            # winter lockdown
+            start_winter_lockdown_date = datetime.date(2020, 12, 16)
+            if (start_winter_lockdown_date < end_date):
+                min = 0.6
+                max = 0.8  # for strictest scenario: 0.8 - 1.0
+                start_winter_lockdown = (
+                    start_winter_lockdown_date - start_date).days
+                dampings.append(contacts_at_home(
+                    start_winter_lockdown, min, max))
+                dampings.append(school_closure(
+                    start_winter_lockdown, 1.0, 1.0))
+                dampings.append(home_office(start_winter_lockdown, 0.2, 0.3))
+                dampings.append(social_events(start_winter_lockdown, min, max))
+                dampings.append(social_events_work(
+                    start_winter_lockdown, 0.1, 0.2))
+                dampings.append(
+                    physical_distancing_home_school(
+                        start_winter_lockdown, 0.2, 0.4))
+                dampings.append(
+                    physical_distancing_work_other(
+                        start_winter_lockdown, min, max))
+                dampings.append(senior_awareness(
+                    start_winter_lockdown, 0.0, 0.0))
+
+                # relaxing of restrictions over christmas days
+                xmas_date = mio.Date(2020, 12, 24)
+                xmas = (xmas_date - start_date).days
+                dampings.append(contacts_at_home(xmas, 0.0, 0.0))
+                dampings.append(home_office(xmas, 0.4, 0.5))
+                dampings.append(social_events(xmas, 0.4, 0.6))
+                dampings.append(
+                    physical_distancing_home_school(
+                        xmas, 0.0, 0.0))
+                dampings.append(physical_distancing_work_other(xmas, 0.4, 0.6))
+
+                # after christmas
+                after_xmas_date = datetime.date(2020, 12, 27)
+                after_xmas = (after_xmas_date - start_date).days
+                dampings.append(contacts_at_home(after_xmas, min, max))
+                dampings.append(home_office(after_xmas, 0.2, 0.3))
+                dampings.append(social_events(after_xmas, 0.6, 0.8))
+                dampings.append(
+                    physical_distancing_home_school(after_xmas, 0.2, 0.4))
+                dampings.append(
+                    physical_distancing_work_other(after_xmas, min, max))
+
+            # local dynamic NPIs
+            dynamic_npis = params.DynamicNPIsInfectedSymptoms
+            local_npis = []
+            # increased from [0.4, 0.6] in Nov
+            local_npis.append(contacts_at_home(0, 0.6, 0.8))
+            local_npis.append(school_closure(0, 0.2, 0.3))  # see paper
+            local_npis.append(home_office(0, 0.2, 0.3))
+            local_npis.append(social_events(0, 0.6, 0.8))
+            local_npis.append(social_events_work(0, 0.1, 0.2))
+            local_npis.append(physical_distancing_home_school(0, 0.6, 0.8))
+            local_npis.append(physical_distancing_work_other(0, 0.6, 0.8))
+            local_npis.append(senior_awareness(0, 0.0, 0.0))
+
+            dynamic_npis.interval = 3.0
+            dynamic_npis.duration = 14.0
+            dynamic_npis.base_value = 100000
+            dynamic_npis.set_threshold(200.0, local_npis)
+
+            # school holidays(holiday periods are set per node, see set_nodes)
+            contacts.school_holiday_damping = damping_helper(
+                0, 1.0, 1.0, lvl_h, typ_s, [loc_s])
 
     def run(self, num_runs=10):
         mio.set_log_level(mio.LogLevel.Off)
