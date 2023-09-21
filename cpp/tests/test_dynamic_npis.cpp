@@ -324,6 +324,7 @@ namespace mio_test
 class MockSimulation
 {
 public:
+    using Model = mio::osecir::Model<double>;
     MockSimulation(mio::osecir::Model<double> m, double t0, double /*dt*/)
         : m_model(m)
         , m_result(t0, m.get_initial_values())
