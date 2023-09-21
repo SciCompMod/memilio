@@ -23,6 +23,7 @@
 @brief Downloads data about population statistic
 
 """
+import configparser
 import warnings
 import requests
 import os
@@ -89,6 +90,25 @@ def read_population_data(username, password, read_data, directory):
                 'Data file '+filename+' was not found in out_folder/Germany')
 
     return df_pop_raw
+
+
+def read_credentials():
+    '''! Reads credentials for regionalstatistik.de (needed for dowload).
+
+    A connfig file instide the epidata folder is needed with following format
+    [CREDENTIALS]
+    Username = XXXXX
+    Password = XXXXX
+
+    '''
+    path = os.path.dirname(os.path.abspath(__file__))
+    parser = configparser.ConfigParser()
+    parser.read(path + '/CredentialsRegio.ini')
+
+    username = parser['CREDENTIALS']['Username']
+    password = parser['CREDENTIALS']['Password']
+
+    return username, password
 
 
 def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
@@ -294,7 +314,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-
+    if (username == None) or (password == None):
+        username, password = read_credentials()
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
