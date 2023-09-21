@@ -10,6 +10,7 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     target_compile_options(2021_vaccination_delta PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
                                                   PRIVATE "-lstdc++;-DLIKWID_PERFMON;-llikwid")
        
+       
     find_package(LIKWID REQUIRED)
     add_executable(abm_simulation abm.cpp)
     target_include_directories(abm_simulation PRIVATE ${LIKWID_INCLUDE_DIRS})
