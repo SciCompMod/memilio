@@ -25,6 +25,7 @@
 """
 import configparser
 import warnings
+import getpass
 import requests
 import os
 import twill
@@ -101,12 +102,25 @@ def read_credentials():
     Password = XXXXX
 
     '''
-    path = os.path.dirname(os.path.abspath(__file__))
-    parser = configparser.ConfigParser()
-    parser.read(path + '/CredentialsRegio.ini')
+    # path where ini file is found
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'CredentialsRegio.ini')
 
-    username = parser['CREDENTIALS']['Username']
-    password = parser['CREDENTIALS']['Password']
+    # check if .ini file exists
+    if not os.path.exists(path):
+        print('.ini file not found. Writing CredentialsRegio.ini...')
+        username = input("Please Enter Username for https://www.regionalstatistik.de/genesis/online\n")
+        password = getpass.getpass("Please Enter Password for https://www.regionalstatistik.de/genesis/online\n")
+        # create file
+        string = '[CREDENTIALS]\nUsername = '+username+'\nPassword = '+password
+        with open(path, 'w+') as file:
+            file.write(string)
+
+    else:
+        parser = configparser.ConfigParser()
+        parser.read(path)
+
+        username = parser['CREDENTIALS']['Username']
+        password = parser['CREDENTIALS']['Password']
 
     return username, password
 
