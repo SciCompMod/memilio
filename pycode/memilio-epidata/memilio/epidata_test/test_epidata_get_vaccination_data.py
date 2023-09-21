@@ -115,7 +115,12 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
         gvd.get_vaccination_data(out_folder=self.path, read_data=True)
 
-    @unittest.skip("Performance")
+    # Sanitizing option 3 for vaccination was introduced in 2021 but soon discontinued
+    # as it a) is dependent on the county the consideration starts with and b) cannot be
+    # used for vaccination ratios towards 90%. The following test was deactivated as it
+    # increased the run time of the tests by 25 mins (~400%) and as the option 3 is only
+    # retained for backward compatibility.
+    @unittest.skip("Reduce-Test-Run-Time")
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
