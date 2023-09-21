@@ -67,6 +67,14 @@ struct LocationId {
     {
         return !(index == rhs.index && type == rhs.type);
     }
+
+    bool operator<(const LocationId& rhs) const
+    {
+        if (type == rhs.type) {
+            return index < rhs.index;
+        }
+        return (type < rhs.type);
+    }
 };
 
 } // namespace abm

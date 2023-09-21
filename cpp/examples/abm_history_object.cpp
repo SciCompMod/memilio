@@ -121,11 +121,10 @@ int main()
     auto start_date            = mio::abm::TimePoint(0);
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto test_type             = mio::abm::AntigenTest();
-    auto test_at_work          = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work = mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_at_work, {});
+    auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
-    world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly.

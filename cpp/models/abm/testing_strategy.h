@@ -25,6 +25,7 @@
 #include "abm/location.h"
 #include "abm/time.h"
 #include <bitset>
+#include <map>
 
 namespace mio
 {
@@ -34,7 +35,6 @@ namespace abm
 /**
  * @brief TestingCriteria for TestingScheme.
  */
-template <typename L>
 class TestingCriteria
 {
 public:
@@ -48,9 +48,8 @@ public:
      */
     TestingCriteria() = default;
 
-    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<L>& locations,
-                    const std::vector<InfectionState>& infection_states)
-        : m_locations(locations)
+    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states)
+
     {
         for (auto age : ages) {
             m_ages.set((size_t)age, true);
@@ -67,13 +66,7 @@ public:
     {
         auto to_compare_ages             = this->m_ages;
         auto to_compare_infection_states = this->m_infection_states;
-        auto to_compare_locations        = this->m_locations;
-
-        std::sort(to_compare_locations.begin(), to_compare_locations.end());
-        std::sort(other.m_locations.begin(), other.m_locations.end());
-
-        return to_compare_ages == other.m_ages && to_compare_locations == other.m_locations &&
-               to_compare_infection_states == other.m_infection_states;
+        return to_compare_ages == other.m_ages && to_compare_infection_states == other.m_infection_states;
     }
 
     /**
@@ -92,27 +85,6 @@ public:
     void remove_age_group(const AgeGroup age_group)
     {
         m_ages.set((size_t)age_group, false);
-    }
-
-    /**
-     * @brief Add a #Location or #LocationType to the set of #LocationType%s that are either allowed or required to be tested.
-     * @param[in] location_type #Location%s or #LocationType to be added.
-     */
-    void add_location(const L location)
-    {
-        if (std::find(m_locations.begin(), m_locations.end(), location) == m_locations.end()) {
-            m_locations.push_back(location);
-        }
-    }
-
-    /**
-     * @brief Remove a #Location or #LocationType from the set of #LocationType%s that are either allowed or required to be tested.
-     * @param[in] location_type #Location or  #LocationType to be removed.
-     */
-    void remove_location(const L location)
-    {
-        auto last = std::remove(m_locations.begin(), m_locations.end(), location);
-        m_locations.erase(last, m_locations.end());
     }
 
     /**
@@ -137,12 +109,11 @@ public:
     /**
      * @brief Check if a Person and a Location meet all the required properties to get tested.
      * @param[in] p Person to be checked.
-     * @param[in] l Location to be checked.
      * @param[in] t TimePoint when to evaluate the TestingCriteria.
      */
-    bool evaluate(const Person& p, const Location& l, TimePoint t) const
+    bool evaluate(const Person& p, TimePoint t) const
     {
-        return has_requested_age(p) && is_requested_location_type(l) && has_requested_infection_state(p, t);
+        return has_requested_age(p) && has_requested_infection_state(p, t);
     }
 
 private:
@@ -156,18 +127,6 @@ private:
             return true; // no condition on the AgeGroup
         }
         return m_ages[(size_t)p.get_age()];
-    }
-
-    /**
-     * @brief Check if a Location is in the set of Location%s that are allowed for testing.
-     * @param[in] l Location to be checked.
-     */
-    bool is_requested_location_type(const Location& l) const
-    {
-        if (m_locations.empty()) {
-            return true; // no condition on the location
-        }
-        return std::find(m_locations.begin(), m_locations.end(), l.get_type()) != m_locations.end();
     }
 
     /**
@@ -185,8 +144,6 @@ private:
 
     std::bitset<(size_t)AgeGroup::Count>
         m_ages; ///< BitSet of #AgeGroup%s that are either allowed or required to be tested.
-    std::vector<L> m_locations; /**< Set of #Location%s or #LocationState%s that are either allowed or required to be 
-    tested.*/
     std::bitset<(size_t)InfectionState::Count>
         m_infection_states; /**< BitSet of #InfectionState%s that are either allowed or required to
     be tested.*/
@@ -208,8 +165,8 @@ public:
      * @param test_type The type of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
-    TestingScheme(const TestingCriteria<LocationType>& testing_criteria, TimeSpan minimal_time_since_last_test,
-                  TimePoint start_date, TimePoint end_date, const GenericTest& test_type, ScalarType probability);
+    TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test, TimePoint start_date,
+                  TimePoint end_date, const GenericTest& test_type, ScalarType probability);
 
     /**
      * @brief Compares two TestingScheme%s for functional equality.
@@ -231,14 +188,13 @@ public:
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
      * @param[in] person Person to check.
-     * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person& person, const Location& location, TimePoint t) const;
+    bool run_scheme(Person& person, TimePoint t) const;
 
 private:
-    TestingCriteria<LocationType> m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
+    TestingCriteria m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.
@@ -258,19 +214,39 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::vector<TestingScheme>& testing_schemes);
+    explicit TestingStrategy(const std::map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map);
 
     /**
-     * @brief Add a TestingScheme to the set of schemes that are checked for testing.
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
+     * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const TestingScheme& scheme);
+    void add_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme);
 
     /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing.
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain LocationType.
+     * A TestingScheme applies to all Location of the same type is store in 
+     * LocationId{INVALID_LOCATION_INDEX, location_type} of m_location_to_schemes_map.
+     * @param[in] loc_type LocationId key for TestingScheme to be added.
+     * @param[in] scheme TestingScheme to be added.
+     */
+    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+
+    /**
+     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
+     * @param[in] loc_id LocationId key for TestingScheme to be remove.
      * @param[in] scheme TestingScheme to be removed.
      */
-    void remove_testing_scheme(const TestingScheme& scheme);
+    void remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme);
+
+    /**
+     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
+     * A TestingScheme applies to all Location of the same type is store in 
+     * LocationId{INVALID_LOCATION_INDEX, location_type} of m_location_to_schemes_map.
+     * @param[in] loc_type LocationType key for TestingScheme to be remove.
+     * @param[in] scheme TestingScheme to be removed.
+     */
+    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
     /**
      * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
@@ -286,10 +262,11 @@ public:
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(Person& person, const Location& location, TimePoint t) const;
+    bool run_strategy(Person& person, const Location& location, TimePoint t);
 
 private:
-    std::vector<TestingScheme> m_testing_schemes; ///< Set of schemes that are checked for testing.
+    std::map<LocationId, std::vector<TestingScheme>>
+        m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 
 } // namespace abm

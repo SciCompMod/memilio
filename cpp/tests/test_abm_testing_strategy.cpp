@@ -26,33 +26,24 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     auto person = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
-    auto testing_criteria = mio::abm::TestingCriteria<mio::abm::LocationType>();
-    ASSERT_EQ(testing_criteria.evaluate(person, work, t), true);
+    auto testing_criteria = mio::abm::TestingCriteria();
+    ASSERT_EQ(testing_criteria.evaluate(person, t), true);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
-    testing_criteria.add_location(mio::abm::LocationType::Home);
-    testing_criteria.add_location(mio::abm::LocationType::Work);
-
-    ASSERT_EQ(testing_criteria.evaluate(person, work, t), true);
-    ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
 
     testing_criteria.add_age_group(mio::abm::AgeGroup::Age35to59);
-    ASSERT_EQ(testing_criteria.evaluate(person, home, t),
+    ASSERT_EQ(testing_criteria.evaluate(person, t),
               false); // now it isn't empty and get's evaluated against age group
     testing_criteria.remove_age_group(mio::abm::AgeGroup::Age35to59);
-    ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, t), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    ASSERT_EQ(testing_criteria.evaluate(person, home, t), false);
-
+    ASSERT_EQ(testing_criteria.evaluate(person, t), false);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    testing_criteria.remove_location(mio::abm::LocationType::Home);
-    ASSERT_EQ(testing_criteria.evaluate(person, home, t), false);
 
-    auto testing_criteria_manual = mio::abm::TestingCriteria<mio::abm::LocationType>(
-        {}, std::vector<mio::abm::LocationType>({mio::abm::LocationType::Work}),
-        std::vector<mio::abm::InfectionState>(
-            {mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::InfectionState::InfectedSymptoms}));
+    auto testing_criteria_manual = mio::abm::TestingCriteria(
+        {}, std::vector<mio::abm::InfectionState>(
+                {mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::InfectionState::InfectedSymptoms}));
     ASSERT_EQ(testing_criteria == testing_criteria_manual, true);
     testing_criteria_manual.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     ASSERT_EQ(testing_criteria == testing_criteria_manual, false);
@@ -65,8 +56,7 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
                                                                     mio::abm::LocationType::Work};
 
-    auto testing_criteria1 =
-        mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_location_types1, test_infection_states1);
+    auto testing_criteria1 = mio::abm::TestingCriteria({}, test_infection_states1);
 
     const auto testing_min_time = mio::abm::days(1);
     const auto start_date       = mio::abm::TimePoint(0);
@@ -85,9 +75,7 @@ TEST(TestTestingScheme, runScheme)
     testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
 
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
-    std::vector<mio::abm::LocationType> test_location_types2     = {mio::abm::LocationType::Home};
-    auto testing_criteria2 =
-        mio::abm::TestingCriteria<mio::abm::LocationType>({}, test_location_types2, test_infection_states2);
+    auto testing_criteria2 = mio::abm::TestingCriteria({}, test_infection_states2);
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
@@ -99,14 +87,14 @@ TEST(TestTestingScheme, runScheme)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(4))
+        .Times(testing::Exactly(5))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5));
-    ASSERT_EQ(testing_scheme1.run_scheme(person1, loc_home, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme2.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme1.run_scheme(person1, loc_home, start_date),
-              false); // Person is in quarantine and wants to go home -> can do so
-    ASSERT_EQ(testing_scheme2.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(0.9));
+    ASSERT_EQ(testing_scheme1.run_scheme(person1, start_date), false); // Person tests and tests positive
+    ASSERT_EQ(testing_scheme2.run_scheme(person2, start_date), true); // Person tests and tests negative
+    ASSERT_EQ(testing_scheme1.run_scheme(person1, start_date),
+              true); // Person doesn't test
 }

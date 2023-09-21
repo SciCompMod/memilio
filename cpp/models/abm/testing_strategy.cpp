@@ -20,15 +20,15 @@
 
 #include "abm/testing_strategy.h"
 #include "memilio/utils/random_number_generator.h"
+#include <iostream>
 
 namespace mio
 {
 namespace abm
 {
 
-TestingScheme::TestingScheme(const TestingCriteria<LocationType>& testing_criteria,
-                             TimeSpan minimal_time_since_last_test, TimePoint start_date, TimePoint end_date,
-                             const GenericTest& test_type, double probability)
+TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
+                             TimePoint start_date, TimePoint end_date, const GenericTest& test_type, double probability)
     : m_testing_criteria(testing_criteria)
     , m_minimal_time_since_last_test(minimal_time_since_last_test)
     , m_start_date(start_date)
@@ -59,12 +59,12 @@ void TestingScheme::update_activity_status(TimePoint t)
     m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
-bool TestingScheme::run_scheme(Person& person, const Location& location, TimePoint t) const
+bool TestingScheme::run_scheme(Person& person, TimePoint t) const
 {
-    if (m_testing_criteria.evaluate(person, location, t)) {
-        if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
-            double random = UniformDistribution<double>::get_instance()();
-            if (random < m_probability) {
+    if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
+        double random = UniformDistribution<double>::get_instance()();
+        if (random < m_probability) {
+            if (m_testing_criteria.evaluate(person, t)) {
                 return !person.get_tested(t, m_test_type.get_default());
             }
         }
@@ -72,40 +72,64 @@ bool TestingScheme::run_scheme(Person& person, const Location& location, TimePoi
     return true;
 }
 
-TestingStrategy::TestingStrategy(const std::vector<TestingScheme>& testing_schemes)
-    : m_testing_schemes(testing_schemes)
+TestingStrategy::TestingStrategy(const std::map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map)
+    : m_location_to_schemes_map(location_to_schemes_map)
 {
 }
 
-void TestingStrategy::add_testing_scheme(const TestingScheme& scheme)
+void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    if (std::find(m_testing_schemes.begin(), m_testing_schemes.end(), scheme) == m_testing_schemes.end()) {
-        m_testing_schemes.push_back(scheme);
+    auto &schemes_vector = m_location_to_schemes_map[loc_id];
+    if (std::find(schemes_vector.begin(), schemes_vector.end(), scheme) == schemes_vector.end()) {
+        schemes_vector.push_back(scheme);
     }
 }
 
-void TestingStrategy::remove_testing_scheme(const TestingScheme& scheme)
+void TestingStrategy::add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
 {
-    auto last = std::remove(m_testing_schemes.begin(), m_testing_schemes.end(), scheme);
-    m_testing_schemes.erase(last, m_testing_schemes.end());
+    auto loc_id = LocationId{INVALID_LOCATION_INDEX, loc_type};
+    add_testing_scheme(loc_id, scheme);
+}
+
+void TestingStrategy::remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
+{
+    auto &schemes_vector = m_location_to_schemes_map[loc_id];
+    auto last           = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
+    schemes_vector.erase(last, schemes_vector.end());
+}
+
+void TestingStrategy::remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
+{
+    auto loc_id = LocationId{INVALID_LOCATION_INDEX, loc_type};
+    remove_testing_scheme(loc_id, scheme);
 }
 
 void TestingStrategy::update_activity_status(TimePoint t)
 {
-    for (auto& ts : m_testing_schemes) {
-        ts.update_activity_status(t);
+    for (auto& [_, testing_schemes] : m_location_to_schemes_map) {
+        for (auto &scheme : testing_schemes) {
+            scheme.update_activity_status(t);
+        }
     }
 }
 
-bool TestingStrategy::run_strategy(Person& person, const Location& location, TimePoint t) const
+bool TestingStrategy::run_strategy(Person& person, const Location& location, TimePoint t)
 {
     // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
     if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
         return true;
     }
-    return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location, t](TestingScheme ts) {
+
+    auto schemes_location_vector = m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}];
+    auto schemes_location_type_vector =
+        m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}];
+    schemes_location_vector.insert(schemes_location_vector.end(), schemes_location_type_vector.begin(),
+                                   schemes_location_type_vector.end());
+    std::cout << schemes_location_vector.size() << '\n';
+    return std::all_of(schemes_location_vector.begin(), schemes_location_vector.end(), [&person, t](TestingScheme ts) {
         if (ts.is_active()) {
-            return ts.run_scheme(person, location, t);
+            std::cout << "run scheme" << '\n';
+            return ts.run_scheme(person, t);
         }
         return true;
     });

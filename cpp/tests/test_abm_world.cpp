@@ -361,10 +361,9 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
-    auto testing_criteria = mio::abm::TestingCriteria<mio::abm::LocationType>({}, {mio::abm::LocationType::Home}, {});
+    auto testing_criteria = mio::abm::TestingCriteria();
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
-    testing_criteria.add_location(mio::abm::LocationType::Work);
 
     const auto testing_frequency = mio::abm::days(1);
     const auto start_date        = mio::abm::TimePoint(20);
@@ -373,9 +372,9 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
 
-    world.get_testing_strategy().add_testing_scheme(testing_scheme);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
@@ -387,7 +386,8 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .WillOnce(testing::Return(0.4));
     ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), false);
 
-    world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
-    world.get_testing_strategy().remove_testing_scheme(testing_scheme);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
+                                                    testing_scheme); //doesn't get added because of == operator
+    world.get_testing_strategy().remove_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), true); // no more testing_schemes
 }
