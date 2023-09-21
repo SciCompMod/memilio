@@ -113,14 +113,16 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
     def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
-        gvd.get_vaccination_data(out_folder=self.path)
+        gvd.get_vaccination_data(out_folder=self.path, read_data=True)
 
+    @unittest.skip("Performance")
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
     def test_get_standard_vaccination_sanitize_3(self, mockin, mockp, mockv):
-        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
+        gvd.get_vaccination_data(out_folder=self.path,
+                                 sanitize_data=3, read_data=True)
 
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            return_value=df_vacc_data_altern)

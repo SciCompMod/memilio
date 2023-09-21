@@ -96,7 +96,7 @@ def transform_weeks_to_dates(df_test):
             df_test[0].loc[i, dd.EngEng['date']] + '-4', "%V/%G-%w"), "%Y-%m-%d")
 
     # federal state-based data
-    df_test[1].rename(columns={df_test[1].columns[1]                      : dd.EngEng['date']}, inplace=True)
+    df_test[1].rename(columns={df_test[1].columns[1]: dd.EngEng['date']}, inplace=True)
     for i in range(len(df_test[1])):
         datestr = str(df_test[1].loc[i, df_test[1].columns[2]]) + \
             "/" + str(df_test[1].loc[i, dd.EngEng['date']]) + '-4'
@@ -302,7 +302,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # get county ids
     unique_geo_entities = geoger.get_county_ids()
 
-    df_test_counties = pd.DataFrame()
+    # create list of DataFrames, later to be merged
+    df_test_counties = []
     states_str = dict(zip((geoger.get_state_ids(zfill=True)), range(1,
                                                                     1+len(geoger.get_state_ids()))))
     for county in unique_geo_entities:
@@ -315,9 +316,11 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties = pd.concat([df_test_counties, df_local])
+        df_test_counties.append(df_test_counties, df_local)
 
-     # store positive rates for the all federal states
+    df_test_counties = pd.concat(df_test_counties)
+
+    # store positive rates for the all federal states
     filename = 'germany_counties_from_states_testpos'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_test_counties, directory, filename, file_format)

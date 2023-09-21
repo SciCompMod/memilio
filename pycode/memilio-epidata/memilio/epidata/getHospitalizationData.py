@@ -208,7 +208,8 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     # get data for each day
     # for each state and age group seperately
-    df_daily = pd.DataFrame()
+    # create list of DataFrames, later to be merged
+    df_daily = []
     for age in df_data[dd.EngEng['ageRKI']].unique():
         df_age = df_data[df_data[dd.EngEng['ageRKI']] == age]
         for stateid in df_data[dd.EngEng['idState']].unique():
@@ -221,10 +222,9 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
             df_age_stateid['hospitalized'] = daily_values
             df_age_stateid.drop(
                 ['7T_Hospitalisierung_Faelle'], axis=1, inplace=True)
-            df_daily = pd.concat(
-                [df_daily.reset_index(drop=True),
-                 df_age_stateid.reset_index(drop=True)],
-                join='outer')
+            df_daily.append(df_age_stateid)
+
+    df_daily = pd.concat(df_daily, join='outer', ignore_index=True)
 
     df_daily = mdfs.extract_subframe_based_on_dates(
         df_daily, start_date, end_date)

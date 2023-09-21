@@ -115,7 +115,8 @@ def sanitizing_average_regions(
     @return New DataFrame with sanitized data.
     """
 
-    df_total = pd.DataFrame()
+    # create list of DataFrames, later to be merged
+    df_total = []
     # computation is done for all Age Groups seperately
     for age in age_groups:
         # create subframe with specific age group
@@ -144,7 +145,9 @@ def sanitizing_average_regions(
                 df_age.loc[df_age[dd.EngEng['idCounty']].isin(
                     counties_list), column] = vacc_sums[column].values*population_ratios.values
 
-        df_total = pd.concat([df_total, df_age], ignore_index=True, sort=False)
+        df_total.append(df_age)
+
+    df_total = pd.concat(df_total, ignore_index=True, sort=False)
 
     return df_total
 
@@ -390,7 +393,8 @@ def extrapolate_age_groups_vaccinations(
     @return New DataFrame with new age groups.
     """
 
-    df_data_ageinf_county_cs = pd.DataFrame()
+    # create list of dataframes, later to be merged
+    df_data_ageinf_county_cs = []
     groupby_list = list(df_data.columns)
     for i in range(len(column_names)):
         groupby_list.remove(column_names[i])
@@ -402,7 +406,7 @@ def extrapolate_age_groups_vaccinations(
         # get population data for all age groups in current county
         pop_state = population_all_ages[population_all_ages[dd.EngEng['idCounty']] == countyID]
         # create empty dataframe for each county
-        total_county_df = pd.DataFrame()
+        total_county_df = []
 
         for i in range(0, len(unique_age_groups_old)):
 
@@ -414,7 +418,7 @@ def extrapolate_age_groups_vaccinations(
                 column_names, axis=1).drop(
                 dd.EngEng['ageRKI'], axis=1)
             # create new dataframe for vaccination data
-            vacc_data_df = pd.DataFrame()
+            vacc_data_df = []
 
             # get total population in old agegroup
             total_pop = 0
@@ -429,24 +433,27 @@ def extrapolate_age_groups_vaccinations(
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
                 new_dataframe[dd.EngEng['ageRKI']] = unique_age_groups_new[j]
-                vacc_data_df = pd.concat(
-                    [vacc_data_df, pd.concat(
-                        [info_df, new_dataframe],
-                        axis=1)])
+                vacc_data_df.append(pd.concat(
+                    [info_df, new_dataframe],
+                    axis=1))
+            vacc_data_df = pd.concat(vacc_data_df)
 
             # merge all dataframes for each age group into one dataframe
-            total_county_df = pd.concat([vacc_data_df, total_county_df]).groupby(
-                groupby_list).sum().reset_index()
+            total_county_df.append(vacc_data_df)
 
-        # merge all county specific dataframes
-        df_data_ageinf_county_cs = pd.concat(
-            [df_data_ageinf_county_cs, total_county_df])
+        total_county_df = pd.concat(total_county_df).groupby(
+            groupby_list).sum().reset_index()
+
+        df_data_ageinf_county_cs.append(total_county_df)
 
         # test if number of vaccinations in current county are equal in old and new dataframe for random chosen date
         for vacc in column_names:
             if total_county_df[total_county_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() - vacc_df[vacc_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() > 1e-5:
                 print(
                     "Error in transformation...")
+
+    # merge all county specific dataframes
+    df_data_ageinf_county_cs = pd.concat(df_data_ageinf_county_cs)
 
     return df_data_ageinf_county_cs
 
