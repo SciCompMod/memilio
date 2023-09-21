@@ -212,7 +212,7 @@ double get_infections_relative(const Simulation<FP,Base>& model, double t, const
  */
 template <typename FP, class Base>
 class Simulation : public Base
-{
+{  
 public:
     /**
      * construct a simulation.
@@ -220,7 +220,7 @@ public:
      * @param t0 start time
      * @param dt time steps
      */
-    Simulation(mio::osecir::Model<FP> const& model, double t0 = 0., double dt = 0.1)
+    Simulation(typename Base::Model const& model, double t0 = 0., double dt = 0.1)
         : Base(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
