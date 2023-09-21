@@ -36,19 +36,20 @@ namespace osecir
 // Create template specializations for the age resolved
 // SECIHURD model
 template<typename FP=double>
-class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>,FP>
+class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP,mio::AgeGroup, InfectionState>, Parameters<FP>,FP>
 {
-    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP,AgeGroup, InfectionState>, Parameters<FP>, FP>;
+    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP,mio::AgeGroup, InfectionState>, Parameters<FP>, FP>;
 
 public:
-    Model(const mio::Populations<FP,AgeGroup,InfectionState>& pop, const typename Base::ParameterSet& params)
+    Model(const mio::Populations<FP, mio::AgeGroup, InfectionState>& pop, const typename Base::ParameterSet& params)
         : Base(pop, params)
     {
     }
 
     Model(int num_agegroups)
-        : Model(mio::Populations<FP,AgeGroup,InfectionState>({AgeGroup(num_agegroups), InfectionState::Count}),
-                typename Base::ParameterSet(AgeGroup(num_agegroups)))
+        : Model(mio::Populations<FP, mio::AgeGroup, InfectionState>(
+                    {mio::AgeGroup(num_agegroups), InfectionState::Count}),
+                typename Base::ParameterSet(mio::AgeGroup(num_agegroups)))
     {
     }
 
@@ -64,7 +65,7 @@ public:
         // delta  // deaths per ICUs
         // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
         auto const& params   = this->parameters;
-        AgeGroup n_agegroups = params.get_num_groups();
+        mio::AgeGroup n_agegroups = params.get_num_groups();
 
         ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns<FP>>();
 
@@ -77,7 +78,7 @@ public:
             icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCritical});
         }
 
-        for (auto i = AgeGroup(0); i < n_agegroups; i++) {
+        for (auto i = mio::AgeGroup(0); i < n_agegroups; i++) {
 
             size_t Si    = this->populations.get_flat_index({i, InfectionState::Susceptible});
             size_t Ei    = this->populations.get_flat_index({i, InfectionState::Exposed});
@@ -181,7 +182,7 @@ public:
     {
         auto obj = io.expect_object("Model");
         auto par = obj.expect_element("Parameters", Tag<typename Base::ParameterSet>{});
-        auto pop = obj.expect_element("Populations", Tag<Populations<FP,AgeGroup,InfectionState>>{});
+        auto pop = obj.expect_element("Populations", Tag<mio::Populations<FP,mio::AgeGroup,InfectionState>>{});
         return apply(
             io,
             [](auto&& par_, auto&& pop_) {
@@ -219,7 +220,7 @@ public:
      * @param t0 start time
      * @param dt time steps
      */
-    Simulation(Model<FP> const& model, double t0 = 0., double dt = 0.1)
+    Simulation(mio::osecir::Model<FP> const& model, double t0 = 0., double dt = 0.1)
         : Base(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
