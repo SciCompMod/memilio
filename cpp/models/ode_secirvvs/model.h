@@ -381,7 +381,7 @@ public:
     {
         auto obj = io.expect_object("Model");
         auto par = obj.expect_element("Parameters", Tag<typename Base::ParameterSet>{});
-        auto pop = obj.expect_element("Populations", Tag<Populations<FP,AgeGroup,InfectionState>>{});
+        auto pop = obj.expect_element("Populations", Tag<mio::Populations<FP,mio::AgeGroup,InfectionState>>{});
         return apply(
             io,
             [](auto&& par_, auto&& pop_) {
