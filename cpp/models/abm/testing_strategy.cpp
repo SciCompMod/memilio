@@ -27,6 +27,64 @@ namespace mio
 namespace abm
 {
 
+TestingCriteria::TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states)
+{
+    for (auto age : ages) {
+        m_ages.set((size_t)age, true);
+    }
+    for (auto infection_state : infection_states) {
+        m_infection_states.set((size_t)infection_state, true);
+    }
+}
+
+bool TestingCriteria::operator==(TestingCriteria other) const
+{
+    auto to_compare_ages             = this->m_ages;
+    auto to_compare_infection_states = this->m_infection_states;
+    return to_compare_ages == other.m_ages && to_compare_infection_states == other.m_infection_states;
+}
+
+void TestingCriteria::add_age_group(const AgeGroup age_group)
+{
+    m_ages.set((size_t)age_group, true);
+}
+
+void TestingCriteria::remove_age_group(const AgeGroup age_group)
+{
+    m_ages.set((size_t)age_group, false);
+}
+
+void TestingCriteria::add_infection_state(const InfectionState infection_state)
+{
+    m_infection_states.set((size_t)infection_state, true);
+}
+
+void TestingCriteria::remove_infection_state(const InfectionState infection_state)
+{
+    m_infection_states.set((size_t)infection_state, false);
+}
+
+bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
+{
+    return has_requested_age(p) && has_requested_infection_state(p, t);
+}
+
+bool TestingCriteria::has_requested_age(const Person& p) const
+{
+    if (m_ages.none()) {
+        return true; // no condition on the AgeGroup
+    }
+    return m_ages[(size_t)p.get_age()];
+}
+
+bool TestingCriteria::has_requested_infection_state(const Person& p, TimePoint t) const
+{
+    if (m_infection_states.none()) {
+        return true; // no condition on the InfectionState
+    }
+    return m_infection_states[(size_t)p.get_infection_state(t)];
+}
+
 TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
                              TimePoint start_date, TimePoint end_date, const GenericTest& test_type, double probability)
     : m_testing_criteria(testing_criteria)
@@ -79,7 +137,7 @@ TestingStrategy::TestingStrategy(const std::map<LocationId, std::vector<TestingS
 
 void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    auto &schemes_vector = m_location_to_schemes_map[loc_id];
+    auto& schemes_vector = m_location_to_schemes_map[loc_id];
     if (std::find(schemes_vector.begin(), schemes_vector.end(), scheme) == schemes_vector.end()) {
         schemes_vector.push_back(scheme);
     }
@@ -93,8 +151,8 @@ void TestingStrategy::add_testing_scheme(const LocationType& loc_type, const Tes
 
 void TestingStrategy::remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    auto &schemes_vector = m_location_to_schemes_map[loc_id];
-    auto last           = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
+    auto& schemes_vector = m_location_to_schemes_map[loc_id];
+    auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
     schemes_vector.erase(last, schemes_vector.end());
 }
 
@@ -107,7 +165,7 @@ void TestingStrategy::remove_testing_scheme(const LocationType& loc_type, const 
 void TestingStrategy::update_activity_status(TimePoint t)
 {
     for (auto& [_, testing_schemes] : m_location_to_schemes_map) {
-        for (auto &scheme : testing_schemes) {
+        for (auto& scheme : testing_schemes) {
             scheme.update_activity_status(t);
         }
     }

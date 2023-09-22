@@ -143,18 +143,17 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
-    py::class_<mio::abm::TestingCriteria<mio::abm::LocationType>>(m, "TestingCriteria")
-        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
-                      const std::vector<mio::abm::InfectionState>&>(),
-             py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
+    py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
+        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
+             py::arg("age_groups"), py::arg("infection_states"));
 
     py::class_<mio::abm::GenericTest>(m, "GenericTest").def(py::init<>());
     py::class_<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
     py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
 
     py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
-        .def(py::init<const mio::abm::TestingCriteria<mio::abm::LocationType>&, mio::abm::TimeSpan, mio::abm::TimePoint,
-                      mio::abm::TimePoint, const mio::abm::GenericTest&, double>(),
+        .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
+                      const mio::abm::GenericTest&, double>(),
              py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"),
              py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
@@ -165,7 +164,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::Vaccination::time);
 
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
-        .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
+        .def(py::init<const std::map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
 
     py::class_<mio::abm::Location>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)

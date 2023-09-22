@@ -48,99 +48,58 @@ public:
      */
     TestingCriteria() = default;
 
-    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states)
-
-    {
-        for (auto age : ages) {
-            m_ages.set((size_t)age, true);
-        }
-        for (auto infection_state : infection_states) {
-            m_infection_states.set((size_t)infection_state, true);
-        }
-    }
+    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states);
 
     /**
      * @brief Compares two TestingCriteria for functional equality.
      */
-    bool operator==(TestingCriteria other) const
-    {
-        auto to_compare_ages             = this->m_ages;
-        auto to_compare_infection_states = this->m_infection_states;
-        return to_compare_ages == other.m_ages && to_compare_infection_states == other.m_infection_states;
-    }
+    bool operator==(TestingCriteria other) const;
 
     /**
      * @brief Add an AgeGroup to the set of AgeGroup%s that are either allowed or required to be tested.
      * @param[in] age_group AgeGroup to be added.
      */
-    void add_age_group(const AgeGroup age_group)
-    {
-        m_ages.set((size_t)age_group, true);
-    }
+    void add_age_group(const AgeGroup age_group);
 
     /**
      * @brief Remove an AgeGroup from the set of AgeGroup%s that are either allowed or required to be tested.
      * @param[in] age_group AgeGroup to be removed.
      */
-    void remove_age_group(const AgeGroup age_group)
-    {
-        m_ages.set((size_t)age_group, false);
-    }
+    void remove_age_group(const AgeGroup age_group);
 
     /**
      * @brief Add an #InfectionState to the set of #InfectionState%s that are either allowed or required to be tested.
      * @param[in] infection_state #InfectionState to be added.
      */
-    void add_infection_state(const InfectionState infection_state)
-    {
-        m_infection_states.set((size_t)infection_state, true);
-    }
+    void add_infection_state(const InfectionState infection_state);
 
     /**
      * @brief Remove an #InfectionState from the set of #InfectionState%s that are either allowed or required to be
      * tested.
      * @param[in] infection_state #InfectionState to be removed.
      */
-    void remove_infection_state(const InfectionState infection_state)
-    {
-        m_infection_states.set((size_t)infection_state, false);
-    }
+    void remove_infection_state(const InfectionState infection_state);
 
     /**
      * @brief Check if a Person and a Location meet all the required properties to get tested.
      * @param[in] p Person to be checked.
      * @param[in] t TimePoint when to evaluate the TestingCriteria.
      */
-    bool evaluate(const Person& p, TimePoint t) const
-    {
-        return has_requested_age(p) && has_requested_infection_state(p, t);
-    }
+    bool evaluate(const Person& p, TimePoint t) const;
 
 private:
     /**
      * @brief Check if a Person has the required age to get tested.
      * @param[in] p Person to be checked.
      */
-    bool has_requested_age(const Person& p) const
-    {
-        if (m_ages.none()) {
-            return true; // no condition on the AgeGroup
-        }
-        return m_ages[(size_t)p.get_age()];
-    }
+    bool has_requested_age(const Person& p) const;
 
     /**
      * @brief Check if a Person has the required InfectionState to get tested.
      * @param[in] p Person to be checked.
      * @param[in] t TimePoint when to check.
      */
-    bool has_requested_infection_state(const Person& p, TimePoint t) const
-    {
-        if (m_infection_states.none()) {
-            return true; // no condition on the InfectionState
-        }
-        return m_infection_states[(size_t)p.get_infection_state(t)];
-    }
+    bool has_requested_infection_state(const Person& p, TimePoint t) const;
 
     std::bitset<(size_t)AgeGroup::Count>
         m_ages; ///< BitSet of #AgeGroup%s that are either allowed or required to be tested.
