@@ -92,8 +92,10 @@ public:
         : m_SubcompartmentNumbers(std::move(SubcompartmentNumbers))
         , m_SubcompartmentNumbersindexfirst(std::vector<int>((int)InfectionStateBase::Count, 1))
     {
-        check_constraints();
-        set_compartment_index();
+        bool constraint_check = check_constraints();
+        if (!constraint_check) {
+            set_compartment_index();
+        }
     }
 
     /**
@@ -104,8 +106,10 @@ public:
     void set_SubcompartmentNumbers(std::vector<int> SubcompartmentNumbers)
     {
         m_SubcompartmentNumbers = SubcompartmentNumbers;
-        check_constraints();
-        set_compartment_index();
+        bool constraint_check   = check_constraints();
+        if (!constraint_check) {
+            set_compartment_index();
+        }
     }
 
     /**
