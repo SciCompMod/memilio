@@ -39,12 +39,12 @@ int main()
 { /* Runs a simulation with comparable parameters and initial data for a LCT SECIR model and an ODE model. 
     Results are automatically stored in hdf5 files.*/
     bool print = true;
-    bool save  = true;
+    bool save  = false;
 
     ScalarType t0   = 0;
     ScalarType tmax = 20;
     ScalarType dt   = 0.1;
-    Eigen::VectorXd init((int)mio::osecir::InfectionState::Count);
+    Eigen::VectorXd init((int)mio::lsecir::InfectionStateBase::Count);
     init << 7500, 90, 50, 70, 18, 8, 0, 0;
     init = init * (10000 / init.sum());
 
@@ -123,14 +123,15 @@ int main()
     // Initialize ODE model with one single age group
     mio::osecir::Model model_ode(1);
 
-    //Set population
-    model_ode.populations.set_total(init.sum());
+    // Set population
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::Exposed)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)];
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSymptoms)];
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSevere)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =

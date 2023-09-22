@@ -18,11 +18,11 @@
 * limitations under the License.
 */
 #include "lct_secir/model.h"
-#include "Eigen/src/Core/Matrix.h"
 #include "infection_state.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/eigen.h"
 #include <string>
 
 namespace mio
@@ -38,18 +38,20 @@ Model::Model(Eigen::VectorXd init, const InfectionState infectionState_init, Par
     m_N0 = m_initial_values.sum();
 }
 
-void Model::check_constraints() const
+bool Model::check_constraints() const
 {
     if (!(infectionStates.get_count() == m_initial_values.size())) {
-        log_error("Initial condition size does not match Subcompartments.");
+        log_error("Size of the initial values does not match Subcompartments.");
+        return true;
     }
     for (int i = 0; i < infectionStates.get_count(); i++) {
         if (m_initial_values[i] < 0) {
             log_warning(
                 "Initial values for one subcompartment are less than zero. Simulation results are not realistic.");
+            return true;
         }
     }
-    parameters.check_constraints();
+    return parameters.check_constraints();
 }
 
 void Model::eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
@@ -166,6 +168,10 @@ TimeSeries<ScalarType> Model::calculate_populations(const TimeSeries<ScalarType>
 {
     if (!(infectionStates.get_count() == result.get_num_elements())) {
         log_error("Result does not match InfectionStates of the Model.");
+        TimeSeries<ScalarType> populations((int)InfectionStateBase::Count);
+        Eigen::VectorXd wrong_size = Eigen::VectorXd::Constant((int)InfectionStateBase::Count, -1);
+        populations.add_time_point(-1, wrong_size);
+        return populations;
     }
     TimeSeries<ScalarType> populations((int)InfectionStateBase::Count);
     Eigen::VectorXd dummy((int)InfectionStateBase::Count);

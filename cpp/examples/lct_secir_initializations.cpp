@@ -26,6 +26,7 @@
 #include "memilio/config.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include <iostream>
 
@@ -33,7 +34,6 @@ int main()
 {
     bool save_result   = true;
     bool print_result  = false;
-    using Vec          = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet = mio::lsecir::Parameters;
 
     ScalarType dt_flows         = 0.1;
@@ -74,30 +74,30 @@ int main()
     ScalarType SusceptibleToExposed_const = (34.1 / 7) * total_population / 100000;
     ScalarType total_confirmed_cases      = 341223;
     ScalarType deaths                     = 9710;
-    Vec init_transitions(num_transitions);
-    init_transitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
-    init_transitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
+    Eigen::VectorXd init_transitions(num_transitions);
+    init_transitions[(int)mio::lsecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
+    init_transitions[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
         SusceptibleToExposed_const * (1 - parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>());
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered] =
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToRecovered] =
         SusceptibleToExposed_const * parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>();
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere] =
+        init_transitions[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
         parameters.get<mio::lsecir::SeverePerInfectedSymptoms>();
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToRecovered] =
+        init_transitions[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
         (1 - parameters.get<mio::lsecir::SeverePerInfectedSymptoms>());
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] *
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] =
+        init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere] *
         parameters.get<mio::lsecir::CriticalPerSevere>();
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] *
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSevereToRecovered] =
+        init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere] *
         (1 - parameters.get<mio::lsecir::CriticalPerSevere>());
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] *
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedCriticalToDead] =
+        init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] *
         parameters.get<mio::lsecir::DeathsPerCritical>();
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] *
+    init_transitions[(int)mio::lsecir::InfectionTransition::InfectedCriticalToRecovered] =
+        init_transitions[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] *
         (1 - parameters.get<mio::lsecir::DeathsPerCritical>());
     init_transitions = init_transitions * dt_flows;
 

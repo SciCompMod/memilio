@@ -22,8 +22,6 @@
 
 #include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
-#include "ide_secir/infection_state.h"
-#include "memilio/math/eigen.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"

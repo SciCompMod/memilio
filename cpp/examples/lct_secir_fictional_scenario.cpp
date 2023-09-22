@@ -33,6 +33,7 @@
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include <math.h>
 #include <iostream>
@@ -41,11 +42,10 @@ int main()
 {
     bool save_result  = false;
     bool print_result = false;
-    bool simulate_ide = false;
-    bool simulate_lct = false;
+    bool simulate_ide = true;
+    bool simulate_lct = true;
     // Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
     int num_subcompartments = 3;
-    using Vec               = mio::TimeSeries<ScalarType>::Vector;
     using ParameterSet      = mio::lsecir::Parameters;
 
     ScalarType dt_flows         = 0.1;
@@ -99,7 +99,7 @@ int main()
     ScalarType SusceptibleToExposed_const = (34.1 / 7) * total_population / 100000;
     ScalarType total_confirmed_cases      = 341223;
     ScalarType deaths                     = 9710;
-    Vec init_transitions(num_transitions);
+    Eigen::VectorXd init_transitions(num_transitions);
     init_transitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =

@@ -25,6 +25,7 @@
 #include "lct_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/math/eigen.h"
 #include <string>
 
 namespace mio
@@ -49,7 +50,7 @@ public:
     /**
      * @brief Checks constraints of the model inclusive check for model parameters.
      */
-    void check_constraints() const;
+    bool check_constraints() const;
 
     /**
      * @brief Evaulates the right-hand-side f of the LCT dydt = f(y, t).
@@ -71,7 +72,8 @@ public:
      * Function transforms this TimeSeries in another TimeSeries with just the Basic InfectionStates. 
      * This is done by summing up the numbers in the Subcompartments.
      * @param[in] result result of a simulation with the model.
-     * @return result of the simulation divided in the Base infection states.
+     * @return result of the simulation divided in the Base infection states. 
+     *  Returns TimeSeries with values -1 if calculation is not possible.
      */
     TimeSeries<ScalarType> calculate_populations(const TimeSeries<ScalarType>& result) const;
 

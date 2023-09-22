@@ -39,9 +39,6 @@ bool Initializer::check_constraints() const
         return true;
     }
 
-    parameters.check_constraints();
-    infectionStates.check_constraints();
-
     if (!(floating_point_equal(0., m_flows.get_last_time(), 1.0, 1e-14))) {
         log_error("Last time point in flows has to be 0.");
         return true;
@@ -58,7 +55,8 @@ bool Initializer::check_constraints() const
         log_warning("Step size was set very large. The result could be distorted.");
         return true;
     }
-    return false;
+
+    return parameters.check_constraints();
 }
 
 Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen::Index idx_incoming_flow,

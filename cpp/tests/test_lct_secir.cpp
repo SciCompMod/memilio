@@ -31,6 +31,7 @@
 
 #include <gtest/gtest.h>
 #include <vector>
+#include <string>
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
 // Test confirms that default construction works
@@ -97,7 +98,6 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     mio::osecir::Model model_ode(1);
 
     // Set population
-    //model_ode.populations.set_total(init.sum());
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::Exposed)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
@@ -339,9 +339,27 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     }
 }
 
+// Test some functions of the model.
+TEST_F(ModelTestLCTSecir, testModelFunctions)
+{
+    mio::TimeSeries<ScalarType> init_wrong_size((int)mio::lsecir::InfectionStateBase::Count);
+    Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones((int)mio::lsecir::InfectionStateBase::Count);
+    init_wrong_size.add_time_point(-10, vec_wrong_size);
+    init_wrong_size.add_time_point(-9, vec_wrong_size);
+    mio::TimeSeries<ScalarType> population = model->calculate_populations(init_wrong_size);
+    EXPECT_EQ(1, population.get_num_time_points());
+    for (int i = 0; i < population.get_num_elements(); i++) {
+        EXPECT_EQ(-1, population.get_last_value()[i]);
+    }
+
+    EXPECT_TRUE(model->get_heading_CompartmentsBase().compare("S | E | C | I | H | U | R | D") == 0);
+    EXPECT_TRUE(model->get_heading_Subcompartments().compare(
+                    "S | E1 | E2 | C1 | C2 | C3 | I | H | U1 | U2 | U3 | U4 | U5 | R | D") == 0);
+}
+
+// Check constraints of InfectionStates and Parameters.
 TEST(TestLCTSecir, testConstraints)
 {
-    // Check constraints of InfectionStates and Parameters.
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
@@ -378,13 +396,14 @@ TEST(TestLCTSecir, testConstraints)
     InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
     constraint_check = InfState.check_constraints();
     EXPECT_TRUE(constraint_check);
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 0;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 1;
 
     // Check number of Subcompartments is zero.
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed] = 0;
     InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
     constraint_check = InfState.check_constraints();
     EXPECT_TRUE(constraint_check);
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 1;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed] = 2;
 
     // Check with correct parameters.
     InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
@@ -483,6 +502,25 @@ TEST(TestLCTSecir, testConstraints)
 
     // Check with correct parameters.
     constraint_check = parameters_lct.check_constraints();
+    EXPECT_FALSE(constraint_check);
+
+    // Check for model.
+    // Check wrong size of initial value vector.
+    Eigen::VectorXd init1 = Eigen::VectorXd::Ones(InfState.get_count() - 1);
+    mio::lsecir::Model model1(std::move(init1), InfState, std::move(parameters_lct));
+    constraint_check = model1.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Check with values smaller than zero.
+    Eigen::VectorXd init2 = Eigen::VectorXd::Constant(InfState.get_count(), -1);
+    mio::lsecir::Model model2(std::move(init2), InfState, std::move(parameters_lct));
+    constraint_check = model2.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Check with correct conditions.
+    Eigen::VectorXd init3 = Eigen::VectorXd::Constant(InfState.get_count(), 100);
+    mio::lsecir::Model model3(std::move(init3), InfState, std::move(parameters_lct));
+    constraint_check = model3.check_constraints();
     EXPECT_FALSE(constraint_check);
 
     // Reactive log output.

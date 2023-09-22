@@ -22,6 +22,7 @@
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/stepper_wrapper.h"
+#include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
 #include <iostream>
