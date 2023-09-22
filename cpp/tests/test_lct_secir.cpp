@@ -355,6 +355,14 @@ TEST_F(ModelTestLCTSecir, testModelFunctions)
     EXPECT_TRUE(model->get_heading_CompartmentsBase().compare("S | E | C | I | H | U | R | D") == 0);
     EXPECT_TRUE(model->get_heading_Subcompartments().compare(
                     "S | E1 | E2 | C1 | C2 | C3 | I | H | U1 | U2 | U3 | U4 | U5 | R | D") == 0);
+
+    std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] = 2;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]   = 2;
+    mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
+
+    mio::lsecir::Model model2(std::move(Eigen::VectorXd::Ones(InfState.get_count())), InfState);
+    EXPECT_TRUE(model2.get_heading_Subcompartments().compare("S | E | C | I1 | I2 | H1 | H2 | U | R | D") == 0);
 }
 
 // Check constraints of InfectionStates and Parameters.
@@ -506,20 +514,20 @@ TEST(TestLCTSecir, testConstraints)
 
     // Check for model.
     // Check wrong size of initial value vector.
-    Eigen::VectorXd init1 = Eigen::VectorXd::Ones(InfState.get_count() - 1);
-    mio::lsecir::Model model1(std::move(init1), InfState, std::move(parameters_lct));
+    mio::lsecir::Model model1(std::move(Eigen::VectorXd::Ones(InfState.get_count() - 1)), InfState,
+                              std::move(parameters_lct));
     constraint_check = model1.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with values smaller than zero.
-    Eigen::VectorXd init2 = Eigen::VectorXd::Constant(InfState.get_count(), -1);
-    mio::lsecir::Model model2(std::move(init2), InfState, std::move(parameters_lct));
+    mio::lsecir::Model model2(std::move(Eigen::VectorXd::Constant(InfState.get_count(), -1)), InfState,
+                              std::move(parameters_lct));
     constraint_check = model2.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with correct conditions.
-    Eigen::VectorXd init3 = Eigen::VectorXd::Constant(InfState.get_count(), 100);
-    mio::lsecir::Model model3(std::move(init3), InfState, std::move(parameters_lct));
+    mio::lsecir::Model model3(std::move(Eigen::VectorXd::Constant(InfState.get_count(), 100)), InfState,
+                              std::move(parameters_lct));
     constraint_check = model3.check_constraints();
     EXPECT_FALSE(constraint_check);
 

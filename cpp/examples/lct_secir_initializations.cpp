@@ -28,6 +28,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include <string>
 #include <iostream>
 
 int main()
@@ -137,9 +138,10 @@ int main()
         mio::lsecir::print_TimeSeries(populations_transitions, model.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        auto save_result_status_subcompartments =
-            mio::save_result({result_transitions}, {0}, 1, "lct_init_transitions_subcompartments.h5");
-        auto save_result_status = mio::save_result({populations_transitions}, {0}, 1, "lct_init_transitions.h5");
+        /*auto save_result_status_subcompartments =
+            mio::save_result({result_transitions}, {0}, 1, "lct_init_transitions_subcompartments3.h5");*/
+        std::string filename    = "lct_init_transitions" + std::to_string(num_subcompartments) + ".h5";
+        auto save_result_status = mio::save_result({populations_transitions}, {0}, 1, filename);
     }
 
     // --- second initialization method: The initialization vector for the LCT model is calculated by taking expected sojourn times.
@@ -195,9 +197,8 @@ int main()
         mio::lsecir::print_TimeSeries(populations2, model2.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        //auto save_result_status_subcompartments2 =
-        //    mio::save_result({result2}, {0}, 1, "result_lct_subcompartments_initmean.h5");
-        auto save_result_status2 = mio::save_result({populations2}, {0}, 1, "lct_init_mean.h5");
+        std::string filename_mean = "lct_init_mean" + std::to_string(num_subcompartments) + ".h5";
+        auto save_result_status2  = mio::save_result({populations2}, {0}, 1, filename_mean);
     }
 
     // --- third initialization method: Initial values are distributed only in the first substates.
@@ -219,8 +220,7 @@ int main()
         mio::lsecir::print_TimeSeries(populations3, model3.get_heading_CompartmentsBase());
     }
     if (save_result) {
-        //auto save_result_status_subcompartments3 =
-        //  mio::save_result({result3}, {0}, 1, "result_lct_subcompartments_initjump.h5");
-        auto save_result_status2 = mio::save_result({populations3}, {0}, 1, "lct_init_first.h5");
+        std::string filename_first = "lct_init_first" + std::to_string(num_subcompartments) + ".h5";
+        auto save_result_status3   = mio::save_result({populations3}, {0}, 1, filename_first);
     }
 }

@@ -36,13 +36,14 @@
 #include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include <math.h>
+#include <string>
 #include <iostream>
 
 int main()
 {
-    bool save_result  = false;
+    bool save_result  = true;
     bool print_result = false;
-    bool simulate_ide = true;
+    bool simulate_ide = false;
     bool simulate_lct = true;
     // Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
     int num_subcompartments = 3;
@@ -50,7 +51,7 @@ int main()
 
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
-    ScalarType tmax             = 75;
+    ScalarType tmax             = 10;
 
     // Define ParameterSet used for simulation and initialization.
     ParameterSet parameters_lct;
@@ -180,7 +181,8 @@ int main()
         if (save_result) {
             /*auto save_result_status_subcompartments =
                 mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_3.h5");*/
-            auto save_result_status = mio::save_result({populations}, {0}, 1, "fictional_rise_lct3.h5");
+            std::string filename    = "fictional_rise_lct_4_" + std::to_string(num_subcompartments) + ".h5";
+            auto save_result_status = mio::save_result({populations}, {0}, 1, filename);
         }
     }
 
@@ -283,7 +285,8 @@ int main()
             sim.print_compartments();
         }
         if (save_result) {
-            auto save_result_status = mio::save_result({sim.get_result()}, {0}, 1, "fictional_rise_idevar.h5");
+            std::string filename_ide = "fictional_rise_ide_4_" + std::to_string(num_subcompartments) + ".h5";
+            auto save_result_status  = mio::save_result({sim.get_result()}, {0}, 1, filename_ide);
         }
     }
 }
