@@ -1205,12 +1205,84 @@ IOResult<void> export_input_data_county_timeseries(
         log_info("extrapolated real data for date: {}-{}-{}", date.day, date.month, date.year);
     }
     /* end: similar functionality in set_confirmed_cases_data(), here only for vector of TimeSeries */
-    auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(save_result(extrapolated_rki, region, num_groups, path_join(dir, "Results_rki.h5")));
 
-    auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_rki});
+    //aggregate extrapolated_rki into compartments MildInfections, Hospitalized, ICU and Dead
+    std::vector<TimeSeries<double>> extrapolated_rki_aggregated(
+        model.size(), TimeSeries<double>::zero(num_days + 1, (size_t) 4* num_age_groups));
+
+    for (size_t day = 0; day <= static_cast<size_t>(num_days); day++) {
+        for (size_t county = 0; county < region.size(); county++) {
+            for (size_t age = 0; age < num_age_groups; age++) {
+
+                auto age_group_offset = age * 4;
+
+                // Compute number of individuals with mild infections, i.e. individuals in Exposed,
+                // InfectedNoSymptoms and InfectedSymptoms with any type of immunity, both confirmed and not confirmed
+                extrapolated_rki_aggregated[county][day]((size_t) 0 + age_group_offset) = 
+                     extrapolated_rki[county][day]((size_t)InfectionState::ExposedNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::ExposedImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaive +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunity +
+                                                       age_group_offset) +
+                        extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaiveConfirmed +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
+                                                       age_group_offset) + 
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
+                                                       age_group_offset);
+
+                // Compute number of all individuals in InfectionState InfectedSevere with any type of immunity 
+                extrapolated_rki_aggregated[county][day]((size_t) 1 + age_group_offset) = 
+                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity  +
+                                                       age_group_offset);
+
+                // Compute number of all individuals in InfectedState InfectedCritical with any type of immunity 
+                extrapolated_rki_aggregated[county][day]((size_t) 2 + age_group_offset) = 
+                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity  +
+                                                       age_group_offset);
+
+                // Compute number of all individuals in InfectedState Dead with any type of immunity 
+                extrapolated_rki_aggregated[county][day]((size_t) 3 + age_group_offset) = 
+                     extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity  +
+                                                       age_group_offset);
+            }
+        }
+    }
+    
+
+    auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
+    BOOST_OUTCOME_TRY(save_result(extrapolated_rki_aggregated, region, num_groups, path_join(dir, "Results.h5")));
+
+    auto extrapolated_rki_data_aggregated_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_rki_aggregated});
     BOOST_OUTCOME_TRY(
-        save_result({extrapolated_rki_data_sum[0][0]}, {0}, num_groups, path_join(dir, "Results_rki_sum.h5")));
+        save_result({extrapolated_rki_data_aggregated_sum[0][0]}, {0}, num_groups, path_join(dir, "Results_sum.h5")));
 
     return success();
 }
@@ -1256,7 +1328,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                       const std::string& dir, int num_days, bool export_time_series = false)
 {
     BOOST_OUTCOME_TRY(details::set_vaccination_data(
-        model, path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json"), date, county, num_days));
+        model, path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json"), date, county, num_days));
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
