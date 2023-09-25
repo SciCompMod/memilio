@@ -140,7 +140,7 @@ def network_fit(
     if not os.path.isfile(os.path.join(path, 'data_secir_groups.pickle')):
         ValueError("no dataset found in path: " + path)
 
-    file = open(os.path.join(path, 'data_secir_groups.pickle'), 'rb')
+    file = open(os.path.join(path, 'data_secir_groups_30days_onevardamp.pickle'), 'rb')
 
     data = pickle.load(file)
     data_splitted = split_data(data['inputs'], data['labels'])
@@ -334,11 +334,25 @@ def get_test_statistic(test_inputs, test_labels, model):
     # reshape [batch, time, features] -> [features, time * batch]
     relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
+
+    # delete the two confirmed compartments from InfectionStates
+    compartment_array = []
+    for compartment in InfectionState.values():
+        compartment_array.append(compartment) 
+    index = [3,5]
+    compartments_cleaned= np.delete(compartment_array, index)
+
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
         index=[str(compartment).split('.')[1]
-               for compartment in InfectionState.values()],
+               for compartment in compartments_cleaned],
         columns=['Percentage Error'])
+
+    # mean_percentage = pd.DataFrame(
+    #     data=relative_err_means_percentage,
+    #     index=[str(compartment).split('.')[1]
+    #            for compartment in InfectionState.values()],
+    #     columns=['Percentage Error'])
 
     return mean_percentage
 
@@ -477,7 +491,13 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    max_epochs = 1500
+    
+
+
+
+
+
+    max_epochs = 10
     label_width = 30
 
     input_dim = get_input_dim_lstm(path_data)
