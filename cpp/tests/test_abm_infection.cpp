@@ -40,6 +40,18 @@ TEST(TestInfection, init)
                                       .infectivity_alpha.params.a())) // Infectivity draws
         .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
                                       .infectivity_beta.params.a()))
+        .WillOnce(testing::Return(0.1)) // Transition to Infected
+        .WillOnce(testing::Return(0.1)) // Transition to Recovered
+        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
+                                      .viral_load_peak.params.a())) // Viral load draws
+        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
+                                      .viral_load_incline.params.a()))
+        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
+                                      .viral_load_decline.params.a()))
+        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
+                                      .infectivity_alpha.params.a())) // Infectivity draws
+        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
+                                      .infectivity_beta.params.a()))
         .WillRepeatedly(testing::Return(1.0));
 
     auto infection = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34, params,
@@ -53,6 +65,25 @@ TEST(TestInfection, init)
     EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
               mio::abm::InfectionState::InfectedNoSymptoms);
     EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.2689414213699951, 1e-14);
+
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_test,
+                                                      virus_variant_test}] = [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.91}, {30, 0.81}}, days);
+    };
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.91}, {30, 0.81}}, days);
+    };
+    auto infection_w_previous_exp =
+        mio::abm::Infection(mio::abm::VirusVariant::Wildtype, age_group_test, params, mio::abm::TimePoint(0),
+                            mio::abm::InfectionState::InfectedSymptoms,
+                            {mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0)}, true);
+    EXPECT_EQ(
+        infection_w_previous_exp.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1) - mio::abm::seconds(1)),
+        mio::abm::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(infection_w_previous_exp.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
+              mio::abm::InfectionState::Recovered);
+    EXPECT_NEAR(infection_w_previous_exp.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)),
+                0.45760205922564895, 1e-14);
 }
 
 TEST(TestInfection, getInfectionState)
