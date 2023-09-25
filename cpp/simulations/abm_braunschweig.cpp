@@ -164,9 +164,9 @@ mio::abm::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
-void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0)
+void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0,
+                            int max_number_persons);
 {
-    int max_number_persons = 10000;
     // Open File
     const fs::path p = filename;
     if (!fs::exists(p)) {
@@ -202,7 +202,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
     // For the world we need: One Hospital, One ICU, One Home for each unique householdID, One Person for each person_id with respective age and home_id
 
-    // We assume that no person goes to an hospitla, altough e.g. "Sonstiges" could be a hospital
+    // We assume that no person goes to an hospital, altough e.g. "Sonstiges" could be a hospital
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
     world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     world.get_individualized_location(hospital).set_capacity(584, 26242);
@@ -963,7 +963,7 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
  */
-mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
+mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0, int max_num_persons)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
@@ -975,7 +975,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "../../data/mobility/bs_sorted.csv", t0);
+    create_world_from_data(world, "../../data/mobility/bs_sorted.csv", t0, max_num_persons);
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
@@ -993,32 +993,6 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     return sim;
 }
 
-struct LogLocationInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type location_information{};
-        for (auto&& location : sim.get_world().get_locations()) {
-            location_information.push_back(std::make_tuple(location.get_index(), location.get_geographical_location()));
-        }
-        return location_information;
-    }
-};
-
-struct LogPersonInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type person_information{};
-        for (auto&& person : sim.get_world().get_persons()) {
-            person_information.push_back(std::make_tuple(
-                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
-                person.get_age()));
-        }
-        return person_information;
-    }
-};
-
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
@@ -1028,12 +1002,13 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+    auto max_num_persons    = 10000;
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
         // Create the sampled simulation with start time t0.
-        auto sim = create_sampled_simulation(t0);
+        auto sim = create_sampled_simulation(t0, max_num_persons);
         //output object
         mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
         // Collect the id of location in world.
@@ -1083,7 +1058,7 @@ int main(int argc, char** argv)
         printf("abm_example <num_runs>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in the current directory.\n");
-        printf("abm_example <num_runs> <result_dir>\n");
+        printf("abm_braunschweig <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
         printf("Running with number of runs = 1.\n");

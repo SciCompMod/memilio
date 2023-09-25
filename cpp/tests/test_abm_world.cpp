@@ -242,8 +242,8 @@ TEST(TestWorld, evolveMigration)
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
         auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
 
-        auto& p1 =
-            add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible, t);
+        auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
+                                   mio::abm::InfectionState::InfectedNoSymptoms, t);
         auto& p2 =
             add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible, t);
         auto& p3 =
@@ -278,7 +278,7 @@ TEST(TestWorld, evolveMigration)
 
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
             mock_exponential_dist;
-        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no infections
 
         world.evolve(t, dt);
 

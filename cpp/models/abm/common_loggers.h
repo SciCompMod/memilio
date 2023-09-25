@@ -22,7 +22,7 @@
 #define COMMON_LOGGERS_H
 
 #include "memilio/io/history.h"
-#include "models/abm/location_type.h"
+#include "location_type.h"
 
 struct LogLocationInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
