@@ -1,7 +1,6 @@
 import json
 import pickle
 import copy
-from memilio.simulation import Damping
 from memilio.simulation.secir import Model, simulate, AgeGroup
 from memilio.simulation.secir import InfectionState, Index_InfectionState
 import numpy as np
