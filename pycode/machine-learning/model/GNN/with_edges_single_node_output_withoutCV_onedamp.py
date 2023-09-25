@@ -30,7 +30,7 @@ from spektral.utils.convolution import gcn_filter, line_graph, incidence_matrix
 from spektral.utils.sparse import sp_matrix_to_sp_tensor
 from utils.gnn_utils import incidence_matrix
 
-from data_generator_withoutdampings_all401 import get_population
+from data_generator_withoutdampings_all400 import get_population
 from memilio.simulation.secir import InfectionState
 
 from sklearn.preprocessing import FunctionTransformer
@@ -192,8 +192,8 @@ class MyDataset_test(spektral.data.dataset.Dataset):
         # self.a = np.asarray(adjacency_list)
         # #self.e = np.asarray(edge_features['Weight']).reshape(
         # np.asarray(edge_features['Weight']).shape[0], 1)
-        self.e = scaled_edges.reshape(np.asarray(
-            edge_features['Weight']).shape[0], 1)
+        # self.e = scaled_edges.reshape(np.asarray(
+        #    edge_features['Weight']).shape[0], 1)
 
         return [spektral.data.Graph(x=x, y=y, e=np.asarray(e), a=self.a) for x, y, e in zip(node_features_test, node_labels_test, all_egde_arrays_test)]
 
@@ -475,21 +475,16 @@ for batch in loader_tr:
 elapsed = time.perf_counter() - start
 
 
-
-
 # save the model
 path = os.path.dirname(os.path.realpath(__file__))
 path_models = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'saved_models')
+    'saved_models_new')
 if not os.path.isdir(path_models):
     os.mkdir(path_models)
 
 model.save(path_models, 'model_400pop_30day_one_damps.h5')
-
-
-
 
 
 # print losses
@@ -526,8 +521,6 @@ print(
         test_loss, test_acc))
 
 elapsed_test = time.perf_counter() - start
-
-
 
 
 print("Time for training: {:.4f} seconds".format(elapsed))
