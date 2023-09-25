@@ -104,6 +104,7 @@ struct WriteToJson {
     }
 };
 
+/// @brief Type list of options included by default (i.e. non-parameter options).
 template <class... Others>
 struct PresetOptions : public typelist<Help, PrintOption, ReadFromJson, WriteToJson, Others...> {
 };
@@ -128,15 +129,14 @@ struct Alias {
     constexpr static bool has_alias_v = mio::is_expression_valid<alias_expr, T>::value;
 
     template <class T = Parameter>
-    static const std::enable_if_t<has_alias_v<T>, std::string> get()
+    static const std::string get()
     {
-        return T::alias();
-    }
-
-    template <class T = Parameter>
-    static const std::enable_if_t<!has_alias_v<T>, std::string> get()
-    {
-        return "";
+        if constexpr (has_alias_v<T>) {
+            return T::alias();
+        }
+        else {
+            return "";
+        }
     }
 };
 
@@ -150,15 +150,14 @@ struct Description {
     constexpr static bool has_description_v = mio::is_expression_valid<description_expr, T>::value;
 
     template <class T = Parameter>
-    static const std::enable_if_t<has_description_v<T>, std::string> get()
+    static const std::string get()
     {
-        return T::description();
-    }
-
-    template <class T = Parameter>
-    static const std::enable_if_t<!has_description_v<T>, std::string> get()
-    {
-        return "";
+        if constexpr (has_description_v<T>) {
+            return T::description();
+        }
+        else {
+            return "";
+        }
     }
 };
 
@@ -296,8 +295,9 @@ void write_help_impl(const typelist<T, Ts...>, std::ostream& os)
 
 /**
  * @brief Writes the output for the --help option.
- * @param executable_name Name of the executable. Usually argv[0] is a good choice.
- * @param parameters A set of parameters.
+ * @param[in] executable_name Name of the executable. Usually argv[0] is a good choice.
+ * @param[in] parameters A set of parameters.
+ * @param[in] os Any instance of std::ostream.
  * @tparam T List of all parameters
  * @tparam Set A parameter set.
  */
@@ -350,9 +350,9 @@ mio::IOResult<void> set_param_impl(const typelist<T, Ts...>, Set& parameters, co
  * The identifier must start with either "--" if it is a parameter's name, or with "-" if it is an alias.
  * The function then recursively tries to match each parameter by this Field, and sets it accordningly.
  *
- * @param parameters The set containing the parameter to set.
- * @param identifier The identifier of the parameter.
- * @param args Json value to be convertet to the matching parameter's type.
+ * @param[in, out] parameters The set containing the parameter to set.
+ * @param[in] identifier The identifier of the parameter.
+ * @param[in] args Json value to be convertet to the matching parameter's type.
  * @tparam T List of all parameters.
  * @tparam Set A parameter set.
  * @return Nothing if successfull, an error code otherwise.
@@ -378,9 +378,9 @@ mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifie
  * The identifier must start with either "--" if it is a parameter's name, or with "-" if it is an alias.
  * The function then recursively tries to match each parameter by this Field, and sets it accordningly.
  *
- * @param parameters The set containing the parameter to set.
- * @param identifier The identifier of the parameter.
- * @param args String containing a json value to be convertet to the matching parameter's type.
+ * @param[in, out] parameters The set containing the parameter to set.
+ * @param[in] identifier The identifier of the parameter.
+ * @param[in] args String containing a json value to be convertet to the matching parameter's type.
  * @tparam T List of all parameters.
  * @tparam Set A parameter set.
  * @return Nothing if successfull, an error code otherwise.
@@ -418,8 +418,8 @@ mio::IOResult<Json::Value> get_param_impl(typelist<T, Ts...>, Set& parameters, c
 
 /**
  * @brief Get the parameter given by name.
- * @param parameters The set containing the parameter to get.
- * @param name The name (or alias) of the parameter.
+ * @param[in] parameters The set containing the parameter to get.
+ * @param[in] name The name (or alias) of the parameter.
  * @tparam T List of all parameters.
  * @tparam Set A parameter set.
  * @return The json value of the parameter if successfull, an error code otherwise.
@@ -436,29 +436,22 @@ struct OptionVerifier {
     using is_required = std::is_same<Field<T>, Name<T>>;
 
     template <template <class> class Field, class OptionA, class OptionB>
-    inline static std::enable_if_t<std::is_same<OptionA, OptionB>::value> verify()
-    {
-        const auto field_a = Field<OptionA>::get();
-        assert((!is_required<Field, OptionA>::value || field_a != "") && "Option is missing required field.");
-    }
-
-    template <template <class> class Field, class OptionA, class OptionB>
-    inline static std::enable_if_t<!std::is_same<OptionA, OptionB>::value && is_required<Field, OptionA>::value>
-    verify()
+    inline static void verify()
     {
         const auto field_a = Field<OptionA>::get();
         const auto field_b = Field<OptionB>::get();
-        assert((field_a != field_b) && "Options may not have duplicate fields. (field required)");
-    }
-
-    template <template <class> class Field, class OptionA, class OptionB>
-    inline static std::enable_if_t<!std::is_same<OptionA, OptionB>::value && !is_required<Field, OptionA>::value>
-    verify()
-    {
-        auto field_a = Field<OptionA>::get();
-        auto field_b = Field<OptionB>::get();
-        assert((field_a == "" || field_b == "" || field_a != field_b) &&
-               "Options may not have duplicate fields. (field optional)");
+        if constexpr (std::is_same<OptionA, OptionB>::value) {
+            assert((!is_required<Field, OptionA>::value || field_a != "") && "Option is missing required field.");
+        }
+        else {
+            if constexpr (is_required<Field, OptionA>::value) {
+                assert((field_a != field_b) && "Options may not have duplicate fields. (field required)");
+            }
+            else {
+                assert((field_a == "" || field_b == "" || field_a != field_b) &&
+                       "Options may not have duplicate fields. (field optional)");
+            }
+        }
     }
 };
 
@@ -468,7 +461,7 @@ inline void verify_options_impl(typelist<Ts...>, typelist<>, typelist<Ts...>)
 {
 }
 
-/// @brief Restart recursion for the next A. Skips symmetric matches by reducing T.
+/// @brief Restart recursion for the next A. Skips symmetric matches by reducing Ts.
 template <template <class> class Field, class T, class... Ts, class A, class... As>
 inline void verify_options_impl(typelist<T, Ts...>, typelist<A, As...>, typelist<>)
 {
@@ -476,7 +469,15 @@ inline void verify_options_impl(typelist<T, Ts...>, typelist<A, As...>, typelist
     verify_options_impl<Field>(typelist<Ts...>(), typelist<As...>(), typelist<Ts...>());
 }
 
-/// @brief Recursively assert that the parameters do not contain duplicate or empty required Fields.
+/**
+ * @brief Recursively assert that the parameters do not contain duplicate or empty required Fields.
+ * @tparam Field The field of the option to compare.
+ * @tparam Ts List of options. Used to reset the list B, Bs if empty.
+ * @tparam A Option to verify.
+ * @tparam As Queue of options to be verified recursively.
+ * @tparam B Second option to verify A against.
+ * @tparam Bs Queue of other options to verify against.
+ */
 template <template <class> class Field, class... Ts, class A, class... As, class B, class... Bs>
 inline void verify_options_impl(typelist<Ts...>, typelist<A, As...>, typelist<B, Bs...>)
 {
@@ -488,7 +489,7 @@ inline void verify_options_impl(typelist<Ts...>, typelist<A, As...>, typelist<B,
 
 /**
  * @brief Assert that no two Names or Aliases in the Set are the same, and that no name is empty.
- * @param parameters Parameter set to verify.
+ * @param[in] parameters Parameter set to verify.
  * @tparam T Lsit of all parameters.
  * @tparam Set A parameter set.
  */

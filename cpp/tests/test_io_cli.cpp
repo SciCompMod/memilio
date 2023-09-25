@@ -120,21 +120,22 @@ struct NoName {
     // const static std::string description()
 };
 
-void make_argv(const std::vector<std::string> values, char** argv, int argc)
+char** make_argv(const std::vector<std::string> values)
 {
-    for (int i = 0; i < argc; i++) {
+    char** argv = new char*[values.size()];
+    for (size_t i = 0; i < values.size(); i++) {
         const auto n = values[i].size() + 1;
         argv[i]      = new char[n];
-        for (unsigned j = 0; j < n; j++) {
-            argv[i][j] = values[i][j];
-        }
+        std::strcpy(argv[i], values[i].c_str());
     }
+    return argv;
 }
 void free_argv(char** argv, int argc)
 {
     for (int i = 0; i < argc; i++) {
         delete[] argv[i];
     }
+    delete[] argv;
 }
 
 using Params = mio::ParameterSet<A, B, C, D>;
@@ -227,10 +228,9 @@ TEST(TestCLI, test_write_help)
 
 TEST(TestCLI, test_print_options)
 {
-    std::vector<std::string> args{"", "--print_option", "a", "D"};
-    const int argc = 4;
-    char* argv[argc];
-    make_argv(args, argv, argc);
+    const std::vector<std::string> args{"", "--print_option", "a", "D"};
+    const int argc = args.size();
+    char** argv    = make_argv(args);
 
     Params p;
     EXPECT_EXIT((void)mio::command_line_interface("TestSuite", argc, argv, p, std::cerr), testing::ExitedWithCode(0),
@@ -275,10 +275,9 @@ TEST(TestCLI, test_import_export)
     ofile.open(tmpfile);
     ofile << read_json;
     ofile.close();
-    std::vector<std::string> args{"", "--read_from_json", tmpfile, "--write_to_json", tmpfile};
-    const int argc = 5;
-    char* argv[argc];
-    make_argv(args, argv, argc);
+    const std::vector<std::string> args{"", "--read_from_json", tmpfile, "--write_to_json", tmpfile};
+    const int argc = args.size();
+    char** argv    = make_argv(args);
     ASSERT_TRUE(mio::command_line_interface("", argc, argv, p));
     free_argv(argv, argc);
     ifile.open(tmpfile);
@@ -290,12 +289,11 @@ TEST(TestCLI, test_import_export)
 TEST(TestCLI, test_command_line_interface)
 {
     // generate argv
-    std::vector<std::string> args{
+    const std::vector<std::string> args{
         "",    "-a", "3.4", "--B", "\"TestValue\"",          "--C has a name that is too long",
         "[0,", "8,", "15]", "--D", "[\"Hello \",\"World!\"]"};
-    const int argc = 11;
-    char* argv[argc];
-    make_argv(args, argv, argc);
+    const int argc = args.size();
+    char** argv    = make_argv(args);
     // trigger fail
     // by error in set_param
     EXPECT_FALSE(mio::command_line_interface<A>("TestSuite", argc, argv));
