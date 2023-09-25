@@ -120,7 +120,7 @@ struct NoName {
     // const static std::string description()
 };
 
-char** make_argv(const std::vector<std::string> values)
+char** make_argv(const std::vector<std::string>& values)
 {
     char** argv = new char*[values.size()];
     for (size_t i = 0; i < values.size(); i++) {
@@ -134,6 +134,7 @@ void free_argv(char** argv, int argc)
 {
     for (int i = 0; i < argc; i++) {
         delete[] argv[i];
+        argv[i] = nullptr;
     }
     delete[] argv;
 }

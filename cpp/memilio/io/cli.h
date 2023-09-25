@@ -373,14 +373,14 @@ mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifie
 }
 
 /**
- * @brief Set the parameter given by identifer to the json value given by args.
+ * @brief Set the parameter given by identifier to the json value given by args.
  *
  * The identifier must start with either "--" if it is a parameter's name, or with "-" if it is an alias.
  * The function then recursively tries to match each parameter by this Field, and sets it accordningly.
  *
  * @param[in, out] parameters The set containing the parameter to set.
  * @param[in] identifier The identifier of the parameter.
- * @param[in] args String containing a json value to be convertet to the matching parameter's type.
+ * @param[in] args String containing a json value to be converted to the matching parameter's type.
  * @tparam T List of all parameters.
  * @tparam Set A parameter set.
  * @return Nothing if successfull, an error code otherwise.
