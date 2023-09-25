@@ -16,7 +16,7 @@ from keras.layers import Dense
 from keras.losses import MeanAbsolutePercentageError
 from keras.metrics import mean_absolute_percentage_error
 from keras.models import Model
-from keras.optimizers import Adam
+from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
 
 from sklearn.model_selection import KFold
 
@@ -125,12 +125,10 @@ class Net(Model):
         super().__init__()
 
         # self.conv1 = GCNConv(32, activation="relu")
-        self.conv1 = APPNPConv(32, activation="relu")
+        self.conv1 = GCNConv(32, activation="elu")
+        # self.conv2 = GCNConv(32, activation="relu")
+        # self.conv3 = GCNConv(32, activation="relu")
 
-        ##### for mixed mode ####
-        # self.conv1 = GATConv(32,     activation="relu")
-        # self.conv2 = GATConv(32,   activation="relu")
-        # self.conv3 = GATConv(32,   activation="relu")
 
         self.dense = Dense(data.n_labels, activation="linear")
 
@@ -152,9 +150,11 @@ class Net(Model):
 #         decay_steps=200,
 #         decay_rate=0.95,
 #         staircase=True)
+#learning_rate = 0.001
 learning_rate = 0.001
 
-optimizer = Adam(learning_rate=learning_rate)
+#optimizer = Adam(learning_rate=learning_rate)
+optimizer = Adagrad(learning_rate=learning_rate)
 loss_fn = MeanAbsolutePercentageError()
 
 
@@ -187,7 +187,7 @@ def evaluate(loader):
             output = np.array(output)
             return np.average(output[:, :-1], 0, weights=output[:, -1])
 
-
+n_days = int(new_labels.shape[2]/48)
 def test_evaluation(loader):
 
     inputs, target = loader.__next__()
@@ -199,8 +199,8 @@ def test_evaluation(loader):
         MAPE_v = []
         for v_p, v_t in zip(batch_p, batch_t):
 
-            pred_ = tf.reshape(v_p, (31, 48))
-            target_ = tf.reshape(v_t, (31, 48))
+            pred_ = tf.reshape(v_p, (n_days, 48))
+            target_ = tf.reshape(v_t, (n_days, 48))
 
             diff = pred_ - target_
             relative_err = (abs(diff))/abs(target_)
@@ -314,15 +314,15 @@ for train_idx, test_idx in zip(train_idxs, test_idxs):
 elapsed = time.perf_counter() - start
 
 
-# plot the losses
+#plot the losses
 plt.figure()
 plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
 plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss ( MAPE)')
-plt.title('Loss for APPNPConv')
+plt.title('Loss for GCN Adagrad ')
 plt.legend()
-plt.savefig('losses_APPNP')
+plt.savefig('losses_GCN_Adagrad.png')
 
 
 # print out stats
