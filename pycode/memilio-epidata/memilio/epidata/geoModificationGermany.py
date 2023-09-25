@@ -25,6 +25,7 @@
 """
 import os
 
+import numpy as np
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
@@ -560,7 +561,8 @@ def merge_df_counties(
         merged_id rows.
     """
     # ensure that separated_ids and dataframe ids can be compared
-    if type(separated_ids[0]) != type(df[dd.EngEng['idCounty']][0]):
+    # df column should be an int, as seperated_ids and merged_id are int.
+    if not isinstance(df[dd.EngEng['idCounty']][0], (int, np.integer)):
         df[dd.EngEng['idCounty']] = df[dd.EngEng['idCounty']].astype(
             type(separated_ids[0]))
     # extract rows of IDs that will be merged
