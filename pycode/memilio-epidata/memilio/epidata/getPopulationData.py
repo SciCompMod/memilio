@@ -331,7 +331,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-    username, password = read_credentials(username, password)
+    if (username is None) or (password is None):
+        username, password = read_credentials(username, password)
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
