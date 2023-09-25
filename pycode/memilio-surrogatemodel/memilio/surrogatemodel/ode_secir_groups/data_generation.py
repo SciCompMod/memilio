@@ -35,6 +35,18 @@ from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
                                       interpolate_simulation_result, simulate)
 
 
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    new_dataset_entries = []
+    for i in dataset_entries : 
+      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+      dataset_entries_reshaped[:, 4] = sum_inf_symp
+      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+    return new_dataset_entries
+
+
 def run_secir_groups_simulation(days, damping_day, populations):
 
     """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region. 
@@ -140,8 +152,13 @@ def run_secir_groups_simulation(days, damping_day, populations):
 
     # Omit first column, as the time points are not of interest here.
     dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
-    return dataset_entries.tolist()
+
+    # delete the confirmed compartments 
+
+    dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    #return dataset_entries.tolist()
     #return dataset_entries.tolist(), damped_contact_matrix
+    return dataset_entires_withut_confirmed, damped_contact_matrix
 
 
 def generate_data(
@@ -189,8 +206,8 @@ def generate_data(
 
         data_run, damped_contact_matrix = run_secir_groups_simulation(
             days, damping_day, population[random.randint(0, len(population) - 1)])
-        data_run = run_secir_groups_simulation(
-            days, population[random.randint(0, len(population) - 1)])
+        #data_run = run_secir_groups_simulation(
+        #    days, population[random.randint(0, len(population) - 1)])
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         data['contact_matrix'].append(np.array(damped_contact_matrix))
@@ -221,7 +238,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_90days.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_30days_onevardamp.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -307,7 +324,7 @@ if __name__ == "__main__":
         r"data//pydata//Germany//county_population.json")
 
     input_width = 5
-    label_width = 90
-    num_runs = 10000
+    label_width = 30
+    num_runs = 100
     data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width)
