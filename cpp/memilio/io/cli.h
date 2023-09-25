@@ -380,7 +380,7 @@ mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifie
  *
  * @param parameters The set containing the parameter to set.
  * @param identifier The identifier of the parameter.
- * @param args String containing a json value to be convertet to the matching parameter's type.
+ * @param args String containing a json value to be converted to the matching parameter's type.
  * @tparam T List of all parameters.
  * @tparam Set A parameter set.
  * @return Nothing if successfull, an error code otherwise.
