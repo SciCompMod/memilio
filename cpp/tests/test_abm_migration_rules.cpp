@@ -427,3 +427,37 @@ TEST(TestMigrationRules, dead)
     ASSERT_EQ(mio::abm::get_buried(p_dead, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
               mio::abm::LocationType::Cemetery);
 }
+
+TEST(TestMigrationRules, random_migration)
+{
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillRepeatedly(testing::Return(1.0));
+
+    auto p_retiree = mio::abm::Person(home, AGE_GROUP_60_TO_79);
+    auto p_adult   = mio::abm::Person(home, AGE_GROUP_15_TO_34);
+
+    auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
+    auto t_night   = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(4);
+    auto dt        = mio::abm::minutes(53);
+
+    mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+
+    ASSERT_EQ(mio::abm::random_migration(p_retiree, t_morning, dt, params), mio::abm::LocationType::Home);
+    ASSERT_EQ(mio::abm::random_migration(p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
+    ASSERT_EQ(mio::abm::random_migration(p_adult, t_night, dt, params), mio::abm::LocationType::Home);
+}

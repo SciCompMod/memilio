@@ -147,12 +147,20 @@ TEST(TestInfection, drawInfectionCourseBackward)
 
 TEST(TestInfection, getPersonalProtectiveFactor)
 {
+
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
     auto person   = mio::abm::Person(location, AGE_GROUP_15_TO_34);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0));
     auto latest_protection = person.get_latest_protection();
 
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
+    // Test default parameter functions
+    auto defaut_infection_protection = params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::ExposureType::GenericVaccine, mio::AgeGroup(0), mio::abm::VirusVariant::Wildtype}](0);
+    auto defaut_severity_protection  = params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::ExposureType::GenericVaccine, mio::AgeGroup(0), mio::abm::VirusVariant::Wildtype}](0);
+    ASSERT_NEAR(defaut_infection_protection, 0, 0.0001);
+    ASSERT_NEAR(defaut_severity_protection, 0, 0.0001);
 
     // Test linear interpolation with one node
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),

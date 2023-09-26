@@ -241,8 +241,8 @@ struct MaskProtection {
 using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
 
 /**
- * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on type of vaccine,
- * age group and virus variant. Its value is between 0 and 1.
+ * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on #ExposureType,
+ * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct InfectionProtectionFactor {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
@@ -259,8 +259,8 @@ struct InfectionProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against severe symptoms after #Infection and #Vaccination, which depends on type of vaccine,
- * age group and virus variant. Its value is between 0 and 1.
+ * @brief Personal protective factor against severe symptoms after #Infection and #Vaccination, which depends on #ExposureType,
+ * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct SeverityProtectionFactor {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
