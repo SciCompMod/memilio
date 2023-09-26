@@ -97,7 +97,7 @@ public:
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
 
-        parameters.check_constraints(dt);
+        parameters.check_constraints();
     }
 
     /**

@@ -269,6 +269,7 @@ public:
         : m_dampings()
         , m_shape(shape_args...)
     {
+        update_cache();
     }
 
     /**
@@ -280,6 +281,7 @@ public:
     {
         assert(il.size() > 0);
         m_shape = il.begin()->get_shape();
+        update_cache();
     }
 
     /**
@@ -308,6 +310,7 @@ public:
     {
         assert(m_dampings.size() > i);
         m_dampings.erase(m_dampings.begin() + i);
+        automatic_cache_update();
     }
 
     /**
@@ -316,6 +319,21 @@ public:
     void clear()
     {
         m_dampings.clear();
+        automatic_cache_update();
+    }
+
+    /**
+    * Disable the internal cache to speed up multiple modifications in a row. 
+    * This class has an internal cache where all dampings are combined into a single time series of matrices for faster lookup.
+    * By default, the cache is automatically updated when dampings are added or removed, but this can be expensive.
+    * This function can be used to disable the cache so that add() or remove() can be called multiple times
+    * in a row more efficiently. Afterwards, the cache needs to be reenabled.
+    * @param b True if cache updates are enabled.
+    */
+    void set_automatic_cache_update(bool b)
+    {
+        m_automatic_cache_update = b;
+        automatic_cache_update();
     }
 
     /**
@@ -334,7 +352,7 @@ public:
      */
     auto get_matrix_at(SimulationTime t) const
     {
-        finalize();
+        assert(!m_accumulated_dampings_cached.empty() && "Cache is not current. Did you disable the automatic cache update?");
         auto ub =
             std::upper_bound(m_accumulated_dampings_cached.begin(), m_accumulated_dampings_cached.end(),
                              std::make_tuple(t), [](auto&& tup1, auto&& tup2) {
@@ -349,13 +367,6 @@ public:
     {
         return get_matrix_at(SimulationTime(t));
     }
-
-    /**
-     * compute the cache of accumulated dampings.
-     * if this is used after adding dampings, all subsequent calls to get_matrix_at()
-     * are quick and threadsafe. Otherwise the cache is updated automatically on the first call.
-     */
-    void finalize() const;
 
     /**
      * access one damping in this collection.
@@ -474,6 +485,24 @@ private:
     void add_(const value_type& damping);
 
     /**
+     * compute the cache of accumulated dampings.
+     * if this is used after adding dampings, all subsequent calls to get_matrix_at()
+     * are quick and threadsafe. Otherwise the cache is updated automatically on the first call.
+     */
+    void update_cache();
+
+    /**
+     * updates the cache if automatic cache updates are enabled.
+     * @see update_cache(), set_automatic_cache_update()
+     */
+    void automatic_cache_update()
+    {
+        if (m_automatic_cache_update) {
+            update_cache();
+        }
+    }
+
+    /**
      * replace matrices of the same type, sum up matrices on the same level.
      * add new types/levels if necessary.
      */
@@ -507,11 +536,12 @@ private:
 private:
     std::vector<value_type> m_dampings;
     Shape m_shape;
-    mutable std::vector<std::tuple<Matrix, SimulationTime>> m_accumulated_dampings_cached;
+    std::vector<std::tuple<Matrix, SimulationTime>> m_accumulated_dampings_cached;
+    bool m_automatic_cache_update = true;
 };
 
 template <class D>
-void Dampings<D>::finalize() const
+void Dampings<D>::update_cache()
 {
     using std::get;
 
@@ -550,6 +580,9 @@ void Dampings<D>::add_(const value_type& damping)
                std::make_tuple(tup2.get_time(), int(tup2.get_type()), int(tup2.get_level()));
     });
     m_accumulated_dampings_cached.clear();
+    if (m_automatic_cache_update) {
+        update_cache();
+    }
 }
 
 template <class S>
