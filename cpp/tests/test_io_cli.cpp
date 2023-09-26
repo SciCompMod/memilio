@@ -120,16 +120,24 @@ struct NoName {
     // const static std::string description()
 };
 
+// allocates a char** argv, filled with the given values. use free_argv when done. do not use this outside testing!
 char** make_argv(const std::vector<std::string>& values)
 {
     char** argv = new char*[values.size()];
+    // create and copy each string
     for (size_t i = 0; i < values.size(); i++) {
         const auto n = values[i].size() + 1;
         argv[i]      = new char[n];
-        std::strcpy(argv[i], values[i].c_str());
+        for (size_t j = 0; j < n; j++) {
+            // make a manual strcpy, since msvc marks the function as unsafe
+            // (this is not a concern as this function is only used for making test parameters)
+            argv[i][j] = values[i][j];
+        }
     }
     return argv;
 }
+
+// deletes the char** created by make_argv
 void free_argv(char** argv, int argc)
 {
     for (int i = 0; i < argc; i++) {
@@ -230,7 +238,7 @@ TEST(TestCLI, test_write_help)
 TEST(TestCLI, test_print_options)
 {
     const std::vector<std::string> args{"", "--print_option", "a", "D"};
-    const int argc = args.size();
+    const int argc = (int)args.size();
     char** argv    = make_argv(args);
 
     Params p;
@@ -277,7 +285,7 @@ TEST(TestCLI, test_import_export)
     ofile << read_json;
     ofile.close();
     const std::vector<std::string> args{"", "--read_from_json", tmpfile, "--write_to_json", tmpfile};
-    const int argc = args.size();
+    const int argc = (int)args.size();
     char** argv    = make_argv(args);
     ASSERT_TRUE(mio::command_line_interface("", argc, argv, p));
     free_argv(argv, argc);
@@ -293,7 +301,7 @@ TEST(TestCLI, test_command_line_interface)
     const std::vector<std::string> args{
         "",    "-a", "3.4", "--B", "\"TestValue\"",          "--C has a name that is too long",
         "[0,", "8,", "15]", "--D", "[\"Hello \",\"World!\"]"};
-    const int argc = args.size();
+    const int argc = (int)args.size();
     char** argv    = make_argv(args);
     // trigger fail
     // by error in set_param
