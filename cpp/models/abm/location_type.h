@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <functional>
 
 namespace mio
 {
@@ -79,5 +80,16 @@ struct LocationId {
 
 } // namespace abm
 } // namespace mio
+
+namespace std
+{
+template <>
+struct hash<mio::abm::LocationId> {
+    std::size_t operator()(const mio::abm::LocationId& loc_id) const
+    {
+        return (hash<uint32_t>()(loc_id.index)) ^ (hash<uint32_t>()(static_cast<uint32_t>(loc_id.type)));
+    }
+};
+} // namespace std
 
 #endif

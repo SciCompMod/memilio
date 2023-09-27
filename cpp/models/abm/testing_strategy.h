@@ -173,7 +173,7 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map);
+    explicit TestingStrategy(const std::unordered_map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
@@ -224,7 +224,7 @@ public:
     bool run_strategy(Person& person, const Location& location, TimePoint t);
 
 private:
-    std::map<LocationId, std::vector<TestingScheme>>
+    std::unordered_map<LocationId, std::vector<TestingScheme>>
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 

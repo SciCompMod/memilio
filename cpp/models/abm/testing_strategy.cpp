@@ -130,7 +130,8 @@ bool TestingScheme::run_scheme(Person& person, TimePoint t) const
     return true;
 }
 
-TestingStrategy::TestingStrategy(const std::map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map)
+TestingStrategy::TestingStrategy(
+    const std::unordered_map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map)
     : m_location_to_schemes_map(location_to_schemes_map)
 {
 }
@@ -178,19 +179,19 @@ bool TestingStrategy::run_strategy(Person& person, const Location& location, Tim
         return true;
     }
 
-    auto schemes_location_vector = m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}];
-    auto schemes_location_type_vector =
-        m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}];
-    schemes_location_vector.insert(schemes_location_vector.end(), schemes_location_type_vector.begin(),
-                                   schemes_location_type_vector.end());
-    std::cout << schemes_location_vector.size() << '\n';
-    return std::all_of(schemes_location_vector.begin(), schemes_location_vector.end(), [&person, t](TestingScheme ts) {
-        if (ts.is_active()) {
-            std::cout << "run scheme" << '\n';
-            return ts.run_scheme(person, t);
+    // Combine two vectors of schemes at corresponding location and location stype
+    std::vector<std::vector<TestingScheme>*> schemes_vector = {
+        &m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}],
+        &m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}]};
+
+    for (auto vec_ptr : schemes_vector) {
+        if (!std::all_of(vec_ptr->begin(), vec_ptr->end(), [&person, t](TestingScheme& ts) {
+                return !ts.is_active() || ts.run_scheme(person, t);
+            })) {
+            return false;
         }
-        return true;
-    });
+    }
+    return true;
 }
 
 } // namespace abm
