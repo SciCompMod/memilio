@@ -130,9 +130,7 @@ def run_secir_groups_simulation(days, number_of_dampings, populations):
 
 
     ##### generate damping days 
-    damping_days = []
-    for i in range(number_of_dampings):
-        damping_days.append(random.randrange(5,days))
+    damping_days=(random.sample(range(5,days), number_of_dampings))
     damping_days.sort()
 
     # Generate a damping matrix and assign it to the model
@@ -171,7 +169,7 @@ def run_secir_groups_simulation(days, number_of_dampings, populations):
 
 
 def generate_data(
-        num_runs, path_out, path_population, input_width, label_width, number_of_dampings, 
+        num_runs, path_out, path_population, input_width, label_width, number_of_dampings, file_name,  
         normalize=True, save_data=True):
     """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
@@ -244,7 +242,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_30days_onevardamp.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, file_name), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -331,7 +329,9 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 100
+    num_runs = 10000
     number_of_dampings = 3
+    file_name = 'data_secir_groups_30days_10k_3damp.pickle'
+
     data = generate_data(num_runs, path_data, path_population, input_width,
-                         label_width, number_of_dampings)
+                         label_width, number_of_dampings, file_name, normalize = True, save_data=True)
