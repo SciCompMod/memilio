@@ -23,14 +23,11 @@
 #include "memilio/config.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
+
 #include "lct_secir/parameters.h"
 #include "lct_secir/infection_state.h"
-
-#include "memilio/io/epi_data.h"
-#include "memilio/io/io.h"
-#include "memilio/utils/date.h"
 #include "memilio/math/eigen.h"
-#include "memilio/utils/logging.h"
+
 #include <string>
 
 namespace mio
@@ -39,27 +36,8 @@ namespace lsecir
 {
 
 IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Date date, InfectionState infectionState,
-                                                     Parameters&& parameters, ScalarType scale_confirmed_cases = 1.)
-{
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_germany(path));
-    auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
-        return a.date < b.date;
-    });
-    if (max_date_entry == rki_data.end()) {
-        log_error("RKI data file is empty.");
-        return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
-    }
-    auto max_date = max_date_entry->date;
-    if (max_date < date) {
-        log_error("Specified date does not exist in RKI data");
-        return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
-    }
-    // was soll die 6 da?
-    auto days_surplus = std::min(get_offset_in_days(max_date, date) - 6, 0);
-
-    Eigen::VectorXd init(infectionState.get_count());
-    return init;
-}
+                                                     Parameters&& parameters, ScalarType total_population,
+                                                     ScalarType scale_confirmed_cases = 1.);
 
 } // namespace lsecir
 } // namespace mio

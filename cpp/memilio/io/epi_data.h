@@ -68,9 +68,9 @@ public:
 /**
  * Represents the entries of a confirmed cases data file, e.g., from RKI.
  * Number of confirmed, recovered and deceased in a Germany on a specific date.
- * ConfirmedCasesGermanyEntry is a simplified version of ConfirmedCasesDataEntry without agegroups.
+ * ConfirmedCasesNoAgeEntry is a simplified version of ConfirmedCasesDataEntry without agegroups.
  */
-class ConfirmedCasesGermanyEntry
+class ConfirmedCasesNoAgeEntry
 {
 public:
     double num_confirmed;
@@ -79,9 +79,9 @@ public:
     Date date;
 
     template <class IOContext>
-    static IOResult<ConfirmedCasesGermanyEntry> deserialize(IOContext& io)
+    static IOResult<ConfirmedCasesNoAgeEntry> deserialize(IOContext& io)
     {
-        auto obj           = io.expect_object("ConfirmedCasesGermanyEntry");
+        auto obj           = io.expect_object("ConfirmedCasesNoAgeEntry");
         auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
         auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
         auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
@@ -89,30 +89,30 @@ public:
         return apply(
             io,
             [](auto&& nc, auto&& nr, auto&& nd, auto&& d) {
-                return ConfirmedCasesGermanyEntry{nc, nr, nd, d};
+                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d};
             },
             num_confirmed, num_recovered, num_deaths, date);
     }
 };
 
 /**
- * Deserialize a list of ConfirmedCasesGermanyEntry from json.
- * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesGermanyEntry.
- * @return list of ConfirmedCasesGermanyEntry.
+ * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
+ * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ * @return list of ConfirmedCasesNoAgeEntry.
  */
-inline IOResult<std::vector<ConfirmedCasesGermanyEntry>> deserialize_confirmed_cases_germany(const Json::Value& jsvalue)
+inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> deserialize_confirmed_cases_noage(const Json::Value& jsvalue)
 {
-    return deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesGermanyEntry>>{});
+    return deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesNoAgeEntry>>{});
 }
 
 /**
- * Deserialize a list of ConfirmedCasesGermanyEntry from json.
- * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesGermanyEntry.
- * @return list of ConfirmedCasesGermanyEntry.
+ * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
+ * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ * @return list of ConfirmedCasesNoAgeEntry.
  */
-inline IOResult<std::vector<ConfirmedCasesGermanyEntry>> read_confirmed_cases_germany(const std::string& filename)
+inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> read_confirmed_cases_noage(const std::string& filename)
 {
-    return read_json(filename, Tag<std::vector<ConfirmedCasesGermanyEntry>>{});
+    return read_json(filename, Tag<std::vector<ConfirmedCasesNoAgeEntry>>{});
 }
 
 /**

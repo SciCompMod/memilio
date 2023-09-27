@@ -253,20 +253,17 @@ mio::IOResult<void> simulate(bool save_result = true, bool print_result = false)
     mio::lsecir::InfectionState infectionStates(vec_subcompartments);
 
     Eigen::VectorXd init_base((int)mio::lsecir::InfectionStateBase::Count);
-    init_base << 7500, 90, 50, 70, 18, 8, 0, 0;
-    init_base = init_base * (10000 / init_base.sum());
 
-    Eigen::VectorXd init_subcompartments(infectionStates.get_count());
+    BOOST_OUTCOME_TRY(init_subcompartments, mio::lsecir::get_initial_data_from_file(
+                                                "../../data/pydata/Germany/cases_all_germany_ma7.json", start_date,
+                                                infectionStates, std::move(parameters), total_population, 2.));
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
-        for (int j = infectionStates.get_firstindex(i);
-             j < infectionStates.get_firstindex(i) + infectionStates.get_number(i); j++) {
-            init_subcompartments[j] = init_base[i] / infectionStates.get_number(i);
-        }
+        init_base[i] =
+            init_subcompartments
+                .segment(Eigen::Index(infectionStates.get_firstindex(i)), Eigen::Index(infectionStates.get_number(i)))
+                .sum();
+        std::cout << i << ": " << init_base[i] << std::endl;
     }
-
-    BOOST_OUTCOME_TRY(init,
-                      mio::lsecir::get_initial_data_from_file("../../data/pydata/Germany/cases_all_germany_ma7.json",
-                                                              start_date, infectionStates, std::move(parameters)));
 
     // Initialize model and perform simulation.
     mio::lsecir::Model model_lct(std::move(init_subcompartments), infectionStates, std::move(parameters));

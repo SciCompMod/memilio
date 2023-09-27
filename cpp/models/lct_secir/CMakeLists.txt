@@ -8,6 +8,7 @@ add_library(lct_secir
     initialization.h
     initialization.cpp
     parameters_io.h
+    parameters_io.cpp
 )
 target_link_libraries(lct_secir PUBLIC memilio)
 target_include_directories(lct_secir PUBLIC
