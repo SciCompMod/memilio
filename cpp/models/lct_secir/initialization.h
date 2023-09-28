@@ -40,20 +40,18 @@ namespace lsecir
 class Initializer
 {
 public:
-    using ParameterSet = Parameters;
-
     /**
      * @brief Constructs a new Initializer object.
      *
      * @param[in] flows Initalizing TimeSeries with flows fitting to these defined in InfectionTransition. 
      *      Timesteps should be equidistant.
-     * @param[in, out] infectionState_init InfectionStates for the Initializer, specifies number of Subcompartments for each infection state.
-     * @param[in, out] parameterSet_init Specifies Parameters necessary for the Initializer.
+     * @param[in, out] infectionState_init InfectionState%s for the Initializer, specifies number of Subcompartments for each infection state.
+     * @param[in, out] parameters_init Specifies Parameters necessary for the Initializer.
      */
     Initializer(TimeSeries<ScalarType>&& flows, InfectionState infectionState_init = InfectionState(),
-                ParameterSet&& parameterSet_init = ParameterSet())
-        : parameters(parameterSet_init)
-        , infectionStates(infectionState_init)
+                Parameters&& parameters_init = Parameters())
+        : parameters(parameters_init)
+        , infectionState(infectionState_init)
         , m_flows(std::move(flows))
     {
         m_dt = m_flows.get_time(1) - m_flows.get_time(0);
@@ -78,8 +76,8 @@ public:
      */
     bool check_constraints() const;
 
-    ParameterSet parameters{}; ///< ParameterSet with the Initalizers Parameters.
-    InfectionState infectionStates; ///< InfectionState specifies number of subcompartments.
+    Parameters parameters{}; ///< Parameters with the Initalizers Parameters.
+    InfectionState infectionState; ///< InfectionState specifies number of subcompartments.
 
 private:
     /**

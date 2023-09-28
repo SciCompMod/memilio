@@ -62,7 +62,7 @@ bool Initializer::check_constraints() const
 Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen::Index idx_incoming_flow,
                                                  ScalarType transition_rate) const
 {
-    int num_infectionstates = infectionStates.get_number(base);
+    int num_infectionstates = infectionState.get_number(base);
     Eigen::VectorXd subcompartments(num_infectionstates);
     // Initialize relevant density for the compartment base.
     // For the first subcompartment a shape parameter of one is needed.
@@ -109,45 +109,45 @@ Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_popul
 {
     check_constraints();
 
-    int infectionStates_count = infectionStates.get_count();
+    int infectionStates_count = infectionState.get_count();
     Eigen::VectorXd init(infectionStates_count);
 
     //E
-    init.segment(infectionStates.get_firstindex(InfectionStateBase::Exposed),
-                 infectionStates.get_number(InfectionStateBase::Exposed)) =
+    init.segment(infectionState.get_firstindex(InfectionStateBase::Exposed),
+                 infectionState.get_number(InfectionStateBase::Exposed)) =
         compute_compartment(InfectionStateBase::Exposed, Eigen::Index(InfectionTransition::SusceptibleToExposed),
                             1 / parameters.get<TimeExposed>());
     //C
-    init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedNoSymptoms),
-                 infectionStates.get_number(InfectionStateBase::InfectedNoSymptoms)) =
+    init.segment(infectionState.get_firstindex(InfectionStateBase::InfectedNoSymptoms),
+                 infectionState.get_number(InfectionStateBase::InfectedNoSymptoms)) =
         compute_compartment(InfectionStateBase::InfectedNoSymptoms,
                             Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
                             1 / parameters.get<TimeInfectedNoSymptoms>());
     //I
-    init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms),
-                 infectionStates.get_number(InfectionStateBase::InfectedSymptoms)) =
+    init.segment(infectionState.get_firstindex(InfectionStateBase::InfectedSymptoms),
+                 infectionState.get_number(InfectionStateBase::InfectedSymptoms)) =
         compute_compartment(InfectionStateBase::InfectedSymptoms,
                             Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
                             1 / parameters.get<TimeInfectedSymptoms>());
     //H
-    init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSevere),
-                 infectionStates.get_number(InfectionStateBase::InfectedSevere)) =
+    init.segment(infectionState.get_firstindex(InfectionStateBase::InfectedSevere),
+                 infectionState.get_number(InfectionStateBase::InfectedSevere)) =
         compute_compartment(InfectionStateBase::InfectedSevere,
                             Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),
                             1 / parameters.get<TimeInfectedSevere>());
     //U
-    init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedCritical),
-                 infectionStates.get_number(InfectionStateBase::InfectedCritical)) =
+    init.segment(infectionState.get_firstindex(InfectionStateBase::InfectedCritical),
+                 infectionState.get_number(InfectionStateBase::InfectedCritical)) =
         compute_compartment(InfectionStateBase::InfectedCritical,
                             Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
                             1 / parameters.get<TimeInfectedCritical>());
     //R
     // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
     init[infectionStates_count - 2] = total_confirmed_cases -
-                                      init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms),
-                                                   infectionStates.get_number(InfectionStateBase::InfectedSymptoms) +
-                                                       infectionStates.get_number(InfectionStateBase::InfectedSevere) +
-                                                       infectionStates.get_number(InfectionStateBase::InfectedCritical))
+                                      init.segment(infectionState.get_firstindex(InfectionStateBase::InfectedSymptoms),
+                                                   infectionState.get_number(InfectionStateBase::InfectedSymptoms) +
+                                                       infectionState.get_number(InfectionStateBase::InfectedSevere) +
+                                                       infectionState.get_number(InfectionStateBase::InfectedCritical))
                                           .sum() -
                                       deaths;
 

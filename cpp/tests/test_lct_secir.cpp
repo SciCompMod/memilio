@@ -227,7 +227,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
 
     // compare the result of eval_right_hand_side with a hand calculated result
-    size_t num_subcompartments = model.infectionStates.get_count();
+    size_t num_subcompartments = model.infectionState.get_count();
     Eigen::VectorXd dydt(num_subcompartments);
     model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
 
@@ -365,7 +365,7 @@ TEST_F(ModelTestLCTSecir, testModelFunctions)
     EXPECT_TRUE(model2.get_heading_Subcompartments().compare("S | E | C | I1 | I2 | H1 | H2 | U | R | D") == 0);
 }
 
-// Check constraints of InfectionStates and Parameters.
+// Check constraints of InfectionState and Parameters.
 TEST(TestLCTSecir, testConstraints)
 {
     // Deactivate temporarily log output for next tests.

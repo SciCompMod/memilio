@@ -71,7 +71,7 @@ public:
     /**
      * @brief Constructor for the InfectionState class.
      *
-     * InfectionState class defines the possible InfectionStates with the number of Subcompartments for the LCT model.
+     * InfectionState class defines the possible InfectionState%s with the number of Subcompartments for the LCT model.
      * With the default constructor, the class is defined without subcompartments, i.e. only the subdivision in InfectionStateBase 
      * is used.
      */
@@ -85,7 +85,7 @@ public:
     /**
      * @brief Constructor for the InfectionState class.
      *
-     * InfectionState class defines the possible InfectionStates with the number of Subcompartments for the LCT model.
+     * InfectionState class defines the possible InfectionState%s with the number of Subcompartments for the LCT model.
      * @param[in] SubcompartmentNumbers Vector which defines the number of Subcompartments for each infection state of InfectionStateBase.       
      */
     InfectionState(std::vector<int> SubcompartmentNumbers)

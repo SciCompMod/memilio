@@ -34,18 +34,17 @@ namespace lsecir
 {
 class Model
 {
-    using ParameterSet = Parameters;
 
 public:
     /**
      * @brief Constructor to create an LCT SECIR Model.
      *
      * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
-     * @param[in, out] infectionState_init InfectionStates for the Model, specifies number of Subcompartments for each infection state.
-     * @param[in, out] parameterSet_init Specifies Parameters necessary for the Model. 
+     * @param[in, out] infectionState_init infectionState for the Model, specifies number of Subcompartments for each infection state.
+     * @param[in, out] parameters_init Specifies Parameters necessary for the Model. 
      */
     Model(Eigen::VectorXd init, InfectionState infectionState_init = InfectionState(),
-          ParameterSet&& parameterSet_init = ParameterSet());
+          Parameters&& parameters_init = Parameters());
 
     /**
      * @brief Checks constraints of the model inclusive check for model parameters.
@@ -69,7 +68,7 @@ public:
      * @brief Calculates the population divided in states defined in InfectionStateBase out of a result with subcompartments.
      *
      * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided in Subcompartments.
-     * Function transforms this TimeSeries in another TimeSeries with just the Basic InfectionStates. 
+     * Function transforms this TimeSeries in another TimeSeries with just the Basic infectionState. 
      * This is done by summing up the numbers in the Subcompartments.
      * @param[in] result result of a simulation with the model.
      * @return result of the simulation divided in the Base infection states. 
@@ -104,8 +103,8 @@ public:
         return m_initial_values;
     }
 
-    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
-    InfectionState infectionStates; ///< InfectionState specifies number of subcompartments.
+    Parameters parameters{}; ///< Parameters of Model Parameters.
+    InfectionState infectionState; ///< InfectionState specifies number of subcompartments.
 
 private:
     Eigen::VectorXd m_initial_values; ///< Initial values of the model.

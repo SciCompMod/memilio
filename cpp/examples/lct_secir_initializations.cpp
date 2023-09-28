@@ -33,16 +33,15 @@
 
 int main()
 {
-    bool save_result   = true;
-    bool print_result  = false;
-    using ParameterSet = mio::lsecir::Parameters;
+    bool save_result  = true;
+    bool print_result = false;
 
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
     ScalarType tmax             = 20;
 
-    // Define ParameterSet used for simulation and initialization.
-    ParameterSet parameters;
+    // Define parameters used for simulation and initialization.
+    mio::lsecir::Parameters parameters;
     parameters.get<mio::lsecir::TimeExposed>()                      = 3.335;
     parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.31331;
     parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.94547;
@@ -117,16 +116,16 @@ int main()
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = num_subcompartments;
-    mio::lsecir::InfectionState infectionStates(vec_subcompartments);
+    mio::lsecir::InfectionState infectionState(vec_subcompartments);
 
     mio::TimeSeries<ScalarType> init_copy(init);
 
     // Get initialization vector for LCT model with num_subcompartments subcompartments.
-    mio::lsecir::Initializer initializer(std::move(init_copy), infectionStates, std::move(parameters));
+    mio::lsecir::Initializer initializer(std::move(init_copy), infectionState, std::move(parameters));
     auto init_compartments = initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
     // Initialize model and perform simulation.
-    mio::lsecir::Model model(std::move(init_compartments), infectionStates, std::move(parameters));
+    mio::lsecir::Model model(std::move(init_compartments), infectionState, std::move(parameters));
     mio::TimeSeries<ScalarType> result_transitions = mio::lsecir::simulate(
         0, tmax, 0.5, model,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
@@ -176,16 +175,16 @@ int main()
         init_vec[(int)mio::lsecir::InfectionStateBase::Dead];
 
     // Constant initialization leads to equally distributed values accross substates
-    Eigen::VectorXd init_mean(infectionStates.get_count());
+    Eigen::VectorXd init_mean(infectionState.get_count());
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
-        for (int j = infectionStates.get_firstindex(i);
-             j < infectionStates.get_firstindex(i) + infectionStates.get_number(i); j++) {
-            init_mean[j] = init_vec[i] / infectionStates.get_number(i);
+        for (int j = infectionState.get_firstindex(i);
+             j < infectionState.get_firstindex(i) + infectionState.get_number(i); j++) {
+            init_mean[j] = init_vec[i] / infectionState.get_number(i);
         }
     }
 
     // Initialize model and perform simulation.
-    mio::lsecir::Model model2(std::move(init_mean), infectionStates, std::move(parameters));
+    mio::lsecir::Model model2(std::move(init_mean), infectionState, std::move(parameters));
     mio::TimeSeries<ScalarType> result2 = mio::lsecir::simulate(
         0, tmax, 0.5, model2,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
@@ -202,13 +201,13 @@ int main()
     }
 
     // --- third initialization method: Initial values are distributed only in the first substates.
-    Eigen::VectorXd init_first = Eigen::VectorXd::Zero(infectionStates.get_count());
+    Eigen::VectorXd init_first = Eigen::VectorXd::Zero(infectionState.get_count());
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
-        init_first[infectionStates.get_firstindex(i)] = init_vec[i];
+        init_first[infectionState.get_firstindex(i)] = init_vec[i];
     }
 
     // Initialize model and perform simulation.
-    mio::lsecir::Model model3(std::move(init_first), infectionStates, std::move(parameters));
+    mio::lsecir::Model model3(std::move(init_first), infectionState, std::move(parameters));
     mio::TimeSeries<ScalarType> result3 = mio::lsecir::simulate(
         0, tmax, 0.5, model3,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,

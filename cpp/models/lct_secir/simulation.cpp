@@ -19,6 +19,7 @@
 */
 #include "lct_secir/simulation.h"
 #include "lct_secir/model.h"
+#include "lct_secir/parameters.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/stepper_wrapper.h"

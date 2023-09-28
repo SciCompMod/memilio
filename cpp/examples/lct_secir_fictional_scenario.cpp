@@ -47,14 +47,13 @@ int main()
     bool simulate_lct = true;
     // Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
     int num_subcompartments = 3;
-    using ParameterSet      = mio::lsecir::Parameters;
 
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
     ScalarType tmax             = 10;
 
-    // Define ParameterSet used for simulation and initialization.
-    ParameterSet parameters_lct;
+    // Define parameters used for simulation and initialization.
+    mio::lsecir::Parameters parameters_lct;
     parameters_lct.get<mio::lsecir::TimeExposed>()                      = 3.335;
     parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.31331;
     parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.94547;
@@ -156,17 +155,17 @@ int main()
         vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
             round(parameters_lct.get<mio::lsecir::TimeInfectedCritical>());
     }
-    mio::lsecir::InfectionState infectionStates(vec_subcompartments);
+    mio::lsecir::InfectionState infectionState(vec_subcompartments);
 
     if (simulate_lct) {
         // Get initialization vector for LCT model with num_subcompartments subcompartments.
         mio::TimeSeries<ScalarType> init_copy(init);
-        mio::lsecir::Initializer initializer(std::move(init_copy), infectionStates, std::move(parameters_lct));
+        mio::lsecir::Initializer initializer(std::move(init_copy), infectionState, std::move(parameters_lct));
         auto init_compartments =
             initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
         // Initialize model and perform simulation.
-        mio::lsecir::Model model(std::move(init_compartments), infectionStates, std::move(parameters_lct));
+        mio::lsecir::Model model(std::move(init_compartments), infectionState, std::move(parameters_lct));
         mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(
             0, tmax, 0.5, model,
             std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
