@@ -32,6 +32,36 @@
 namespace pymio
 {
 
+enum class PickleFlag {
+    NoPickling,
+    TryPickling,
+    ForcePickling
+};
+
+// Tags for different pickling strategies
+struct NoPicklingTag {};
+struct TryPicklingTag {};
+struct ForcePicklingTag {};
+
+// Tag dispatch to convert value into type
+template <PickleFlag F>
+struct PicklingTag {};
+
+template <>
+struct PicklingTag<PickleFlag::NoPickling> {
+    using type = NoPicklingTag;
+};
+
+template <>
+struct PicklingTag<PickleFlag::TryPickling> {
+    using type = TryPicklingTag;
+};
+
+template <>
+struct PicklingTag<PickleFlag::ForcePickling> {
+    using type = ForcePicklingTag;
+};
+
 template <class IOContext, class T>
 using has_seriliazion_functions = mio::conjunction<mio::has_serialize<IOContext, T>, mio::has_deserialize<IOContext, T>>;
 
@@ -68,12 +98,15 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
         }));
 }
 
-// Bind classes with optional support for pickling
 template <class T, class... Args>
-decltype(auto) bind_class_optional_serialize(pybind11::module& m, std::string const& name)
-{
+decltype(auto) _bind_class(pybind11::module& m, std::string const& name, NoPicklingTag) {
     decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
+    return cls;
+}
 
+template <class T, class... Args>
+decltype(auto) _bind_class(pybind11::module& m, std::string const& name, TryPicklingTag) {
+    decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
     // Bind the class depending on its features
     if constexpr (is_serializable<mio::PickleSerializer, T>::value) {
         pybind_pickle_class<T, Args...>(cls);
@@ -81,13 +114,16 @@ decltype(auto) bind_class_optional_serialize(pybind11::module& m, std::string co
     return cls;
 }
 
-// Bind classes with support for pickling
 template <class T, class... Args>
-decltype(auto) bind_class(pybind11::module& m, std::string const& name)
-{
+decltype(auto) _bind_class(pybind11::module& m, std::string const& name, ForcePicklingTag) {
     decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
     pybind_pickle_class<T, Args...>(cls);
     return cls;
+}
+
+template <PickleFlag F, class T, class... Args>
+decltype(auto) bind_class(pybind11::module& m, std::string const& name) {
+    return _bind_class<T, Args...>(m, name, typename PicklingTag<F>::type{});
 }
 
 // the following functions help bind class template realizations
@@ -143,7 +179,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    pybind11::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    bind_class<PickleFlag::NoPickling, Iterator>(m, (std::string("_Iter") + class_name).c_str())
         .def(
             "__next__",
             [](Iterator& self) -> auto&& {
@@ -157,7 +193,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
             pybind11::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    pybind11::class_<Range>(m, class_name.c_str())
+    bind_class<PickleFlag::NoPickling, Range>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {

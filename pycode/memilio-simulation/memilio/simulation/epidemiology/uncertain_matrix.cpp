@@ -33,7 +33,7 @@ namespace pymio
 
 void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
 {
-    bind_class<mio::UncertainContactMatrix>(m, name.c_str())
+    bind_class<PickleFlag::ForcePickling, mio::UncertainContactMatrix>(m, name.c_str())
         .def(py::init<>())
         .def(py::init<const mio::ContactMatrixGroup&>())
         .def_property(

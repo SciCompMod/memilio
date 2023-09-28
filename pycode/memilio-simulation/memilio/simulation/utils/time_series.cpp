@@ -30,7 +30,7 @@ namespace pymio
 
 void bind_time_series(py::module_& m, std::string const& name)
 {
-    bind_class<mio::TimeSeries<double>>(m, name.c_str())
+    bind_class<PickleFlag::ForcePickling, mio::TimeSeries<double>>(m, name.c_str())
         .def(py::init<Eigen::Index>(), py::arg("num_elements"))
         .def("get_num_time_points", &mio::TimeSeries<double>::get_num_time_points)
         .def("get_num_elements", &mio::TimeSeries<double>::get_num_elements)

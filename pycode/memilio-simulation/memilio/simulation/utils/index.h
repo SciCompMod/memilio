@@ -47,7 +47,7 @@ std::enable_if_t<std::is_enum<Tag>::value> bind_Index_members_if_enum(pybind11::
 template <class Tag>
 void bind_Index(pybind11::module_& m, std::string const& name)
 {
-    decltype(auto) c = pymio::bind_class<mio::Index<Tag>>(m, name.c_str());
+    decltype(auto) c = bind_class<PickleFlag::ForcePickling, mio::Index<Tag>>(m, name.c_str());
     c.def(pybind11::init<size_t>(), pybind11::arg("value"));
     c.def(pybind11::self == pybind11::self);
     c.def(pybind11::self != pybind11::self);
@@ -69,7 +69,7 @@ template <class... Tags>
 void bind_MultiIndex(pybind11::module_& m, std::string const& name)
 {
     using C          = mio::Index<Tags...>;
-    decltype(auto) c = pymio::bind_class<C>(m, name.c_str());
+    decltype(auto) c = bind_class<PickleFlag::ForcePickling, C>(m, name.c_str());
     c.def(pybind11::init<mio::Index<Tags> const&...>()).def(pybind11::init([](pybind11::tuple t) {
         return C(extract_index<Tags, C>(t)...);
     }));

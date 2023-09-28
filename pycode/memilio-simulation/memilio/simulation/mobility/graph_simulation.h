@@ -36,7 +36,7 @@ template <class Graph>
 void bind_GraphSimulation(pybind11::module_& m, std::string const& name)
 {
     using GS = mio::GraphSimulation<Graph>;
-    bind_class_optional_serialize<GS>(m, name.c_str())
+    bind_class<PickleFlag::TryPickling, GS>(m, name.c_str())
         .def(pybind11::init([](Graph& graph, double t0, double dt) {
                  return std::make_unique<GS>(mio::make_migration_sim(t0, dt, std::move(graph)));
              }),
