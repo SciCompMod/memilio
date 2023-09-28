@@ -43,13 +43,14 @@ struct Trip {
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
     LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    std::vector<uint32_t>
+        cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
 
     /**
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
-     * @param[in] time_new Time at which a Person changes the Location.
+     * @param[in] time_new Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
      * @param[in] destination Location where the Person migrates to.
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person migrates to.
@@ -58,19 +59,15 @@ struct Trip {
          const std::vector<uint32_t>& input_cells = {})
     {
         person_id             = id;
-        time                  = time_new;
+        time                  = mio::abm::TimePoint(time_new.time_since_midnight().seconds());
         migration_destination = destination;
         migration_origin      = origin;
         cells                 = input_cells;
     }
 
     Trip(uint32_t id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, destination, destination, input_cells)
     {
-        person_id             = id;
-        time                  = time_new;
-        migration_destination = destination;
-        migration_origin      = destination;
-        cells                 = input_cells;
     }
 };
 

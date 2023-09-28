@@ -242,8 +242,8 @@ TEST(TestWorld, evolveMigration)
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
         auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
 
-        auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
-                                   mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto& p1 =
+            add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible, t);
         auto& p2 =
             add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible, t);
         auto& p3 =
@@ -302,6 +302,7 @@ TEST(TestWorld, evolveMigration)
         p5.migrate_to(home);
 
         t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
+        world.get_trip_list().reset_index();
 
         world.evolve(t, dt);
 

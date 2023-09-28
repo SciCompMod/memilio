@@ -110,7 +110,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend).hour_of_day() < (t + dt).hour_of_day()) {
+               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
             auto& trip            = m_trip_list.get_next_trip(weekend);
             auto& person          = m_persons[trip.person_id];
             auto current_location = person->get_location();
@@ -124,7 +124,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             m_trip_list.increase_index();
         }
     }
-    if (t.days() < (t + dt).days()) {
+    if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
     }
 }
