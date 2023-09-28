@@ -113,12 +113,6 @@ TEST(TestSaveResult, save_result)
 
 TEST(TestSaveResult, save_result_with_params)
 {
-    //rng needs to be reseeded right before using parallel parameterstudies
-    //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto rng                = mio::thread_local_rng();
-    mio::thread_local_rng() = mio::RandomNumberGenerator();
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -230,14 +224,17 @@ TEST(TestSaveResult, save_result_with_params)
 
 TEST(TestSaveResult, save_percentiles_and_sums)
 {
-    //rng needs to be reseeded right before using parallel parameterstudies
-    //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto prev_rng           = mio::thread_local_rng();
+    < < < < < < < < < Temporary merge branch 1 == == == ==
+        =
+            //rng needs to be reseeded right before using parallel parameterstudies
+        //to keep the rest of the tests independent, we install a temporary RNG for this test
+        auto prev_rng       = mio::thread_local_rng();
     mio::thread_local_rng() = mio::RandomNumberGenerator();
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    // set up parameter study
-    double t0           = 0;
+    >>>>>>>>> Temporary merge branch 2
+        // set up parameter study
+        double t0       = 0;
     double tmax         = 100;
     double cont_freq    = 10; // see Polymod study
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
