@@ -200,7 +200,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
-    // For the world we need: Hospitals, ICUs, Homea for each unique householdID, One Person for each person_id with respective age and home_id.
+    // For the world we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
 
     // We assume that no person goes to an hospital, altough e.g. "Sonstiges" could be a hospital
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);

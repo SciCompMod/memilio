@@ -140,11 +140,9 @@ public:
     }
 
 private:
-    std::vector<Trip>
-        m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday. These get used repeatedly every Monday to Friday.
-    std::vector<Trip>
-        m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day. It is assumed, that these Trips are used every Saturday and Sunday.
-    uint32_t m_current_index; ///< The index of the Trip a Person makes next. This resets every day.
+    std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
+    std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.
+    uint32_t m_current_index; ///< The index of the Trip a Person makes next.
 };
 
 } // namespace abm
