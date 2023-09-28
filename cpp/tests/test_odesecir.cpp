@@ -30,6 +30,7 @@
 #include "ode_secir/parameters.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
+#include <iomanip>
 
 TEST(TestOdeSecir, compareWithPreviousRun)
 {
@@ -784,9 +785,9 @@ TEST(Secir, get_reproduction_number)
         model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
         model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
         model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
-        model.parameters.get<mio::osecir::ICUCapacity>()                          = std::numeric_limits<double>::max();
-        model.parameters.get<mio::osecir::TestAndTraceCapacity>()                 = std::numeric_limits<double>::max();
     }
+    model.parameters.get<mio::osecir::ICUCapacity>()          = std::numeric_limits<double>::max();
+    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<double>::max();
 
     mio::TimeSeries<ScalarType> result((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_0((int)mio::osecir::InfectionState::Count * num_groups);
@@ -845,11 +846,12 @@ TEST(Secir, get_reproduction_number)
     EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 3.4060279836965339,
                 1e-12); //Calculated by hand
 
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.7153740911442856, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.7153740911442856,
+                1e-12); //Calculated by hand
     EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.4833316698917707, 1e-12);
     EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 3.4450376807796337, 1e-12);
 
-    //Test that V is not invertible for certain values.
+    //Test handling non-invertibility of V for certain values
     mio::TimeSeries<ScalarType>::Vector result_7((int)mio::osecir::InfectionState::Count * num_groups);
     double icu_occupancy = 0.95 * model.parameters.get<mio::osecir::ICUCapacity>();
     double severe1       = model.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0] /
@@ -867,6 +869,10 @@ TEST(Secir, get_reproduction_number)
     sim2.get_result() = time_series;
 
     EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)0, sim2));
+
+    //Test in the case of limites test-and-trace capacity:
+    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 0;
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571, 1e-12);
 }
 
 TEST(Secir, get_migration_factors)
