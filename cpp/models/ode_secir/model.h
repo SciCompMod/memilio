@@ -24,6 +24,7 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
+#include "memilio/io/io.h"
 #include "memilio/math/interpolation.h"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/parameters.h"
@@ -371,6 +372,10 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                           t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedCritical})] +
                       sim.get_result().get_value(
                           t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Recovered})];
+        if (temp == 0) {
+            return mio::failure(mio::StatusCode::UnknownError,
+                                "One agegroup has no members ! Cannot calculate reproduction number");
+        }
         divN[(size_t)k] = 1 / temp;
 
         riskFromInfectedSymptomatic[(size_t)k] = smoother_cosine(

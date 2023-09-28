@@ -789,7 +789,7 @@ TEST(Secir, get_reproduction_number)
     model.parameters.get<mio::osecir::ICUCapacity>()          = std::numeric_limits<double>::max();
     model.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<double>::max();
 
-    mio::TimeSeries<ScalarType> result((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType> time_series1((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_0((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_1((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_2((int)mio::osecir::InfectionState::Count * num_groups);
@@ -821,20 +821,21 @@ TEST(Secir, get_reproduction_number)
     result_6 << 2700, 600, 100, 0, 100, 0, 0, 0, 0, 0, 4000, 300, 0, 0, 200, 0, 0, 0, 0, 0, 1300, 400, 100, 0, 100, 0,
         0, 100, 0, 0;
 
-    result.add_time_point(0.0, result_0);
-    result.add_time_point(0.1000000000000000000, result_1);
-    result.add_time_point(0.2000000000000000000, result_2);
-    result.add_time_point(0.4000000000000000000, result_3);
-    result.add_time_point(0.6000000000000000000, result_4);
-    result.add_time_point(0.8000000000000000000, result_5);
-    result.add_time_point(1.0, result_6);
+    time_series1.add_time_point(0.0, result_0);
+    time_series1.add_time_point(0.1000000000000000000, result_1);
+    time_series1.add_time_point(0.2000000000000000000, result_2);
+    time_series1.add_time_point(0.4000000000000000000, result_3);
+    time_series1.add_time_point(0.6000000000000000000, result_4);
+    time_series1.add_time_point(0.8000000000000000000, result_5);
+    time_series1.add_time_point(1.0, result_6);
 
     mio::osecir::Simulation<> sim(model, 0.0);
-    sim.get_result() = result;
+    sim.get_result() = time_series1;
 
-    EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_time(0) - 0.5, sim)); //Test for indices out of range
-    EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_last_time() + 0.5, sim));
-    EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)result.get_num_time_points(), sim));
+    EXPECT_FALSE(
+        mio::osecir::get_reproduction_number(time_series1.get_time(0) - 0.5, sim)); //Test for indices out of range
+    EXPECT_FALSE(mio::osecir::get_reproduction_number(time_series1.get_last_time() + 0.5, sim));
+    EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)time_series1.get_num_time_points(), sim));
 
     EXPECT_EQ(mio::osecir::get_reproduction_number((size_t)0, sim).value(),
               mio::osecir::get_reproduction_number(0.0, sim).value());
@@ -861,18 +862,42 @@ TEST(Secir, get_reproduction_number)
                       std::sin(3.141592653589793 / (0.1 * model.parameters.get<mio::osecir::ICUCapacity>()) *
                                (icu_occupancy - 0.9 * model.parameters.get<mio::osecir::ICUCapacity>())));
 
-    mio::TimeSeries<ScalarType> time_series((int)mio::osecir::InfectionState::Count * num_groups);
-    result_7 << 0, 0, 0, 0, 0, 0, severe1, 0.95 * model.parameters.get<mio::osecir::ICUCapacity>(), 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
-    time_series.add_time_point(0.0, result_7);
+    mio::TimeSeries<ScalarType> time_series2((int)mio::osecir::InfectionState::Count * num_groups);
+    result_7 << 1000, 0, 0, 0, 0, 0, severe1, 0.95 * model.parameters.get<mio::osecir::ICUCapacity>(), 0, 0, 1000, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    time_series2.add_time_point(0.0, result_7);
     mio::osecir::Simulation<> sim2(model, 0.0);
-    sim2.get_result() = time_series;
+    sim2.get_result() = time_series2;
 
     EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)0, sim2));
 
-    //Test in the case of limites test-and-trace capacity:
+    //Test in the case of limited test-and-trace capacity:
+
+    //1. expect the same results for very small test-and trace capacity
     model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 0;
     EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571, 1e-12);
+
+    //2. Test special domain for test-and-trace capacity/requirement:
+    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 1;
+    mio::TimeSeries<ScalarType> time_series3((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_8((int)mio::osecir::InfectionState::Count * num_groups);
+    result_8 << 10, 0, 4.3956043956043956, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        100, 0;
+    time_series3.add_time_point(0.0, result_8);
+    mio::osecir::Simulation<> sim3(model, 0.0);
+    sim3.get_result() = time_series3;
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim3).value(), 1.0109679865291294476, 1e-12);
+    //Calculated by hand
+
+    //Test for failure in the case of an empty agegroup
+    mio::TimeSeries<ScalarType> time_series4((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_9((int)mio::osecir::InfectionState::Count * num_groups);
+    result_9 << 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    time_series4.add_time_point(0.0, result_9);
+    mio::osecir::Simulation<> sim4(model, 0.0);
+    sim4.get_result() = time_series4;
+
+    EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)0, sim4));
 }
 
 TEST(Secir, get_migration_factors)
