@@ -373,8 +373,10 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                       sim.get_result().get_value(
                           t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Recovered})];
         if (temp == 0) {
-            return mio::failure(mio::StatusCode::UnknownError,
-                                "One agegroup has no members ! Cannot calculate reproduction number");
+            //In the case one agegroup has no members, add one recovered to this agegroup so no division by zero occurs
+            sim.get_result().get_value(
+                t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Recovered})] = 1;
+            temp                                                                                   = 1;
         }
         divN[(size_t)k] = 1 / temp;
 
