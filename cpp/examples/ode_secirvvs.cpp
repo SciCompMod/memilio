@@ -126,13 +126,18 @@ int main()
 
     // use default Cash-Karp adaptive integrator
 
+    }
+
     LIKWID_MARKER_STOP("setup");
 
     LIKWID_MARKER_START("simulation");
 
+    for(int iter=0;iter<10000;iter++) {
+
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
 
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model, integrator);
+    }
 
     LIKWID_MARKER_STOP("simulation");
 

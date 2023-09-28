@@ -20,17 +20,17 @@
 #include "ode_secir/model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
-#include <likwid-marker.h>
+//#include <likwid-marker.h>
 
 
 int main()
 {
 
-    LIKWID_MARKER_INIT;
+    //LIKWID_MARKER_INIT;
 
-    LIKWID_MARKER_START("setup");  
+    //LIKWID_MARKER_START("setup");  
 
-    for(int iter = 0; iter < 10000; iter++) {
+    for(int iter = 0; iter < 200000; iter++) {
 
     mio::set_log_level(mio::LogLevel::debug);
 
@@ -91,15 +91,15 @@ int main()
     //integrator->set_rel_tolerance(1e-4);
     //integrator->set_abs_tolerance(1e-1);
 
-    LIKWID_MARKER_STOP("setup");
-
-    LIKWID_MARKER_START("simulation");
-
+    //LIKWID_MARKER_STOP("setup");
+    
+    //LIKWID_MARKER_START("simulation");
+    
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
 
-    LIKWID_MARKER_STOP("simulation");
+    //LIKWID_MARKER_STOP("simulation");
 
-    LIKWID_MARKER_CLOSE;
+    //LIKWID_MARKER_CLOSE;
 
     bool print_to_terminal = false;
 

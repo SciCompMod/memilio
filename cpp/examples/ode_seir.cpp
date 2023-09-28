@@ -27,7 +27,7 @@
 int main()
 {
 
-for(int iter = 0; iter < 10000; iter++) {
+for(int iter = 0; iter < 2000000; iter++) {
 
 //perform multiple iterations for more accurate likwid measurements
 
@@ -60,10 +60,12 @@ for(int iter = 0; iter < 10000; iter++) {
     model.check_constraints();
     // print_seir_params(model);
 
-    auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
+    //auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
 
 
-    auto seir = simulate(t0, tmax, dt, model, integrator);
+    //auto seir = simulate(t0, tmax, dt, model, integrator);
+    auto seir = simulate(t0, tmax, dt, model);
+
 
 
     //printf("\n number total: %f\n",
