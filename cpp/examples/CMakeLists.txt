@@ -15,9 +15,10 @@ target_link_libraries(adapt_rk_example PRIVATE memilio)
 target_compile_options(adapt_rk_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ode_seir_example ode_seir.cpp)
-target_link_libraries(ode_seir_example PRIVATE memilio ode_seir likwid)
-target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
-                                        PRIVATE "-lstdc++;-DLIKWID_PERFMON;-llikwid")
+target_include_directories(ode_seir_example PRIVATE ${LIKWID_INCLUDE_DIRS})
+target_link_libraries(ode_seir_example PRIVATE memilio ode_seir ${LIKWID_LIBRARIES})
+target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_definitions(ode_seir_example PRIVATE "-DLIKWID_PERFMON")
 
 add_executable(ode_secir_example ode_secir.cpp)
 target_link_libraries(ode_secir_example PRIVATE memilio ode_secir likwid)
@@ -44,9 +45,11 @@ target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_seci
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(abm_minimal_example abm_minimal.cpp)
-target_link_libraries(abm_minimal_example PRIVATE memilio abm likwid)
-target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
-                                           PRIVATE "-lstdc++;-DLIKWID_PERFMON;-llikwid")
+target_include_directories(abm_minimal_example PRIVATE ${LIKWID_INCLUDE_DIRS})
+target_link_libraries(abm_minimal_example PRIVATE memilio abm ${LIKWID_LIBRARIES})
+target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_definitions(abm_minimal_example PRIVATE "-DLIKWID_PERFMON")
+                                  
 
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)

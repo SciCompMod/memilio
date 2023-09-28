@@ -11,7 +11,7 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
                                                   PRIVATE "-lstdc++;-DLIKWID_PERFMON;-llikwid")
        
        
-    find_package(LIKWID REQUIRED)
+    #find_package(LIKWID REQUIRED)
     add_executable(abm_simulation abm.cpp)
     target_include_directories(abm_simulation PRIVATE ${LIKWID_INCLUDE_DIRS})
     target_link_libraries(abm_simulation PRIVATE memilio abm Boost::filesystem ${HDF5_C_LIBRARIES} ${LIKWID_LIBRARIES})

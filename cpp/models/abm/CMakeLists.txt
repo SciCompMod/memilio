@@ -28,9 +28,13 @@ add_library(abm
     mask.h
     mask.cpp
 )
-target_link_libraries(abm PUBLIC memilio)
+
+#find_package(LIKWID REQUIRED)
 target_include_directories(abm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+    ${LIKWID_INCLUDE_DIRS}
+) 
+target_link_libraries(abm PUBLIC memilio ${LIKWID_LIBRARIES})
 target_compile_options(abm PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_definitions(abm PRIVATE "-DLIKWID_PERFMON")
