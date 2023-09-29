@@ -841,16 +841,12 @@ TEST(Secir, get_reproduction_number)
               mio::osecir::get_reproduction_number(0.0, sim).value());
 
     //Test one function for integer timepoints
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571,
-                1e-12); //Calculated by hand
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)4, sim).value(), 3.4678495894266841, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 3.4060279836965339,
-                1e-12); //Calculated by hand
-
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.7153740911442856,
-                1e-12); //Calculated by hand
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.4833316698917707, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 3.4450376807796337, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)4, sim).value(), 3.5005445618245297, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 3.4540372055485653, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.719862942211813, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.5121859116705565, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 3.4874972585249733, 1e-12);
 
     //Test handling non-invertibility of V for certain values
     mio::TimeSeries<ScalarType>::Vector result_7((int)mio::osecir::InfectionState::Count * num_groups);
@@ -868,14 +864,13 @@ TEST(Secir, get_reproduction_number)
     time_series2.add_time_point(0.0, result_7);
     mio::osecir::Simulation<> sim2(model, 0.0);
     sim2.get_result() = time_series2;
-
     EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)0, sim2));
 
     //Test in the case of limited test-and-trace capacity:
 
     //1. expect the same results for very small test-and trace capacity
     model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 0;
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571116, 1e-12);
 
     //2. Test special domain for test-and-trace capacity/requirement:
     model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 1;
@@ -887,7 +882,6 @@ TEST(Secir, get_reproduction_number)
     mio::osecir::Simulation<> sim3(model, 0.0);
     sim3.get_result() = time_series3;
     EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim3).value(), 1.0109679865291294476, 1e-12);
-    //Calculated by hand
 }
 
 TEST(Secir, get_migration_factors)

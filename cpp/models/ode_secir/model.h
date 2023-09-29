@@ -348,8 +348,11 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
     double season_val =
         (1 + params.template get<Seasonality>() *
-                 sin(3.141592653589793 *
-                     (std::fmod((sim.get_model().parameters.template get<StartDay>() + t_idx), 365.0) / 182.5 + 0.5)));
+                 sin(3.141592653589793 * (std::fmod((sim.get_model().parameters.template get<StartDay>() +
+                                                     sim.get_result().get_time(t_idx)),
+                                                    365.0) /
+                                              182.5 +
+                                          0.5)));
     ContactMatrixGroup const& contact_matrix = sim.get_model().parameters.template get<ContactPatterns>();
 
     Eigen::MatrixXd cont_freq_eff(num_groups, num_groups);
