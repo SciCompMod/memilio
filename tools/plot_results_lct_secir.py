@@ -29,12 +29,221 @@ import h5py
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import math
 
 import memilio.epidata.getDataIntoPandasDataFrame as gd
 
 # Define compartments
 secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
               5: 'ICU', 6: 'Recovered', 7: 'Death'}
+
+# Define parameters used for simulation, used for plotting real data.
+parameters = {
+    'TimeExposed':  3.335,
+    'TimeInfectedNoSymptoms':  3.31331,
+    'TimeInfectedSymptoms': 6.94547,
+    'TimeInfectedSevere':  11.634346,
+    'TimeInfectedCritical': 17.476959,
+    'RecoveredPerInfectedNoSymptoms':  0.206901,
+    'start_date': pd.Timestamp('2020.10.15'),
+    'end_date': pd.Timestamp('2020.11.15'),
+    'scaleConfirmed': 2.
+}
+color_dict = {'ODE': '#1f77b4',
+              'RKI': 'grey',
+              'LCT': '#ff7f0e',
+              'LCT3': '#d62728',
+              'LCT10': '#ff7f0e',
+              'LCT20': '#9467bd',
+              'LCTvar': '#2ca02c',
+              'IDE10': '#17becf',
+              'IDEvar': '#e377c2',
+              }
+linestyle_dict = {'ODE': 'solid',
+                  'RKI': 'dashed',
+                  'LCT': 'solid',
+                  'LCT3': 'dashdot',
+                  'LCT10': 'solid',
+                  'LCT20': 'dashdot',
+                  'LCTvar': 'solid',
+                  'IDE10': 'dashed',
+                  'IDEvar': 'dashed'}
+
+
+def load_data(file):
+    df = pd.read_json(file)
+    df = df.drop(columns=['Recovered'])
+
+    df = df[(df['Date'] >= parameters['start_date']+pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))
+            & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=math.ceil(parameters['TimeExposed']+parameters['TimeInfectedNoSymptoms'])))]
+    df['Confirmed'] = parameters['scaleConfirmed']*df['Confirmed']
+    df2 = df.copy()
+    df2 = df2[(df['Date'] >= parameters['start_date'])
+              & (df['Date'] <= parameters['end_date'])]
+    df2 = df2.reset_index()
+    df2 = df2.drop(columns=['index', 'Confirmed', 'Deaths'])
+
+    help_I = df['Confirmed'][(df['Date'] >= parameters['start_date'])
+                             & (df['Date'] <= parameters['end_date'])].to_numpy()
+    help_I = help_I - (1-math.fmod(parameters['TimeInfectedSymptoms'], 1))*df['Confirmed'][(df['Date'] >= parameters['start_date']+pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))
+                                                                                           & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))].to_numpy()
+    help_I = help_I - math.fmod(parameters['TimeInfectedSymptoms'], 1) * df['Confirmed'][(df['Date'] >= parameters['start_date']+pd.DateOffset(days=-math.ceil(
+        parameters['TimeInfectedSymptoms']))) & (df['Date'] <= parameters['end_date']+pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms'])))].to_numpy()
+    df2['InfectedSymptoms'] = help_I
+    help_D = (1-(1-math.fmod(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'], 1)))*df['Deaths'][(df['Date'] >= parameters['start_date']+pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))
+                                                                                                                                                       & (df['Date'] <= parameters['end_date']+pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))].to_numpy()
+    help_D = help_D + (1-math.fmod(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'], 1))*df['Deaths'][(df['Date'] >= parameters['start_date']+pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))
+                                                                                                                                                            & (df['Date'] <= parameters['end_date']+pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))].to_numpy()
+    df2['Deaths'] = help_D
+    fmod = math.fmod(
+        parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'], 1)
+    help_newE = fmod*df['Confirmed'][(df['Date'] >= parameters['start_date']+pd.DateOffset(days=math.ceil(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))
+                                     & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=math.ceil(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))].to_numpy()
+    help_newE = help_newE+(1-2*fmod)*df['Confirmed'][(df['Date'] >= parameters['start_date']+pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))
+                                                     & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))].to_numpy()
+    help_newE = help_newE-(1-fmod)*df['Confirmed'][(df['Date'] >= parameters['start_date']+pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed']-1)))
+                                                   & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed']-1)))].to_numpy()
+    df2['NewInfectionsDay'] = help_newE / \
+        (1-parameters['RecoveredPerInfectedNoSymptoms'])
+    return df2
+
+
+def compare_compartments_real(files, datafile, legendplot, deaths=False, filename_plot="compare_real"):
+    """ Plots the result of a simulation with an LCT SECIR model compared with real data for the compartments deaths and infected.
+        The simulation result should consist of accumulated numbers for subcompartments.
+
+    @param[in] files: paths of the hdf5-files (without file extension .h5) with the simulation results that should be compared.
+        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
+        One could compare results with eg different parameters or different models.
+    @param[in] datafile: Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
+    @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
+    @param[in] filename_plot: name to use as the file name for the saved plot.
+    """
+    # define plot
+    plt.figure(filename_plot)
+
+    data_rki = load_data(datafile)
+    num_days = data_rki.shape[0]
+
+    if (deaths):
+        plt.plot(range(num_days), data_rki['Deaths'],
+                 linestyle=linestyle_dict['RKI'], color=color_dict['RKI'], linewidth=1.2)
+        compartment_idx = 7
+        labely = "Todesfälle"
+    else:
+        plt.plot(range(num_days), data_rki['InfectedSymptoms'],
+                 linestyle=linestyle_dict['RKI'], color=color_dict['RKI'], linewidth=1.2)
+        compartment_idx = 3
+        labely = "Anzahl der Individuen in I"
+
+    # add simulation results to plot
+    for file in range(len(files)):
+        # load data
+        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+
+        if (len(list(h5file.keys())) > 1):
+            raise gd.DataError("File should contain one dataset.")
+        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+            raise gd.DataError("Expected only one group.")
+
+        data = h5file[list(h5file.keys())[0]]
+        dates = data['Time'][:]
+        # As there should be only one Group, total is the simulation result
+        total = data['Total'][:, :]
+        if (total.shape[1] != 8):
+            raise gd.DataError(
+                "Expected a different number of compartments.")
+
+        # plot result
+        plt.plot(dates, total[:, compartment_idx],
+                 linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+        h5file.close()
+
+    plt.xlabel('Datum', fontsize=14)
+    plt.ylabel(labely, fontsize=14)
+    plt.xlim(left=0, right=num_days-1)
+    # define x-ticks
+    datelist = np.array(pd.date_range(parameters["start_date"].date(
+    ), periods=num_days, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int(num_days / 3) + 1) * 3)
+    plt.xticks(tick_range, datelist[tick_range],
+               rotation=45, fontsize=14)
+    plt.xticks(np.arange(num_days), minor=True)
+
+    plt.legend(legendplot, fontsize=10)
+    plt.grid(True, linestyle='--')
+    plt.tight_layout()
+
+    # save result
+    if not os.path.isdir('Plots'):
+        os.makedirs('Plots')
+    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+
+
+def plot_new_infections_real(files, datafile, legendplot, filename_plot="compare_new_infections_real"):
+    """ Plots the result of a simulation with an LCT SECIR model compared with real data for the compartments deaths and infected.
+        The simulation result should consist of accumulated numbers for subcompartments.
+
+    @param[in] files: paths of the hdf5-files (without file extension .h5) with the simulation results that should be compared.
+        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
+        One could compare results with eg different parameters or different models.
+    @param[in] datafile: Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
+    @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
+    @param[in] filename_plot: name to use as the file name for the saved plot.
+    """
+    # define plot
+    plt.figure(filename_plot)
+
+    data_rki = load_data(datafile)
+    num_days = data_rki.shape[0]
+
+    plt.plot(range(num_days), data_rki['NewInfectionsDay'],
+             linestyle=linestyle_dict['RKI'], color=color_dict['RKI'], linewidth=1.2)
+
+    # add simulation results to plot
+    for file in range(len(files)):
+        # load data
+        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+
+        if (len(list(h5file.keys())) > 1):
+            raise gd.DataError("File should contain one dataset.")
+        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+            raise gd.DataError("Expected only one group.")
+
+        data = h5file[list(h5file.keys())[0]]
+        dates = data['Time'][:]
+        # As there should be only one Group, total is the simulation result
+        total = data['Total'][:, :]
+        if (total.shape[1] != 8):
+            raise gd.DataError(
+                "Expected a different number of compartments.")
+        incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
+
+        # plot result
+        plt.plot(dates[1:], incidence,
+                 linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+        h5file.close()
+
+    plt.xlabel('Datum', fontsize=14)
+    plt.ylabel('Neuansteckungen pro Tag', fontsize=14)
+    plt.xlim(left=0, right=num_days-1)
+    # define x-ticks
+    datelist = np.array(pd.date_range(parameters["start_date"].date(
+    ), periods=num_days, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int(num_days / 3) + 1) * 3)
+    plt.xticks(tick_range, datelist[tick_range],
+               rotation=45, fontsize=14)
+    plt.xticks(np.arange(num_days), minor=True)
+
+    plt.legend(legendplot, fontsize=10)
+    plt.grid(True, linestyle='--')
+    plt.tight_layout()
+
+    # save result
+    if not os.path.isdir('Plots'):
+        os.makedirs('Plots')
+    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
 
 
 def plot_lct_subcompartments(file, vec_subcompartments=[1, 20, 20, 20, 20, 20, 1, 1], filename_plot="LCT_subcompartments"):
@@ -71,7 +280,7 @@ def plot_lct_subcompartments(file, vec_subcompartments=[1, 20, 20, 20, 20, 20, 1
     for i in range(len(vec_subcompartments)):
         idx_start = sum(vec_subcompartments[0:i])
         axs[int(i/2), i % 2].plot(dates,
-                                  total[:, idx_start:idx_start+vec_subcompartments[i]], linewidth=1.5)
+                                  total[:, idx_start:idx_start+vec_subcompartments[i]], linewidth=1.2)
         axs[int(i/2), i % 2].grid(True, linestyle='--')
         legendplot = []
         if (vec_subcompartments[i] == 1):
@@ -93,104 +302,6 @@ def plot_lct_subcompartments(file, vec_subcompartments=[1, 20, 20, 20, 20, 20, 1
     fig.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
 
 
-def plot_single_result(file, compartment_idx=range(8), filename_plot="LCT_compartments"):
-    """ Plots the result of a simulation with an LCT SECIR model in a single Plot for specified comparments.
-        The result should consist of accumulated numbers for subcompartments.
-
-    @param[in] file: path of the file (without file extension .h5) with the simulation result of an lct
-        model with accumulated numbers for subcompartments.
-    @param[in] compartment_idx: indexes of the compartments that should be plot, eg in form of a list.
-    @param[in] filename_plot: name to use as the file name for the saved plot.
-    """
-
-    # load data
-    h5file = h5py.File(str(file) + '.h5', 'r')
-
-    if (len(list(h5file.keys())) > 1):
-        raise gd.DataError("File should contain one dataset.")
-    if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-        raise gd.DataError("Expected only one group.")
-
-    data = h5file[list(h5file.keys())[0]]
-    dates = data['Time'][:]
-    # As there should be only one Group, total is the simulation result
-    total = data['Total'][:, compartment_idx]
-    h5file.close()
-
-    # plot result
-    plt.figure(filename_plot)
-    plt.plot(dates, total, linewidth=1.5)
-
-    legendplot = []
-    for i in compartment_idx:
-        legendplot.append(secir_dict[i])
-    plt.legend(legendplot, fontsize=14)
-
-    plt.xlabel('Time', fontsize=14)
-    plt.ylabel('Number of persons', fontsize=10)
-    plt.ylim(bottom=0)
-    plt.xlim(left=0, right=dates[-1])
-    plt.grid(True, linestyle='--')
-    plt.style.use('seaborn-v0_8-colorblind')
-    plt.tight_layout()
-
-    # save result
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
-
-
-def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_plot="compare_single_compartment"):
-    """ Plots the result of a simulation with an LCT SECIR model in a single Plot for specified comparments.
-        The result should consist of accumulated numbers for subcompartments.
-
-    @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
-        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
-        One could compare results with eg different parameters or different models.
-    @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
-    @param[in] compartment_idx: index of the compartment one wants to compare.
-    @param[in] filename_plot: name to use as the file name for the saved plot.
-    """
-    # define plot
-    plt.figure(filename_plot)
-    plt.style.use('seaborn-v0_8-colorblind')
-
-    # add results to plot
-    for file in range(len(files)):
-        # load data
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
-
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
-
-        data = h5file[list(h5file.keys())[0]]
-        dates = data['Time'][:]
-        # As there should be only one Group, total is the simulation result
-        total = data['Total'][:, :]
-        if (total.shape[1] != 8):
-            raise gd.DataError(
-                "Expected a different number of compartments.")
-
-        # plot result
-        plt.plot(dates, total[:, compartment_idx], linewidth=1.5)
-        h5file.close()
-
-    plt.xlabel('Zeit', fontsize=14)
-    plt.ylabel('Anzahl der Individuen in ' +
-               secir_dict[compartment_idx], fontsize=14)
-    plt.xlim(left=0, right=dates[-1])
-    plt.legend(legendplot, fontsize=10)
-    plt.grid(True, linestyle='--')
-    plt.tight_layout()
-
-    # save result
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
-
-
 def compare_all_compartments(files, legendplot, filename_plot="compare_compartments"):
     """ Creates a 4x2 Plot with one subplot per compartment and one line per result one wants to compare.
 
@@ -201,7 +312,6 @@ def compare_all_compartments(files, legendplot, filename_plot="compare_compartme
     @param[in] filename_plot: name to use as the file name for the saved plot.
     """
 
-    plt.style.use('seaborn-v0_8-colorblind')
     fig, axs = plt.subplots(
         4, 2, sharex='all', num=filename_plot, tight_layout=True)
 
@@ -223,10 +333,14 @@ def compare_all_compartments(files, legendplot, filename_plot="compare_compartme
             raise gd.DataError(
                 "Expected a different number of compartments.")
         # plot data
-        for i in range(8):
-            axs[int(i/2), i % 2].plot(dates,
-                                      total[:, i], label=legendplot[file], linewidth=1.2)
-
+        if legendplot[file] in linestyle_dict:
+            for i in range(8):
+                axs[int(i/2), i % 2].plot(dates,
+                                          total[:, i], label=legendplot[file], linewidth=1.2, linestyle=linestyle_dict[legendplot[file]], color=color_dict[legendplot[file]])
+        else:
+            for i in range(8):
+                axs[int(i/2), i % 2].plot(dates,
+                                          total[:, i], label=legendplot[file], linewidth=1.2)
         h5file.close()
 
     # define some characteristics of the plot
@@ -265,7 +379,6 @@ def plot_new_infections(files, legendplot, filename_plot="compare_new_infections
     """
     # define plot
     plt.figure(filename_plot)
-    plt.style.use('seaborn-v0_8-colorblind')
 
     # add results to plot
     for file in range(len(files)):
@@ -287,7 +400,11 @@ def plot_new_infections(files, legendplot, filename_plot="compare_new_infections
         incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
 
         # plot result
-        plt.plot(dates[1:], incidence, linewidth=1.2)
+        if legendplot[file] in linestyle_dict:
+            plt.plot(dates[1:], incidence, linewidth=1.2,
+                     linestyle=linestyle_dict[legendplot[file]], color=color_dict[legendplot[file]])
+        else:
+            plt.plot(dates[1:], incidence, linewidth=1.2)
 
         h5file.close()
 
@@ -311,7 +428,7 @@ if __name__ == '__main__':
         __file__), "..", "data", "simulation_lct")
 
     # Defines which simulation case should be plotted
-    case = 3
+    case = 5
 
     if case == 1:
         plot_new_infections([os.path.join(data_dir, "init", "lct_init_transitions20"), os.path.join(data_dir, "init", "lct_init_mean20"), os.path.join(data_dir, "init", "lct_init_first20")],
@@ -372,3 +489,17 @@ if __name__ == '__main__':
                             legendplot=list(["ODE", "IDE10", "IDEvar", "LCT10", "LCTvar"]),  filename_plot="compare_new_infections_ide_rise2long")
         compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_rise_lct_2long1"), os.path.join(data_dir, "riseR0long", "fictional_rise_ide_2long10"),  os.path.join(data_dir, "riseR0long", "fictional_rise_ide_2long0"), os.path.join(data_dir, "riseR0long", "fictional_rise_lct_2long10"),  os.path.join(data_dir, "riseR0long", "fictional_rise_lct_2long0")],
                                  legendplot=list(["ODE", "IDE10", "IDEvar", "LCT10", "LCTvar"]),  filename_plot="compare_compartments_ide_rise2long")
+
+    if case == 5:
+        compare_compartments_real([os.path.join(data_dir, "real", "real_ode_2020_10_15"), os.path.join(data_dir, "real", "real_lct_2020_10_15")],
+                                  os.path.join(os.path.dirname(
+                                      __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
+                                  legendplot=list(["RKI", "ODE", "LCT"]), deaths=True, filename_plot="compare_deaths_real_2020_10_15")
+        compare_compartments_real([os.path.join(data_dir, "real", "real_ode_2020_10_15"), os.path.join(data_dir, "real", "real_lct_2020_10_15")],
+                                  os.path.join(os.path.dirname(
+                                      __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
+                                  legendplot=list(["RKI", "ODE", "LCT"]), deaths=False, filename_plot="compare_infected_real_2020_10_15")
+        plot_new_infections_real([os.path.join(data_dir, "real", "real_ode_2020_10_15"), os.path.join(data_dir, "real", "real_lct_2020_10_15")],
+                                 os.path.join(os.path.dirname(
+                                     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
+                                 legendplot=list(["RKI", "ODE", "LCT"]), filename_plot="compare_new_infections_real_2020_10_15")
