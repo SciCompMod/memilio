@@ -175,6 +175,7 @@ struct MEMILIO_ENABLE_EBO Key : TypeSafe<T, Key<T>>, OperatorComparison<Key<T>> 
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
     using TypeSafe<T, Key<T>>::TypeSafe;
 };
+static_assert(sizeof(Key<uint32_t>) == sizeof(uint32_t), "Empty Base Optimization isn't working.");
 
 /**
 * A counter type for counter based random number generators.
@@ -185,7 +186,7 @@ struct MEMILIO_ENABLE_EBO Counter : TypeSafe<T, Counter<T>>, OperatorComparison<
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
     using TypeSafe<T, Counter<T>>::TypeSafe;
 };
-static_assert(sizeof(Counter<uint32_t>) == sizeof(uint32_t), "");
+static_assert(sizeof(Counter<uint32_t>) == sizeof(uint32_t), "Empty Base Optimization isn't working.");
 
 template <class Derived>
 auto RandomNumberGeneratorBase<Derived>::operator()() -> result_type
