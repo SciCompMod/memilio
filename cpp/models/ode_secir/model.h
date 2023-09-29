@@ -375,6 +375,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                           t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Recovered})];
         if (temp == 0) {
             //In the case one agegroup has no members, add one recovered to this agegroup so no division by zero occurs
+            mio::TimeSeries<double> result2 = sim.get_result();
+            result2.remove_time_point(t_idx);
             mio::TimeSeries<double>::Vector temp_vector((int)mio::osecir::InfectionState::Count * num_groups);
             for (size_t i = 0; i < (size_t)temp_vector.size(); i++) {
                 if (i == sim.get_model().populations.get_flat_index({k, InfectionState::Recovered})) {
@@ -384,9 +386,9 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                     temp_vector[i] = sim.get_result().get_value(t_idx)[i];
                 }
             }
-            sim.get_result().remove_time_point(t_idx);
-            sim.get_result().add_time_point(t_idx, temp_vector);
-            temp = 1;
+            result2.add_time_point(t_idx, temp_vector);
+            sim.get_result() = result2;
+            return get_reproduction_number(t_idx, sim);
         }
         divN[(size_t)k] = 1 / temp;
 
