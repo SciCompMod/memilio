@@ -69,11 +69,13 @@ public:
         /**
         * Creates a RandomNumberGenerator for a person.
         * @param key Key to be used by the generator.
-        * @param person Person who's counter will be used. 
+        * @param id Id of the Person.
+        * @param counter Reference to the Person's RNG Counter. 
         */
-        RandomNumberGenerator(Key<uint64_t> key, Person& person)
+        RandomNumberGenerator(Key<uint64_t> key, uint32_t id, Counter<uint32_t>& counter)
             : m_key(key)
-            , m_person(person)
+            , m_person_id(id)
+            , m_counter(counter)
         {
         }
 
@@ -81,10 +83,10 @@ public:
         * Creates a RandomNumberGenerator for a person.
         * Uses the same key as another RandomNumberGenerator.
         * @param rng RandomNumberGenerator who's key will be used.
-        * @param person Person who's counter will be used. 
+        * @param person Reference to the Person who's counter will be used. 
         */
         RandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
-            : RandomNumberGenerator(rng.get_key(), person)
+            : RandomNumberGenerator(rng.get_key(), person.get_person_id(), person.get_rng_counter())
         {
         }
 
@@ -101,7 +103,7 @@ public:
         */
         Counter<uint64_t> get_counter() const
         {
-            return rng_totalsequence_counter<uint64_t>(m_person.get_person_id(), m_person.get_rng_counter());
+            return rng_totalsequence_counter<uint64_t>(m_person_id, m_counter);
         }
 
         /**
@@ -109,12 +111,13 @@ public:
         */
         void increment_counter()
         {
-            ++m_person.get_rng_counter();
+            ++m_counter;
         }
 
     private:
-        Key<uint64_t> m_key;
-        Person& m_person;
+        Key<uint64_t> m_key; ///< Global RNG Key
+        uint32_t m_person_id; ///< Id of the Person
+        Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
     };
 
     /**
