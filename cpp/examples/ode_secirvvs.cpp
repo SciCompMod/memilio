@@ -20,16 +20,11 @@
 #include "ode_secirvvs/model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
-#include <likwid-marker.h>
-
 
 int main()
 {
-    LIKWID_MARKER_INIT;
 
-    LIKWID_MARKER_START("setup");
-
-    for(int iter = 0; iter < 10000; iter++) {
+    for(int iter=0; iter < 100000; iter++) {
 
     mio::set_log_level(mio::LogLevel::debug);
 
@@ -37,7 +32,7 @@ int main()
     double tmax = 30;
     double dt   = 0.1;
 
-    //mio::log_info("Simulating SECIRVVS; t={} ... {} with dt = {}.", t0, tmax, dt);
+    mio::log_info("Simulating SECIRVVS; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::osecirvvs::Model model(1);
 
@@ -117,7 +112,7 @@ int main()
     model.apply_constraints();
 
     // use adaptive Runge-Kutta-Fehlberg45 scheme as integrator
-    // auto integrator = std::make_shared<mio::RKIntegratorCore>();
+     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
     // integrator->set_dt_min(0.3);
     // integrator->set_dt_max(1.0);
     // integrator->set_rel_tolerance(1e-4);
@@ -125,23 +120,7 @@ int main()
     // mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
 
     // use default Cash-Karp adaptive integrator
-
-    }
-
-    LIKWID_MARKER_STOP("setup");
-
-    LIKWID_MARKER_START("simulation");
-
-    for(int iter=0;iter<10000;iter++) {
-
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model, integrator);
-    }
-
-    LIKWID_MARKER_STOP("simulation");
-
-    LIKWID_MARKER_CLOSE;
 
     bool print_to_terminal = false;
 
