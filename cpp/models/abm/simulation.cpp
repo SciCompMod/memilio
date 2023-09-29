@@ -20,7 +20,6 @@
 #include "abm/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
-#include "memilio/utils/random_number_generator.h"
 #include <random>
 
 namespace mio
