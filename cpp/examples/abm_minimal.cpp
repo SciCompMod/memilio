@@ -130,6 +130,7 @@ int main()
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), start_date,
                                                          infection_state));
+        }
     }
 
     // Assign locations to the people
