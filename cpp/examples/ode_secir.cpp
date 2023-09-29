@@ -85,7 +85,7 @@ int main()
 
     model.apply_constraints();
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    //auto integrator = std::make_shared<mio::EulerIntegratorCore>();
     //integrator->set_dt_min(0.3);
     //integrator->set_dt_max(1.0);
     //integrator->set_rel_tolerance(1e-4);
@@ -95,7 +95,7 @@ int main()
     
     //LIKWID_MARKER_START("simulation");
     
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
     //LIKWID_MARKER_STOP("simulation");
 

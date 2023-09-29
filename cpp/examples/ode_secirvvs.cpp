@@ -112,7 +112,7 @@ int main()
     model.apply_constraints();
 
     // use adaptive Runge-Kutta-Fehlberg45 scheme as integrator
-     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
     // integrator->set_dt_min(0.3);
     // integrator->set_dt_max(1.0);
     // integrator->set_rel_tolerance(1e-4);
