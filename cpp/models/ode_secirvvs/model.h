@@ -22,6 +22,7 @@
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/parameters.h"
@@ -615,12 +616,45 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
     auto const& params = sim.get_model().parameters;
     size_t num_groups  = (size_t)sim.get_model().parameters.get_num_groups();
-    std::cout << num_groups;
 
     Eigen::MatrixXd F(15 * num_groups, 15 * num_groups);
     Eigen::MatrixXd V(15 * num_groups, 15 * num_groups);
     F = Eigen::MatrixXd::Zero(15 * num_groups, 15 * num_groups); //Initialize matrices F and V with zeroes
     V = Eigen::MatrixXd::Zero(15 * num_groups, 15 * num_groups);
+
+    auto icu_occupancy           = 0.0;
+    auto test_and_trace_required = 0.0;
+    for (auto i = AgeGroup(0); i < (mio::AgeGroup)num_groups; ++i) {
+        auto rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
+        test_and_trace_required +=
+            (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+            (sim.get_result().get_value(
+                 t_idx)[sim.get_model().populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaive})] +
+
+             sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                 {i, InfectionState::InfectedNoSymptomsPartialImmunity})] +
+             sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                 {i, InfectionState::InfectedNoSymptomsImprovedImmunity})] +
+             sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                 {i, InfectionState::InfectedNoSymptomsNaiveConfirmed})] +
+             sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                 {i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed})] +
+             sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                 {i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed})]);
+        icu_occupancy +=
+            (sim.get_result().get_value(
+                 t_idx)[sim.get_model().populations.get_flat_index({i, InfectionState::InfectedCriticalNaive})] +
+             sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                 {i, InfectionState::InfectedCriticalPartialImmunity})] +
+             sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                 {i, InfectionState::InfectedCriticalImprovedImmunity})]);
+    }
+
+    double season_val =
+        (1 + params.template get<Seasonality>() *
+                 sin(3.141592653589793 * (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+    double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                        static_cast<Eigen::Index>((size_t)j));
 
     //Initialize F
     for (Eigen::Index l = 0; l < 3; l++) {
