@@ -321,7 +321,7 @@ public:
      * @brief Simulates a viral test and returns the test result of the Person.
      * If the test is positive, the Person has to quarantine.
      * If the test is negative, quarantine ends.
-     * @param[inout] rng RandomNumberGenerator of the person.
+     * @param[inout] rng RandomNumberGenerator of the Person.
      * @param[in] t TimePoint of the test.
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
@@ -389,7 +389,7 @@ public:
 
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
-     * @param[inout] rng RandomNumberGenerator of the person.
+     * @param[inout] rng RandomNumberGenerator of the Person.
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
