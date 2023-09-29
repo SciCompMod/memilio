@@ -112,16 +112,18 @@ void World::migration(TimePoint t, TimeSpan dt)
             }
         }
     }
+
     // check if a person makes a trip
-    size_t num_trips = m_trip_list.num_trips();
+    bool weekend     = t.is_weekend();
+    size_t num_trips = m_trip_list.num_trips(weekend);
+
     if (num_trips != 0) {
-        while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
-            auto& trip             = m_trip_list.get_next_trip();
+        while (m_trip_list.get_current_index() < num_trips &&
+               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
+            auto& trip             = m_trip_list.get_next_trip(weekend);
             auto& person           = m_persons[trip.person_id];
             auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);
-            auto& current_location = person->get_location();
-            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
-                current_location == get_individualized_location(trip.migration_origin)) {
+            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     person->apply_mask_intervention(personal_rng, target_location);
@@ -130,6 +132,9 @@ void World::migration(TimePoint t, TimeSpan dt)
             }
             m_trip_list.increase_index();
         }
+    }
+    if (((t).days() < std::floor((t + dt).days()))) {
+        m_trip_list.reset_index();
     }
 }
 
@@ -170,6 +175,13 @@ const Location& World::get_individualized_location(LocationId id) const
 Location& World::get_individualized_location(LocationId id)
 {
     return *m_locations[id.index];
+}
+
+const Location& World::find_location(LocationType type, const Person& person) const
+{
+    auto index = person.get_assigned_location_index(type);
+    assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
+    return get_individualized_location({index, type});
 }
 
 Location& World::find_location(LocationType type, const Person& person)

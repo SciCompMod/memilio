@@ -193,9 +193,9 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::TripList>(m, "TripList")
         .def(py::init<>())
-        .def("add_trip", &mio::abm::TripList::add_trip)
-        .def_property_readonly("next_trip", &mio::abm::TripList::get_next_trip)
-        .def_property_readonly("num_trips", &mio::abm::TripList::num_trips);
+        .def("add_trip", &mio::abm::TripList::add_trip, py::arg("trip"), py::arg("weekend") = false)
+        .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
+        .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
 
     py::class_<mio::abm::World>(m, "World")
         .def(py::init<mio::abm::GlobalInfectionParameters>(),
