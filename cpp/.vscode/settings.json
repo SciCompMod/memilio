@@ -1,8 +1,0 @@
-{
-    "editor.formatOnSave": true,
-    "files.associations": {
-        "*.tcc": "cpp",
-        "functional": "cpp",
-        "streambuf": "cpp"
-    }
-}

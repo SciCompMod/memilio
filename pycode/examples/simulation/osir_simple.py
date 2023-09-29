@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
 #
@@ -25,7 +25,7 @@ from memilio.simulation import Damping
 from memilio.simulation.osir import Index_InfectionState
 from memilio.simulation.osir import InfectionState as State
 from memilio.simulation.osir import (Model, interpolate_simulation_result,
-                                      simulate)
+                                     simulate)
 
 
 def run_osir_simulation():

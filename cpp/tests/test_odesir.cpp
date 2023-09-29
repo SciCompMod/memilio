@@ -64,7 +64,7 @@ TEST(Testsir, ComparesirWithJS)
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    std::vector<std::vector<double>> refData = load_test_data_csv<double>("sir-js-compare.csv");
+    std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-sir-js-compare.csv");
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
     auto result                              = mio::simulate<mio::osir::Model>(t0, tmax, dt, model, integrator);
 
