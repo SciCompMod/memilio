@@ -111,9 +111,8 @@ void World::migration(TimePoint t, TimeSpan dt)
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip            = m_trip_list.get_next_trip(weekend);
-            auto& person          = m_persons[trip.person_id];
-            auto current_location = person->get_location();
+            auto& trip   = m_trip_list.get_next_trip(weekend);
+            auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {

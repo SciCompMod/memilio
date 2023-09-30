@@ -241,26 +241,21 @@ TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalIn
         case InfectionState::Recovered:
             // roll out next infection step
             v = uniform_dist();
-            std::cout << v;
             if (v < 0.25) {
-                std::cout << " 1/4" << '\n';
                 time_period = days(
                     params.get<InfectedNoSymptomsToRecovered>()[{m_virus_variant, age}]); // TODO: subject to change
                 previous_state = InfectionState::InfectedNoSymptoms;
             }
             else if (v < 0.5) { // TODO: subject to change
-                std::cout << " 2/4" << '\n';
                 time_period =
                     days(params.get<InfectedSymptomsToRecovered>()[{m_virus_variant, age}]); // TODO: subject to change
                 previous_state = InfectionState::InfectedSymptoms;
             }
             else if (v < 0.75) {
-                std::cout << " 3/4" << '\n';
                 time_period = days(params.get<SevereToRecovered>()[{m_virus_variant, age}]); // TODO: subject to change
                 previous_state = InfectionState::InfectedSevere;
             }
             else {
-                std::cout << " 4/4" << '\n';
                 time_period =
                     days(params.get<CriticalToRecovered>()[{m_virus_variant, age}]); // TODO: subject to change
                 previous_state = InfectionState::InfectedCritical;
