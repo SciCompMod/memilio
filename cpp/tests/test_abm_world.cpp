@@ -224,15 +224,6 @@ TEST(TestWorld, evolveMigration)
         auto t      = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt     = mio::abm::hours(2);
         auto params = mio::abm::GlobalInfectionParameters{};
-        //setup so p1 and p5 don't transition
-        // params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype,
-        //                                                       mio::abm::AgeGroup::Age15to34}]  = 2 * dt.days();
-        // params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
-        //                                                        mio::abm::AgeGroup::Age15to34}] = 2 * dt.days();
-        // params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-        //     2 * dt.days();
-        // params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-        //     2 * dt.days();
 
         auto world = mio::abm::World(params);
         world.use_migration_rules(false);
