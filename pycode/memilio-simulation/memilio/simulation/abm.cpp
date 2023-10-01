@@ -51,11 +51,12 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Age60to79", mio::abm::AgeGroup::Age60to79)
         .value("Age80plus", mio::abm::AgeGroup::Age80plus);
 
-    pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
+    pymio::iterable_enum<mio::abm::ExposureType>(m, "ExposureType")
+        .value("NoProtection", mio::abm::ExposureType::NoProtection)
+        .value("NaturalInfection", mio::abm::ExposureType::NaturalInfection)
+        .value("GenericVaccine", mio::abm::ExposureType::GenericVaccine);
 
-    pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
-        .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
-        .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
+    pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
 
     pymio::iterable_enum<mio::abm::LocationType>(m, "LocationType")
         .value("Home", mio::abm::LocationType::Home)
@@ -75,9 +76,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
     pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
-    pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::abm::AgeGroup,
-                                 mio::abm::VaccinationState>(m, "_AgeVaccinationParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::abm::AgeGroup>(
+        m, "_AgeVaccinationParameterArray");
+    pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());
@@ -158,6 +159,11 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
+    py::class_<mio::abm::Vaccination>(m, "Vaccination")
+        .def(py::init<mio::abm::ExposureType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
+        .def_readwrite("exposure_type", &mio::abm::Vaccination::exposure_type)
+        .def_readwrite("time", &mio::abm::Vaccination::time);
+
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
 
@@ -186,9 +192,9 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::TripList>(m, "TripList")
         .def(py::init<>())
-        .def("add_trip", &mio::abm::TripList::add_trip)
-        .def_property_readonly("next_trip", &mio::abm::TripList::get_next_trip)
-        .def_property_readonly("num_trips", &mio::abm::TripList::num_trips);
+        .def("add_trip", &mio::abm::TripList::add_trip, py::arg("trip"), py::arg("weekend") = false)
+        .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
+        .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
 
     py::class_<mio::abm::World>(m, "World")
         .def(py::init<mio::abm::GlobalInfectionParameters>(),
