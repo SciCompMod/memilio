@@ -30,7 +30,7 @@ from spektral.utils.convolution import gcn_filter, line_graph, incidence_matrix
 from spektral.utils.sparse import sp_matrix_to_sp_tensor
 from utils.gnn_utils import incidence_matrix
 
-from data_generator_withoutdampings_all401 import get_population
+from data_generator_withoutdampings_all400 import get_population
 from memilio.simulation.secir import InfectionState
 
 from sklearn.preprocessing import FunctionTransformer
@@ -331,13 +331,30 @@ def train_step(inputs, target):
     return loss, acc
 
 
+# def evaluate(loader):
+#     output = []
+#     step = 0
+#     while step < loader.steps_per_epoch:
+#         step += 1
+#         inputs, target = loader.__next__()
+#         pred = model(inputs, training=False)
+#         outs = (
+#             loss_fn(target, pred),
+#             tf.reduce_mean(mean_absolute_percentage_error(target, pred)),
+#             len(target),  # Keep track of batch size
+#         )
+#         output.append(outs)
+#         if step == loader.steps_per_epoch:
+#             output = np.array(output)
+#             return np.average(output[:, :-1], 0, weights=output[:, -1])
+
 def evaluate(loader):
     output = []
     step = 0
     while step < loader.steps_per_epoch:
         step += 1
         inputs, target = loader.__next__()
-        pred = model(inputs, training=False)
+        pred = model.predict(inputs)
         outs = (
             loss_fn(target, pred),
             tf.reduce_mean(mean_absolute_percentage_error(target, pred)),
@@ -349,10 +366,58 @@ def evaluate(loader):
             return np.average(output[:, :-1], 0, weights=output[:, -1])
 
 
+# def test_evaluation(loader, node):
+    
+#     inputs, target = loader.__next__()
+#     pred = model(inputs, training=False)
+#     # reshape to [n_nodes, n_testsamples, dimension of label]
+#     pred_reshaped = np.asarray(pred).reshape(
+#         [pred.shape[1], pred.shape[0], pred.shape[2]])
+#     target_reshaped = np.asarray(target).reshape(
+#         [target.shape[1], target.shape[0], target.shape[2]])
+#     # select node
+#     pred_node = pred_reshaped[node:node+1]
+#     target_node = target_reshaped[node:node+1]
+
+#     mean_per_batch = []
+
+
+
+#     for batch_p, batch_t in zip(pred_node, target_node):
+#         MAPE_v = []
+#         for v_p, v_t in zip(batch_p, batch_t):
+
+#             pred_ = tf.reshape(v_p, (30, 48))
+#             target_ = tf.reshape(v_t, (30, 48))
+
+#             diff = pred_ - target_
+#             relative_err = (abs(diff))/abs(target_)
+#             relative_err_transformed = np.asarray(
+#                 relative_err).transpose().reshape(8, -1)
+#             relative_err_means_percentage = relative_err_transformed.mean(
+#                 axis=1) * 100
+
+#             MAPE_v.append(relative_err_means_percentage)
+
+#         mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
+
+#     mean_percentage = pd.DataFrame(
+#         data=np.asarray(mean_per_batch).transpose().mean(axis=1),
+#         index=[str(compartment).split('.')[1]
+#                for compartment in InfectionState.values()],
+#         columns=['Percentage Error'])
+
+#     return mean_percentage
+
+
+
+
+
+
 def test_evaluation(loader, node):
 
     inputs, target = loader.__next__()
-    pred = model(inputs, training=False)
+    pred = model.predict(inputs)
     # reshape to [n_nodes, n_testsamples, dimension of label]
     pred_reshaped = np.asarray(pred).reshape(
         [pred.shape[1], pred.shape[0], pred.shape[2]])
@@ -363,6 +428,10 @@ def test_evaluation(loader, node):
     target_node = target_reshaped[node:node+1]
 
     mean_per_batch = []
+    states_array= []
+    for i in InfectionState.values():
+        states_array.append(i)
+
 
     for batch_p, batch_t in zip(pred_node, target_node):
         MAPE_v = []
@@ -385,7 +454,7 @@ def test_evaluation(loader, node):
     mean_percentage = pd.DataFrame(
         data=np.asarray(mean_per_batch).transpose().mean(axis=1),
         index=[str(compartment).split('.')[1]
-               for compartment in InfectionState.values()],
+               for compartment in states_array[:8]],
         columns=['Percentage Error'])
 
     return mean_percentage
