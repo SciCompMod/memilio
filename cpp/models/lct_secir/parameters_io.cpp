@@ -53,7 +53,7 @@ IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Da
     }
     auto max_date = max_date_entry->date;
     if (max_date < date) {
-        log_error("Specified date does not exist in RKI data");
+        log_error("Specified date does not exist in RKI data.");
         return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
     }
     // Compute initial values for all subcompartments.
@@ -70,6 +70,9 @@ IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Da
 
     ScalarType min_offset_needed = std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical);
     ScalarType max_offset_needed = std::ceil(timeExposed + timeInfectedNoSymptoms);
+
+    bool min_offset_needed_avail = false;
+    bool max_offset_needed_avail = false;
 
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
     for (auto&& entry : rki_data) {
@@ -230,6 +233,7 @@ IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Da
 
             // Compute Dead.
             if (offset == min_offset_needed) {
+                min_offset_needed_avail = true;
                 init[infectionState.get_firstindex(InfectionStateBase::Dead)] +=
                     (1 - (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
                           std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical))) *
@@ -240,6 +244,9 @@ IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Da
                     (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
                      std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical)) *
                     entry.num_deaths;
+            }
+            if (offset == max_offset_needed) {
+                max_offset_needed_avail = true;
             }
         }
     }
@@ -257,6 +264,10 @@ IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Da
     // Compute Susceptibles
     init[infectionState.get_firstindex(InfectionStateBase::Susceptible)] =
         total_population - init.segment(1, infectionState.get_count() - 1).sum();
+    if (!max_offset_needed_avail || !min_offset_needed_avail) {
+        log_error("Necessary range of dates needed to compute initial values does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+    }
 
     return init;
 }

@@ -94,6 +94,36 @@ TEST(TestEpiDataIo, read_rki_error_age)
     ASSERT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidValue));
 }
 
+TEST(TestEpiDataIo, read_confirmed_cases_noage)
+{
+    Json::Value js(Json::arrayValue);
+    js[0]["Date"]      = "2021-12-01";
+    js[0]["Confirmed"] = 1;
+    js[0]["Deaths"]    = 2;
+    js[0]["Recovered"] = 3;
+
+    js[1]["Date"]      = "2021-12-02";
+    js[1]["Confirmed"] = 4;
+    js[1]["Deaths"]    = 5;
+    js[1]["Recovered"] = 6;
+
+    auto result = mio::deserialize_confirmed_cases_noage(js);
+    ASSERT_THAT(print_wrap(result), IsSuccess());
+
+    auto rki_data_noage = result.value();
+    ASSERT_EQ(rki_data_noage.size(), 2);
+
+    ASSERT_EQ(rki_data_noage[0].date, mio::Date(2021, 12, 1));
+    ASSERT_EQ(rki_data_noage[0].num_confirmed, 1);
+    ASSERT_EQ(rki_data_noage[0].num_deaths, 2);
+    ASSERT_EQ(rki_data_noage[0].num_recovered, 3);
+
+    ASSERT_EQ(rki_data_noage[1].date, mio::Date(2021, 12, 2));
+    ASSERT_EQ(rki_data_noage[1].num_confirmed, 4);
+    ASSERT_EQ(rki_data_noage[1].num_deaths, 5);
+    ASSERT_EQ(rki_data_noage[1].num_recovered, 6);
+}
+
 TEST(TestEpiDataIo, read_divi)
 {
     Json::Value js(Json::arrayValue);
@@ -299,6 +329,29 @@ TEST(TestEpiDataIo, read_confirmed_cases_data)
     ASSERT_EQ(case_data[2].district_id, mio::regions::DistrictId(1235));
     ASSERT_EQ(case_data[2].county_id, boost::none);
     ASSERT_EQ(case_data[2].state_id, boost::none);
+}
+
+TEST(TestEpiDataIo, read_confirmed_cases_noage_data)
+{
+    auto rki_data_noage =
+        mio::read_confirmed_cases_noage(mio::path_join(TEST_DATA_DIR, "test_cases_all_germany.json")).value();
+
+    ASSERT_EQ(rki_data_noage.size(), 3);
+
+    ASSERT_EQ(rki_data_noage[0].date, mio::Date(2020, 06, 01));
+    ASSERT_EQ(rki_data_noage[0].num_confirmed, 1.2);
+    ASSERT_EQ(rki_data_noage[0].num_deaths, 2);
+    ASSERT_EQ(rki_data_noage[0].num_recovered, 3);
+
+    ASSERT_EQ(rki_data_noage[1].date, mio::Date(2020, 06, 02));
+    ASSERT_EQ(rki_data_noage[1].num_confirmed, 4.5);
+    ASSERT_EQ(rki_data_noage[1].num_deaths, 5.1);
+    ASSERT_EQ(rki_data_noage[1].num_recovered, 6);
+
+    ASSERT_EQ(rki_data_noage[2].date, mio::Date(2020, 06, 03));
+    ASSERT_EQ(rki_data_noage[2].num_confirmed, 7);
+    ASSERT_EQ(rki_data_noage[2].num_deaths, 8);
+    ASSERT_EQ(rki_data_noage[2].num_recovered, 930.1);
 }
 
 TEST(TestEpiDataIO, read_vaccination_data)

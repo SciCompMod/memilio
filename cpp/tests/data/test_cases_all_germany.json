@@ -1,0 +1,20 @@
+[
+    {
+        "Date": "2020-06-01",
+        "Confirmed": 1.2,
+        "Deaths": 2.0,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-06-02",
+        "Confirmed": 4.5,
+        "Deaths": 5.1,
+        "Recovered": 6
+    },
+    {
+        "Date": "2020-06-03",
+        "Confirmed": 7,
+        "Deaths": 8,
+        "Recovered": 930.1
+    }
+]
