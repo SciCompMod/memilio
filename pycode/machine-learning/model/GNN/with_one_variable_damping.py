@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pickle
 import spektral
+import time
 
 import numpy as np
 import scipy.sparse as sp
@@ -17,8 +18,9 @@ from keras.models import Model
 from keras.optimizers import Adam
 
 from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, MixedLoader
-from spektral.layers import GATConv, GINConv, XENetConv, XENetConvBatch
+from spektral.layers import GATConv, GINConv, XENetConv, XENetConvBatch, ARMAConv, GATConv, GCNConv
 from spektral.transforms.normalize_adj import NormalizeAdj
+from spektral.utils.convolution import normalized_laplacian , rescale_laplacian, gcn_filter
 
 # from data_generator_withoutdampings_all401 import get_population
 from memilio.simulation.secir import InfectionState
@@ -128,8 +130,8 @@ edge_features = df.rename_axis('Source')\
     .melt('Source', value_name='Weight', var_name='Target')\
     .reset_index(drop=True)
 
-edge_features = edge_features[
-    edge_features.Weight != 0]
+# edge_features = edge_features[
+#     edge_features.Weight != 0]
 
 
 ##### calculate an array of edge weights for each edge #####
@@ -187,7 +189,7 @@ for damp, day in zip(dampings, damping_days):
 class MyDataset(spektral.data.dataset.Dataset):
     def read(self):
         # self.a = sp.csr_matrix(adjacency_matrix)
-        self.a = np.asarray(adjacency_list)
+        self.a = gcn_filter(np.asarray(adjacency_list))
         # self.e = np.asarray(all_egde_arrays)
         return [spektral.data.Graph(x=x, y=y, e=np.asarray(e), a=self.a) for x, y, e in zip(node_features, node_labels, all_egde_arrays)]
 
@@ -205,8 +207,8 @@ class MyDataset(spektral.data.dataset.Dataset):
 # data = MyDataset()
 data = MyDataset(transforms=NormalizeAdj())
 batch_size = 32
-epochs = 500
-es_patience = 30  # Patience for early stopping
+epochs = 200
+es_patience = 50  # Patience for early stopping
 
 # Train/valid/test split
 idxs = np.random.permutation(len(data))
@@ -240,28 +242,36 @@ class Net(Model):
     def __init__(self):
         super().__init__()
 
-        # self.conv1 = XENetConv(
-        #     32, 240, 1,    activation="relu")
-        # self.conv2 = XENetConv(
-        #     32, 240, 1,  activation="relu")
+        
+        self.conv1 = GCNConv(
+            32,   activation="relu")
+        self.conv2 = GCNConv(
+            32,  activation="relu")
 
-        self.conv1 = XENetConvBatch(
-            32, 240, 1,    activation="relu")
-        self.conv2 = XENetConvBatch(
-            32, 240, 1,  activation="relu")
+
+        # self.conv1 = XENetConvBatch(
+        #     32, 240, 1,    activation="relu")
+        # self.conv2 = XENetConvBatch(
+        #     32, 240, 1,  activation="relu")
         # self.conv3 = XENetConv(32, 64,64,  activation="relu")
 
         # self.global_pool = GlobalAvgPool()
         self.dense = Dense(data.n_labels, activation="linear")
 
     def call(self, inputs):
-        # x, a, e = inputs
-        x, a, e = inputs
-        # a = np.asarray(a)
-        # e = np.asarray(e)
-        x, e = self.conv1([x, a, e])
+        ### for ARMA 
+        x,a,e, = inputs
+      
+        x = self.conv1([x,a])
+        x = self.conv2([x,a])
 
-        x, e = self.conv2([x, a, e])
+
+
+
+   
+        # x, a, e = inputs
+        # x, e = self.conv1([x, a, e])
+        # x, e = self.conv2([x, a, e])
         # x = self.conv3([x, a])
         # x = self.global_pool([x])
 
@@ -352,6 +362,7 @@ patience = es_patience
 results = []
 losses_history = []
 val_losses_history = []
+start = time.perf_counter()
 for batch in loader_tr:
     step += 1
     loss, acc = train_step(*batch)
@@ -382,7 +393,7 @@ for batch in loader_tr:
         results = []
         losses_history.append(loss)
         val_losses_history.append(val_loss)
-
+elapsed = time.perf_counter() - start
 ################################################################################
 # Evaluate model
 ################################################################################
@@ -392,3 +403,5 @@ test_MAPE = test_evaluation(loader_te)
 print(test_MAPE)
 
 print("Done. Test loss: {:.4f}. Test acc: {:.2f}".format(test_loss, test_acc))
+print("Time for training: {:.4f} seconds".format(elapsed))
+print("Time for training: {:.4f} minutes".format(elapsed/60))

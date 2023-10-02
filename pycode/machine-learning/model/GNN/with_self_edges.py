@@ -195,12 +195,23 @@ scaled_edges = transformer.transform(
 #         super().__init__(**kwargs)
 
 
+def preprocess(adjacency):
+    laplacian = gcn_filter(adjacency)
+    incidence = incidence_matrix(adjacency)
+    edge_laplacian = gcn_filter(line_graph(incidence).numpy())
+
+    return laplacian, edge_laplacian, incidence
+
+
+laplacian, edge_laplacian, incidence = preprocess(adjacency_matrix)
+matrix_tuple = [laplacian, edge_laplacian, incidence]
 # for mixed mode
 
 
 class MyDataset(spektral.data.dataset.Dataset):
     def read(self):
-        self.a = adjacency_matrix
+        # self.a = adjacency_matrix
+        self.a = matrix_tuple
         # self.a = np.asarray(adjacency_list)
         # #self.e = np.asarray(edge_features['Weight']).reshape(
         # np.asarray(edge_features['Weight']).shape[0], 1)
@@ -248,18 +259,6 @@ class MyDataset(spektral.data.dataset.Dataset):
 # loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
 
 
-def preprocess(adjacency):
-    laplacian = gcn_filter(adjacency)
-    incidence = incidence_matrix(adjacency)
-    edge_laplacian = gcn_filter(line_graph(incidence).numpy())
-
-    return laplacian, edge_laplacian, incidence
-
-
-# laplacian, edge_laplacian, incidence = preprocess(adjacency_matrix)
-# matrix_tuple = [laplacian, edge_laplacian, incidence]
-
-
 ################################################################################
 # Build model
 ################################################################################
@@ -269,7 +268,7 @@ class Net(Model):
 
         # self.conv1 = ECCConv(24,   activation="relu")
         # initializer = tf.keras.initializers.GlorotUniform(seed=42)
-        self.conv1 = XENetConvBatch(
+        self.conv1 = CensNetConv(
             32, 240, 1,  activation="relu")
 
         # self.srcpool = SRCPool()
@@ -492,9 +491,9 @@ plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
 plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss ( MAPE)')
-plt.title('Loss for APPNPConv')
+plt.title('Loss for CensNetConv')
 plt.legend()
-plt.savefig('losses_APPNP')
+plt.savefig('losses_CensNet')
 
 
 print("Best train losses: {} ".format(train_losses))
