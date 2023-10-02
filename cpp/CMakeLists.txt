@@ -7,6 +7,7 @@ option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
+option(MEMILIO_BUILD_DATA_TRANSFER "Build memilio files for data transfer." ON)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
@@ -133,6 +134,10 @@ endif()
 
 if(MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
+endif()
+
+if(MEMILIO_BUILD_DATA_TRANSFER)
+    add_subdirectory(data_transfer)
 endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)

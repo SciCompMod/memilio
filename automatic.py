@@ -21,9 +21,9 @@ def read_input_data(start_date, path_to_input_data):
     @param[in] start_date Start date of data.
     @param[in] path_to_input_data Path where data is saved.
     """
-    arg_dict = {'out_folder': path_to_input_data,
+    arg_dict = {'out_folder': "{}/pydata".format(path_to_input_data),
                 'moving_average': 7, 'start_date': start_date}
-    arg_dict_pop = {'out_folder': path_to_input_data,
+    arg_dict_pop = {'out_folder': "{}/pydata".format(path_to_input_data),
                     "username": '',
                     "password": ''}
 
@@ -47,11 +47,11 @@ def compute_compartments_from_input_data(start_date, path_to_input_data, num_day
     year = start_date.year
     month = start_date.month
     day = start_date.day
-    subprocess.run(["./2023_fall_data {} {} {} {} {}".format(
+    subprocess.run(["./build/bin/generate_graph_from_data {} {} {} {} {}".format(
         path_to_input_data, str(year), str(month), str(day), str(num_days_sim))], shell=True)
 
 
-def prepare_data_for_backend(start_date, path_to_output_data):
+def prepare_data_for_backend(start_date, path_to_input_data, path_to_output_data):
     """! Prepares output data for backend. 
 
     Creates metadata.json and zip-folder containing metadata.json, Results.h5 
@@ -87,9 +87,9 @@ def prepare_data_for_backend(start_date, path_to_output_data):
 
     # make zip
     with ZipFile(os.path.join(path_to_output_data, "rki.zip"), 'w') as zip_object:
-        zip_object.write("metadata.json")
-        zip_object.write("Results.h5")
-        zip_object.write("Results_sum.h5")
+        zip_object.write(os.path.join(path_to_input_data, "metadata.json"))
+        zip_object.write(os.path.join(path_to_input_data, "Results.h5"))
+        zip_object.write(os.path.join(path_to_input_data, "Results_sum.h5"))
 
 
 def import_to_backend(path_to_esid, path_to_output_data):
@@ -114,24 +114,25 @@ def import_to_backend(path_to_esid, path_to_output_data):
 
 
 def main():
-    # Number of days that is simulated
-    num_days_sim = 90
+    # Number of days to take into account
+    num_days_sim = 10
 
     # Set start date relative to current date
     start_date = date.today() - datetime.timedelta(days=num_days_sim)
 
     # Set paths to ESID repository, folder with input data and folder with output data
-    path_to_esid = '/localdata1/wend_aa/feature/flexible-start-end-times'
-    path_to_input_data = '/localdata1/wend_aa/esid-falldata-automatic/data_test'
-    path_to_output_data = '/localdata1/wend_aa/esid-falldata-automatic/data_test'
+    path_to_esid = './data_test'
+    path_to_input_data = './data_test'
+    path_to_output_data = './data_test'
 
     # read_input_data(start_date, path_to_input_data)
 
-    compute_compartments_from_input_data(
-        start_date, path_to_input_data, num_days_sim)
+    # compute_compartments_from_input_data(
+    #    start_date, path_to_input_data, num_days_sim)
 
-    # prepare_data_for_backend(start_date, path_to_output_data)
-    # import_to_backend(path_to_esid, path_to_output_data)
+    prepare_data_for_backend(
+        start_date, path_to_input_data, path_to_output_data)
+    import_to_backend(path_to_esid, path_to_output_data)
 
 
 if __name__ == "__main__":
