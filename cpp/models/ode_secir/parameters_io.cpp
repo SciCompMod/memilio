@@ -299,6 +299,93 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     return success();
 }
 
+IOResult<void> set_confirmed_cases_data_one_age_group(std::vector<Model>& model, const std::string& path,
+                                                      std::vector<int> const& region, Date date,
+                                                      const std::vector<double>& scaling_factor_inf)
+{
+    std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
+    std::vector<std::vector<int>> t_Exposed{model.size()};
+    std::vector<std::vector<int>> t_InfectedSymptoms{model.size()};
+    std::vector<std::vector<int>> t_InfectedSevere{model.size()};
+    std::vector<std::vector<int>> t_InfectedCritical{model.size()};
+
+    std::vector<std::vector<double>> mu_C_R{model.size()};
+    std::vector<std::vector<double>> mu_I_H{model.size()};
+    std::vector<std::vector<double>> mu_H_U{model.size()};
+    std::vector<std::vector<double>> mu_U_D{model.size()};
+
+    const std::vector<double> scaling_factor_inf_age_groups(ConfirmedCasesDataEntry::age_group_names.size(),
+                                                            scaling_factor_inf[0]);
+
+    for (size_t county = 0; county < model.size(); ++county) {
+        for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
+
+            t_InfectedNoSymptoms[county].push_back(
+                static_cast<int>(std::round(2 * (model[county].parameters.get<IncubationTime>()[(AgeGroup)0] -
+                                                 model[county].parameters.get<SerialInterval>()[(AgeGroup)0]))));
+            t_Exposed[county].push_back(
+                static_cast<int>(std::round(2 * model[county].parameters.get<SerialInterval>()[(AgeGroup)0] -
+                                            model[county].parameters.get<IncubationTime>()[(AgeGroup)0])));
+            t_InfectedSymptoms[county].push_back(
+                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)0])));
+            t_InfectedSevere[county].push_back(
+                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSevere>()[(AgeGroup)0])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)0])));
+
+            mu_C_R[county].push_back(model[county].parameters.get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)0]);
+            mu_I_H[county].push_back(model[county].parameters.get<SeverePerInfectedSymptoms>()[(AgeGroup)0]);
+            mu_H_U[county].push_back(model[county].parameters.get<CriticalPerSevere>()[(AgeGroup)0]);
+            mu_U_D[county].push_back(model[county].parameters.template get<DeathsPerCritical>()[(AgeGroup)0]);
+        }
+    }
+
+    std::vector<std::vector<double>> num_InfectedSymptoms(
+        model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<double>> num_death(
+        model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<double>> num_rec(model.size(),
+                                             std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<double>> num_Exposed(
+        model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<double>> num_InfectedNoSymptoms(
+        model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<double>> num_InfectedSevere(
+        model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<double>> num_icu(model.size(),
+                                             std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(
+        path, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
+        num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
+        mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_age_groups));
+
+    for (size_t county = 0; county < model.size(); county++) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
+            model[county].populations[{AgeGroup(0), InfectionState::Exposed}] =
+                std::accumulate(num_Exposed[county].begin(), num_Exposed[county].end(), 0.0);
+            model[county].populations[{AgeGroup(0), InfectionState::InfectedNoSymptoms}] =
+                std::accumulate(num_InfectedNoSymptoms[county].begin(), num_InfectedNoSymptoms[county].end(), 0.0);
+            model[county].populations[{AgeGroup(0), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+            model[county].populations[{AgeGroup(0), InfectionState::InfectedSymptoms}] =
+                std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0);
+            model[county].populations[{AgeGroup(0), InfectionState::InfectedSymptomsConfirmed}] = 0;
+            model[county].populations[{AgeGroup(0), InfectionState::InfectedSevere}] =
+                std::accumulate(num_InfectedSevere[county].begin(), num_InfectedSevere[county].end(), 0.0);
+            model[county].populations[{AgeGroup(0), InfectionState::Dead}] =
+                std::accumulate(num_death[county].begin(), num_death[county].end(), 0.0);
+            model[county].populations[{AgeGroup(0), InfectionState::Recovered}] =
+                std::accumulate(num_rec[county].begin(), num_rec[county].end(), 0.0);
+        }
+        else {
+            log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
+                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+                        std::to_string(region[county]) + ". Population data has not been set.");
+        }
+    }
+    return success();
+}
+
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {
@@ -332,7 +419,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 }
 
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion)
+                                                                const std::vector<int>& vregion, bool one_age_group)
 {
     BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
 
@@ -353,13 +440,23 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
             }
         }
     }
-
-    return success(vnum_population);
+    if (one_age_group) {
+        std::vector<std::vector<double>> vnum_pop_acc(vregion.size(), std::vector<double>(1, 0));
+        for (size_t region = 0; region < vregion.size(); ++region) {
+            vnum_pop_acc[region][0] =
+                std::accumulate(vnum_population[region].begin(), vnum_population[region].end(), 0.0);
+        }
+        return success(vnum_pop_acc);
+    }
+    else {
+        return success(vnum_population);
+    }
 }
 
-IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion)
+IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
+                                   bool one_age_group)
 {
-    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion, one_age_group));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
