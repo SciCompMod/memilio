@@ -188,7 +188,6 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 {
     const mio::Date start_date = mio::Date(2021, 6, 1);
     const auto num_days        = 90.0;
-    const auto end_date        = mio::offset_date_by_days(start_date, int(std::ceil(num_days)));
 
     //create or load graph
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
