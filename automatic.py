@@ -87,9 +87,12 @@ def prepare_data_for_backend(start_date, path_to_input_data, path_to_output_data
 
     # make zip
     with ZipFile(os.path.join(path_to_output_data, "rki.zip"), 'w') as zip_object:
-        zip_object.write(os.path.join(path_to_input_data, "metadata.json"))
-        zip_object.write(os.path.join(path_to_input_data, "Results.h5"))
-        zip_object.write(os.path.join(path_to_input_data, "Results_sum.h5"))
+        zip_object.write(os.path.join(path_to_input_data,
+                         "metadata.json"),  "metadata.json")
+        zip_object.write(os.path.join(
+            path_to_input_data, "Results.h5"), "Results.h5")
+        zip_object.write(os.path.join(path_to_input_data,
+                         "Results_sum.h5"), "Results_sum.h5")
 
 
 def import_to_backend(path_to_esid, path_to_output_data):
@@ -121,14 +124,14 @@ def main():
     start_date = date.today() - datetime.timedelta(days=num_days_sim)
 
     # Set paths to ESID repository, folder with input data and folder with output data
-    path_to_esid = './data_test'
+    path_to_esid = '/localdata1/wend_aa/ESID'
     path_to_input_data = './data_test'
     path_to_output_data = './data_test'
 
-    # read_input_data(start_date, path_to_input_data)
+    read_input_data(start_date, path_to_input_data)
 
-    # compute_compartments_from_input_data(
-    #    start_date, path_to_input_data, num_days_sim)
+    compute_compartments_from_input_data(
+        start_date, path_to_input_data, num_days_sim)
 
     prepare_data_for_backend(
         start_date, path_to_input_data, path_to_output_data)
