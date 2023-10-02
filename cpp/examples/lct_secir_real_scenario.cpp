@@ -31,7 +31,6 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include "memilio/utils/uncertain_value.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
@@ -80,13 +79,17 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 /**
  * @brief Set the contact pattern of parameters for a Model without division in age groups.
  *
- *  The contacts are calculated using contact matrices from files in the data directory for different locations.
+ * The contacts are calculated using contact matrices from files in the data directory for different locations.
+ * Also set Nonpharmaceutical Interventions influencing the ContactPatterns used for simulation in the timeframe from start_date to end_date.
  * 
- * @param data_dir Directory to files with contact matrices.
+ * @param data_dir Directory to files with minimum and baseline contact matrices.
  * @param parameters Object that the contact pattern will be added to.
- * @returns Any io errors that happen during reading of the files.
+ * @param start_date Start date of the simulation used for setting NPIs.
+ * @param end_date End date of the simulation used for setting NPIs.
+ * @returns Any io errors that happen during reading of the input files.
  */
-mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::Parameters& parameters)
+mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::Parameters& parameters,
+                                         mio::Date start_date, mio::Date end_date)
 {
     // Files in data_dir are containing contact matrices with 6 agegroups. We use this to compute a contact pattern without division of age groups.
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
@@ -115,65 +118,48 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
         contact_matrices[size_t(contact_location.first)].get_baseline() = Eigen::MatrixXd::Constant(1, 1, base);
         contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Constant(1, 1, min);
     }
-    // Set ContactPatterns in parameters.
-    parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
-
-    return mio::success();
-}
-
-/**
- * @brief Set Nonpharmaceutical Interventions influencing the ContactPatterns used for simulation in a specified timeframe.
- * @param start_date Start date of the simulation.
- * @param end_date End date of the simulation.
- * @param parameters Object that the NPIs will be added to.
- */
-void set_npis(mio::Date start_date, mio::Date end_date, mio::lsecir::Parameters& parameters)
-{
-    auto& contacts         = parameters.get<mio::lsecir::ContactPatterns>();
-    auto& contact_dampings = contacts.get_dampings();
-
-    auto v = mio::UncertainValue(0.1);
-
+    // Add NPIs to the contact matrices.
     // Set of NPIs for June.
     auto start_npi_june = mio::Date(2020, 6, 1);
     if (start_npi_june < end_date) {
         auto offset_june = mio::SimulationTime(mio::get_offset_in_days(start_npi_june, start_date));
 
         // Contact reduction at home.
-        v = 0.1;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::Home)), offset_june,
-            {size_t(ContactLocation::Home)}, Eigen::VectorXd::Constant(1, 1.0)));
+        ScalarType v = 0.1;
+        contact_matrices[size_t(ContactLocation::Home)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::Home)), offset_june);
+
         // Home-Office + people stopped working.
         v = 0.25 + 0.025;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::HomeOffice)),
-            offset_june, {size_t(ContactLocation::Work)}, Eigen::VectorXd::Constant(1, 1.0)));
+        contact_matrices[size_t(ContactLocation::Work)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::HomeOffice)), offset_june);
         // GatheringBanFacilitiesClosure affects ContactLocation Other.
         v = 0.1;
-        contact_dampings.push_back(
-            mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                 mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_june,
-                                 {size_t(ContactLocation::Other)}, Eigen::VectorXd::Constant(1, 1.0)));
+        contact_matrices[size_t(ContactLocation::Other)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_june);
+
         // PhysicalDistanceAndMasks in all locations.
         v = 0.1;
-        contact_dampings.push_back(
-            mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_june,
-                                 {size_t(ContactLocation::Home), size_t(ContactLocation::School),
-                                  size_t(ContactLocation::Work), size_t(ContactLocation::Other)},
-                                 Eigen::VectorXd::Constant(1, 1.0)));
+        for (auto&& contact_location : contact_locations) {
+            contact_matrices[size_t(contact_location.first)].add_damping(
+                Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_june);
+        }
+
         // Schools closed.
         v = 0.5;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::SchoolClosure)),
-            offset_june, {size_t(ContactLocation::School)}, Eigen::VectorXd::Constant(1, 1.0)));
-        auto school_reopen_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 15), start_date));
+        contact_matrices[size_t(ContactLocation::School)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::SchoolClosure)), offset_june);
         // School fully reopened.
-        v = 0.0;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::SchoolClosure)),
-            school_reopen_time, {size_t(ContactLocation::School)}, Eigen::VectorXd::Constant(1, 1.0)));
+        auto school_reopen_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 15), start_date));
+        v                       = 0.0;
+        contact_matrices[size_t(ContactLocation::School)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::SchoolClosure)), school_reopen_time);
     }
 
     // Set of NPIs for October.
@@ -182,30 +168,31 @@ void set_npis(mio::Date start_date, mio::Date end_date, mio::lsecir::Parameters&
         auto start_autumn = mio::SimulationTime(mio::get_offset_in_days(start_npi_october, start_date));
 
         // Contact reduction at home.
-        v = 0.3;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::Home)), start_autumn,
-            {size_t(ContactLocation::Home)}, Eigen::VectorXd::Constant(1, 1.0)));
+        double v = 0.3;
+        contact_matrices[size_t(ContactLocation::Home)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::Home)), start_autumn);
         // PhysicalDistanceAndMasks in all locations.
         v = 0.3;
-        contact_dampings.push_back(
-            mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn,
-                                 {size_t(ContactLocation::Home), size_t(ContactLocation::School),
-                                  size_t(ContactLocation::Work), size_t(ContactLocation::Other)},
-                                 Eigen::VectorXd::Constant(1, 1.0)));
+        for (auto&& contact_location : contact_locations) {
+            contact_matrices[size_t(contact_location.first)].add_damping(
+                Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn);
+        }
         // Schools closed because of autumn break (use values for NRW).
         v                       = 1.;
         auto autumn_break_begin = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 12), start_date));
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::SchoolClosure)),
-            autumn_break_begin, {size_t(ContactLocation::School)}, Eigen::VectorXd::Constant(1, 1.0)));
+
+        contact_matrices[size_t(ContactLocation::School)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::SchoolClosure)), autumn_break_begin);
+
         // School fully reopened because of ending autumn break.
         auto autumn_break_end = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 24), start_date));
-        v                     = 0.0;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::SchoolClosure)),
-            autumn_break_end, {size_t(ContactLocation::School)}, Eigen::VectorXd::Constant(1, 1.0)));
+        v                     = 0.;
+        contact_matrices[size_t(ContactLocation::School)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::SchoolClosure)), autumn_break_end);
     }
 
     //Set of NPIs for November.
@@ -214,35 +201,43 @@ void set_npis(mio::Date start_date, mio::Date end_date, mio::lsecir::Parameters&
 
         auto start_autumn_lockdown = mio::SimulationTime(mio::get_offset_in_days(start_npi_november, start_date));
         // Contact reduction at home.
-        v = 0.5;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::Home)),
-            start_autumn_lockdown, {size_t(ContactLocation::Home)}, Eigen::VectorXd::Constant(1, 1.0)));
+        double v = 0.5;
+        contact_matrices[size_t(ContactLocation::Home)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::Home)), start_autumn_lockdown);
         // Home-Office + people stopped working.
         v = 0.25 + 0.05;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::HomeOffice)),
-            start_autumn_lockdown, {size_t(ContactLocation::Work)}, Eigen::VectorXd::Constant(1, 1.0)));
+        contact_matrices[size_t(ContactLocation::Work)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::HomeOffice)), start_autumn_lockdown);
         // GatheringBanFacilitiesClosure affects ContactLocation Other.
         v = 0.7;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), start_autumn_lockdown,
-            {size_t(ContactLocation::Other)}, Eigen::VectorXd::Constant(1, 1.0)));
+        contact_matrices[size_t(ContactLocation::Other)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+            mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), start_autumn_lockdown);
         // PhysicalDistanceAndMasks in ContactLocation%s School and Home.
         v = 0.3;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown,
-            {size_t(ContactLocation::Home), size_t(ContactLocation::School)}, Eigen::VectorXd::Constant(1, 1.0)));
+        contact_matrices[size_t(ContactLocation::Home)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
+        contact_matrices[size_t(ContactLocation::School)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
+
         // PhysicalDistanceAndMasks in ContactLocation%s Work and Other.
         v = 0.5;
-        contact_dampings.push_back(mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown,
-            {size_t(ContactLocation::Work), size_t(ContactLocation::Other)}, Eigen::VectorXd::Constant(1, 1.0)));
+        contact_matrices[size_t(ContactLocation::Work)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
+        contact_matrices[size_t(ContactLocation::Other)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
     }
-    parameters.get<mio::lsecir::ContactPatterns>().make_matrix();
+
+    // Set ContactPatterns in parameters.
+    parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
+
+    return mio::success();
 }
 
 /**
@@ -258,7 +253,7 @@ mio::IOResult<void> simulate(std::string const& path, bool save_result = true, b
     // Set values needed for initialization.
     ScalarType total_population = 83155031.0;
     auto start_date             = mio::Date(2020, 10, 15);
-    auto end_date               = mio::Date(2020, 11, 15);
+    auto end_date               = mio::Date(2020, 11, 30);
 
     // Define parameters used for simulation and initialization.
     mio::lsecir::Parameters parameters;
@@ -276,9 +271,7 @@ mio::IOResult<void> simulate(std::string const& path, bool save_result = true, b
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.173176;
     parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.217177;
 
-    auto status = set_contact_matrices("../../data", parameters);
-    set_npis(start_date, end_date, parameters);
-    // TODO: if simulated cases are higher than expected maybe the autumn break is missing in end of october.
+    auto status = set_contact_matrices("../../data", parameters, start_date, end_date);
 
     // Define number of subcompartments.
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
