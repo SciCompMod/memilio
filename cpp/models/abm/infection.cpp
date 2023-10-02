@@ -26,8 +26,9 @@ namespace mio
 namespace abm
 {
 
-Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                     InfectionState init_state, std::pair<ExposureType, TimePoint> latest_protection, bool detected)
+Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
+                     const GlobalInfectionParameters& params, TimePoint init_date, InfectionState init_state,
+                     std::pair<ExposureType, TimePoint> latest_protection, bool detected)
     : m_virus_variant(virus)
     , m_detected(detected)
 {
@@ -49,9 +50,10 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
         m_viral_load.start_date +
         days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
 
-    auto inf_params  = params.get<InfectivityDistributions>()[{virus, age}];
-    m_log_norm_alpha = inf_params.infectivity_alpha.get_distribution_instance()(rng, inf_params.infectivity_alpha.params);
-    m_log_norm_beta  = inf_params.infectivity_beta.get_distribution_instance()(rng, inf_params.infectivity_beta.params);
+    auto inf_params = params.get<InfectivityDistributions>()[{virus, age}];
+    m_log_norm_alpha =
+        inf_params.infectivity_alpha.get_distribution_instance()(rng, inf_params.infectivity_alpha.params);
+    m_log_norm_beta = inf_params.infectivity_beta.get_distribution_instance()(rng, inf_params.infectivity_beta.params);
 }
 
 ScalarType Infection::get_viral_load(TimePoint t) const

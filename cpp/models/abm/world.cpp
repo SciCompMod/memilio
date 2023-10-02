@@ -65,7 +65,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person = m_persons[i];
+        auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
         person->interact(personal_rng, t, dt, m_infection_parameters);
     }
@@ -73,7 +73,8 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+                                           const MigrationParameters&),
                           std::vector<LocationType>>>
         enhanced_migration_rules;
     for (auto rule : m_migration_rules) {
@@ -93,7 +94,7 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person = m_persons[i];
+        auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
         for (auto rule : enhanced_migration_rules) {
             //check if transition rule can be applied
@@ -120,9 +121,9 @@ void World::migration(TimePoint t, TimeSpan dt)
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip             = m_trip_list.get_next_trip(weekend);
-            auto& person           = m_persons[trip.person_id];
-            auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);
+            auto& trip        = m_trip_list.get_next_trip(weekend);
+            auto& person      = m_persons[trip.person_id];
+            auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
             if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
