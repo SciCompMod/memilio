@@ -63,10 +63,10 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other)            = default;
+    World(World&& other) = default;
     World& operator=(World&& other) = default;
     World(const World&)             = delete;
-    World& operator=(const World&)  = delete;
+    World& operator=(const World&) = delete;
 
     /** 
      * @brief Prepare the World for the next Simulation step.
@@ -132,6 +132,8 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
+    const Location& find_location(LocationType type, const Person& person) const;
+
     Location& find_location(LocationType type, const Person& person);
 
     /** 

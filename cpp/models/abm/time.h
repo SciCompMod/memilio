@@ -198,6 +198,14 @@ public:
     }
 
     /**
+     * @brief If the current time is on a weekend, e.g. day_of_the_week is 5 = Sat or 6 = Sun.
+     */
+    bool is_weekend() const
+    {
+        return (day_of_week() > 4) ? true : false;
+    }
+
+    /**
      * @brief Hour in the current day (0 - 23).
      */
     int hour_of_day() const
