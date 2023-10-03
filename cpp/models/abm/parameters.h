@@ -530,7 +530,7 @@ struct GotoSchoolTimeMaximum {
 };
 
 /**
- * @brief The vector of AgeGroups that can go to school.
+ * @brief The set of AgeGroups that can go to school.
  */
 struct AgeGroupGotoSchool {
     using Type = std::set<AgeGroup>;
@@ -545,7 +545,7 @@ struct AgeGroupGotoSchool {
 };
 
 /**
- * @brief The vector of AgeGroups that can go to Work.
+ * @brief The set of AgeGroups that can go to work.
  */
 struct AgeGroupGotoWork {
     using Type = std::set<AgeGroup>;
@@ -591,73 +591,73 @@ public:
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
      * if constraints are not satisfied.
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
-    int check_constraints() const
+    bool check_constraints() const
     {
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
             if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}] < 0) {
                 log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
                           (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error(
                     "Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller than {:d}",
                     (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error(
                     "Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller than {:d}",
                     (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error(
                     "Constraint check: Parameter InfectedSymptomsToRecovered of age group {:.0f} smaller than {:d}",
                     (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter InfectedSymptomsToSevere of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<SevereToCritical>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<CriticalToDead>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller than {:d}", (size_t)i,
                           0);
-                return 1;
+                return true;
             }
 
             if (this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
-                return 1;
+                return true;
             }
 
             if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0 ||
@@ -665,7 +665,7 @@ public:
                 log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller than {:d} or "
                           "larger than {:d}",
                           (size_t)i, 0, 1);
-                return 1;
+                return true;
             }
 
             if (this->get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
@@ -673,7 +673,7 @@ public:
                 log_error("Constraint check: Parameter GotoWorkTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
-                return 1;
+                return true;
             }
 
             if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds() ||
@@ -681,7 +681,7 @@ public:
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
                           (size_t)i, this->get<GotoWorkTimeMinimum>()[i].seconds());
-                return 1;
+                return true;
             }
 
             if (this->get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
@@ -689,7 +689,7 @@ public:
                 log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
-                return 1;
+                return true;
             }
 
             if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds() ||
@@ -697,7 +697,7 @@ public:
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
                           (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
-                return 1;
+                return true;
             }
         }
 
@@ -706,28 +706,28 @@ public:
             log_error(
                 "Constraint check: Parameter MaskProtection for MaskType Community is smaller {:d} or larger {:d}", 0,
                 1);
-            return 1;
+            return true;
         }
 
         if (this->get<MaskProtection>()[MaskType::FFP2] < 0.0 || this->get<MaskProtection>()[MaskType::FFP2] > 1.0) {
             log_error("Constraint check: Parameter MaskProtection for MaskType FFP2 is smaller {:d} or larger {:d}", 0,
                       1);
-            return 1;
+            return true;
         }
 
         if (this->get<MaskProtection>()[MaskType::Surgical] < 0.0 ||
             this->get<MaskProtection>()[MaskType::Surgical] > 1.0) {
             log_error("Constraint check: Parameter MaskProtection for MaskType Surgical smaller {:d} or larger {:d}", 0,
                       1);
-            return 1;
+            return true;
         }
 
         if (this->get<LockdownDate>().seconds() < 0.0) {
             log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
-            return 1;
+            return true;
         }
 
-        return 0;
+        return false;
     }
 
 private:

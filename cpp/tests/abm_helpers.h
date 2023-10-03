@@ -30,7 +30,7 @@
 #include <memory>
 
 // Assign the name to general age group.
-const auto NUM_AGE_GROUPS     = 6;
+const size_t NUM_AGE_GROUPS     = 6;
 const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 6);
 const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 5);
 const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 4);

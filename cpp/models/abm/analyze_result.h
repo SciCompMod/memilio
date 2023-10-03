@@ -47,7 +47,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     std::vector<double> single_element_ensemble(num_runs);
     auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
 
-    // lamda function that calculates the percentile of a single paramter
+    // lambda function that calculates the percentile of a single parameter
     std::vector<Model> percentile(num_nodes, Model((int)num_groups));
     auto param_percentil = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
         std::vector<double> single_element(num_runs);
@@ -96,15 +96,29 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             param_percentil(node, [age_group](auto&& model) -> auto& {
                 return model.parameters.template get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, age_group}];
             });
+            // param_percentil(node, [age_group](auto&& model) -> auto& {
+            //     return model.parameters.template get<ViralLoadDistributions>()[{VirusVariant::Wildtype, age_group}].;
+            // });
+            // param_percentil(node, [age_group](auto&& model) -> auto& {
+            //     return model.parameters.template get<InfectivityDistributions>()[{VirusVariant::Wildtype, age_group}];
+            // });
             param_percentil(node, [age_group](auto&& model) -> auto& {
                 return model.parameters.template get<DetectInfection>()[{VirusVariant::Wildtype, age_group}];
             });
         }
-        for (size_t run = 0; run < num_runs; run++) {
-            auto const& params           = ensemble_params[run][node];
-            single_element_ensemble[run] = static_cast<double>(params.parameters.size());
-        }
-        std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
+        // group independent params
+        param_percentil(node, [](auto&& model) -> auto& {
+            return model.parameters.template get<MaskProtection>()[MaskType::Community];
+        });
+        param_percentil(node, [](auto&& model) -> auto& {
+            return model.parameters.template get<MaskProtection>()[MaskType::FFP2];
+        });
+        param_percentil(node, [](auto&& model) -> auto& {
+            return model.parameters.template get<MaskProtection>()[MaskType::Surgical];
+        });
+        // param_percentil(node, [](auto&& model) -> auto& {
+        //     return model.parameters.template get<LockdownDate>().days();
+        // });
     }
 
     return percentile;

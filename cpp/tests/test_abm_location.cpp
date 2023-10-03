@@ -35,6 +35,19 @@ TEST(TestLocation, init)
     EXPECT_EQ(location.get_number_persons(), 0);
 }
 
+TEST(TestLocation, copyLocation) {
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
+    auto person = make_test_person(location, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(location.get_number_persons(), 0);
+    location.add_person(person);
+    EXPECT_EQ(location.get_number_persons(), 1);
+
+    auto copied_location = location.copy_location();
+    ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
+    ASSERT_EQ(copied_location.get_index(), 0);
+    EXPECT_EQ(copied_location.get_number_persons(), 0);
+}
+
 TEST(TestLocation, initCell)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
@@ -108,7 +121,7 @@ TEST(TestLocation, CacheExposureRate)
         infected2.migrate_to(location, {0, 1});
 
         //cache precomputed results
-        location.cache_exposure_rates(t, dt);
+        location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);
 
         EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.015015859523894731,
                     1e-14);
@@ -124,7 +137,7 @@ TEST(TestLocation, CacheExposureRate)
         location.set_capacity(2, 22, 0); // Capacity for Cell 1
         location.set_capacity(2, 22, 1); // Capacity for Cell 2
         location.set_capacity(2, 22, 2); // Capacity for Cell 3
-        location.cache_exposure_rates(t, dt);
+        location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);
 
         EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.045047578571684191, 1e-14);
         EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.022523789285842095, 1e-14);
@@ -239,7 +252,7 @@ TEST(TestLocation, interact)
     location.add_person(infected3, {0});
 
     //cache precomputed results
-    location.cache_exposure_rates(t, dt);
+    location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;

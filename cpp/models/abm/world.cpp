@@ -41,7 +41,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
-    assert((size_t)age <= (size_t)parameters.get_num_groups());
+    assert((size_t)age.size() < (size_t)parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
@@ -68,8 +68,8 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const Parameters&),
-                          std::vector<LocationType>>>
+    std::vector<
+        std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const Parameters&), std::vector<LocationType>>>
         m_enhanced_migration_rules;
     for (auto rule : m_migration_rules) {
         //check if transition rule can be applied
@@ -127,7 +127,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     for (auto& location : m_locations) {
-        location->cache_exposure_rates(t, dt);
+        location->cache_exposure_rates(t, dt, parameters.get_num_groups());
     }
 }
 

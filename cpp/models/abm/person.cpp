@@ -54,6 +54,7 @@ Person Person::copy_person(Location& location)
 {
     Person copied_person     = Person(*this);
     copied_person.m_location = &location;
+    location.add_person(*this);
     return copied_person;
 }
 

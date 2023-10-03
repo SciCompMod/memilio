@@ -31,6 +31,19 @@ TEST(TestPerson, init)
     ASSERT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
 
+TEST(TestPerson, copyPerson)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
+    auto t        = mio::abm::TimePoint(0);
+    auto person   = mio::abm::Person(location, AGE_GROUP_60_TO_79);
+    auto copied_location = location.copy_location();
+    auto copied_person = person.copy_person(copied_location);
+    
+    ASSERT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
+    ASSERT_EQ(copied_person.get_location(), copied_location);
+    ASSERT_EQ(copied_person.get_person_id(), mio::abm::INVALID_PERSON_ID);
+}
+
 TEST(TestPerson, migrate)
 {
     auto t      = mio::abm::TimePoint(0);

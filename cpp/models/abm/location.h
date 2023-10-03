@@ -96,19 +96,28 @@ class Location
 {
 public:
     /**
-     * @brief Construct a Location of a certain type.
-     * @param type The #LocationType.
-     * @param index The index of the Location.
-     * @param num_agegroups The number of age groups in the model
-     * @param num_cells [Default: 1] The number of Cell%s in which the Location is divided.
+     * @brief Construct a Location of a certain LocationId.
+     * @param[in] loc_id The #LocationId.
+     * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
+     * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells = 1);
+    Location(LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
 
-    Location(LocationType loc_type, uint32_t loc_index, size_t num_agegroups, uint32_t num_cells = 1)
+    /**
+     * @brief Construct a Location with provided parameters. 
+     * @param[in] loc_type The #LocationType.
+     * @param[in] index The index of the Location.
+     * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
+     * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
+     */
+    Location(LocationType loc_type, uint32_t loc_index, size_t num_agegroups = 1, uint32_t num_cells = 1)
         : Location(LocationId{loc_index, loc_type}, num_agegroups, num_cells)
     {
     }
 
+    /**
+     * @brief Return a copy of the current Location object with an empty m_persons.
+     */
     Location copy_location();
 
     /**
@@ -148,9 +157,11 @@ public:
      * @param[in] virus VirusVariant of interest.
      * @param[in] age_receiver AgeGroup of the receiving Person.
      * @param[in] age_transmitter AgeGroup of the transmitting Person.
+     * @param[in] num_agegroups The number of age groups in the model.
      * @return Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
     */
-    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const;
+    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
+                                             size_t num_agegroups) const;
 
     /**
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
@@ -185,8 +196,9 @@ public:
      * @brief Prepare the Location for the next Simulation step.
      * @param[in] t Current TimePoint of the Simulation.
      * @param[in] dt The duration of the Simulation step.
+     * @param[in] num_agegroups The number of age groups in the model.
      */
-    void cache_exposure_rates(TimePoint t, TimeSpan dt);
+    void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups);
 
     /**
      * @brief Get the Location specific Infection parameters.
@@ -310,7 +322,6 @@ public:
         auto obj = io.create_object("Location");
         obj.add_element("index", m_id.index);
         obj.add_element("type", m_id.type);
-        obj.add_element("num_agegroups", m_num_agegroups);
     }
 
     /**
@@ -320,15 +331,15 @@ public:
     template <class IOContext>
     static IOResult<Location> deserialize(IOContext& io)
     {
-        auto obj           = io.expect_object("Location");
-        auto index         = obj.expect_element("index", Tag<uint32_t>{});
-        auto num_agegroups = obj.expect_element("num_agegroups", Tag<size_t>{});
+        auto obj   = io.expect_object("Location");
+        auto index = obj.expect_element("index", Tag<uint32_t>{});
+        auto type  = obj.expect_element("type", Tag<uint32_t>{});
         return apply(
             io,
-            [](auto&& index_, auto&& num_agegroups_) {
-                return Location{LocationId{index_, LocationType(0)}, num_agegroups_};
+            [](auto&& index_, auto&& type_) {
+                return Location{LocationId{index_, LocationType(type_)}};
             },
-            index, num_agegroups);
+            index, type);
     }
 
     /**
@@ -365,7 +376,6 @@ public:
 
 private:
     LocationId m_id; ///< Id of the Location including type and index.
-    size_t m_num_agegroups; ///< The number of age groups in the model.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -86,8 +86,6 @@ public:
                     LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
                     m_persons.push_back(
                         std::make_unique<Person>(person.copy_person(get_individualized_location(origin_id))));
-                    auto& copied_person = *m_persons.back();
-                    get_individualized_location(origin_id).add_person(copied_person);
                 }
             }
         }
@@ -97,7 +95,7 @@ public:
     //type is move-only for stable references of persons/locations
     World(World&& other)            = default;
     World& operator=(World&& other) = default;
-    World& operator=(const World&)  = delete;
+    World& operator=(const World&)  = default;
 
     /**
      * serialize this. 
