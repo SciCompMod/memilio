@@ -21,6 +21,7 @@
 #define DAMPING_H
 
 #include "memilio/math/eigen.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/type_safe.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/math/matrix_shape.h"
@@ -48,10 +49,10 @@ DECL_TYPESAFE(int, DampingType);
 /**
  * double simulation time.
  */
-class SimulationTime : public TypeSafe<double, SimulationTime>,
-                       public OperatorAdditionSubtraction<SimulationTime>,
-                       public OperatorScalarMultiplicationDivision<SimulationTime, double>,
-                       public OperatorComparison<SimulationTime>
+class MEMILIO_ENABLE_EBO SimulationTime : public TypeSafe<double, SimulationTime>,
+                                          public OperatorAdditionSubtraction<SimulationTime>,
+                                          public OperatorScalarMultiplicationDivision<SimulationTime, double>,
+                                          public OperatorComparison<SimulationTime>
 {
 public:
     using TypeSafe<double, SimulationTime>::TypeSafe;

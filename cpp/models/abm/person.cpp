@@ -31,7 +31,7 @@ namespace mio
 namespace abm
 {
 
-Person::Person(Location& location, AgeGroup age, uint32_t person_id)
+Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t person_id)
     : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
@@ -44,10 +44,10 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     , m_person_id(person_id)
     , m_cells{0}
 {
-    m_random_workgroup        = UniformDistribution<double>::get_instance()();
-    m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
-    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
-    m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
+    m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
+    m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
+    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()(rng);
+    m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
 Person Person::copy_person(Location& location)
@@ -58,10 +58,10 @@ Person Person::copy_person(Location& location)
     return copied_person;
 }
 
-void Person::interact(TimePoint t, TimeSpan dt, const Parameters& params)
+void Person::interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params)
 {
     if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
-        m_location->interact(*this, t, dt, params);
+        m_location->interact(rng, *this, t, dt, params);
     }
     m_time_at_location += dt;
 }
@@ -113,6 +113,16 @@ Location& Person::get_location()
 const Location& Person::get_location() const
 {
     return *m_location;
+}
+
+const Infection& Person::get_infection() const
+{
+    return m_infections.back();
+}
+
+Infection& Person::get_infection()
+{
+    return m_infections.back();
 }
 
 void Person::set_assigned_location(Location& location)
@@ -175,9 +185,9 @@ void Person::remove_quarantine()
     m_quarantine = false;
 }
 
-bool Person::get_tested(TimePoint t, const TestParameters& params)
+bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
-    ScalarType random = UniformDistribution<double>::get_instance()();
+    ScalarType random = UniformDistribution<double>::get_instance()(rng);
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -231,13 +241,13 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
     }
 }
 
-bool Person::apply_mask_intervention(const Location& target)
+bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location& target)
 {
     if (target.get_npi_active() == false) {
         m_wears_mask = false;
         if (get_mask_compliance(target.get_type()) > 0.) {
             // draw if the person wears a mask even if not required
-            ScalarType wear_mask = UniformDistribution<double>::get_instance()();
+            ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
             if (wear_mask < get_mask_compliance(target.get_type())) {
                 m_wears_mask = true;
             }
@@ -247,7 +257,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = true;
         if (get_mask_compliance(target.get_type()) < 0.) {
             // draw if a person refuses to wear the required mask
-            ScalarType wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
+            ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng, -1., 0.);
             if (wear_mask > get_mask_compliance(target.get_type())) {
                 m_wears_mask = false;
             }

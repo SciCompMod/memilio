@@ -17,7 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/random_number_generator.h"
 
 TEST(TestMasks, init)
 {
@@ -54,6 +56,7 @@ TEST(TestMasks, changeMask)
 
 TEST(TestMasks, maskProtection)
 {
+    auto rng = mio::RandomNumberGenerator();
     mio::abm::Parameters params(NUM_AGE_GROUPS);
 
     // set incubation period to two days so that the newly infected person is still exposed
@@ -61,7 +64,7 @@ TEST(TestMasks, maskProtection)
 
     //setup location with some chance of exposure
     auto t                  = mio::abm::TimePoint(0);
-    auto infection_location = mio::abm::Location(mio::abm::Location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS));
+    mio::abm::Location infection_location(mio::abm::Location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS));
     auto susc_person1       = mio::abm::Person(infection_location, AGE_GROUP_15_TO_34);
     auto susc_person2       = mio::abm::Person(infection_location, AGE_GROUP_15_TO_34);
     auto infected1          = make_test_person(infection_location, AGE_GROUP_15_TO_34,
@@ -81,9 +84,11 @@ TEST(TestMasks, maskProtection)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
 
-    infection_location.interact(susc_person1, t, dt, params);
+    auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person1);
+    infection_location.interact(p1_rng, susc_person1, t, dt, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
-    infection_location.interact(susc_person2, t, dt, params);
+    auto p2_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person2);
+    infection_location.interact(p2_rng, susc_person2, t, dt, params);
 
     // The person susc_person1 should have full protection against an infection, susc_person2 not
     ASSERT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);

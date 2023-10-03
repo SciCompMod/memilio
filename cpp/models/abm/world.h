@@ -28,6 +28,7 @@
 #include "abm/testing_strategy.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/populations.h"
 
@@ -203,6 +204,8 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
+    const Location& find_location(LocationType type, const Person& person) const;
+
     Location& find_location(LocationType type, const Person& person);
 
     /** 
@@ -243,6 +246,16 @@ public:
      */
     Parameters parameters;
 
+    /**
+    * Get the RandomNumberGenerator used by this world for random events.
+    * Persons use their own generators with the same key as the global one. 
+    * @return The random number generator.
+    */
+    RandomNumberGenerator& get_rng()
+    {
+        return m_rng;
+    }
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -262,10 +275,12 @@ private:
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const Parameters&),
+    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+                                           const Parameters&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
+    RandomNumberGenerator m_rng; ///< Global random number generator
 };
 
 } // namespace abm
