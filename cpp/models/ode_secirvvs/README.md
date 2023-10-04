@@ -8,7 +8,7 @@ The ratio of two variants can change over time, which affects the average transm
 
 Below is an overview of the model architecture and its compartments.
 
-![SECIRVVS_model](https://github.com/DLR-SC/memilio/assets/69154294/cf5ffd74-245c-4558-9de2-71b82cf79441)
+![SECIRVVS_model](https://github.com/DLR-SC/memilio/assets/69154294/5d1b72ec-2f45-44a4-8eba-b77533c9e6cf)
 | Parameter                   | Implementation | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\lambda_{N,i} =  \rho_{N,i} \sum_j \phi_{i,j}\frac{\xi_{I_{NS}} (I_{NS,N,j} + I_{NS,PI,j}+ I_{NS,II,j}) + \xi_{I_{Sy}} (I_{Sy,N,j} + I_{Sy,PI,j}+ I_{Sy,II,j})}{N_j^{D^\perp}}$                      |  `ext_inf_force_dummy`               | Force of infection for susceptibles located in the naive immunity level |
