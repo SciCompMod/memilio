@@ -474,15 +474,17 @@ TEST(TestMigrationRules, icu)
 
 TEST(TestMigrationRules, recover)
 {
-    auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0);
-    auto t        = mio::abm::TimePoint(12346);
-    auto dt       = mio::abm::hours(1);
-    auto p_rec    = make_test_person(hospital, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Recovered, t);
-    auto p_inf = make_test_person(hospital, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::InfectedSevere, t);
-
-    ASSERT_EQ(mio::abm::return_home_when_recovered(rng_rec, p_rec, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
+    auto rng = mio::RandomNumberGenerator();
+    mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0);
+    auto t       = mio::abm::TimePoint(12346);
+    auto dt      = mio::abm::hours(1);
+    auto p_rec   = make_test_person(hospital, AGE_GROUP_60_TO_79, mio::abm::InfectionState::Recovered, t);
+    auto rng_rec = mio::abm::Person::RandomNumberGenerator(rng, p_rec);
+    auto p_inf   = make_test_person(hospital, AGE_GROUP_60_TO_79, mio::abm::InfectionState::InfectedSevere, t);
+    auto rng_inf = mio::abm::Person::RandomNumberGenerator(rng, p_inf);
+    ASSERT_EQ(mio::abm::return_home_when_recovered(rng_rec, p_rec, t, dt, {NUM_AGE_GROUPS}),
               mio::abm::LocationType::Home);
-    ASSERT_EQ(mio::abm::return_home_when_recovered(rng_inf, p_inf, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
+    ASSERT_EQ(mio::abm::return_home_when_recovered(rng_inf, p_inf, t, dt, {NUM_AGE_GROUPS}),
               mio::abm::LocationType::Hospital);
 }
 
@@ -490,12 +492,11 @@ TEST(TestMigrationRules, dead)
 {
     auto rng = mio::RandomNumberGenerator();
 
-    mio::abm::Location icu(mio::abm::LocationType::ICU, 0, NUM_AGE_GROUPS);
+    mio::abm::Location icu(mio::abm::LocationType::ICU, 0);
     auto t      = mio::abm::TimePoint(12346);
     auto dt     = mio::abm::hours(1);
-    auto p_dead = make_test_person(icu, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t);
+    auto p_dead = make_test_person(icu, AGE_GROUP_60_TO_79, mio::abm::InfectionState::Dead, t);
+    auto p_rng  = mio::abm::Person::RandomNumberGenerator(rng, p_dead);
 
-    ASSERT_EQ(mio::abm::random_migration(p_retiree, t_morning, dt, params), mio::abm::LocationType::Home);
-    ASSERT_EQ(mio::abm::random_migration(p_rng, p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
-    ASSERT_EQ(mio::abm::random_migration(p_adult, t_night, dt, params), mio::abm::LocationType::Home);
+    ASSERT_EQ(mio::abm::get_buried(p_rng, p_dead, t, dt, {NUM_AGE_GROUPS}), mio::abm::LocationType::Cemetery);
 }

@@ -122,7 +122,7 @@ TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, A
 
 void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age,
                                               const Parameters& params, TimePoint init_date, InfectionState start_state,
-                                              std::pair<ExposureType, TimePoint> latest_protection)
+                                              std::pair<ExposureType, TimePoint> latest_exposure)
 {
     auto t = init_date;
     TimeSpan time_period{}; // time period for current infection state

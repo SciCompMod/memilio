@@ -107,7 +107,7 @@ TEST(TestLockdownRules, home_office)
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0);
     mio::abm::Location work(mio::abm::LocationType::Work, 0);
-    mio::abm::Parameters params;
+    mio::abm::Parameters params(NUM_AGE_GROUPS);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};

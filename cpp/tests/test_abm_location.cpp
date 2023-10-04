@@ -45,7 +45,7 @@ TEST(TestLocation, copyLocation)
     location.add_person(person);
     EXPECT_EQ(location.get_number_persons(), 1);
 
-    auto copied_location = location.copy_location();
+    auto copied_location = mio::abm::Location(location);
     ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
     ASSERT_EQ(copied_location.get_index(), 0);
     EXPECT_EQ(copied_location.get_number_persons(), 0);
@@ -104,8 +104,8 @@ TEST(TestLocation, CacheExposureRate)
 
     auto rng = mio::RandomNumberGenerator();
 
-    mio::abm::AgeGroup age = mio::abm::AgeGroup(
-        mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(mio::abm::AgeGroup::Count) - 1));
+    mio::AgeGroup age =
+        mio::AgeGroup(mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(NUM_AGE_GROUPS - 1)));
     mio::abm::VirusVariant variant = mio::abm::VirusVariant(
         mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(mio::abm::VirusVariant::Count) - 1));
 
@@ -231,7 +231,7 @@ TEST(TestLocation, interact)
 
     // Test should work identically work with any age.
     mio::AgeGroup age =
-        mio::AgeGroup(mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(mio::abm::AgeGroup::Count) - 1));
+        mio::AgeGroup(mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(NUM_AGE_GROUPS - 1)));
     mio::abm::VirusVariant variant = mio::abm::VirusVariant(
         mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(mio::abm::VirusVariant::Count) - 1));
 

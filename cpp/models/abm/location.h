@@ -118,8 +118,19 @@ public:
 
     /**
      * @brief Return a copy of the current Location object with an empty m_persons.
+     * @param[in] other The original #Location.
      */
-    Location copy_location();
+    Location(Location& other)
+        : m_id(other.m_id)
+        , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
+        , m_parameters(other.m_parameters)
+        , m_subpopulations(other.m_subpopulations)
+        , m_cells(other.m_cells)
+        , m_required_mask(other.m_required_mask)
+        , m_npi_active(other.m_npi_active)
+        , m_geographical_location(other.m_geographical_location)
+    {
+    }
 
     /**
      * @brief Compare two Location%s.

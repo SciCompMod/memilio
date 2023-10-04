@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/age.h"
+
 #include "abm/location_type.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
@@ -85,7 +85,7 @@ TEST(TestInfection, init)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.91}, {30, 0.81}}, days);
     };
     auto infection_w_previous_exp =
-        mio::abm::Infection(mio::abm::VirusVariant::Wildtype, age_group_test, params, mio::abm::TimePoint(0),
+        mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_test, params, mio::abm::TimePoint(0),
                             mio::abm::InfectionState::InfectedSymptoms,
                             {mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0)}, true);
     EXPECT_EQ(

@@ -449,5 +449,6 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
     world.get_testing_strategy().remove_testing_scheme(testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), true); // no more testing_schemes
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+              true); // no more testing_schemes
 }

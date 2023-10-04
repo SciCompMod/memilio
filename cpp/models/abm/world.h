@@ -79,7 +79,7 @@ public:
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
                 // Copy a location
-                m_locations.emplace_back(std::make_unique<Location>(origin_loc.copy_location()));
+                m_locations.emplace_back(std::make_unique<Location>(origin_loc));
             }
             for (auto& person : other.get_persons()) {
                 // If a person is in this location, copy this person and add it to this location.
@@ -109,8 +109,12 @@ public:
         obj.add_element("num_agegroups", parameters.get_num_groups());
         std::vector<Trip> trips;
         TripList trip_list = get_trip_list();
-        for (size_t i = 0; i < trip_list.num_trips(); i++) {
-            trips.push_back(trip_list.get_next_trip());
+        for (size_t i = 0; i < trip_list.num_trips(true); i++) {
+            trips.push_back(trip_list.get_next_trip(true));
+            trip_list.increase_index();
+        }
+        for (size_t i = 0; i < trip_list.num_trips(false); i++) {
+            trips.push_back(trip_list.get_next_trip(false));
             trip_list.increase_index();
         }
         obj.add_list("trips", trips.begin(), trips.end());

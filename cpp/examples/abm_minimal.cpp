@@ -51,14 +51,13 @@ void write_results_to_file(const mio::abm::Simulation& sim)
 int main()
 {
     // This is a minimal example with children and adults < 60 year old.
-    // We divided them into 4 different age groups, which are defined as follows:
-    size_t NUM_AGE_GROUPS         = 4;
-    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 4);
-    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 3);
+    // We divided them into 3 different age groups, which are defined as follows:
+    size_t NUM_AGE_GROUPS         = 3;
+    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 3);
     const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
     const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 1);
 
-    // Create the world with 4 age groups.
+    // Create the world with 3 age groups.
     auto world = mio::abm::World(NUM_AGE_GROUPS);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
