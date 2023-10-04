@@ -1,3 +1,6 @@
+"""Combines automatic download of public generated data via memilio-epidata,
+extrapolation into compartments via cpp code and upload to ESID database"""
+
 import os
 import datetime
 import json
@@ -6,7 +9,8 @@ import subprocess
 from datetime import date
 from zipfile import ZipFile
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+import click
+
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import getDIVIData as gdd
@@ -48,7 +52,7 @@ def compute_compartments_from_input_data(start_date, path_to_input_data, num_day
     month = start_date.month
     day = start_date.day
     subprocess.run(["./build/bin/generate_graph_from_data {} {} {} {} {}".format(
-        path_to_input_data, str(year), str(month), str(day), str(num_days_sim))], shell=True)
+        path_to_input_data, str(year), str(month), str(day), str(num_days_sim))], shell=True, check=False)
 
 
 def prepare_data_for_backend(start_date, path_to_input_data, path_to_output_data):
@@ -109,14 +113,17 @@ def import_to_backend(path_to_esid, path_to_output_data):
     os.chdir(path_to_backend)
 
     subprocess.run(
-        ["cp -f {}/rki.zip {}/rki.zip".format(path_to_output_data, path_to_backend)], shell=True)
+        ["cp -f {}/rki.zip {}/rki.zip".format(path_to_output_data, path_to_backend)], shell=True, check=False)
     subprocess.run(
-        ["USER_ID=$(id -u) GROUP_ID=$(id -g) docker-compose -f docker-compose.dev.yml up -d"], shell=True)
+        ["USER_ID=$(id -u) GROUP_ID=$(id -g) docker-compose -f docker-compose.dev.yml up -d"], shell=True, check=False)
     subprocess.run(
-        ["USER_ID=$(id -u) GROUP_ID=$(id -g) docker-compose -f docker-compose.dev.yml run --rm backend python manage.py import_rki rki.zip"], shell=True)
+        ["USER_ID=$(id -u) GROUP_ID=$(id -g) docker-compose -f docker-compose.dev.yml run --rm backend python manage.py import_rki rki.zip"], shell=True, check=False)
 
 
-def main():
+@click.command()
+@click.option('--path_to_esid', prompt='Path to ESID database', help='Path to ESID database.')
+def main(path_to_esid):
+    """Main program to execute all steps."""
     # Number of days to take into account
     num_days_sim = 10
 
@@ -124,18 +131,18 @@ def main():
     start_date = date.today() - datetime.timedelta(days=num_days_sim)
 
     # Set paths to ESID repository, folder with input data and folder with output data
-    path_to_esid = '/localdata1/wend_aa/ESID'
+    # path_to_esid = '/localdata1/wend_aa/ESID'
     path_to_input_data = './data_test'
     path_to_output_data = './data_test'
 
-    read_input_data(start_date, path_to_input_data)
+    # read_input_data(start_date, path_to_input_data)
 
-    compute_compartments_from_input_data(
-        start_date, path_to_input_data, num_days_sim)
+    # compute_compartments_from_input_data(
+    #    start_date, path_to_input_data, num_days_sim)
 
-    prepare_data_for_backend(
-        start_date, path_to_input_data, path_to_output_data)
-    import_to_backend(path_to_esid, path_to_output_data)
+    # prepare_data_for_backend(
+    #    start_date, path_to_input_data, path_to_output_data)
+    # import_to_backend(path_to_esid, path_to_output_data)
 
 
 if __name__ == "__main__":
