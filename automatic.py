@@ -110,10 +110,10 @@ def import_to_backend(path_to_esid, path_to_output_data):
     """
 
     path_to_backend = os.path.join(path_to_esid, "backend")
-    os.chdir(path_to_backend)
 
     subprocess.run(
         ["cp -f {}/rki.zip {}/rki.zip".format(path_to_output_data, path_to_backend)], shell=True, check=False)
+    os.chdir(path_to_backend)
     subprocess.run(
         ["USER_ID=$(id -u) GROUP_ID=$(id -g) docker-compose -f docker-compose.dev.yml up -d"], shell=True, check=False)
     subprocess.run(
