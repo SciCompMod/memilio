@@ -23,15 +23,14 @@
 #include "lct_secir/parameters.h"
 #include "lct_secir/infection_state.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/date.h"
 #include "test_data_dir.h"
 #include "memilio/io/io.h"
 #include <matchers.h>
 
-#include <iostream>
-
 #include <gtest/gtest.h>
 
-TEST(TestParametersIo, ReadPopulationDataRKI)
+TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 {
     ScalarType total_population = 1000.0;
     auto start_date             = mio::Date(2020, 6, 1);
@@ -53,13 +52,13 @@ TEST(TestParametersIo, ReadPopulationDataRKI)
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     // Use subcompartments with a soujourn time of approximately one day in each subcompartment.
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-        round(parameters.get<mio::lsecir::TimeExposed>());
+        (int)round(parameters.get<mio::lsecir::TimeExposed>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-        round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-        round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-        round(parameters.get<mio::lsecir::TimeInfectedSevere>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedSevere>());
     // Both realistic distributions for times corresponding to InfectedCritical of the IDE model are exponential distributions.
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] = 1;
     mio::lsecir::InfectionState infectionState(vec_subcompartments);
@@ -81,7 +80,7 @@ TEST(TestParametersIo, ReadPopulationDataRKI)
     }
 }
 
-TEST(TestParametersIo, ReadPopulationDataRKIFailure)
+TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
 {
     ScalarType total_population = 1000.0;
     auto start_date             = mio::Date(2020, 6, 6);
@@ -103,13 +102,13 @@ TEST(TestParametersIo, ReadPopulationDataRKIFailure)
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     // Use subcompartments with a soujourn time of approximately one day in each subcompartment.
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-        round(parameters.get<mio::lsecir::TimeExposed>());
+        (int)round(parameters.get<mio::lsecir::TimeExposed>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-        round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-        round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-        round(parameters.get<mio::lsecir::TimeInfectedSevere>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedSevere>());
     // Both realistic distributions for times corresponding to InfectedCritical of the IDE model are exponential distributions.
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] = 1;
     mio::lsecir::InfectionState infectionState(vec_subcompartments);

@@ -57,7 +57,6 @@ set(TESTSOURCES
     test_ide_secir.cpp
     test_lct_secir.cpp
     test_lct_initializer.cpp
-    test_lct_parameters_io.cpp
     test_state_age_function.cpp
     distributions_helpers.h
     distributions_helpers.cpp
@@ -71,6 +70,7 @@ if(MEMILIO_HAS_JSONCPP)
 set(TESTSOURCES ${TESTSOURCES}
 test_json_serializer.cpp
 test_epi_data_io.cpp
+test_lct_parameters_io.cpp
 )
 endif()
 
