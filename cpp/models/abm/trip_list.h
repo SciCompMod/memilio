@@ -43,13 +43,14 @@ struct Trip {
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
     LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    std::vector<uint32_t>
+        cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
 
     /**
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
-     * @param[in] time_new Time at which a Person changes the Location.
+     * @param[in] time_new Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
      * @param[in] destination Location where the Person migrates to.
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person migrates to.
@@ -58,10 +59,15 @@ struct Trip {
          const std::vector<uint32_t>& input_cells = {})
     {
         person_id             = id;
-        time                  = time_new;
+        time                  = mio::abm::TimePoint(time_new.time_since_midnight().seconds());
         migration_destination = destination;
         migration_origin      = origin;
         cells                 = input_cells;
+    }
+
+    Trip(uint32_t id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, destination, destination, input_cells)
+    {
     }
 };
 
@@ -78,19 +84,27 @@ public:
 
     /**
      * @brief Get the next Trip.
+     * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    const Trip& get_next_trip() const;
+    const Trip& get_next_trip(bool weekend) const;
 
     /**
      * @brief Get the time at which the next Trip will happen.
+     * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    TimePoint get_next_trip_time() const;
+    TimePoint get_next_trip_time(bool weekend) const;
 
     /**
      * @brief Add a Trip to migration data.
      * @param[in] trip The Trip to be added.
+     * @param[in] weekend If the Trip is made on a weekend day.     
      */
-    void add_trip(Trip trip);
+    void add_trip(Trip trip, bool weekend = false);
+
+    /**
+     * @brief Use the same TripList for weekend and weekday.
+     */
+    void use_weekday_trips_on_weekend();
 
     /**
      * @brief Increment the current index to select the next Trip.
@@ -101,11 +115,20 @@ public:
     }
 
     /**
-     * @brief Get the length of the TripList.
+     * @brief Reset the current index to 0.
      */
-    size_t num_trips() const
+    void reset_index()
     {
-        return m_trips.size();
+        m_current_index = 0;
+    }
+
+    /**
+     * @brief Get the length of the TripList.
+     * @param weekend Whether the Trip%s during the week or on the weekend are used.
+     */
+    size_t num_trips(bool weekend = false) const
+    {
+        return weekend ? m_trips_weekend.size() : m_trips_weekday.size();
     }
 
     /**
@@ -117,7 +140,8 @@ public:
     }
 
 private:
-    std::vector<Trip> m_trips; ///< The list of Trip%s a Person makes.
+    std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
+    std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.
     uint32_t m_current_index; ///< The index of the Trip a Person makes next.
 };
 

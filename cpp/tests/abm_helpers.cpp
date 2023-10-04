@@ -18,15 +18,19 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
+#include "abm/person.h"
+#include "memilio/utils/random_number_generator.h"
 
 mio::abm::Person make_test_person(mio::abm::Location& location, mio::abm::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
                                   mio::abm::GlobalInfectionParameters params)
 {
-    mio::abm::Person p = mio::abm::Person(location, age);
+    auto rng           = mio::RandomNumberGenerator();
+    mio::abm::Person p = mio::abm::Person(rng, location, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
+        auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
         p.add_new_infection(
-            mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
+            mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
     }
     return p;
 }
@@ -36,7 +40,8 @@ mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId l
 {
     mio::abm::Person& p = world.add_person(loc_id, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age,
+        auto rng_p = mio::abm::Person::RandomNumberGenerator(world.get_rng(), p);
+        p.add_new_infection(mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age,
                                                 world.get_global_infection_parameters(), t, infection_state));
     }
     return p;
