@@ -47,7 +47,7 @@ TEST(TestLocation, copyLocation)
 
     auto copied_location = mio::abm::Location(location);
     ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
-    ASSERT_EQ(copied_location.get_index(), 0);
+    ASSERT_EQ(copied_location.get_index(), location.get_index());
     EXPECT_EQ(copied_location.get_number_persons(), 0);
 }
 
