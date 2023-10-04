@@ -1,4 +1,4 @@
-# ODE-based / SEIR- and SECIR-type models
+# ODE-based SECIR-type model
 
 This module models and simulates the epidemic using an ODE-based SECIR-type model approach. Unlike the agent based model that uses an particular agents, this model simulates the spread of COVID19 in a population with subpopulations being in different compartments such as 'Exposed', 'Infected' or 'Recovered'.
 
@@ -11,6 +11,28 @@ The model consists of the following major classes:
 5. SECIR: implements an *age-resolved ODE-model*, based on the non-age-resolved based model as described in https://www.medrxiv.org/content/10.1101/2020.04.04.20053637v2, uses the compartments 'Susceptible (S)', 'Exposed (E)', 'InfectedNoSymptoms (I_NS)', 'InfectedSymptoms (I_Sy)', 'InfectedSevere (I_Sev)', 'InfectedCritical (I_Cr)', 'Recovered (R)' and 'Dead'. Recovered people remain immune. Uses `populations` to model different 'groups' for a particular age-range (first dimension) and an infection state (second dimension). Parameters are set as 'Parameters'; they contain contact patterns in form of a UncertainContactMatrix and an extended set of epidemiologic parameters.
 6. Parameter Space: Factory class for the 'Parameters' to set distributions to the different parameters and providing the opportunity to sample from these parameter set containing random distributions.
 7. Parameter Studies: Method to be called on a set of 'Parameters' with a given set of random distributions to sample from the distributions and run ensemble run simulations with the obtained samples.
+
+Below is an overview of the model architecture and its compartments.
+
+![secir_model](https://github.com/DLR-SC/memilio/assets/69154294/d99b257b-1cc2-447d-8e32-ba3aa8329c0c)
+| Mathematical variable                   | C++ variable name | Description |
+|---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
+| $\phi$                      |  `ContactPatterns`               | Matrix of daily contact rates / number of daily contacts between different age groups. |
+| $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in one of the susceptible compartments. |
+| $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion of nonsymptomatically infected people who are not isolated. |
+| $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of infected people with symptomps who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
+| $N_j$                         | `Nj`   | Total population of age group $j$. |
+| $D_i$                         |  `Di`  | Number of death people of age group $i$. |
+| $\frac{1}{T_{E}}$                    |  `rateE`               | Time in days an individual stays in the Exposed compartment  (Computed from `SerialInterval` and `IncubationPeriod`). |
+| $\frac{1}{T_{I_{NS}}}$                    |  `rateINS`               | Time in days an individual stays in the InfectedNoSymptoms compartment (Computed from `SerialInterval` and `IncubationPeriod`). |
+| $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Time in days an individual stays in the InfectedSymptoms compartment. |
+| $T_{I_{Sev}}$                       |  `TimeInfectedSevere`               | Time in days an individual stays in the InfectedSevere compartment. |
+| $T_{I_{Cr}}$                       |  `TimeInfectedCritical`               | Time in days an individual stays in the InfectedCritical compartment. |
+| $\mu_{I_{NS}}^{I_{Sy}}$              |   `1 - RecoveredPerInfectedNoSymptoms`              | Probability of transition from compartment InfectedNoSymptoms to InfectedSymptoms. |  
+| $\mu_{I_{Sy}}^{I_{Sev}}$              |   `SeverePerInfectedSymptoms`              | Probability of transition from compartment InfectedSymptoms to InfectedSevere. |
+| $\mu_{I_{Sev}}^{I_{Cr}}$              |   `CriticalPerSevere`              | Probability of transition from compartment InfectedSevere to InfectedCritical. |  
+| $\mu_{I_{Cr}}^{D}$              |   `DeathsPerCritical`              | Probability of dying when in compartment InfectedCritical. |   
+
 
 ## Simulation
 
