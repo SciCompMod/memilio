@@ -9,10 +9,10 @@ This model is a very simple ODE model with only four compartments and few parame
 Below is an overview of the model architecture and its compartments.
 
 ![SEIR_model](https://github.com/DLR-SC/memilio/assets/69154294/80a36be5-57d9-4012-9b5f-25eb08ec8837)
-| Parameter                   | Implementation | Description |
+| Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
-| $\phi$                      |  `ContactPatterns`               | Daily contact rate |
-| $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in one of the susceptible compartments |
+| $\phi$                      |  `ContactPatterns`               | Daily contact rate / Number of daily contacts. |
+| $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in the Susceptible compartment. |
 | $N$                         | `populations.get_total()`   | Total population. |
 | $T_{E}$                    |  `TimeExposed`               | Time in days an individual stays in the Exposed compartment. |
 | $T_{I}$                    |  `TimeInfected`               | Time in days an individual stays in the Infected compartment. |
