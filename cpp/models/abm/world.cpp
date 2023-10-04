@@ -43,7 +43,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
-    assert((size_t)age.size() < (size_t)parameters.get_num_groups());
+    assert((size_t)age.size < (size_t)parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
