@@ -57,6 +57,7 @@ set(TESTSOURCES
     test_ide_secir.cpp
     test_lct_secir.cpp
     test_lct_initializer.cpp
+    test_lct_parameters_io.cpp
     test_state_age_function.cpp
     distributions_helpers.h
     distributions_helpers.cpp

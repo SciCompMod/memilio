@@ -98,6 +98,7 @@ public:
 /**
  * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
  * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Exactly one entry per date should be provided, for example no entries per age group.
  * @return list of ConfirmedCasesNoAgeEntry.
  */
 inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> deserialize_confirmed_cases_noage(const Json::Value& jsvalue)
@@ -108,6 +109,7 @@ inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> deserialize_confirmed_cas
 /**
  * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
  * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Exactly one entry per date should be provided, for example no entries per age group
  * @return list of ConfirmedCasesNoAgeEntry.
  */
 inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> read_confirmed_cases_noage(const std::string& filename)

@@ -166,7 +166,7 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
     # define x-ticks
     datelist = np.array(pd.date_range(parameters["start_date"].date(
     ), periods=num_days, freq='D').strftime('%m-%d').tolist())
-    tick_range = (np.arange(int(num_days / 3) + 1) * 3)
+    tick_range = (np.arange(int((num_days-1) / 3) + 1) * 3)
     plt.xticks(tick_range, datelist[tick_range],
                rotation=45, fontsize=14)
     plt.xticks(np.arange(num_days), minor=True)
@@ -231,7 +231,7 @@ def plot_new_infections_real(files, datafile, legendplot, filename_plot="compare
     # define x-ticks
     datelist = np.array(pd.date_range(parameters["start_date"].date(
     ), periods=num_days, freq='D').strftime('%m-%d').tolist())
-    tick_range = (np.arange(int(num_days / 3) + 1) * 3)
+    tick_range = (np.arange(int((num_days - 1) / 3) + 1) * 3)
     plt.xticks(tick_range, datelist[tick_range],
                rotation=45, fontsize=14)
     plt.xticks(np.arange(num_days), minor=True)

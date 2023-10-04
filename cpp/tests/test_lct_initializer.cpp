@@ -30,7 +30,6 @@
 TEST(TestInitializer, compareWithPrevious)
 {
     ScalarType dt = 0.5;
-    using Vec     = mio::TimeSeries<ScalarType>::Vector;
 
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
@@ -69,7 +68,7 @@ TEST(TestInitializer, compareWithPrevious)
 
     // add time points for initialization of transitions
     mio::TimeSeries<ScalarType> init((int)mio::lsecir::InfectionTransition::Count);
-    Vec vec_init((int)mio::lsecir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType>::Vector vec_init((int)mio::lsecir::InfectionTransition::Count);
     vec_init[(int)mio::lsecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
