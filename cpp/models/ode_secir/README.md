@@ -14,7 +14,7 @@ The model consists of the following major classes:
 
 Below is an overview of the model architecture and its compartments.
 
-![secir_model](https://github.com/DLR-SC/memilio/assets/69154294/9e0ba2fb-f966-442f-86ca-b568d74b9311)
+![secir_model](https://github.com/DLR-SC/memilio/assets/69154294/d99b257b-1cc2-447d-8e32-ba3aa8329c0c)
 | Parameter                   | Implementation | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\phi$                      |  `ContactPatterns`               | Daily contact rate |
