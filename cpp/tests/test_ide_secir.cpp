@@ -155,7 +155,8 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
 }
 
 // Check results of our simulation with an example calculated by hand,
-// for calculations see Overleaf document.
+// for calculations see internal Overleaf document.
+// TODO: Add link to material when published.
 TEST(IdeSecir, checkSimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -221,7 +222,8 @@ TEST(IdeSecir, checkSimulationFunctions)
     mio::TimeSeries<ScalarType> transitions_simulated = sim.get_transitions();
 
     // Define vectors for compartments and transitions with values from example
-    // (calculated by hand, see Overleaf document).
+    // (calculated by hand, see internal Overleaf document).
+    // TODO: Add link to material when published.
     Vec secihurd0((int)mio::isecir::InfectionState::Count);
     Vec secihurd1((int)mio::isecir::InfectionState::Count);
     Vec transitions1(num_transitions);
@@ -446,7 +448,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     // Set probabilities so that all individuals go from Susceptible to InfectedCritical with probability 1,
-    // from there they move to Recovered or Dead with probability 0.5, respectively.
+    // from there they move to Recovered or Dead with probability 0.4 and 0.6, respectively.
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
@@ -530,14 +532,14 @@ TEST(IdeSecir, compareEquilibria)
     // Here the maximum support for the TransitionDistribution%s is set differently for each model
     // In both models, all TransitionDistribution%s are SmootherCosine.
 
-    // For model.
+    // For the Model model.
     // All TransitionDistribution%s have parameter=2.
     mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
-    // For model2
+    // For the Model model2.
     // All TransitionDistribution%s have parameter=2 except for InfectedCriticalToRecovered
     // which has parameter=7.
     mio::SmootherCosine smoothcos2(2.0);
