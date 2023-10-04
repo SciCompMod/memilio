@@ -162,11 +162,11 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
 TEST(IdeSecir, checkSimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
-  
-    ScalarType tmax        = 0.5;
-    ScalarType N           = 10000;
-    ScalarType Dead_before = 10;
-    ScalarType dt          = 0.5;
+
+    ScalarType tmax   = 0.5;
+    ScalarType N      = 10000;
+    ScalarType deaths = 10;
+    ScalarType dt     = 0.5;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
