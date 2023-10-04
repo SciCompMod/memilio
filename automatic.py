@@ -17,7 +17,7 @@ from memilio.epidata import getDIVIData as gdd
 from memilio.epidata import getVaccinationData as gvd
 
 
-def read_input_data(start_date, path_to_input_data):
+def read_input_data(start_date, path_to_input_data, username='', password=''):
     """! Reads data needed to compute number of individuals in compartments. 
 
     Downloads case data, population data, DIVI data and vaccination data.
@@ -28,8 +28,8 @@ def read_input_data(start_date, path_to_input_data):
     arg_dict = {'out_folder': "{}/pydata".format(path_to_input_data),
                 'moving_average': 7, 'start_date': start_date}
     arg_dict_pop = {'out_folder': "{}/pydata".format(path_to_input_data),
-                    "username": '',
-                    "password": ''}
+                    "username": username,
+                    "password": password}
 
     gcd.get_case_data(**arg_dict)
     gpd.get_population_data(**arg_dict_pop)
