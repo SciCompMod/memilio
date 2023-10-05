@@ -58,6 +58,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 {
 
     begin_step(t, dt);
+
     //log_info("ABM World interaction.");
 
 #pragma omp parallel
@@ -87,13 +88,6 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-    // #pragma omp parallel
-    //     {
-    //         LIKWID_MARKER_START("interaction");
-    //         //std::cout << "region interaction started" << std::endl;
-    //     }
-    //LIKWID_MARKER_START("interaction");
-
     PRAGMA_OMP(parallel for schedule(dynamic, 50)) //dynamic 20
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
@@ -117,13 +111,6 @@ void World::interaction(TimePoint t, TimeSpan dt)
             }
         }
     }
-
-    // #pragma omp paralell
-    //     {
-    //         LIKWID_MARKER_STOP("interaction");
-    //         //std::cout << "region interaction ended" << std::endl;
-    //     }
-    //LIKWID_MARKER_STOP("interaction");
 }
 
 void World::prepare()

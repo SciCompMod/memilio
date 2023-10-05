@@ -21,16 +21,16 @@ target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 target_compile_definitions(ode_seir_example PRIVATE "-DLIKWID_PERFMON")
 
 add_executable(ode_secir_example ode_secir.cpp)
-target_link_libraries(ode_secir_example PRIVATE memilio ode_secir likwid)
-target_compile_options(ode_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
-                                         PRIVATE "-lstdc++;-DLIKWID_PERFMON;-llikwid")
-
+target_include_directories(ode_secir_example PRIVATE ${LIKWID_INCLUDE_DIRS})
+target_link_libraries(ode_secir_example PRIVATE memilio ode_secir ${LIKWID_LIBRARIES})
+target_compile_options(ode_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_definitions(ode_secir_example PRIVATE "-DLIKWID_PERFMON")
 
 add_executable(ode_secirvvs_example ode_secirvvs.cpp)
-target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs likwid)
-target_compile_options(ode_secirvvs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
-                                            PRIVATE "-lstdc++;-DLIKWID_PERFMON;-llikwid")
-
+target_include_directories(ode_secirvvs_example PRIVATE ${LIKWID_INCLUDE_DIRS})
+target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs ${LIKWID_LIBRARIES})
+target_compile_options(ode_secirvvs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_definitions(ode_secirvvs_example PRIVATE "-DLIKWID_PERFMON")
 
 add_executable(ode_secir_ageres_example ode_secir_ageres.cpp)
 target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
@@ -66,11 +66,6 @@ target_compile_options(ide_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
-#parallelization cmake
-#add_executable(parallelization_test_example parallelization_test.cpp)
-#target_link_libraries(parallelization_test_example PRIVATE omp)
-#target_compile_options(parallelization_test_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)

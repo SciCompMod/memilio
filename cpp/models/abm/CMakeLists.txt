@@ -29,7 +29,7 @@ add_library(abm
     mask.cpp
 )
 
-#find_package(LIKWID REQUIRED)
+
 target_include_directories(abm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
