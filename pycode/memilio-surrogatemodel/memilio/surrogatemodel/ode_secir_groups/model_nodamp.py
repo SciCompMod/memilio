@@ -126,7 +126,7 @@ def plot_compartment_prediction_model(
 
 
 def network_fit(
-        path, model, modeltype, max_epochs=30, early_stop=100, plot=True):
+        path, filename,  model, modeltype, max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -140,7 +140,7 @@ def network_fit(
     if not os.path.isfile(os.path.join(path, 'data_secir_groups.pickle')):
         ValueError("no dataset found in path: " + path)
 
-    file = open(os.path.join(path, 'data_secir_groups_90days_nodamp.pickle'), 'rb')
+    file = open(os.path.join(path, filename), 'rb')
 
     data = pickle.load(file)
     data_splitted = split_data(data['inputs'], data['labels'])
@@ -245,10 +245,19 @@ def get_test_statistic(test_inputs, test_labels, model):
     # reshape [batch, time, features] -> [features, time * batch]
     relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
+
+    
+    # delete the two confirmed compartments from InfectionStates
+    compartment_array = []
+    for compartment in InfectionState.values():
+        compartment_array.append(compartment) 
+    index = [3,5]
+    compartments_cleaned= np.delete(compartment_array, index)
+
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
         index=[str(compartment).split('.')[1]
-               for compartment in InfectionState.values()],
+               for compartment in compartments_cleaned],
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -307,13 +316,13 @@ def flat_input(input):
 
 
 
-def get_input_dim_lstm(path):
+def get_input_dim_lstm(path, filename):
     """! Extract the dimensiond of the input data
 
    @param path path to the data 
 
    """
-    file = open(os.path.join(path, 'data_secir_groups_90days_nodamp.pickle'), 'rb')
+    file = open(os.path.join(path, filename), 'rb')
 
     data = pickle.load(file)
     input_dim = data['inputs'].shape[2] 
@@ -325,12 +334,14 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    max_epochs = 1500
-    label_width = 90
+    filename = 'data_secir_groups_30days_onevardamp.pickle'
+    max_epochs = 1000
+    label_width = 30
 
-    input_dim = get_input_dim_lstm(path_data)
+    input_dim = get_input_dim_lstm(path_data, filename)
 
-    model = "LSTM"
+
+    model = "Dense"
     if model == "Dense_Single":
         model = network_architectures.mlp_multi_input_single_output()
         modeltype = 'classic'
@@ -349,6 +360,6 @@ if __name__ == "__main__":
         modeltype = 'timeseries'
 
     model_output = network_fit(
-        path_data, model=model, modeltype=modeltype,
+        path_data, filename,  model=model, modeltype=modeltype,
         max_epochs=max_epochs,  plot=True)
     
