@@ -20,9 +20,10 @@
 #include "abm/mask_type.h"
 #include "abm/mask.h"
 #include "abm/location.h"
-#include "memilio/utils/random_number_generator.h"
 #include "abm/random_events.h"
-
+#include "abm/infection.h"
+#include "memilio/utils/random_number_generator.h"
+#include <mutex>
 #include <numeric>
 
 namespace mio
@@ -56,7 +57,8 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
            m_parameters.get<AerosolTransmissionRates>()[{virus}];
 }
 
-void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
+void Location::interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                        const GlobalInfectionParameters& global_params) const
 {
     // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
@@ -76,10 +78,10 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalIn
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
         VirusVariant virus =
-            random_transition(VirusVariant::Count, dt,
+            random_transition(rng, VirusVariant::Count, dt,
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
-            person.add_new_infection(Infection(virus, age_receiver, global_params, t + dt / 2,
+            person.add_new_infection(Infection(rng, virus, age_receiver, global_params, t + dt / 2,
                                                mio::abm::InfectionState::Exposed, person.get_latest_protection(),
                                                false)); // Starting time in first approximation
         }
@@ -95,7 +97,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
         cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
         for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {
-                auto inf   = p->get_infection();
+                auto& inf  = p->get_infection();
                 auto virus = inf.get_virus_variant();
                 auto age   = p->get_age();
                 /* average infectivity over the time step 
@@ -113,6 +115,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
 
 void Location::add_person(Person& p, std::vector<uint32_t> cells)
 {
+    std::lock_guard<std::mutex> lk(m_mut);
     m_persons.push_back(&p);
     for (uint32_t cell_idx : cells)
         m_cells[cell_idx].m_persons.push_back(&p);
@@ -120,13 +123,14 @@ void Location::add_person(Person& p, std::vector<uint32_t> cells)
 
 void Location::remove_person(Person& p)
 {
+    std::lock_guard<std::mutex> lk(m_mut);
     m_persons.erase(std::remove(m_persons.begin(), m_persons.end(), &p), m_persons.end());
     for (auto&& cell : m_cells) {
         cell.m_persons.erase(std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p), cell.m_persons.end());
     }
 }
 
-size_t Location::get_number_persons()
+size_t Location::get_number_persons() const
 {
     return m_persons.size();
 }
@@ -179,6 +183,7 @@ void Location::initialize_subpopulations(const TimePoint t)
         }
     }
 }
+
 const TimeSeries<ScalarType>& Location::get_subpopulations() const
 {
     return m_subpopulations;

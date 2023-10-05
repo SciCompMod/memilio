@@ -18,7 +18,9 @@
 * limitations under the License.
 */
 #include "abm/abm.h"
+#include "abm/person.h"
 #include "memilio/io/result_io.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 
@@ -42,8 +44,9 @@ void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarT
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarType infected_no_symptoms,
-                                                   ScalarType infected_symptoms, ScalarType recovered)
+mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
+                                                   ScalarType infected_no_symptoms, ScalarType infected_symptoms,
+                                                   ScalarType recovered)
 {
     ScalarType susceptible          = 1 - exposed - infected_no_symptoms - infected_symptoms - recovered;
     std::vector<ScalarType> weights = {
@@ -52,7 +55,7 @@ mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarTyp
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    auto state = mio::DiscreteDistribution<size_t>::get_instance()(rng, weights);
     return (mio::abm::InfectionState)state;
 }
 
@@ -439,10 +442,11 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto infection_state =
-            determine_infection_state(exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
+        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
+                                                         infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), t, infection_state,
                                                          person.get_latest_protection(), false));
         }
@@ -1058,6 +1062,14 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 */
 mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
+    // mio::thread_local_rng().seed(
+    //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
+    printf("Parameter Sample Seeds: ");
+    for (auto s : mio::thread_local_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
+    
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
@@ -1066,6 +1078,14 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     mio::abm::GlobalInfectionParameters infection_params;
     set_parameters(infection_params);
     auto world = mio::abm::World(infection_params);
+
+    // world.get_rng().seed(
+    //    {23144124, 1835345345, 9343763, 9123}); //set seeds, e.g., for debugging
+    printf("ABM Simulation Seeds: ");
+    for (auto s : world.get_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
 
     // Create the world object from statistical data.
     create_world_from_statistical_data(world);
@@ -1163,13 +1183,6 @@ int main(int argc, char** argv)
         printf("\tStore the results in <result_dir>.\n");
         return 0;
     }
-
-    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
-    //printf("Seeds: ");
-    //for (auto s : mio::thread_local_rng().get_seeds()) {
-    //    printf("%u, ", s);
-    //}
-    //printf("\n");
 
     auto result = run(result_dir, num_runs, save_single_runs);
     if (!result) {

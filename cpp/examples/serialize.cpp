@@ -59,8 +59,8 @@ struct Foo {
         //and create the object if all lookups were succesful.
         return mio::apply(
             io,
-            [](auto&& s) {
-                return Foo{s};
+            [](auto&& s_) {
+                return Foo{s_};
             },
             s_rslt);
     }
@@ -97,10 +97,10 @@ struct Bar {
         //e.g. it can validate values and return an error
         return mio::apply(
             io,
-            [](auto&& i, auto&& foos) -> mio::IOResult<Bar> {
+            [](auto&& i_, auto&& foos_) -> mio::IOResult<Bar> {
                 //use mio::success or mio::failure to return an IOResult
-                if (i >= 0) {
-                    return mio::success(Bar{i, std::vector<Foo>{foos.begin(), foos.end()}});
+                if (i_ >= 0) {
+                    return mio::success(Bar{i_, std::vector<Foo>{foos_.begin(), foos_.end()}});
                 }
                 return mio::failure(mio::StatusCode::OutOfRange, "i must be non-negative.");
             },

@@ -33,6 +33,7 @@
 #include "memilio/utils/memory.h"
 #include <array>
 #include <random>
+#include <mutex>
 
 namespace mio
 {
@@ -159,11 +160,13 @@ public:
 
     /** 
      * @brief A Person interacts with the population at this Location and may become infected.
+     * @param[in, out] rng Person::RandomNumberGenerator for this Person.
      * @param[in, out] person The Person that interacts with the population.
      * @param[in] dt Length of the current Simulation time step.
      * @param[in] global_params Global infection parameters.
      */
-    void interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
+    void interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                  const GlobalInfectionParameters& global_params) const;
 
     /** 
      * @brief Add a Person to the population at this Location.
@@ -231,7 +234,7 @@ public:
      * @param[in] cell_idx Cell index of interest.
      * @return Air exposure rate in the Cell.
      */
-    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(uint32_t cell_idx)
+    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(uint32_t cell_idx) const
     {
         return m_cells[cell_idx].m_cached_exposure_rate_contacts;
     }
@@ -241,7 +244,7 @@ public:
      * @param[in] cell_idx Cell index of interest.
      * @return Contact exposure rate in the cell.
      */
-    CustomIndexArray<ScalarType, VirusVariant> get_cached_exposure_rate_air(uint32_t cell_idx)
+    CustomIndexArray<ScalarType, VirusVariant> get_cached_exposure_rate_air(uint32_t cell_idx) const
     {
         return m_cells[cell_idx].m_cached_exposure_rate_air;
     }
@@ -263,7 +266,7 @@ public:
      * @param[in] cell_idx The index of the Cell.
      * @return The CellCapacity of the Cell.
      */
-    CellCapacity get_capacity(uint32_t cell_idx = 0)
+    CellCapacity get_capacity(uint32_t cell_idx = 0) const
     {
         return m_cells[cell_idx].m_capacity;
     }
@@ -301,7 +304,7 @@ public:
      * @brief Get the total number of Person%s at the Location.
      * @return Number of Person%s.
      */
-    size_t get_number_persons();
+    size_t get_number_persons() const;
 
     /**
      * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
@@ -329,7 +332,26 @@ public:
      */
     const TimeSeries<ScalarType>& get_subpopulations() const;
 
+    /**
+     * @brief Get the geographical location of the Location.
+     * @return The geographical location of the Location.
+     */
+    GeographicalLocation get_geographical_location() const
+    {
+        return m_geographical_location;
+    }
+
+    /**
+     * @brief Set the geographical location of the Location.
+     * @param[in] location The geographical location of the Location.
+     */
+    void set_geographical_location(GeographicalLocation location)
+    {
+        m_geographical_location = location;
+    }
+
 private:
+    std::mutex m_mut; ///< Mutex to protect the list of persons from concurrent modification.
     LocationId m_id; ///< Id of the Location including type and index.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
@@ -340,6 +362,7 @@ private:
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
+    GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
 };
 
 } // namespace abm
