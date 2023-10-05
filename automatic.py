@@ -32,10 +32,10 @@ def read_input_data(start_date, path_to_input_data, username='', password=''):
                     "username": username,
                     "password": password}
 
-    # progress_indicator.ProgressIndicator.disable_indicators(True)
-    # gcd.get_case_data(**arg_dict)
-    # gpd.get_population_data(**arg_dict_pop)
-    # gdd.get_divi_data(**arg_dict)
+    progress_indicator.ProgressIndicator.disable_indicators(True)
+    gcd.get_case_data(**arg_dict)
+    gpd.get_population_data(**arg_dict_pop)
+    gdd.get_divi_data(**arg_dict)
     gvd.get_vaccination_data(**arg_dict)
 
 
