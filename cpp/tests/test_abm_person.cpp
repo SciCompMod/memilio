@@ -43,7 +43,7 @@ TEST(TestPerson, copyPerson)
     auto location        = mio::abm::Location(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
     auto t               = mio::abm::TimePoint(0);
     auto person          = mio::abm::Person(rng, location, AGE_GROUP_60_TO_79);
-    auto copied_location = mio::abm::Location(location);
+    auto copied_location = location.copy_location_without_persons();
     auto copied_person   = person.copy_person(copied_location);
 
     ASSERT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);

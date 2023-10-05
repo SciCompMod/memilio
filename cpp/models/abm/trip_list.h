@@ -70,6 +70,15 @@ struct Trip {
     }
 
     /**
+     * @brief Compare two Trip%s.
+     */
+    bool operator==(const Trip& other) const
+    {
+        return (person_id == other.person_id) && (time == other.time) &&
+               (migration_destination == other.migration_destination) && (migration_origin == other.migration_origin);
+    }
+
+    /**
      * serialize this. 
      * @see mio::serialize
      */
@@ -78,6 +87,11 @@ struct Trip {
     {
         auto obj = io.create_object("Trip");
         obj.add_element("person_id", person_id);
+        obj.add_element("time", time.seconds());
+        obj.add_element("destination_index", migration_destination.index);
+        obj.add_element("destination_type", migration_destination.type);
+        obj.add_element("origin_index", migration_origin.index);
+        obj.add_element("origin_type", migration_origin.type);
     }
 
     /**
@@ -87,14 +101,22 @@ struct Trip {
     template <class IOContext>
     static IOResult<Trip> deserialize(IOContext& io)
     {
-        auto obj       = io.expect_object("Trip");
-        auto person_id = obj.expect_element("person_id", Tag<uint32_t>{});
+        auto obj               = io.expect_object("Trip");
+        auto person_id         = obj.expect_element("person_id", Tag<uint32_t>{});
+        auto time              = obj.expect_element("time", Tag<int>{});
+        auto destination_index = obj.expect_element("destination_index", Tag<uint32_t>{});
+        auto destination_type  = obj.expect_element("destination_type", Tag<uint32_t>{});
+        auto origin_index      = obj.expect_element("origin_index", Tag<uint32_t>{});
+        auto origin_type       = obj.expect_element("origin_type", Tag<uint32_t>{});
         return apply(
             io,
-            [](auto&& person_id_) {
-                return Trip{person_id_};
+            [](auto&& person_id_, auto&& time_, auto&& destination_index_, auto&& destination_type_,
+               auto&& origin_index_, auto&& origin_type_) {
+                return Trip(person_id_, TimePoint(time_),
+                            LocationId{destination_index_, LocationType(destination_type_)},
+                            LocationId{origin_index_, LocationType(origin_type_)});
             },
-            person_id);
+            person_id, time, destination_index, destination_type, origin_index, origin_type);
     }
 };
 

@@ -28,6 +28,7 @@ import memilio.simulation.abm as abm
 global NUM_AGE_GROUPS
 NUM_AGE_GROUPS = 6
 
+
 class TestAbm(unittest.TestCase):
     def test_world(self):
         t0 = abm.TimePoint(0)

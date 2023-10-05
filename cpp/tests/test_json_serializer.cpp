@@ -478,13 +478,13 @@ TEST(TestJsonSerializer, abmLocation)
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
     auto js       = mio::serialize_json(location);
     Json::Value expected_json;
-    expected_json["index"] = Json::UInt(0);
-    expected_json["type"]  = Json::UInt(mio::abm::LocationType::Home);
+    expected_json["index"] = Json::UInt64(0);
+    expected_json["type"]  = Json::UInt64(mio::abm::LocationType::Home);
     ASSERT_EQ(js.value(), expected_json);
 
-    // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location>());
-    // ASSERT_THAT(print_wrap(r), IsSuccess());
-    // EXPECT_EQ(r.value(), location);
+    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location>());
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+    EXPECT_EQ(r.value(), location);
 }
 
 TEST(TestJsonSerializer, abmPerson)
@@ -493,11 +493,12 @@ TEST(TestJsonSerializer, abmPerson)
     auto person   = make_test_person(location);
     auto js       = mio::serialize_json(person);
     Json::Value expected_json;
-    expected_json["location"]["index"] = Json::UInt(location.get_index());
-    expected_json["location"]["type"]  = Json::UInt(location.get_type());
+    expected_json["Location"]["index"] = Json::UInt(location.get_index());
+    expected_json["Location"]["type"]  = Json::UInt(location.get_type());
     expected_json["age"]               = Json::UInt(2);
     expected_json["id"]                = Json::UInt(person.get_person_id());
     ASSERT_EQ(js.value(), expected_json);
+
     // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Person>());
     // ASSERT_THAT(print_wrap(r), IsSuccess());
     // EXPECT_EQ(r.value(), person);
@@ -513,8 +514,17 @@ TEST(TestJsonSerializer, abmTrip)
     mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
     auto js = mio::serialize_json(trip);
     Json::Value expected_json;
-    expected_json["person_id"] = Json::UInt(person.get_person_id());
+    expected_json["person_id"]         = Json::UInt(person.get_person_id());
+    expected_json["time"]              = Json::Int(mio::abm::hours(8).seconds());
+    expected_json["destination_index"] = Json::UInt(work_id.index);
+    expected_json["destination_type"]  = Json::UInt(work_id.type);
+    expected_json["origin_index"]      = Json::UInt(home_id.index);
+    expected_json["origin_type"]       = Json::UInt(home_id.type);
     ASSERT_EQ(js.value(), expected_json);
+
+    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Trip>());
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+    EXPECT_EQ(r.value(), trip);
 }
 
 TEST(TestJsonSerializer, abmWorld)
@@ -529,16 +539,25 @@ TEST(TestJsonSerializer, abmWorld)
     Json::Value expected_json;
     expected_json["num_agegroups"]                   = Json::UInt(NUM_AGE_GROUPS);
     expected_json["trips"][0]["person_id"]           = Json::UInt(person.get_person_id());
+    expected_json["trips"][0]["time"]                = Json::Int(mio::abm::hours(8).seconds());
+    expected_json["trips"][0]["destination_index"]   = Json::UInt(work_id.index);
+    expected_json["trips"][0]["destination_type"]    = Json::UInt(work_id.type);
+    expected_json["trips"][0]["origin_index"]        = Json::UInt(home_id.index);
+    expected_json["trips"][0]["origin_type"]         = Json::UInt(home_id.type);
     expected_json["locations"][0]["index"]           = Json::UInt(0);
     expected_json["locations"][0]["type"]            = Json::UInt(mio::abm::LocationType::Cemetery);
     expected_json["locations"][1]["index"]           = Json::UInt(1);
     expected_json["locations"][1]["type"]            = Json::UInt(mio::abm::LocationType::Home);
     expected_json["locations"][2]["index"]           = Json::UInt(2);
     expected_json["locations"][2]["type"]            = Json::UInt(mio::abm::LocationType::Work);
-    expected_json["persons"][0]["location"]["index"] = Json::UInt(1);
-    expected_json["persons"][0]["location"]["type"]  = Json::UInt(mio::abm::LocationType::Home);
+    expected_json["persons"][0]["Location"]["index"] = Json::UInt(1);
+    expected_json["persons"][0]["Location"]["type"]  = Json::UInt(mio::abm::LocationType::Home);
     expected_json["persons"][0]["age"]               = Json::UInt(2);
     expected_json["persons"][0]["id"]                = Json::UInt(person.get_person_id());
     expected_json["use_migration_rules"]             = Json::Value(true);
     ASSERT_EQ(js.value(), expected_json);
+
+    // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::World>());
+    // ASSERT_THAT(print_wrap(r), IsSuccess());
+    // EXPECT_EQ(r.value(), world);
 }

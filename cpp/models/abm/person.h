@@ -463,7 +463,7 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Person");
-        obj.add_element("location", *m_location);
+        obj.add_element("Location", *m_location);
         obj.add_element("age", m_age);
         obj.add_element("id", m_person_id);
     }
@@ -476,13 +476,13 @@ public:
     static IOResult<Person> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Person");
-        auto loc = obj.expect_element("location", mio::Tag<Location>{});
+        auto loc = obj.expect_element("Location", mio::Tag<Location>{});
         auto age = obj.expect_element("age", Tag<uint32_t>{});
         auto id  = obj.expect_element("id", Tag<uint32_t>{});
         return apply(
             io,
             [](auto&& loc_, auto&& age_, auto&& id_) {
-                return Person(loc_, AgeGroup(age_), id_);
+                return Person{mio::RandomNumberGenerator(), loc_, AgeGroup(age_), id_};
             },
             loc, age, id);
     }

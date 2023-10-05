@@ -117,13 +117,14 @@ public:
     }
 
     /**
-     * @brief Return a copy of the current Location object with an empty m_persons.
+     * @brief Return a copy of the current Location object.
      * @param[in] other The original #Location.
      */
-    Location(Location& other)
+    Location(const Location& other)
         : m_id(other.m_id)
         , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
         , m_parameters(other.m_parameters)
+        , m_persons(other.m_persons)
         , m_subpopulations(other.m_subpopulations)
         , m_cells(other.m_cells)
         , m_required_mask(other.m_required_mask)
@@ -131,6 +132,12 @@ public:
         , m_geographical_location(other.m_geographical_location)
     {
     }
+
+    /**
+     * @brief Return a copy of the current Location object with an empty m_persons.
+     * @param[in] other The original #Location.
+     */
+    Location copy_location_without_persons();
 
     /**
      * @brief Compare two Location%s.
