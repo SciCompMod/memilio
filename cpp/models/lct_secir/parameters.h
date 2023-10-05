@@ -20,6 +20,7 @@
 #ifndef LCT_SECIR_PARAMS_H
 #define LCT_SECIR_PARAMS_H
 
+#include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -232,11 +233,46 @@ struct DeathsPerCritical {
     }
 };
 
+/**
+ * @brief the start day in the LCT SECIR model
+ * The start day defines in which season the simulation can be started
+ * If the start day is 180 and simulation takes place from t0=0 to
+ * tmax=100 the days 180 to 280 of the year are simulated
+ */
+struct StartDay {
+    using Type = ScalarType;
+    static Type get_default()
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "StartDay";
+    }
+};
+
+/**
+ * @brief the seasonality in the LCT-SECIR model
+ * the seasonality is given as (1+k*sin()) where the sine
+ * curve is below one in summer and above one in winter
+ */
+struct Seasonality {
+    using Type = ScalarType;
+    static Type get_default()
+    {
+        return Type(0.);
+    }
+    static std::string name()
+    {
+        return "Seasonality";
+    }
+};
+
 using ParametersBase =
     ParameterSet<TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, ContactPatterns, RelativeTransmissionNoSymptoms,
                  RiskOfInfectionFromSymptomatic, RecoveredPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical>;
+                 CriticalPerSevere, DeathsPerCritical, StartDay, Seasonality>;
 
 /**
  * @brief Parameters of an LCT-SECIR model.
@@ -318,6 +354,12 @@ public:
             log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
             return true;
         }
+
+        if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
+            log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
+            return true;
+        }
+
         return false;
     }
 

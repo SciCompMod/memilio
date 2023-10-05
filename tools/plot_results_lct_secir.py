@@ -43,11 +43,11 @@ parameters = {
     'TimeExposed':  3.335,
     'TimeInfectedNoSymptoms':  3.31331,
     'TimeInfectedSymptoms': 6.94547,
-    'TimeInfectedSevere':  11.634346,
-    'TimeInfectedCritical': 17.476959,
+    'TimeInfectedSevere':  7.28196,
+    'TimeInfectedCritical': 13.066,
     'RecoveredPerInfectedNoSymptoms':  0.206901,
     'start_date': pd.Timestamp('2020.10.15'),
-    'end_date': pd.Timestamp('2020.11.15'),
+    'end_date': pd.Timestamp('2020.10.15')+pd.DateOffset(days=45),
     'scaleConfirmed': 2.
 }
 color_dict = {'ODE': '#1f77b4',
@@ -200,6 +200,7 @@ def plot_new_infections_real(files, datafile, legendplot, filename_plot="compare
 
     plt.plot(range(num_days), data_rki['NewInfectionsDay'],
              linestyle=linestyle_dict['RKI'], color=color_dict['RKI'], linewidth=1.2)
+    print(data_rki['NewInfectionsDay'][0])
 
     # add simulation results to plot
     for file in range(len(files)):
@@ -219,6 +220,7 @@ def plot_new_infections_real(files, datafile, legendplot, filename_plot="compare
             raise gd.DataError(
                 "Expected a different number of compartments.")
         incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
+        print(incidence[0])
 
         # plot result
         plt.plot(dates[1:], incidence,
@@ -428,7 +430,7 @@ if __name__ == '__main__':
         __file__), "..", "data", "simulation_lct")
 
     # Defines which simulation case should be plotted
-    case = 5
+    case = 6
 
     if case == 1:
         plot_new_infections([os.path.join(data_dir, "init", "lct_init_transitions20"), os.path.join(data_dir, "init", "lct_init_mean20"), os.path.join(data_dir, "init", "lct_init_first20")],
@@ -491,6 +493,19 @@ if __name__ == '__main__':
                                  legendplot=list(["ODE", "IDE10", "IDEvar", "LCT10", "LCTvar"]),  filename_plot="compare_compartments_ide_rise2long")
 
     if case == 5:
+        compare_compartments_real([os.path.join(data_dir, "real", "real_ode_2020_6_1"), os.path.join(data_dir, "real", "real_lct_2020_6_1")],
+                                  os.path.join(os.path.dirname(
+                                      __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
+                                  legendplot=list(["RKI", "ODE", "LCT"]), deaths=True, filename_plot="compare_deaths_real_2020_6_1")
+        compare_compartments_real([os.path.join(data_dir, "real", "real_ode_2020_6_1"), os.path.join(data_dir, "real", "real_lct_2020_6_1")],
+                                  os.path.join(os.path.dirname(
+                                      __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
+                                  legendplot=list(["RKI", "ODE", "LCT"]), deaths=False, filename_plot="compare_infected_real_2020_6_1")
+        plot_new_infections_real([os.path.join(data_dir, "real", "real_ode_2020_6_1"), os.path.join(data_dir, "real", "real_lct_2020_6_1")],
+                                 os.path.join(os.path.dirname(
+                                     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
+                                 legendplot=list(["RKI", "ODE", "LCT"]), filename_plot="compare_new_infections_real_2020_6_1")
+    if case == 6:
         compare_compartments_real([os.path.join(data_dir, "real", "real_ode_2020_10_15"), os.path.join(data_dir, "real", "real_lct_2020_10_15")],
                                   os.path.join(os.path.dirname(
                                       __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),

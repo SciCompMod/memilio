@@ -70,15 +70,13 @@ void Model::eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, 
     I = y.segment(infectionState.get_firstindex(InfectionStateBase::InfectedSymptoms),
                   infectionState.get_number(InfectionStateBase::InfectedSymptoms))
             .sum();
-    if (t < 0.05 || t > 25) {
-        auto a = parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(0, 0);
-        unused(a);
-        auto b = parameters.get<ContactPatterns>().get_dampings();
-        unused(b);
-    }
+
     //S'
+    ScalarType season_val =
+        1 + parameters.get<Seasonality>() *
+                sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + t), 365.0) / 182.5 + 0.5));
     dydt[0] =
-        -y[0] / (m_N0 - y[infectionState.get_firstindex(InfectionStateBase::Dead)]) *
+        -y[0] / (m_N0 - y[infectionState.get_firstindex(InfectionStateBase::Dead)]) * season_val *
         parameters.get<TransmissionProbabilityOnContact>() *
         parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(0, 0) *
         (parameters.get<RelativeTransmissionNoSymptoms>() * C + parameters.get<RiskOfInfectionFromSymptomatic>() * I);

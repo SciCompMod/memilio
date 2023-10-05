@@ -57,6 +57,8 @@ TEST(TestInitializer, compareWithPrevious)
 
     parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
     parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1;
+    parameters_lct.get<mio::lsecir::Seasonality>()                    = 0;
+    parameters_lct.get<mio::lsecir::StartDay>()                       = 0;
     parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.1;
     parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.1;
     parameters_lct.get<mio::lsecir::CriticalPerSevere>()              = 0.1;

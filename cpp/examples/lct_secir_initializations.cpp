@@ -56,6 +56,7 @@ int main()
 
     parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
     parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.3;
+    parameters.get<mio::lsecir::Seasonality>()                      = 0;
     parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.206901;
     parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.0786429;
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.173176;

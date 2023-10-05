@@ -222,6 +222,8 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
     model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
     model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
+    model.parameters.get<mio::lsecir::Seasonality>()                    = 0.1;
+    model.parameters.get<mio::lsecir::StartDay>()                       = 0;
     model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
     model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
     model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
@@ -232,8 +234,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
 
     Eigen::VectorXd compare(num_subcompartments);
-    compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
-        1.6901;
+    compare << -16.875, -1.875, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899, 1.6901;
 
     for (size_t i = 0; i < num_subcompartments; i++) {
         ASSERT_NEAR(compare[i], dydt[i], 1e-3);
@@ -507,6 +508,12 @@ TEST(TestLCTSecir, testConstraints)
     constraint_check                                     = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
     parameters_lct.get<mio::lsecir::DeathsPerCritical>() = 0.1;
+
+    // Check Seasonality.
+    parameters_lct.get<mio::lsecir::Seasonality>() = 1;
+    constraint_check                               = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::Seasonality>() = 0.1;
 
     // Check with correct parameters.
     constraint_check = parameters_lct.check_constraints();
