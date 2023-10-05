@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef SIR_MODEL_H
-#define SIR_MODEL_H
+#ifndef ODESIR_MODEL_H
+#define ODESIR_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
@@ -66,4 +66,4 @@ public:
 } // namespace osir
 } // namespace mio
 
-#endif // SIR_MODEL_H
+#endif // ODESIR_MODEL_H
