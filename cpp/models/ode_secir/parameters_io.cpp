@@ -76,17 +76,17 @@ int get_region_id(int id)
 }
 
 IOResult<void> read_confirmed_cases_data(
-    std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_Exposed,
-    std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
-    std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
-    std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec,
-    const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
+    std::string const& path, std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
+    std::vector<std::vector<double>>& vnum_Exposed, std::vector<std::vector<double>>& vnum_InfectedNoSymptoms,
+    std::vector<std::vector<double>>& vnum_InfectedSymptoms, std::vector<std::vector<double>>& vnum_InfectedSevere,
+    std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
+    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_Exposed,
+    const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
     const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
     const std::vector<double>& scaling_factor_inf)
 {
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
@@ -223,7 +223,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
 {
-
     std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
     assert(scaling_factor_inf.size() == age_ranges.size());
 
@@ -237,6 +236,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<double>> mu_I_H{model.size()};
     std::vector<std::vector<double>> mu_H_U{model.size()};
     std::vector<std::vector<double>> mu_U_D{model.size()};
+
+    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(path));
 
     for (size_t county = 0; county < model.size(); county++) {
         for (size_t group = 0; group < age_ranges.size(); group++) {
@@ -268,7 +269,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(age_ranges.size(), 0.0));
     std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data(path, region, date, num_Exposed, num_InfectedNoSymptoms,
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(path, case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
                                                 num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
                                                 t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
@@ -317,6 +318,8 @@ IOResult<void> set_confirmed_cases_data_one_age_group(std::vector<Model>& model,
     const std::vector<double> scaling_factor_inf_age_groups(ConfirmedCasesDataEntry::age_group_names.size(),
                                                             scaling_factor_inf[0]);
 
+    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(path));
+
     for (size_t county = 0; county < model.size(); ++county) {
         for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
 
@@ -356,9 +359,9 @@ IOResult<void> set_confirmed_cases_data_one_age_group(std::vector<Model>& model,
                                              std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
 
     BOOST_OUTCOME_TRY(read_confirmed_cases_data(
-        path, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
-        num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
-        mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_age_groups));
+        path, case_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
+        num_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+        t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_age_groups));
 
     for (size_t county = 0; county < model.size(); county++) {
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
@@ -421,10 +424,15 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                 const std::vector<int>& vregion, bool one_age_group)
 {
-    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
-
-    std::vector<std::vector<double>> vnum_population(
-        vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path, !one_age_group));
+    size_t age_group_size;
+    if (one_age_group) {
+        age_group_size = PopulationDataEntry::age_group_names.size();
+    }
+    else {
+        age_group_size = ConfirmedCasesDataEntry::age_group_names.size();
+    }
+    std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_group_size, 0.0));
 
     for (auto&& entry : population_data) {
         auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {

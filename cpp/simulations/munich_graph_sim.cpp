@@ -100,7 +100,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
         node.parameters = params;
     }
     auto read = mio::osecir::read_input_data_one_age_group(nodes, start_date, node_ids, scaling_factor_infected,
-                                                           scaling_factor_icu, data_dir.string(), 90, false);
+                                                           scaling_factor_icu, data_dir.string(), 90, true);
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
         params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
@@ -247,9 +247,9 @@ int main(int argc, char** argv)
     bool save_single_runs = true;
     if (argc == 1) {
         mode       = RunMode::Save;
-        save_dir   = "../../munich_simulation/results";
-        result_dir = "../../munich_simulation/results";
-        data_dir   = "../../munich_simulation/data";
+        save_dir   = "../../../munich_simulation/results";
+        result_dir = "../../../munich_simulation/results";
+        data_dir   = "../../../munich_simulation/data";
     }
     else if (argc == 4) {
         mode       = RunMode::Load;
