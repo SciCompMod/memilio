@@ -867,12 +867,13 @@ TEST(Secir, get_reproduction_number)
 
     //Test in the case of limited test-and-trace capacity:
 
-    /*   //1. expect the same results for very small test-and trace capacity
+    //Test for small test and trace
     model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 0;
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.7417747463385571116, 1e-12);
-*/
+    mio::osecir::Simulation<> sim2(model, 0.0);
+    sim2.get_result() = time_series1;
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim2).value(), 5.1941804908632792, 1e-12);
 
-    //2. Test special domain for test-and-trace capacity/requirement:
+    // Test special domain for test-and-trace capacity/requirement:
     model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 1;
     mio::TimeSeries<ScalarType> time_series3((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_8((int)mio::osecir::InfectionState::Count * num_groups);
