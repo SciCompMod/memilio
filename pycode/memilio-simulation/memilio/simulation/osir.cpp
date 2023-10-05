@@ -59,7 +59,7 @@ PYBIND11_MODULE(_simulation_osir, m)
     pymio::iterable_enum<mio::osir::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::osir::InfectionState::Susceptible)
         .value("Infected", mio::osir::InfectionState::Infected)
-        .value("Removed", mio::osir::InfectionState::Removed);
+        .value("Removed", mio::osir::InfectionState::Recovered);
 
     pymio::bind_ParameterSet<mio::osir::ParametersBase>(m, "ParametersBase");
 

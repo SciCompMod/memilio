@@ -109,7 +109,7 @@ public:
      */
     bool apply_constraints()
     {
-        double tol_times = 1e-4;
+        double tol_times = 1e-1;
 
         int corrected = false;
         if (this->get<TimeInfected>() < tol_times) {
@@ -137,7 +137,7 @@ public:
      */
     bool check_constraints() const
     {
-        double tol_times = 1e-4;
+        double tol_times = 1e-1;
 
         if (this->get<TimeInfected>() < tol_times) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "

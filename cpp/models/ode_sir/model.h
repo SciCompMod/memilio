@@ -50,16 +50,16 @@ public:
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
     {
         auto& params     = this->parameters;
-        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        dydt[(size_t)InfectionState::Susceptible] = 
-            -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Infected] = coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]
-            - (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Removed] =
+        dydt[(size_t)InfectionState::Susceptible] =
+            -coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+        dydt[(size_t)InfectionState::Infected] =
+            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-
+        dydt[(size_t)InfectionState::Recovered] =
+            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 };
 

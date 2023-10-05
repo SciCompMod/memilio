@@ -34,7 +34,7 @@ enum class InfectionState
 {
     Susceptible,
     Infected,
-    Removed,
+    Recovered,
     Count
 };
 

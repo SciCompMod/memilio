@@ -53,11 +53,11 @@ TEST(Testsir, ComparesirWithJS)
     mio::osir::Model model;
 
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}] = 1000;
+    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
         total_population -
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}];
+        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::osir::TimeInfected>(2);
 
@@ -69,8 +69,7 @@ TEST(Testsir, ComparesirWithJS)
     auto result                              = mio::simulate<mio::osir::Model>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
-    
-    
+
     for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
         double t     = refData[static_cast<size_t>(irow)][0];
         auto rel_tol = 1e-6;
@@ -82,12 +81,11 @@ TEST(Testsir, ComparesirWithJS)
         }
         else if (t > 13.0) {
             //minor divergence after damping
-           rel_tol = 1e-2;
+            rel_tol = 1e-2;
         }
 
         ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
-        
-        
+
         for (size_t icol = 0; icol < 3; ++icol) {
             double ref    = refData[static_cast<size_t>(irow)][icol + 1];
             double actual = result[irow][icol];
@@ -95,10 +93,7 @@ TEST(Testsir, ComparesirWithJS)
             double tol = rel_tol * ref;
             ASSERT_NEAR(ref, actual, tol) << "at row " << irow;
         }
-        
     }
-    
-    
 }
 
 TEST(Testsir, checkPopulationConservation)
@@ -113,11 +108,11 @@ TEST(Testsir, checkPopulationConservation)
     mio::osir::Model model;
 
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}] = 1000;
+    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
         total_population -
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Removed)}];
+        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::osir::TimeInfected>(2);
 
@@ -155,6 +150,7 @@ TEST(Testsir, check_constraints_parameters)
 
 TEST(Testsir, apply_constraints_parameters)
 {
+    const double tol_times = 1e-1;
     mio::osir::Model model;
     model.parameters.set<mio::osir::TimeInfected>(6);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(0.04);
@@ -163,15 +159,13 @@ TEST(Testsir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
-    
-    model.parameters.set<mio::osir::TimeInfected>(1e-5);
+
+    model.parameters.set<mio::osir::TimeInfected>(-2.5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osir::TimeInfected>(), 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::osir::TimeInfected>(), tol_times);
 
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(10.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_NEAR(model.parameters.get<mio::osir::TransmissionProbabilityOnContact>(), 0.0, 1e-14);
     mio::set_log_level(mio::LogLevel::warn);
-    
-    
 }
