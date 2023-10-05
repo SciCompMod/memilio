@@ -404,29 +404,29 @@ class Simulation:
                     physical_distancing_work_other(after_xmas, min, max))
 
             # local dynamic NPIs
-            dynamic_npis = params.DynamicNPIsInfectedSymptoms
-            local_npis = []
-            # increased from [0.4, 0.6] in Nov
-            local_npis.append(contacts_at_home(0, 0.6, 0.8))
-            local_npis.append(school_closure(0, 0.2, 0.3))  # see paper
-            local_npis.append(home_office(0, 0.2, 0.3))
-            local_npis.append(social_events(0, 0.6, 0.8))
-            local_npis.append(social_events_work(0, 0.1, 0.2))
-            local_npis.append(physical_distancing_home_school(0, 0.6, 0.8))
-            local_npis.append(physical_distancing_work_other(0, 0.6, 0.8))
-            local_npis.append(senior_awareness(0, 0.0, 0.0))
+            # dynamic_npis = params.DynamicNPIsInfectedSymptoms
+            # local_npis = []
+            # # increased from [0.4, 0.6] in Nov
+            # local_npis.append(contacts_at_home(0, 0.6, 0.8))
+            # local_npis.append(school_closure(0, 0.2, 0.3))  # see paper
+            # local_npis.append(home_office(0, 0.2, 0.3))
+            # local_npis.append(social_events(0, 0.6, 0.8))
+            # local_npis.append(social_events_work(0, 0.1, 0.2))
+            # local_npis.append(physical_distancing_home_school(0, 0.6, 0.8))
+            # local_npis.append(physical_distancing_work_other(0, 0.6, 0.8))
+            # local_npis.append(senior_awareness(0, 0.0, 0.0))
 
-            dynamic_npis.interval = 3.0
-            dynamic_npis.duration = 14.0
-            dynamic_npis.base_value = 100000
-            dynamic_npis.set_threshold(200.0, local_npis)
+            # dynamic_npis.interval = 3.0
+            # dynamic_npis.duration = 14.0
+            # dynamic_npis.base_value = 100000
+            # dynamic_npis.set_threshold(200.0, local_npis)
 
             # school holidays(holiday periods are set per node, see set_nodes)
             contacts.school_holiday_damping = damping_helper(
                 0, 1.0, 1.0, lvl_h, typ_s, [loc_s])
 
     def run(self, num_runs=10):
-        mio.set_log_level(mio.LogLevel.Off)
+        mio.set_log_level(mio.LogLevel.Warning)
 
         # calculate tmax
         tmax = (
@@ -480,6 +480,8 @@ class Simulation:
                     indx_nan[0]).property.model.parameters)
             handle_result.c += 1
         handle_result.c = 0
+
+        mio.secir.write_graph(self.graph, "graph_python")
 
         study = secir.ParameterStudy(
             self.graph, 0., tmax, 0.5, num_runs)
