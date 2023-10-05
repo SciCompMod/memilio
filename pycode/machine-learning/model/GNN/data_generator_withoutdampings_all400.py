@@ -19,6 +19,18 @@ from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
                                       interpolate_simulation_result, simulate)
 
 
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    new_dataset_entries = []
+    for i in dataset_entries : 
+      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+      dataset_entries_reshaped[:, 4] = sum_inf_symp
+      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+    return new_dataset_entries
+
+
 def run_secir_groups_simulation(days, populations):
     """
     Runs the c++ secir model using mulitple age groups
@@ -116,7 +128,9 @@ def run_secir_groups_simulation(days, populations):
     # Omit first column, as the time points are not of interest here.
     dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
 
-    return dataset_entries.tolist()
+    dataset_entires_without_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    return dataset_entires_without_confirmed
+    #return dataset_entries.tolist()
 
     # # Run Simulation
     # data = np.zeros((days, len(compartments) * num_groups))
@@ -368,10 +382,10 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_nodamp_400pop_1k_30days')
+        'data_GNN_nodamp_400pop_1k_90days')
 
     input_width = 5
-    days = 35
+    days = 95
     num_runs = 1000
     number_of_populations = 400
     generate_data(num_runs, path_data, input_width,
