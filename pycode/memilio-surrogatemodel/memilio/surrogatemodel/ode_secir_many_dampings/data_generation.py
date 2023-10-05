@@ -130,7 +130,7 @@ def run_secir_groups_simulation(days, number_of_dampings, populations):
 
 
     ##### generate damping days 
-    damping_days=(random.sample(range(5,days), number_of_dampings))
+    damping_days=(random.sample(range(5,(days-1)), number_of_dampings))
     damping_days.sort()
 
     # Generate a damping matrix and assign it to the model
