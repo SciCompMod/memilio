@@ -126,7 +126,7 @@ def plot_compartment_prediction_model(
 
 
 def network_fit(
-        path, model, modeltype, max_epochs=30, early_stop=100, plot=True):
+        path, filename, model, modeltype, max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -140,7 +140,7 @@ def network_fit(
     if not os.path.isfile(os.path.join(path, 'data_secir_groups.pickle')):
         ValueError("no dataset found in path: " + path)
 
-    file = open(os.path.join(path, 'data_secir_groups_30days_onevardamp.pickle'), 'rb')
+    file = open(os.path.join(path, filename), 'rb')
 
     data = pickle.load(file)
     data_splitted = split_data(data['inputs'], data['labels'])
@@ -492,12 +492,12 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
+    filename = 'data_secir_groups_30days_onevardamp.pickle'
 
 
 
 
-
-    max_epochs = 10
+    max_epochs = 1000
     label_width = 30
 
     input_dim = get_input_dim_lstm(path_data)
@@ -521,5 +521,5 @@ if __name__ == "__main__":
         modeltype = 'timeseries'
 
     model_output = network_fit(
-        path_data, model=model, modeltype=modeltype,
+        path_data, filename, model=model, modeltype=modeltype, 
         max_epochs=max_epochs)
