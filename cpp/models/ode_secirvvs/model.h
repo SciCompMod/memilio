@@ -622,6 +622,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     F = Eigen::MatrixXd::Zero(15 * num_groups, 15 * num_groups); //Initialize matrices F and V with zeroes
     V = Eigen::MatrixXd::Zero(15 * num_groups, 15 * num_groups);
 
+    ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns>();
+
     auto icu_occupancy           = 0.0;
     auto test_and_trace_required = 0.0;
     for (auto i = AgeGroup(0); i < (mio::AgeGroup)num_groups; ++i) {
@@ -652,9 +654,9 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
     double season_val =
         (1 + params.template get<Seasonality>() *
-                 sin(3.141592653589793 * (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
-    double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                        static_cast<Eigen::Index>((size_t)j));
+                 sin(3.141592653589793 *
+                     (std::fmod((params.template get<StartDay>() + sim.get_result().get_time(t_idx)), 365.0) / 182.5 +
+                      0.5)));
 
     //Initialize F
     for (Eigen::Index l = 0; l < 3; l++) {
@@ -680,6 +682,9 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
             std::cout << transmission_probability_reduc;
 
             for (Eigen::Index j = 0; j < (Eigen::Index)num_groups; j++) {
+                double cont_freq_eff =
+                    season_val * contact_matrix.get_matrix_at(sim.get_result().get_time(t_idx))(
+                                     static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j));
             }
         }
     }

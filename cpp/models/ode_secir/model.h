@@ -304,64 +304,6 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 }
 
 /**
-*@brief Computes the reproduction number at a given index time of the Model output obtained by the Simulation.
-*@param t_idx The index time at which the reproduction number is computed.
-*@param sim The Model Simulation.
-*@returns The computed reproduction number at the provided index time.
-*/
-template <class Base>
-IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base>& sim)
-{
-    std::cout << t_idx << sim.get_result().get_value(t_idx)[0];
-    return mio::success(1.0);
-}
-
-/**
-*@brief Computes the reproduction number for all time points of the Model output obtained by the Simulation.
-*@param sim The Model Simulation.
-*@returns vector containing all reproduction numbers
-*/
-template <class Base>
-Eigen::VectorXd get_reproduction_numbers(const Simulation<Base>& sim)
-{
-    Eigen::VectorXd temp(sim.get_result().get_num_time_points());
-    for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
-        temp[i] = get_reproduction_number((size_t)i, sim).value();
-    }
-    return temp;
-}
-
-/**
-*@brief Computes the reproduction number at a given time point of the Model output obtained by the Simulation. If the particular time point is not inside the output, a linearly interpolated value is returned.
-*@param t_value The time point at which the reproduction number is computed.
-*@param sim The Model Simulation.
-*@returns The computed reproduction number at the provided time point, potentially using linear interpolation.
-*/
-template <class Base>
-IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulation<Base>& sim)
-{
-    if (t_value < sim.get_result().get_time(0) || t_value > sim.get_result().get_last_time()) {
-        return mio::failure(mio::StatusCode::OutOfRange,
-                            "Cannot interpolate reproduction number outside computed horizon of the TimeSeries");
-    }
-
-    if (t_value == sim.get_result().get_time(0)) {
-        return mio::success(get_reproduction_number((size_t)0, sim).value());
-    }
-
-    auto times = std::vector<ScalarType>(sim.get_result().get_times().begin(), sim.get_result().get_times().end());
-
-    auto time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_value));
-
-    ScalarType y1 = get_reproduction_number(static_cast<size_t>(time_late - 1), sim).value();
-    ScalarType y2 = get_reproduction_number(static_cast<size_t>(time_late), sim).value();
-
-    auto result = linear_interpolation(t_value, sim.get_result().get_time(time_late - 1),
-                                       sim.get_result().get_time(time_late), y1, y2);
-    return mio::success(static_cast<ScalarType>(result));
-}
-
-/**
  * Get migration factors.
  * Used by migration graph simulation.
  * Like infection risk, migration of infected individuals is reduced if they are well isolated.
