@@ -50,7 +50,7 @@ def run_osir_simulation():
 
     # Initial number of people in each compartment
     model.populations[Index_InfectionState(State.Infected)] = 50
-    model.populations[Index_InfectionState(State.Removed)] = 10
+    model.populations[Index_InfectionState(State.Recovered)] = 10
     model.populations.set_difference_from_total(
         (Index_InfectionState(State.Susceptible)), populations[0])
 

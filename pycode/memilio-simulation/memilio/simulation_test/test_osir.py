@@ -38,7 +38,7 @@ class Test_osir_integration(unittest.TestCase):
 
         model.populations[Index_InfectionState(State.Susceptible)] = 4800
         model.populations[Index_InfectionState(State.Infected)] = 50
-        model.populations[Index_InfectionState(State.Removed)] = 50
+        model.populations[Index_InfectionState(State.Recovered)] = 50
 
         model.parameters.ContactPatterns.baseline = np.ones((1, 1))
         model.parameters.ContactPatterns.minimum = np.zeros((1, 1))
