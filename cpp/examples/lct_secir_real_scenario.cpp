@@ -82,10 +82,11 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * The contacts are calculated using contact matrices from files in the data directory for different locations.
  * Also set Nonpharmaceutical Interventions influencing the ContactPatterns used for simulation in the timeframe from start_date to end_date.
  * 
- * @param data_dir Directory to files with minimum and baseline contact matrices.
- * @param parameters Object that the contact pattern will be added to.
- * @param start_date Start date of the simulation used for setting NPIs.
- * @param end_date End date of the simulation used for setting NPIs.
+ * @param[in] data_dir Directory to files with minimum and baseline contact matrices.
+ * @param[in] parameters Object that the contact pattern will be added to.
+ * @param[in] start_date Start date of the simulation used for setting NPIs.
+ * @param[in] end_date End date of the simulation used for setting NPIs.
+ * @param[in] lockdown_hard Proportion of counties for which a hard lockdown is implemented.
  * @returns Any io errors that happen during reading of the input files.
  */
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::Parameters& parameters,
@@ -118,7 +119,11 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
         contact_matrices[size_t(contact_location.first)].get_baseline() = Eigen::MatrixXd::Constant(1, 1, base);
         contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Constant(1, 1, min);
     }
+
     // Add NPIs to the contact matrices.
+    // Less counties are in a hard lockdown during summer.
+    lockdown_hard = lockdown_hard / 2;
+
     // Set of NPIs for June.
     auto start_npi_june = mio::Date(2020, 6, 1);
     if (start_npi_june < end_date) {
@@ -146,85 +151,17 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
                 Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_june);
         }
-
-        // Remote schooling + Pfingst holiday.
-        v = 0.5 * (1 - 2. / 16.) + 2. / 16.;
+        // Remote schooling.
+        v = 0.5;
         contact_matrices[size_t(ContactLocation::School)].add_damping(
             Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
             mio::DampingType(int(Intervention::SchoolClosure)), offset_june);
-        // School fully reopened.
-        auto school_reopen_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 13), start_date));
-        v                       = 0.0;
+        // School fully reopened, lockdown_hard has 1/4 of schools closed.
+        auto school_reopen_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 15), start_date));
+        v                       = lockdown_hard * 0.25;
         contact_matrices[size_t(ContactLocation::School)].add_damping(
             Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
             mio::DampingType(int(Intervention::SchoolClosure)), school_reopen_time);
-        // Summer break weighted by number of federal states.
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 1. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 22), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 4. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 25), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 6. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 29), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 9. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 7, 6), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 12. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 7, 16), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 14. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 7, 20), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 15. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 7, 27), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 1), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 7, 30), start_date)));
-        // End of summer break.
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 15. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 8, 1), start_date)));
-
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 11. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 8, 8), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 10. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 8, 11), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 7. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 8, 14), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 4. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 8, 26), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 2. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 8, 29), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 1. / 16.), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 9, 7), start_date)));
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, 0), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)),
-            mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 9, 12), start_date)));
     }
 
     // Set of NPIs for October.
@@ -244,33 +181,16 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
                 Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn);
         }
-        // some schools are closed in case of hard lockdown
-        v = lockdown_hard * 0.25;
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)), start_autumn);
-
-        // Schools closed because of autumn break (use values for NRW).
-        v                       = 1.;
-        auto autumn_break_begin = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 12), start_date));
-
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)), autumn_break_begin);
-
-        // School fully reopened because of ending autumn break.
-        auto autumn_break_end = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 24), start_date));
-        v                     = lockdown_hard * 0.25;
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)), autumn_break_end);
     }
 
-    //Set of NPIs for November.
-    auto start_npi_november = mio::Date(2020, 11, 1);
-    if (start_npi_november < end_date) {
+    // Set of NPIs for Autumn lockdown.
+    // More counties in hard lockdown.
+    lockdown_hard                  = lockdown_hard * 3;
+    auto start_npi_autumn_lockdown = mio::Date(2020, 10, 24);
+    if (start_npi_autumn_lockdown < end_date) {
 
-        auto start_autumn_lockdown = mio::SimulationTime(mio::get_offset_in_days(start_npi_november, start_date));
+        auto start_autumn_lockdown =
+            mio::SimulationTime(mio::get_offset_in_days(start_npi_autumn_lockdown, start_date));
         // Contact reduction at home.
         double v = 0.5;
         contact_matrices[size_t(ContactLocation::Home)].add_damping(
@@ -286,11 +206,13 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
         contact_matrices[size_t(ContactLocation::Other)].add_damping(
             Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
             mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), start_autumn_lockdown);
-        // PhysicalDistanceAndMasks in ContactLocation%s School and Home.
+        // PhysicalDistanceAndMasks in ContactLocation%s Home.
         v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.7;
         contact_matrices[size_t(ContactLocation::Home)].add_damping(
             Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
             mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
+        // PhysicalDistanceAndMasks in ContactLocation%s School.
+        v = 0.7;
         contact_matrices[size_t(ContactLocation::School)].add_damping(
             Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
             mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
@@ -306,10 +228,6 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
 
     // Set ContactPatterns in parameters.
     parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
-    for (int i = 0; i < 45; i++) {
-        std::cout << parameters.get<mio::lsecir::ContactPatterns>().get_cont_freq_mat().get_matrix_at(i)(0, 0)
-                  << std::endl;
-    }
 
     return mio::success();
 }
@@ -317,13 +235,18 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
 /**
  * @brief Performs a simulation of a real scenario with an LCT and an ODE model.
  *
- * @param path Path of the RKI file that should be used to compute initial values for simulations.
- * @param save_result Specifies if the results should be saved.
- * @param print_result Specifies if the results should be printed.
- * @returns Any io errors that happen during reading of the RKI file or files for contact matrices.
+ * @param[in] path Path of the RKI file that should be used to compute initial values for simulations.
+ * @param[in] simulation_parameters Map with parameters necessary for the simulation which can be different for diffferent start dates.
+ *        Provide the parameters "start_month", "start_day","seasonality" (parameter k for the seasonality of the models), 
+ *        "RelativeTransmissionNoSymptoms", "RiskOfInfectionFromSymptomatic", "scale_confirmed_cases" (to scale the RKI data while computing an initialization vector),
+ *        "lockdown_hard" (Proportion of counties for which a hard lockdown is implemented) and 
+ *        "scale_contacts" (scales contacts per hand to match the new infections in the RKI data).
+ * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
+ * @param[in] print_result Specifies if the results should be printed.
+ * @returns Any io errors that happen during reading of the RKI file or files for contact matrices or saving the results.
  */
 mio::IOResult<void> simulate(std::string const& path, std::map<std::string, ScalarType> simulation_parameters,
-                             bool save_result = true, bool print_result = false)
+                             std::string save_dir = "", bool print_result = false)
 {
     // Set values needed for initialization.
     ScalarType total_population = 83155031.0;
@@ -336,8 +259,8 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     parameters.get<mio::lsecir::TimeExposed>()            = 3.335;
     parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 3.31331;
     parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 6.94547;
-    parameters.get<mio::lsecir::TimeInfectedSevere>()     = 7.28196;
-    parameters.get<mio::lsecir::TimeInfectedCritical>()   = 13.066;
+    parameters.get<mio::lsecir::TimeInfectedSevere>()     = 11.634346;
+    parameters.get<mio::lsecir::TimeInfectedCritical>()   = 17.476959;
     parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() =
         0.0733271 * simulation_parameters["scale_contacts"];
     parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() =
@@ -349,7 +272,7 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.206901;
     parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.0786429;
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.173176;
-    parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.25;
+    parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.217177;
 
     auto status =
         set_contact_matrices("../../data", parameters, start_date, end_date, simulation_parameters["lockdown_hard"]);
@@ -406,12 +329,12 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
         std::cout << "Result ODE model:" << std::endl;
         mio::lsecir::print_TimeSeries(result_ode, model_ode.get_heading_CompartmentsBase());
     }
-    if (save_result) {
+    if (!save_dir.empty()) {
         // Save results.
-        std::string filename = "real_lct_2020_" + std::to_string((int)simulation_parameters["start_month"]) + "_" +
-                               std::to_string((int)simulation_parameters["start_day"]) + ".h5";
+        std::string filename = save_dir + "real_lct_2020_" + std::to_string((int)simulation_parameters["start_month"]) +
+                               "_" + std::to_string((int)simulation_parameters["start_day"]) + ".h5";
         auto save_result_status = mio::save_result({populations_lct}, {0}, 1, filename);
-        filename                = "real_ode_2020_" + std::to_string((int)simulation_parameters["start_month"]) + "_" +
+        filename = save_dir + "real_ode_2020_" + std::to_string((int)simulation_parameters["start_month"]) + "_" +
                    std::to_string((int)simulation_parameters["start_day"]) + ".h5";
         save_result_status = mio::save_result({result_ode}, {0}, 1, filename);
     }
@@ -419,7 +342,8 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
 }
 
 int main()
-{ //TODO: Check above NPIS
+{
+    std::string save_dir                                               = "../../data/simulation_lct/real/";
     std::map<std::string, ScalarType> simulation_parameters_2020_06_01 = {{"start_month", 6},
                                                                           {"start_day", 1},
                                                                           {"seasonality", 0.2},
@@ -427,19 +351,28 @@ int main()
                                                                           {"RiskOfInfectionFromSymptomatic", 0.2},
                                                                           {"scale_confirmed_cases", 1.},
                                                                           {"lockdown_hard", 0.03 * 14 / (45 * 401.)},
-                                                                          {"scale_contacts", 445. / 524}};
+                                                                          {"scale_contacts", 445. / 533.}};
 
-    std::map<std::string, ScalarType> simulation_parameters_2020_10_15 = {{"start_month", 10},
-                                                                          {"start_day", 15},
-                                                                          {"seasonality", 0.1},
+    std::map<std::string, ScalarType> simulation_parameters_2020_10_01 = {{"start_month", 10},
+                                                                          {"start_day", 1},
+                                                                          {"seasonality", 0.2},
                                                                           {"RelativeTransmissionNoSymptoms", 1},
                                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                                           {"scale_confirmed_cases", 2.},
                                                                           {"lockdown_hard", 371 * 14 / (45 * 401.)},
-                                                                          {"scale_contacts", 32085.242444 / 26827.655}};
+                                                                          {"scale_contacts", 11154.2 / 13106.}};
 
-    // Path is valid if file is executed eg in memilio/build/bin
-    auto result = simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_10_15);
+    // Paths are valid if file is executed eg in memilio/build/bin
+    auto result =
+        simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_06_01, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+
+    result =
+        simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_10_01, save_dir);
+
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

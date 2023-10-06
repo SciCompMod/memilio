@@ -47,7 +47,7 @@ enum class InfectionStateBase
 };
 
 /**
- * @brief The #InfectionTransition enum describes the possible
+ * @brief The InfectionTransition enum describes the possible
  * transitions of the infectious state of persons.
  */
 enum class InfectionTransition

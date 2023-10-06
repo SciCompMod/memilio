@@ -48,7 +48,7 @@ Simulation::Simulation(Model const& model, ScalarType t0, ScalarType dt)
 
 void print_TimeSeries(const TimeSeries<ScalarType>& result, std::string heading)
 {
-    // print result after simulation
+    // Print result after simulation.
     std::cout << "# time | " + heading << std::endl;
     for (Eigen::Index i = 0; i < result.get_num_time_points(); ++i) {
         std::cout << result.get_time(i);

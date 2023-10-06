@@ -30,6 +30,7 @@
 
 #include <gtest/gtest.h>
 
+// Check that Initialization based on synthetic RKI data match previous result.
 TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 {
     ScalarType total_population = 1000.0;
@@ -80,6 +81,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     }
 }
 
+// Check some cases where computation of initial values for an LCT model based on RKI data should fail.
 TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
 {
     ScalarType total_population = 1000.0;
@@ -115,6 +117,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
+
     // Case where start_date is later than maximal provided date in file.
     auto read_result1 = mio::lsecir::get_initial_data_from_file(
         mio::path_join(TEST_DATA_DIR, "test_cases_all_germany.json"), start_date, infectionState, std::move(parameters),

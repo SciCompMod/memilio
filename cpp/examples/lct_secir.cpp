@@ -25,12 +25,14 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
-#include "memilio/io/result_io.h"
 #include <vector>
 
 int main()
 {
-    // Set vector that specifies the number of subcompartments
+    /** Simple example to demonstrate how to simulate using an LCT SECIR model. 
+    Parameters, initial values and subcompartments are not realistic. */
+
+    // Set vector that specifies the number of subcompartments.
     std::vector<int> num_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     num_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
     num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
@@ -38,7 +40,8 @@ int main()
     mio::lsecir::InfectionState infectionState(num_subcompartments);
 
     ScalarType tmax = 20;
-    // define initial population distribution in infection states, one entry per Subcompartment
+
+    // Define initial distribution of the population in the subcompartments.
     Eigen::VectorXd init(infectionState.get_count());
     init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
     init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
@@ -56,15 +59,15 @@ int main()
     init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
     init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
 
-    // initialize model
+    // Initialize model.
     mio::lsecir::Model model(std::move(init), infectionState);
 
-    // Set Parameters of the model
+    // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 2 * 4.2 - 5.2;
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2 * (5.2 - 4.2);
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
     model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
-    // also possible to change values with setter
+    // Also possible to change values with setter.
     model.parameters.set<mio::lsecir::TimeInfectedCritical>(7.1);
 
     model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
@@ -80,18 +83,9 @@ int main()
     model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
     model.parameters.set<mio::lsecir::DeathsPerCritical>(0.3);
 
-    // perform simulation
+    // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, tmax, 0.5, model);
-    // print result with Subcompartments
-    // mio::lsecir::print_TimeSeries(result, model.get_heading_Subcompartments());
-    // calculate the distribution in infectionState without subcompartments of the result
+    // Calculate the distribution in infectionState without subcompartments of the result and print it.
     mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
-    // print it
     mio::lsecir::print_TimeSeries(populations, model.get_heading_CompartmentsBase());
-
-    bool save_result = false;
-    if (save_result) {
-        auto save_result_status_subcompartments = mio::save_result({result}, {0}, 1, "result_lct_subcompartments.h5");
-        auto save_result_status                 = mio::save_result({populations}, {0}, 1, "result_lct.h5");
-    }
 }

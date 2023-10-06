@@ -343,6 +343,9 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
 // Test some functions of the model.
 TEST_F(ModelTestLCTSecir, testModelFunctions)
 {
+    // Test calculate_populations with vector of wrong size.
+    // Deactivate temporarily log output because an error is expected.
+    mio::set_log_level(mio::LogLevel::off);
     mio::TimeSeries<ScalarType> init_wrong_size((int)mio::lsecir::InfectionStateBase::Count);
     Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones((int)mio::lsecir::InfectionStateBase::Count);
     init_wrong_size.add_time_point(-10, vec_wrong_size);
@@ -352,11 +355,15 @@ TEST_F(ModelTestLCTSecir, testModelFunctions)
     for (int i = 0; i < population.get_num_elements(); i++) {
         EXPECT_EQ(-1, population.get_last_value()[i]);
     }
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
 
+    // Test get heading functions.
     EXPECT_TRUE(model->get_heading_CompartmentsBase().compare("S | E | C | I | H | U | R | D") == 0);
     EXPECT_TRUE(model->get_heading_Subcompartments().compare(
                     "S | E1 | E2 | C1 | C2 | C3 | I | H | U1 | U2 | U3 | U4 | U5 | R | D") == 0);
 
+    // Test with other Subcompartments.
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] = 2;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]   = 2;

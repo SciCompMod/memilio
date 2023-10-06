@@ -25,20 +25,26 @@
 #include "lct_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/io/result_io.h"
+#include "memilio/io/io.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include <string>
-#include <iostream>
 
-int main()
+/** 
+* @brief Perform simulation for an LCT model with realistic parameters with different initialization methods to compare those.
+*
+* @param[in] num_subcompartments Number of subcompartments for each compartment where subcompartments make sense.
+* @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
+* @param[in] tmax End time of the simulation.
+* @param[in] print_result Specifies if the results should be printed.
+* @returns Any io errors that happen during saving the results.
+*/
+mio::IOResult<void> simulate(int num_subcompartments = 3, std::string save_dir = "", ScalarType tmax = 20,
+                             bool print_result = false)
 {
-    bool save_result  = true;
-    bool print_result = false;
-
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
-    ScalarType tmax             = 20;
 
     // Define parameters used for simulation and initialization.
     mio::lsecir::Parameters parameters;
@@ -56,13 +62,13 @@ int main()
 
     parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
     parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.3;
-    parameters.get<mio::lsecir::Seasonality>()                      = 0;
+    parameters.get<mio::lsecir::Seasonality>()                    = 0;
     parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.206901;
     parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.0786429;
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.173176;
     parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.217177;
 
-    // --- first initialization method: The initialization vector for the LCT model is calculated by defining transitions.
+    // --- First initialization method: The initialization vector for the LCT model is calculated by defining transitions.
     // Create TimeSeries with num_transitions elements.
     int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> init(num_transitions);
@@ -102,15 +108,14 @@ int main()
         (1 - parameters.get<mio::lsecir::DeathsPerCritical>());
     init_transitions = init_transitions * dt_flows;
 
-    // add initial time point to time series
+    // Add initial time point to time series.
     init.add_time_point(-200, init_transitions);
-    // add further time points until time 0
+    // Add further time points until time 0.
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt_flows, init_transitions);
     }
 
     // Set vector that specifies the number of subcompartments.
-    int num_subcompartments = 3;
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments;
@@ -137,15 +142,17 @@ int main()
     if (print_result) {
         mio::lsecir::print_TimeSeries(populations_transitions, model.get_heading_CompartmentsBase());
     }
-    if (save_result) {
-        /*auto save_result_status_subcompartments =
-            mio::save_result({result_transitions}, {0}, 1, "lct_init_transitions_subcompartments3.h5");*/
-        std::string filename    = "lct_init_transitions" + std::to_string(num_subcompartments) + ".h5";
-        auto save_result_status = mio::save_result({populations_transitions}, {0}, 1, filename);
+    if (!save_dir.empty()) {
+        std::string filename = save_dir + "lct_init_transitions_" + std::to_string(num_subcompartments);
+        if (tmax > 50) {
+            filename = filename + "_long";
+        }
+        filename                               = filename + ".h5";
+        mio::IOResult<void> save_result_status = mio::save_result({populations_transitions}, {0}, 1, filename);
     }
 
-    // --- second initialization method: The initialization vector for the LCT model is calculated by taking expected sojourn times.
-    // Because of the constant initialization, the constant value of SusceptibleToExposed is scaled by expected sojourn time
+    // --- Second initialization method: The initialization vector for the LCT model is calculated by taking expected sojourn times.
+    // Because of the constant initialization, the constant value of SusceptibleToExposed is scaled by expected sojourn time.
     Eigen::VectorXd init_vec((int)mio::lsecir::InfectionStateBase::Count);
     init_vec[(int)mio::lsecir::InfectionStateBase::Exposed] =
         SusceptibleToExposed_const * parameters.get<mio::lsecir::TimeExposed>();
@@ -175,7 +182,7 @@ int main()
         init_vec[(int)mio::lsecir::InfectionStateBase::Recovered] -
         init_vec[(int)mio::lsecir::InfectionStateBase::Dead];
 
-    // Constant initialization leads to equally distributed values accross substates
+    // Constant initialization leads to equally distributed values accross substates.
     Eigen::VectorXd init_mean(infectionState.get_count());
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
         for (int j = infectionState.get_firstindex(i);
@@ -196,12 +203,16 @@ int main()
     if (print_result) {
         mio::lsecir::print_TimeSeries(populations2, model2.get_heading_CompartmentsBase());
     }
-    if (save_result) {
-        std::string filename_mean = "lct_init_mean" + std::to_string(num_subcompartments) + ".h5";
-        auto save_result_status2  = mio::save_result({populations2}, {0}, 1, filename_mean);
+    if (!save_dir.empty()) {
+        std::string filename_mean = save_dir + "lct_init_mean_" + std::to_string(num_subcompartments);
+        if (tmax > 50) {
+            filename_mean = filename_mean + "_long";
+        }
+        filename_mean                           = filename_mean + ".h5";
+        mio::IOResult<void> save_result_status2 = mio::save_result({populations2}, {0}, 1, filename_mean);
     }
 
-    // --- third initialization method: Initial values are distributed only in the first substates.
+    // --- Third initialization method: Initial values are distributed only in the first substates.
     Eigen::VectorXd init_first = Eigen::VectorXd::Zero(infectionState.get_count());
     for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
         init_first[infectionState.get_firstindex(i)] = init_vec[i];
@@ -219,8 +230,31 @@ int main()
     if (print_result) {
         mio::lsecir::print_TimeSeries(populations3, model3.get_heading_CompartmentsBase());
     }
-    if (save_result) {
-        std::string filename_first = "lct_init_first" + std::to_string(num_subcompartments) + ".h5";
-        auto save_result_status3   = mio::save_result({populations3}, {0}, 1, filename_first);
+    if (!save_dir.empty()) {
+        std::string filename_first = save_dir + "lct_init_first_" + std::to_string(num_subcompartments);
+        if (tmax > 50) {
+            filename_first = filename_first + "_long";
+        }
+        filename_first                          = filename_first + ".h5";
+        mio::IOResult<void> save_result_status3 = mio::save_result({populations3}, {0}, 1, filename_first);
     }
+    return mio::success();
+}
+
+int main()
+{ // Path is valid if file is executed eg in memilio/build/bin
+    std::string save_dir = "../../data/simulation_lct/init/";
+    auto result          = simulate(20, save_dir, 100);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    for (int i : {3, 10, 20}) {
+        result = simulate(i, save_dir, 20);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
+    }
+    return 0;
 }

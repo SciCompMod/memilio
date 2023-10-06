@@ -22,22 +22,23 @@
 
 int main()
 {
-    /** With this file the parameters for a ODE-SECIR model without age distribution can be calculated to match those specified in the first published paper
+    /** With this file parameters without age distribution can be calculated to match those specified in the first published paper
      (https://doi.org/10.1016/j.mbs.2021.108648). 
      
-    For this, the parameters from the paper are used first to derive just one transitiontime if 2 are specified, eg T_C=\mu_C^R*T_C^R+(1-\mu_C^R)*T_C^I.
+    For ODE or LCT models, the parameters from the paper are used first to derive just one transitiontime if 2 are specified, eg T_C=\mu_C^R*T_C^R+(1-\mu_C^R)*T_C^I.
+    For an IDE mdel, this step is omitted.
     For each age group, average values are calculated if lower and upper bounds are given. 
     For this we assume a uniform distribution so that T=(T_min+T_max)/2.
     Finally we calculate a weighted average time across the age groups.
     */
     bool printResult = true;
 
-    // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020
+    // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
     const double age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
     const int total                = 83155031.0;
     const int numagegroups         = 6;
 
-    // transmission parameters
+    // Transmission parameters.
     const double transmissionProbabilityOnContactMin[] = {0.02, 0.05, 0.05, 0.05, 0.08, 0.15};
     const double transmissionProbabilityOnContactMax[] = {0.04, 0.07, 0.07, 0.07, 0.10, 0.20};
 
@@ -70,7 +71,7 @@ int main()
         std::cout << "timeExposed: " << timeExposed << std::endl;
     }
 
-    // Calculate parameters for I first because a value of I is needed for C
+    // Calculate parameters for I first because a value of I is needed for C.
     // I
     const double timeInfectedSymptomstoRecoveredMin        = 5.6;
     const double timeInfectedSymptomstoRecoveredMax        = 8.4;
@@ -97,7 +98,7 @@ int main()
         severePerInfectedSymptoms += (age_group_sizes[i] / total) * severePerInfectedSymptomsdummy;
     }
 
-    // for IDE model
+    // Calculation for an IDE model.
     const double timeInfectedSymptomstoRecovered =
         0.5 * (timeInfectedSymptomstoRecoveredMin + timeInfectedSymptomstoRecoveredMax);
     double timeInfectedSymptomstoInfectedSevere = 0;

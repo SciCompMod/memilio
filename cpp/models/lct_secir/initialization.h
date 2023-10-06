@@ -22,8 +22,6 @@
 #define LCTSECIR_INITIALIZATION_H
 
 #include "memilio/config.h"
-#include "memilio/epidemiology/state_age_function.h"
-#include "boost/math/special_functions/factorials.hpp"
 #include "lct_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
@@ -64,6 +62,7 @@ public:
      *
      * @param[in] total_population The total size of the considered population.
      * @param[in] deaths Number of deceased people from the disease at time 0.
+     * @param[in] total_confirmed_cases Total number of confirmed cases at time 0.
      * @return Vector with a possible initialization for an LCT model computed out of the flows. 
      *      A subcompartment is set to -1 if calculation was not possible.
      */

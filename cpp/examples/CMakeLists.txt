@@ -59,7 +59,10 @@ target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(compute_parameters compute_parameters.cpp)
-target_link_libraries(compute_parameters PRIVATE memilio )
+target_link_libraries(compute_parameters PRIVATE memilio)
+
+add_executable(lct_secir_example lct_secir.cpp)
+target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 
 
 if(MEMILIO_HAS_JSONCPP)
@@ -94,11 +97,6 @@ if(MEMILIO_HAS_HDF5)
 endif()
 
 if(MEMILIO_HAS_HDF5)
-  add_executable(lct_secir_example lct_secir.cpp)
-  target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
-endif()
-
-if(MEMILIO_HAS_HDF5)
   add_executable(lct_secir_fictional_scenario lct_secir_fictional_scenario.cpp)
   target_link_libraries(lct_secir_fictional_scenario PRIVATE memilio lct_secir ide_secir)
 endif()
@@ -111,9 +109,4 @@ endif()
 if(MEMILIO_HAS_HDF5)
   add_executable(lct_secir_initializations lct_secir_initializations.cpp)
   target_link_libraries(lct_secir_initializations PRIVATE memilio lct_secir ide_secir)
-endif()
-
-if(MEMILIO_HAS_HDF5)
-  add_executable(lct_secir_compare lct_secir_compare.cpp)
-  target_link_libraries(lct_secir_compare PRIVATE memilio lct_secir ode_secir ide_secir)
 endif()

@@ -32,25 +32,37 @@
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/io/result_io.h"
+#include "memilio/io/io.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include <math.h>
 #include <string>
 #include <iostream>
 
-int main()
+/** 
+* @brief Perform a fictive simulation with realistic parameters and contacts, such that the reproduction number 
+*   is approximately 1 at the beginning and rising or dropping at simulationtime 2.
+*   
+*   This scenario should enable a comparison of the qualitative behavior of different models.
+*   
+* @param[in] R0 Define R0 from simulationtime 2 on. Please use a number > 0.
+* @param[in] num_subcompartments Number of subcompartments for each compartment where subcompartments make sense. 
+*        Number is also used for some distributions of the IDE model.
+*        Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
+* @param[in] simulate_lct Defines if a simulation with an LCT model is done.
+* @param[in] simulate_ide Defines if a simulation with an IDE model is done.
+* @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
+* @param[in] tmax End time of the simulation.
+* @param[in] print_result Specifies if the results should be printed.
+* @returns Any io errors that happen during saving the results.
+*/
+mio::IOResult<void> simulate(ScalarType R0, int num_subcompartments = 3, bool simulate_lct = true,
+                             bool simulate_ide = true, std::string save_dir = "", ScalarType tmax = 10,
+                             bool print_result = false)
 {
-    bool save_result  = true;
-    bool print_result = false;
-    bool simulate_ide = false;
-    bool simulate_lct = true;
-    // Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
-    int num_subcompartments = 3;
 
     ScalarType dt_flows         = 0.1;
     ScalarType total_population = 83155031.0;
-    ScalarType tmax             = 10;
 
     // Define parameters used for simulation and initialization.
     mio::lsecir::Parameters parameters_lct;
@@ -62,17 +74,17 @@ int main()
     parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    if (false) {
+    if (R0 <= 1.) {
         // Perform simulation with dropping R0.
         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
         contact_matrix[0].add_damping(0., mio::SimulationTime(1.9));
-        contact_matrix[0].add_damping(0.5, mio::SimulationTime(2.));
+        contact_matrix[0].add_damping(R0, mio::SimulationTime(2.));
     }
     else {
         // Perform simulation with rising R0.
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 4 * 2.7463));
-        contact_matrix[0].add_damping(0.75, mio::SimulationTime(-1.));
-        contact_matrix[0].add_damping(0.75, mio::SimulationTime(1.9));
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, R0 * 2.7463));
+        contact_matrix[0].add_damping(1 - 1. / R0, mio::SimulationTime(-1.));
+        contact_matrix[0].add_damping(1 - 1. / R0, mio::SimulationTime(1.9));
         contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
     }
 
@@ -162,7 +174,7 @@ int main()
         // Get initialization vector for LCT model with num_subcompartments subcompartments.
         mio::TimeSeries<ScalarType> init_copy(init);
         mio::lsecir::Initializer initializer(std::move(init_copy), infectionState, std::move(parameters_lct));
-        auto init_compartments =
+        Eigen::VectorXd init_compartments =
             initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
         // Initialize model and perform simulation.
@@ -178,17 +190,21 @@ int main()
             std::cout << "Result LCT model:" << std::endl;
             mio::lsecir::print_TimeSeries(populations, model.get_heading_CompartmentsBase());
         }
-        if (save_result) {
-            /*auto save_result_status_subcompartments =
-                mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_3.h5");*/
-            std::string filename    = "fictional_rise_lct_4_" + std::to_string(num_subcompartments) + ".h5";
-            auto save_result_status = mio::save_result({populations}, {0}, 1, filename);
+        if (!save_dir.empty()) {
+            std::string R0string = std::to_string(R0);
+            std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
+                                   std::to_string(num_subcompartments);
+            if (tmax > 50) {
+                filename = filename + "_long";
+            }
+            filename                               = filename + ".h5";
+            mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
         }
     }
 
     //--------- IDE model ------------
-    // Initialize model.
     if (simulate_ide) {
+        // Initialize model.
         mio::isecir::Model model_ide(std::move(init), total_population, deaths, total_confirmed_cases);
 
         // Set working parameters.
@@ -276,7 +292,7 @@ int main()
         model_ide.set_tol_for_support_max(1e-6);
         model_ide.check_constraints(dt_flows);
 
-        // Carry out simulation.
+        // Simulate.
         mio::isecir::Simulation sim(model_ide, 0, dt_flows);
         sim.advance(tmax);
 
@@ -284,9 +300,94 @@ int main()
             std::cout << "\nResult IDE model:" << std::endl;
             sim.print_compartments();
         }
-        if (save_result) {
-            std::string filename_ide = "fictional_rise_ide_4_" + std::to_string(num_subcompartments) + ".h5";
-            auto save_result_status  = mio::save_result({sim.get_result()}, {0}, 1, filename_ide);
+        if (!save_dir.empty()) {
+            std::string R0string     = std::to_string(R0);
+            std::string filename_ide = save_dir + "fictional_ide_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
+                                       std::to_string(num_subcompartments);
+            if (tmax > 50) {
+                filename_ide = filename_ide + "_long";
+            }
+            filename_ide                           = filename_ide + ".h5";
+            mio::IOResult<void> save_result_status = mio::save_result({sim.get_result()}, {0}, 1, filename_ide);
         }
     }
+    return mio::success();
+}
+
+int main()
+{
+    // First case: drop R0 to 0.5.
+    // Paths are valid if file is executed eg in memilio/build/bin
+    std::string save_dir = "../../data/simulation_lct/dropR0/";
+    auto result          = simulate(0.5, 0, true, true, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    result = simulate(0.5, 10, true, true, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    for (int i : {1, 3, 20}) {
+        result = simulate(0.5, i, true, false, save_dir);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
+    }
+
+    // Second case: Rise R0 to 2 or 4.
+    save_dir = "../../data/simulation_lct/riseR0short/";
+    for (int j : {2, 4}) {
+        for (int i : {0, 10}) {
+            result = simulate(j, i, true, true, save_dir);
+            if (!result) {
+                printf("%s\n", result.error().formatted_message().c_str());
+                return -1;
+            }
+        }
+    }
+    for (int j : {2, 4}) {
+        for (int i : {1, 3, 20}) {
+            result = simulate(j, i, true, false, save_dir);
+            if (!result) {
+                printf("%s\n", result.error().formatted_message().c_str());
+                return -1;
+            }
+        }
+    }
+    // Third case: Rise R0 to 2 or 4 long term.
+    save_dir = "../../data/simulation_lct/riseR0long/";
+
+    for (int i : {0, 10}) {
+        result = simulate(2, i, true, true, save_dir, 150);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
+    }
+    for (int i : {1, 3, 20}) {
+        result = simulate(2, i, true, false, save_dir, 150);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
+    }
+
+    for (int i : {0, 10}) {
+        result = simulate(4, i, true, true, save_dir, 75);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
+    }
+    for (int i : {1, 3, 20}) {
+        result = simulate(4, i, true, false, save_dir, 75);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
+    }
+    return 0;
 }

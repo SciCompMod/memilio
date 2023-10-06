@@ -51,7 +51,8 @@ struct TimeExposed {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedNoSymptoms before developing Symptoms or recover in the SECIR model in day unit.
+ * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
+ *  Symptoms or recover in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
     using Type = ScalarType;
@@ -66,7 +67,8 @@ struct TimeInfectedNoSymptoms {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedSymptoms before going to Hospital or recover in the SECIR model in day unit.
+ * @brief Average time spent in the TimeInfectedSymptoms before going to Hospital 
+ *  or recover in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
     using Type = ScalarType;
@@ -81,7 +83,8 @@ struct TimeInfectedSymptoms {
 };
 
 /**
- * @brief Average time being in the Hospital before treated by ICU or recover in the SECIR model in day unit.
+ * @brief Average time being in the Hospital before treated by ICU or recover in the 
+ *  SECIR model in day unit.
  */
 struct TimeInfectedSevere {
     using Type = ScalarType;
@@ -234,10 +237,10 @@ struct DeathsPerCritical {
 };
 
 /**
- * @brief the start day in the LCT SECIR model
- * The start day defines in which season the simulation can be started
+ * @brief The start day in the LCT SECIR model.
+ * The start day defines in which season the simulation is started.
  * If the start day is 180 and simulation takes place from t0=0 to
- * tmax=100 the days 180 to 280 of the year are simulated
+ * tmax=100 the days 180 to 280 of the year are simulated.
  */
 struct StartDay {
     using Type = ScalarType;
@@ -252,9 +255,9 @@ struct StartDay {
 };
 
 /**
- * @brief the seasonality in the LCT-SECIR model
- * the seasonality is given as (1+k*sin()) where the sine
- * curve is below one in summer and above one in winter
+ * @brief The seasonality in the LCT-SECIR model.
+ * The seasonality is given as (1+k*sin()) where the sine
+ * curve is below one in summer and above one in winter.
  */
 struct Seasonality {
     using Type = ScalarType;

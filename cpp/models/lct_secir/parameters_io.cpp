@@ -58,8 +58,6 @@ IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Da
     }
     // Compute initial values for all subcompartments.
     Eigen::VectorXd init = Eigen::VectorXd::Zero(infectionState.get_count());
-    // TODO: was soll die 6 da?
-    //auto days_surplus = std::min(get_offset_in_days(max_date, date) - 6, 0);
     // Define variables for parameters that are often needed.
     ScalarType timeExposed            = parameters.get<TimeExposed>();
     ScalarType timeInfectedNoSymptoms = parameters.get<TimeInfectedNoSymptoms>();
