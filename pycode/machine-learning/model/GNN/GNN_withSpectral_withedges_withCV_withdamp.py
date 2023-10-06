@@ -215,7 +215,7 @@ def evaluate(loader):
     while step < loader.steps_per_epoch:
         step += 1
         inputs, target = loader.__next__()
-        pred = model(inputs, training=False)
+        pred = model.predict(inputs)
         outs = (
             loss_fn(target, pred),
             tf.reduce_mean(mean_absolute_percentage_error(target, pred)),
@@ -231,7 +231,7 @@ n_days = int(new_labels.shape[2]/48)
 def test_evaluation(loader):
 
     inputs, target = loader.__next__()
-    pred = model(inputs, training=False)
+    pred = model.predict(inputs)
 
     mean_per_batch = []
 
