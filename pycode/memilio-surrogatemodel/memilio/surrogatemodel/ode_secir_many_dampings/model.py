@@ -19,6 +19,7 @@
 #############################################################################
 import os
 import pickle
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -536,14 +537,14 @@ if __name__ == "__main__":
         os.path.dirname(os.path.realpath(path)))), 'data')
     file_name = 'data_secir_groups_30days_10k_3damp.pickle'
     
-    max_epochs = 5
+    max_epochs = 1000
     label_width = 30
 
     input_dim_lstm, output_dim_lstm = get_dim_lstm(path_data,file_name)
     input_dim_classic, output_dim_classic = get_dim_classic(path_data,file_name)
 
 
-    model = "cnn_lstm_2"
+    model = "CNN"
     if model == "Dense":
         model = network_architectures.mlp_model(input_dim_classic, output_dim_classic)
         modeltype = 'classic'
@@ -561,6 +562,13 @@ if __name__ == "__main__":
         model = network_architectures.cnn_lstm_hybrid_2(input_dim_lstm, output_dim_lstm )
         modeltype = 'timeseries'
 
+
+
+    start = time.perf_counter()
     model_output = network_fit(
         path_data, file_name, model=model, modeltype=modeltype,
         max_epochs=max_epochs, plot= True)
+    
+    elapsed = time.perf_counter() - start
+    print("Time for training, testing,  prediction and plotting:: {:.4f} minutes".format(elapsed/60))
+ 
