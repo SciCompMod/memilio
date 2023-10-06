@@ -128,7 +128,7 @@ class MyDataset(spektral.data.dataset.Dataset):
 # data = MyDataset()
 data = MyDataset(transforms=NormalizeAdj())
 batch_size = 32
-epochs = 1000
+epochs = 2
 es_patience = 100  # Patience for early stopping
 
 shape_node_features = node_features.shape[2]
