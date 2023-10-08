@@ -34,7 +34,7 @@
 #include <string>
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
-// Test confirms that default construction works
+// Test confirms that default construction of an LCT model works.
 TEST(TestLCTSecir, simulateDefault)
 {
     ScalarType t0   = 0;
@@ -64,13 +64,15 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     ScalarType tmax = 5;
     ScalarType dt   = 0.1;
 
+    // Initialization vector for both models.
     Eigen::VectorXd init = Eigen::VectorXd::Constant((int)mio::lsecir::InfectionStateBase::Count, 15);
     init[0]              = 200;
     init[3]              = 50;
     init[5]              = 30;
 
+    // Define LCT model.
     mio::lsecir::Model model_lct(init);
-    // Set Parameters of the model
+    // Set Parameters.
     model_lct.parameters.get<mio::lsecir::TimeExposed>()            = 2 * 4.2 - 5.2;
     model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2 * (5.2 - 4.2);
     model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
@@ -85,19 +87,21 @@ TEST(TestLCTSecir, compareWithOdeSecir)
 
     model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
     model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
+    model_lct.parameters.get<mio::lsecir::StartDay>()                       = 50;
+    model_lct.parameters.get<mio::lsecir::Seasonality>()                    = 0.1;
     model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
     model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
     model_lct.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
     model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
 
+    // Simulate.
     mio::TimeSeries<ScalarType> result_lct = mio::lsecir::simulate(
         t0, tmax, dt, model_lct,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
-    // Initialize ODE model with one single age group
+    // Initialize ODE model with one age group.
     mio::osecir::Model model_ode(1);
-
-    // Set population
+    // Set initial distribution of the population.
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::Exposed)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
@@ -117,17 +121,17 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     model_ode.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                     init.sum());
 
-    // set parameters fitting to these of the lct model
-    // no restrictions by additional parameters
-    model_ode.parameters.set<mio::osecir::StartDay>(0);
-    model_ode.parameters.set<mio::osecir::Seasonality>(0);
+    // Set parameters according to the parameters of the LCT model.
+    // No restrictions by additional parameters.
     model_ode.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<double>::max();
     model_ode.parameters.get<mio::osecir::ICUCapacity>()          = std::numeric_limits<double>::max();
 
+    model_ode.parameters.set<mio::osecir::StartDay>(50);
+    model_ode.parameters.set<mio::osecir::Seasonality>(0.1);
     model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] =
-        5.2; // TimeExposed = 2 * SerialInterval - IncubationTime
+        5.2; // TimeExposed = 2 * SerialInterval - IncubationTime.
     model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] =
-        4.2; // TimeInfectedNoSymptoms = 2* (IncubationTime - SerialInterval)
+        4.2; // TimeInfectedNoSymptoms = 2* (IncubationTime - SerialInterval).
     model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = 5.8;
     model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]   = 9.5;
     model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 7.1;
@@ -144,10 +148,12 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                = 0.25;
     model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]                = 0.3;
 
+    // Simulate.
     mio::TimeSeries<double> result_ode =
         simulate(t0, tmax, dt, model_ode,
                  std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
+    // Simulation results should be equal.
     ASSERT_EQ(result_lct.get_num_time_points(), result_ode.get_num_time_points());
     for (int i = 0; i < 4; ++i) {
         ASSERT_NEAR(result_lct.get_time(i), result_ode.get_time(i), 1e-5);
@@ -173,12 +179,12 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     }
 }
 
-// test if the right hand side of the model is working
+// Test if the function eval_right_hand_side() is working using a hand calculated result.
 TEST(TestLCTSecir, testEvalRightHandSide)
-{ // Setup model
-
+{
+    // Define model.
     /* Number of subcompartments, chose more than one subcompartment for all compartments except S, R, D
-    so that the function is correct for all selections */
+    so that the function is correct for all selections. */
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
@@ -187,7 +193,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 2;
     mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
 
-    // define initial population distribution in infection states, one entry per subcompartment
+    // Define initial population distribution in infection states, one entry per subcompartment.
     Eigen::VectorXd init(InfState.get_count());
     init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
     init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
@@ -204,10 +210,9 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
     init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
 
-    // initialize model
     mio::lsecir::Model model(std::move(init), InfState);
 
-    // Set parameters of the model
+    // Set parameters.
     model.parameters.set<mio::lsecir::TimeExposed>(2 * 4.2 - 5.2);
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2 * (5.2 - 4.2);
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
@@ -222,39 +227,40 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
     model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
     model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
-    model.parameters.get<mio::lsecir::Seasonality>()                    = 0.1;
+    model.parameters.get<mio::lsecir::Seasonality>()                    = 0.;
     model.parameters.get<mio::lsecir::StartDay>()                       = 0;
     model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
     model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
     model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
 
-    // compare the result of eval_right_hand_side with a hand calculated result
+    // Compare the result of eval_right_hand_side() with a hand calculated result.
     size_t num_subcompartments = model.infectionState.get_count();
     Eigen::VectorXd dydt(num_subcompartments);
     model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
 
     Eigen::VectorXd compare(num_subcompartments);
-    compare << -16.875, -1.875, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899, 1.6901;
+    compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
+        1.6901;
 
     for (size_t i = 0; i < num_subcompartments; i++) {
         ASSERT_NEAR(compare[i], dydt[i], 1e-3);
     }
 }
 
-// SetUp for comparing with previous run
+// Model setup to compare result with a previous output.
 class ModelTestLCTSecir : public testing::Test
 {
 protected:
     virtual void SetUp()
     {
-        // Number of subcompartments
+        // Define number of subcompartments.
         std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
         SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
         SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
         SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
         mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
 
-        // define initial population distribution in infection states, one entry per Subcompartment
+        // Define initial population distribution in infection states, one entry per Subcompartment.
         Eigen::VectorXd init(InfState.get_count());
         init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
         init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
@@ -272,16 +278,13 @@ protected:
         init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
         init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
 
-        // initialize model
-        model = new mio::lsecir::Model(std::move(init), InfState);
-
-        // Set Parameters of the model
-        model->parameters.get<mio::lsecir::TimeExposed>()            = 2 * 4.2 - 5.2;
-        model->parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2 * (5.2 - 4.2);
-        model->parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
-        model->parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
-        model->parameters.get<mio::lsecir::TimeInfectedCritical>()   = 7.1;
-
+        // Initialize model and set parameters.
+        model                                             = new mio::lsecir::Model(std::move(init), InfState);
+        model->parameters.get<mio::lsecir::TimeExposed>() = 2 * 4.2 - 5.2;
+        model->parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 2 * (5.2 - 4.2);
+        model->parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 5.8;
+        model->parameters.get<mio::lsecir::TimeInfectedSevere>()               = 9.5;
+        model->parameters.get<mio::lsecir::TimeInfectedCritical>()             = 7.1;
         model->parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
 
         mio::ContactMatrixGroup& contact_matrix = model->parameters.get<mio::lsecir::ContactPatterns>();
@@ -305,7 +308,7 @@ public:
     mio::lsecir::Model* model = nullptr;
 };
 
-// Test compares a simulation with the result of a previous run stored in a .csv file
+// Test compares a simulation with the result of a previous run stored in a .csv file.
 TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
 {
     ScalarType tmax                    = 3;
@@ -313,7 +316,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
         0, tmax, 0.5, *model,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
-    // compare result of subcompartments
+    // Compare subcompartments.
     auto compare = load_test_data_csv<ScalarType>("lct-secir-subcompartments-compare.csv");
 
     ASSERT_EQ(compare.size(), static_cast<size_t>(result.get_num_time_points()));
@@ -325,7 +328,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
         }
     }
 
-    // compare results of base compartments
+    // Compare base compartments.
     mio::TimeSeries<ScalarType> population = model->calculate_populations(result);
     auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-compartments-compare.csv");
 
@@ -340,10 +343,10 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     }
 }
 
-// Test some functions of the model.
+// Test some additional functions and exceptions of the model.
 TEST_F(ModelTestLCTSecir, testModelFunctions)
 {
-    // Test calculate_populations with vector of wrong size.
+    // Test calculate_populations with a vector of a wrong size.
     // Deactivate temporarily log output because an error is expected.
     mio::set_log_level(mio::LogLevel::off);
     mio::TimeSeries<ScalarType> init_wrong_size((int)mio::lsecir::InfectionStateBase::Count);
@@ -379,7 +382,13 @@ TEST(TestLCTSecir, testConstraints)
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
-    // Number of subcompartments
+    // Check InfectionState with a wrong size of the initialization vector.
+    std::vector<int> SubcompartmentNumbers1((int)mio::lsecir::InfectionStateBase::Count - 1, 1);
+    mio::lsecir::InfectionState InfState(SubcompartmentNumbers1);
+    bool constraint_check = InfState.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Check with right size but wrong number of Subcompartments for Susceptibles.
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Susceptible]        = 2;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
@@ -387,20 +396,12 @@ TEST(TestLCTSecir, testConstraints)
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 4;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 5;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 6;
-    std::vector<int> SubcompartmentNumbers1((int)mio::lsecir::InfectionStateBase::Count - 1, 1);
-    mio::lsecir::InfectionState InfState(SubcompartmentNumbers1);
-
-    // Check wrong size of vector.
-    bool constraint_check = InfState.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Check wrong number of Subcompartments for Susceptibles.
     InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
     constraint_check = InfState.check_constraints();
     EXPECT_TRUE(constraint_check);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Susceptible] = 1;
 
-    // For Recovered.
+    // Wrong number of subcompartments for Recovered.
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Recovered] = 5;
     InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
     constraint_check = InfState.check_constraints();
@@ -414,7 +415,7 @@ TEST(TestLCTSecir, testConstraints)
     EXPECT_TRUE(constraint_check);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 1;
 
-    // Check number of Subcompartments is zero.
+    // Check if number of Subcompartments is zero.
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed] = 0;
     InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
     constraint_check = InfState.check_constraints();
@@ -426,7 +427,7 @@ TEST(TestLCTSecir, testConstraints)
     constraint_check = InfState.check_constraints();
     EXPECT_FALSE(constraint_check);
 
-    // Check for parameters.
+    // Check for exceptions of parameters.
     mio::lsecir::Parameters parameters_lct;
     parameters_lct.get<mio::lsecir::TimeExposed>()                      = 0;
     parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.1;

@@ -289,7 +289,8 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
         round(parameters.get<mio::lsecir::TimeInfectedSevere>());
     // Both realistic distributions for times corresponding to InfectedCritical of the IDE model are exponential distributions.
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] = 1;
+    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
+        round(parameters.get<mio::lsecir::TimeInfectedCritical>());
     mio::lsecir::InfectionState infectionState(vec_subcompartments);
 
     // Calculate initial value vector for subcompartments with RKI data.
