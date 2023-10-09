@@ -1,3 +1,23 @@
+/*
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*
+* Authors: Sascha Korf, Carlotta Gerstein
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -7,8 +27,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
-#include "abm/movement_data.h"
-#include "abm/common_abm_loggers.h"
+#include "abm/vaccine.h"
 
 namespace fs = boost::filesystem;
 
@@ -30,8 +49,9 @@ void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarT
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarType infected_no_symptoms,
-                                                   ScalarType infected_symptoms, ScalarType recovered)
+mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
+                                                   ScalarType infected_no_symptoms, ScalarType infected_symptoms,
+                                                   ScalarType recovered)
 {
     ScalarType susceptible          = 1 - exposed - infected_no_symptoms - infected_symptoms - recovered;
     std::vector<ScalarType> weights = {
@@ -40,7 +60,7 @@ mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarTyp
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    auto state = mio::DiscreteDistribution<size_t>::get_instance()(rng, weights);
     return (mio::abm::InfectionState)state;
 }
 
@@ -52,15 +72,30 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto infection_state =
-            determine_infection_state(exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
+        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
+                                                         infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), t, infection_state));
     }
 }
+int stringToMinutes(const std::string& input)
+{
+    size_t colonPos = input.find(":");
+    if (colonPos == std::string::npos) {
+        // Handle invalid input (no colon found)
+        return -1; // You can choose a suitable error code here.
+    }
 
-void split_line(std::string string, std::vector<double>* row)
+    std::string xStr = input.substr(0, colonPos);
+    std::string yStr = input.substr(colonPos + 1);
+
+    int x = std::stoi(xStr);
+    int y = std::stoi(yStr);
+    return x * 60 + y;
+}
+void split_line(std::string string, std::vector<int32_t>* row)
 {
     std::vector<std::string> strings;
 
@@ -71,39 +106,36 @@ void split_line(std::string string, std::vector<double>* row)
     } // Temporary fix to handle empty cells.
     boost::split(strings, string, boost::is_any_of(","));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
-        if (s.rfind('.') != std::string::npos) {
-            return std::stod(s);
+        if (s.find(":") != std::string::npos) {
+            return stringToMinutes(s);
         }
         else {
-            return (double)std::stoi(s);
+            return std::stoi(s);
         }
     });
 }
 
-mio::abm::LocationType get_location_type(mio::abm::ActivityType acitivity_end)
+mio::abm::LocationType get_location_type(uint32_t acitivity_end)
 {
     mio::abm::LocationType type;
     switch (acitivity_end) {
-    case mio::abm::ActivityType::Workplace:
+    case 1:
         type = mio::abm::LocationType::Work;
         break;
-    case mio::abm::ActivityType::Education:
+    case 2:
         type = mio::abm::LocationType::School;
         break;
-    case mio::abm::ActivityType::Shopping:
+    case 3:
         type = mio::abm::LocationType::BasicsShop;
         break;
-    case mio::abm::ActivityType::Leisure:
+    case 4:
         type = mio::abm::LocationType::SocialEvent; // Freizeit
         break;
-    case mio::abm::ActivityType::PrivateMatters:
+    case 5:
         type = mio::abm::LocationType::BasicsShop; // Private Erledigung
         break;
-    case mio::abm::ActivityType::OtherActivity:
+    case 6:
         type = mio::abm::LocationType::SocialEvent; // Sonstiges
-        break;
-    case mio::abm::ActivityType::Home:
-        type = mio::abm::LocationType::Home;
         break;
     default:
         type = mio::abm::LocationType::Home;
@@ -134,9 +166,9 @@ mio::abm::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
-void create_world_from_data(mio::abm::World& world, const std::string& filename)
+void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0,
+                            int max_number_persons)
 {
-    int max_number_persons = 10000;
     // Open File
     const fs::path p = filename;
     if (!fs::exists(p)) {
@@ -147,7 +179,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
     // Open an existing file
     fin.open(filename, std::ios::in);
-    std::vector<double> row;
+    std::vector<int32_t> row;
     std::vector<std::string> row_string;
     std::string line;
 
@@ -166,59 +198,98 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
     std::map<uint32_t, mio::abm::LocationId> locations = {};
     std::map<uint32_t, mio::abm::Person&> persons      = {};
+    std::map<uint32_t, uint32_t> person_ids            = {};
+    std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
+    std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
-    // For the world we need: One Hospital, One ICU, One Home for each unique householdID, One Person for each person_id with respective age and home_id
+    // For the world we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
 
-    // We assume that no person goes to an hospitla, altough e.g. "Sonstiges" could be a hospital
+    // We assume that no person goes to an hospital, altough e.g. "Sonstiges" could be a hospital
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
     world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(hospital).set_capacity(584, 26242);
+    world.get_individualized_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
+                                                             std::numeric_limits<uint32_t>::max());
     auto icu = world.add_location(mio::abm::LocationType::ICU);
     world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(icu).set_capacity(30, 1350);
+    world.get_individualized_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(),
+                                                        std::numeric_limits<uint32_t>::max());
 
-    // First we create the persons and their homes and also the locations
+    // First we determine the persons number and their starting locations
     int number_of_persons = 0;
-    while (std::getline(fin, line) && number_of_persons < max_number_persons) {
+
+    while (std::getline(fin, line)) {
         row.clear();
 
         // read columns in this row
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id          = (int)row[index["puid"]];
-        uint32_t age                = (int)row[index["age"]];
-        uint32_t home_id            = (int)row[index["huid"]];
-        uint32_t target_location_id = (int)std::abs(row[index["loc_id_end"]]);
-        // uint32_t origin_location_id            = (int)std::abs(row[index["loc_id_start"]]);
-        mio::abm::GeographicalLocation geo_loc = {std::abs(row[index["lon_start"]]), std::abs(row[index["lat_start"]])};
-        mio::abm::TransportMode transport_mode = mio::abm::TransportMode(
-            row[index["travel_mode"]] -
-            1); // 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
-        mio::abm::ActivityType activity_end = mio::abm::ActivityType(
-            row[index["activity_end"]] -
-            1); // 1:Workplace, 2:Education, 3:Shopping, 4:Leisure, 5:Private Matters, 6:Other Activity, 7:Home, 8:Unknown Activity
-        uint32_t trip_start = (int)row[index["start_time"]];
+        uint32_t person_id = row[index["puid"]];
+        auto it_person_id  = person_ids.find(person_id);
+        if (it_person_id == person_ids.end()) {
+            if (number_of_persons >= max_number_persons)
+                break; //This is okay because the data is sorted by person_id
+            person_ids.insert({person_id, number_of_persons});
+            number_of_persons++;
+        }
 
+        // The starting location of a person is the end location of the last trip he made, either on the same day or on
+        // the day before
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        int trip_start              = row[index["start_time"]];
+        if (trip_start < t0.hour_of_day()) {
+            auto it_person = locations_before.find(person_id);
+            if (it_person == locations_before.end()) {
+                locations_before.insert({person_id, std::make_pair(target_location_id, trip_start)});
+            }
+            else {
+                if (it_person->second.second <= trip_start) {
+                    it_person->second.first  = target_location_id;
+                    it_person->second.second = trip_start;
+                }
+            }
+        }
+        else {
+            auto it_person = locations_after.find(person_id);
+            if (it_person == locations_after.end()) {
+                locations_after.insert({person_id, std::make_pair(target_location_id, trip_start)});
+            }
+            else {
+                if (it_person->second.second <= trip_start) {
+                    it_person->second.first  = target_location_id;
+                    it_person->second.second = trip_start;
+                }
+            }
+        }
+    }
+
+    fin.clear();
+    fin.seekg(0);
+    std::getline(fin, line); // Skip header row
+
+    // Add all locations to the world
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t person_id = row[index["puid"]];
+        if (person_ids.find(person_id) == person_ids.end())
+            break;
+
+        uint32_t home_id            = row[index["huid"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t activity_end       = row[index["activity_end"]];
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
         if (it_home == locations.end()) {
             home = world.add_location(mio::abm::LocationType::Home, 1);
-            world.get_individualized_location(home).set_geographical_location(geo_loc);
             locations.insert({home_id, home});
         }
         else {
             home = it_home->second;
-        }
-
-        auto it_person = persons.find(person_id);
-        if (it_person == persons.end()) {
-            auto& person = world.add_person(home, determine_age_group(age));
-            person.set_assigned_location(home);
-            person.set_assigned_location(hospital);
-            person.set_assigned_location(icu);
-            persons.insert({person_id, person});
-            number_of_persons++;
         }
 
         mio::abm::LocationId location;
@@ -226,23 +297,66 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             target_location_id); // Check if location already exists also for home which have the same id (home_id = target_location_id)
         if (it_location == locations.end()) {
             location = world.add_location(
-                get_location_type(mio::abm::ActivityType(activity_end)),
-                1); //Assume one place has one activity, this may be untrue but not important for now(?)
-            world.get_individualized_location(location).set_geographical_location(geo_loc);
+                get_location_type(activity_end),
+                1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
         }
+    }
+    fin.clear();
+    fin.seekg(0);
+    std::getline(fin, line); // Skip header row
+
+    // Add the persons and trips
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t person_id = row[index["puid"]];
+        if (person_ids.find(person_id) == person_ids.end())
+            break;
+
+        uint32_t age                = row[index["age"]];
+        uint32_t home_id            = row[index["huid"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
+        uint32_t trip_start         = row[index["start_time"]];
 
         // Add the trip to the trip list person and location must exist at this point
-        auto person          = persons.find(person_id)->second;
         auto target_location = locations.find(target_location_id)->second;
-        // auto origin_location = locations.find(origin_location_id)->second;
-        person.set_assigned_location(
-            target_location); //This assumes that we only have in each tripchain only one location type for each person
-        world.get_trip_list().add_trip(mio::abm::Trip(person.get_person_id(),
-                                                      mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
-                                                      target_location, target_location, transport_mode, activity_end));
-    }
+        auto start_location  = locations.find(start_location_id)->second;
 
+        auto it_person = persons.find(person_id);
+
+        if (it_person == persons.end()) {
+            auto it_first_location_id = locations_before.find(person_id);
+            if (it_first_location_id == locations_before.end()) {
+                it_first_location_id = locations_after.find(person_id);
+            }
+            auto first_location_id = it_first_location_id->second.first;
+            auto first_location    = locations.find(first_location_id)->second;
+            auto& person           = world.add_person(first_location, determine_age_group(age));
+            auto home              = locations.find(home_id)->second;
+            person.set_assigned_location(home);
+            person.set_assigned_location(hospital);
+            person.set_assigned_location(icu);
+            persons.insert({person_id, person});
+            it_person = persons.find(person_id);
+        }
+
+        it_person->second.set_assigned_location(
+            target_location); //This assumes that we only have in each tripchain only one location type for each person
+        if (locations.find(start_location_id) == locations.end()) {
+            // For trips where the start location is not known use Home instead
+            start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
+                              mio::abm::LocationType::Home};
+        }
+        world.get_trip_list().add_trip(mio::abm::Trip(it_person->second.get_person_id(),
+                                                      mio::abm::TimePoint(0) + mio::abm::minutes(trip_start),
+                                                      target_location, start_location));
+    }
     world.get_trip_list().use_weekday_trips_on_weekend();
 }
 
@@ -851,9 +965,10 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 
 /**
  * Create a sampled simulation with start time t0.
- * @param t0 the start time of the simulation
-*/
-mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
+ * @param t0 The start time of the Simulation.
+ */
+mio::abm::Simulation create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
+                                               int max_num_persons)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
@@ -865,7 +980,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "C:/Users/korf_sa/Documents/rep/cpp/simulations/bs_niedersachsen.csv");
+    create_world_from_data(world, input_file, t0, max_num_persons);
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
@@ -882,74 +997,51 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto sim = mio::abm::Simulation(t0, std::move(world));
     return sim;
 }
-
-template <typename T>
-void write_log_to_file(const T& history)
-{
-    auto logg          = history.get_log();
-    auto loc_id        = std::get<0>(logg)[0];
-    auto agent_id      = std::get<1>(logg)[0];
-    auto movement_data = std::get<2>(logg);
-    // Write lo to a text file.
-    std::ofstream myfile("locations_lookup.txt");
-    myfile << "location_id, latitude, longitude\n";
-    for (uint32_t loc_id_index = 0; loc_id_index < loc_id.size(); ++loc_id_index) {
-        auto id           = std::get<0>(loc_id[loc_id_index]);
-        auto id_longitute = std::get<1>(loc_id[loc_id_index]).longitude;
-        auto id_latitude  = std::get<1>(loc_id[loc_id_index]).latitude;
-        myfile << id << ", " << id_longitute << ", " << id_latitude << "\n";
+struct LogLocationInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type location_information{};
+        for (auto&& location : sim.get_world().get_locations()) {
+            location_information.push_back(std::make_tuple(location.get_index(), location.get_geographical_location()));
+        }
+        return location_information;
     }
-    myfile.close();
+};
 
-    std::ofstream myfile2("agents_lookup.txt");
-    myfile2 << "agent_id, home_id, age\n";
-    for (uint32_t agent_id_index = 0; agent_id_index < agent_id.size(); ++agent_id_index) {
-        auto id      = std::get<0>(agent_id[agent_id_index]);
-        auto home_id = std::get<1>(agent_id[agent_id_index]);
-        auto age     = (int)std::get<2>(agent_id[agent_id_index]);
-        myfile2 << id << ", " << home_id << ", " << age << "\n";
+struct LogPersonInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type person_information{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            person_information.push_back(std::make_tuple(
+                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+                person.get_age()));
+        }
+        return person_information;
     }
-    myfile2.close();
+};
 
-    // std::ofstream myfile3("movement_data.txt");
-    // myfile3 << "trip_id, agent_id, start_location, end_location, start_time, end_time, transport_mode, activity, "
-    //            "infection_state \n";
-    // int trips_id = 0;
-    // for (uint32_t movement_data_index = 0; movement_data_index < movement_data.size(); ++movement_data_index) {
-    //     for (uint32_t trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
-    //         auto start_location  = movement_data[movement_data_index][trip_index].from_id;
-    //         auto end_location    = movement_data[movement_data_index][trip_index].to_id;
-    //         auto start_time      = movement_data[movement_data_index][trip_index].start_time.seconds();
-    //         auto end_time        = movement_data[movement_data_index][trip_index].end_time.seconds();
-    //         auto transport_mode  = (int)movement_data[movement_data_index][trip_index].transport_mode;
-    //         auto activity        = (int)movement_data[movement_data_index][trip_index].activity_type;
-    //         auto infection_state = (int)movement_data[movement_data_index][trip_index].infection_state;
-    //         myfile3 << trips_id << ", " << start_location << " , " << end_location << " , " << start_time << " , "
-    //                 << end_time << " , " << transport_mode << " , " << activity << " , " << infection_state << "\n";
-    //         trips_id++;
-    //     }
-    //     myfile3 << "timestep Nr.:" << movement_data_index << "\n";
-    // }
-    // myfile3.close();
-}
-
-mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
+mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
+                        bool save_single_runs = true)
 {
 
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::hours(30); // End time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(10); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+    auto max_num_persons    = 1000;
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
         // Create the sampled simulation with start time t0.
-        auto sim = create_sampled_simulation(t0);
+        auto sim = create_sampled_simulation(input_file, t0, max_num_persons);
         //output object
-        mio::History<mio::DataWriterToMemory, LogPersonInformation, LogLocationInformation, LogMovementData> history;
+        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
@@ -966,7 +1058,6 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
             BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
-        // write_log_to_file(history);
         ++run_idx;
     }
     BOOST_OUTCOME_TRY(save_result_result);
@@ -978,8 +1069,9 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    size_t num_runs        = 1;
-    bool save_single_runs  = true;
+    std::string input_file = "C:/Users/korf_sa/Documents/rep/data/mobility/bs_sorted.csv";
+    size_t num_runs;
+    bool save_single_runs = true;
 
     if (argc == 2) {
         num_runs = atoi(argv[1]);
@@ -998,9 +1090,11 @@ int main(int argc, char** argv)
         printf("abm_example <num_runs>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in the current directory.\n");
-        printf("abm_example <num_runs> <result_dir>\n");
+        printf("abm_braunschweig <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
+        printf("Running with number of runs = 1.\n");
+        num_runs = 1;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
@@ -1010,7 +1104,7 @@ int main(int argc, char** argv)
     //}
     //printf("\n");
 
-    auto result = run(result_dir, num_runs, save_single_runs);
+    auto result = run(input_file, result_dir, num_runs, save_single_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

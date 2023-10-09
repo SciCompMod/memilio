@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, Sascha Korf, Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -72,6 +72,19 @@ struct LocationId {
 struct GeographicalLocation {
     double latitude;
     double longitude;
+
+    /**
+     * @brief Compare two Location%s.
+     */
+    bool operator==(const GeographicalLocation& other) const
+    {
+        return (latitude == other.latitude && longitude == other.longitude);
+    }
+
+    bool operator!=(const GeographicalLocation& other) const
+    {
+        return !(latitude == other.latitude && longitude == other.longitude);
+    }
 };
 
 } // namespace abm
