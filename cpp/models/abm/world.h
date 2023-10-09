@@ -185,14 +185,6 @@ public:
 
     const TestingStrategy& get_testing_strategy() const;
 
-    /**
-     * @brief Get the movement data.
-     * @return Reference to the list of movement data for the migration of Person%s for one timestep.
-     */
-    std::vector<mio::abm::movement_data>& get_movement_data();
-
-    const std::vector<mio::abm::movement_data>& get_movement_data() const;
-
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -219,8 +211,6 @@ private:
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
-    std::vector<mio::abm::movement_data>
-        m_movement_data; ///< Movement data for the migration of Person%s for one timestep.
 };
 
 } // namespace abm
