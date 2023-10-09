@@ -89,11 +89,6 @@ struct Trip {
         migration_origin      = origin;
         cells                 = input_cells;
     }
-
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, destination, destination, input_cells)
-    {
-    }
 };
 
 /**
