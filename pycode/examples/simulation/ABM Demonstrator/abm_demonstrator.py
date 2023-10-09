@@ -18,7 +18,6 @@
 # limitations under the License.
 #############################################################################
 import argparse
-import pandas as pd
 import numpy as np
 
 from memilio.simulation import abm
@@ -28,6 +27,7 @@ from memilio.simulation.abm import VirusVariant
 from memilio.simulation.abm import History
 from memilio.simulation.abm import Infection
 
+import pandas as pd
 # class used to map input areas to abm locations
 
 
@@ -40,152 +40,230 @@ class LocationMapping:
 # infection parameters are dependent on age group and vaccination state
 
 
-def set_infection_parameters():
+def set_infection_parameters(parameters):
     infection_params = abm.GlobalInfectionParameters()
 
     # AgeGroup 0-4
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                      VaccinationState.Unvaccinated] = 3
+                                      VaccinationState.Unvaccinated] = parameters.loc["Age0to4_IncubationPeriod"].value
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                  VaccinationState.Unvaccinated] = 2.2
+                                                  VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_InfectedNoSymptomsToSymptoms"].value)
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                   VaccinationState.Unvaccinated] = 9.2
+                                                   VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_InfectedNoSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                 VaccinationState.Unvaccinated] = 7
+                                                 VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_InfectedSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                              VaccinationState.Unvaccinated] = 10.5
+                                              VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_InfectedSymptomsToSevere"].value)
     infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                       VaccinationState.Unvaccinated] = 5
+                                       VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_SevereToRecovered"].value)
     infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                      VaccinationState.Unvaccinated] = 5
+                                      VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_SevereToCritical"].value)
     infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                         VaccinationState.Unvaccinated] = 7
+                                         VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_CriticalToRecovered"].value)
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                    VaccinationState.Unvaccinated] = 6
+                                    VaccinationState.Unvaccinated] = (
+        parameters.loc["Age0to4_CriticalToDead"].value)
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+                                  VaccinationState.Unvaccinated,
+                                  parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
+                                  parameters.loc["incline"].value, parameters.loc["incline"].value,
+                                  parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4, -7.0, -7.0, 1.0, 1.0)
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4,
+        parameters.loc["alpha"].value, parameters.loc["alpha"].value,
+        parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 5-14
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                      VaccinationState.Unvaccinated] = 3
+                                      VaccinationState.Unvaccinated] = parameters.loc["Age5to14_IncubationPeriod"].value
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                  VaccinationState.Unvaccinated] = 2.2
+                                                  VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_InfectedNoSymptomsToSymptoms"].value)
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                   VaccinationState.Unvaccinated] = 9.2
+                                                   VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_InfectedNoSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                 VaccinationState.Unvaccinated] = 7
+                                                 VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_InfectedSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                              VaccinationState.Unvaccinated] = 10.5
+                                              VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_InfectedSymptomsToSevere"].value)
     infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                       VaccinationState.Unvaccinated] = 5
+                                       VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_SevereToRecovered"].value)
     infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                      VaccinationState.Unvaccinated] = 5
+                                      VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_SevereToCritical"].value)
     infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                         VaccinationState.Unvaccinated] = 7
+                                         VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_CriticalToRecovered"].value)
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                    VaccinationState.Unvaccinated] = 6
+                                    VaccinationState.Unvaccinated] = (
+        parameters.loc["Age5to14_CriticalToDead"].value)
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+                                  VaccinationState.Unvaccinated,
+                                  parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
+                                  parameters.loc["incline"].value, parameters.loc["incline"].value,
+                                  parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14, -7.0, -7.0, 1.0, 1.0)
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14,
+        parameters.loc["alpha"].value, parameters.loc["alpha"].value,
+        parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 15-34
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                      VaccinationState.Unvaccinated] = 3
+                                      VaccinationState.Unvaccinated] = parameters.loc["Age15to34_IncubationPeriod"].value
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                  VaccinationState.Unvaccinated] = 2.2
+                                                  VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_InfectedNoSymptomsToSymptoms"].value)
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                   VaccinationState.Unvaccinated] = 9.2
+                                                   VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_InfectedNoSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                 VaccinationState.Unvaccinated] = 7
+                                                 VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_InfectedSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                              VaccinationState.Unvaccinated] = 10.5
+                                              VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_InfectedSymptomsToSevere"].value)
     infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                       VaccinationState.Unvaccinated] = 6
+                                       VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_SevereToRecovered"].value)
     infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                      VaccinationState.Unvaccinated] = 5
+                                      VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_SevereToCritical"].value)
     infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                         VaccinationState.Unvaccinated] = 7
+                                         VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_CriticalToRecovered"].value)
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                    VaccinationState.Unvaccinated] = 6
+                                    VaccinationState.Unvaccinated] = (
+        parameters.loc["Age15to34_CriticalToDead"].value)
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+                                  VaccinationState.Unvaccinated,
+                                  parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
+                                  parameters.loc["incline"].value, parameters.loc["incline"].value,
+                                  parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34, -7.0, -7.0, 1.0, 1.0)
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34,
+        parameters.loc["alpha"].value, parameters.loc["alpha"].value,
+        parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 35-59
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                      VaccinationState.Unvaccinated] = 3
+                                      VaccinationState.Unvaccinated] = parameters.loc["Age35to59_IncubationPeriod"].value
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                  VaccinationState.Unvaccinated] = 2.2
+                                                  VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_InfectedNoSymptomsToSymptoms"].value)
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                   VaccinationState.Unvaccinated] = 9.2
+                                                   VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_InfectedNoSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                 VaccinationState.Unvaccinated] = 7
+                                                 VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_InfectedSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                              VaccinationState.Unvaccinated] = 6
+                                              VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_InfectedSymptomsToSevere"].value)
     infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                       VaccinationState.Unvaccinated] = 8
+                                       VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_SevereToRecovered"].value)
     infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                      VaccinationState.Unvaccinated] = 5
+                                      VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_SevereToCritical"].value)
     infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                         VaccinationState.Unvaccinated] = 17.5
+                                         VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_CriticalToRecovered"].value)
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                    VaccinationState.Unvaccinated] = 16.5
+                                    VaccinationState.Unvaccinated] = (
+        parameters.loc["Age35to59_CriticalToDead"].value)
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+                                  VaccinationState.Unvaccinated,
+                                  parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
+                                  parameters.loc["incline"].value, parameters.loc["incline"].value,
+                                  parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59, -7.0, -7.0, 1.0, 1.0)
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59,
+        parameters.loc["alpha"].value, parameters.loc["alpha"].value,
+        parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 60-79
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                      VaccinationState.Unvaccinated] = 3
+                                      VaccinationState.Unvaccinated] = parameters.loc["Age60to79_IncubationPeriod"].value
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                  VaccinationState.Unvaccinated] = 2.2
+                                                  VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_InfectedNoSymptomsToSymptoms"].value)
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                   VaccinationState.Unvaccinated] = 9.2
+                                                   VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_InfectedNoSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                 VaccinationState.Unvaccinated] = 7.0
+                                                 VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_InfectedSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                              VaccinationState.Unvaccinated] = 6.0
+                                              VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_InfectedSymptomsToSevere"].value)
     infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                       VaccinationState.Unvaccinated] = 10.0
+                                       VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_SevereToRecovered"].value)
     infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                      VaccinationState.Unvaccinated] = 5
+                                      VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_SevereToCritical"].value)
     infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                         VaccinationState.Unvaccinated] = 17.5
+                                         VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_CriticalToRecovered"].value)
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                    VaccinationState.Unvaccinated] = 16.5
+                                    VaccinationState.Unvaccinated] = (
+        parameters.loc["Age60to79_CriticalToDead"].value)
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+                                  VaccinationState.Unvaccinated,
+                                  parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
+                                  parameters.loc["incline"].value, parameters.loc["incline"].value,
+                                  parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79, -7.0, -7.0, 1.0, 1.0)
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79,
+        parameters.loc["alpha"].value, parameters.loc["alpha"].value,
+        parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 80+
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                      VaccinationState.Unvaccinated] = 3
+                                      VaccinationState.Unvaccinated] = parameters.loc["Age80plus_IncubationPeriod"].value
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                  VaccinationState.Unvaccinated] = 2.2
+                                                  VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_InfectedNoSymptomsToSymptoms"].value)
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                   VaccinationState.Unvaccinated] = 9.2
+                                                   VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_InfectedNoSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                 VaccinationState.Unvaccinated] = 7.0
+                                                 VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_InfectedSymptomsToRecovered"].value)
     infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                              VaccinationState.Unvaccinated] = 6.0
+                                              VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_InfectedSymptomsToSevere"].value)
     infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                       VaccinationState.Unvaccinated] = 15.0
+                                       VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_SevereToRecovered"].value)
     infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                      VaccinationState.Unvaccinated] = 5
+                                      VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_SevereToCritical"].value)
     infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                         VaccinationState.Unvaccinated] = 12.5
+                                         VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_CriticalToRecovered"].value)
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                    VaccinationState.Unvaccinated] = 11
+                                    VaccinationState.Unvaccinated] = (
+        parameters.loc["Age80plus_CriticalToDead"].value)
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+                                  VaccinationState.Unvaccinated,
+                                  parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
+                                  parameters.loc["incline"].value, parameters.loc["incline"].value,
+                                  parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus, -7.0, -7.0, 1.0, 1.0)
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus,
+        parameters.loc["alpha"].value, parameters.loc["alpha"].value,
+        parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     return infection_params
 
@@ -616,9 +694,8 @@ def set_sim_result_at_start(sim):
 
 
 def run_abm_simulation():
-
-    input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList_modified.txt'
-    output_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/output/'
+    input_path = 'input/'
+    output_path = 'output/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -628,11 +705,12 @@ def run_abm_simulation():
     # distribution used to distribute the residential areas to one-, two-, three-, four- and five-person households
     household_distribution = [0.4084, 0.3375, 0.1199, 0.0965, 0.0377]
     # read txt file with inputs
-    areas = read_txt(input_path)
+    areas = read_txt(input_path+'INSIDe_Demonstrator_AreaList_modified.txt')
+    parameters = pd.read_csv(input_path+'parameter_table.csv', index_col=0)
     # create simulation
     sim = abm.Simulation(t0)
     # set infection parameters
-    sim.world.infection_parameters = set_infection_parameters()
+    sim.world.infection_parameters = set_infection_parameters(parameters)
     # as input areas do fit one-to-one to abm location types they have there has to be a mapping
     mapping = create_locations_from_input(
         sim.world, areas, household_distribution)
