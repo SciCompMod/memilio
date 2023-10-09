@@ -31,12 +31,14 @@ def read_input_data(start_date, path_to_input_data, username='', password=''):
     arg_dict_pop = {'out_folder': "{}/pydata".format(path_to_input_data),
                     "username": username,
                     "password": password}
+    arg_dict_vacc = {'out_folder': "{}/pydata".format(path_to_input_data),
+                     'moving_average': 7}
 
     progress_indicator.ProgressIndicator.disable_indicators(True)
     gcd.get_case_data(**arg_dict)
     gpd.get_population_data(**arg_dict_pop)
     gdd.get_divi_data(**arg_dict)
-    gvd.get_vaccination_data(**arg_dict)
+    gvd.get_vaccination_data(**arg_dict_vacc)
 
 
 def compute_compartments_from_input_data(start_date, path_to_input_data, num_days_sim):
