@@ -446,7 +446,7 @@ TEST(TestLCTSecir, testConstraints)
     parameters_lct.get<mio::lsecir::CriticalPerSevere>()              = 0.1;
     parameters_lct.get<mio::lsecir::DeathsPerCritical>()              = 0.1;
 
-    // Check TimeExposed.
+    // Check improper TimeExposed.
     constraint_check = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
     parameters_lct.get<mio::lsecir::TimeExposed>() = 3.1;

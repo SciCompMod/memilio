@@ -27,10 +27,13 @@
 
 #include <gtest/gtest.h>
 
+// Test compares a calculation of an initial vector using data for flows with a previous result.
 TEST(TestInitializer, compareWithPrevious)
 {
+
     ScalarType dt = 0.5;
 
+    // Define number of subcompartments.
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
@@ -44,6 +47,7 @@ TEST(TestInitializer, compareWithPrevious)
     compare << 82810889.00545, 850.70432, 970.04980, 315.32890, 391.51799, 391.39351, 565.45854, 580.79267, 85.97421,
         86.02738, 80.26791, 189.53449, 167.57963, 329757.36512, 9710;
 
+    // Define parameters.
     mio::lsecir::Parameters parameters_lct;
     parameters_lct.get<mio::lsecir::TimeExposed>()                      = 3.1;
     parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.1;
@@ -68,7 +72,7 @@ TEST(TestInitializer, compareWithPrevious)
     ScalarType deaths                = 9710;
     ScalarType total_population      = 83155031.0;
 
-    // add time points for initialization of transitions
+    // Add time points for initialization of transitions.
     mio::TimeSeries<ScalarType> init((int)mio::lsecir::InfectionTransition::Count);
     mio::TimeSeries<ScalarType>::Vector vec_init((int)mio::lsecir::InfectionTransition::Count);
     vec_init[(int)mio::lsecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
@@ -81,14 +85,15 @@ TEST(TestInitializer, compareWithPrevious)
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-    // add initial time point to time series
+    // Add initial time point to time series.
     init.add_time_point(-130, vec_init);
-    // add further time points until time 0
+    // Add further time points until time 0.
     while (init.get_last_time() < 0) {
         vec_init *= 1.01;
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
+    // Calculate initial vector and compare with previous reult.
     mio::lsecir::Initializer initializer(std::move(init), InfState, std::move(parameters_lct));
     auto init_compartments = initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
@@ -97,14 +102,15 @@ TEST(TestInitializer, compareWithPrevious)
     }
 }
 
+// Check if the constraints of te Initializer are validated as expected.
 TEST(TestInitializer, testConstraints)
 {
-    // Check constraints of Initializer.
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
     ScalarType dt = 0.5;
 
+    // Define number of subcompartments.
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
@@ -113,7 +119,7 @@ TEST(TestInitializer, testConstraints)
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 2;
     mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
 
-    // Check wrong form of initial flows.
+    // Check wrong size of initial flows.
     mio::TimeSeries<ScalarType> init_wrong_size((int)mio::lsecir::InfectionTransition::Count - 1);
     Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones((int)mio::lsecir::InfectionTransition::Count - 1);
     init_wrong_size.add_time_point(-10, vec_wrong_size);
@@ -172,7 +178,7 @@ TEST(TestInitializer, testConstraints)
     constraint_check = initializer_right.check_constraints();
     EXPECT_FALSE(constraint_check);
 
-    // Check with short time frame. Fitting time frame is tested above.
+    // Check with too short time period of initial data. The time period above was long enough.
     mio::TimeSeries<ScalarType> init_short((int)mio::lsecir::InfectionTransition::Count);
     init_short.add_time_point(-1., vec_init);
     while (init_short.get_last_time() < 0) {
@@ -193,4 +199,3 @@ TEST(TestInitializer, testConstraints)
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 }
-/* test num_time_points < calc_time_index and constraints*/
