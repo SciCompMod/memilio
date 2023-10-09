@@ -251,7 +251,8 @@ def make_multiple_person_households(household_size,
         hh_one_parent, number_of_one_parent_households)
     # add other households
     hh_other = abm.Household()
-    hh_other.add_members(other, household_size)
+    hh_other.add_members(parent, 1)
+    hh_other.add_members(other, household_size - 1)
     household_group.add_households(hh_other, number_of_other_households)
 
     return household_group
@@ -616,8 +617,8 @@ def set_sim_result_at_start(sim):
 
 def run_abm_simulation():
 
-    input_path = '/INSIDe_Demonstrator_AreaList_modified.txt'
-    output_path = '/output/'
+    input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList_modified.txt'
+    output_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/output/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
