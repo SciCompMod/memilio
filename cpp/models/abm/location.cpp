@@ -60,10 +60,10 @@ ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVar
     return prob;
 }
 
-ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const
+ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus, Parameters global_params) const
 {
     return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
-           m_parameters.get<AerosolTransmissionRates>()[{virus}];
+           global_params.get<AerosolTransmissionRates>()[{virus}];
 }
 
 void Location::interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
@@ -82,7 +82,7 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
                 (std::min(
                      m_parameters.get<MaximumContacts>(),
                      transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups())) +
-                 transmission_air_per_day(cell_index, virus)) *
+                 transmission_air_per_day(cell_index, virus, global_params)) *
                 (1 - mask_protection) * dt.days() * (1 - person.get_protection_factor(t, virus, global_params));
 
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);

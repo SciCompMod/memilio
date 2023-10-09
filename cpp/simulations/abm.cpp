@@ -625,10 +625,10 @@ void set_parameters(mio::abm::Parameters params)
 }
 
 /**
- * Create a sampled simulation with start time t0.
+ * Create a sampled world with start time t0.
  * @param t0 the start time of the simulation
 */
-mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
+mio::abm::World create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
     // mio::thread_local_rng().seed(
     //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
@@ -672,8 +672,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     mio::abm::set_school_closure(t_lockdown, 0.9, world.parameters);
     mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
 
-    auto sim = mio::abm::Simulation(t0, std::move(world));
-    return sim;
+    return world;
 }
 
 /**
@@ -695,15 +694,21 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
     std::vector<int> loc_ids;
+
+    // Create the sampled simulation with start time t0
+    auto world = create_sampled_simulation(t0);
+
     // Loop over a number of runs
     while (run_idx <= num_runs) {
         loc_ids = {};
-        // Create the sampled simulation with start time t0
-        auto sim = create_sampled_simulation(t0);
+
+        auto sim = mio::abm::Simulation(t0, std::move(world));
+
         // Collect the id of location in world.
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
+
         // Advance the world to tmax
         sim.advance(tmax);
         ensemble_params.push_back(std::vector<mio::abm::World>{mio::abm::World(sim.get_world())});

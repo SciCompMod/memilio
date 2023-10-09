@@ -186,9 +186,10 @@ public:
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
      * @param[in] cell_index Cell index of the Cell.
      * @param[in] virus VirusVariant of interest.
+     * @param[in] global_params The Parameters set of the World. 
      * @return Amount of average Infection%s with the virus per day.
     */
-    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const;
+    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, Parameters global_params) const;
 
     /** 
      * @brief A Person interacts with the population at this Location and may become infected.

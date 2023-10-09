@@ -238,6 +238,21 @@ struct MaskProtection {
     }
 };
 
+/**
+ * @brief Aerosol transmission rates. 
+*/
+struct AerosolTransmissionRates {
+    using Type = CustomIndexArray<ScalarType, VirusVariant>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day
+    }
+    static std::string name()
+    {
+        return "AerosolTransmissionRates";
+    }
+};
+
 using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
 
 /**
@@ -292,57 +307,6 @@ struct HighViralLoadProtectionFactor {
         return "HighViralLoadProtectionFactor";
     }
 };
-
-/**
- * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
- */
-struct MaximumContacts {
-    using Type = ScalarType;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return std::numeric_limits<ScalarType>::max();
-    }
-    static std::string name()
-    {
-        return "MaximumContacts";
-    }
-};
-
-/**
- * contact rates
-*/
-struct ContactRates {
-    using Type = CustomIndexArray<ScalarType, AgeGroup, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({size, size},
-                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
-    }
-    static std::string name()
-    {
-        return "ContactRates";
-    }
-};
-
-/**
- * aerosol transmission rates
-*/
-struct AerosolTransmissionRates {
-    using Type = CustomIndexArray<ScalarType, VirusVariant>;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day
-    }
-    static std::string name()
-    {
-        return "AerosolTransmissionRates";
-    }
-};
-
-/**
- * @brief Parameters of the Infection that depend on the Location.
- */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, AerosolTransmissionRates>;
 
 /**
  * @brief Parameters that describe the reliability of a test.
@@ -563,10 +527,46 @@ using ParametersBase =
     ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, MaskProtection, LockdownDate, SocialEventRate,
-                 BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
+                 InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
+                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
                  GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
                  InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+
+/**
+ * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
+ */
+struct MaximumContacts {
+    using Type = ScalarType;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return std::numeric_limits<ScalarType>::max();
+    }
+    static std::string name()
+    {
+        return "MaximumContacts";
+    }
+};
+
+/**
+ * contact rates
+*/
+struct ContactRates {
+    using Type = CustomIndexArray<ScalarType, AgeGroup, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, size},
+                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
+    }
+    static std::string name()
+    {
+        return "ContactRates";
+    }
+};
+
+/**
+ * @brief Parameters of the Infection that depend on the Location.
+ */
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
 
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.

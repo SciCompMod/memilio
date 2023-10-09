@@ -47,7 +47,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     std::vector<double> single_element_ensemble(num_runs);
     auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
 
-    // lambda function that calculates the percentile of a single parameter
+    // Lambda function that calculates the percentile of a single parameter
     std::vector<Model> percentile(num_nodes, Model((int)num_groups));
     auto param_percentil = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
         std::vector<double> single_element(num_runs);
@@ -56,8 +56,15 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             single_element[run] = get_param(params);
         }
         std::sort(single_element.begin(), single_element.end());
-        auto& new_params = get_param(percentile[n]);
-        new_params       = single_element[static_cast<size_t>(num_runs * p)];
+        double new_params = single_element[static_cast<size_t>(num_runs * p)];
+        if constexpr (std::is_same_v<decltype(get_param(percentile[n])), double>) {
+            // If get_param returns a double, just use the value
+            get_param(percentile[n]);
+        }
+        else {
+            // Otherwise, assign the new value to the reference returned by get_param
+            get_param(percentile[n]) = new_params;
+        }
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
@@ -96,14 +103,23 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             param_percentil(node, [age_group](auto&& model) -> auto& {
                 return model.parameters.template get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, age_group}];
             });
-            // param_percentil(node, [age_group](auto&& model) -> auto& {
-            //     return model.parameters.template get<ViralLoadDistributions>()[{VirusVariant::Wildtype, age_group}].;
-            // });
-            // param_percentil(node, [age_group](auto&& model) -> auto& {
-            //     return model.parameters.template get<InfectivityDistributions>()[{VirusVariant::Wildtype, age_group}];
-            // });
             param_percentil(node, [age_group](auto&& model) -> auto& {
                 return model.parameters.template get<DetectInfection>()[{VirusVariant::Wildtype, age_group}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<BasicShoppingRate>()[{age_group}];
+            });
+            param_percentil(node, [age_group](auto&& model) {
+                return model.parameters.template get<GotoWorkTimeMinimum>()[{age_group}].hours();
+            });
+            param_percentil(node, [age_group](auto&& model) {
+                return model.parameters.template get<GotoWorkTimeMaximum>()[{age_group}].hours();
+            });
+            param_percentil(node, [age_group](auto&& model) {
+                return model.parameters.template get<GotoSchoolTimeMinimum>()[{age_group}].hours();
+            });
+            param_percentil(node, [age_group](auto&& model) {
+                return model.parameters.template get<GotoSchoolTimeMaximum>()[{age_group}].hours();
             });
         }
         // group independent params
@@ -116,9 +132,12 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         param_percentil(node, [](auto&& model) -> auto& {
             return model.parameters.template get<MaskProtection>()[MaskType::Surgical];
         });
-        // param_percentil(node, [](auto&& model) -> auto& {
-        //     return model.parameters.template get<LockdownDate>().days();
-        // });
+        param_percentil(node, [](auto&& model) -> auto& {
+            return model.parameters.template get<AerosolTransmissionRates>()[VirusVariant::Wildtype];
+        });
+        param_percentil(node, [](auto&& model) {
+            return model.parameters.template get<LockdownDate>().days();
+        });
     }
 
     return percentile;
