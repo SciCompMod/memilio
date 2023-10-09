@@ -56,13 +56,13 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             single_element[run] = get_param(params);
         }
         std::sort(single_element.begin(), single_element.end());
-        double new_params = single_element[static_cast<size_t>(num_runs * p)];
         if constexpr (std::is_same_v<decltype(get_param(percentile[n])), double>) {
             // If get_param returns a double, just use the value
             get_param(percentile[n]);
         }
         else {
             // Otherwise, assign the new value to the reference returned by get_param
+            double new_params        = single_element[static_cast<size_t>(num_runs * p)];
             get_param(percentile[n]) = new_params;
         }
     };
