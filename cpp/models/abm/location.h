@@ -26,6 +26,7 @@
 #include "abm/location_type.h"
 #include "abm/infection_state.h"
 #include "abm/vaccine.h"
+#include "abm/npi.h"
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
@@ -167,6 +168,11 @@ public:
      */
     void interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
                   const GlobalInfectionParameters& global_params) const;
+
+    /**
+     * @brief Check if a Person is allowed to enter this Location.
+    */
+    bool may_enter(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t);
 
     /** 
      * @brief Add a Person to the population at this Location.
@@ -351,7 +357,7 @@ public:
     }
 
 private:
-    std::mutex m_mut; ///< Mutex to protect the list of persons from concurrent modification.
+    std::mutex m_mut; ///< Mutex to protect the list of Person%s from concurrent modification.
     LocationId m_id; ///< Id of the Location including type and index.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
@@ -361,6 +367,7 @@ private:
         InfectionState::Count)}; ///< A TimeSeries of the #InfectionState%s for each TimePoint at the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
+    LocationNPIStrategy m_NPIs{AcceptBase{}}; ///< Set of NPIs that affect this location. Can be called.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
 };
