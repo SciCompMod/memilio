@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef SIR_INFECTIONSTATE_H
-#define SIR_INFECTIONSTATE_H
+#ifndef ODESIR_INFECTIONSTATE_H
+#define ODESIR_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -41,4 +41,4 @@ enum class InfectionState
 } // namespace osir
 } // namespace mio
 
-#endif // SIR_INFECTIONSTATE_H
+#endif // ODESIR_INFECTIONSTATE_H
