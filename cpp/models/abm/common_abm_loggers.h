@@ -58,25 +58,26 @@ struct LogPersonInformation : mio::LogOnce {
     }
 };
 
+mio::abm::movement_data calculate_movement_data(const mio::abm::Simulation& sim)
+{
+    mio::abm::movement_data movement_data{};
+    mio::unused(sim);
+    // movement_data.agent_id        = sim.get_world().get_persons().get_person_id();
+    // movement_data.from_id         = sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index();
+    // movement_data.to_id           = sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index();
+    // movement_data.start_time      = sim.get_world().get_time();
+    // movement_data.end_time        = sim.get_world().get_time();
+    // movement_data.transport_mode  = sim.get_world().get_persons().get_transport_mode();
+    // movement_data.activity_type   = sim.get_world().get_persons().get_activity_type();
+    // movement_data.infection_state = sim.get_world().get_persons().get_infection_state();
+    return movement_data;
+}
 struct LogMovementData : mio::LogAlways {
     using Type = int;
     static Type log(const mio::abm::Simulation& sim)
     {
+        return calculate_movement_data(sim).agent_id;
     }
 };
-
-// mio::abm::movement_data calculate_movement_data(const mio::abm::Simulation& sim)
-// {
-//     mio::abm::movement_data movement_data;
-//     movement_data.agent_id        = sim.get_world().get_persons().get_person_id();
-//     movement_data.from_id         = sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index();
-//     movement_data.to_id           = sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index();
-//     movement_data.start_time      = sim.get_world().get_time();
-//     movement_data.end_time        = sim.get_world().get_time();
-//     movement_data.transport_mode  = sim.get_world().get_persons().get_transport_mode();
-//     movement_data.activity_type   = sim.get_world().get_persons().get_activity_type();
-//     movement_data.infection_state = sim.get_world().get_persons().get_infection_state();
-//     return movement_data;
-// }
 
 #endif //ABM_COMMON_LOGGERS_H
