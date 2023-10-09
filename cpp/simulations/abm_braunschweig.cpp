@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Khoa Nguyen, David Kerkmann
+* Authors: Sascha Korf, Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,12 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+#include <fstream>
+#include <vector>
+#include <iostream>
 #include "abm/abm.h"
-#include "abm/person.h"
 #include "memilio/io/result_io.h"
-#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
+#include "abm/vaccine.h"
 
 namespace fs = boost::filesystem;
 
@@ -60,376 +65,6 @@ mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumbe
 }
 
 /**
- * Calculates a vector in which each entry describes the amount of people living in the corresponding household.
- * This is done with equal distribution and if the number of people is not divisible by number of households the last one gets the rest. E.g. number_of_people = 10, number_of_households = 3. Then the vector household_sizes = {3,3,4}.
- * @param number_of_people The total amount of people to be distributed.
- * @param number_of_households The total amount of households.
- * @return A vector with the size of each household.
- */
-std::vector<int> last_household_gets_the_rest(int number_of_people, int number_of_households)
-{
-    std::vector<int> household_sizes(number_of_households, 0);
-    int avarage_household_size_round_down = number_of_people / number_of_households; //int rounds down.
-    int people_left                       = number_of_people -
-                      avarage_household_size_round_down *
-                          number_of_households; // People left if everyone got the same rounded down amount of people.
-    for (auto i = 0; i < number_of_households - 1; i++) {
-        household_sizes.at(i) = avarage_household_size_round_down;
-    }
-    household_sizes.at(number_of_households - 1) =
-        avarage_household_size_round_down + people_left; // Last one gets the people which would've been left out.
-    return household_sizes;
-}
-
-/**
- * Constructs a household group which has a single member to represent them all, e.g. all people have the same age distribution.
- * @param age_dist A vector with the amount of people in each age group
- * @param number_of_people The total amount of people living in this household group.
- * @param number_of_hh The number of households in this household group.
- * @return householdGroup A Class Household Group.
- */
-mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember& member, int number_of_people,
-                                                 int number_of_hh)
-{
-
-    // The size of each household is calculated in a vector household_size_list.
-    auto households_size_list = last_household_gets_the_rest(number_of_people, number_of_hh);
-
-    auto householdGroup = mio::abm::HouseholdGroup();
-    for (auto& household_size : households_size_list) {
-        auto household = mio::abm::Household();
-        household.add_members(member, household_size); // Add members according to the amount of people in the list.
-        householdGroup.add_households(household, 1); // Add the household to the household group.
-
-        // assuming 22 square meters per person and 3 meters of room height
-        // see: https://doi.org/10.1371/journal.pone.0259037
-        household.set_space_per_member(66);
-    }
-    return householdGroup;
-}
-
-/**
- * Constructs a household group with families.
- * @param child Child Household Member.
- * @param parent Parent Household Member.
- * @param random Random Household Member. This is for the rest Group where no exact age distribution can be found.
- * @param number_of_persons_in_household Amount of people in this household
- * @param number_of_full_familes Amount of full families, e.g. two parents and (number_of_persons_in_household - 2) children.
- * @param number_of_half_familes Amount of half families, e.g. one parent and (number_of_persons_in_household - 1) children.
- * @param number_of_other_familes number_of_persons_in_household random persons.
- * @return A Household group.
- */
-mio::abm::HouseholdGroup make_homes_with_families(const mio::abm::HouseholdMember& child,
-                                                  const mio::abm::HouseholdMember& parent,
-                                                  const mio::abm::HouseholdMember& random,
-                                                  int number_of_persons_in_household, int number_of_full_familes,
-                                                  int number_of_half_familes, int number_of_other_familes)
-{
-
-    auto private_household_group = mio::abm::HouseholdGroup();
-
-    // Add full families.
-    auto household_full = mio::abm::Household();
-    household_full.add_members(child, number_of_persons_in_household - 2);
-    household_full.add_members(parent, 2);
-    private_household_group.add_households(household_full, number_of_full_familes);
-
-    // Add half families.
-    auto household_half = mio::abm::Household();
-    household_half.add_members(child, number_of_persons_in_household - 1);
-    household_half.add_members(parent, 1);
-    private_household_group.add_households(household_half, number_of_half_familes);
-
-    // Add other families.
-    if (number_of_persons_in_household < 5) {
-        auto household_others = mio::abm::Household();
-        household_others.add_members(random, number_of_persons_in_household);
-        private_household_group.add_households(household_others, number_of_other_familes);
-    }
-    else if (number_of_persons_in_household == 5) {
-        // For 5 and more people in one household we have to distribute the rest onto the left over households.
-        int people_left_size5 = 545;
-
-        auto households_size_list = last_household_gets_the_rest(people_left_size5, number_of_other_familes);
-
-        auto household_rest = mio::abm::HouseholdGroup();
-        for (auto& household_size : households_size_list) {
-            auto household = mio::abm::Household();
-            household.add_members(random, household_size); // Add members according to the amount of people in the list.
-            household_rest.add_households(household, 1); // Add the household to the household group.
-        }
-    }
-    return private_household_group;
-}
-
-void create_world_from_statistical_data(mio::abm::World& world)
-{
-
-    /** The data is taken from
-     * https://www-genesis.destatis.de/genesis/online?operation=statistic&levelindex=0&levelid=1627908577036&code=12211#abreadcrumb
-     * All numbers are in 1000.
-     * Destatis divides the Households into community households and private households.
-     * Community Households are: Refugee, Disabled, Retirement and Others. We have an explicit age distribution, amount of households and amount of people for them but not the exact amount of people in each household.
-     * The private Households are divided with respect to the amount of people living in each household. For a one person household we have the exact age distribution. For the rest we have data about which kind of family lives in them. The different kinds of families are: A family with two parents and the rest are children, a family with one parent and the rest are children and  "other" families with no exact data about their age.
-    */
-
-    // Refugee
-    auto refugee = mio::abm::HouseholdMember();
-    refugee.set_age_weight(mio::abm::AgeGroup::Age0to4, 25);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age5to14, 12);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age15to34, 25);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age35to59, 9);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age60to79, 1);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age80plus, 1);
-    int refugee_number_of_people     = 74;
-    int refugee_number_of_households = 12;
-    auto refugeeGroup = make_uniform_households(refugee, refugee_number_of_people, refugee_number_of_households);
-
-    add_household_group_to_world(world, refugeeGroup);
-
-    // Disabled
-    auto disabled = mio::abm::HouseholdMember();
-    disabled.set_age_weight(mio::abm::AgeGroup::Age0to4, 2);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age5to14, 6);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age15to34, 13);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age35to59, 42);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age60to79, 97);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age80plus, 32);
-    int disabled_number_of_people     = 194;
-    int disabled_number_of_households = 8;
-
-    auto disabledGroup = make_uniform_households(disabled, disabled_number_of_people, disabled_number_of_households);
-
-    add_household_group_to_world(world, disabledGroup);
-
-    // Retirement
-    auto retired = mio::abm::HouseholdMember();
-    retired.set_age_weight(mio::abm::AgeGroup::Age15to34, 1);
-    retired.set_age_weight(mio::abm::AgeGroup::Age35to59, 30);
-    retired.set_age_weight(mio::abm::AgeGroup::Age60to79, 185);
-    retired.set_age_weight(mio::abm::AgeGroup::Age80plus, 530);
-    int retirement_number_of_people     = 744;
-    int retirement_number_of_households = 16;
-
-    auto retirementGroup =
-        make_uniform_households(retired, retirement_number_of_people, retirement_number_of_households);
-
-    add_household_group_to_world(world, retirementGroup);
-
-    // Others
-    auto other = mio::abm::HouseholdMember();
-    other.set_age_weight(mio::abm::AgeGroup::Age0to4, 30);
-    other.set_age_weight(mio::abm::AgeGroup::Age5to14, 40);
-    other.set_age_weight(mio::abm::AgeGroup::Age15to34, 72);
-    other.set_age_weight(mio::abm::AgeGroup::Age35to59, 40);
-    other.set_age_weight(mio::abm::AgeGroup::Age60to79, 30);
-    other.set_age_weight(mio::abm::AgeGroup::Age80plus, 10);
-    int others_number_of_people     = 222;
-    int others_number_of_households = 20;
-
-    auto otherGroup = make_uniform_households(other, others_number_of_people, others_number_of_households);
-
-    add_household_group_to_world(world, otherGroup);
-
-    // One Person Household (we have exact age data about this)
-    auto one_person_household_member = mio::abm::HouseholdMember();
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age15to34, 4364);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age35to59, 7283);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age60to79, 4100);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age80plus, 1800);
-    int one_person_number_of_people     = 15387;
-    int one_person_number_of_households = 15387;
-
-    auto onePersonGroup = make_uniform_households(one_person_household_member, one_person_number_of_people,
-                                                  one_person_number_of_households);
-
-    add_household_group_to_world(world, onePersonGroup);
-
-    // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
-    child.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
-
-    auto parent = mio::abm::HouseholdMember(); // A child is 40/40/20% 15-34, 35-59 or 60-79.
-    parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 2);
-    parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 2);
-    parent.set_age_weight(mio::abm::AgeGroup::Age60to79, 1);
-
-    auto random = mio::abm::HouseholdMember(); // Randoms are distributed according to the left over persons.
-    random.set_age_weight(mio::abm::AgeGroup::Age0to4, 5000);
-    random.set_age_weight(mio::abm::AgeGroup::Age5to14, 6000);
-    random.set_age_weight(mio::abm::AgeGroup::Age15to34, 14943);
-    random.set_age_weight(mio::abm::AgeGroup::Age35to59, 22259);
-    random.set_age_weight(mio::abm::AgeGroup::Age60to79, 11998);
-    random.set_age_weight(mio::abm::AgeGroup::Age80plus, 5038);
-
-    // Two person households
-    int two_person_full_families  = 11850;
-    int two_person_half_families  = 1765;
-    int two_person_other_families = 166;
-    auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
-                                                             two_person_half_families, two_person_other_families);
-    add_household_group_to_world(world, twoPersonHouseholds);
-
-    // Three person households
-    int three_person_full_families  = 4155;
-    int three_person_half_families  = 662;
-    int three_person_other_families = 175;
-    auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
-                                                               three_person_half_families, three_person_other_families);
-    add_household_group_to_world(world, threePersonHouseholds);
-
-    // Four person households
-    int four_person_full_families  = 3551;
-    int four_person_half_families  = 110;
-    int four_person_other_families = 122;
-    auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
-                                                              four_person_half_families, four_person_other_families);
-    add_household_group_to_world(world, fourPersonHouseholds);
-
-    // Five plus person households
-    int fiveplus_person_full_families  = 1245;
-    int fiveplus_person_half_families  = 80;
-    int fiveplus_person_other_families = 82;
-    auto fivePlusPersonHouseholds =
-        make_homes_with_families(child, parent, random, 5, fiveplus_person_full_families, fiveplus_person_half_families,
-                                 fiveplus_person_other_families);
-    add_household_group_to_world(world, fivePlusPersonHouseholds);
-}
-
-/**
- * Add locations to the world and assign locations to the people.
- */
-void create_assign_locations(mio::abm::World& world)
-{
-    // Add one social event with 100 maximum contacts.
-    // Maximum contacs limit the number of people that a person can infect while being at this location.
-    // A high percentage of people (50-100%) have to get tested in the 2 days before the event
-    // For the capacity we assume an area of 1.25 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and a
-    // room height of 3 m
-    auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
-    world.get_individualized_location(event).set_capacity(100, 375);
-
-    auto testing_criteria = mio::abm::TestingCriteria();
-    auto testing_min_time = mio::abm::days(2);
-    auto start_date       = mio::abm::TimePoint(0);
-    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
-
-    auto probability = mio::UncertainValue();
-    assign_uniform_distribution(probability, 0.5, 1.0);
-
-    auto test_type      = mio::abm::AntigenTest();
-    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type,
-                                                  probability.draw_sample());
-
-    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
-
-    // Add hospital and ICU with 5 maximum contacs.
-    // For the number of agents in this example we assume a capacity of 584 persons (80 beds per 10000 residents in
-    // Germany (Statistisches Bundesamt, 2022) and a volume of 26242 m^3
-    // (https://doi.org/10.1016/j.buildenv.2021.107926))
-    // For the ICUs we assume a capacity of 30 agents and the same volume.
-    auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(hospital).set_capacity(584, 26242);
-    auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(icu).set_capacity(30, 1350);
-
-    // Add schools, workplaces and shops.
-    // At every school there are 600 students. The maximum contacs are 40.
-    // Students have to get tested once a week.
-    // We assume 2 m^2 per student (https://doi.org/10.1371/journal.pone.0259037) and a room height of 3 m.
-    // At every workplace work 100 people (needs to be varified), maximum contacts are 40.
-    // People can get tested at work (and do this with 0.5 probability).
-    // Per person we assume an area of 10 m^2 (https://doi.org/10.1371/journal.pone.0259037) and a room height of 3 m.
-    // Add one supermarked per 15.000 people, maximum constacts are assumed to be 20.
-    // A shop has a capacity of 240 persons (https://doi.org/10.1016/j.buildenv.2021.107926)
-    // and a volume of 7200 cubic meters (10 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and 3 m
-    // room height).
-    auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    world.get_individualized_location(shop).set_capacity(240, 7200);
-
-    auto school = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(school).set_capacity(600, 3600);
-
-    auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(work).set_capacity(100, 3000);
-
-    int counter_event  = 0;
-    int counter_school = 0;
-    int counter_work   = 0;
-    int counter_shop   = 0;
-    //Assign locations to the people
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        //assign shop and event
-        person.set_assigned_location(event);
-        counter_event++;
-        person.set_assigned_location(shop);
-        counter_shop++;
-        //assign hospital and ICU
-        person.set_assigned_location(hospital);
-        person.set_assigned_location(icu);
-        //assign work/school to people depending on their age
-        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
-            person.set_assigned_location(school);
-            counter_school++;
-        }
-        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
-            person.set_assigned_location(work);
-            counter_work++;
-        }
-        //add new school/work/shop if needed
-        if (counter_event == 1000) {
-            counter_event = 0;
-            event         = world.add_location(mio::abm::LocationType::SocialEvent);
-            world.get_individualized_location(event).set_capacity(100, 375);
-            world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
-        }
-        if (counter_school == 600) {
-            counter_school = 0;
-            school         = world.add_location(mio::abm::LocationType::School);
-            world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(school).set_capacity(600, 3600);
-        }
-        if (counter_work == 100) {
-            counter_work = 0;
-            work         = world.add_location(mio::abm::LocationType::Work);
-            world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(work).set_capacity(100, 3000);
-        }
-        if (counter_shop == 15000) {
-            counter_shop = 0;
-            shop         = world.add_location(mio::abm::LocationType::BasicsShop);
-            world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-            world.get_individualized_location(shop).set_capacity(240, 7200);
-        }
-    }
-
-    // add the testing schemes for school and work
-    auto testing_criteria_school = mio::abm::TestingCriteria();
-
-    testing_min_time           = mio::abm::days(7);
-    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
-                                                         end_date, test_type, probability.draw_sample());
-    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
-
-    auto test_at_work          = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work = mio::abm::TestingCriteria();
-
-    assign_uniform_distribution(probability, 0.1, 0.5);
-    testing_min_time         = mio::abm::days(1);
-    auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
-                                                       test_type, probability.draw_sample());
-    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
-}
-
-/**
  * Assign an infection state to each person.
  */
 void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_prob,
@@ -437,15 +72,292 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
-        auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
-                                                         infected_symptoms_prob, recovered_prob);
-        if (infection_state != mio::abm::InfectionState::Susceptible) {
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto infection_state =
+            determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
+        if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), t, infection_state,
-                                                         person.get_latest_protection(), false));
+                                                         world.get_global_infection_parameters(), t, infection_state));
+    }
+}
+int stringToMinutes(const std::string& input)
+{
+    size_t colonPos = input.find(":");
+    if (colonPos == std::string::npos) {
+        // Handle invalid input (no colon found)
+        return -1; // You can choose a suitable error code here.
+    }
+
+    std::string xStr = input.substr(0, colonPos);
+    std::string yStr = input.substr(colonPos + 1);
+
+    int x = std::stoi(xStr);
+    int y = std::stoi(yStr);
+    return x * 60 + y;
+}
+void split_line(std::string string, std::vector<int32_t>* row)
+{
+    std::vector<std::string> strings;
+
+    std::string x = ",,", y = ",-1,";
+    size_t pos;
+    while ((pos = string.find(x)) != std::string::npos) {
+        string.replace(pos, 2, y);
+    } // Temporary fix to handle empty cells.
+    boost::split(strings, string, boost::is_any_of(","));
+    std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
+        if (s.find(":") != std::string::npos) {
+            return stringToMinutes(s);
+        }
+        else {
+            return std::stoi(s);
+        }
+    });
+}
+
+mio::abm::LocationType get_location_type(uint32_t acitivity_end)
+{
+    mio::abm::LocationType type;
+    switch (acitivity_end) {
+    case 1:
+        type = mio::abm::LocationType::Work;
+        break;
+    case 2:
+        type = mio::abm::LocationType::School;
+        break;
+    case 3:
+        type = mio::abm::LocationType::BasicsShop;
+        break;
+    case 4:
+        type = mio::abm::LocationType::SocialEvent; // Freizeit
+        break;
+    case 5:
+        type = mio::abm::LocationType::BasicsShop; // Private Erledigung
+        break;
+    case 6:
+        type = mio::abm::LocationType::SocialEvent; // Sonstiges
+        break;
+    default:
+        type = mio::abm::LocationType::Home;
+        break;
+    }
+    return type;
+}
+
+mio::abm::AgeGroup determine_age_group(uint32_t age)
+{
+    if (age <= 4) {
+        return mio::abm::AgeGroup::Age0to4;
+    }
+    else if (age <= 14) {
+        return mio::abm::AgeGroup::Age5to14;
+    }
+    else if (age <= 34) {
+        return mio::abm::AgeGroup::Age15to34;
+    }
+    else if (age <= 59) {
+        return mio::abm::AgeGroup::Age35to59;
+    }
+    else if (age <= 79) {
+        return mio::abm::AgeGroup::Age60to79;
+    }
+    else {
+        return mio::abm::AgeGroup::Age80plus;
+    }
+}
+
+void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0,
+                            int max_number_persons)
+{
+    // Open File
+    const fs::path p = filename;
+    if (!fs::exists(p)) {
+        mio::log_error("Cannot read in data. File does not exist.");
+    }
+    // File pointer
+    std::fstream fin;
+
+    // Open an existing file
+    fin.open(filename, std::ios::in);
+    std::vector<int32_t> row;
+    std::vector<std::string> row_string;
+    std::string line;
+
+    // Read the Titles from the Data file
+    std::getline(fin, line);
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+    std::vector<std::string> titles;
+    boost::split(titles, line, boost::is_any_of(","));
+    uint32_t count_of_titles              = 0;
+    std::map<std::string, uint32_t> index = {};
+    for (auto const& title : titles) {
+        index.insert({title, count_of_titles});
+        row_string.push_back(title);
+        count_of_titles++;
+    }
+
+    std::map<uint32_t, mio::abm::LocationId> locations = {};
+    std::map<uint32_t, mio::abm::Person&> persons      = {};
+    std::map<uint32_t, uint32_t> person_ids            = {};
+    std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
+    std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
+
+    // For the world we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
+
+    // We assume that no person goes to an hospital, altough e.g. "Sonstiges" could be a hospital
+    auto hospital = world.add_location(mio::abm::LocationType::Hospital);
+    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_individualized_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
+                                                             std::numeric_limits<uint32_t>::max());
+    auto icu = world.add_location(mio::abm::LocationType::ICU);
+    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_individualized_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(),
+                                                        std::numeric_limits<uint32_t>::max());
+
+    // First we determine the persons number and their starting locations
+    int number_of_persons = 0;
+
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t person_id = row[index["puid"]];
+        auto it_person_id  = person_ids.find(person_id);
+        if (it_person_id == person_ids.end()) {
+            if (number_of_persons >= max_number_persons)
+                break; //This is okay because the data is sorted by person_id
+            person_ids.insert({person_id, number_of_persons});
+            number_of_persons++;
+        }
+
+        // The starting location of a person is the end location of the last trip he made, either on the same day or on
+        // the day before
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        int trip_start              = row[index["start_time"]];
+        if (trip_start < t0.hour_of_day()) {
+            auto it_person = locations_before.find(person_id);
+            if (it_person == locations_before.end()) {
+                locations_before.insert({person_id, std::make_pair(target_location_id, trip_start)});
+            }
+            else {
+                if (it_person->second.second <= trip_start) {
+                    it_person->second.first  = target_location_id;
+                    it_person->second.second = trip_start;
+                }
+            }
+        }
+        else {
+            auto it_person = locations_after.find(person_id);
+            if (it_person == locations_after.end()) {
+                locations_after.insert({person_id, std::make_pair(target_location_id, trip_start)});
+            }
+            else {
+                if (it_person->second.second <= trip_start) {
+                    it_person->second.first  = target_location_id;
+                    it_person->second.second = trip_start;
+                }
+            }
         }
     }
+
+    fin.clear();
+    fin.seekg(0);
+    std::getline(fin, line); // Skip header row
+
+    // Add all locations to the world
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t person_id = row[index["puid"]];
+        if (person_ids.find(person_id) == person_ids.end())
+            break;
+
+        uint32_t home_id            = row[index["huid"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t activity_end       = row[index["activity_end"]];
+        mio::abm::LocationId home;
+        auto it_home = locations.find(home_id);
+        if (it_home == locations.end()) {
+            home = world.add_location(mio::abm::LocationType::Home, 1);
+            locations.insert({home_id, home});
+        }
+        else {
+            home = it_home->second;
+        }
+
+        mio::abm::LocationId location;
+        auto it_location = locations.find(
+            target_location_id); // Check if location already exists also for home which have the same id (home_id = target_location_id)
+        if (it_location == locations.end()) {
+            location = world.add_location(
+                get_location_type(activity_end),
+                1); // Assume one place has one activity, this may be untrue but not important for now(?)
+            locations.insert({target_location_id, location});
+        }
+    }
+    fin.clear();
+    fin.seekg(0);
+    std::getline(fin, line); // Skip header row
+
+    // Add the persons and trips
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t person_id = row[index["puid"]];
+        if (person_ids.find(person_id) == person_ids.end())
+            break;
+
+        uint32_t age                = row[index["age"]];
+        uint32_t home_id            = row[index["huid"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
+        uint32_t trip_start         = row[index["start_time"]];
+
+        // Add the trip to the trip list person and location must exist at this point
+        auto target_location = locations.find(target_location_id)->second;
+        auto start_location  = locations.find(start_location_id)->second;
+
+        auto it_person = persons.find(person_id);
+
+        if (it_person == persons.end()) {
+            auto it_first_location_id = locations_before.find(person_id);
+            if (it_first_location_id == locations_before.end()) {
+                it_first_location_id = locations_after.find(person_id);
+            }
+            auto first_location_id = it_first_location_id->second.first;
+            auto first_location    = locations.find(first_location_id)->second;
+            auto& person           = world.add_person(first_location, determine_age_group(age));
+            auto home              = locations.find(home_id)->second;
+            person.set_assigned_location(home);
+            person.set_assigned_location(hospital);
+            person.set_assigned_location(icu);
+            persons.insert({person_id, person});
+            it_person = persons.find(person_id);
+        }
+
+        it_person->second.set_assigned_location(
+            target_location); //This assumes that we only have in each tripchain only one location type for each person
+        if (locations.find(start_location_id) == locations.end()) {
+            // For trips where the start location is not known use Home instead
+            start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
+                              mio::abm::LocationType::Home};
+        }
+        world.get_trip_list().add_trip(mio::abm::Trip(it_person->second.get_person_id(),
+                                                      mio::abm::TimePoint(0) + mio::abm::minutes(trip_start),
+                                                      target_location, start_location));
+    }
+    world.get_trip_list().use_weekday_trips_on_weekend();
 }
 
 void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
@@ -1053,18 +965,11 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 
 /**
  * Create a sampled simulation with start time t0.
- * @param t0 the start time of the simulation
-*/
-mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
+ * @param t0 The start time of the Simulation.
+ */
+mio::abm::Simulation create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
+                                               int max_num_persons)
 {
-    // mio::thread_local_rng().seed(
-    //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
-    printf("Parameter Sample Seeds: ");
-    for (auto s : mio::thread_local_rng().get_seeds()) {
-        printf("%u, ", s);
-    }
-    printf("\n");
-    
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
@@ -1074,22 +979,12 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     set_parameters(infection_params);
     auto world = mio::abm::World(infection_params);
 
-    // world.get_rng().seed(
-    //    {23144124, 1835345345, 9343763, 9123}); //set seeds, e.g., for debugging
-    printf("ABM Simulation Seeds: ");
-    for (auto s : world.get_rng().get_seeds()) {
-        printf("%u, ", s);
-    }
-    printf("\n");
-
     // Create the world object from statistical data.
-    create_world_from_statistical_data(world);
+    create_world_from_data(world, input_file, t0, max_num_persons);
+    world.use_migration_rules(false);
 
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
-
-    // Add locations and assign locations to the people.
-    create_assign_locations(world);
 
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
@@ -1102,36 +997,58 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto sim = mio::abm::Simulation(t0, std::move(world));
     return sim;
 }
+struct LogLocationInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type location_information{};
+        for (auto&& location : sim.get_world().get_locations()) {
+            location_information.push_back(std::make_tuple(location.get_index(), location.get_geographical_location()));
+        }
+        return location_information;
+    }
+};
 
-/**
- * Run the ABM simulation.
- * @param result_dir Directory where all results of the parameter study will be stored.
- * @param num_runs Number of runs.
- * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
- * @returns Any io error that occurs during reading or writing of files.
- */
-mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
+struct LogPersonInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type person_information{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            person_information.push_back(std::make_tuple(
+                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+                person.get_age()));
+        }
+        return person_information;
+    }
+};
+
+mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
+                        bool save_single_runs = true)
 {
 
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(10); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+    auto max_num_persons    = 1000;
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
         // Create the sampled simulation with start time t0.
-        auto sim = create_sampled_simulation(t0);
+        auto sim = create_sampled_simulation(input_file, t0, max_num_persons);
+        //output object
+        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
-        sim.advance(tmax);
+        sim.advance(tmax, history);
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
         // Push result of the simulation back to the result vector
@@ -1149,10 +1066,10 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
 int main(int argc, char** argv)
 {
-
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
+    std::string input_file = "C:/Users/korf_sa/Documents/rep/data/mobility/bs_sorted.csv";
     size_t num_runs;
     bool save_single_runs = true;
 
@@ -1165,7 +1082,7 @@ int main(int argc, char** argv)
     else if (argc == 3) {
         num_runs   = atoi(argv[1]);
         result_dir = argv[2];
-        printf("Number of runs is %s.\n", argv[1]);
+        printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else {
@@ -1173,13 +1090,21 @@ int main(int argc, char** argv)
         printf("abm_example <num_runs>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in the current directory.\n");
-        printf("abm_example <num_runs> <result_dir>\n");
+        printf("abm_braunschweig <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
-        return 0;
+        printf("Running with number of runs = 1.\n");
+        num_runs = 1;
     }
 
-    auto result = run(result_dir, num_runs, save_single_runs);
+    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
+    //printf("Seeds: ");
+    //for (auto s : mio::thread_local_rng().get_seeds()) {
+    //    printf("%u, ", s);
+    //}
+    //printf("\n");
+
+    auto result = run(input_file, result_dir, num_runs, save_single_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

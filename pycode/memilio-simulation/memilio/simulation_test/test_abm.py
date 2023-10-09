@@ -114,7 +114,7 @@ class TestAbm(unittest.TestCase):
                            abm.hours(8), work_id, home_id))
         world.trip_list = trip_list
         world.use_migration_rules = False
-        self.assertEqual(world.trip_list.num_trips, 2)
+        self.assertEqual(world.trip_list.num_trips(), 2)
 
         # vaccination
         vaccine = abm.Vaccination(

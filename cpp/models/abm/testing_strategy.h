@@ -24,6 +24,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
+#include "memilio/utils/random_number_generator.h"
 #include <bitset>
 #include <map>
 
@@ -146,11 +147,12 @@ public:
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
+     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person& person, TimePoint t) const;
+    bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
 private:
     TestingCriteria m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
@@ -216,12 +218,13 @@ public:
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
+     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(Person& person, const Location& location, TimePoint t);
+    bool run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
 private:
     std::unordered_map<LocationId, std::vector<TestingScheme>>

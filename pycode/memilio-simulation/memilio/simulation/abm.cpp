@@ -164,7 +164,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::Vaccination::time);
 
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
-        .def(py::init<const std::map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
+        .def(py::init<const std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
 
     py::class_<mio::abm::Location>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
@@ -175,6 +175,7 @@ PYBIND11_MODULE(_simulation_abm, m)
                           self.get_infection_parameters() = params;
                       });
 
+    //copying and moving of ranges enabled below, see PYMIO_IGNORE_VALUE_TYPE
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
 
@@ -191,9 +192,9 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::TripList>(m, "TripList")
         .def(py::init<>())
-        .def("add_trip", &mio::abm::TripList::add_trip)
-        .def_property_readonly("next_trip", &mio::abm::TripList::get_next_trip)
-        .def_property_readonly("num_trips", &mio::abm::TripList::num_trips);
+        .def("add_trip", &mio::abm::TripList::add_trip, py::arg("trip"), py::arg("weekend") = false)
+        .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
+        .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
 
     py::class_<mio::abm::World>(m, "World")
         .def(py::init<mio::abm::GlobalInfectionParameters>(),
@@ -239,3 +240,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
 }
+
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_persons()))

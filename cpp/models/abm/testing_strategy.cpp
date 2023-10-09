@@ -117,13 +117,13 @@ void TestingScheme::update_activity_status(TimePoint t)
     m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
-bool TestingScheme::run_scheme(Person& person, TimePoint t) const
+bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
-        double random = UniformDistribution<double>::get_instance()();
+        double random = UniformDistribution<double>::get_instance()(rng);
         if (random < m_probability) {
             if (m_testing_criteria.evaluate(person, t)) {
-                return !person.get_tested(t, m_test_type.get_default());
+                return !person.get_tested(rng, t, m_test_type.get_default());
             }
         }
     }
@@ -172,7 +172,8 @@ void TestingStrategy::update_activity_status(TimePoint t)
     }
 }
 
-bool TestingStrategy::run_strategy(Person& person, const Location& location, TimePoint t)
+bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location,
+                                   TimePoint t)
 {
     // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
     if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
@@ -185,8 +186,8 @@ bool TestingStrategy::run_strategy(Person& person, const Location& location, Tim
         &m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}]};
 
     for (auto vec_ptr : schemes_vector) {
-        if (!std::all_of(vec_ptr->begin(), vec_ptr->end(), [&person, t](TestingScheme& ts) {
-                return !ts.is_active() || ts.run_scheme(person, t);
+        if (!std::all_of(vec_ptr->begin(), vec_ptr->end(), [&rng, &person, t](TestingScheme& ts) {
+                return !ts.is_active() || ts.run_scheme(rng, person, t);
             })) {
             return false;
         }
