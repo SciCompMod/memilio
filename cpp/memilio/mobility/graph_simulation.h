@@ -145,7 +145,7 @@ public:
     void advance(double t_max)
     {
         //draw normalized waiting time
-        ScalarType normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(1.0);
+        ScalarType normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(m_rng, 1.0);
         std::vector<ScalarType> dt_cand(Base::m_graph.nodes().size());
         ScalarType cumulative_rate = 0; //cumulative transition rate
         size_t parameters_per_edge =
@@ -161,7 +161,7 @@ public:
                     //evaluate rates
                     get_rates(m_rates);
                     //draw transition event
-                    size_t event = mio::DiscreteDistribution<size_t>::get_instance()(m_rates);
+                    size_t event = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, m_rates);
                     //edge that performs transition event
                     auto& event_edge = Base::m_graph.edges()[event / parameters_per_edge];
                     //index for compartment and age group migrating
@@ -188,7 +188,7 @@ public:
                     cumulative_rate = get_cumulative_transition_rate();
 
                     //draw new normalized waiting time
-                    normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(1.0);
+                    normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(m_rng, 1.0);
 
                 } while (cumulative_rate * Base::m_dt > normalized_waiting_time);
             }
@@ -209,6 +209,11 @@ public:
             //new dt ist the minimal dt of all nodes
             Base::m_dt = *std::min_element(dt_cand.begin(), dt_cand.end());
         }
+    }
+
+    RandomNumberGenerator& get_rng()
+    {
+        return m_rng;
     }
 
 private:
@@ -239,6 +244,7 @@ private:
     }
 
     std::vector<ScalarType> m_rates;
+    RandomNumberGenerator m_rng;
 };
 
 template <class Graph, class NodeF, class EdgeF>

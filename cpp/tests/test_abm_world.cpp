@@ -17,7 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/random_number_generator.h"
 
 TEST(TestWorld, init)
 {
@@ -224,15 +226,6 @@ TEST(TestWorld, evolveMigration)
         auto t      = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt     = mio::abm::hours(2);
         auto params = mio::abm::GlobalInfectionParameters{};
-        //setup so p1-p5 don't transition
-        params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype,
-                                                              mio::abm::AgeGroup::Age15to34}]  = 2 * dt.days();
-        params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
-                                                               mio::abm::AgeGroup::Age15to34}] = 2 * dt.days();
-        params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-            2 * dt.days();
-        params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-            2 * dt.days();
 
         auto world = mio::abm::World(params);
         world.use_migration_rules(false);
@@ -242,8 +235,22 @@ TEST(TestWorld, evolveMigration)
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
         auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
 
-        auto& p1 =
-            add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible, t);
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+            mock_uniform_dist;
+        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+            .Times(testing::AtLeast(8))
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillRepeatedly(testing::Return(1.0)); // this forces p1 and p3 to recover
+
+        auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
+                                   mio::abm::InfectionState::InfectedNoSymptoms, t);
         auto& p2 =
             add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible, t);
         auto& p3 =
@@ -393,6 +400,8 @@ TEST(TestWorld, evolveMigration)
 
 TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
+    auto rng = mio::RandomNumberGenerator();
+
     mio::abm::GlobalInfectionParameters params;
     // make sure the infected person stay in Infected long enough
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34}] =
@@ -407,6 +416,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto current_time = mio::abm::TimePoint(0);
     auto person       = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
                                         mio::abm::InfectionState::InfectedSymptoms, current_time);
+    auto rng_person   = mio::abm::Person::RandomNumberGenerator(rng, person);
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
@@ -426,7 +436,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, test_type, probability);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time),
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
     world.get_testing_strategy().update_activity_status(current_time);
@@ -435,9 +445,10 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), false);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
     world.get_testing_strategy().remove_testing_scheme(testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), true); // no more testing_schemes
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+              true); // no more testing_schemes
 }
