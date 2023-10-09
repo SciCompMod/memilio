@@ -131,8 +131,8 @@ public:
                     uint32_t person_id = INVALID_PERSON_ID);
 
     /**
-     * @brief Create a copy of the current Person with a new Location.
-     * @param[in, out] location The new Location of the Person.
+     * @brief Create a copy of this #Person object with a new Location.
+     * @param[in, out] location The new #Location of the Person.
      */
     Person copy_person(Location& location);
 

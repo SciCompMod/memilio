@@ -134,8 +134,7 @@ public:
     }
 
     /**
-     * @brief Return a copy of the current Location object with an empty m_persons.
-     * @param[in] other The original #Location.
+     * @brief Return a copy of this #Location object with an empty m_persons.
      */
     Location copy_location_without_persons();
 
