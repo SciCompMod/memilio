@@ -1,8 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -67,6 +66,7 @@ public:
         : m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
+        , m_cemetery_id(add_location(LocationType::Cemetery))
     {
         use_migration_rules(true);
     }
@@ -139,6 +139,7 @@ public:
         uint32_t person_id = static_cast<uint32_t>(m_persons.size());
         m_persons.push_back(std::make_unique<Person<FP>>(get_individualized_location(id), age, person_id));
         auto& person = *m_persons.back();
+        person.set_assigned_location(m_cemetery_id);
         get_individualized_location(id).add_person(person);
         return person;
     }
@@ -147,16 +148,15 @@ public:
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
-    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const
+    auto get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
     {
         return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
     }
-
     /**
      * @brief Get a range of all Person%s in the World.
      * @return A range of all Person%s.
      */
-    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const
+    auto get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
     {
         return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
     }
@@ -263,6 +263,7 @@ public:
         // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
         if (m_use_migration_rules) {
             m_migration_rules = {
+                                 std::make_pair(&get_buried<FP>, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
                                  std::make_pair(&return_home_when_recovered<FP>,
                                                 std::vector<LocationType>{
                                                                           LocationType::Home,
@@ -277,6 +278,7 @@ public:
         }
         else {
             m_migration_rules = {
+                                 std::make_pair(&get_buried<FP>, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
                                  std::make_pair(&return_home_when_recovered<FP>,
                                                 std::vector<LocationType>{
                                                                           LocationType::Home,
@@ -286,6 +288,7 @@ public:
                                  std::make_pair(&go_to_quarantine<FP>, std::vector<LocationType>{LocationType::Home})};
         }
     }
+
 
     bool use_migration_rules() const
     {
@@ -372,7 +375,8 @@ private:
                 auto& trip            = m_trip_list.get_next_trip();
                 auto& person          = m_persons[trip.person_id];
                 auto current_location = person->get_location();
-                if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
+                if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
+                    current_location == get_individualized_location(trip.migration_origin)) {
                     auto& target_location = get_individualized_location(trip.migration_destination);
                     if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                         person->apply_mask_intervention(target_location);
@@ -397,6 +401,7 @@ private:
                                            const MigrationParameters<FP>&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
+    LocationId m_cemetery_id; // Central cemetery for all dead persons.
 };
 
 } // namespace abm

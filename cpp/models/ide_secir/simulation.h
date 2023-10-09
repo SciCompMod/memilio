@@ -89,9 +89,10 @@ public:
     }
 
 
+
     /**
      * @brief Get the result of the simulation.
-     * Return the number of persons in all InfectionState%s.
+     * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
     TimeSeries<double>& get_result()
@@ -101,7 +102,7 @@ public:
 
     /**
      * @brief Get the result of the simulation.
-     * Return the number of persons in all InfectionState%s.
+     * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
     const TimeSeries<double>& get_result() const
@@ -110,7 +111,7 @@ public:
     }
 
     /**
-     * @brief Get the transitions between the different InfectionState%s.
+     * @brief Get the transitions between the different #InfectionState%s.
      * 
      * @return TimeSeries with stored transitions calculated in the simulation.
      */

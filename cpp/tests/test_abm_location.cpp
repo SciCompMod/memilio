@@ -100,21 +100,23 @@ TEST(TestLocation, CacheExposureRate)
         auto home      = mio::abm::Location<double>(mio::abm::LocationType::Home, 0, 1);
         auto location  = mio::abm::Location<double>(mio::abm::LocationType::PublicTransport, 0, 3);
         auto infected1 = mio::abm::Person<double>(home, age);
-        infected1.add_new_infection(mio::abm::Infection<double>(variant, age, params, t));
+        infected1.add_new_infection(
+            mio::abm::Infection<double>(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
         infected1.migrate_to(location, {0});
         auto infected2 = mio::abm::Person<double>(home, age);
-        infected2.add_new_infection(mio::abm::Infection<double>(variant, age, params, t));
+        infected2.add_new_infection(
+            mio::abm::Infection<double>(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
         infected2.migrate_to(location, {0, 1});
 
         //cache precomputed results
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.0020454543682044937,
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.015015859523894731,
                     1e-14);
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.0020454543682044937, 1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0010227271841022469,
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.015015859523894731, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0075079297619473654,
                     1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0010227271841022469, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0075079297619473654, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
 
@@ -125,8 +127,8 @@ TEST(TestLocation, CacheExposureRate)
         location.set_capacity(2, 22, 2); // Capacity for Cell 3
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.0061363631046134817, 1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0030681815523067408, 1e-14);
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.045047578571684191, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.022523789285842095, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
     }
 }
@@ -139,12 +141,10 @@ TEST(TestLocation, reachCapacity)
     auto dt     = mio::abm::hours(1);
     auto params = mio::abm::GlobalInfectionParameters<double>{};
     //setup so p1 doesn't transition
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
-        2 * dt.days();
-    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
-        2 * dt.days();
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                          mio::abm::AgeGroup::Age15to34}]  = 2 * dt.days();
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                           mio::abm::AgeGroup::Age15to34}] = 2 * dt.days();
 
     auto world     = mio::abm::World<double>(params);
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
@@ -219,13 +219,12 @@ TEST(TestLocation, interact)
 
     mio::abm::GlobalInfectionParameters<double> params;
     params.set_default<mio::abm::ViralLoadDistributions>();
-    params.get<mio::abm::ViralLoadDistributions>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] = {
-        {1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
+    params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {{1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
     params.set_default<mio::abm::InfectivityDistributions>();
     params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
 
     // set incubtion period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod<double>>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] = 2.;
+    params.get<mio::abm::IncubationPeriod<double>>()[{variant, age}] = 2.;
 
     //setup location with some chance of exposure
     auto location  = mio::abm::Location<double>(mio::abm::LocationType::Work, 0);
@@ -275,20 +274,19 @@ TEST(TestLocation, storeSubpopulations)
     auto location = mio::abm::Location<double>(mio::abm::LocationType::PublicTransport, 0, 3);
 
     //setup: p1 goes from Infected to Recovered, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to Recovered
-    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
-                                                         mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.days();
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                         mio::abm::AgeGroup::Age5to14}] = 1.5 * dt.days();
 
-    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                         mio::abm::AgeGroup::Age15to34}] = 5 * dt.days();
+    params
+        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
         5 * dt.days();
-    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                      mio::abm::VaccinationState::Unvaccinated}] = 5 * dt.days();
 
-    params.get<mio::abm::IncubationPeriod<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
-                                              mio::abm::VaccinationState::Unvaccinated}] = 0.4 * dt.days();
-    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
-        1.8 * dt.days();
+    params.get<mio::abm::IncubationPeriod<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
+        0.4 * dt.days();
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                           mio::abm::AgeGroup::Age35to59}] = 1.8 * dt.days();
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
 

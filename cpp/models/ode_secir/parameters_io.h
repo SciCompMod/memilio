@@ -89,7 +89,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
 {
-
     std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
     assert(scaling_factor_inf.size() == age_ranges.size());
 
@@ -118,7 +117,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
             t_InfectedSevere[county].push_back(
                 static_cast<int>(std::round(model[county].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
             t_InfectedCritical[county].push_back(static_cast<int>(
-                std::round(model[county].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group])));
+                std::round(model[county].parameters.template get<TimeInfectedCritical<double>>()[(AgeGroup)group])));
 
             mu_C_R[county].push_back(model[county].parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[(AgeGroup)group]);
             mu_I_H[county].push_back(model[county].parameters.template get<SeverePerInfectedSymptoms<FP>>()[(AgeGroup)group]);
@@ -146,8 +145,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
                 model[county].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[county][i];
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
                     num_InfectedNoSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
                     num_InfectedSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
                     num_InfectedSevere[county][i];
                 model[county].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[county][i];
@@ -338,6 +339,8 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
     for (size_t j = 0; j < static_cast<size_t>(num_days); j++) {
         std::vector<std::vector<double>> num_InfectedSymptoms(
             model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed(
+            model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<std::vector<double>> num_death(
             model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<std::vector<double>> num_rec(
@@ -345,6 +348,8 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
         std::vector<std::vector<double>> num_Exposed(
             model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<std::vector<double>> num_InfectedNoSymptoms(
+            model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed(
             model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<std::vector<double>> num_InfectedSevere(
             model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
@@ -365,8 +370,12 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
                     num_Exposed[i][age];
                 rki_data[i][j]((size_t)InfectionState::InfectedNoSymptoms + (size_t)InfectionState::Count * age) =
                     num_InfectedNoSymptoms[i][age];
+                rki_data[i][j]((size_t)InfectionState::InfectedNoSymptomsConfirmed +
+                               (size_t)InfectionState::Count * age) = num_InfectedNoSymptomsConfirmed[i][age];
                 rki_data[i][j]((size_t)InfectionState::InfectedSymptoms + (size_t)InfectionState::Count * age) =
                     num_InfectedSymptoms[i][age];
+                rki_data[i][j]((size_t)InfectionState::InfectedSymptomsConfirmed +
+                               (size_t)InfectionState::Count * age) = num_InfectedSymptomsConfirmed[i][age];
                 rki_data[i][j]((size_t)InfectionState::InfectedSevere + (size_t)InfectionState::Count * age) =
                     num_InfectedSevere[i][age];
                 rki_data[i][j]((size_t)InfectionState::InfectedCritical + (size_t)InfectionState::Count * age) =
@@ -376,7 +385,9 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
                 rki_data[i][j]((size_t)InfectionState::Dead + (size_t)InfectionState::Count * age) = num_death[i][age];
                 rki_data[i][j]((size_t)InfectionState::Susceptible + (size_t)InfectionState::Count * age) =
                     num_population[i][age] - num_Exposed[i][age] - num_InfectedNoSymptoms[i][age] -
-                    num_InfectedSymptoms[i][age] - num_InfectedSevere[i][age] - num_rec[i][age] - num_death[i][age] -
+                    num_InfectedNoSymptomsConfirmed[i][age] - num_InfectedSymptoms[i][age] -
+                    num_InfectedSymptomsConfirmed[i][age] - num_InfectedSevere[i][age] - num_rec[i][age] -
+                    num_death[i][age] -
                     rki_data[i][j]((size_t)InfectionState::InfectedCritical + (size_t)InfectionState::Count * age);
             }
         }

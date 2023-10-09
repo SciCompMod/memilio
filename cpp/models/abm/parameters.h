@@ -43,10 +43,10 @@ namespace abm
  */
 template<typename FP=double>
 struct IncubationPeriod {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -54,38 +54,13 @@ struct IncubationPeriod {
     }
 };
 
-template<typename FP=double>
-struct SusceptibleToExposedByInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedNoSymptoms";
-    }
-};
-
-template<typename FP=double>
-struct SusceptibleToExposedByInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedSymptoms";
-    }
-};
 
 template<typename FP=double>
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -95,10 +70,10 @@ struct InfectedNoSymptomsToSymptoms {
 
 template<typename FP=double>
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -108,10 +83,10 @@ struct InfectedNoSymptomsToRecovered {
 
 template<typename FP=double>
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -121,10 +96,10 @@ struct InfectedSymptomsToRecovered {
 
 template<typename FP=double>
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -134,10 +109,10 @@ struct InfectedSymptomsToSevere {
 
 template<typename FP=double>
 struct SevereToCritical {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -147,10 +122,10 @@ struct SevereToCritical {
 
 template<typename FP=double>
 struct SevereToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -160,10 +135,10 @@ struct SevereToRecovered {
 
 template<typename FP=double>
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -173,10 +148,10 @@ struct CriticalToRecovered {
 
 template<typename FP=double>
 struct CriticalToDead {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
     }
     static std::string name()
     {
@@ -186,17 +161,21 @@ struct CriticalToDead {
 
 template<typename FP=double>
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 0.);
     }
     static std::string name()
     {
         return "RecoveredToSusceptible";
     }
 };
-
+/**
+ * @brief Parameters for the ViralLoad course. Default values taken as constant values from the average from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+ * Section 3.3.1 or see also supplementary materials Fig. S5.
+*/
 struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_peak;
     UniformDistribution<double>::ParamType viral_load_incline;
@@ -204,10 +183,10 @@ struct ViralLoadDistributionsParameters {
 };
 
 struct ViralLoadDistributions {
-    using Type = CustomIndexArray<ViralLoadDistributionsParameters, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<ViralLoadDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
+        Type default_val({VirusVariant::Count, AgeGroup::Count},
                          ViralLoadDistributionsParameters{{8.1, 8.1}, {2., 2.}, {-0.17, -0.17}});
         return default_val;
     }
@@ -217,6 +196,10 @@ struct ViralLoadDistributions {
     }
 };
 
+/**
+ * @brief Parameters for the Infectivity. Default values taken as constant values that match the graph 2C from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+*/
 struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
@@ -241,10 +224,10 @@ struct InfectivityDistributions {
  */
 template<typename FP=double>
 struct DetectInfection {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.5);
+        return Type({VirusVariant::Count, AgeGroup::Count}, 0.5);
     }
     static std::string name()
     {
@@ -253,7 +236,7 @@ struct DetectInfection {
 };
 
 /**
- * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
+ * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 template<typename FP=double>
 struct MaskProtection {
@@ -268,17 +251,71 @@ struct MaskProtection {
     }
 };
 
+using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
+
+/**
+ * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on type of vaccine,
+ * age group and virus variant. Its value is between 0 and 1.
+ */
+struct InfectionProtectionFactor {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    static auto get_default()
+    {
+        return Type({ExposureType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "InfectionProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against severe symptoms after #Infection and #Vaccination, which depends on type of vaccine,
+ * age group and virus variant. Its value is between 0 and 1.
+ */
+struct SeverityProtectionFactor {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    static auto get_default()
+    {
+        return Type({ExposureType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "SeverityProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against high viral load. Its value is between 0 and 1.
+ */
+struct HighViralLoadProtectionFactor {
+    using Type = InputFunctionForProtectionLevel;
+    static auto get_default()
+    {
+        return Type([](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "HighViralLoadProtectionFactor";
+    }
+};
+
 /**
  * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 template<typename FP=double>
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod<FP>, SusceptibleToExposedByInfectedNoSymptoms<FP>,
-                 SusceptibleToExposedByInfectedSymptoms<FP>,
+    ParameterSet<IncubationPeriod<FP>,
                  InfectedNoSymptomsToSymptoms<FP>, InfectedNoSymptomsToRecovered<FP>, InfectedSymptomsToRecovered<FP>,
                  InfectedSymptomsToSevere<FP>, SevereToCritical<FP>, SevereToRecovered<FP>, CriticalToDead<FP>, CriticalToRecovered<FP>,
                  RecoveredToSusceptible<FP>, ViralLoadDistributions, InfectivityDistributions, DetectInfection<FP>,
-                 MaskProtection<FP>>;
+                 MaskProtection<FP>, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

@@ -1,8 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -77,17 +77,15 @@ LocationType random_migration(const Person<FP>& person, TimePoint t, TimeSpan dt
 template<typename FP=double>
 LocationType go_to_school(const Person<FP>& person, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params)
 {
-    auto current_loc = person.get_location().get_type();
-
-    if (current_loc == LocationType::Home && t < params.template get<LockdownDate>() && t.day_of_week() < 5 &&
-        person.get_go_to_school_time(params) >= t.time_since_midnight() &&
-        person.get_go_to_school_time(params) < t.time_since_midnight() + dt && person.get_age() == AgeGroup::Age5to14 &&
-        person.goes_to_school(t, params) && !person.is_in_quarantine()) {
-        return LocationType::School;
-    }
-    //return home
-    if (current_loc == LocationType::School && t.hour_of_day() >= 15) {
-        return LocationType::Home;
+    auto current_loc     = person.get_location().get_type();
+    auto make_transition = [current_loc](auto l) {
+        return std::make_pair(l, l == current_loc ? 0. : 1.);
+    };
+    if (t < params.template get<LockdownDate>()) {
+        return random_transition(current_loc, dt,
+                                 {make_transition(LocationType::Work), make_transition(LocationType::Home),
+                                  make_transition(LocationType::School), make_transition(LocationType::SocialEvent),
+                                  make_transition(LocationType::BasicsShop)});
     }
     return current_loc;
 }
@@ -217,6 +215,19 @@ LocationType return_home_when_recovered(const Person<FP>& person, TimePoint t, T
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
         person.get_infection_state(t) == InfectionState::Recovered) {
         return LocationType::Home;
+    }
+    return current_loc;
+}
+
+/**
+ * @brief Person%s in the icu go to cemetery when they are dead.
+ */
+template<typename FP=double>
+LocationType get_buried(const Person<FP>& person, TimePoint t, TimeSpan /* dt */, const MigrationParameters<FP>& /* params */)
+{
+    auto current_loc = person.get_location().get_type();
+    if (person.get_infection_state(t) == InfectionState::Dead) {
+        return LocationType::Cemetery;
     }
     return current_loc;
 }

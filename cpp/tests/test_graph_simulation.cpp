@@ -215,9 +215,9 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     auto expected_values_n1 = std::vector<double>{709.0, 6.4651647420642382, 33.101208735481720, 265.43362652245412};
     auto actual_values_n1   = std::vector<double>{result_n1[0], result_n1[1], result_n1[2], result_n1[3]};
 
-    for(size_t i=0; i < expected_values_n0.size(); ++i) {
-    EXPECT_NEAR(actual_values_n0[i], expected_values_n0[i],1e-8);
-    EXPECT_NEAR(actual_values_n1[i], expected_values_n1[i],1e-8);
+    for (size_t i = 0; i < expected_values_n0.size(); ++i) {
+        EXPECT_THAT(expected_values_n0[i], testing::DoubleNear(actual_values_n0[i], 1e-9));
+        EXPECT_THAT(expected_values_n1[i], testing::DoubleNear(actual_values_n1[i], 1e-9));
     }
 }
 

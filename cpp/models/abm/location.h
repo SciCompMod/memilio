@@ -98,6 +98,7 @@ struct Cell {
         }
     }
 
+
     /**
     * @brief Get subpopulation of a particular #InfectionState in the Cell.
     * @param[in] t TimePoint of querry.
@@ -130,6 +131,7 @@ public:
     {
         assert(num_cells > 0 && "Number of cells has to be larger than 0.");
     }
+
 
     Location(LocationType loc_type, uint32_t loc_index, uint32_t num_cells = 1)
         : Location(LocationId{loc_index, loc_type}, num_cells)
@@ -174,9 +176,8 @@ public:
      * @param[in] age_receiver AgeGroup of the receiving Person.
      * @param[in] age_transmitter AgeGroup of the transmitting Person.
      * @return Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
-    */
-    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus,
-                                             AgeGroup age_receiver) const
+    */  
+    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const
     {
         ScalarType prob = 0;
         for (uint32_t age_transmitter = 0; age_transmitter != static_cast<uint32_t>(AgeGroup::Count); ++age_transmitter) {
@@ -205,8 +206,7 @@ public:
      * @param[in] dt Length of the current Simulation time step.
      * @param[in] global_params Global infection parameters.
      */
-    void interact(Person<FP>& person, TimePoint t, TimeSpan dt,
-                  const GlobalInfectionParameters<FP>& global_params) const
+    void interact(Person<FP>& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters<FP>& global_params) const
     {
         // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
         auto age_receiver          = person.get_age();
@@ -221,7 +221,7 @@ public:
                     (std::min(m_parameters.get<MaximumContacts>(),
                               transmission_contacts_per_day(cell_index, virus, age_receiver)) +
                      transmission_air_per_day(cell_index, virus)) *
-                    (1 - mask_protection) * dt.days() / days(1).days() * person.get_protection_factor(virus, t);
+                    (1 - mask_protection) * dt.days() * (1 - person.get_protection_factor(t, virus, global_params));
 
                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
             }
@@ -229,8 +229,9 @@ public:
                 random_transition(VirusVariant::Count, dt,
                                   local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
             if (virus != VirusVariant::Count) {
-                person.add_new_infection(
-                    mio::abm::Infection<FP>(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
+                person.add_new_infection(Infection(virus, age_receiver, global_params, t + dt / 2,
+                                                   mio::abm::InfectionState::Exposed, person.get_latest_protection(),
+                                                   false)); // Starting time in first approximation
             }
         }
     }
@@ -261,6 +262,8 @@ public:
         }
     }
 
+
+
     /** 
      * @brief Prepare the Location for the next Simulation step.
      * @param[in] t Current TimePoint of the Simulation.
@@ -290,6 +293,7 @@ public:
             }
         }
     }
+
 
 
 
@@ -442,11 +446,12 @@ public:
         m_subpopulations.get_last_value() = subpopulations;
     }
 
+
     /**
      * @brief Initialize the history of subpopulations.
      * @param[in] t The TimePoint of initialization.
      */
-    void initialize_subpopulations(TimePoint t)
+    void initialize_subpopulations(const TimePoint t)
     {
         if (m_subpopulations.get_num_time_points() == 0) {
             store_subpopulations(t);
@@ -458,6 +463,7 @@ public:
         }
     }
 
+
     /**
      * @brief Get the complete history of subpopulations.
      * @return The TimeSeries of the #InfectionState%s for each TimePoint at the Location.
@@ -466,6 +472,8 @@ public:
     {
         return m_subpopulations;
     }
+
+
 
 private:
     LocationId m_id; ///< Id of the Location including type and index.

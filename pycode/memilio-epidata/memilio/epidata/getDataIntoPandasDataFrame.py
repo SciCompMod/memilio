@@ -214,9 +214,12 @@ def get_file(
         if df.empty:
             raise DataError("Error: Dataframe is empty.")
     except AttributeError:
-        for i in range(len(df)):
-            if df[i].empty:
-                raise DataError("Error: Dataframe is empty.")
+        if isinstance(df, list) or isinstance(df, dict):
+            for i in df:
+                if df[i].empty:
+                    raise DataError("Error: Dataframe is empty.")
+        else:
+            raise DataError("Could not catch type of df: " + str(type(df)))
     return df
 
 
@@ -235,6 +238,7 @@ def cli(what):
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
     - no_raw
+    - no_progress_indicators (excluded from dict)
     The default values are defined in default dict.
 
     Depending on what following parser can be added:
@@ -259,7 +263,7 @@ def cli(what):
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources'],
+                "population": ['Download population data from official sources', 'username'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
@@ -341,9 +345,29 @@ def cli(what):
             '-sd', '--sanitize_data', type=int, default=1,
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
-    args = parser.parse_args()
 
-    return vars(args)
+    parser.add_argument(
+        '--no-progress-indicators',
+        help='Disables all progress indicators (used for downloads etc.).',
+        action='store_true')
+
+    if 'username' in what_list:
+        parser.add_argument(
+            '--username', type=str
+        )
+
+        parser.add_argument(
+            '--password', type=str
+        )
+    args = vars(parser.parse_args())
+    # disable progress indicators globally, if the argument --no-progress-indicators was specified
+    progress_indicator.ProgressIndicator.disable_indicators(
+        args["no_progress_indicators"])
+    # remove the no_progress_indicators entry from the dict
+    # (after disabling indicators, its value is no longer usefull)
+    args.pop("no_progress_indicators")
+
+    return args
 
 
 def append_filename(
@@ -388,9 +412,10 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     - json
     - json_timeasstring [Default]
     - hdf5
+    - csv
     - txt
     The file_type defines the file format and thus also the file ending.
-    The file format can be json, hdf5 or txt.
+    The file format can be json, hdf5, csv or txt.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
@@ -404,6 +429,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
                'hdf5': [".h5", {"key": "data"}],
+               'csv': [".csv", {}],
                'txt': [".txt", param_dict]}
 
     try:
@@ -412,7 +438,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring, hdf5 or txt.")
+            " does not exist. Use json, json_timeasstring, hdf5, csv or txt.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -425,6 +451,8 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
+    elif file_type == 'csv':
+        df.to_csv(out_path)
     elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 

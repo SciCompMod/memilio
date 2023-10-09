@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -121,8 +121,8 @@ public:
     }
 
     /**
-     * @brief Get the latest Infection of the Person.
-     * @return The latest Infection of the Person.
+     * @brief Get the latest #Infection of the Person.
+     * @return The latest #Infection of the Person.
      */
     Infection<FP>& get_infection()
     {
@@ -518,6 +518,7 @@ public:
         return true;
     }
 
+
     /**
      * @brief Decide if a Person is currently wearing a Mask.
      * @param[in] wear_mask If true, the protection of the Mask is considered when computing the exposure rate.
@@ -537,25 +538,49 @@ public:
     }
 
     /**
-     * @brief Get the multiplicative factor on how likely an Infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
+     * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
      * @param[in] t TimePoint of check.
-     * @return Protection factor of the immune system to the given VirusVariant at the given TimePoint.
+     * @param[in] virus VirusVariant to check
+     * @param[in] params GlobalInfectionParameters in the model.
+     * @returns Protection factor for general #Infection of the immune system to the given VirusVariant at the given TimePoint.
      */
-    ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters<FP>& params) const
     {
-        return 1.; // put implementation in .cpp
+        auto latest_protection = get_latest_protection();
+        // If there is no previous protection or vaccination, return 0.
+        if (latest_protection.first == ExposureType::NoProtection) {
+            return 0;
+        }
+        return params.template get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
+            t.days() - latest_protection.second.days());
     }
 
     /**
-     * @brief Get the multiplicative factor on how severe a new Infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
-     * @param[in] t TimePoint of check.
-     * @return Severity factor of a new Infection with the given VirusVariant at the given TimePoint.
-     */
-    ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+     * @brief Add a new #Vaccination
+     * @param[in] v ExposureType (i. e. vaccine) the person takes.  
+     * @param[in] t TimePoint of the Vaccination.
+    */
+    void add_new_vaccination(ExposureType v, TimePoint t)
     {
-        return 1.; // put implementation in .cpp
+        m_vaccinations.push_back(Vaccination(v, t));
+    }
+
+    /**
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+    */
+    std::pair<ExposureType, TimePoint> get_latest_protection() const
+    {
+        ExposureType latest_exposure_type = ExposureType::NoProtection;
+        TimePoint infection_time          = TimePoint(0);
+        if (!m_infections.empty()) {
+            latest_exposure_type = ExposureType::NaturalInfection;
+            infection_time       = m_infections.back().get_start_date();
+        }
+        if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
+            latest_exposure_type = m_vaccinations.back().exposure_type;
+            infection_time       = m_vaccinations.back().time;
+        }
+        return std::make_pair(latest_exposure_type, infection_time);
     }
 
 private:

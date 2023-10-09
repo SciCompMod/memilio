@@ -221,6 +221,7 @@ IOResult<void> read_confirmed_cases_data(
 
 
 
+
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {

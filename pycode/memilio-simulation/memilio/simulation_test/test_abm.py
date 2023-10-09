@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
 #
-# Authors: Daniel Abele
+# Authors: Daniel Abele, Khoa Nguyen
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -32,7 +32,7 @@ class TestAbm(unittest.TestCase):
         sim = abm.Simulation(t0)
         world = sim.world
         self.assertEqual(len(world.persons), 0)
-        self.assertEqual(len(world.locations), 0)
+        self.assertEqual(len(world.locations), 1)
         self.assertEqual(len(sim.result), 0)
 
     def test_locations(self):
@@ -42,7 +42,7 @@ class TestAbm(unittest.TestCase):
 
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
-        self.assertEqual(len(world.locations), 2)
+        self.assertEqual(len(world.locations), 3)
 
         home = world.locations[home_id.index]
         self.assertEqual(home.type, abm.LocationType.Home)
@@ -77,7 +77,7 @@ class TestAbm(unittest.TestCase):
         # check persons
         self.assertEqual(len(world.persons), 2)
         self.assertEqual(p1.age, abm.AgeGroup.Age15to34)
-        self.assertEqual(p1.location.index, 0)
+        self.assertEqual(p1.location.index, 1)
         self.assertEqual(world.persons[0], p1)
         self.assertEqual(world.persons[1], p2)
 
@@ -102,10 +102,10 @@ class TestAbm(unittest.TestCase):
 
         social_event = world.locations[social_event_id.index]
 
-        world.infection_parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4,
-                                                            abm.VaccinationState.Unvaccinated] = 0.0
-        world.infection_parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4,
-                                                               abm.VaccinationState.Unvaccinated] = 0.0
+        world.infection_parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype,
+                                                            abm.AgeGroup.Age0to4] = 0.0
+        world.infection_parameters.InfectedSymptomsToRecovered[
+            abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4] = 0.0
 
         # trips
         trip_list = abm.TripList()
@@ -116,6 +116,12 @@ class TestAbm(unittest.TestCase):
         world.trip_list = trip_list
         world.use_migration_rules = False
         self.assertEqual(world.trip_list.num_trips, 2)
+
+        # vaccination
+        vaccine = abm.Vaccination(
+            abm.ExposureType.GenericVaccine, abm.TimePoint(0))
+        self.assertEqual(vaccine.exposure_type,
+                         abm.ExposureType.GenericVaccine)
 
         # run
         t1 = t0 + abm.days(1)
