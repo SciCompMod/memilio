@@ -43,9 +43,16 @@ constexpr size_t index_templ_pack()
 }
 } // namespace details
 
-struct LogOnce {
+/* These are the base classes for Loggers. They are used to determine when a logger is called. 
+* LogOnceStart is only passed to Writer on the first call to History::log, LogAlways on all calls.
+* LogOnceTrigger is only passed to Writer if the trigger is true. This needs to be implemented, e.g. for logging only the last step.
+*/
+struct LogOnceStart {
 };
 
+struct LogOnceTrigger {
+    bool check_trigger();
+};
 struct LogAlways {
 };
 
@@ -57,7 +64,7 @@ template <class... Loggers>
 struct DataWriterToMemory {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
-    static void write_this(const typename Logger::Type& t, Data& data)
+    static void log_this(const typename Logger::Type& t, Data& data)
     {
         std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(t);
     }
@@ -68,9 +75,9 @@ struct DataWriterToMemory {
 * The class provides a log(T t) function to add the current record.
 * It provides a get_log() function to access the record.
 * It uses Loggers to retrieve data, and Writer to record it.
-* A Logger has a type "Type", a function "static Type log(const T&)" and is derived from either LogOnce or LogAlways.
-* LogOnce is only passed to Writer on the first call to History::log, LogAlways on all calls.
-* The Writer defines the type "Data" of the record, and defines with "static void write_this(const Logger::Type&, Data&)" how log values are added to it.
+* A Logger has a type "Type", a function "static Type log(const T&)" and is derived from either LogOnceStart or LogAlways.
+* LogOnceStart is only passed to Writer on the first call to History::log, LogAlways on all calls.
+* The Writer defines the type "Data" of the record, and defines with "static void log_this(const Logger::Type&, Data&)" how log values are added to it.
 * @tparam Writer The writer that is used to handle the data, e.g. store it into an array.
 * @tparam Loggers The loggers that are used to log data.
 */
@@ -110,10 +117,10 @@ private:
     bool logged = false;
 
     template <class T, class logger, class... loggers>
-    std::enable_if_t<std::is_base_of<LogOnce, logger>::value> log_impl(const T& t)
+    std::enable_if_t<std::is_base_of<LogOnceStart, logger>::value> log_impl(const T& t)
     {
         if (!logged) {
-            WriteWrapper::template write_this<logger>(logger::log(t), m_data);
+            WriteWrapper::template log_this<logger>(logger::log(t), m_data);
         }
         log_impl<T, loggers...>(t);
     }
@@ -122,7 +129,16 @@ private:
     std::enable_if_t<std::is_base_of<LogAlways, logger>::value> log_impl(const T& t)
     {
         log_impl<T, loggers...>(t);
-        WriteWrapper::template write_this<logger>(logger::log(t), m_data);
+        WriteWrapper::template log_this<logger>(logger::log(t), m_data);
+    }
+
+    template <class T, class logger, class... loggers>
+    std::enable_if_t<std::is_base_of<LogOnceTrigger, logger>::value> log_impl(const T& t)
+    {
+        log_impl<T, loggers...>(t);
+        if (logger.check_trigger(t)) {
+            WriteWrapper::template log_this<logger>(logger::log(t), m_data);
+        }
     }
 
     template <class T>

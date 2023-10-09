@@ -5,8 +5,9 @@
 class example
 {
 public:
-    int a = 1;
-    int b = 2;
+    int a            = 1;
+    int b            = 2;
+    int current_time = 0;
 };
 
 struct LogPair : mio::LogAlways {
@@ -16,11 +17,25 @@ struct LogPair : mio::LogAlways {
         return {ex.a, ex.b};
     }
 };
-struct LogAOnce : mio::LogOnce {
+struct LogAOnce : mio::LogOnceStart {
     using Type = int;
     static Type log(const example& ex)
     {
         return ex.a;
+    }
+};
+
+struct LogTrigger : mio::LogOnceTrigger {
+    using Type = int;
+    bool check_trigger(const example& ex)
+    {
+        if (ex.current_time == 1) {
+            return true;
+        }
+    }
+    static Type log(const example& ex)
+    {
+        return ex.current_time;
     }
 };
 
@@ -36,9 +51,10 @@ struct Dummy {
 TEST(HistoryObject, log)
 {
     example ex;
-    mio::HistoryWithMemoryWriter<LogPair, LogAOnce> history;
+    mio::HistoryWithMemoryWriter<LogPair, LogAOnce, LogTrigger> history;
     int n_runs = 2;
     for (int i = 0; i < n_runs; i++) {
+        ex.current_time = i;
         history.log(ex);
     }
     auto data = history.get_log();
@@ -47,4 +63,5 @@ TEST(HistoryObject, log)
     ASSERT_EQ(std::get<0>(data)[0], std::get<0>(data)[1]);
     ASSERT_EQ(std::get<0>(data)[0], std::make_pair(ex.a, ex.b));
     ASSERT_EQ(std::get<1>(data)[0], ex.a);
+    ASSERT_EQ(std::get<2>(data)[0], 1);
 }

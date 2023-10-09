@@ -997,7 +997,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     auto sim = mio::abm::Simulation(t0, std::move(world));
     return sim;
 }
-struct LogLocationInformation : mio::LogOnce {
+struct LogLocationInformation : mio::LogOnceStart {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
     static Type log(const mio::abm::Simulation& sim)
     {
@@ -1009,7 +1009,7 @@ struct LogLocationInformation : mio::LogOnce {
     }
 };
 
-struct LogPersonInformation : mio::LogOnce {
+struct LogPersonInformation : mio::LogOnceStart {
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
     static Type log(const mio::abm::Simulation& sim)
     {
