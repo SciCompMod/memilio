@@ -588,20 +588,23 @@ TEST(TestWorld, copyWorld)
     ASSERT_EQ(copied_world.use_migration_rules(), world.use_migration_rules());
 
     mio::abm::TripList& copied_trip_data = copied_world.get_trip_list();
-    ASSERT_EQ(copied_trip_data.num_trips(), world.get_trip_list().num_trips());
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, p1.get_person_id());
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination, school_id1);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, home_id);
+    ASSERT_EQ(copied_trip_data.num_trips(), trip_data.num_trips());
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
+              trip_data.get_next_trip(false).migration_destination);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
     copied_trip_data.increase_index();
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, p2.get_person_id());
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination, work_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, home_id);
+    trip_data.increase_index();
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
+              trip_data.get_next_trip(false).migration_destination);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
 
     ASSERT_EQ(copied_world.get_locations().size(), world.get_locations().size());
-    ASSERT_EQ(copied_world.get_locations()[1].get_index(), school_id1.index);
-    ASSERT_EQ(copied_world.get_locations()[2].get_index(), school_id2.index);
-    ASSERT_EQ(copied_world.get_locations()[3].get_index(), work_id.index);
-    ASSERT_EQ(copied_world.get_locations()[4].get_index(), home_id.index);
+    ASSERT_EQ(copied_world.get_locations()[1].get_index(), world.get_locations()[1].get_index());
+    ASSERT_EQ(copied_world.get_locations()[2].get_index(), world.get_locations()[2].get_index());
+    ASSERT_EQ(copied_world.get_locations()[3].get_index(), world.get_locations()[3].get_index());
+    ASSERT_EQ(copied_world.get_locations()[4].get_index(), world.get_locations()[4].get_index());
     ASSERT_EQ(copied_world.get_locations()[1].get_number_persons(), world.get_locations()[1].get_number_persons());
     ASSERT_EQ(copied_world.get_locations()[2].get_number_persons(), world.get_locations()[2].get_number_persons());
     ASSERT_EQ(copied_world.get_locations()[3].get_number_persons(), world.get_locations()[3].get_number_persons());
@@ -634,12 +637,16 @@ TEST(TestWorld, copyWorld)
         world.get_locations()[4].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
 
     ASSERT_EQ(copied_world.get_persons().size(), world.get_persons().size());
-    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_index(), p1.get_location().get_index());
-    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_index(), p2.get_location().get_index());
-    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(), p1.get_location().get_type());
-    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(), p2.get_location().get_type());
+    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_index(),
+              world.get_persons()[0].get_location().get_index());
+    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_index(),
+              world.get_persons()[1].get_location().get_index());
+    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(),
+              world.get_persons()[0].get_location().get_type());
+    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(),
+              world.get_persons()[1].get_location().get_type());
     ASSERT_EQ(copied_world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
-              p1.get_infection().get_infection_state(mio::abm::TimePoint(0)));
+              world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)));
     ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home),
               world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home));
     ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Work),
@@ -648,49 +655,47 @@ TEST(TestWorld, copyWorld)
               world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Home));
     ASSERT_EQ(copied_world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work),
               world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work));
-    ASSERT_EQ(&(world.get_persons()[0].get_location()), &(p1.get_location()));
-    ASSERT_EQ(&(world.get_persons()[1].get_location()), &(p2.get_location()));
+    ASSERT_EQ(&(world.get_persons()[0].get_location()), &(world.get_persons()[0].get_location()));
+    ASSERT_EQ(&(world.get_persons()[1].get_location()), &(world.get_persons()[1].get_location()));
 
     // Assert the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
     ASSERT_NE(&(copied_world.parameters), &world.parameters);
-
     ASSERT_NE(&(copied_world.get_trip_list()), &trip_data);
 
-    ASSERT_NE(&copied_world.get_locations()[1], &school1);
-    ASSERT_NE(&copied_world.get_locations()[2], &school2);
-    ASSERT_NE(&copied_world.get_locations()[3], &work);
-    ASSERT_NE(&copied_world.get_locations()[4], &home);
-    ASSERT_NE(&copied_world.get_locations()[1].get_cells(), &school1.get_cells());
-    ASSERT_NE(&copied_world.get_locations()[2].get_cells(), &school2.get_cells());
-    ASSERT_NE(&copied_world.get_locations()[3].get_cells(), &work.get_cells());
-    ASSERT_NE(&copied_world.get_locations()[4].get_cells(), &home.get_cells());
-    ASSERT_NE(&copied_world.get_locations()[1].get_subpopulations(), &school1.get_subpopulations());
-    ASSERT_NE(&copied_world.get_locations()[2].get_subpopulations(), &school2.get_subpopulations());
-    ASSERT_NE(&copied_world.get_locations()[3].get_subpopulations(), &work.get_subpopulations());
-    ASSERT_NE(&copied_world.get_locations()[4].get_subpopulations(), &home.get_subpopulations());
+    ASSERT_NE(&copied_world.get_locations()[1], &world.get_locations()[1]);
+    ASSERT_NE(&copied_world.get_locations()[2], &world.get_locations()[2]);
+    ASSERT_NE(&copied_world.get_locations()[3], &world.get_locations()[3]);
+    ASSERT_NE(&copied_world.get_locations()[4], &world.get_locations()[4]);
+    ASSERT_NE(&copied_world.get_locations()[1].get_cells(), &world.get_locations()[1].get_cells());
+    ASSERT_NE(&copied_world.get_locations()[2].get_cells(), &world.get_locations()[2].get_cells());
+    ASSERT_NE(&copied_world.get_locations()[3].get_cells(), &world.get_locations()[3].get_cells());
+    ASSERT_NE(&copied_world.get_locations()[4].get_cells(), &world.get_locations()[4].get_cells());
+    ASSERT_NE(&copied_world.get_locations()[1].get_subpopulations(), &world.get_locations()[1].get_subpopulations());
+    ASSERT_NE(&copied_world.get_locations()[2].get_subpopulations(), &world.get_locations()[2].get_subpopulations());
+    ASSERT_NE(&copied_world.get_locations()[3].get_subpopulations(), &world.get_locations()[3].get_subpopulations());
+    ASSERT_NE(&copied_world.get_locations()[4].get_subpopulations(), &world.get_locations()[4].get_subpopulations());
 
-    ASSERT_NE(&copied_world.get_persons()[0], &p1);
-    ASSERT_NE(&copied_world.get_persons()[1], &p2);
-    ASSERT_NE(&(copied_world.get_persons()[0].get_location()), &school1);
-    ASSERT_NE(&(copied_world.get_persons()[1].get_location()), &school2);
-    ASSERT_NE(&(copied_world.get_locations()[1]), &(p1.get_location()));
-    ASSERT_NE(&(copied_world.get_locations()[2]), &(p2.get_location()));
-    ASSERT_NE(&(copied_world.get_persons()[0].get_assigned_locations()), &p1.get_assigned_locations());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_assigned_locations()), &p2.get_assigned_locations());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_vaccinations()), &p1.get_vaccinations());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_vaccinations()), &p2.get_vaccinations());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_infection()), &p1.get_infection());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_mask()), &p1.get_mask());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_mask()), &p2.get_mask());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_cells()), &p1.get_cells());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &p2.get_cells());
+    ASSERT_NE(&copied_world.get_persons()[0], &world.get_persons()[0]);
+    ASSERT_NE(&copied_world.get_persons()[1], &world.get_persons()[1]);
+    ASSERT_NE(&(copied_world.get_persons()[0].get_location()), &world.get_persons()[0].get_location());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_location()), &world.get_persons()[1].get_location());
+    ASSERT_NE(&(copied_world.get_locations()[1]), &(world.get_locations()[1]));
+    ASSERT_NE(&(copied_world.get_locations()[2]), &(world.get_locations()[2]));
+    ASSERT_NE(&(copied_world.get_persons()[0].get_assigned_locations()),
+              &world.get_persons()[0].get_assigned_locations());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_assigned_locations()),
+              &world.get_persons()[1].get_assigned_locations());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_infection()), &world.get_persons()[0].get_infection());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_mask()), &world.get_persons()[0].get_mask());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_mask()), &world.get_persons()[1].get_mask());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_cells()), &world.get_persons()[0].get_cells());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &world.get_persons()[1].get_cells());
 
     // Evolve the world and check that the copied world has not evolved
-    p1.migrate_to(work, {0});
-    p2.migrate_to(home, {0});
-    ASSERT_NE(copied_world.get_persons()[0].get_location().get_type(), work.get_type());
-    ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(), home.get_type());
-    auto copied_world2 = mio::abm::World(world);
-    ASSERT_EQ(copied_world2.get_persons()[0].get_location().get_type(), work.get_type());
-    ASSERT_EQ(copied_world2.get_persons()[1].get_location().get_type(), home.get_type());
+    copied_world.get_persons()[0].migrate_to(work, {0});
+    copied_world.get_persons()[1].migrate_to(home, {0});
+    ASSERT_NE(copied_world.get_persons()[0].get_location().get_type(),
+              world.get_persons()[0].get_location().get_type());
+    ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(),
+              world.get_persons()[1].get_location().get_type());
 }
