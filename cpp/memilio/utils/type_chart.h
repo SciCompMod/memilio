@@ -72,6 +72,7 @@ private:
             return Index;
         }
         else {
+            static_assert(Index < sizeof...(Types), "Type is not contained in TypeChart");
             return get_impl<Index + 1>(mio::Tag<Type>());
         }
     }

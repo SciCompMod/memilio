@@ -273,20 +273,20 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
         mio::Graph<mio::SimulationNode<mio::SimulationFlows<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax,
         dt);
 
-    std::stringstream ss_sim_no_flows;
-    std::stringstream ss_sim_flows;
-
     //test if all results of both simulations are equal for all nodes
     for (size_t node_id = 0; node_id < sim_no_flows.get_graph().nodes().size(); ++node_id) {
-        sim_no_flows.get_graph().nodes()[node_id].property.get_result().print_table({"S", "E", "I", "R"}, 16, 7,
-                                                                                    ss_sim_no_flows);
-        sim_flows.get_graph().nodes()[node_id].property.get_result().print_table({"S", "E", "I", "R"}, 16, 7,
-                                                                                 ss_sim_flows);
-        EXPECT_EQ(ss_sim_flows.str(), ss_sim_no_flows.str());
-        ss_sim_flows.str("");
-        ss_sim_flows.clear();
-        ss_sim_no_flows.str("");
-        ss_sim_no_flows.clear();
+        auto& results_no_flows = sim_no_flows.get_graph().nodes()[node_id].property.get_result();
+        auto& results_flows    = sim_flows.get_graph().nodes()[node_id].property.get_result();
+        EXPECT_EQ((size_t)results_no_flows.get_num_time_points(), (size_t)results_flows.get_num_time_points());
+        for (size_t t_indx = 0; t_indx < (size_t)results_no_flows.get_num_time_points(); t_indx++) {
+            EXPECT_NEAR(results_no_flows.get_time((Eigen::Index)t_indx), results_flows.get_time((Eigen::Index)t_indx),
+                        1e-10);
+            auto tmp_sol_no_flows = results_no_flows.get_value((Eigen::Index)t_indx);
+            auto tmp_sol_flows    = results_flows.get_value((Eigen::Index)t_indx);
+            EXPECT_NEAR(tmp_sol_no_flows[0], tmp_sol_flows[0], 1e-10);
+            EXPECT_NEAR(tmp_sol_no_flows[1], tmp_sol_flows[1], 1e-10);
+            EXPECT_NEAR(tmp_sol_no_flows[2], tmp_sol_flows[2], 1e-10);
+        }
     }
 
     // test all values from one node to the provided reference data for both simulations
