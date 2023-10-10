@@ -59,7 +59,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
 template <class Simulation>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<pymio::PickleFlag::TryPickling, mio::ParameterStudy<Simulation>>(m, name.c_str())
+    pymio::bind_class<pymio::PickleFlag::NoPickling, mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,

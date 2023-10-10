@@ -38,29 +38,9 @@ enum class PickleFlag {
     ForcePickling
 };
 
-// Tags for different pickling strategies
-struct NoPicklingTag {};
-struct TryPicklingTag {};
-struct ForcePicklingTag {};
-
 // Tag dispatch to convert value into type
 template <PickleFlag F>
 struct PicklingTag {};
-
-template <>
-struct PicklingTag<PickleFlag::NoPickling> {
-    using type = NoPicklingTag;
-};
-
-template <>
-struct PicklingTag<PickleFlag::TryPickling> {
-    using type = TryPicklingTag;
-};
-
-template <>
-struct PicklingTag<PickleFlag::ForcePickling> {
-    using type = ForcePicklingTag;
-};
 
 template <class IOContext, class T>
 using has_seriliazion_functions = mio::conjunction<mio::has_serialize<IOContext, T>, mio::has_deserialize<IOContext, T>>;
@@ -72,7 +52,7 @@ template <class M>
 using is_eigen_matrix = std::is_base_of<Eigen::EigenBase<M>, M>;
 
 template <class IOContext, class T>
-using is_serializable = mio::conjunction<has_seriliazion_functions<IOContext, T>, is_tuple<T>, is_eigen_matrix<T>, std::is_enum<T>, mio::is_container<T>>;
+using is_serializable = mio::disjunction<has_seriliazion_functions<IOContext, T>, is_tuple<T>, is_eigen_matrix<T>, std::is_enum<T>, mio::is_container<T>>;
 
 template <class T, class... Args>
 void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
@@ -99,14 +79,14 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 }
 
 template <class T, class... Args>
-decltype(auto) _bind_class(pybind11::module& m, std::string const& name, NoPicklingTag) {
-    decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
+auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<PickleFlag::NoPickling> /*tags*/) {
+    auto cls = pybind11::class_<T, Args...>(m, name.c_str());
     return cls;
 }
 
 template <class T, class... Args>
-decltype(auto) _bind_class(pybind11::module& m, std::string const& name, TryPicklingTag) {
-    decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
+auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<PickleFlag::TryPickling> /*tags*/) {
+    auto cls = pybind11::class_<T, Args...>(m, name.c_str());
     // Bind the class depending on its features
     if constexpr (is_serializable<mio::PickleSerializer, T>::value) {
         pybind_pickle_class<T, Args...>(cls);
@@ -115,15 +95,15 @@ decltype(auto) _bind_class(pybind11::module& m, std::string const& name, TryPick
 }
 
 template <class T, class... Args>
-decltype(auto) _bind_class(pybind11::module& m, std::string const& name, ForcePicklingTag) {
-    decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
+auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<PickleFlag::ForcePickling> /*tags*/) {
+    auto cls = pybind11::class_<T, Args...>(m, name.c_str());
     pybind_pickle_class<T, Args...>(cls);
     return cls;
 }
 
 template <PickleFlag F, class T, class... Args>
-decltype(auto) bind_class(pybind11::module& m, std::string const& name) {
-    return _bind_class<T, Args...>(m, name, typename PicklingTag<F>::type{});
+auto bind_class(pybind11::module& m, std::string const& name) {
+    return _bind_class<T, Args...>(m, name, PicklingTag<F>{});
 }
 
 // the following functions help bind class template realizations
