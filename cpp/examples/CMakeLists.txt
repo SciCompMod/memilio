@@ -58,9 +58,9 @@ target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_F
 #target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 #target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(abm_history_example abm_history_object.cpp)
-target_link_libraries(abm_history_example PRIVATE memilio abm)
-target_compile_options(abm_history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+#add_executable(abm_history_example abm_history_object.cpp)
+#target_link_libraries(abm_history_example PRIVATE memilio abm)
+#target_compile_options(abm_history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(twitter_migration_example twitter_migration.cpp)
 target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
