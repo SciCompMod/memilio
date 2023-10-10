@@ -18,7 +18,9 @@
 * limitations under the License.
 */
 #include "abm/abm.h"
+#include "abm/person.h"
 #include "memilio/io/result_io.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 
@@ -33,7 +35,7 @@ namespace fs = boost::filesystem;
  */
 void assign_uniform_distribution(mio::UncertainValue<double>& p, ScalarType min, ScalarType max)
 {
-    p = mio::UncertainValue<double>(0.5 * (max + min));
+    p = mio::UncertainValue(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -42,8 +44,9 @@ void assign_uniform_distribution(mio::UncertainValue<double>& p, ScalarType min,
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarType infected_no_symptoms,
-                                                   ScalarType infected_symptoms, ScalarType recovered)
+mio::abm::InfectionState determine_infection_state(mio::abm::Person<double>::RandomNumberGenerator& rng, ScalarType exposed,
+                                                   ScalarType infected_no_symptoms, ScalarType infected_symptoms,
+                                                   ScalarType recovered)
 {
     ScalarType susceptible          = 1 - exposed - infected_no_symptoms - infected_symptoms - recovered;
     std::vector<ScalarType> weights = {
@@ -52,7 +55,7 @@ mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarTyp
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    auto state = mio::DiscreteDistribution<size_t>::get_instance()(rng, weights);
     return (mio::abm::InfectionState)state;
 }
 
@@ -315,11 +318,11 @@ void create_assign_locations(mio::abm::World<double>& world)
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
 
-    auto probability = mio::UncertainValue<double>();
+    auto probability = mio::UncertainValue();
     assign_uniform_distribution(probability, 0.5, 1.0);
 
-    auto test_type      = mio::abm::AntigenTest<double>();
-    auto testing_scheme = mio::abm::TestingScheme<double>(testing_criteria, testing_min_time, start_date, end_date, test_type,
+    auto test_type      = mio::abm::AntigenTest();
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type,
                                                   probability.draw_sample());
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
@@ -416,7 +419,7 @@ void create_assign_locations(mio::abm::World<double>& world)
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
 
     testing_min_time           = mio::abm::days(7);
-    auto testing_scheme_school = mio::abm::TestingScheme<double>(testing_criteria_school, testing_min_time, start_date,
+    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
                                                          end_date, test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
 
@@ -426,7 +429,7 @@ void create_assign_locations(mio::abm::World<double>& world)
 
     assign_uniform_distribution(probability, 0.1, 0.5);
     testing_min_time         = mio::abm::days(1);
-    auto testing_scheme_work = mio::abm::TestingScheme<double>(testing_criteria_work, testing_min_time, start_date, end_date,
+    auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
                                                        test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }
@@ -434,16 +437,16 @@ void create_assign_locations(mio::abm::World<double>& world)
 /**
  * Assign an infection state to each person.
  */
-template<typename FP=double>
-void assign_infection_state(mio::abm::World<FP>& world, mio::abm::TimePoint t, double exposed_prob,
+void assign_infection_state(mio::abm::World<double>& world, mio::abm::TimePoint t, double exposed_prob,
                             double infected_no_symptoms_prob, double infected_symptoms_prob, double recovered_prob)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto infection_state =
-            determine_infection_state(exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
+        auto rng             = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
+        auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
+                                                         infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection<FP>(mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), t, infection_state,
                                                          person.get_latest_protection(), false));
         }
@@ -586,7 +589,8 @@ void set_parameters(mio::abm::GlobalInfectionParameters<double> infection_params
     infection_params
         .get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus}] = 0.052;
     infection_params
-        .get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus}] =  0.;
+        .get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus}] =
+        0.;
 
     // Set each parameter for vaccinated people including personal infection and vaccine protection levels.
     // Summary: https://doi.org/10.1038/s41577-021-00550-x,
@@ -1058,6 +1062,14 @@ void set_parameters(mio::abm::GlobalInfectionParameters<double> infection_params
 */
 mio::abm::Simulation<double> create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
+    // mio::thread_local_rng().seed(
+    //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
+    printf("Parameter Sample Seeds: ");
+    for (auto s : mio::thread_local_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
+    
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
@@ -1065,7 +1077,15 @@ mio::abm::Simulation<double> create_sampled_simulation(const mio::abm::TimePoint
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     mio::abm::GlobalInfectionParameters<double> infection_params;
     set_parameters(infection_params);
-    auto world = mio::abm::World<double>(infection_params);
+    auto world = mio::abm::World(infection_params);
+
+    // world.get_rng().seed(
+    //    {23144124, 1835345345, 9343763, 9123}); //set seeds, e.g., for debugging
+    printf("ABM Simulation Seeds: ");
+    for (auto s : world.get_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
 
     // Create the world object from statistical data.
     create_world_from_statistical_data(world);
@@ -1084,7 +1104,7 @@ mio::abm::Simulation<double> create_sampled_simulation(const mio::abm::TimePoint
     mio::abm::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
-    auto sim = mio::abm::Simulation<double>(t0, std::move(world));
+    auto sim = mio::abm::Simulation(t0, std::move(world));
     return sim;
 }
 
@@ -1163,13 +1183,6 @@ int main(int argc, char** argv)
         printf("\tStore the results in <result_dir>.\n");
         return 0;
     }
-
-    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
-    //printf("Seeds: ");
-    //for (auto s : mio::thread_local_rng().get_seeds()) {
-    //    printf("%u, ", s);
-    //}
-    //printf("\n");
 
     auto result = run(result_dir, num_runs, save_single_runs);
     if (!result) {

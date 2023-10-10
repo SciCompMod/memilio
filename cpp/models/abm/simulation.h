@@ -24,6 +24,9 @@
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/history.h" // IWYU pragma: keep
+#include "memilio/utils/logging.h"
+#include "memilio/utils/mioomp.h"
+#include <random>
 
 namespace mio
 {
@@ -98,6 +101,7 @@ public:
         }
     }
 
+
     /**
      * @brief Get the result of the Simulation.
      * Sum over all Location%s of the number of Person%s in an #InfectionState.
@@ -136,13 +140,28 @@ private:
     }
 
     void store_result_at(TimePoint t)
+{
+    m_result.add_time_point(t.days());
+    m_result.get_last_value().setZero();
+
+    //Use a manual parallel reduction to sum up the subpopulations
+    //The reduction clause of `omp parallel for` doesn't work well for `Eigen::VectorXd`
+    PRAGMA_OMP(parallel)
     {
-        m_result.add_time_point(t.days());
-        m_result.get_last_value().setZero();
-        for (auto& location : m_world.get_locations()) {
-            m_result.get_last_value() += location.get_subpopulations().get_last_value().template cast<ScalarType>();
+        //thread local sum of subpopulations, computed in parallel
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(m_result.get_num_elements());
+        PRAGMA_OMP(for)
+        for (auto i = size_t(0); i < m_world.get_locations().size(); ++i) {
+            auto&& location = m_world.get_locations()[i];
+            sum += location.get_subpopulations().get_last_value().template cast<ScalarType>();
+        }
+        //synchronized total sum
+        PRAGMA_OMP(critical)
+        {
+            m_result.get_last_value() += sum;
         }
     }
+}
 
     void evolve_world(TimePoint tmax)
     {
@@ -150,6 +169,7 @@ private:
         m_world.evolve(m_t, dt);
         m_t += m_dt;
     }
+
 
     World<FP> m_world; ///< The World to simulate.
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.

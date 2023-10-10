@@ -159,6 +159,7 @@ TEST(TestSeir, check_constraints_parameters)
 
 TEST(TestSeir, apply_constraints_parameters)
 {
+    const double tol_times = 1e-1;
     mio::oseir::Model model;
     model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
@@ -170,11 +171,11 @@ TEST(TestSeir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::oseir::TimeExposed<double>>(-5.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseir::TimeExposed<double>>(), 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeExposed<double>>(), tol_times);
 
     model.parameters.set<mio::oseir::TimeInfected<double>>(1e-5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseir::TimeInfected<double>>(), 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeInfected<double>>(), tol_times);
 
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(10.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

@@ -22,21 +22,15 @@
 
 #include "abm/age.h"
 #include "abm/location_type.h"
+#include "abm/infection_state.h"
 #include "abm/parameters.h"
 #include "abm/time.h"
-#include "abm/infection.h"
 #include "abm/vaccine.h"
 #include "abm/mask_type.h"
 #include "abm/mask.h"
-#include "abm/mask_type.h"
-#include "abm/parameters.h"
-#include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
-
-
 #include "memilio/utils/memory.h"
 #include <functional>
-#include <vector>
 
 namespace mio
 {
@@ -44,8 +38,12 @@ namespace abm
 {
 
 struct LocationId;
+
 template<typename>
 class Location;
+
+template<typename>
+class Infection;
 
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
@@ -57,12 +55,85 @@ class Person
 {
 public:
     /**
+    * Random number generator of individual persons.
+    * Increments the random number generator counter of the person when used.
+    * Does not store its own key or counter.
+    * Instead the key needs to be provided from the outside, so that the RNG
+    * for all persons share the same key.
+    * The counter is taken from the person.
+    * Person::RandomNumberGenerator is cheap to construct and transparent
+    * for the compiler to optimize, so we don't store the RNG persistently, only the 
+    * counter, so we don't need to store the key in each person. This increases
+    * consistency (if the key is changed after the person is created) and 
+    * reduces the memory required per person.
+    * @see mio::RandomNumberGeneratorBase
+    */
+    class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
+    {
+    public:
+        /**
+        * Creates a RandomNumberGenerator for a person.
+        * @param key Key to be used by the generator.
+        * @param id Id of the Person.
+        * @param counter Reference to the Person's RNG Counter. 
+        */
+        RandomNumberGenerator(Key<uint64_t> key, uint32_t id, Counter<uint32_t>& counter)
+            : m_key(key)
+            , m_person_id(id)
+            , m_counter(counter)
+        {
+        }
+
+        /**
+        * Creates a RandomNumberGenerator for a person.
+        * Uses the same key as another RandomNumberGenerator.
+        * @param rng RandomNumberGenerator who's key will be used.
+        * @param person Reference to the Person who's counter will be used. 
+        */
+        RandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
+            : RandomNumberGenerator(rng.get_key(), person.get_person_id(), person.get_rng_counter())
+        {
+        }
+
+        /**
+        * @return Get the key.
+        */
+        Key<uint64_t> get_key() const
+        {
+            return m_key;
+        }
+
+        /**
+        * @return Get the current counter.
+        */
+        Counter<uint64_t> get_counter() const
+        {
+            return rng_totalsequence_counter<uint64_t>(m_person_id, m_counter);
+        }
+
+        /**
+        * Increment the counter.
+        */
+        void increment_counter()
+        {
+            ++m_counter;
+        }
+
+    private:
+        Key<uint64_t> m_key; ///< Global RNG Key
+        uint32_t m_person_id; ///< Id of the Person
+        Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
+    };
+
+    /**
      * @brief Create a Person.
+     * @param[in, out] rng RandomNumberGenerator.
      * @param[in, out] location Initial location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(Location<FP>& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID)
+    explicit Person(mio::RandomNumberGenerator& rng, Location<FP>& location, AgeGroup age,
+                    uint32_t person_id = INVALID_PERSON_ID)
         : m_location(&location)
         , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
         , m_quarantine(false)
@@ -75,10 +146,10 @@ public:
         , m_person_id(person_id)
         , m_cells{0}
     {
-        m_random_workgroup        = UniformDistribution<double>::get_instance()();
-        m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
-        m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
-        m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
+        m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
+        m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
+        m_random_goto_work_hour   = UniformDistribution<double>::get_instance()(rng);
+        m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
     }
 
     /**
@@ -96,10 +167,10 @@ public:
      * @param[in] dt Length of the current Simulation TimeStep.
      * @param[in, out] global_infection_parameters Infection parameters that are the same in all Location%s.
      */
-    void interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters<FP>& params)
+    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const GlobalInfectionParameters<FP>& params)
     {
         if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
-            m_location->interact(*this, t, dt, params);
+            m_location->interact(rng, *this, t, dt, params);
         }
         m_time_at_location += dt;
     }
@@ -109,13 +180,13 @@ public:
      * @param[in, out] loc_new The new Location of the Person.
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
-    void migrate_to(Location<FP>& loc_new, const std::vector<uint32_t>& cells = {0})
+    void migrate_to(Location<FP>& loc_new, const std::vector<uint32_t>& cells_new = {0})
     {
         if (*m_location != loc_new) {
             m_location->remove_person(*this);
             m_location = &loc_new;
-            m_cells    = cells;
-            loc_new.add_person(*this, cells);
+            m_cells    = cells_new;
+            loc_new.add_person(*this, cells_new);
             m_time_at_location = TimeSpan(0);
         }
     }
@@ -208,6 +279,7 @@ public:
         return *m_location;
     }
 
+
     const Location<FP>& get_location() const
     {
         return *m_location;
@@ -255,7 +327,6 @@ public:
     {
         m_assigned_locations[(uint32_t)id.type] = id.index;
     }
-
 
     /**
      * @brief Returns the index of an assigned Location of the Person.
@@ -305,7 +376,6 @@ public:
         int seconds_after_minimum       = int(timeSlots * m_random_goto_work_hour);
         return minimum_goto_work_time + seconds(seconds_after_minimum);
     }
-
 
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
@@ -369,13 +439,14 @@ public:
      * @brief Simulates a viral test and returns the test result of the Person.
      * If the test is positive, the Person has to quarantine.
      * If the test is negative, quarantine ends.
+     * @param[inout] rng RandomNumberGenerator of the Person.
      * @param[in] t TimePoint of the test.
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
      */
-    bool get_tested(TimePoint t, const TestParameters<FP>& params)
+    bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters<FP>& params)
     {
-        ScalarType random = UniformDistribution<double>::get_instance()();
+        ScalarType random = UniformDistribution<double>::get_instance()(rng);
         if (is_infected(t)) {
             // true positive
             if (random < params.sensitivity) {
@@ -413,7 +484,6 @@ public:
     {
         return m_person_id;
     }
-
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -483,16 +553,17 @@ public:
 
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
+     * @param[inout] rng RandomNumberGenerator of the Person.
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(const Location<FP>& target)
+    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location<FP>& target)
     {
         if (target.get_npi_active() == false) {
             m_wears_mask = false;
             if (get_mask_compliance(target.get_type()) > 0.) {
                 // draw if the person wears a mask even if not required
-                ScalarType wear_mask = UniformDistribution<double>::get_instance()();
+                ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
                 if (wear_mask < get_mask_compliance(target.get_type())) {
                     m_wears_mask = true;
                 }
@@ -502,7 +573,7 @@ public:
             m_wears_mask = true;
             if (get_mask_compliance(target.get_type()) < 0.) {
                 // draw if a person refuses to wear the required mask
-                ScalarType wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
+                ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng, -1., 0.);
                 if (wear_mask > get_mask_compliance(target.get_type())) {
                     m_wears_mask = false;
                 }
@@ -517,7 +588,6 @@ public:
         }
         return true;
     }
-
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -566,6 +636,15 @@ public:
     }
 
     /**
+    * Get this persons RandomNumberGenerator counter.
+    * @see mio::abm::Person::RandomNumberGenerator.
+    */
+    Counter<uint32_t>& get_rng_counter()
+    {
+        return m_rng_counter;
+    }
+
+    /**
      * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
     */
     std::pair<ExposureType, TimePoint> get_latest_protection() const
@@ -602,6 +681,7 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
 };
 
 } // namespace abm

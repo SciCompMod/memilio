@@ -41,7 +41,7 @@ TEST(TestSaveResult, save_result)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model<double> model(1);
+    mio::osecir::Model model(1);
     auto& params            = model.parameters;
     mio::AgeGroup nb_groups = params.get_num_groups();
     ;
@@ -113,12 +113,6 @@ TEST(TestSaveResult, save_result)
 
 TEST(TestSaveResult, save_result_with_params)
 {
-    //rng needs to be reseeded right before using parallel parameterstudies
-    //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto rng                = mio::thread_local_rng();
-    mio::thread_local_rng() = mio::RandomNumberGenerator();
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -127,7 +121,7 @@ TEST(TestSaveResult, save_result_with_params)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     size_t num_groups = 3;
-    mio::osecir::Model<double> model((int)num_groups);
+    mio::osecir::Model model((int)num_groups);
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
@@ -167,10 +161,11 @@ TEST(TestSaveResult, save_result_with_params)
     auto graph = mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -225,18 +220,10 @@ TEST(TestSaveResult, save_result_with_params)
                   .nodes()[0]
                   .property.parameters.get<mio::osecir::SerialInterval<double>>()[mio::Index<mio::AgeGroup>(1)],
               params.get<mio::osecir::SerialInterval<double>>()[mio::Index<mio::AgeGroup>(1)]);
-
-    mio::thread_local_rng() = rng;
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
 {
-    //rng needs to be reseeded right before using parallel parameterstudies
-    //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto prev_rng           = mio::thread_local_rng();
-    mio::thread_local_rng() = mio::RandomNumberGenerator();
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -245,7 +232,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     size_t num_groups = 3;
-    mio::osecir::Model<double> model((int)num_groups);
+    mio::osecir::Model model((int)num_groups);
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
@@ -289,6 +276,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -347,6 +335,4 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ASSERT_TRUE(results_run2);
     auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
     ASSERT_TRUE(results_run2_sum);
-
-    mio::thread_local_rng() = prev_rng;
 }

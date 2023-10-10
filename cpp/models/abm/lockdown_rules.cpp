@@ -18,5 +18,3 @@
 * limitations under the License.
 */
 #include "abm/lockdown_rules.h" // IWYU pragma: keep
-
-

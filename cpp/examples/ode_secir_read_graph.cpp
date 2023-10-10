@@ -55,8 +55,7 @@ int main(int argc, char** argv)
 
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 1.; //time step of migration, not integration
-    using FP=double;
+    using FP = double;
 
     double cont_freq = 10; // see Polymod study
 

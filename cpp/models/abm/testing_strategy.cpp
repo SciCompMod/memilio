@@ -20,7 +20,7 @@
 */
 
 #include "abm/testing_strategy.h"
-
+#include "memilio/utils/random_number_generator.h"
 
 namespace mio
 {
@@ -89,6 +89,12 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
     auto last = std::remove(m_infection_states.begin(), m_infection_states.end(), infection_state);
     m_infection_states.erase(last, m_infection_states.end());
 }
+
+
+
+
+
+
 
 } // namespace abm
 } // namespace mio

@@ -17,11 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h" // IWYU pragma: keep
+#include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
 #include "abm/world.h"
-#include "memilio/io/io.h" // IWYU pragma: keep
+#include "memilio/io/io.h"
 #include "abm/location_type.h"
 #include <fstream>
 #include <string>
@@ -44,13 +44,13 @@ void write_log_to_file(const T& history)
     std::string input;
     std::ofstream myfile("test_output.txt");
     myfile << "Locations as numbers:\n";
-    for (auto loc_id_index = 0; loc_id_index < loc_id[0].size(); ++loc_id_index) {
-        myfile << convert_loc_id_to_string(loc_id[0][loc_id_index]) << "\n";
+    for (auto&& id : loc_id[0]) {
+        myfile << convert_loc_id_to_string(id) << "\n";
     }
     myfile << "Timepoints:\n";
 
-    for (int t = 0; t < time_points.size(); ++t) {
-        input += std::to_string(time_points[t]) + " ";
+    for (auto&& t : time_points) {
+        input += std::to_string(t) + " ";
     }
     myfile << input << "\n";
 
@@ -66,7 +66,7 @@ int main()
     infection_params.get<mio::abm::IncubationPeriod<double>>() = 4.;
 
     // Create the world with infection parameters.
-    auto world = mio::abm::World<double>(infection_params);
+    auto world = mio::abm::World(infection_params);
 
     // There are 3 households for each household group.
     int n_households = 3;
@@ -120,24 +120,25 @@ int main()
     auto probability      = 0.5;
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto test_type        = mio::abm::AntigenTest<double>();
+    auto test_type        = mio::abm::AntigenTest();
     auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work =
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
     auto testing_scheme_work =
-        mio::abm::TestingScheme<double>(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
+        auto rng = typename mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection<double>(
-                mio::abm::VirusVariant::Wildtype, person.get_age(), world.get_global_infection_parameters(), start_date,
-                infection_state));
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.get_global_infection_parameters(), start_date,
+                                                         infection_state));
     }
 
     // Assign locations to the people

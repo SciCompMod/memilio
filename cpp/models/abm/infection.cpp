@@ -18,6 +18,5 @@
 * limitations under the License.
 */
 
-
-#include "abm/infection.h"  // IWYU pragma: keep
+#include "abm/infection.h" // IWYU pragma: keep
 

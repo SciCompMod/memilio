@@ -19,7 +19,10 @@
 */
 
 #include "abm/household.h"
+#include "abm/person.h"
+#include "abm/location.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/random_number_generator.h"
 #include <string>
 
 namespace mio
@@ -40,7 +43,6 @@ void HouseholdGroup::add_households(Household household, int number_of_household
     m_household_list.push_back(std::make_tuple(household, number_of_households));
     m_number_of_households += number_of_households;
 }
-
 
 
 

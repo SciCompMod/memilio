@@ -17,12 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h" // IWYU pragma: keep
+#include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
-#include "abm/world.h"
-#include "memilio/io/io.h" // IWYU pragma: keep
-#include "abm/location_type.h"
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -34,7 +31,7 @@ void write_results_to_file(const mio::abm::Simulation<FP>& sim)
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream myfile("abm_minimal.txt");
+    std::ofstream myfile("abm_minimal.txt", std::ios::out);
     myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         myfile << sim.get_result().get_time(i);
@@ -49,7 +46,6 @@ void write_results_to_file(const mio::abm::Simulation<FP>& sim)
             myfile << "\n";
         }
     }
-    myfile.close();
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
@@ -116,12 +112,12 @@ int main()
     auto probability      = 0.5;
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto test_type        = mio::abm::AntigenTest<double>();
+    auto test_type        = mio::abm::AntigenTest();
     auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work =
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
     auto testing_scheme_work =
-        mio::abm::TestingScheme<double>(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 
     // Assign infection state to each person.
@@ -130,8 +126,9 @@ int main()
     for (auto& person : persons) {
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
+        auto rng = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection<double>(mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), start_date,
                                                          infection_state));
         }
@@ -160,7 +157,7 @@ int main()
 
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto sim  = mio::abm::Simulation<double>(t0, std::move(world));
+    auto sim  = mio::abm::Simulation(t0, std::move(world));
 
     sim.advance(tmax);
 

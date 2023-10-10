@@ -27,12 +27,11 @@
 
 #include <iostream>
 
-int main(int argc, char** argv)
+int main(int /*argc*/, char** /*argv*/)
 {
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.1; //initial time step
-    using FP=double;
 
     //total compartment sizes
     double num_total = 10000, num_exp = 200, num_ins = 50, num_is = 50, num_isev = 10, num_icri = 5, num_rec = 0,

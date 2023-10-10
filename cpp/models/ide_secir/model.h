@@ -124,7 +124,7 @@ public:
      * @brief Calculate the number of individuals in each compartment for time 0.
      * 
      * Initial transitions are used to calculate the initial compartment sizes.
-     * @param[in] dt Time discretization step size.         
+     * @param[in] dt Time discretization step size.
      */
     void initialize(ScalarType dt)
     {
@@ -135,7 +135,7 @@ public:
         if (m_forceofinfection > 0) {
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
                 m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
-                m_forceofinfection;
+                (dt * m_forceofinfection);
 
             //calculate other compartment sizes for t=0
             other_compartments_current_timestep(dt);
@@ -426,6 +426,8 @@ public:
 
         m_populations.get_last_value()[idx_InfectionState] = sum;
     }
+
+
 
 
     /**

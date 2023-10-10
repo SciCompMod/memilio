@@ -21,11 +21,11 @@
 #ifndef EPI_ABM_TESTING_SCHEME_H
 #define EPI_ABM_TESTING_SCHEME_H
 
-#include "abm/parameters.h" // IWYU pragma: keep
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
-#include "memilio/utils/random_number_generator.h" // IWYU pragma: keep
+#include "memilio/utils/random_number_generator.h"
 
 namespace mio
 {
@@ -170,8 +170,10 @@ public:
      * @param test_type The type of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
-    TestingScheme(const std::vector<TestingCriteria>& testing_criteria, TimeSpan minimal_time_since_last_test,
-                  TimePoint start_date, TimePoint end_date, const GenericTest<FP>& test_type, ScalarType probability)
+    TestingScheme(const std::vector<TestingCriteria>& testing_criteria,
+                  TimeSpan minimal_time_since_last_test,
+                  TimePoint start_date, TimePoint end_date,
+                  const GenericTest<FP>& test_type, ScalarType probability)
         : m_testing_criteria(testing_criteria)
         , m_minimal_time_since_last_test(minimal_time_since_last_test)
         , m_start_date(start_date)
@@ -180,7 +182,6 @@ public:
         , m_probability(probability)
     {
     }
-
 
     /**
      * @brief Compares two TestingScheme%s for functional equality.
@@ -235,23 +236,26 @@ public:
         m_is_active = (m_start_date <= t && t <= m_end_date);
     }
 
+
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
+     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person<FP>& person, const Location<FP>& location, TimePoint t) const
+    bool run_scheme(typename Person<FP>::RandomNumberGenerator& rng,
+                    Person<FP>& person, const Location<FP>& location, TimePoint t) const
     {
         if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
-            double random = UniformDistribution<double>::get_instance()();
+            double random = UniformDistribution<double>::get_instance()(rng);
             if (random < m_probability) {
                 if (std::any_of(m_testing_criteria.begin(), m_testing_criteria.end(),
-                                [person, location, t](TestingCriteria tr) {
+                                [&person, &location, t](TestingCriteria tr) {
                                     return tr.evaluate(person, location, t);
                                 })) {
-                    return !person.get_tested(t, m_test_type.get_default());
+                    return !person.get_tested(rng, t, m_test_type.get_default());
                 }
             }
         }
@@ -296,7 +300,6 @@ public:
         }
     }
 
-
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing.
      * @param[in] scheme TestingScheme to be removed.
@@ -322,23 +325,26 @@ public:
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
+     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(Person<FP>& person, const Location<FP>& location, TimePoint t) const
+    bool run_strategy(typename Person<FP>::RandomNumberGenerator& rng,
+                      Person<FP>& person, const Location<FP>& location, TimePoint t) const
     {
         // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
         if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
             return true;
         }
-        return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location, t](TestingScheme<FP> ts) {
-            if (ts.is_active()) {
-                return ts.run_scheme(person, location, t);
-            }
-            return true;
-        });
+        return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(),
+                           [&person, &location, &rng, t](const TestingScheme<FP>& ts) {
+                               if (ts.is_active()) {
+                                   return ts.run_scheme(rng, person, location, t);
+                               }
+                               return true;
+                           });
     }
 
 private:
