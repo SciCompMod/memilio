@@ -27,6 +27,10 @@ namespace mio
 namespace abm
 {
 
+/**
+ * Base NPI, but equipped with a stringency which is often useful for all kind of NPIs.
+ * Alternatively, this can also be implemented in each NPI directly.
+*/
 struct AcceptBaseStringency : AcceptBase {
     AcceptBaseStringency() = default;
     AcceptBaseStringency(double strin)
