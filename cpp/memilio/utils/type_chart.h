@@ -66,21 +66,14 @@ public:
 private:
     /// @brief Iterates Index via recursion, as long as Type is not the Index-th position of Types.
     template <size_t Index, class Type>
-    inline constexpr std::enable_if_t<
-        !std::is_same<Type, typename std::tuple_element<Index, std::tuple<Types...>>::type>::value, size_t>
-    get_impl(mio::Tag<Type> f) const
+    inline constexpr size_t get_impl(mio::Tag<Type>) const
     {
-        static_assert(Index < sizeof...(Types), "Type is not contained in TypeChart");
-        return get_impl<Index + 1>(f);
-    }
-
-    /// @brief Returns Index. This ends the recursion of get_impl, when Type is the Index-th position of Types.
-    template <size_t Index, class Type>
-    inline constexpr std::enable_if_t<
-        std::is_same<Type, typename std::tuple_element<Index, std::tuple<Types...>>::type>::value, size_t>
-    get_impl(mio::Tag<Type>) const
-    {
-        return Index;
+        if constexpr (std::is_same<Type, typename std::tuple_element<Index, std::tuple<Types...>>::type>::value) {
+            return Index;
+        }
+        else {
+            return get_impl<Index + 1>(mio::Tag<Type>());
+        }
     }
 
     std::tuple<Types...> m_types; ///< Store types. Never instanced.
