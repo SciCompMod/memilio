@@ -19,6 +19,7 @@
 #############################################################################
 import argparse
 import numpy as np
+import os
 
 from memilio.simulation import abm
 from memilio.simulation.abm import AgeGroup
@@ -694,8 +695,8 @@ def set_sim_result_at_start(sim):
 
 
 def run_abm_simulation():
-    input_path = 'input/'
-    output_path = 'output/'
+    input_path = 'input'
+    output_path = 'output'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -705,8 +706,8 @@ def run_abm_simulation():
     # distribution used to distribute the residential areas to one-, two-, three-, four- and five-person households
     household_distribution = [0.4084, 0.3375, 0.1199, 0.0965, 0.0377]
     # read txt file with inputs
-    areas = read_txt(input_path+'INSIDe_Demonstrator_AreaList_modified.txt')
-    parameters = pd.read_csv(input_path+'parameter_table.csv', index_col=0)
+    areas = read_txt(os.path.join(input_path, 'INSIDe_Demonstrator_AreaList_modified.txt'))
+    parameters = pd.read_csv(os.path.join(input_path, 'parameter_table.csv'), index_col=0)
     # create simulation
     sim = abm.Simulation(t0)
     # set infection parameters
@@ -726,16 +727,16 @@ def run_abm_simulation():
     # results collected during the simulation
     log = history.log
     # write simulation results to txt file
-    write_results_to_file(output_path + 'output.txt', log)
+    write_results_to_file(os.path.join(output_path, 'output.txt'), log)
     # write location mapping to txt file
     write_location_mapping_to_file(
-        output_path + 'location_mapping.txt', mapping)
+        os.path.join(output_path, 'location_mapping.txt'), mapping)
     # write infection paths per agent to file
-    write_infection_paths_to_file(output_path + 'infection_paths.txt', log)
+    write_infection_paths_to_file(os.path.join(output_path, 'infection_paths.txt'), log)
 
     # print compartment values to csv
     # only used for validation purposes
-    with open(output_path + 'console_output.csv', 'w') as f:
+    with open(os.path.join(output_path, 'console_output.csv'), 'w') as f:
         f.write("t S E C I I_s I_c R D\n")
         for t in range(sim.result.get_num_time_points()):
             line = str(sim.result.get_time(t)) + " "
