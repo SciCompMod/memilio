@@ -160,7 +160,7 @@ TEST(TestSeir, check_constraints_parameters)
 TEST(TestSeir, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
-    mio::oseir::Model model;
+    mio::oseir::Model<double> model;
     model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
@@ -185,7 +185,7 @@ TEST(TestSeir, apply_constraints_parameters)
 
 TEST(TestSeir, get_reproduction_numbers)
 {
-    mio::oseir::Model model;
+    mio::oseir::Model<double> model;
 
     double total_population                                                                            = 10000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
@@ -268,7 +268,7 @@ TEST(TestSeir, get_reproduction_numbers)
 
 TEST(TestSeir, get_reproduction_number)
 {
-    mio::oseir::Model model;
+    mio::oseir::Model<double> model;
 
     double total_population = 10000; //Initialize compartments to get total population of 10000
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;

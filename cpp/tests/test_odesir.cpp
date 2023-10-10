@@ -35,7 +35,7 @@ TEST(Testsir, simulateDefault)
     double tmax = 1;
     double dt   = 0.1;
 
-    mio::osir::Model model;
+    mio::osir::Model<double> model;
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
@@ -50,7 +50,7 @@ TEST(Testsir, ComparesirWithJS)
 
     double total_population = 1061000;
 
-    mio::osir::Model model;
+    mio::osir::Model<double> model;
 
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
@@ -105,7 +105,7 @@ TEST(Testsir, checkPopulationConservation)
 
     double total_population = 1061000;
 
-    mio::osir::Model model;
+    mio::osir::Model<double> model;
 
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
@@ -128,7 +128,7 @@ TEST(Testsir, checkPopulationConservation)
 
 TEST(Testsir, check_constraints_parameters)
 {
-    mio::osir::Model model;
+    mio::osir::Model<double> model;
     model.parameters.set<mio::osir::TimeInfected<double>>(6);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact<double>>(0.04);
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 10;
@@ -151,7 +151,7 @@ TEST(Testsir, check_constraints_parameters)
 TEST(Testsir, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
-    mio::osir::Model model;
+    mio::osir::Model<double> model;
     model.parameters.set<mio::osir::TimeInfected<double>>(6);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact<double>>(0.04);
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 10;
