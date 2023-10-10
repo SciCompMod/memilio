@@ -193,30 +193,15 @@ private:
     times it is in the group.*/
 };
 
-namespace
-{
-#ifdef  __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-#pragma clang diagnostic ignored "-Wunused-function"
-#endif
+
+
 /**
  * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
  * @param[in] age_groups A CustomIndexArray with the weights.
  * @return The picked AgeGroup.
  */
-
 AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
-                                              const CustomIndexArray<int, AgeGroup>& age_groups)
-{
-    auto age_group_weights = age_groups.array().cast<double>().eval();
-    size_t age_group       = DiscreteDistribution<size_t>::get_instance()(rng, age_group_weights);
-    return (AgeGroup)age_group;
-}
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-} // namespace
+                                              const CustomIndexArray<int, AgeGroup>& age_groups);
 
 
 /**
