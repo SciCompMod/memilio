@@ -246,7 +246,7 @@ mio::IOResult<void> simulate(ScalarType R0, int num_subcompartments = 3, bool si
 
         mio::GammaSurvivalFunction erlangInfectedSymptomsToInfectedSevere(
             vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms], 0,
-            7.64507 / vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]);
+            6.30662 / vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]);
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
             .set_state_age_function(erlangInfectedSymptomsToInfectedSevere);
         erlangInfectedSymptomsToInfectedSevere.set_scale(

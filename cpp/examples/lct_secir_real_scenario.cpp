@@ -31,9 +31,8 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include <iostream>
-
 #include "boost/filesystem.hpp"
+#include <iostream>
 
 /**
  * @brief Indices of contact matrix corresponding to locations where contacts occur.
@@ -77,6 +76,248 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
                                                                          {ContactLocation::Other, "other"}};
 
 /**
+ * @brief Add NPIs to a given contact matrix from 01/06/2020 on.
+ *
+ * NPIs have been adjusted so that they approximate the trend of the RKI data for a period of 45 days from 01/06/2020 on.
+ * 
+ * @param[in] contact_matrices The contact matrices where the NPIs shpuld be added to.
+ * @param[in] start_date Start date of the simulation used for setting the NPIs.
+ */
+void set_npi_june(mio::ContactMatrixGroup& contact_matrices, mio::Date start_date)
+{
+    // ---------------------01/06/2020--------------------------------
+    /* NPIs from Paper "Assessment of effective mitigation ..." (doi: 10.1016/j.mbs.2021.108648) with slightly higher value for 
+    GatheringBanFacilitiesClosure. */
+    auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 1), start_date));
+    // Contact reduction at home.
+    ScalarType v = 0.1;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
+                                                                mio::DampingLevel(int(InterventionLevel::Main)),
+                                                                mio::DampingType(int(Intervention::Home)), offset_npi);
+    // Home-Office + people stopped working.
+    v = (0.25 + 0.025);
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
+    // GatheringBanFacilitiesClosure affects ContactLocation Other.
+    v = 0.2;
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
+    // PhysicalDistanceAndMasks in all locations.
+    v = 0.1;
+    for (auto&& contact_location : contact_locations) {
+        contact_matrices[size_t(contact_location.first)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    }
+    // Remote schooling.
+    v = 0.5;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::SchoolClosure)), offset_npi);
+
+    // ---------------------02/06/2020--------------------------------
+    /* Values of new infections per day of the RKI data are rising from 02/06/2020 on.
+     This could be partly explained by the relatively low number of cases and psychological effects.
+     Most NPIs need to be lifted in order to reproduce the trend of the number of cases.*/
+    offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 2), start_date));
+    // Lifted contact reduction at home.
+    v = 0.;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
+                                                                mio::DampingLevel(int(InterventionLevel::Main)),
+                                                                mio::DampingType(int(Intervention::Home)), offset_npi);
+    // Lifted home-Office, people continued to stop working.
+    v = (0. + 0.025);
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
+    // Lifted gatheringBanFacilitiesClosure affects ContactLocation Other.
+    v = 0.;
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
+    // Lifted physicalDistanceAndMasks in all locations.
+    v = 0.;
+    for (auto&& contact_location : contact_locations) {
+        contact_matrices[size_t(contact_location.first)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    }
+    // Lifted part of remote schooling.
+    v = 0.25;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::SchoolClosure)), offset_npi);
+
+    // ---------------------14/06/2020--------------------------------
+    // Number of cases are rising again so that further NPIs had to be implemented. People became more cautious again.
+    offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 14), start_date));
+    // Contact reduction at home.
+    v = 0.1;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
+                                                                mio::DampingLevel(int(InterventionLevel::Main)),
+                                                                mio::DampingType(int(Intervention::Home)), offset_npi);
+    // Home-Office + people stopped working.
+    v = (0.25 + 0.025);
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
+    // GatheringBanFacilitiesClosure affects ContactLocation Other.
+    v = 0.25;
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
+    // PhysicalDistanceAndMasks in all locations.
+    v = 0.25;
+    for (auto&& contact_location : contact_locations) {
+        contact_matrices[size_t(contact_location.first)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    }
+    // Remote schooling.
+    v = 0.35;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::SchoolClosure)), offset_npi);
+
+    // ---------------------03/07/2020--------------------------------
+    // Number of cases are at a low level. People begin to meet again but are more cautious than on 02/06/2020.
+    offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 7, 3), start_date));
+    // Contact reduction at home.
+    v = 0.;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
+                                                                mio::DampingLevel(int(InterventionLevel::Main)),
+                                                                mio::DampingType(int(Intervention::Home)), offset_npi);
+    // Home-Office + people stopped working.
+    v = (0. + 0.025);
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
+    // GatheringBanFacilitiesClosure affects ContactLocation Other.
+    v = 0.1;
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
+    // PhysicalDistanceAndMasks in ContactLocation%s Home.
+    v = 0.;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    // PhysicalDistanceAndMasks in ContactLocation%s School.
+    v = 0.1;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    // PhysicalDistanceAndMasks in ContactLocation%s Work and Other.
+    v = 0.1;
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    v = 0.;
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    // Remote schooling.
+    v = 0.2;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::SchoolClosure)), offset_npi);
+}
+
+/**
+ * @brief Add NPIs to a given contact matrix from 01/10/2020 on.
+ *
+ * NPIs from the Paper "Assessment of effective mitigation ..." (doi: 10.1016/j.mbs.2021.108648) are used with slight 
+ * modifications for a period of 45 days from 01/10/2020 on.
+ * 
+ * @param[in] contact_matrices The contact matrices where the NPIs shpuld be added to.
+ * @param[in] start_date Start date of the simulation used for setting the NPIs.
+ * @param[in] lockdown_hard Proportion of counties for which a hard lockdown is implemented.
+ */
+void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_date, ScalarType lockdown_hard)
+{
+    // ---------------------01/10/2020--------------------------------
+    // NPIs from Paper for october.
+    auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 1), start_date));
+    // For the beginning of the time period, we assume only half of the defined proportion of counties is in a hard lockdown.
+    lockdown_hard = lockdown_hard / 2;
+    // Contact reduction at home.
+    double v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.5;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
+                                                                mio::DampingLevel(int(InterventionLevel::Main)),
+                                                                mio::DampingType(int(Intervention::Home)), offset_npi);
+    // Home-Office + people stopped working.
+    v = (0.25 + 0.025) * (1 - lockdown_hard) + lockdown_hard * (0.25 + 0.15);
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
+    // GatheringBanFacilitiesClosure affects ContactLocation Other.
+    v = 0.1 * (1 - lockdown_hard) + lockdown_hard * 0.7;
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
+    // PhysicalDistanceAndMasks in all locations.
+    v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.7;
+    for (auto&& contact_location : contact_locations) {
+        contact_matrices[size_t(contact_location.first)].add_damping(
+            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    }
+    // Remote schooling.
+    v = lockdown_hard * 0.25;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::SchoolClosure)), offset_npi);
+
+    // ---------------------24/10/2020--------------------------------
+    /* We assume that the stricter NPIs of november defined in the paper are beginning about a week earlier, 
+    which can be seen from the RKI data.
+    Moreover the lockdown value of PhysicalDistanceAndMasks in the location school is assumed to apply for all counties.*/
+    offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 24), start_date));
+    // For the second half of the simulation, the proportion of counties in hard lockdown is increased to compensate for the lower proportion before.
+    lockdown_hard = lockdown_hard * 3;
+    // Contact reduction at home.
+    v = 0.5;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
+                                                                mio::DampingLevel(int(InterventionLevel::Main)),
+                                                                mio::DampingType(int(Intervention::Home)), offset_npi);
+    // Home-Office + people stopped working.
+    v = (0.25 + 0.05) * (1 - lockdown_hard) + lockdown_hard * (0.25 + 0.15);
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
+    // GatheringBanFacilitiesClosure affects ContactLocation Other.
+    v = 0.7;
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
+    // PhysicalDistanceAndMasks in ContactLocation%s Home.
+    v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.7;
+    contact_matrices[size_t(ContactLocation::Home)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    // PhysicalDistanceAndMasks in ContactLocation%s School.
+    v = 0.7;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    // PhysicalDistanceAndMasks in ContactLocation%s Work and Other.
+    v = 0.5 * (1 - lockdown_hard) + lockdown_hard * 0.7;
+    contact_matrices[size_t(ContactLocation::Work)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    contact_matrices[size_t(ContactLocation::Other)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+        mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
+    // Remote schooling.
+    v = lockdown_hard * 0.25;
+    contact_matrices[size_t(ContactLocation::School)].add_damping(
+        Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
+        mio::DampingType(int(Intervention::SchoolClosure)), offset_npi);
+}
+
+/**
  * @brief Set the contact pattern of parameters for a Model without division in age groups.
  *
  * The contacts are calculated using contact matrices from files in the data directory for different locations.
@@ -84,19 +325,21 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * 
  * @param[in] data_dir Directory to files with minimum and baseline contact matrices.
  * @param[in] parameters Object that the contact pattern will be added to.
- * @param[in] start_date Start date of the simulation used for setting NPIs.
- * @param[in] end_date End date of the simulation used for setting NPIs.
- * @param[in] lockdown_hard Proportion of counties for which a hard lockdown is implemented.
+ * @param[in] simulation_parameters Map with parameters necessary for the calculation of contacts an NPIs which can be different for diffferent start dates.
+ *      Function uses the values to define start and end date, lockdown_hard and scale_contacts.
  * @returns Any io errors that happen during reading of the input files.
  */
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::Parameters& parameters,
-                                         mio::Date start_date, mio::Date end_date, ScalarType lockdown_hard)
+                                         std::map<std::string, ScalarType> simulation_parameters)
 {
     // Files in data_dir are containing contact matrices with 6 agegroups. We use this to compute a contact pattern without division of age groups.
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
     const double age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
     const int total                = 83155031.0;
     const int numagegroups         = 6;
+    mio::Date start_date =
+        mio::Date(2020, (int)simulation_parameters["start_month"], (int)simulation_parameters["start_day"]);
+    mio::Date end_date = mio::offset_date_by_days(start_date, 45);
 
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), 1);
     // Load and set minimum and baseline contacts for each contact location.
@@ -116,114 +359,22 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
                 min += age_group_sizes[i] / total * minimum(i, j);
             }
         }
-        contact_matrices[size_t(contact_location.first)].get_baseline() = Eigen::MatrixXd::Constant(1, 1, base);
-        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Constant(1, 1, min);
+        contact_matrices[size_t(contact_location.first)].get_baseline() =
+            simulation_parameters["scale_contacts"] * Eigen::MatrixXd::Constant(1, 1, base);
+        contact_matrices[size_t(contact_location.first)].get_minimum() =
+            simulation_parameters["scale_contacts"] * Eigen::MatrixXd::Constant(1, 1, min);
     }
 
-    // Add NPIs to the contact matrices.
-    // Less counties are in a hard lockdown during summer.
-    lockdown_hard = lockdown_hard / 2;
-
+    // ----- Add NPIs to the contact matrices. -----
     // Set of NPIs for June.
-    auto start_npi_june = mio::Date(2020, 6, 1);
-    if (start_npi_june < end_date) {
-        auto offset_june = mio::SimulationTime(mio::get_offset_in_days(start_npi_june, start_date));
-
-        // Contact reduction at home.
-        ScalarType v = 0.1 * (1 - lockdown_hard) + 0.5 * lockdown_hard;
-        contact_matrices[size_t(ContactLocation::Home)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::Home)), offset_june);
-        // Home-Office + people stopped working.
-        v = (0.25 + 0.025) * (1 - lockdown_hard) + lockdown_hard * (0.25 + 0.15);
-        contact_matrices[size_t(ContactLocation::Work)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::HomeOffice)), offset_june);
-        // GatheringBanFacilitiesClosure affects ContactLocation Other.
-        v = 0.1 * (1 - lockdown_hard) + lockdown_hard * 0.7;
-        contact_matrices[size_t(ContactLocation::Other)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_june);
-        // PhysicalDistanceAndMasks in all locations.
-        v = 0.1 * (1 - lockdown_hard) + lockdown_hard * 0.7;
-        for (auto&& contact_location : contact_locations) {
-            contact_matrices[size_t(contact_location.first)].add_damping(
-                Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_june);
-        }
-        // Remote schooling.
-        v = 0.5;
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)), offset_june);
-        // School fully reopened, lockdown_hard has 1/4 of schools closed.
-        auto school_reopen_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 15), start_date));
-        v                       = lockdown_hard * 0.25;
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::SchoolClosure)), school_reopen_time);
+    if (mio::Date(2020, 6, 1) < end_date) {
+        set_npi_june(contact_matrices, start_date);
     }
 
     // Set of NPIs for October.
     auto start_npi_october = mio::Date(2020, 10, 1);
     if (start_npi_october < end_date) {
-        auto start_autumn = mio::SimulationTime(mio::get_offset_in_days(start_npi_october, start_date));
-
-        // Contact reduction at home.
-        double v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.5;
-        contact_matrices[size_t(ContactLocation::Home)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::Home)), start_autumn);
-        // PhysicalDistanceAndMasks in all locations.
-        v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.7;
-        for (auto&& contact_location : contact_locations) {
-            contact_matrices[size_t(contact_location.first)].add_damping(
-                Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn);
-        }
-    }
-
-    // Set of NPIs for Autumn lockdown.
-    // More counties in hard lockdown.
-    lockdown_hard                  = lockdown_hard * 3;
-    auto start_npi_autumn_lockdown = mio::Date(2020, 10, 24);
-    if (start_npi_autumn_lockdown < end_date) {
-
-        auto start_autumn_lockdown =
-            mio::SimulationTime(mio::get_offset_in_days(start_npi_autumn_lockdown, start_date));
-        // Contact reduction at home.
-        double v = 0.5;
-        contact_matrices[size_t(ContactLocation::Home)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::Home)), start_autumn_lockdown);
-        // Home-Office + people stopped working.
-        v = (0.25 + 0.05) * (1 - lockdown_hard) + lockdown_hard * (0.25 + 0.15);
-        contact_matrices[size_t(ContactLocation::Work)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::HomeOffice)), start_autumn_lockdown);
-        // GatheringBanFacilitiesClosure affects ContactLocation Other.
-        v = 0.7;
-        contact_matrices[size_t(ContactLocation::Other)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
-            mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), start_autumn_lockdown);
-        // PhysicalDistanceAndMasks in ContactLocation%s Home.
-        v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.7;
-        contact_matrices[size_t(ContactLocation::Home)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
-        // PhysicalDistanceAndMasks in ContactLocation%s School.
-        v = 0.7;
-        contact_matrices[size_t(ContactLocation::School)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
-        // PhysicalDistanceAndMasks in ContactLocation%s Work and Other.
-        v = 0.5 * (1 - lockdown_hard) + lockdown_hard * 0.7;
-        contact_matrices[size_t(ContactLocation::Work)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
-        contact_matrices[size_t(ContactLocation::Other)].add_damping(
-            Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), start_autumn_lockdown);
+        set_npi_october(contact_matrices, start_date, simulation_parameters["lockdown_hard"]);
     }
 
     // Set ContactPatterns in parameters.
@@ -256,13 +407,12 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
 
     // Define parameters used for simulation and initialization.
     mio::lsecir::Parameters parameters;
-    parameters.get<mio::lsecir::TimeExposed>()            = 3.335;
-    parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 3.31331;
-    parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 6.94547;
-    parameters.get<mio::lsecir::TimeInfectedSevere>()     = 11.634346;
-    parameters.get<mio::lsecir::TimeInfectedCritical>()   = 17.476959;
-    parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() =
-        0.0733271 * simulation_parameters["scale_contacts"];
+    parameters.get<mio::lsecir::TimeExposed>()                      = 3.335;
+    parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.31331;
+    parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.94547;
+    parameters.get<mio::lsecir::TimeInfectedSevere>()               = 11.634346;
+    parameters.get<mio::lsecir::TimeInfectedCritical>()             = 17.476959;
+    parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
     parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() =
         simulation_parameters["RelativeTransmissionNoSymptoms"];
     parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() =
@@ -274,8 +424,7 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.173176;
     parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.217177;
 
-    auto status =
-        set_contact_matrices("../../data", parameters, start_date, end_date, simulation_parameters["lockdown_hard"]);
+    auto status = set_contact_matrices("../../data", parameters, simulation_parameters);
 
     // Define number of subcompartments.
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
@@ -339,6 +488,15 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
                    std::to_string((int)simulation_parameters["start_day"]) + ".h5";
         save_result_status = mio::save_result({result_ode}, {0}, 1, filename);
     }
+    // Print commands to get the number of new infections on the first day of simulation. Could be used to scale the contacts.
+    std::cout << "Number of new infections on the first day of simulation: " << std::endl;
+    std::cout << "LCT model:"
+              << (populations_lct[0][0] - populations_lct[1][0]) /
+                     (populations_lct.get_time(1) - populations_lct.get_time(0))
+              << std::endl;
+    std::cout << "ODE model:"
+              << (result_ode[0][0] - result_ode[1][0]) / (result_ode.get_time(1) - result_ode.get_time(0)) << std::endl;
+
     return mio::success();
 }
 
@@ -352,7 +510,7 @@ int main()
                                                                           {"RiskOfInfectionFromSymptomatic", 0.2},
                                                                           {"scale_confirmed_cases", 1.},
                                                                           {"lockdown_hard", 0.03 * 14 / (45 * 401.)},
-                                                                          {"scale_contacts", 445. / 533.}};
+                                                                          {"scale_contacts", 445. / 516.7}};
 
     std::map<std::string, ScalarType> simulation_parameters_2020_10_01 = {{"start_month", 10},
                                                                           {"start_day", 1},
@@ -362,6 +520,12 @@ int main()
                                                                           {"scale_confirmed_cases", 2.},
                                                                           {"lockdown_hard", 371 * 14 / (45 * 401.)},
                                                                           {"scale_contacts", 11154.2 / 13106.}};
+    /* Values for "RelativeTransmissionNoSymptoms", "RelativeTransmissionNoSymptoms" and "seasonality" are suitable values based on doi: 10.1016/j.mbs.2021.108648.
+    "scale_confirmed_cases" are values directly from this paper. 
+    "lockdown_hard" is based on the number of beginnings of a strict lockdown for 14 days of the 45 days simulation period in the lockdown. Value is not used for 01/06/2020 and 
+    scaled in octiber to assume that in the beginning of the period are less counties in lockdown and more in the second half. 
+    "lockdown_hard" should give the average percentage of counties that are in a hard lockdown on a simulation day. 
+    "scale_contacts" is used to match the predicted number of new infections on the first simulation day to the RKI data. */
 
     // Paths are valid if file is executed eg in memilio/build/bin
     auto result =

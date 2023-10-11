@@ -104,11 +104,12 @@ int main()
     double timeInfectedSymptomstoInfectedSevere = 0;
 
     for (int i = 0; i < numagegroups; i++) {
+        severePerInfectedSymptomsdummy = 0.5 * (severePerInfectedSymptomsMin[i] + severePerInfectedSymptomsMax[i]);
         timeInfectedSymptomstoInfectedSevere +=
-            (age_group_sizes[i] / total) * 0.5 *
+            severePerInfectedSymptomsdummy * (age_group_sizes[i] / total) * 0.5 *
             (timeInfectedSymptomstoInfectedSevereMin[i] + timeInfectedSymptomstoInfectedSevereMax[i]);
     }
-
+    timeInfectedSymptomstoInfectedSevere = timeInfectedSymptomstoInfectedSevere / severePerInfectedSymptoms;
     // C
     const double timeInfectedNoSymptomstoInfectedSymptoms = 5.2 - timeExposed;
     const double timeInfectedNoSymptomstoRecovered =
