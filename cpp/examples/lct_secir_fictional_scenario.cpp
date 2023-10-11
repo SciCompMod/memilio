@@ -93,7 +93,7 @@ mio::IOResult<void> simulate(ScalarType R0, int num_subcompartments = 3, bool si
 
     parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
     parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.3;
-    parameters_lct.get<mio::lsecir::Seasonality>()                    = 0;
+    parameters_lct.get<mio::lsecir::Seasonality>()                    = 0.;
     parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.206901;
     parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.0786429;
     parameters_lct.get<mio::lsecir::CriticalPerSevere>()              = 0.173176;
