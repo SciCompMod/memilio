@@ -28,8 +28,8 @@ TEST(TestLockdownRules, school_closure)
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(6);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location school(mio::abm::LocationType::School, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> school(mio::abm::LocationType::School, 0);
 
     //setup rng mock so one person is home schooled and the other goes to school
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -69,8 +69,8 @@ TEST(TestLockdownRules, school_opening)
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(7);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location school(mio::abm::LocationType::School, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> school(mio::abm::LocationType::School, 0);
     //setup rng mock so the person is homeschooled in case of lockdown
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -99,8 +99,8 @@ TEST(TestLockdownRules, home_office)
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt        = mio::abm::hours(1);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0);
     mio::abm::MigrationParameters<double> params;
 
     mio::abm::set_home_office(t, 0.4, params);
@@ -136,8 +136,8 @@ TEST(TestLockdownRules, no_home_office)
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(8);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0);
 
     //setup rng mock so the person works in home office
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -167,8 +167,8 @@ TEST(TestLockdownRules, social_event_closure)
     auto dt        = mio::abm::hours(1);
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::hours(19);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> event(mio::abm::LocationType::SocialEvent, 0);
     auto p = mio::abm::Person(rng, home, mio::abm::AgeGroup::Age5to14);
     p.set_assigned_location(home);
     p.set_assigned_location(event);
@@ -188,8 +188,8 @@ TEST(TestLockdownRules, social_events_opening)
     auto dt        = mio::abm::hours(1);
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(19);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> event(mio::abm::LocationType::SocialEvent, 0);
     auto p = mio::abm::Person(rng, home, mio::abm::AgeGroup::Age5to14);
     p.set_assigned_location(event);
     p.set_assigned_location(home);
