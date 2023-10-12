@@ -18,9 +18,11 @@
 # limitations under the License.
 #############################################################################
 """
-@file cumpute_npi_reduction.py
+@file compute_npi_reduction.py
 
-@brief Computes the overall reduction in contacts by enforcing a NPI.
+@brief Computes the overall reduction of contacts (in percentage) by enforcing a set of nonpharmaceutical interventions
+as described in
+M. J. Kühn, D. Abele, T. Mitra, W. Koslow, M. Abedi, K. Rack, M. Siggel, S. Khailaie, M. Klitz, S. Binder, Luca Spataro, J. Gilg, J. Kleinert, M. Häberle, L. Plötzke, C. D. Spinner, M. Stecher, X. X. Zhu, A. Basermann, M. Meyer-Hermann, "Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution". Mathematical Biosciences 339, 108648 (2021). https://www.sciencedirect.com/science/article/abs/pii/S0025556421000845
 """
 
 import sys
@@ -60,7 +62,6 @@ def get_data_path():
     """
 
     data_path = os.getcwd().split('memilio')[0] + 'memilio/data/'
-    #print("My current directory is : " + data_path)
     return data_path
 
 
