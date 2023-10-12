@@ -23,8 +23,8 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0);
     auto person = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
@@ -93,8 +93,8 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
     testing_scheme.add_testing_criteria(testing_criteria2);
 
-    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> loc_home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> loc_work(mio::abm::LocationType::Work, 0);
     auto person1     = make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person<double>::RandomNumberGenerator(rng, person1);
     auto person2 =

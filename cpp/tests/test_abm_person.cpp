@@ -27,7 +27,7 @@ TEST(TestPerson, init)
 {
     auto rng = mio::RandomNumberGenerator();
     
-    mio::abm::Location location(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> location(mio::abm::LocationType::Work, 0);
     auto t      = mio::abm::TimePoint(0);
     auto person = mio::abm::Person(rng, location, mio::abm::AgeGroup::Age60to79);
 
@@ -41,10 +41,10 @@ TEST(TestPerson, migrate)
     auto rng = mio::RandomNumberGenerator();
 
     auto t   = mio::abm::TimePoint(0);
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 0, 1);
-    mio::abm::Location loc2(mio::abm::LocationType::School, 0);
-    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 0, 2);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> loc1(mio::abm::LocationType::PublicTransport, 0, 1);
+    mio::abm::Location<double> loc2(mio::abm::LocationType::School, 0);
+    mio::abm::Location<double> loc3(mio::abm::LocationType::PublicTransport, 0, 2);
     auto person = make_test_person(home, mio::abm::AgeGroup::Age0to4, mio::abm::InfectionState::Recovered);
     person.migrate_to(loc1, {0});
 
@@ -72,7 +72,7 @@ TEST(TestPerson, migrate)
 TEST(TestPerson, setGetAssignedLocation)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location location(mio::abm::LocationType::Work, 2);
+    mio::abm::Location<double> location(mio::abm::LocationType::Work, 2);
     auto person = mio::abm::Person(rng, location, mio::abm::AgeGroup::Age35to59);
     person.set_assigned_location(location);
     ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
@@ -87,8 +87,8 @@ TEST(TestPerson, quarantine)
     auto rng = mio::RandomNumberGenerator();
 
     auto infection_parameters = mio::abm::GlobalInfectionParameters<double>();
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0);
 
     //setup rng mock so the person has a state transition to Recovered
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -125,7 +125,7 @@ TEST(TestPerson, get_tested)
     auto rng = mio::RandomNumberGenerator();
 
     mio::abm::TimePoint t(0);
-    mio::abm::Location loc(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> loc(mio::abm::LocationType::Home, 0);
     auto infected       = make_test_person(loc, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
     auto rng_infected   = mio::abm::Person<double>::RandomNumberGenerator(rng, infected);
     auto susceptible    = mio::abm::Person<double>(rng, loc, mio::abm::AgeGroup::Age15to34);
@@ -171,8 +171,8 @@ TEST(TestPerson, get_tested)
 
 TEST(TestPerson, getCells)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 2);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, 1);
+    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, 2);
     auto person = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
     home.add_person(person);
     person.migrate_to(location, {0, 1});
@@ -185,7 +185,7 @@ TEST(TestPerson, interact)
 
     // Location.interact is tested seperately in the location
     auto infection_parameters = mio::abm::GlobalInfectionParameters<double>();
-    mio::abm::Location loc(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> loc(mio::abm::LocationType::Home, 0);
     mio::abm::TimePoint t(0);
     auto person     = mio::abm::Person<double>(rng, loc, mio::abm::AgeGroup::Age15to34);
     auto rng_person = mio::abm::Person<double>::RandomNumberGenerator(rng, person);
@@ -198,8 +198,8 @@ TEST(TestPerson, applyMaskIntervention)
 {
     auto rng = mio::RandomNumberGenerator();
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location target(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> target(mio::abm::LocationType::Work, 0);
     auto person = make_test_person(home);
     person.get_mask().change_mask(mio::abm::MaskType::Community);
     auto rng_person = mio::abm::Person<double>::RandomNumberGenerator(rng, person);
@@ -232,7 +232,7 @@ TEST(TestPerson, applyMaskIntervention)
 
 TEST(TestPerson, setWearMask)
 {
-    mio::abm::Location location(mio::abm::LocationType::School, 0);
+    mio::abm::Location<double> location(mio::abm::LocationType::School, 0);
     auto person = make_test_person(location);
 
     person.set_wear_mask(false);
@@ -244,7 +244,7 @@ TEST(TestPerson, setWearMask)
 
 TEST(TestPerson, getMaskProtectiveFactor)
 {
-    mio::abm::Location location(mio::abm::LocationType::School, 0);
+    mio::abm::Location<double> location(mio::abm::LocationType::School, 0);
     auto person_community = make_test_person(location);
     person_community.get_mask().change_mask(mio::abm::MaskType::Community);
     person_community.set_wear_mask(true);
@@ -293,7 +293,7 @@ TEST(TestPerson, getLatestProtection)
 TEST(Person, rng)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location loc(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> loc(mio::abm::LocationType::Home, 0);
     auto p = mio::abm::Person(rng, loc, mio::abm::AgeGroup::Age35to59, 13);
 
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
