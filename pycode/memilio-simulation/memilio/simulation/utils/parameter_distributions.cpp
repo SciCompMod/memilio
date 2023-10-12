@@ -28,7 +28,7 @@ namespace pymio
 
 void bind_parameter_distribution(py::module_& m, std::string const& name)
 {
-    bind_class<EnablePickling::IfAvailable, mio::ParameterDistribution>(m, name.c_str())
+    bind_class<EnablePickling::Never, mio::ParameterDistribution>(m, name.c_str())
         .def_property("lower_bound", &mio::ParameterDistribution::get_lower_bound,
                       &mio::ParameterDistribution::set_lower_bound)
         .def_property("upper_bound", &mio::ParameterDistribution::get_upper_bound,

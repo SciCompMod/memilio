@@ -42,17 +42,11 @@ enum class EnablePickling {
 template <EnablePickling F>
 struct PicklingTag {};
 
+//detect a serialize_internal function
 template <class IOContext, class T>
-using has_seriliazion_functions = mio::conjunction<mio::has_serialize<IOContext, T>, mio::has_deserialize<IOContext, T>>;
-
-template <class Tup>
-using is_tuple = mio::is_expression_valid<mio::details::tuple_size_value_t, Tup>;
-
-template <class M>
-using is_eigen_matrix = std::is_base_of<Eigen::EigenBase<M>, M>;
-
+using serialize_internal_t = decltype(mio::serialize_internal(std::declval<IOContext&>(), std::declval<T&>()));
 template <class IOContext, class T>
-using is_serializable = mio::disjunction<has_seriliazion_functions<IOContext, T>, is_tuple<T>, is_eigen_matrix<T>, std::is_enum<T>, mio::is_container<T>>;
+using has_serialize_internal = mio::is_expression_valid<serialize_internal_t, IOContext, T>;
 
 template <class T, class... Args>
 void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
@@ -88,7 +82,7 @@ template <class T, class... Args>
 auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::IfAvailable> /*tags*/) {
     auto cls = pybind11::class_<T, Args...>(m, name.c_str());
     // Bind the class depending on its features
-    if constexpr (is_serializable<mio::PickleSerializer, T>::value) {
+    if constexpr (has_serialize_internal<mio::PickleSerializer, T>::value) {
         pybind_pickle_class<T, Args...>(cls);
     }
     return cls;
