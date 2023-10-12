@@ -63,7 +63,7 @@ TEST(TestMasks, maskProtection)
     params.get<mio::abm::IncubationPeriod<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] = 2.;
 
     //setup location with some chance of exposure
-    mio::abm::Location infection_location(mio::abm::LocationType::School, 0);
+    mio::abm::Location<double> infection_location(mio::abm::LocationType::School, 0);
     auto t            = mio::abm::TimePoint(0);
     auto susc_person1 = mio::abm::Person(rng, infection_location, mio::abm::AgeGroup::Age15to34);
     auto susc_person2 = mio::abm::Person(rng, infection_location, mio::abm::AgeGroup::Age15to34);
