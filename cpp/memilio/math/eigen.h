@@ -30,6 +30,7 @@ MSVC_WARNING_DISABLE_PUSH(4996)
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wint-in-bool-context")
 GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
+GCC_CLANG_DIAGNOSTIC(ignored "-Wdeprecated-declarations")
 
 #include <Eigen/Core>
 
