@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -154,6 +154,7 @@ public:
     {
         m_tab       = tab;
         m_tab_final = final_tab;
+        m_kt_values.resize(Eigen::NoChange, m_tab_final.entries_low.size());
     }
 
     /**

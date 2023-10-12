@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -77,6 +77,7 @@ template <class IterPair>
 class Range
 {
 public:
+    using Iterators              = IterPair;
     using iterator               = typename IterPair::first_type;
     using const_iterator         = typename IterPair::first_type;
     using reverse_iterator       = std::reverse_iterator<iterator>;
@@ -155,7 +156,7 @@ auto make_range(Iter1&& iter1, Iter2&& iter2)
 /**
  * meta function to check type T for an existing stream output operator "<<"
  */
-template<class T>
+template <class T>
 using ostream_op_expr_t = decltype(std::declval<std::ostream&>() << std::declval<T>());
 template <class T>
 using has_ostream_op = is_expression_valid<ostream_op_expr_t, T>;
@@ -163,53 +164,61 @@ using has_ostream_op = is_expression_valid<ostream_op_expr_t, T>;
 /**
  * meta function to check type T for an existing equality comparison operator
  */
-template<class T>
+template <class T>
 using eq_op_t = decltype(std::declval<T>() == std::declval<T>());
 template <class T>
 using has_eq_op = is_expression_valid<eq_op_t, T>;
 
+/**
+ * meta function to check type T for beeing an iterator
+ */
+template <class T>
+using is_iterator_expr_t = typename std::iterator_traits<T>::iterator_category;
+template <class T>
+using is_iterator = is_expression_valid<is_iterator_expr_t, T>;
+
 namespace details
 {
-    /**
+/**
      * length of a null terminated C string
      */
-    inline size_t string_length(const char* str)
-    {
-        return std::strlen(str);
-    }
+inline size_t string_length(const char* str)
+{
+    return std::strlen(str);
+}
 
-    /**
+/**
      * length of a string (e.g std::string)
      */
-    template <class String>
-    size_t string_length(String&& str)
-    {
-        return str.length();
-    }
+template <class String>
+size_t string_length(String&& str)
+{
+    return str.length();
+}
 
-    /**
+/**
      * breaks the recursion of path_join_rec.
      */
-    inline void path_join_rec(std::stringstream&, bool)
-    {
-    }
+inline void path_join_rec(std::stringstream&, bool)
+{
+}
 
-    /**
+/**
      * recursive template helper function to join paths
      * @param ss stream that collects the result
      * @param writeSeparator add separator before adding the next part of the path
      * @param head next part of the path to add
      * @param tail remaining parts of the path
      */
-    template <class Head, class... Tail>
-    void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail&&... tail)
-    {
-        if (writeSeparator) {
-            ss << '/';
-        }
-        ss << head;
-        path_join_rec(ss, string_length(head) > 0 && head[string_length(head) - 1] != '/', tail...);
+template <class Head, class... Tail>
+void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail&&... tail)
+{
+    if (writeSeparator) {
+        ss << '/';
     }
+    ss << head;
+    path_join_rec(ss, string_length(head) > 0 && head[string_length(head) - 1] != '/', tail...);
+}
 
 } // namespace details
 
@@ -246,7 +255,7 @@ template <class U, class T>
 std::unique_ptr<U> dynamic_unique_ptr_cast(std::unique_ptr<T>&& base_ptr)
 {
     auto tmp_base_ptr = std::move(base_ptr);
-    U* tmp = dynamic_cast<U*>(tmp_base_ptr.get());
+    U* tmp            = dynamic_cast<U*>(tmp_base_ptr.get());
     std::unique_ptr<U> derived_ptr;
     if (tmp != nullptr) {
         tmp_base_ptr.release();
@@ -258,12 +267,12 @@ std::unique_ptr<U> dynamic_unique_ptr_cast(std::unique_ptr<T>&& base_ptr)
 /**
  * checks if there is an element in this range that matches a predicate
  */
-template<class Iter, class Pred>
+template <class Iter, class Pred>
 bool contains(Iter b, Iter e, Pred p)
 {
     return find_if(b, e, p) != e;
 }
 
-}
+} // namespace mio
 
 #endif //STL_UTIL_H

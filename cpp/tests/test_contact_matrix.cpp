@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -52,10 +52,11 @@ TEST(TestContactMatrix, dampings)
     cm.add_damping(D2, mio::DampingLevel(7), mio::DampingType(2), mio::SimulationTime(2.0));
 
     EXPECT_EQ(cm.get_dampings().size(), 2);
-    EXPECT_THAT(
-        cm.get_dampings(),
-        testing::ElementsAre(mio::SquareDamping(D1, mio::DampingLevel(7), mio::DampingType(3), mio::SimulationTime(0.5), Eigen::Index(2)),
-                             mio::SquareDamping(D2, mio::DampingLevel(7), mio::DampingType(2), mio::SimulationTime(2.0))));
+    EXPECT_THAT(cm.get_dampings(),
+                testing::ElementsAre(
+                    mio::SquareDamping(D1, mio::DampingLevel(7), mio::DampingType(3), mio::SimulationTime(0.5),
+                                       Eigen::Index(2)),
+                    mio::SquareDamping(D2, mio::DampingLevel(7), mio::DampingType(2), mio::SimulationTime(2.0))));
 
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-1e5)), print_wrap(B));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-0.5)), print_wrap(B));

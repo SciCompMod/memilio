@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -27,20 +27,19 @@ namespace mio
 
 namespace details
 {
-    //helper functor that dereferences a pointer
-    struct DerefFunctor
+//helper functor that dereferences a pointer
+struct DerefFunctor {
+    template <class Ptr>
+    auto& operator()(Ptr&& p) const
     {
-        template<class Ptr>
-        auto& operator()(Ptr&& p) const
-        {
-            return *p;
-        }
-    };
+        return *p;
+    }
+};
 
-    //base class for dereferencing iterator
-    template <class PtrIter>
-    using PointerDereferencingIteratorBase =
-        decltype(make_transform_iterator(std::declval<PtrIter>(), std::declval<DerefFunctor>()));
+//base class for dereferencing iterator
+template <class PtrIter>
+using PointerDereferencingIteratorBase =
+    decltype(make_transform_iterator(std::declval<PtrIter>(), std::declval<DerefFunctor>()));
 } // namespace details
 
 /**
@@ -57,6 +56,6 @@ public:
     {
     }
 };
-}
+} // namespace mio
 
 #endif

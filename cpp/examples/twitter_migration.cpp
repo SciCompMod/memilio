@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn
 *
@@ -21,7 +21,7 @@
 
 // wrapper function to print out matrix entries by gdb's 'print get_element(M,1,1)'
 // (GDB doesn't support calling the overloaded operator())
-int get_element(Eigen::MatrixXd const& m, int i, int j)
+double get_element(Eigen::MatrixXd const& m, int i, int j)
 {
     return m(i, j);
 }

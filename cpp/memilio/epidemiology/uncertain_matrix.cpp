@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -29,7 +29,8 @@ UncertainContactMatrix::UncertainContactMatrix(size_t num_matrices, Eigen::Index
 UncertainContactMatrix::UncertainContactMatrix(const ContactMatrixGroup& cont_freq)
     : m_cont_freq(cont_freq)
     , m_dampings()
-    , m_school_holiday_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {}, Eigen::VectorXd::Zero(cont_freq.get_num_groups()))
+    , m_school_holiday_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {},
+                               Eigen::VectorXd::Zero(cont_freq.get_num_groups()))
     , m_school_holidays()
 {
 }

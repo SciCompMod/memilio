@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Elisabeth Kluth
+* Authors: Elisabeth Kluth, Daniel Abele
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,28 +25,47 @@
 
 namespace mio
 {
+namespace abm
+{
 
 TripList::TripList()
-    : m_trips({})
+    : m_trips_weekday({})
+    , m_trips_weekend({})
     , m_current_index(0)
 {
 }
 
-const Trip& TripList::get_next_trip() const
+const Trip& TripList::get_next_trip(bool weekend) const
 {
-    return m_trips[m_current_index];
+    return weekend ? m_trips_weekend[m_current_index] : m_trips_weekday[m_current_index];
 }
 
-TimePoint TripList::get_next_trip_time() const
+TimePoint TripList::get_next_trip_time(bool weekend) const
 {
-    return m_trips[m_current_index].time;
+    return weekend ? m_trips_weekend[m_current_index].time : m_trips_weekday[m_current_index].time;
 }
 
-void TripList::add_trip(Trip trip)
+void TripList::use_weekday_trips_on_weekend()
 {
-    insert_sorted_replace(m_trips, trip, [](auto& trip1, auto& trip2) {
-        return trip1.time < trip2.time;
-    });
+    m_trips_weekend = m_trips_weekday;
 }
 
+void TripList::add_trip(Trip trip, bool weekend)
+{
+    //Trips are sorted by time.
+    //Also include the person id in the comparison so different persons can make trips at the same time.
+    //The same person can only make one trip at the same time.
+    if (!weekend) {
+        insert_sorted_replace(m_trips_weekday, trip, [](auto& trip1, auto& trip2) {
+            return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+        });
+    }
+    else {
+        insert_sorted_replace(m_trips_weekend, trip, [](auto& trip1, auto& trip2) {
+            return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+        });
+    }
+}
+
+} // namespace abm
 } // namespace mio

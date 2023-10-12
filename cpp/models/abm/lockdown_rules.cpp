@@ -18,28 +18,35 @@
 * limitations under the License.
 */
 #include "abm/lockdown_rules.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/time.h"
 
 namespace mio
 {
+namespace abm
+{
 
-void set_home_office(TimePoint t_begin, double p, AbmMigrationParameters& params)
+void set_home_office(TimePoint t_begin, double p, MigrationParameters& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
-    params.get<WorkRatio>().add_damping(damping1, mio::SimulationTime(t_begin.days()));
+    params.get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.get<WorkRatio>().finalize();
 }
 
-void set_school_closure(TimePoint t_begin, double p, AbmMigrationParameters& params)
+void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
-    params.get<SchoolRatio>().add_damping(damping1, mio::SimulationTime(t_begin.days()));
+    params.get<SchoolRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.get<SchoolRatio>().finalize();
 }
 
-void close_social_events(TimePoint t_begin, double p, AbmMigrationParameters& params)
+void close_social_events(TimePoint t_begin, double p, MigrationParameters& params)
 {
-    auto damping1 = Eigen::VectorXd::Constant((size_t)AbmAgeGroup::Count, p);
-    params.get<SocialEventRate>().add_damping(damping1, mio::SimulationTime(t_begin.days()));
+    auto damping1 = Eigen::VectorXd::Constant((size_t)AgeGroup::Count, p);
+    params.get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.get<SocialEventRate>().finalize();
 }
 
-} //namespace mio
+} // namespace abm
+} // namespace mio

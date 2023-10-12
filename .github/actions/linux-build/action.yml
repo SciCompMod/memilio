@@ -1,7 +1,7 @@
 name: "Linux Build"
 description: "Build the C++ library on Linux."
 inputs:
-  config: 
+  config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
@@ -40,11 +40,16 @@ runs:
         if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
           sudo apt-get -qq -y install libhdf5-dev 
         fi
-        if [[ "${{ inputs.compiler }}" == "clang" ]]; then
+        if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
+          if [[ "${{ inputs.version }}" == "latest" ]]; then   
+            sudo apt-get -qq -y install gcc-11
+            sudo apt-get -qq -y install g++-11
+          fi
+        elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             sudo apt-get -qq -y install clang-6.0
           else
-            sudo apt-get -qq -y install clang-9
+            sudo apt-get -qq -y install clang-14
           fi
         fi
     - name: Build
@@ -53,8 +58,8 @@ runs:
         cd cpp
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            export CC=/usr/bin/gcc-7
-            export CXX=/usr/bin/g++-7
+            export CC=/usr/bin/gcc-9
+            export CXX=/usr/bin/g++-9
           else        
             export CC=/usr/bin/gcc-10
             export CXX=/usr/bin/g++-10
@@ -64,8 +69,8 @@ runs:
             export CC=/usr/bin/clang-6.0
             export CXX=/usr/bin/clang++-6.0
           else        
-            export CC=/usr/bin/clang-9
-            export CXX=/usr/bin/clang++-9
+            export CC=/usr/bin/clang-14
+            export CXX=/usr/bin/clang++-14
           fi
         else
           echo "unknown value for action input: compiler"
@@ -79,8 +84,8 @@ runs:
       run: |
         cd cpp
         tar -czf build.tar.gz build
-    - name: Upload built test directory
-      uses: actions/upload-artifact@v2
+    - name: Upload built directory
+      uses: actions/upload-artifact@v3
       with:
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
         path: cpp/build.tar.gz

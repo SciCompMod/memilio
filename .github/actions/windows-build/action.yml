@@ -1,7 +1,7 @@
 name: "Build MSVC"
 description: "Build memilio c++ library using MSVC on Windows"
 inputs:
-  config: 
+  config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
@@ -50,9 +50,9 @@ runs:
         cmake --version
         cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="${{github.workspace}}/hdf5/share/cmake/hdf5" ..
         cmake --build . -- -j 4
-    - name: Upload built test directory
-      uses: actions/upload-artifact@v2
+    - name: Upload built binary files
+      uses: actions/upload-artifact@v3
       with:
         name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
-        path: cpp/build-win/tests
+        path: cpp/build-win/bin
         retention-days: 1

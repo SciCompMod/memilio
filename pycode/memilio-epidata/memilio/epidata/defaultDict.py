@@ -43,14 +43,15 @@ defaultDict = {
     'make_plot': False,
     'out_folder': default_file_path,
     'update_data': False,
-    'start_date': date(2020, 4, 24),
+    'start_date': date(2020, 1, 1),
     'end_date': date.today(),
     'split_berlin': False,
     'impute_dates': False,
     'moving_average': 0,
     'file_format': 'json_timeasstring',
     'no_raw': False,
-    'rep_date': False
+    'rep_date': False,
+    'sanitize_data': 1
 }
 
 # The following dict EngEng makes sure that for all
@@ -94,6 +95,7 @@ EngEng = {
     'vaccPartial': "Vacc_partially",
     'vaccComplete': "Vacc_completed",
     'vaccRefresh': "Vacc_refreshed",
+    'vaccNotComplete': "Vacc_not_completed",
     # test data
     'positiveRate': 'Positive_rate',
     # NPI data
@@ -102,16 +104,24 @@ EngEng = {
     'nuts3': 'NUTS3',
     'total_volume': 'Unique_trips',
     'region_name': 'County',
-    'region_id': 'ID_County'
+    'region_id': 'ID_County',
+    'desc': 'Description',
+    'incidence': 'Incidence'
 }
 
 GerEng = {
+    'datum': EngEng['date'],
+    'date': EngEng['date'],
     'Geschlecht': EngEng['gender'],
     'AnzahlFall': EngEng['confirmed'],
     'AnzahlGenesen': EngEng['recovered'],
     'AnzahlTodesfall': EngEng['deaths'],
     'IdBundesland': EngEng['idState'],
     'Bundesland': EngEng['state'],
+    'bundesland_id': EngEng['idState'],
+    'landkreis_id': EngEng['idCounty'],
+    'bundesland_name': EngEng['state'],
+    'landkreis_name': EngEng['county'],
     'IdLandkreis': EngEng['idCounty'],
     'Landkreis': EngEng['county'],
     'Altersgruppe': EngEng['ageRKI'],
@@ -140,12 +150,12 @@ GerEng = {
     'Anzahl': EngEng['number'],
     'Positivenanteil (%)': EngEng['positiveRate'],
     'Anteil positiv': EngEng['positiveRate'],
-    'bundesland': EngEng['state'],
     'ags2': EngEng['idState'],
     'kreis': EngEng['county'],
     'ags5': EngEng['idCounty'],
     'm_code': EngEng['npiCode'],
-    'code': EngEng['npiCode']
+    'code': EngEng['npiCode'],
+    'Bundesland_Id': EngEng['idState']
 }
 
 EsEng = {'fecha': EngEng['date'],
@@ -689,4 +699,4 @@ def invert_dict(dict_to_invert):
     @param dict_to_invert Dictionary.
     @return Inverted dictionary.
     """
-    return dict([(val, key) for key, val in dict_to_invert.items()])
+    return {val: key for key, val in dict_to_invert.items()}

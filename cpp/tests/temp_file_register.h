@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -34,14 +34,14 @@ public:
      * Destructor. 
      * Removes all registered files.
      */
-    ~TempFileRegister() 
+    ~TempFileRegister()
     {
         for (auto&& file : m_files) {
-            boost::system::error_code ec; 
+            boost::system::error_code ec;
             boost::filesystem::remove_all(file, ec);
             if (ec) {
                 //just log a warning, failed cleanup should not be considered a test failure.
-                mio::log_warning("Failed to remove temporary file {}:{}",file.string(), ec.message());
+                mio::log_warning("Failed to remove temporary file {}:{}", file.string(), ec.message());
             }
         }
     }
@@ -57,7 +57,7 @@ public:
      */
     std::string get_unique_path(const std::string& model = "%%%%-%%%%-%%%%-%%%%")
     {
-        auto tmp_path = get_tmp_path();
+        auto tmp_path  = get_tmp_path();
         auto file_name = boost::filesystem::unique_path(model);
         auto file_path = tmp_path / file_name;
         m_files.push_back(file_path);

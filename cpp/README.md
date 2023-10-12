@@ -26,10 +26,10 @@ The following table lists the dependencies that are used. Most of them are requi
 
 | Library | Version  | Required | Bundled               | Notes |
 |---------|----------|----------|-----------------------|-------|
-| spdlog  | 1.5.0    | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
+| spdlog  | 1.11.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
 | Eigen   | 3.3.9    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
 | Boost   | 1.75.0   | Yes      | Yes (.tar.gz archive) | https://www.boost.org/ |
-| JsonCpp | 1.7.4    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
+| JsonCpp | 1.9.5    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
 
@@ -51,6 +51,7 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_BUILD_MODELS`: build the separate model libraries in the models directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_SIMULATIONS`: build the simulation applications in the simulations directory, ON or OFF, default ON.
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
+- `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
 
 Other important options may need:
@@ -74,12 +75,12 @@ cmake --build .
 
 Run the unittests with:
 ```bash
-./tests/memilio-test
+./bin/memilio-test
 ```
 
 Run an example with:
-```
-./examples/secir-example
+```bash
+./bin/secir-example
 ```
 
 ### Installing

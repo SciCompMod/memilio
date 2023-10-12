@@ -1,7 +1,9 @@
-import unittest
-import memilio.simulation as msim
-import numpy as np
 import pickle
+import unittest
+
+import numpy as np
+
+import memilio.simulation as msim
 
 
 class Test_Pickle(unittest.TestCase):
@@ -39,7 +41,7 @@ class Test_Pickle(unittest.TestCase):
     def test_damping_sampling(self):
         test = msim.UncertainValue(2.2)
         test.set_distribution(msim.ParameterDistributionNormal(0, 1, 0.4, 0.1))
-        test = msim.DampingSampling(test, 1, 2, 3, [0, 1], np.arange((2)))
+        test = msim.DampingSampling(test, 1, 2, 3, [0, 1], np.arange(2))
 
         data = pickle.dumps(test)
         pickle_test = pickle.loads(data)

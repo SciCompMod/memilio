@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert
 *
@@ -50,7 +50,6 @@ struct DoubleParam {
 struct StringParam {
     using Type = std::string;
 };
-
 
 struct NotDefaultConstructible {
     int i;
@@ -186,8 +185,10 @@ struct MockForeachFuncRef {
 
 TEST(TestParameterSet, customIndexArray)
 {
-    struct AgeGroup{};
-    struct Income{};
+    struct AgeGroup {
+    };
+    struct Income {
+    };
 
     struct ParamType1 {
         using Type = mio::CustomIndexArray<double, AgeGroup>;
@@ -214,7 +215,6 @@ TEST(TestParameterSet, customIndexArray)
     EXPECT_EQ((params.get<ParamType2>()[{mio::Index<AgeGroup>(0), mio::Index<Income>(1)}]), 42);
     params.get<ParamType2>()[{mio::Index<AgeGroup>(0), mio::Index<Income>(1)}] = -42;
     EXPECT_EQ((params.get<ParamType2>()[{mio::Index<AgeGroup>(0), mio::Index<Income>(1)}]), -42);
-
 }
 
 TEST(TestParameterSet, foreach)
@@ -302,7 +302,7 @@ TEST(TestParameterSet, equality)
     mio::ParameterSet<IntParam1, DoubleParam> d;
     d.set<IntParam1>(2);
     d.set<DoubleParam>(0.5);
-    
+
     ASSERT_TRUE(a == b);
     ASSERT_TRUE(a != c);
     ASSERT_TRUE(a != d);

@@ -8,19 +8,19 @@ runs:
   using: "composite"
   steps:
     - name: Download built test directory
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.build-artifact }}
-        path: cpp/build-win/tests
+        path: cpp/build-win/bin
     - name: Run unit tests
       shell: pwsh
       run: |
-        cd cpp/build-win/tests
+        cd cpp/build-win/bin
         .\memilio-test.exe --gtest_output="xml:report.xml"
     - name: Upload report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: test-cpp-win-report
         path: |
-          cpp/build-win/tests/report.xml
+          cpp/build-win/bin/report.xml
         retention-days: 1

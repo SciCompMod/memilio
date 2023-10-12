@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -24,13 +24,13 @@
 
 TEST(TestCompartmentSimulation, integrator_uses_model_reference)
 {
-    struct MockModel
-    {
+    struct MockModel {
         Eigen::VectorXd get_initial_values() const
         {
             return Eigen::VectorXd::Zero(1);
         }
-        void eval_right_hand_side(const Eigen::Ref<const Eigen::VectorXd>&, const Eigen::Ref<const Eigen::VectorXd>&, double, Eigen::Ref<Eigen::VectorXd> dydt) const
+        void eval_right_hand_side(const Eigen::Ref<const Eigen::VectorXd>&, const Eigen::Ref<const Eigen::VectorXd>&,
+                                  double, Eigen::Ref<Eigen::VectorXd> dydt) const
         {
             dydt[0] = this->m_dydt;
         }

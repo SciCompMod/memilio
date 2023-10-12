@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -19,6 +19,6 @@
 */
 #include "memilio/io/json_serializer.h"
 
-#ifdef MEMILIO_HAS_JSONCPP 
+#ifdef MEMILIO_HAS_JSONCPP
 
 #endif //MEMILIO_HAS_JSONCPP

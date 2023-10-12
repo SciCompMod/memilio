@@ -22,12 +22,14 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * age groups like RKI.
  * EXPERIMENTAL; will be merged with new model framework soon.
  */
-enum class AbmAgeGroup
+enum class AgeGroup
 {
     Age0to4 = 0,
     Age5to14,
@@ -39,6 +41,7 @@ enum class AbmAgeGroup
     Count
 };
 
+} // namespace abm
 } // namespace mio
 
 #endif //EPI_ABM_AGE_H

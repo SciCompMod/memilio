@@ -1,0 +1,142 @@
+name: Epidata-CI
+
+on: 
+  schedule:
+    - cron: "40 1 * * *"
+  push:
+    branches:
+      - 'main'
+    tags:
+      - version-*
+    paths:
+      - '**/memilio-epidata/**'
+      - '.github/**'
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '**/memilio-epidata/**'
+      - '.github/**'
+  workflow_dispatch:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    - uses: pre-commit/action@v3.0.0
+
+  build-py-epidata:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/build-py
+        with:
+          package: epidata
+
+  build-py-plot:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/build-py
+        with:
+          package: plot
+
+  test-py-epidata:
+    needs: build-py-epidata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with: 
+          package: epidata
+          coverage: ON
+
+  test-py-plot:
+    if: github.event.pull_request.draft == false
+    needs: [build-py-plot, build-py-epidata]
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with: 
+          package: plot
+          coverage: ON 
+
+  test-pylint-epidata:
+    needs: build-py-epidata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-pylint
+        with:
+          package: epidata
+
+  test-pylint-plot:
+    needs: build-py-plot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-pylint
+        with:
+          package: plot
+
+  download-data:
+    needs: build-py-epidata
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install python3-pip gnupg
+          python -m pip install --upgrade pip
+      - name: Download Python Wheels
+        uses: actions/download-artifact@v3
+        with:
+          name: python-wheels-epidata
+          path: pycode/wheelhouse
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install Python Wheels
+        run: |
+          for pkg in `ls pycode/wheelhouse/*cp311*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+          for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
+      - name: Download Data
+        run: |
+          mkdir -p data_dl
+          getcasedata -o data_dl --no-progress-indicators
+          getpopuldata -o data_dl --no-progress-indicators --username=${{ secrets.REGIODBUSER }} --password=${{ secrets.REGIODBPW }}
+          getjhdata -o data_dl --no-progress-indicators
+          getdividata -o data_dl --no-progress-indicators
+          getcommutermobility -o data_dl --no-progress-indicators
+          getvaccinationdata -o data_dl --no-progress-indicators
+          gethospitalizationdata -o data_dl --no-progress-indicators
+      - name: Upload Data
+        uses: actions/upload-artifact@v3
+        with:
+          name: data
+          path: |
+            data_dl/*.json
+            data_dl/Germany/*.json
+            data_dl/Spain/*.json
+            data_dl/France/*.json
+            data_dl/Italy*.json
+            data_dl/SouthKorea/*.json
+            data_dl/US/*.json
+            data_dl/China/*.json
+          retention-days: 1
+          

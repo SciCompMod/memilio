@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -63,7 +63,8 @@ inline double smoother_cosine(double x, double xleft, double xright, double ylef
  * @return a matrix expression with yij = smoother_cosine(x, xleft, xright, yleftij, yrightij)
  */
 template <class LeftExpr, class RightExpr>
-auto smoother_cosine(double x, double xleft, double xright, const Eigen::MatrixBase<LeftExpr>& yleft_expr, const Eigen::MatrixBase<RightExpr>& yright_expr)
+auto smoother_cosine(double x, double xleft, double xright, const Eigen::MatrixBase<LeftExpr>& yleft_expr,
+                     const Eigen::MatrixBase<RightExpr>& yright_expr)
 {
     return yleft_expr.binaryExpr(yright_expr, [=](auto yleft, auto yright) {
         return smoother_cosine(x, xleft, xright, yleft, yright);

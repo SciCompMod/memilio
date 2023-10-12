@@ -18,8 +18,10 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import memilio.simulation as mio
+
 import numpy as np
+
+import memilio.simulation as mio
 
 
 class Test_UncertainMatrix(unittest.TestCase):

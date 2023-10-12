@@ -32,8 +32,6 @@
 #include <utility>
 #include <typeinfo>
 
-namespace py = pybind11;
-
 namespace mio
 {
 
@@ -51,7 +49,6 @@ struct PickleType : std::false_type {
 template <>
 struct PickleType<bool> : std::true_type {
 };
-
 
 template <class T>
 using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
@@ -96,26 +93,26 @@ struct PickleType<const char*> : std::true_type {
 };
 
 /**
- * Transform functions for conversion from a py::tuple element.
+ * Transform functions for conversion from a pybind11::tuple element.
  * @tparam T the type to be deserialized.
  * @param v Parameter that needs to be deserialized
  */
-template<typename T, class V>
+template <typename T, class V>
 static T from_tuple_element(const V& v)
 {
-        return v.template cast<T>();
+    return v.template cast<T>();
 }
 
 /**
- * Transform functions for conversion to a py::tuple.
+ * Transform functions for conversion to a pybind11::tuple.
  * @tparam T the type to be serialized.
  * @param v Parameter that needs to be serialized
  */
-template<typename T>
-static py::tuple to_tuple(const T& v)
+template <typename T>
+static pybind11::tuple to_tuple(const T& v)
 {
     static_assert(PickleType<T>::value, "v must be one of the types for which PickleType is true");
-    return py::make_tuple(v);
+    return pybind11::make_tuple(v);
 }
 /**@}*/
 
@@ -190,7 +187,7 @@ public:
      * @param value reference to the tuple that will store the data.
      * @param flags flags to determine the behavior of serialization.
      */
-    PickleObject(const std::shared_ptr<IOStatus>& status, py::tuple& value, int flags)
+    PickleObject(const std::shared_ptr<IOStatus>& status, pybind11::tuple& value, int flags)
         : PickleBase{status, flags}
         , m_value{value}
         , m_index(0)
@@ -205,9 +202,9 @@ public:
      * @{
      */
     template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
-    void add_element( const std::string& name, const T& value);
+    void add_element(const std::string& name, const T& value);
     template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
-    void add_element( const std::string& name, const T& value);
+    void add_element(const std::string& name, const T& value);
     /**@}*/
 
     /**
@@ -217,7 +214,7 @@ public:
      * @param value pointer to value of the element, may be null.
      */
     template <class T>
-    void add_optional(const std::string& name,  const T* value);
+    void add_optional(const std::string& name, const T* value);
 
     /**
      * add list of elementss to the tuple.
@@ -227,10 +224,12 @@ public:
      * @param e iterator to end of the list.
      * @{
      */
-    template <class Iter, std::enable_if_t<PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*> = nullptr>
-    void add_list( const std::string& name, Iter b, Iter e);
-    template <class Iter, std::enable_if_t<!PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*> = nullptr>
-    void add_list( const std::string& name, Iter b, Iter e);
+    template <class Iter,
+              std::enable_if_t<PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*> = nullptr>
+    void add_list(const std::string& name, Iter b, Iter e);
+    template <class Iter,
+              std::enable_if_t<!PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*> = nullptr>
+    void add_list(const std::string& name, Iter b, Iter e);
     /**@}*/
 
     /**
@@ -280,8 +279,9 @@ public:
     }
 
     size_t m_index;
+
 private:
-    py::tuple& m_value;
+    pybind11::tuple& m_value;
 };
 
 /**
@@ -299,7 +299,7 @@ public:
     PickleContext(const std::shared_ptr<IOStatus>& status, int flags)
         : PickleBase{status, flags}
         , m_value{}
-        , m_index(0) 
+        , m_index(0)
     {
     }
 
@@ -310,7 +310,7 @@ public:
      * @param status status of serialization, shared with parent IO contexts and objects.
      * @param flags flags to determine behavior of serialization.
      */
-    PickleContext(const py::tuple& value, const std::shared_ptr<IOStatus>& status, int flags)
+    PickleContext(const pybind11::tuple& value, const std::shared_ptr<IOStatus>& status, int flags)
         : PickleBase(status, flags)
         , m_value(value)
         , m_index(0)
@@ -327,7 +327,7 @@ public:
     PickleObject create_object(const std::string& type)
     {
         mio::unused(type);
-        m_value = py::tuple();
+        m_value = pybind11::tuple();
         return {m_status, m_value, m_flags};
     }
 
@@ -348,14 +348,14 @@ public:
      * The tuple that contains the serialized data.
      * @{
      */
-    const py::tuple& value() const&
+    const pybind11::tuple& value() const&
     {
         return m_value;
     }
     /**
      * overload for rvalue references to allow moving the value out of this context.
      */
-    py::tuple&& value() &&
+    pybind11::tuple&& value() &&
     {
         return std::move(m_value);
     }
@@ -368,7 +368,7 @@ public:
      * @tparam T the type of value to be serialized.
      * @param io reference PickleContext.
      * @param t value to be serialized.
-     */ 
+     */
     template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
     friend void serialize_internal(PickleContext& io, const T& t)
     {
@@ -381,7 +381,7 @@ public:
      * @tparam T the type of value to be deserialized.
      * @param io reference TupleContext.
      * @param t value to be serialized.
-     */ 
+     */
     template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
     friend IOResult<T> deserialize_internal(PickleContext& io, Tag<T>)
     {
@@ -390,7 +390,7 @@ public:
 
 private:
     size_t m_index;
-    py::tuple m_value;
+    pybind11::tuple m_value;
 };
 
 /**
@@ -406,7 +406,7 @@ public:
      * @param value value that contains serialized data.
      * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
      */
-    PickleSerializer(const py::tuple& value, int flags = IOF_None)
+    PickleSerializer(const pybind11::tuple& value, int flags = IOF_None)
         : PickleContext(value, std::make_shared<IOStatus>(), flags)
     {
     }
@@ -417,7 +417,7 @@ public:
      * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
      */
     PickleSerializer(int flags = IOF_None)
-        : PickleSerializer(py::tuple{}, flags)
+        : PickleSerializer(pybind11::tuple{}, flags)
     {
     }
 };
@@ -427,10 +427,10 @@ public:
  * @tparam T the type of value to be serialized.
  * @param t the object to be serialized.
  * @param flags flags that determine the behavior of serialized; see mio::IOFlags.
- * @return py::tuple if serialization is succesful, error code otherwise.
+ * @return pybind11::tuple if serialization is succesful, error code otherwise.
  */
 template <class T>
-IOResult<py::tuple> serialize_pickle(const T& v, int flags = IOF_None)
+IOResult<pybind11::tuple> serialize_pickle(const T& v, int flags = IOF_None)
 {
     PickleSerializer t{flags};
     serialize(t, v);
@@ -439,7 +439,6 @@ IOResult<py::tuple> serialize_pickle(const T& v, int flags = IOF_None)
     }
     return success(t.value());
 }
-
 
 /**
  * Deserialize an object from a tuple.
@@ -450,12 +449,11 @@ IOResult<py::tuple> serialize_pickle(const T& v, int flags = IOF_None)
  * @return the deserialized object if succesful, error code otherwise.
  */
 template <class T>
-IOResult<T> deserialize_pickle(const py::tuple& t, Tag<T> tag, int flags = IOF_None)
+IOResult<T> deserialize_pickle(const pybind11::tuple& t, Tag<T> tag, int flags = IOF_None)
 {
     PickleSerializer ctxt{t, flags};
     return deserialize(ctxt, tag);
 }
-
 
 ////////////////////////////////////////////////////////////////////
 //Implementations for PickleContext/Object member functions below //
@@ -476,7 +474,7 @@ void PickleObject::add_element(const std::string& name, const T& value)
         auto ctxt = PickleContext(m_status, m_flags);
         mio::serialize(ctxt, value);
         if (m_status) {
-            m_value = m_value + py::make_tuple(std::move(ctxt).value());
+            m_value = m_value + pybind11::make_tuple(std::move(ctxt).value());
         }
     }
 }
@@ -488,7 +486,7 @@ void PickleObject::add_optional(const std::string& name, const T* value)
     if (value) {
         end += 1;
     }
-    add_list(name,value, end);
+    add_list(name, value, end);
 }
 
 template <class Iter, std::enable_if_t<PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*>>
@@ -496,39 +494,37 @@ void PickleObject::add_list(const std::string& name, Iter b, Iter e)
 {
 
     if (m_status->is_ok()) {
-        auto new_tuple = py::tuple(0);
+        auto new_tuple = pybind11::tuple(0);
         for (auto it = b; it < e; ++it) {
             new_tuple = new_tuple + (to_tuple(*it));
         }
-        m_value = m_value + py::make_tuple(new_tuple);
-
-
+        m_value = m_value + pybind11::make_tuple(new_tuple);
     }
 }
 
 template <class Iter, std::enable_if_t<!PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*>>
-void PickleObject::add_list(const std::string &name, Iter b, Iter e)
+void PickleObject::add_list(const std::string& name, Iter b, Iter e)
 {
     if (m_status->is_ok()) {
-        auto new_tuple = py::tuple(0);
+        auto new_tuple = pybind11::tuple(0);
         for (auto it = b; it < e; ++it) {
             auto ctxt = PickleContext(m_status, m_flags);
             mio::serialize(ctxt, *it);
             if (m_status) {
-                new_tuple = new_tuple + py::make_tuple(std::move(ctxt).value());
+                new_tuple = new_tuple + pybind11::make_tuple(std::move(ctxt).value());
             }
         }
-        m_value = m_value + py::make_tuple(new_tuple);
+        m_value = m_value + pybind11::make_tuple(new_tuple);
     }
 }
 
 template <class T, std::enable_if_t<PickleType<T>::value, void*>>
-IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> /*tag*/)
+IOResult<T> PickleObject::expect_element(const std::string& name, Tag<T> /*tag*/)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
     }
-    if (py::len(m_value) <= m_index) {
+    if (pybind11::len(m_value) <= m_index) {
         return failure(StatusCode::OutOfRange, "Index of " + name + " out of range.");
     }
 
@@ -536,22 +532,22 @@ IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> /*tag*/)
 }
 
 template <class T, std::enable_if_t<!PickleType<T>::value, void*>>
-IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> tag)
+IOResult<T> PickleObject::expect_element(const std::string& name, Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
     }
 
-    if (py::len(m_value) <= m_index) {
+    if (pybind11::len(m_value) <= m_index) {
         return failure(StatusCode::OutOfRange, "Index of " + name + " out of range.");
     }
 
-    auto ctxt = PickleContext(m_value[m_index++].template cast<py::tuple>(), m_status, m_flags);
+    auto ctxt = PickleContext(m_value[m_index++].template cast<pybind11::tuple>(), m_status, m_flags);
     return mio::deserialize(ctxt, tag);
 }
 
 template <class T>
-IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string &name, mio::Tag<T> tag)
+IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string& name, mio::Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
@@ -562,45 +558,44 @@ IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string &na
     if (r.size() == 0) {
         return success();
     }
-    else if (r.size()==1) {
+    else if (r.size() == 1) {
         return success(r[0]);
     }
-
 
     return failure(StatusCode::OutOfRange, "Optional must be a tuple with only one element");
 }
 
 template <class T, std::enable_if_t<PickleType<T>::value, void*>>
-IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<T> /*tag*/)
+IOResult<std::vector<T>> PickleObject::expect_list(const std::string& name, Tag<T> /*tag*/)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
     }
-    if (py::len(m_value) <= m_index) {
+    if (pybind11::len(m_value) <= m_index) {
         return failure(StatusCode::OutOfRange, "Index of " + name + " out of range.");
     }
-    const auto& tuple = m_value[m_index++].template cast<py::tuple>();
+    const auto& tuple = m_value[m_index++].template cast<pybind11::tuple>();
     std::vector<T> v;
-    v.reserve(py::len(tuple));
-    for (size_t i = 0; i < py::len(tuple); ++i) {
+    v.reserve(pybind11::len(tuple));
+    for (size_t i = 0; i < pybind11::len(tuple); ++i) {
         v.emplace_back(from_tuple_element<T>(tuple[i]));
     }
     return success(std::move(v));
 }
 
 template <class T, std::enable_if_t<!PickleType<T>::value, void*>>
-IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<T> tag)
+IOResult<std::vector<T>> PickleObject::expect_list(const std::string& name, Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
     }
-    if (py::len(m_value) <= m_index) {
+    if (pybind11::len(m_value) <= m_index) {
         return failure(StatusCode::OutOfRange, "Index of " + name + " out of range.");
     }
-    const auto& tuple = m_value[m_index++].template cast<py::tuple>();
+    const auto& tuple = m_value[m_index++].template cast<pybind11::tuple>();
     std::vector<T> v;
-    v.reserve(py::len(tuple));
-    for (size_t i = 0; i < py::len(tuple); ++i) {
+    v.reserve(pybind11::len(tuple));
+    for (size_t i = 0; i < pybind11::len(tuple); ++i) {
         auto ctxt = PickleContext(tuple[i], m_status, m_flags);
         auto r    = mio::deserialize(ctxt, tag);
         if (r) {
@@ -613,6 +608,6 @@ IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<
     return success(std::move(v));
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif

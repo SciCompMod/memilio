@@ -18,7 +18,7 @@ runs:
         sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
         sudo apt-get -qq update
     - name: Download built test directory
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.build-artifact }}
         path: cpp
@@ -29,28 +29,34 @@ runs:
         tar -xzf build.tar.gz
     - name: Run unit tests
       shell: bash
+      # always run tests as cmake target coverage
+      # does not return an error if a test fails
+      run: |
+        cd cpp/build/bin
+        sudo chmod a+x memilio-test
+        ./memilio-test  --gtest_output="xml:report.xml"
+    - name: Compute code coverage
+      shell: bash
+      # compute code coverage
       run: |
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
           cd cpp/build
           cmake --build . --target coverage/fast
-        else
-          cd cpp/build/tests
-          sudo chmod a+x memilio-test
-          ./memilio-test  --gtest_output="xml:report.xml"
         fi
     - name: Upload test report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: test-cpp-linux-report
-        path: cpp/build/tests/report.xml
-        if-no-files-found: ${{ inputs.coverage == 'ON' && 'ignore' || 'error' }}
+        path: cpp/build/bin/report.xml
+        if-no-files-found: error
         retention-days: 1
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: test-cpp-coverage-reports
         path: |
           cpp/build/coverage.info
           cpp/build/coverage
+        # coverage is only calculated from latest gcc debug build
         if-no-files-found: ${{ inputs.coverage == 'OFF' && 'ignore' || 'error' }}
         retention-days: 1

@@ -1,30 +1,22 @@
-HPC against Corona Documentation
+MEmilio Documentation
 ===============================
+The MEmilio documentation is created by [doxygen](https://www.doxygen.nl/). The documentation of the main branch is automatically deployed to https://dlr-sc.github.io/memilio/documentation/index.html by the continuous integration process.
 
-iUsed software: doxygen 1.8.5 (www.doxygen.nl)
+In order to create the MEmilio documentation locally, follow the procedure below.
 
-
-How to create this documentation:
+How to create the documentation:
 ---------------------------------
-1. Execute
-.. code:: sh
+1. From the `docs` folder, execute
 
     doxygen
 
-This will create an html documentation
+This will create an html documentation.
 
-2. Execute 
+2. Open 
 
-.. code:: sh
-
-     firefox html/index.html
-
-This opens the documentation.
+     docs/html/index.html
 
 
 How to use the documentation
 ----------------------------
-
-Under "Related Pages" all Readme files can be found. The title is shown there, thus it should be always meaningfull
-
-Under "Files" the general file structure is projected and the documentation of classes and functions etc can be found within the specific file name.
+Under "Files", you can see the general file structure and access documentation of classes.

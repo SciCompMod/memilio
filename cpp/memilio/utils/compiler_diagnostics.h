@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -22,22 +22,26 @@
 
 namespace mio
 {
-    /**
-     * does nothing, can be used to mark variables as not used.
-     * e.g. for avoiding compiler warnings/error about unused variables.
-     */
-    template<class... T>
-    void unused(T&&...) {}
+/**
+* does nothing, can be used to mark variables as not used.
+* e.g. for avoiding compiler warnings/error about unused variables.
+*/
+template <class... T>
+void unused(T&&...)
+{
+}
+
+} // namespace mio
 
 #define QUOTE(x) #x
 
 //defines warning macros for MSVC
 #ifdef _MSC_VER
 #define MSVC_WARNING_DISABLE_PUSH(list) __pragma(warning(push)) __pragma(warning(disable : list))
-#define MSVC_WARNING_POP __pragma(warning(pop))
+#define MSVC_WARNING_POP() __pragma(warning(pop))
 #else
 #define MSVC_WARNING_DISABLE_PUSH(...)
-#define MSVC_WARNING_POP
+#define MSVC_WARNING_POP()
 #endif
 
 //defines warning macros for gcc and clang
@@ -45,7 +49,7 @@ namespace mio
 
 #ifdef __GNUC__
 #define COMPILER GCC
-#else 
+#else
 #define COMPILER clang
 #endif
 
@@ -59,11 +63,16 @@ namespace mio
 
 #endif //gcc, clang
 
-//macro for if with compile time constant condition
-#define IF_CONSTEXPR(expr)                                                                                             \
-    MSVC_WARNING_DISABLE_PUSH(4127)                                                                                    \
-    if (expr)                                                                                                          \
-    MSVC_WARNING_POP
-}
+//MSVC has a long standing bug that breaks empty base optimization (EBO)
+//if the class has more than one empty base class.
+//types that rely on empty base optimization must add this declaration
+//e.g. struct MEMILIO_ENABLE_EBO Foo : EmptyBase1, EmptyBase2, ...
+//see https://en.cppreference.com/w/cpp/language/ebo
+//see https://stackoverflow.com/questions/12701469/why-is-the-empty-base-class-optimization-ebo-is-not-working-in-msvc
+#ifdef _MSC_VER
+#define MEMILIO_ENABLE_EBO __declspec(empty_bases)
+#else
+#define MEMILIO_ENABLE_EBO
+#endif
 
 #endif //EPI_UTILS_UNUSED_H

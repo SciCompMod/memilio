@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_SECIR_DYNAMIC_LOCKDOWN_H
-#define EPI_SECIR_DYNAMIC_LOCKDOWN_H
+#ifndef MIO_EPI_DYNAMIC_LOCKDOWN_H
+#define MIO_EPI_DYNAMIC_LOCKDOWN_H
 
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/damping_sampling.h"
@@ -142,7 +142,7 @@ public:
     /**
      * draw a random sample from the damping distributions
      */
-    void draw_sample() 
+    void draw_sample()
     {
         for (auto&& t : m_thresholds) {
             for (auto&& d : t.second) {
@@ -338,4 +338,4 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
 
 } // namespace mio
 
-#endif
+#endif // MIO_EPI_DYNAMIC_LOCKDOWN_H

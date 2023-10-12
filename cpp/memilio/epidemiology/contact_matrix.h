@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_SECIR_CONTACT_FREQUENCY_MATRIX_H
-#define EPI_SECIR_CONTACT_FREQUENCY_MATRIX_H
+#ifndef EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
+#define EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
 
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/damping.h"
@@ -40,9 +40,9 @@ namespace mio
  * @see ContactMatrix
  * @tparam D instance of Dampings or compatible type
  */
-template<class D>
+template <class D>
 class DampingMatrixExpression
-{    
+{
 public:
     using DampingsType = D;
     using Shape        = typename DampingsType::Shape;
@@ -208,7 +208,7 @@ public:
      * serialize this. 
      * @see mio::serialize
      */
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("DampingMatrixExpression");
@@ -221,26 +221,29 @@ protected:
     /**
      * deserialize an object of a class derived from this.
      */
-    template<class IOContext, class Derived>
+    template <class IOContext, class Derived>
     static IOResult<Derived> deserialize(IOContext& io, Tag<Derived>)
-    {        
+    {
         auto obj = io.expect_object("DampingMatrixExpression");
-        auto b = obj.expect_element("Baseline", Tag<Matrix>{});
-        auto m = obj.expect_element("Minimum", Tag<Matrix>{});
-        auto d = obj.expect_list("Dampings", Tag<typename DampingsType::value_type>{});
-        return apply(io, [](auto&& b_, auto&& m_, auto&& d_) -> IOResult<Derived> {
-            if (Shape::get_shape_of(b_) != Shape::get_shape_of(m_)) {
-                return failure(StatusCode::InvalidValue, "Baseline and Minimum must have the same shape.");
-            }
-            auto r = Derived(b_, m_);
-            for (auto&& e : d_) {
-                if (e.get_shape() != Shape::get_shape_of(b_)) {
-                    return failure(StatusCode::InvalidValue, "Dampings must have the same shape as the Baseline.");
+        auto b   = obj.expect_element("Baseline", Tag<Matrix>{});
+        auto m   = obj.expect_element("Minimum", Tag<Matrix>{});
+        auto d   = obj.expect_list("Dampings", Tag<typename DampingsType::value_type>{});
+        return apply(
+            io,
+            [](auto&& b_, auto&& m_, auto&& d_) -> IOResult<Derived> {
+                if (Shape::get_shape_of(b_) != Shape::get_shape_of(m_)) {
+                    return failure(StatusCode::InvalidValue, "Baseline and Minimum must have the same shape.");
                 }
-                r.add_damping(e);
-            }
-            return success(r);
-        }, b, m, d);
+                auto r = Derived(b_, m_);
+                for (auto&& e : d_) {
+                    if (e.get_shape() != Shape::get_shape_of(b_)) {
+                        return failure(StatusCode::InvalidValue, "Dampings must have the same shape as the Baseline.");
+                    }
+                    r.add_damping(e);
+                }
+                return success(r);
+            },
+            b, m, d);
     }
 
 public:
@@ -248,7 +251,7 @@ public:
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<DampingMatrixExpression> deserialize(IOContext& io)
     {
         return deserialize(io, Tag<DampingMatrixExpression>{});
@@ -264,7 +267,7 @@ private:
  * represents a collection of DampingMatrixExpressions that are summed up.
  * @tparam E some instance of DampingMatrixExpression or compatible type.
  */
-template<class E>
+template <class E>
 class DampingMatrixExpressionGroup
 {
 public:
@@ -273,17 +276,17 @@ public:
     using const_reference = const value_type&;
     using iterator        = typename std::vector<value_type>::iterator;
     using const_iterator  = typename std::vector<value_type>::const_iterator;
-    
-    using Shape           = typename value_type::Shape;
-    using Matrix          = typename value_type::Matrix;
-    using DampingsType    = typename value_type::DampingsType;
+
+    using Shape        = typename value_type::Shape;
+    using Matrix       = typename value_type::Matrix;
+    using DampingsType = typename value_type::DampingsType;
 
     /**
      * create a collection.
      * @param num_groups number of groups.
      * @param num_matrices number of matrices.
      */
-    template<class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
+    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
     explicit DampingMatrixExpressionGroup(size_t num_matrices, T... shape_args)
         : m_matrices(num_matrices, value_type{shape_args...})
     {
@@ -452,12 +455,14 @@ protected:
             [](auto&& m_) -> IOResult<Derived> {
                 //validation
                 if (m_.empty()) {
-                    return failure(StatusCode::InvalidValue, "DampingMatrixExpressionGroup must have at least one matrix.");
+                    return failure(StatusCode::InvalidValue,
+                                   "DampingMatrixExpressionGroup must have at least one matrix.");
                 }
                 auto shape = m_[0].get_shape();
                 for (size_t i = 1; i < m_.size(); ++i) {
                     if (m_[i].get_shape() != shape) {
-                        return failure(StatusCode::InvalidValue, "Elements of DampingMatrixExpressionGroup must all have the same shape.");
+                        return failure(StatusCode::InvalidValue,
+                                       "Elements of DampingMatrixExpressionGroup must all have the same shape.");
                     }
                 }
 
@@ -506,8 +511,8 @@ public:
     Eigen::Index get_num_groups() const
     {
         return Base::get_shape().rows();
-    }    
-    
+    }
+
     /**
      * deserialize an object of this class.
      * @see mio::deserialize
@@ -529,7 +534,7 @@ class ContactMatrixGroup : public DampingMatrixExpressionGroup<ContactMatrix>
 public:
     using Base = DampingMatrixExpressionGroup<ContactMatrix>;
     using Base::Base;
-    
+
     /**
      * get the number of groups.
      */
@@ -551,4 +556,4 @@ public:
 
 } // namespace mio
 
-#endif //EPI_SECIR_CONTACT_FREQUENCY_MATRIX_H
+#endif //EPI_ODE_CONTACT_FREQUENCY_MATRIX_H

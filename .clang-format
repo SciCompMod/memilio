@@ -16,7 +16,7 @@ BraceWrapping:
 BreakBeforeBraces: "Custom"
 PointerAlignment: Left
 AllowShortFunctionsOnASingleLine: false
-NamespaceIndentation: Inner
+NamespaceIndentation: None
 BreakConstructorInitializersBeforeComma: true
 AlwaysBreakTemplateDeclarations: Yes
 AllowShortLambdasOnASingleLine: Empty

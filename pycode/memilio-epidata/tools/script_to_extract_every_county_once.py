@@ -2,9 +2,9 @@
 # data for test_epidata_get_Case_Data_read.py which is not to large
 
 import pandas as pd
+
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-
 
 # Put any CaseDataFull.json file or Update file has below here
 file_name = "UpdateDataCases2021-07-08.json"
@@ -24,7 +24,7 @@ for k in dd.County.keys():
     if len(df_k) > 0:
 
         df_append = df_k.iloc[[0]]
-        df_neu = df_neu.append(df_append)
+        df_neu = pd.concat([df_neu, df_append])
 
 print("Number of counties in data:", len(df_neu))
 
