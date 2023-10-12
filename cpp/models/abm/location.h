@@ -63,12 +63,12 @@ struct CellCapacity {
  */
 template<typename FP=double>
 struct Cell {
-    std::vector<observer_ptr<Person<FP>>> m_persons;
-    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
-    CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
+    std::vector<observer_ptr<Person<FP> > > m_persons;
+    CustomIndexArray<FP, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
+    CustomIndexArray<FP, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    explicit Cell(std::vector<observer_ptr<Person<FP>>> persons = {})
+    explicit Cell(std::vector<observer_ptr<Person<FP> > > persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
