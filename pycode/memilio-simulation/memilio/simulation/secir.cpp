@@ -59,7 +59,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
 template <class Simulation>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<pymio::PickleFlag::NoPickling, mio::ParameterStudy<Simulation>>(m, name.c_str())
+    pymio::bind_class<pymio::EnablePickling::Never, mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
@@ -180,17 +180,17 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
 
-    pymio::bind_class<pymio::PickleFlag::ForcePickling, mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<pymio::EnablePickling::Required, mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::osecir::Parameters::check_constraints)
         .def("apply_constraints", &mio::osecir::Parameters::apply_constraints);
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-    pymio::bind_class<pymio::PickleFlag::ForcePickling, mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+    pymio::bind_class<pymio::EnablePickling::Required, mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
                                                                                                            "ModelBase");
-    pymio::bind_class<pymio::PickleFlag::ForcePickling, mio::osecir::Model,
+    pymio::bind_class<pymio::EnablePickling::Required, mio::osecir::Model,
                       mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>>(
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));

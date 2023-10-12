@@ -32,14 +32,14 @@
 namespace pymio
 {
 
-enum class PickleFlag {
-    NoPickling,
-    TryPickling,
-    ForcePickling
+enum class EnablePickling {
+    Never,
+    IfAvailable,
+    Required
 };
 
 // Tag dispatch to convert value into type
-template <PickleFlag F>
+template <EnablePickling F>
 struct PicklingTag {};
 
 template <class IOContext, class T>
@@ -79,13 +79,13 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 }
 
 template <class T, class... Args>
-auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<PickleFlag::NoPickling> /*tags*/) {
+auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/) {
     auto cls = pybind11::class_<T, Args...>(m, name.c_str());
     return cls;
 }
 
 template <class T, class... Args>
-auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<PickleFlag::TryPickling> /*tags*/) {
+auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::IfAvailable> /*tags*/) {
     auto cls = pybind11::class_<T, Args...>(m, name.c_str());
     // Bind the class depending on its features
     if constexpr (is_serializable<mio::PickleSerializer, T>::value) {
@@ -95,13 +95,13 @@ auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<Pickl
 }
 
 template <class T, class... Args>
-auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<PickleFlag::ForcePickling> /*tags*/) {
+auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Required> /*tags*/) {
     auto cls = pybind11::class_<T, Args...>(m, name.c_str());
     pybind_pickle_class<T, Args...>(cls);
     return cls;
 }
 
-template <PickleFlag F, class T, class... Args>
+template <EnablePickling F, class T, class... Args>
 auto bind_class(pybind11::module& m, std::string const& name) {
     return _bind_class<T, Args...>(m, name, PicklingTag<F>{});
 }
@@ -159,7 +159,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    bind_class<PickleFlag::NoPickling, Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    bind_class<EnablePickling::Never, Iterator>(m, (std::string("_Iter") + class_name).c_str())
         .def(
             "__next__",
             [](Iterator& self) -> auto&& {
@@ -173,7 +173,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
             pybind11::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    bind_class<PickleFlag::NoPickling, Range>(m, class_name.c_str())
+    bind_class<EnablePickling::Never, Range>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {
