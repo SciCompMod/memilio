@@ -47,6 +47,11 @@ Location Location::copy_location_without_persons(size_t num_agegroups)
     Location copy_loc  = Location(*this);
     copy_loc.m_persons = std::vector<observer_ptr<Person>>();
     copy_loc.m_cells   = std::vector<Cell>{num_agegroups};
+    for (size_t idx = 0; idx < m_cells.size(); idx++) {
+        copy_loc.set_capacity(get_capacity(idx).persons, get_capacity(idx).volume, idx);
+        copy_loc.get_cached_exposure_rate_contacts(idx) = get_cached_exposure_rate_contacts(idx);
+        copy_loc.get_cached_exposure_rate_air(idx)      = get_cached_exposure_rate_air(idx);
+    }
     return copy_loc;
 }
 
@@ -62,7 +67,7 @@ ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVar
 }
 
 ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
-                                              Parameters const global_params) const
+                                              const Parameters& global_params) const
 {
     return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
            global_params.get<AerosolTransmissionRates>()[{virus}];

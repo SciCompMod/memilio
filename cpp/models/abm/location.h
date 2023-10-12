@@ -189,7 +189,7 @@ public:
      * @param[in] global_params The Parameters set of the World. 
      * @return Amount of average Infection%s with the virus per day.
     */
-    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, Parameters global_params) const;
+    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
 
     /** 
      * @brief A Person interacts with the population at this Location and may become infected.
