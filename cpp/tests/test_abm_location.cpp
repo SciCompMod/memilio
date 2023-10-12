@@ -45,9 +45,10 @@ TEST(TestLocation, copyLocation)
     location.add_person(person);
     EXPECT_EQ(location.get_number_persons(), 1);
 
-    auto copied_location = location.copy_location_without_persons();
+    auto copied_location = location.copy_location_without_persons(NUM_AGE_GROUPS);
     ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
     ASSERT_EQ(copied_location.get_index(), location.get_index());
+    ASSERT_EQ(copied_location.get_cells().size(), location.get_cells().size());
     EXPECT_EQ(copied_location.get_number_persons(), 0);
 }
 

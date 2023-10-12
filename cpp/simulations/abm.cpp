@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen, David Kerkmann
 *
@@ -19,7 +19,6 @@
 */
 #include "abm/abm.h"
 #include "abm/analyze_result.h"
-#include "abm/person.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
@@ -628,7 +627,7 @@ void set_parameters(mio::abm::Parameters params)
  * Create a sampled world with start time t0.
  * @param t0 the start time of the simulation
 */
-mio::abm::World create_sampled_simulation(const mio::abm::TimePoint& t0)
+mio::abm::World create_sampled_world(const mio::abm::TimePoint& t0)
 {
     // mio::thread_local_rng().seed(
     //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
@@ -691,18 +690,18 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::abm::World>>{};
     ensemble_params.reserve(size_t(num_runs));
-    auto run_idx            = size_t(1); // The run index
-    auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+    auto run_idx = size_t(1); // The run index
     std::vector<int> loc_ids;
 
     // Create the sampled simulation with start time t0
-    auto world = create_sampled_simulation(t0);
+    auto world = create_sampled_world(t0);
+    ensemble_params.push_back(std::vector<mio::abm::World>{world});
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
         loc_ids = {};
 
-        auto sim = mio::abm::Simulation(t0, std::move(world));
+        auto sim = mio::abm::Simulation(t0, mio::abm::World(world));
 
         // Collect the id of location in world.
         for (auto& location : sim.get_world().get_locations()) {
@@ -711,18 +710,13 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
         // Advance the world to tmax
         sim.advance(tmax);
-        ensemble_params.push_back(std::vector<mio::abm::World>{mio::abm::World(sim.get_world())});
+
+        // Collect results from the simulation
         ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()});
 
-        // Option to save the current run result to file
-        if (save_result_result && save_single_runs) {
-            auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            save_result_result =
-                save_result_with_params(ensemble_results.back(), ensemble_params.back(), loc_ids, result_dir, run_idx);
-        }
         ++run_idx;
     }
-    BOOST_OUTCOME_TRY(save_result_result);
+    // Save result to files
     BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, loc_ids, result_dir, save_single_runs));
     return mio::success();
 }

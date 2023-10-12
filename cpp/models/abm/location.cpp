@@ -42,10 +42,11 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
-Location Location::copy_location_without_persons()
+Location Location::copy_location_without_persons(size_t num_agegroups)
 {
     Location copy_loc  = Location(*this);
     copy_loc.m_persons = std::vector<observer_ptr<Person>>();
+    copy_loc.m_cells   = std::vector<Cell>{num_agegroups};
     return copy_loc;
 }
 
@@ -60,7 +61,8 @@ ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVar
     return prob;
 }
 
-ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus, Parameters global_params) const
+ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
+                                              Parameters const global_params) const
 {
     return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
            global_params.get<AerosolTransmissionRates>()[{virus}];

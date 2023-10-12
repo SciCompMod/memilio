@@ -135,8 +135,9 @@ public:
 
     /**
      * @brief Return a copy of this #Location object with an empty m_persons.
+     * @param[in] num_agegroups The number of age groups in the model.
      */
-    Location copy_location_without_persons();
+    Location copy_location_without_persons(size_t num_agegroups);
 
     /**
      * @brief Compare two Location%s.

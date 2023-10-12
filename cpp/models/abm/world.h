@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -79,7 +79,8 @@ public:
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
                 // Copy a location
-                m_locations.emplace_back(std::make_unique<Location>(origin_loc.copy_location_without_persons()));
+                m_locations.emplace_back(
+                    std::make_unique<Location>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
             }
             for (auto& person : other.get_persons()) {
                 // If a person is in this location, copy this person and add it to this location.
@@ -96,7 +97,7 @@ public:
     //type is move-only for stable references of persons/locations
     World(World&& other)            = default;
     World& operator=(World&& other) = default;
-    World& operator=(const World&)  = default;
+    World& operator=(const World&)  = delete;
 
     /**
      * serialize this. 
