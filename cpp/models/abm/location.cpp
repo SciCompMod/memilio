@@ -47,7 +47,7 @@ Location Location::copy_location_without_persons(size_t num_agegroups)
     Location copy_loc  = Location(*this);
     copy_loc.m_persons = std::vector<observer_ptr<Person>>();
     copy_loc.m_cells   = std::vector<Cell>{num_agegroups};
-    for (size_t idx = 0; idx < m_cells.size(); idx++) {
+    for (uint32_t idx = 0; idx < m_cells.size(); idx++) {
         copy_loc.set_capacity(get_capacity(idx).persons, get_capacity(idx).volume, idx);
         copy_loc.get_cached_exposure_rate_contacts(idx) = get_cached_exposure_rate_contacts(idx);
         copy_loc.get_cached_exposure_rate_air(idx)      = get_cached_exposure_rate_air(idx);
