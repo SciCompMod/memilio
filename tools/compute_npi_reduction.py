@@ -20,9 +20,14 @@
 """
 @file compute_npi_reduction.py
 
-@brief Computes the overall reduction of contacts (in percentage) by enforcing a set of nonpharmaceutical interventions
-as described in
-M. J. Kühn, D. Abele, T. Mitra, W. Koslow, M. Abedi, K. Rack, M. Siggel, S. Khailaie, M. Klitz, S. Binder, Luca Spataro, J. Gilg, J. Kleinert, M. Häberle, L. Plötzke, C. D. Spinner, M. Stecher, X. X. Zhu, A. Basermann, M. Meyer-Hermann, "Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution". Mathematical Biosciences 339, 108648 (2021). https://www.sciencedirect.com/science/article/abs/pii/S0025556421000845
+@brief Computes the overall reduction of contacts (in percentage) by enforcing a set of
+nonpharmaceutical interventions as described in
+M. J. Kühn, D. Abele, T. Mitra, W. Koslow, M. Abedi, K. Rack, M. Siggel, S. Khailaie, M. Klitz,
+S. Binder, Luca Spataro, J. Gilg, J. Kleinert, M. Häberle, L. Plötzke, C. D. Spinner, M. Stecher,
+X. X. Zhu, A. Basermann, M. Meyer-Hermann, "Assessment of effective mitigation and prediction of
+the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution".
+Mathematical Biosciences 339, 108648 (2021).
+https://www.sciencedirect.com/science/article/abs/pii/S0025556421000845
 """
 
 import os
@@ -67,31 +72,17 @@ def compute_population(county_id, data_path, filename):
     @return Array containing the population for each age group in the given county.
     """
 
-    # TODO: We currently don't have age-resolved data for each county.
-    #       Once we have this data, find correct file and adapt extraction to that file format.
-
     df = pd.read_json(os.path.join(data_path, 'pydata/Germany', filename))
+    df = df.drop(columns='Population')
 
-    print(df.head())
-    # mds.fit_age_group_intervals(df)
+    ages_RKI = ['<4', '5-14', '15-34', '35-59', '60-79', '>80']
     if county_id == 0:
-        population = np.array([
-            len(df[df['Age_RKI'] == 'A00-A04']),
-            len(df[df['Age_RKI'] == 'A05-A14']),
-            len(df[df['Age_RKI'] == 'A15-A34']),
-            len(df[df['Age_RKI'] == 'A35-A59']),
-            len(df[df['Age_RKI'] == 'A60-A79']),
-            len(df[df['Age_RKI'] == 'A80+'])])
-
+        df = df.drop(columns='ID_County')
+        df = df.sum().to_frame().T
+        population = mds.fit_age_group_intervals(df, ages_RKI)
     else:
         df_county = df[df['ID_County'] == county_id]
-        population = np.array([
-            len(df_county[df_county['Age_RKI'] == 'A00-A04']),
-            len(df_county[df_county['Age_RKI'] == 'A05-A14']),
-            len(df_county[df_county['Age_RKI'] == 'A15-A34']),
-            len(df_county[df_county['Age_RKI'] == 'A35-A59']),
-            len(df_county[df_county['Age_RKI'] == 'A60-A79']),
-            len(df_county[df_county['Age_RKI'] == 'A80+'])])
+        population = mds.fit_age_group_intervals(df_county, ages_RKI)
 
     return population
 
@@ -177,7 +168,6 @@ def compute_npi_reduction(NPI=0, county='Germany', data_path='data', filename='c
     @return Factor of mean reduction in contacts between 0 and 1. 1: 100% reduction, 0: 0% reduction.
     """
 
-    # TODO: Find correct file, adapt 'compute_population' to it.
     county, county_id = find_county(county)
 
     print('NPI reduction for citizens in ' + county + ':')
