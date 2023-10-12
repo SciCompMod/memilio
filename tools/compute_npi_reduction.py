@@ -25,11 +25,12 @@ as described in
 M. J. Kühn, D. Abele, T. Mitra, W. Koslow, M. Abedi, K. Rack, M. Siggel, S. Khailaie, M. Klitz, S. Binder, Luca Spataro, J. Gilg, J. Kleinert, M. Häberle, L. Plötzke, C. D. Spinner, M. Stecher, X. X. Zhu, A. Basermann, M. Meyer-Hermann, "Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution". Mathematical Biosciences 339, 108648 (2021). https://www.sciencedirect.com/science/article/abs/pii/S0025556421000845
 """
 
-import sys
-import numpy as np
 import os
+import numpy as np
 import pandas as pd
+import click
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import modifyDataframeSeries as mds
 
 
 def find_county(county):
@@ -49,26 +50,19 @@ def find_county(county):
             county_id = county
             county = dd.County.get(county_id)
             if county:
-                print('Found county ' + county + ' with input ID ' + str(county_id) + '.')
+                print('Found county ' + county +
+                      ' with input ID ' + str(county_id) + '.')
             else:
-                raise ValueError('County ' + str(county_id) + ' was not found in County list. Aborting.')
+                raise ValueError('County ' + str(county_id) +
+                                 ' was not found in County list. Aborting.')
     return county, county_id
 
 
-def get_data_path():
-    """"! Returns data path of memilio repository. Currently only works if repository is called 'memilio'.
-
-    @return Data path of memilio repository.
-    """
-
-    data_path = os.getcwd().split('memilio')[0] + 'memilio/data/'
-    return data_path
-
-
-def compute_population(county_id, filename):
+def compute_population(county_id, data_path, filename):
     """"! Computes current population across age groups from given county.
 
     @param county_id ID of county.
+    @param data_path Data path where the downloaded files are.
     @param filename Name of file which has the age-resolved data.
     @return Array containing the population for each age group in the given county.
     """
@@ -76,48 +70,40 @@ def compute_population(county_id, filename):
     # TODO: We currently don't have age-resolved data for each county.
     #       Once we have this data, find correct file and adapt extraction to that file format.
 
-    data_path = get_data_path()
+    df = pd.read_json(os.path.join(data_path, 'pydata/Germany', filename))
 
-    df = pd.read_json(data_path + '/Germany/' + filename)
-    
+    print(df.head())
+    # mds.fit_age_group_intervals(df)
     if county_id == 0:
         population = np.array([
-        len(df[df['Age_RKI'] == 'A00-A04']),
-        len(df[df['Age_RKI'] == 'A05-A14']),
-        len(df[df['Age_RKI'] == 'A15-A34']),
-        len(df[df['Age_RKI'] == 'A35-A59']),
-        len(df[df['Age_RKI'] == 'A60-A79']),
-        len(df[df['Age_RKI'] == 'A80+'])  ])
+            len(df[df['Age_RKI'] == 'A00-A04']),
+            len(df[df['Age_RKI'] == 'A05-A14']),
+            len(df[df['Age_RKI'] == 'A15-A34']),
+            len(df[df['Age_RKI'] == 'A35-A59']),
+            len(df[df['Age_RKI'] == 'A60-A79']),
+            len(df[df['Age_RKI'] == 'A80+'])])
 
-        # provide population of age groups as used in contact matrices
-        # population = np.array([3961376,7429883,19117865,28919134,18057318,5681135])
-        
     else:
         df_county = df[df['ID_County'] == county_id]
         population = np.array([
-        len(df_county[df_county['Age_RKI'] == 'A00-A04']),
-        len(df_county[df_county['Age_RKI'] == 'A05-A14']),
-        len(df_county[df_county['Age_RKI'] == 'A15-A34']),
-        len(df_county[df_county['Age_RKI'] == 'A35-A59']),
-        len(df_county[df_county['Age_RKI'] == 'A60-A79']),
-        len(df_county[df_county['Age_RKI'] == 'A80+'])  ])
-    
-    #print(df_county[(df_county['Age_RKI'] != 'A05-A14') & (df_county['Age_RKI'] != 'A15-A34') & (df_county['Age_RKI'] != 'A35-A59') & (df_county['Age_RKI'] != 'A60-A79') & (df_county['Age_RKI'] != 'A80+') & (df_county['Age_RKI'] != 'A00-A04')].head())
-    #print(sum(population))
-    # Some ages are unknown in this specific list. This will hopefully be fixed when the correct list is used.
-    
+            len(df_county[df_county['Age_RKI'] == 'A00-A04']),
+            len(df_county[df_county['Age_RKI'] == 'A05-A14']),
+            len(df_county[df_county['Age_RKI'] == 'A15-A34']),
+            len(df_county[df_county['Age_RKI'] == 'A35-A59']),
+            len(df_county[df_county['Age_RKI'] == 'A60-A79']),
+            len(df_county[df_county['Age_RKI'] == 'A80+'])])
+
     return population
 
 
-def compute_base_contacts(population, use_minimum):
+def compute_base_contacts(population, data_path, use_minimum):
     """"! Computes base contacts for a given population.
 
     @param population Array containing the population for each age group.
+    @param data_path Data path where the downloaded files are.
     @param use_minimum Boolean if the minimum contact matrix should be used. If false, minimum contacts are set to 0.
     @return Arrays containing the total amount of contacts for each age group at baseline and at minimum contact state.
     """
-
-    data_path = get_data_path()
 
     # names for contact location data files
     home = 'home'
@@ -130,18 +116,19 @@ def compute_base_contacts(population, use_minimum):
 
     # read contact matrices
     # assuming baseline contact matrices are constant across the whole population
-    cm_bl = np.zeros((4,6,6))
-    cm_bl_min = np.zeros((4,6,6))
+    cm_bl = np.zeros((4, 6, 6))
+    cm_bl_min = np.zeros((4, 6, 6))
 
     for k, loc in enumerate(contact_locs):
         cm_bl[k] = np.loadtxt(data_path + '/contacts/baseline_' + loc + '.txt')
         if use_minimum:
-            cm_bl_min[k] = np.loadtxt(data_path + '/contacts/minimum_' + loc + '.txt')
+            cm_bl_min[k] = np.loadtxt(
+                data_path + '/contacts/minimum_' + loc + '.txt')
         # else: already initialized to zeros
 
     # multiply matrices from left and sum up in each category
-    contacts_total_base = np.sum(population@cm_bl,1)
-    contacts_total_min = np.sum(population@cm_bl_min,1)
+    contacts_total_base = np.sum(population@cm_bl, 1)
+    contacts_total_min = np.sum(population@cm_bl_min, 1)
 
     return contacts_total_base, contacts_total_min
 
@@ -158,8 +145,10 @@ def apply_NPI(NPI, contacts_total_base, contacts_total_min):
     # TODO: think about how to read in NPI. For now, it is hardcoded.
 
     # define intervals of contact reduction for different levels
-    reduc_factors_min = np.array([[0.5, 0.3, 0.6, 0.6], [0.0, 0.25, 0.25, 0.25]])
-    reduc_factors_max = np.array([[0.7, 0.5, 0.8, 0.8], [0.0, 0.35, 0.35, 0.35]])
+    reduc_factors_min = np.array(
+        [[0.5, 0.3, 0.6, 0.6], [0.0, 0.25, 0.25, 0.25]])
+    reduc_factors_max = np.array(
+        [[0.7, 0.5, 0.8, 0.8], [0.0, 0.35, 0.35, 0.35]])
     reduc_factors_mean = (reduc_factors_min + reduc_factors_max)/2
 
     # compute total reduction factor for each level
@@ -167,49 +156,58 @@ def apply_NPI(NPI, contacts_total_base, contacts_total_min):
     reduc_factors_mean_total = np.prod(1 - reduc_factors_mean, 0)
 
     # compute total mean reduction in contacts (that is 1/2*min + 1/2*max)
-    contacts_total_reduced_mean = reduc_factors_mean_total*contacts_total_base + (1-reduc_factors_mean_total)*contacts_total_min
+    contacts_total_reduced_mean = reduc_factors_mean_total * \
+        contacts_total_base + (1-reduc_factors_mean_total)*contacts_total_min
 
-    reduc_total = 1 - np.sum(contacts_total_reduced_mean) / np.sum(contacts_total_base)
+    reduc_total = 1 - np.sum(contacts_total_reduced_mean) / \
+        np.sum(contacts_total_base)
     return reduc_total
 
 
-def compute_npi_reduction(NPI = 0, county = 'Germany', filename = 'cases_all_county_age.json', use_minimum = False):
+@click.command()
+@click.option('--data_path', default='data', help='Data path where the downloaded files are.')
+def compute_npi_reduction(NPI=0, county='Germany', data_path='data', filename='county_current_population.json', use_minimum=False):
     """"! Main function that computes the reduction from a NPI in a given county and prints the result.
 
     @param NPI NPI that represents minimum and maximum contact reductions. For now, this is not used but hardcoded.
-    @param county [Default: Germany] County in which the NPI is applied. 
-    @param filename [Default: 'cases_all_county_age.json'] Name of file which has the age-resolved data.
+    @param county [Default: 'Germany'] County in which the NPI is applied. 
+    @param data_path [Default: 'data'] Data path where the downloaded files are.
+    @param filename [Default: 'county_current_population.json'] Name of file which has the age-resolved data.
     @use_minimum [Default: False] Boolean if the minimum contact matrix should be used. If false, minimum contacts are set to 0.
     @return Factor of mean reduction in contacts between 0 and 1. 1: 100% reduction, 0: 0% reduction.
     """
 
     # TODO: Find correct file, adapt 'compute_population' to it.
     county, county_id = find_county(county)
-    
-    print('NPI reduction for citizens in ' + county + ':')
-    population = compute_population(county_id, filename)
 
-    contacts_total_base, contacts_total_min = compute_base_contacts(population, use_minimum)
+    print('NPI reduction for citizens in ' + county + ':')
+    population = compute_population(county_id, data_path, filename)
+
+    contacts_total_base, contacts_total_min = compute_base_contacts(
+        population, data_path, use_minimum)
 
     # print out basic info
     print('Number of baseline in home: '
-          + str(np.round(100*contacts_total_base[0] / sum(contacts_total_base), 2)) + '%, school: '
-          + str(np.round(100*contacts_total_base[1] / sum(contacts_total_base), 2)) + '%, work: '
-          + str(np.round(100*contacts_total_base[2] / sum(contacts_total_base), 2)) + '%, other: '
+          + str(np.round(100*contacts_total_base[0] /
+                sum(contacts_total_base), 2)) + '%, school: '
+          + str(np.round(100*contacts_total_base[1] /
+                sum(contacts_total_base), 2)) + '%, work: '
+          + str(np.round(100*contacts_total_base[2] /
+                sum(contacts_total_base), 2)) + '%, other: '
           + str(np.round(100*contacts_total_base[3] / sum(contacts_total_base), 2)) + '%')
 
     reduc_total = apply_NPI(NPI, contacts_total_base, contacts_total_min)
 
     print('Total contact reduction (including protection effects): '
-        + str(np.round(100*reduc_total,2)) + '%')
+          + str(np.round(100*reduc_total, 2)) + '%')
 
     return reduc_total
 
     # OLD CODE (kept to have fast access to other computations (min/max) and outputs):
     # make three copies and compute for min, mean and max
-    #contacts_total_reduced = [contacts_total_base.copy(
-    #), contacts_total_base.copy(), contacts_total_base.copy()]
-    #if reduc_factors_min.shape == reduc_factors_max.shape:
+    # contacts_total_reduced = [contacts_total_base.copy(
+    # ), contacts_total_base.copy(), contacts_total_base.copy()]
+    # if reduc_factors_min.shape == reduc_factors_max.shape:
     #    for i in range(len(contacts_total_base)):
     #        reduc = [1, 1, 1]
     #        for j in range(reduc_factors_min.shape[0]):
@@ -224,7 +222,7 @@ def compute_npi_reduction(NPI = 0, county = 'Germany', filename = 'cases_all_cou
     #
     #    print('Summed contact reduction (including protection effects): ' + \
     #          str(np.round(100*(1 - sum(contacts_total_reduced[1]) / sum(contacts_total_base)), 2))
-    #          + '% (' + str(np.round(100*(1 - sum(contacts_total_reduced[0]) / sum(contacts_total_base)), 2)) 
+    #          + '% (' + str(np.round(100*(1 - sum(contacts_total_reduced[0]) / sum(contacts_total_base)), 2))
     #          + ' - ' + str(np.round(100*(1 - sum(contacts_total_reduced[2]) / sum(contacts_total_base)), 2)) + '%)')
     #
     #    print('Average number of contact reduction in home: '
@@ -238,9 +236,10 @@ def compute_npi_reduction(NPI = 0, county = 'Germany', filename = 'cases_all_cou
     #        + str(np.round(100*contacts_total_reduced[1][1] / sum(contacts_total_reduced), 2)) + '%, work: '
     #        + str(np.round(100*contacts_total_reduced[1][2] / sum(contacts_total_reduced), 2)) + '%, other: '
     #        + str(np.round(100*contacts_total_reduced[1][3] / sum(contacts_total_reduced), 2)) + '%')
-    #else:
+    # else:
     #    print('Error in reduction factor dimension. Please provide equally '
     #        'sized arrays for minimum and maximum.')
 
+
 if __name__ == "__main__":
-    compute_npi_reduction(*sys.argv[1:])
+    compute_npi_reduction()
