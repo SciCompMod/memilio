@@ -56,15 +56,8 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             single_element[run] = get_param(params);
         }
         std::sort(single_element.begin(), single_element.end());
-        if constexpr (std::is_same_v<decltype(get_param(percentile[n])), double>) {
-            // If get_param returns a double, just use the value
-            get_param(percentile[n]);
-        }
-        else {
-            // Otherwise, assign the new value to the reference returned by get_param
-            double new_params        = single_element[static_cast<size_t>(num_runs * p)];
-            get_param(percentile[n]) = new_params;
-        }
+        auto& new_params = get_param(percentile[n]);
+        new_params       = single_element[static_cast<size_t>(num_runs * p)];
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
@@ -105,67 +98,90 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
                     return model.parameters.template get<DetectInfection>()[{virus_variant, age_group}];
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
-                        .viral_load_incline.params.a();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
+                            .viral_load_incline.params.a();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
-                        .viral_load_incline.params.b();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
+                            .viral_load_incline.params.b();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
-                        .viral_load_decline.params.a();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
+                            .viral_load_decline.params.a();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
-                        .viral_load_decline.params.b();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
+                            .viral_load_decline.params.b();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
-                        .viral_load_peak.params.a();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
+                            .viral_load_peak.params.a();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
-                        .viral_load_peak.params.b();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}]
+                            .viral_load_peak.params.b();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
-                        .infectivity_alpha.params.a();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
+                            .infectivity_alpha.params.a();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
-                        .infectivity_alpha.params.b();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
+                            .infectivity_alpha.params.b();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
-                        .infectivity_beta.params.a();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
+                            .infectivity_beta.params.a();
+                    return result;
                 });
-                param_percentil(node, [age_group, virus_variant](auto&& model) {
-                    return model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
-                        .infectivity_beta.params.b();
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
+                            .infectivity_beta.params.b();
+                    return result;
                 });
                 param_percentil(node, [virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<AerosolTransmissionRates>()[virus_variant];
+                    return model.parameters.template get<AerosolTransmissionRates>()[{virus_variant}];
                 });
             }
             param_percentil(node, [age_group](auto&& model) -> auto& {
                 return model.parameters.template get<BasicShoppingRate>()[{age_group}];
             });
-            param_percentil(node, [age_group](auto&& model) {
-                return model.parameters.template get<GotoWorkTimeMinimum>()[{age_group}].hours();
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                static auto result = model.parameters.template get<GotoWorkTimeMinimum>()[{age_group}].hours();
+                return result;
             });
-            param_percentil(node, [age_group](auto&& model) {
-                return model.parameters.template get<GotoWorkTimeMaximum>()[{age_group}].hours();
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                static auto result = model.parameters.template get<GotoWorkTimeMaximum>()[{age_group}].hours();
+                return result;
             });
-            param_percentil(node, [age_group](auto&& model) {
-                return model.parameters.template get<GotoSchoolTimeMinimum>()[{age_group}].hours();
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                static auto result = model.parameters.template get<GotoSchoolTimeMinimum>()[{age_group}].hours();
+                return result;
             });
-            param_percentil(node, [age_group](auto&& model) {
-                return model.parameters.template get<GotoSchoolTimeMaximum>()[{age_group}].hours();
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                static auto result = model.parameters.template get<GotoSchoolTimeMaximum>()[{age_group}].hours();
+                return result;
             });
         }
-
         param_percentil(node, [](auto&& model) -> auto& {
             return model.parameters.template get<MaskProtection>()[MaskType::Community];
         });
@@ -175,8 +191,9 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         param_percentil(node, [](auto&& model) -> auto& {
             return model.parameters.template get<MaskProtection>()[MaskType::Surgical];
         });
-        param_percentil(node, [](auto&& model) {
-            return model.parameters.template get<LockdownDate>().days();
+        param_percentil(node, [](auto&& model) -> auto& {
+            static auto result = model.parameters.template get<LockdownDate>().days();
+            return result;
         });
     }
 

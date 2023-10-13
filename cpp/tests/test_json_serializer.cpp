@@ -511,8 +511,9 @@ TEST(TestJsonSerializer, abmTrip)
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto& home   = world.get_individualized_location(home_id);
     auto person  = make_test_person(home);
-    mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
-    auto js = mio::serialize_json(trip);
+    mio::abm::Trip trip1(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
+    mio::abm::Trip trip2(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(7), work_id, home_id);
+    auto js = mio::serialize_json(trip1, true);
     Json::Value expected_json;
     expected_json["person_id"]         = Json::UInt(person.get_person_id());
     expected_json["time"]              = Json::Int(mio::abm::hours(8).seconds());
@@ -524,7 +525,13 @@ TEST(TestJsonSerializer, abmTrip)
 
     auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Trip>());
     ASSERT_THAT(print_wrap(r), IsSuccess());
-    EXPECT_EQ(r.value(), trip);
+    EXPECT_EQ(r.value(), trip1);
+
+    js                    = mio::serialize_json(trip2, true);
+    expected_json["time"] = Json::Int(mio::abm::days(7).seconds());
+    r                     = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Trip>());
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+    EXPECT_EQ(r.value(), trip2);
 }
 
 TEST(TestJsonSerializer, abmWorld)

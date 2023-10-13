@@ -472,8 +472,8 @@ TEST(TestEnsembleParamsPercentile, graph_osecir_basic)
 TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 {
     size_t num_age_groups = 6;
-    auto world1 = mio::abm::World(num_age_groups);
-    auto world2 = mio::abm::World(num_age_groups);
+    auto world1           = mio::abm::World(num_age_groups);
+    auto world2           = mio::abm::World(num_age_groups);
 
     world1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.1;
