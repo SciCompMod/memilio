@@ -179,14 +179,24 @@ public:
      */
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
-    
-    bool has_location(LocationType loc)
+
+    /**
+    * @brief Check if at least one Location with a specified LocationType exists.
+    * @return True if there is at least one Location of LocationType `type`. False otherwise.
+    */
+    bool has_location(LocationType type) const
     {
-        return m_has_locations[size_t(loc)];
+        return m_has_locations[size_t(type)];
     }
 
-    template<class C = std::initializer_list<LocationType>>
-    bool has_locations(const C& location_types)
+    /**
+    * @brief Check if at least one Location of every specified LocationType exists.
+    * @tparam C A type of container of LocationType.
+    * @param location_types A container of LocationType%s.
+    * @return True if there is at least one Location of every LocationType in `location_types`. False otherwise.
+    */
+    template <class C = std::initializer_list<LocationType>>
+    bool has_locations(const C& location_types) const
     {
         return std::all_of(location_types.begin(), location_types.end(), [&](auto loc) {
             return has_location(loc);
