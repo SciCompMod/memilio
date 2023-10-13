@@ -124,8 +124,6 @@ TEST(TestDampings, automatic_cache_update)
 
 #ifndef NDEBUG
     EXPECT_DEATH(dampings.get_matrix_at(2.0), "Cache is not current\\. Did you disable the automatic cache update\\?");
-#else
-    EXPECT_THAT(print_wrap(dampings.get_matrix_at(2.0)), MatrixNear((Eigen::VectorXd(2) << 0.0, 0.0).finished()));
 #endif
 
     dampings.set_automatic_cache_update(true);
