@@ -325,10 +325,10 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
     }
 
-    auto const& params                       = sim.get_model().parameters;
-    const size_t num_groups                  = (size_t)sim.get_model().parameters.get_num_groups();
-    unsigned int num_infected_compartments   = 5;
-    unsigned int total_infected_compartments = num_infected_compartments * num_groups;
+    auto const& params                 = sim.get_model().parameters;
+    const size_t num_groups            = (size_t)sim.get_model().parameters.get_num_groups();
+    size_t num_infected_compartments   = 5;
+    size_t total_infected_compartments = num_infected_compartments * num_groups;
 
     Eigen::MatrixXd F(total_infected_compartments, total_infected_compartments);
     Eigen::MatrixXd V(total_infected_compartments, total_infected_compartments);
