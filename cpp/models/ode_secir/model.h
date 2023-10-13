@@ -22,12 +22,10 @@
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/compartments/simulation.h"
-#include "memilio/epidemiology/age_group.h"
+#include "memilio/config.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/io/io.h"
-#include "memilio/math/interpolation.h"
-#include "memilio/utils/time_series.h"
 #include "ode_secir/infection_state.h"
+#include "memilio/math/interpolation.h"
 #include "ode_secir/parameters.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
@@ -315,7 +313,8 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 /**
 *@brief Computes the reproduction number at a given index time of the Model output obtained by the Simulation.
 *@param t_idx The index time at which the reproduction number is computed.
-*@param sim The Model Simulation.
+*@param sim The simulation handling the secir model
+*@tparam Base simulation type that uses a secir compartment model. see Simulation.
 *@returns The computed reproduction number at the provided index time.
 */
 template <class Base>
@@ -326,13 +325,16 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
     }
 
-    auto const& params = sim.get_model().parameters;
-    size_t num_groups  = (size_t)sim.get_model().parameters.get_num_groups();
+    auto const& params                       = sim.get_model().parameters;
+    const size_t num_groups                  = (size_t)sim.get_model().parameters.get_num_groups();
+    unsigned int num_infected_compartments   = 5;
+    unsigned int total_infected_compartments = num_infected_compartments * num_groups;
 
-    Eigen::MatrixXd F(5 * num_groups, 5 * num_groups);
-    Eigen::MatrixXd V(5 * num_groups, 5 * num_groups);
-    F = Eigen::MatrixXd::Zero(5 * num_groups, 5 * num_groups); //Initialize matrices F and V with zeroes
-    V = Eigen::MatrixXd::Zero(5 * num_groups, 5 * num_groups);
+    Eigen::MatrixXd F(total_infected_compartments, total_infected_compartments);
+    Eigen::MatrixXd V(total_infected_compartments, total_infected_compartments);
+    F = Eigen::MatrixXd::Zero(total_infected_compartments,
+                              total_infected_compartments); //Initialize matrices F and V with zeroes
+    V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
 
     auto test_and_trace_required = 0.0;
     auto icu_occupancy           = 0.0;
@@ -413,8 +415,36 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         }
     }
 
+    //Check criterion if matrix V will be invertible by checking if subblock J is invertible
+    Eigen::MatrixXd J(num_groups, num_groups);
+    J = Eigen::MatrixXd::Zero(num_groups, num_groups);
+    for (size_t i = 0; i < num_groups; i++) {
+        J(i, i) = 1 / (params.template get<TimeInfectedCritical>()[(mio::AgeGroup)i]);
+
+        if (!(icu_occupancy < 0.9 * params.template get<ICUCapacity>() ||
+              icu_occupancy > (double)(params.template get<ICUCapacity>()))) {
+            for (size_t j = 0; j < num_groups; j++) {
+                J(i, j) -= sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
+                               {(mio::AgeGroup)i, InfectionState::InfectedSevere})] /
+                           params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i] * 5 *
+                           params.template get<CriticalPerSevere>()[(mio::AgeGroup)i] * 3.141592653589793 /
+                           (params.template get<ICUCapacity>()) *
+                           std::sin(3.141592653589793 / (0.1 * params.template get<ICUCapacity>()) *
+                                    (icu_occupancy - 0.9 * params.template get<ICUCapacity>()));
+            }
+        }
+    }
+
+    //Try to invert J
+    Eigen::FullPivLU<Eigen::MatrixXd> lu(J); //Check invertibility via LU Decomposition
+    if (!lu.isInvertible()) {
+        return mio::failure(mio::StatusCode::UnknownError, "Matrix V is not invertible");
+    }
+
+    //Eigen::Array<ScalarType, 3, 3> Jnew = J;
+
     //Initialize the matrix F
-    for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
+    for (size_t i = 0; i < num_groups; i++) {
 
         for (size_t j = 0; j < num_groups; j++) {
 
@@ -465,28 +495,12 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         V(i + 3 * num_groups, i + 3 * num_groups) = 1 / (params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i]);
         V(i + 4 * num_groups, i + 3 * num_groups) =
             -criticalPerSevereAdjusted / (params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i]);
-        V(i + 4 * num_groups, i + 4 * num_groups) = 1 / (params.template get<TimeInfectedCritical>()[(mio::AgeGroup)i]);
 
-        if (!(icu_occupancy < 0.9 * params.template get<ICUCapacity>() ||
-              icu_occupancy > (double)(params.template get<ICUCapacity>()))) {
-            for (size_t j = 0; j < num_groups; j++) {
-                V(i + 4 * num_groups, j + 4 * num_groups) -=
-                    sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
-                        {(mio::AgeGroup)i, InfectionState::InfectedSevere})] /
-                    params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i] * 5 *
-                    params.template get<CriticalPerSevere>()[(mio::AgeGroup)i] * 3.141592653589793 /
-                    (params.template get<ICUCapacity>()) *
-                    std::sin(3.141592653589793 / (0.1 * params.template get<ICUCapacity>()) *
-                             (icu_occupancy - 0.9 * params.template get<ICUCapacity>()));
-            }
+        for (size_t j = 0; j < num_groups; j++) {
+            V(i + 4 * num_groups, j + 4 * num_groups) = J(i, j);
         }
     }
 
-    //Try to invert V
-    Eigen::FullPivLU<Eigen::MatrixXd> lu(V); //Check invertibility via LU Decomposition
-    if (!lu.isInvertible()) {
-        return mio::failure(mio::StatusCode::UnknownError, "Matrix V is not invertible");
-    }
     V = V.inverse();
 
     //Compute F*V
@@ -497,15 +511,15 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
 
     ces.compute(NextGenMatrix);
-    const Eigen::VectorXcd tempvector = ces.eigenvalues();
+    const Eigen::VectorXcd eigen_vals = ces.eigenvalues();
 
-    Eigen::VectorXd tempvector1;
-    tempvector1.resize(tempvector.size());
-    //Do this later with some iterator
-    for (int i = 0; i < tempvector.size(); i++) {
-        tempvector1[i] = std::abs(tempvector[i]);
+    Eigen::VectorXd eigen_vals_abs;
+    eigen_vals_abs.resize(eigen_vals.size());
+
+    for (int i = 0; i < eigen_vals.size(); i++) {
+        eigen_vals_abs[i] = std::abs(eigen_vals[i]);
     }
-    return mio::success(tempvector1.maxCoeff());
+    return mio::success(eigen_vals_abs.maxCoeff());
 }
 
 /**
