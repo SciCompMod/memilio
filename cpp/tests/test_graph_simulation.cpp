@@ -186,9 +186,6 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     using testing::_;
     using testing::Eq;
 
-    //set seeds
-    mio::thread_local_rng().seed({114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203});
-
     const auto t0   = 0.0;
     const auto tmax = 20.;
     const auto dt   = 0.076;
@@ -204,15 +201,18 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    
+    //set seeds
+    sim.get_rng().seed({114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203});
 
     sim.advance(tmax);
 
     auto result_n0 = sim.get_graph().nodes()[0].property.get_result().get_last_value();
     auto result_n1 = sim.get_graph().nodes()[1].property.get_result().get_last_value();
 
-    auto expected_values_n0 = std::vector<double>{691.0, 6.3518514260209971, 31.303976182729517, 257.34417239124963};
+    auto expected_values_n0 = std::vector<double>{687.0, 6.3624463711313268, 31.61724873461494, 254.0203048942538};
     auto actual_values_n0   = std::vector<double>{result_n0[0], result_n0[1], result_n0[2], result_n0[3]};
-    auto expected_values_n1 = std::vector<double>{709.0, 6.4651647420642382, 33.101208735481720, 265.43362652245412};
+    auto expected_values_n1 = std::vector<double>{713.0, 6.4545879236128822, 32.787911286182755, 268.7575007902044};
     auto actual_values_n1   = std::vector<double>{result_n1[0], result_n1[1], result_n1[2], result_n1[3]};
 
     for (size_t i = 0; i < expected_values_n0.size(); ++i) {

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/lockdown_rules.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/time.h"
 
