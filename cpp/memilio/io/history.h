@@ -45,7 +45,7 @@ constexpr size_t index_templ_pack()
 
 /* These are the base classes for Loggers. They are used to determine when a logger is called. 
 * LogOnceStart is only passed to Writer on the first call to History::log, LogAlways on all calls.
-* LogOnceTrigger is only passed to Writer if the trigger is true. This needs to be implemented, e.g. for logging only the last step.
+* LogIf is only logging to Writer if the should_log is true. This needs to be implemented, e.g. for logging only the last step.
 */
 struct LogOnceStart {
 };
