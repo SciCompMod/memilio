@@ -24,20 +24,18 @@ struct LogAOnce : mio::LogOnceStart {
         return ex.a;
     }
 };
-struct StepCond {
-    bool operator()(const example& ex) const
-    {
-        // Add your condition here
-        std::cout << "StepCond" << std::endl;
-        return ex.current_time == 0;
-    }
-};
-struct LogStepIf : mio::LogIf<StepCond, example> {
+
+struct LogStepIf : mio::LogIf<example> {
     using Type = int;
     static bool log(const example& ex)
     {
         std::cout << "StepCondFulfilled" << std::endl;
         return ex.current_time;
+    }
+    static bool should_log(const example& ex)
+    {
+        std::cout << "StepCond" << std::endl;
+        return ex.current_time == 1;
     }
 };
 

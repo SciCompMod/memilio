@@ -47,19 +47,15 @@ constexpr size_t index_templ_pack()
 * LogOnceStart is only passed to Writer on the first call to History::log, LogAlways on all calls.
 * LogOnceTrigger is only passed to Writer if the trigger is true. This needs to be implemented, e.g. for logging only the last step.
 */
-
 struct LogOnceStart {
 };
 
 struct LogAlways {
 };
 
-template <typename Condition, typename Cond>
-struct LogIf : public LogAlways {
-    static bool should_log(const Cond& cond)
-    {
-        return Condition()(cond);
-    }
+template <typename Cond>
+struct LogIf {
+    static bool should_log(const Cond& cond);
 };
 
 /*
@@ -136,6 +132,15 @@ private:
     {
         log_impl<T, loggers...>(t);
         WriteWrapper::template log_this<logger>(logger::log(t), m_data);
+    }
+
+    template <class T, class logger, class... loggers>
+    std::enable_if_t<std::is_base_of<LogIf<T>, logger>::value> log_impl(const T& t)
+    {
+        log_impl<T, loggers...>(t);
+        if (logger::should_log(t)) {
+            WriteWrapper::template log_this<logger>(logger::log(t), m_data);
+        }
     }
 
     template <class T>
