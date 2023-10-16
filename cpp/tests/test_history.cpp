@@ -24,17 +24,19 @@ struct LogAOnce : mio::LogOnceStart {
         return ex.a;
     }
 };
-
-struct LogTrigger : mio::LogOnceTrigger {
-    using Type = int;
-    bool check_trigger(const example& ex)
+struct StepCond {
+    bool operator()(const example& ex) const
     {
-        if (ex.current_time == 1) {
-            return true;
-        }
+        // Add your condition here
+        std::cout << "StepCond" << std::endl;
+        return ex.current_time == 0;
     }
-    static Type log(const example& ex)
+};
+struct LogStepIf : mio::LogIf<StepCond, example> {
+    using Type = int;
+    static bool log(const example& ex)
     {
+        std::cout << "StepCondFulfilled" << std::endl;
         return ex.current_time;
     }
 };
@@ -51,7 +53,7 @@ struct Dummy {
 TEST(HistoryObject, log)
 {
     example ex;
-    mio::HistoryWithMemoryWriter<LogPair, LogAOnce, LogTrigger> history;
+    mio::HistoryWithMemoryWriter<LogPair, LogAOnce, LogStepIf> history;
     int n_runs = 2;
     for (int i = 0; i < n_runs; i++) {
         ex.current_time = i;
