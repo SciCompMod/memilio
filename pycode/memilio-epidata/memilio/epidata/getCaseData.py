@@ -332,13 +332,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 df_local = df_local[df_local[AnzahlTodesfall] != 0]
 
             # cumulative sum over columns defined in dict_files
-            if dict_files[file][2] == None:
+            if dict_files[file][2] is None:
                 df_local_cs = df_local.cumsum()
-                df_local_cs.reset_index(drop=False, inplace=True)
             else:
                 df_local_cs = df_local.groupby(level=[dict_files[file][0].index(
                     level_index) for level_index in dict_files[file][2]]).cumsum()
-                df_local_cs.reset_index(drop=False, inplace=True)
+            df_local_cs.reset_index(drop=False, inplace=True)
 
             if impute_dates or moving_average > 0:
                 df_local_cs = mdfs.impute_and_reduce_df(
