@@ -53,8 +53,8 @@ void set_home_office(TimePoint t_begin, double p, MigrationParameters<FP>& param
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.template get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
-    params.template get<WorkRatio>().finalize();
 }
+
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
@@ -67,7 +67,7 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters<FP>& pa
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.template get<SchoolRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
-    params.template get<SchoolRatio>().finalize();
+
 }
 
 
@@ -86,7 +86,6 @@ void close_social_events(TimePoint t_begin, double p, MigrationParameters<FP>& p
 {
     auto damping1 = Eigen::VectorXd::Constant((size_t)AgeGroup::Count, p);
     params.template get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
-    params.template get<SocialEventRate>().finalize();
 }
 
 } // namespace abm
