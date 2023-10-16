@@ -23,9 +23,11 @@
 #include "memilio/config.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/parameter_distributions.h"
-
+#include "memilio/ad/include/ad/ad.hpp"
 #include <memory>
 #include <ostream>
+
+
 
 namespace mio
 {
@@ -102,6 +104,8 @@ public:
         return m_value;
     }
 
+
+
     /**
      * @brief Set an UncertainValue from a scalar, distribution remains unchanged.
      */
@@ -110,6 +114,8 @@ public:
         m_value = v;
         return *this;
     }
+
+
 
     /**
      * @brief Sets the distribution of the value.
@@ -121,7 +127,6 @@ public:
     {
         m_dist.reset(dist.clone());
     }
-
 
 
     /**
@@ -229,6 +234,11 @@ private:
     FP m_value;
     std::unique_ptr<ParameterDistribution> m_dist;
 };
+
+template<typename FP>
+bool operator<(const UncertainValue<typename ad::gt1s<FP>::type>& a,const FP b){
+    return ad::value(a.value()) < b;
+}
 
 //gtest printer
 //TODO: should be extended when UncertainValue gets operator== that compares distributions as well

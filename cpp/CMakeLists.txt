@@ -114,6 +114,7 @@ endif()
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
+add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
@@ -124,7 +125,6 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
     add_subdirectory(models/ode_seair)
-    add_subdirectory(memilio/ad)
     add_subdirectory(models/ode_sir)
 endif()
 

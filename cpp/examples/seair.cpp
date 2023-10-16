@@ -17,6 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "ad/ad.hpp"
+
+
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"
 #include "ode_seair/parameters.h"
@@ -26,7 +29,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/time_series_to_file.h"
 #include <fstream>
-#include "ad/ad.hpp"
+
 
 
 
@@ -34,7 +37,7 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    using FP=double;
+    using FP=typename ad::gt1s<double>::type;
 
 
 
@@ -63,7 +66,7 @@ int main()
 
 
 
-    auto seair = mio::simulate<mio::oseair::Model<FP>,FP>(t0, tmax, dt, model);
+ //   auto seair = mio::simulate<mio::oseair::Model<FP>,FP>(t0, tmax, dt, model);
 //    const std::string file_name = "seair.txt";
 //    std::cout << "Writing output to " << file_name << std::endl;
 //    mio::time_series_to_file(seair, file_name);

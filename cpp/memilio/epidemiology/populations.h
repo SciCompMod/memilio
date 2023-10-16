@@ -24,6 +24,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
+#include "memilio/ad/include/ad/ad.hpp"
 
 #include <vector>
 #include <array>
@@ -253,8 +254,9 @@ public:
     void check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i] < 0) {
-                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, this->array()[i], 0);
+            FP value = this->array()[i];
+            if (value < 0.) {
+                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, ad::value(value), 0);
             }
         }
     }
