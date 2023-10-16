@@ -512,7 +512,9 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         state level.  
     """
     # data for all dates is automatically added
-    impute_dates = True
+    if impute_dates == False:
+        print('Setting impute_dates = True as data for all dates is automatically added.')
+        impute_dates = True
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
