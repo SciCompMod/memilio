@@ -327,7 +327,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         merge_berlin=True, merge_eisenach=merge_eisenach, zfill=True))
     age_cols = df_pop_raw.loc[
         idCounty_idx[0]: idCounty_idx[1] - 2,
-        dd.EngEng['ageRKI']].values
+        dd.EngEng['ageRKI']].values.copy()
     for i in range(len(age_cols)):
         if i == 0:
             upper_bound = str(int(age_cols[i][
