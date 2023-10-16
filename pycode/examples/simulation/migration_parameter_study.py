@@ -55,6 +55,8 @@ def parameter_study():
     model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedNoSymptoms] = 50
     model.populations[mio.AgeGroup(
+        0), secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedSymptoms] = 50
     model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedSevere] = 20

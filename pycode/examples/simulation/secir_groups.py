@@ -86,7 +86,9 @@ def run_secir_groups_simulation(show_plot=True):
         # Initial number of peaople in each compartment
         model.populations[AgeGroup(i), State.Exposed] = 100
         model.populations[AgeGroup(i), State.InfectedNoSymptoms] = 50
+        model.populations[AgeGroup(i), State.InfectedNoSymptomsConfirmed] = 0
         model.populations[AgeGroup(i), State.InfectedSymptoms] = 50
+        model.populations[AgeGroup(i), State.InfectedSymptomsConfirmed] = 0
         model.populations[AgeGroup(i), State.InfectedSevere] = 20
         model.populations[AgeGroup(i), State.InfectedCritical] = 10
         model.populations[AgeGroup(i), State.Recovered] = 10
