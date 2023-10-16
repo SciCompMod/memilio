@@ -27,7 +27,7 @@ def read_input_data(start_date, path_to_input_data, username='', password=''):
     @param[in] path_to_input_data Path where data is saved.
     """
     arg_dict = {'out_folder': "{}/pydata".format(path_to_input_data),
-                'moving_average': 7, 'start_date': start_date}
+                'moving_average': 7}
     arg_dict_pop = {'out_folder': "{}/pydata".format(path_to_input_data),
                     "username": username,
                     "password": password}
@@ -38,7 +38,7 @@ def read_input_data(start_date, path_to_input_data, username='', password=''):
     gcd.get_case_data(**arg_dict)
     gpd.get_population_data(**arg_dict_pop)
     gdd.get_divi_data(**arg_dict)
-    gvd.get_vaccination_data(**arg_dict_vacc)
+    gvd.get_vaccination_data(**arg_dict)
 
 
 def compute_compartments_from_input_data(start_date, path_to_input_data, num_days_sim):
