@@ -76,7 +76,11 @@ def run_mobility_example(plot_results=True):
     model.populations[secir.AgeGroup(
         0), secir.InfectionState.InfectedNoSymptoms] = 0
     model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
+    model.populations[secir.AgeGroup(
         0), secir.InfectionState.InfectedSymptoms] = 0
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedSymptomsConfirmed] = 0
     model.populations[secir.AgeGroup(
         0), secir.InfectionState.InfectedSevere] = 0
     model.populations[secir.AgeGroup(
