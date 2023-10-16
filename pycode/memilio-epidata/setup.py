@@ -6,6 +6,11 @@ from setuptools import Command, find_packages, setup
 
 __version__ = '0.7.0'
 
+# Python-magic needs DLLs for libmagic. They have to be installed only on windows.
+if sys.platform == 'win32':
+    pymagic = 'python-magic-bin'
+else:
+    pymagic = 'python-magic'
 
 class PylintCommand(Command):
     """
@@ -85,7 +90,7 @@ setup(
         'pyxlsb',
         'wget',
         'twill',
-        'python-magic==0.4.13'  # fails for other versions
+        pymagic
     ],
     extras_require={
         'dev': [
