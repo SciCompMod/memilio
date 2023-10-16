@@ -45,7 +45,11 @@ class Test_ParameterStudy(unittest.TestCase):
 
         model.populations[A0, secir.InfectionState.Exposed] = 100
         model.populations[A0, secir.InfectionState.InfectedNoSymptoms] = 50
+        model.populations[A0,
+                          secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
         model.populations[A0, secir.InfectionState.InfectedSymptoms] = 50
+        model.populations[A0,
+                          secir.InfectionState.InfectedSymptomsConfirmed] = 0
         model.populations[A0, secir.InfectionState.InfectedSevere] = 20
         model.populations[A0, secir.InfectionState.InfectedCritical] = 10
         model.populations[A0, secir.InfectionState.Recovered] = 10

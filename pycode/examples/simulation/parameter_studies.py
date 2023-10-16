@@ -42,16 +42,21 @@ def parameter_study():
 
         model.populations[group, secir.InfectionState.Exposed] = 100
         model.populations[group, secir.InfectionState.InfectedNoSymptoms] = 50
-        model.populations[group, secir.InfectionState.InfectedSymptoms] = 20
+        model.populations[group,
+                          secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
+        model.populations[group, secir.InfectionState.InfectedSymptoms] = 50
+        model.populations[group,
+                          secir.InfectionState.InfectedSymptomsConfirmed] = 0
         model.populations[group, secir.InfectionState.InfectedSevere] = 20
         model.populations[group, secir.InfectionState.InfectedCritical] = 10
-        model.populations[group, secir.InfectionState.Recovered] = 50
-        model.populations[group, secir.InfectionState.Dead] = 10
+        model.populations[group, secir.InfectionState.Recovered] = 10
+        model.populations[group, secir.InfectionState.Dead] = 0
         model.populations.set_difference_from_group_total_AgeGroup(
             (group, secir.InfectionState.Susceptible), 10000)
 
         model.parameters.TransmissionProbabilityOnContact[group].set_distribution(
             mio.ParameterDistributionUniform(0.1, 0.2))
+        model.parameters.RelativeTransmissionNoSymptoms[group] = 0.67
         model.parameters.RecoveredPerInfectedNoSymptoms[group] = 0.09
         model.parameters.RiskOfInfectionFromSymptomatic[group] = 0.25
         model.parameters.SeverePerInfectedSymptoms[group] = 0.2
@@ -69,7 +74,7 @@ def parameter_study():
     model.parameters.ContactPatterns.cont_freq_mat[3] = mio.ContactMatrix(
         np.ones((num_groups, num_groups))*0.5)
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(
-        mio.Damping(np.ones((num_groups, num_groups))*0.7, 30.0))
+        mio.Damping(np.ones((num_groups, num_groups))*0.7, 7.0))
     print(model.parameters.ContactPatterns.cont_freq_mat[1].baseline)
     # process the result of one run
 
@@ -96,7 +101,7 @@ def parameter_study():
     graph.add_edge(0, 1, 0.01 * np.ones(model.populations.numel()*num_groups))
     graph.add_edge(1, 0, 0.01 * np.ones(model.populations.numel()*num_groups))
 
-    study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
+    study = secir.ParameterStudy(graph, t0=0, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)
 
 
