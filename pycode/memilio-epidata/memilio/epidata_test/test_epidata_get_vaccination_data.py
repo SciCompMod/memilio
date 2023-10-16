@@ -28,7 +28,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import progress_indicator
 
 
@@ -114,14 +113,21 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
     def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
-        gvd.get_vaccination_data(out_folder=self.path)
+        gvd.get_vaccination_data(out_folder=self.path, read_data=True)
 
+    # Sanitizing option 3 for vaccination was introduced in 2021 but soon discontinued
+    # as it a) is dependent on the county the consideration starts with and b) cannot be
+    # used for vaccination ratios towards 90%. The following test was deactivated as it
+    # increased the run time of the tests by 25 mins (~400%) and as the option 3 is only
+    # retained for backward compatibility.
+    @unittest.skip("Reduce-Test-Run-Time")
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
     def test_get_standard_vaccination_sanitize_3(self, mockin, mockp, mockv):
-        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
+        gvd.get_vaccination_data(out_folder=self.path,
+                                 sanitize_data=3, read_data=True)
 
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            return_value=df_vacc_data_altern)
