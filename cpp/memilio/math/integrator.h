@@ -36,9 +36,12 @@ namespace mio
 /**
  * Function template to be integrated
  */
+template<typename FP=double>
 using DerivFunction =
-    std::function<void(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)>;
+    std::function<void(Eigen::Ref<const typename Eigen::Matrix<FP, Eigen::Dynamic,1> > y , FP t,
+                       Eigen::Ref<typename Eigen::Matrix<FP,Eigen::Dynamic,1> > dydt)>;
 
+template<typename FP=double>
 class IntegratorCore
 {
 public:
@@ -53,8 +56,9 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    virtual bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
-                      Eigen::Ref<Eigen::VectorXd> ytp1) const = 0;
+    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic,1>> yt,
+                      FP& t, FP& dt,
+                      Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic,1>> ytp1) const = 0;
 };
 
 /**
@@ -74,7 +78,7 @@ public:
      * @param core implements the solution method
      */
     template <class F, class Vector>
-    OdeIntegrator(F&& f, FP t0, Vector&& y0, FP dt_init, std::shared_ptr<IntegratorCore> core)
+    OdeIntegrator(F&& f, FP t0, Vector&& y0, FP dt_init, std::shared_ptr<IntegratorCore<FP>> core)
         : m_f(std::forward<F>(f))
         , m_result(t0, y0)
         , m_dt(dt_init)
@@ -156,17 +160,17 @@ public:
         return m_next_dt;
     }
 
-    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    void set_integrator(std::shared_ptr<IntegratorCore<FP>> integrator)
     {
         m_core = integrator;
     }
 
 private:
-    DerivFunction m_f;
+    DerivFunction<FP> m_f;
     TimeSeries<FP> m_result;
     FP m_dt;
     FP m_next_dt;
-    std::shared_ptr<IntegratorCore> m_core;
+    std::shared_ptr<IntegratorCore<FP>> m_core;
 };
 
 } // namespace mio
