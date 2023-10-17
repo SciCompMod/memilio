@@ -68,8 +68,8 @@ TEST(TestSeir, CompareSeirWithJS)
     model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("seir-js-compare.csv");
-    auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
-    auto result                              = mio::simulate<mio::oseir::Model<double>>(t0, tmax, dt, model, integrator);
+    auto integrator                          = std::make_shared<mio::EulerIntegratorCore<double>>();
+    auto result                              = mio::simulate<mio::oseir::Model<double>,double>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

@@ -76,7 +76,7 @@ int main()
 
     model.apply_constraints();
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_shared<mio::RKIntegratorCore<double>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);

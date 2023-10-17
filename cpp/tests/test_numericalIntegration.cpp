@@ -57,7 +57,7 @@ public:
     double err;
 };
 
-using TestVerifyNumericalIntegratorEuler = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore>>;
+using TestVerifyNumericalIntegratorEuler = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore<double>>>;
 TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
 {
     n   = 1000;
@@ -89,10 +89,10 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-using TestTypes = ::testing::Types<mio::RKIntegratorCore,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
+using TestTypes = ::testing::Types<mio::RKIntegratorCore<double>,
+                                   mio::ControlledStepperWrapper<double,boost::numeric::odeint::runge_kutta_cash_karp54>,
+                                   mio::ControlledStepperWrapper<double,boost::numeric::odeint::runge_kutta_dopri5>,
+                                   mio::ControlledStepperWrapper<double,boost::numeric::odeint::runge_kutta_fehlberg78>>;
 
 TYPED_TEST_SUITE(TestVerifyNumericalIntegrator, TestTypes);
 
@@ -145,7 +145,7 @@ auto DoStep()
                           testing::Return(true));
 }
 
-class MockIntegratorCore : public mio::IntegratorCore
+class MockIntegratorCore : public mio::IntegratorCore<double>
 {
 public:
     MockIntegratorCore()
@@ -153,7 +153,7 @@ public:
         ON_CALL(*this, step).WillByDefault(DoStep());
     }
     MOCK_METHOD(bool, step,
-                (const mio::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                (const mio::DerivFunction<double>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
 };

@@ -44,7 +44,7 @@ namespace mio
  * integrator, wrapped as mio::IntegratorCore.
  */
 template <typename FP,template <class State = Eigen::Matrix<FP,Eigen::Dynamic,1>,
-                    class Value = FP, class Deriv = State, class Time = double,
+                    class Value = FP, class Deriv = State, class Time = FP,
                     class Algebra    = boost::numeric::odeint::vector_space_algebra,
                     class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
                     class Resizer    = boost::numeric::odeint::never_resizer>
@@ -82,7 +82,7 @@ public:
     {
         // copy y(t) to dydt, to retrieve the VectorXd from the Ref
         dydt               = yt;
-        const double t_old = t; // t is updated by try_step on a successfull step
+        const FP t_old = t; // t is updated by try_step on a successfull step
         do {
             // we use the scheme try_step(sys, inout, t, dt) with sys=f, inout=y(t) for
             // in-place computation. This is similiar to do_step, but it can update t and dt

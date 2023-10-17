@@ -79,12 +79,12 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_shared<mio::RKIntegratorCore<double>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> secihurd = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -159,12 +159,12 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     auto integrator =
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>();
+        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> secihurd = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare-cashkarp.csv");
 

@@ -78,12 +78,12 @@ TEST(TestOdeSecir, compareWithPreviousRun)
 
     model.apply_constraints();
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_shared<mio::RKIntegratorCore<double>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> secihurd = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 

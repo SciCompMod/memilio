@@ -57,16 +57,16 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
 
-    g.nodes()[0].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
-    g.nodes()[1].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
+    g.nodes()[0].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
+    g.nodes()[1].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
 
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
     auto single_sim1 = mio::Simulation<mio::oseir::Model<double>>(model1, t0);
     auto single_sim2 = mio::Simulation<mio::oseir::Model<double>>(model2, t0);
-    single_sim1.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
-    single_sim2.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
+    single_sim1.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
+    single_sim2.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
 
     graph_sim.advance(tmax);
     single_sim1.advance(tmax);
