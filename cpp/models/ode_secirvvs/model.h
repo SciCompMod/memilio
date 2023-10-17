@@ -33,7 +33,7 @@ namespace mio
 namespace osecirvvs
 {
 // clang-format off
-using Flows = TypeChart<
+using Flows = TypeList<
     //naive
     Flow<InfectionState::SusceptibleNaive,                            InfectionState::ExposedNaive>, 
     Flow<InfectionState::ExposedNaive,                                InfectionState::InfectedNoSymptomsNaive>,

@@ -24,14 +24,14 @@
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
-#include "memilio/utils/type_chart.h"
+#include "memilio/utils/type_list.h"
 #include "memilio/compartments/simulation.h"
 #include "gtest/gtest.h"
 #include "matchers.h"
 
 using I     = mio::oseir::InfectionState;
-using Flows = mio::TypeChart<mio::Flow<I::Susceptible, I::Exposed>, mio::Flow<I::Exposed, I::Infected>,
-                             mio::Flow<I::Infected, I::Recovered>>;
+using Flows = mio::TypeList<mio::Flow<I::Susceptible, I::Exposed>, mio::Flow<I::Exposed, I::Infected>,
+                            mio::Flow<I::Infected, I::Recovered>>;
 
 struct CatA : public mio::Index<CatA> {
     CatA(size_t i)
@@ -69,26 +69,26 @@ TEST(TestFlows, FlowChart)
     EXPECT_EQ(Flows().size(), 3);
     // Testing get (by index) function, verifying with source members.
     auto flow0        = mio::Flow<I::Susceptible, I::Exposed>().source;
-    auto test_source0 = Flows().get<0>().source;
+    auto test_source0 = mio::type_at_t<0, Flows>::source;
     EXPECT_EQ(flow0, test_source0);
 
     auto flow1        = mio::Flow<I::Exposed, I::Infected>().source;
-    auto test_source1 = Flows().get<1>().source;
+    auto test_source1 = mio::type_at_t<1, Flows>::source;
     EXPECT_EQ(flow1, test_source1);
 
     auto flow2        = mio::Flow<I::Infected, I::Recovered>().source;
-    auto test_source2 = Flows().get<2>().source;
+    auto test_source2 = mio::type_at_t<2, Flows>::source;
     EXPECT_EQ(flow2, test_source2);
 
     // Testing get (by Flow) function.
-    using Flow0 = mio::Flow<I::Susceptible, I::Exposed>;
-    EXPECT_EQ(Flows().get<Flow0>(), 0);
+    const size_t index0 = mio::index_of_v<mio::Flow<I::Susceptible, I::Exposed>, Flows>;
+    EXPECT_EQ(index0, 0);
 
-    using Flow1 = mio::Flow<I::Exposed, I::Infected>;
-    EXPECT_EQ(Flows().get<Flow1>(), 1);
+    const size_t index1 = mio::index_of_v<mio::Flow<I::Exposed, I::Infected>, Flows>;
+    EXPECT_EQ(index1, 1);
 
-    using Flow2 = mio::Flow<I::Infected, I::Recovered>;
-    EXPECT_EQ(Flows().get<Flow2>(), 2);
+    const size_t index2 = mio::index_of_v<mio::Flow<I::Infected, I::Recovered>, Flows>;
+    EXPECT_EQ(index2, 2);
 }
 
 TEST(TestFlows, SimulationFlows)

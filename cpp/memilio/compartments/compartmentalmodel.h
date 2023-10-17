@@ -23,7 +23,7 @@
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/type_chart.h"
+#include "memilio/utils/type_list.h"
 #include "memilio/utils/flow.h"
 #include "memilio/utils/metaprogramming.h"
 #include <cstddef>
@@ -201,14 +201,14 @@ using filtered_index_t = decltype(as_index<IndexTemplate>(
 /**
  * @brief CompartmentalModel with flows. 
  *
- * Inherits from CompartmentalModel extending it with a TypeChart (the optional template parameter). 
+ * Inherits from CompartmentalModel extending it with a TypeList (the optional template parameter). 
  * @see CompartmentalModel
  *
- * Instead of directly computing the right-hand-side with get_derivatives, first the flows defined by TypeChart are
+ * Instead of directly computing the right-hand-side with get_derivatives, first the flows defined by TypeList are
  * computed, and then added to/subtracted from their source/target compartment.
  */
 template <class Comp, class Pop, class Params, class... Flows>
-struct CompartmentalModel<Comp, Pop, Params, TypeChart<Flows...>> : public CompartmentalModel<Comp, Pop, Params> {
+struct CompartmentalModel<Comp, Pop, Params, TypeList<Flows...>> : public CompartmentalModel<Comp, Pop, Params> {
     using PopIndex = typename Pop::Index;
     // FlowIndex is the same as PopIndex without the category Comp. It is used as argument type for get_flow_index,
     // since a flow is used to determine only the compartment (i.e. Index<Comp>) for the population of the model.
@@ -221,7 +221,7 @@ struct CompartmentalModel<Comp, Pop, Params, TypeChart<Flows...>> : public Compa
 
 public:
     using Base      = CompartmentalModel<Comp, Pop, Params>;
-    using FlowChart = TypeChart<Flows...>;
+    using FlowChart = TypeList<Flows...>;
     /**
      * @brief Default constructor, forwarding args to Base constructor.
      */
@@ -320,7 +320,7 @@ public:
     size_t get_flow_index(const FlowIndex& indices) const
     {
         return flatten_index(indices, m_flow_index_dimensions) * FlowChart().size() +
-               FlowChart().template get<Flow<Source, Target>>();
+               index_of_v<Flow<Source, Target>, FlowChart>;
     }
 
     /**
@@ -333,7 +333,7 @@ public:
     constexpr size_t get_flow_index() const
     {
         static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indices must be specified");
-        return FlowChart().template get<Flow<Source, Target>>();
+        return index_of_v<Flow<Source, Target>, FlowChart>;
     }
 
 private:
@@ -397,8 +397,8 @@ private:
     get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, const size_t& flat_pop,
                  const size_t& flat_flow) const
     {
-        constexpr size_t source = static_cast<size_t>(FlowChart().template get<FlowID>().source);
-        constexpr size_t target = static_cast<size_t>(FlowChart().template get<FlowID>().target);
+        constexpr size_t source = static_cast<size_t>(type_at_t<FlowID, FlowChart>::source);
+        constexpr size_t target = static_cast<size_t>(type_at_t<FlowID, FlowChart>::target);
         // see get_flow_index for more info on these index calculations.
         // flat_flow and flat_pop already contain index information for all non-Comp Categories, so
         // we only need to add FlowID and source/target respectively (with the correct factors).

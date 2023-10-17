@@ -36,21 +36,21 @@ namespace osecir
 // Create template specializations for the age resolved
 // SECIHURD model
 // clang-format off
-using Flows = TypeChart<Flow<InfectionState::Susceptible,                 InfectionState::Exposed>,
-                        Flow<InfectionState::Exposed,                     InfectionState::InfectedNoSymptoms>,
-                        Flow<InfectionState::InfectedNoSymptoms,          InfectionState::InfectedSymptoms>,
-                        Flow<InfectionState::InfectedNoSymptoms,          InfectionState::Recovered>,
-                        Flow<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::InfectedSymptomsConfirmed>,
-                        Flow<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>,
-                        Flow<InfectionState::InfectedSymptoms,            InfectionState::InfectedSevere>,
-                        Flow<InfectionState::InfectedSymptoms,            InfectionState::Recovered>,
-                        Flow<InfectionState::InfectedSymptomsConfirmed,   InfectionState::InfectedSevere>,
-                        Flow<InfectionState::InfectedSymptomsConfirmed,   InfectionState::Recovered>,
-                        Flow<InfectionState::InfectedSevere,              InfectionState::InfectedCritical>,
-                        Flow<InfectionState::InfectedSevere,              InfectionState::Recovered>,
-                        Flow<InfectionState::InfectedSevere,              InfectionState::Dead>,
-                        Flow<InfectionState::InfectedCritical,            InfectionState::Dead>,
-                        Flow<InfectionState::InfectedCritical,            InfectionState::Recovered>>;
+using Flows = TypeList<Flow<InfectionState::Susceptible,                 InfectionState::Exposed>,
+                       Flow<InfectionState::Exposed,                     InfectionState::InfectedNoSymptoms>,
+                       Flow<InfectionState::InfectedNoSymptoms,          InfectionState::InfectedSymptoms>,
+                       Flow<InfectionState::InfectedNoSymptoms,          InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::InfectedSymptomsConfirmed>,
+                       Flow<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSymptoms,            InfectionState::InfectedSevere>,
+                       Flow<InfectionState::InfectedSymptoms,            InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSymptomsConfirmed,   InfectionState::InfectedSevere>,
+                       Flow<InfectionState::InfectedSymptomsConfirmed,   InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSevere,              InfectionState::InfectedCritical>,
+                       Flow<InfectionState::InfectedSevere,              InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSevere,              InfectionState::Dead>,
+                       Flow<InfectionState::InfectedCritical,            InfectionState::Dead>,
+                       Flow<InfectionState::InfectedCritical,            InfectionState::Recovered>>;
 // clang-format on
 
 class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows>

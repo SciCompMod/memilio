@@ -23,7 +23,7 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/utils/type_chart.h"
+#include "memilio/utils/type_list.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 
@@ -37,9 +37,9 @@ namespace oseir
  ********************/
 
 // clang-format off
-using Flows = TypeChart<Flow<InfectionState::Susceptible, InfectionState::Exposed>,
-                        Flow<InfectionState::Exposed,     InfectionState::Infected>,
-                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
+using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed>,
+                       Flow<InfectionState::Exposed,     InfectionState::Infected>,
+                       Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
 
 class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
