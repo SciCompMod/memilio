@@ -44,7 +44,14 @@ public:
      */
     bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic,1>> yt,
               FP& t, FP& dt,
-              Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic,1>> ytp1) const override;
+              Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic,1>> ytp1) const override
+    {
+        // we are misusing the next step y as temporary space to store the derivative
+        f(yt, t, ytp1);
+        ytp1 = yt + dt * ytp1;
+        t += dt;
+        return true;
+    }
 };
 
 } // namespace mio

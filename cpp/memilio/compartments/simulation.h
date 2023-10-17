@@ -51,7 +51,7 @@ public:
      */
     Simulation(Model const& model, FP t0 = 0., FP dt = 0.1)
         : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+              std::make_shared<mio::ControlledStepperWrapper<FP,boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(
               [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
@@ -64,7 +64,7 @@ public:
     /**
      * @brief set the core integrator used in the simulation
      */
-    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    void set_integrator(std::shared_ptr<IntegratorCore<FP>> integrator)
     {
         m_integratorCore = std::move(integrator);
         m_integrator.set_integrator(m_integratorCore);
@@ -74,7 +74,7 @@ public:
      * @brief get_integrator
      * @return reference to the core integrator used in the simulation
      */
-    IntegratorCore& get_integrator()
+    IntegratorCore<FP>& get_integrator()
     {
         return *m_integratorCore;
     }
@@ -83,7 +83,7 @@ public:
      * @brief get_integrator
      * @return reference to the core integrator used in the simulation
      */
-    IntegratorCore const& get_integrator() const
+    IntegratorCore<FP> const& get_integrator() const
     {
         return *m_integratorCore;
     }
@@ -142,7 +142,7 @@ public:
     }
 
 private:
-    std::shared_ptr<IntegratorCore> m_integratorCore;
+    std::shared_ptr<IntegratorCore<FP>> m_integratorCore;
     std::unique_ptr<Model> m_model;
     OdeIntegrator<FP> m_integrator;
 }; // namespace mio
@@ -203,7 +203,7 @@ using is_compartment_model_simulation =
  */
 template <class Model, typename FP=double, class Sim = Simulation<Model,FP>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
-                                std::shared_ptr<IntegratorCore> integrator = nullptr)
+                        std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
