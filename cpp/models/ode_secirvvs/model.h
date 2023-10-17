@@ -33,61 +33,60 @@ namespace mio
 namespace osecirvvs
 {
 // clang-format off
-template <class I = InfectionState>
 using Flows = TypeChart<
     //naive
-    Flow<I, I::SusceptibleNaive,                            I::ExposedNaive>, 
-    Flow<I, I::ExposedNaive,                                I::InfectedNoSymptomsNaive>,
-    Flow<I, I::InfectedNoSymptomsNaive,                     I::InfectedSymptomsNaive>,
-    Flow<I, I::InfectedNoSymptomsNaive,                     I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsNaiveConfirmed,            I::InfectedSymptomsNaiveConfirmed>,
-    Flow<I, I::InfectedNoSymptomsNaiveConfirmed,            I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsNaive,                       I::InfectedSevereNaive>,
-    Flow<I, I::InfectedSymptomsNaive,                       I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsNaiveConfirmed,              I::InfectedSevereNaive>,
-    Flow<I, I::InfectedSymptomsNaiveConfirmed,              I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSevereNaive,                         I::InfectedCriticalNaive>,
-    Flow<I, I::InfectedSevereNaive,                         I::SusceptibleImprovedImmunity>, 
-    Flow<I, I::InfectedSevereNaive,                         I::DeadNaive>,
-    Flow<I, I::InfectedCriticalNaive,                       I::DeadNaive>,
-    Flow<I, I::InfectedCriticalNaive,                       I::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::SusceptibleNaive,                            InfectionState::ExposedNaive>, 
+    Flow<InfectionState::ExposedNaive,                                InfectionState::InfectedNoSymptomsNaive>,
+    Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::InfectedSymptomsNaive>,
+    Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsNaiveConfirmed,            InfectionState::InfectedSymptomsNaiveConfirmed>,
+    Flow<InfectionState::InfectedNoSymptomsNaiveConfirmed,            InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsNaive,                       InfectionState::InfectedSevereNaive>,
+    Flow<InfectionState::InfectedSymptomsNaive,                       InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::InfectedSevereNaive>,
+    Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::InfectedCriticalNaive>,
+    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::SusceptibleImprovedImmunity>, 
+    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::DeadNaive>,
+    Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::DeadNaive>,
+    Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::SusceptibleImprovedImmunity>,
     //partial immunity
-    Flow<I, I::SusceptiblePartialImmunity,                  I::ExposedPartialImmunity>,
-    Flow<I, I::ExposedPartialImmunity,                      I::InfectedNoSymptomsPartialImmunity>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunity,           I::InfectedSymptomsPartialImmunity>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunity,           I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunityConfirmed,  I::InfectedSymptomsPartialImmunityConfirmed>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunityConfirmed,  I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunity,             I::InfectedSeverePartialImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunity,             I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunityConfirmed,    I::InfectedSeverePartialImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunityConfirmed,    I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSeverePartialImmunity,               I::InfectedCriticalPartialImmunity>,
-    Flow<I, I::InfectedSeverePartialImmunity,               I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSeverePartialImmunity,               I::DeadPartialImmunity>,
-    Flow<I, I::InfectedCriticalPartialImmunity,             I::DeadPartialImmunity>,
-    Flow<I, I::InfectedCriticalPartialImmunity,             I::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::ExposedPartialImmunity>,
+    Flow<InfectionState::ExposedPartialImmunity,                      InfectionState::InfectedNoSymptomsPartialImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsPartialImmunity,           InfectionState::InfectedSymptomsPartialImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsPartialImmunity,           InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,  InfectionState::InfectedSymptomsPartialImmunityConfirmed>,
+    Flow<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,  InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsPartialImmunity,             InfectionState::InfectedSeverePartialImmunity>,
+    Flow<InfectionState::InfectedSymptomsPartialImmunity,             InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsPartialImmunityConfirmed,    InfectionState::InfectedSeverePartialImmunity>,
+    Flow<InfectionState::InfectedSymptomsPartialImmunityConfirmed,    InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSeverePartialImmunity,               InfectionState::InfectedCriticalPartialImmunity>,
+    Flow<InfectionState::InfectedSeverePartialImmunity,               InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSeverePartialImmunity,               InfectionState::DeadPartialImmunity>,
+    Flow<InfectionState::InfectedCriticalPartialImmunity,             InfectionState::DeadPartialImmunity>,
+    Flow<InfectionState::InfectedCriticalPartialImmunity,             InfectionState::SusceptibleImprovedImmunity>,
     //improved immunity
-    Flow<I, I::SusceptibleImprovedImmunity,                 I::ExposedImprovedImmunity>,
-    Flow<I, I::ExposedImprovedImmunity,                     I::InfectedNoSymptomsImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsImprovedImmunity,          I::InfectedSymptomsImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsImprovedImmunity,          I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsImprovedImmunityConfirmed, I::InfectedSymptomsImprovedImmunityConfirmed>,
-    Flow<I, I::InfectedNoSymptomsImprovedImmunityConfirmed, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunity,            I::InfectedSevereImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunity,            I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunityConfirmed,   I::InfectedSevereImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunityConfirmed,   I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSevereImprovedImmunity,              I::InfectedCriticalImprovedImmunity>,
-    Flow<I, I::InfectedSevereImprovedImmunity,              I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSevereImprovedImmunity,              I::DeadImprovedImmunity>,
-    Flow<I, I::InfectedCriticalImprovedImmunity,            I::DeadImprovedImmunity>,
-    Flow<I, I::InfectedCriticalImprovedImmunity,            I::SusceptibleImprovedImmunity>>;
+    Flow<InfectionState::SusceptibleImprovedImmunity,                 InfectionState::ExposedImprovedImmunity>,
+    Flow<InfectionState::ExposedImprovedImmunity,                     InfectionState::InfectedNoSymptomsImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsImprovedImmunity,          InfectionState::InfectedSymptomsImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsImprovedImmunity,          InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed, InfectionState::InfectedSymptomsImprovedImmunityConfirmed>,
+    Flow<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed, InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsImprovedImmunity,            InfectionState::InfectedSevereImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsImprovedImmunity,            InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,   InfectionState::InfectedSevereImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,   InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::InfectedCriticalImprovedImmunity>,
+    Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::DeadImprovedImmunity>,
+    Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::DeadImprovedImmunity>,
+    Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::SusceptibleImprovedImmunity>>;
 // clang-format on
 
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows<>>
+class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters, Flows<>>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters, Flows>;
 
 public:
     Model(const Populations& pop, const ParameterSet& params)

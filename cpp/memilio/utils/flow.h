@@ -20,15 +20,19 @@
 #ifndef FLOW_H_
 #define FLOW_H_
 
+#include <type_traits>
+
 namespace mio
 {
 
 /// @brief A Flow defines a transition between two Compartments in a CompartmentalModel. Use with TypeChart
-template <class Status, Status Source, Status Target>
+template <auto Source, auto Target>
 struct Flow {
-    using Type                 = Status;
-    const static Status source = Source;
-    const static Status target = Target;
+    using Type = decltype(Source);
+    static_assert(std::is_same<Type, decltype(Target)>::value & std::is_enum<Type>::value,
+                  "The Source and Target parameters of a Flow must have the same enum type.");
+    const static Type source = Source;
+    const static Type target = Target;
 };
 
 } // namespace mio

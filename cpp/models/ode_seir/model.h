@@ -37,15 +37,14 @@ namespace oseir
  ********************/
 
 // clang-format off
-template <class I = InfectionState>
-using Flows = TypeChart<Flow<I, I::Susceptible, I::Exposed>,
-                        Flow<I, I::Exposed,     I::Infected>,
-                        Flow<I, I::Infected,    I::Recovered>>;
+using Flows = TypeChart<Flow<InfectionState::Susceptible, InfectionState::Exposed>,
+                        Flow<InfectionState::Exposed,     InfectionState::Infected>,
+                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters, Flows<>>
+class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows<>>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
 
 public:
     Model()

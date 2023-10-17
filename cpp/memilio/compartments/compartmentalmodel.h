@@ -320,7 +320,7 @@ public:
     size_t get_flow_index(const FlowIndex& indices) const
     {
         return flatten_index(indices, m_flow_index_dimensions) * FlowChart().size() +
-               FlowChart().template get<Flow<Comp, Source, Target>>();
+               FlowChart().template get<Flow<Source, Target>>();
     }
 
     /**
@@ -333,7 +333,7 @@ public:
     constexpr size_t get_flow_index() const
     {
         static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indices must be specified");
-        return FlowChart().template get<Flow<Comp, Source, Target>>();
+        return FlowChart().template get<Flow<Source, Target>>();
     }
 
 private:
