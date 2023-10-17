@@ -58,8 +58,8 @@ class TestModel
     using Base = CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
 
 public:
-    TestModel()
-        : Base(Populations({I::Count, CatA(11), CatB(5), CatC(7)}, 0.), mio::oseir::Parameters{})
+    TestModel(Populations::Index dimensions)
+        : Base(Populations(dimensions, 0.), mio::oseir::Parameters{})
     {
     }
 };
@@ -181,7 +181,7 @@ TEST(TestFlows, GetInitialFlows)
 TEST(TestFlows, GetFlowIndex)
 {
     // test get_flow_index with some prime number products
-    TestModel m;
+    TestModel m({I::Count, CatA(11), CatB(5), CatC(7)});
     auto idx0 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(0), CatC(1)});
     EXPECT_EQ(idx0, 3);
 
