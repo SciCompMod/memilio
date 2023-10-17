@@ -34,7 +34,7 @@ namespace pymio
 template <class Simulation>
 void bind_Simulation(pybind11::module_& m, std::string const& name)
 {
-    bind_class<EnablePickling::IfAvailable, Simulation>(m, name.c_str())
+    bind_class<Simulation, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<const typename Simulation::Model&, double, double>(), pybind11::arg("model"),
              pybind11::arg("t0") = 0, pybind11::arg("dt") = 0.1)
         .def_property_readonly("result", pybind11::overload_cast<>(&Simulation::get_result, pybind11::const_),

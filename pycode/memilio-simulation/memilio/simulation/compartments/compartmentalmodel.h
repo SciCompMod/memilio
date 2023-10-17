@@ -35,7 +35,7 @@ template <class InfectionState, class Populations, class Parameters>
 void bind_CompartmentalModel(pybind11::module_& m, std::string const& name)
 {
     using Model = mio::CompartmentalModel<InfectionState, Populations, Parameters>;
-    bind_class<EnablePickling::Never, Model>(m, name.c_str())
+    bind_class<Model, EnablePickling::Never>(m, name.c_str())
         .def(pybind11::init<Populations const&, Parameters const&>())
         .def("apply_constraints", &Model::template apply_constraints<Parameters>)
         .def("check_constraints", &Model::template check_constraints<Parameters>)

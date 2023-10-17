@@ -95,7 +95,7 @@ auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<Enabl
     return cls;
 }
 
-template <EnablePickling F, class T, class... Args>
+template <class T, EnablePickling F, class... Args>
 auto bind_class(pybind11::module& m, std::string const& name) {
     return _bind_class<T, Args...>(m, name, PicklingTag<F>{});
 }
@@ -153,7 +153,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    bind_class<EnablePickling::Never, Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    bind_class<Iterator, EnablePickling::Never>(m, (std::string("_Iter") + class_name).c_str())
         .def(
             "__next__",
             [](Iterator& self) -> auto&& {
@@ -167,7 +167,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
             pybind11::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    bind_class<EnablePickling::Never, Range>(m, class_name.c_str())
+    bind_class<Range, EnablePickling::Never>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {

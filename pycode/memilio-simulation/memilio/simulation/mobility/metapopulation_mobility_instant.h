@@ -33,7 +33,7 @@ template <class Simulation>
 void bind_MigrationGraph(pybind11::module_& m, std::string const& name)
 {
     using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
-    bind_class<EnablePickling::IfAvailable, G>(m, name.c_str())
+    bind_class<G, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<>())
         .def(
             "add_node",
@@ -89,7 +89,7 @@ void bind_migration_edge(pybind11::module_& m, std::string const& name);
 template <typename Model>
 void bind_ModelNode(pybind11::module_& m, std::string const& name)
 {
-    bind_class<EnablePickling::IfAvailable, mio::Node<Model>>(m, name.c_str())
+    bind_class<mio::Node<Model>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("id",
                                [](const mio::Node<Model>& self) {
                                    return self.id;
@@ -105,7 +105,7 @@ void bind_ModelNode(pybind11::module_& m, std::string const& name)
 template <typename Simulation>
 void bind_SimulationNode(pybind11::module_& m, std::string const& name)
 {
-    bind_class<EnablePickling::IfAvailable, mio::Node<mio::SimulationNode<Simulation>>>(m, name.c_str())
+    bind_class<mio::Node<mio::SimulationNode<Simulation>>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("id",
                                [](const mio::Node<Simulation>& self) {
                                    return self.id;
@@ -125,7 +125,7 @@ template <class Model>
 void bind_ModelGraph(pybind11::module_& m, std::string const& name)
 {
     using G = mio::Graph<Model, mio::MigrationParameters>;
-    bind_class<EnablePickling::IfAvailable, G>(m, name.c_str())
+    bind_class<G, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<>())
         .def("add_node", &G::template add_node<const Model&>, pybind11::arg("id"), pybind11::arg("model"),
              pybind11::return_value_policy::reference_internal)
