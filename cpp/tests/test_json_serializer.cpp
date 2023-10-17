@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -511,9 +511,8 @@ TEST(TestJsonSerializer, abmTrip)
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto& home   = world.get_individualized_location(home_id);
     auto person  = make_test_person(home);
-    mio::abm::Trip trip1(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
-    mio::abm::Trip trip2(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(7), work_id, home_id);
-    auto js = mio::serialize_json(trip1, true);
+    mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
+    auto js = mio::serialize_json(trip, true);
     Json::Value expected_json;
     expected_json["person_id"]         = Json::UInt(person.get_person_id());
     expected_json["time"]              = Json::Int(mio::abm::hours(8).seconds());
@@ -525,13 +524,7 @@ TEST(TestJsonSerializer, abmTrip)
 
     auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Trip>());
     ASSERT_THAT(print_wrap(r), IsSuccess());
-    EXPECT_EQ(r.value(), trip1);
-
-    js                    = mio::serialize_json(trip2, true);
-    expected_json["time"] = Json::Int(mio::abm::days(7).seconds());
-    r                     = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Trip>());
-    ASSERT_THAT(print_wrap(r), IsSuccess());
-    EXPECT_EQ(r.value(), trip2);
+    EXPECT_EQ(r.value(), trip);
 }
 
 TEST(TestJsonSerializer, abmWorld)
@@ -540,8 +533,10 @@ TEST(TestJsonSerializer, abmWorld)
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto person  = world.add_person(home_id, AGE_GROUP_15_TO_34);
-    mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
-    world.get_trip_list().add_trip(trip);
+    mio::abm::Trip trip1(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
+    mio::abm::Trip trip2(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(11), work_id, home_id);
+    world.get_trip_list().add_trip(trip1, false);
+    world.get_trip_list().add_trip(trip2, true);
     auto js = mio::serialize_json(world);
     Json::Value expected_json;
     expected_json["num_agegroups"]                   = Json::UInt(NUM_AGE_GROUPS);
@@ -551,6 +546,12 @@ TEST(TestJsonSerializer, abmWorld)
     expected_json["trips"][0]["destination_type"]    = Json::UInt(work_id.type);
     expected_json["trips"][0]["origin_index"]        = Json::UInt(home_id.index);
     expected_json["trips"][0]["origin_type"]         = Json::UInt(home_id.type);
+    expected_json["trips"][1]["person_id"]           = Json::UInt(person.get_person_id());
+    expected_json["trips"][1]["time"]                = Json::Int(mio::abm::hours(11).seconds());
+    expected_json["trips"][1]["destination_index"]   = Json::UInt(work_id.index);
+    expected_json["trips"][1]["destination_type"]    = Json::UInt(work_id.type);
+    expected_json["trips"][1]["origin_index"]        = Json::UInt(home_id.index);
+    expected_json["trips"][1]["origin_type"]         = Json::UInt(home_id.type);
     expected_json["locations"][0]["index"]           = Json::UInt(0);
     expected_json["locations"][0]["type"]            = Json::UInt(mio::abm::LocationType::Cemetery);
     expected_json["locations"][1]["index"]           = Json::UInt(1);
