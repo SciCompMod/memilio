@@ -406,6 +406,7 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     mio::Date end_date = mio::offset_date_by_days(start_date, 45);
 
     // Define parameters used for simulation and initialization.
+    // Parameters are calculated via examples/compute_parameters.cpp.
     mio::lsecir::Parameters parameters;
     parameters.get<mio::lsecir::TimeExposed>()                      = 3.335;
     parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.31331;

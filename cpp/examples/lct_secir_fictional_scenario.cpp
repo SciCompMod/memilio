@@ -65,6 +65,7 @@ mio::IOResult<void> simulate(ScalarType R0, int num_subcompartments = 3, bool si
     ScalarType total_population = 83155031.0;
 
     // Define parameters used for simulation and initialization.
+    // Parameters are calculated via examples/compute_parameters.cpp.
     mio::lsecir::Parameters parameters_lct;
     parameters_lct.get<mio::lsecir::TimeExposed>()                      = 3.335;
     parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.31331;
