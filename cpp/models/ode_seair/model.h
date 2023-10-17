@@ -85,7 +85,6 @@ public:
         const auto& r = y[(size_t)InfectionState::Recovered];
 
 
-
         dydt[(size_t)InfectionState::Susceptible] = -alpha_a * s * a - alpha_i * s * i + gamma * r;
         dydt[(size_t)InfectionState::Exposed] = alpha_a  * s * a + alpha_i * s * i - t_latent_inverse * e;
         dydt[(size_t)InfectionState::Asymptomatic] = t_latent_inverse * e - kappa * a - rho * a;

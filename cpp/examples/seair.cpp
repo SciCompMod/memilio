@@ -30,7 +30,19 @@
 #include "memilio/utils/time_series_to_file.h"
 #include <fstream>
 
+template<typename FP>
+void set_initial_values(mio::oseair::Model<FP>& model) {
+    const double N = 327167434;// total population of the United States
 
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = 0.9977558755803503;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]   = 0.0003451395725394549;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}]   = 0.00037846880968213874;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = (337072.0 / N);
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = (17448.0 / N);
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]   = (9619.0 / N);
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::ObjectiveFunction)}]   = 0.0;
+
+}
 
 
 int main()
@@ -47,28 +59,37 @@ int main()
 
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
 
-    mio::oseair::Model<FP> model;
-    const double N = 327167434;// total population of the United States
+    mio::oseair::Model<FP> model1;
+    set_initial_values(model1);
+    FP value = model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}];
+    ad::derivative(value) = 1.0;
+    model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = value;
+    model1.check_constraints();
+    auto seair1 = mio::simulate<mio::oseair::Model<FP>,FP>(t0, tmax, dt, model1);
 
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = 0.9977558755803503;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]   = 0.0003451395725394549;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}]   = 0.00037846880968213874;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = (337072.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = (17448.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]   = (9619.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::ObjectiveFunction)}]   = 0.0;
+    mio::oseair::Model<double> model2;
+    set_initial_values(model2);
+    double h = 1e-4;
+    model2.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] += h;
+    model2.check_constraints();
+    auto seair2 = mio::simulate<mio::oseair::Model<double>,double>(0, 100, 0.2, model2);
+
+    const std::string file_name = "seair.txt";
+    std::cout << "Writing output to " << file_name << std::endl;
+    mio::time_series_to_file(seair1, file_name);
+
+    auto last1 = seair1.get_last_value();
+    auto last2 = seair2.get_last_value();
+
+    std::cout << "Last value is" << std::endl;
+    std::cout <<  last2 << std::endl;
+
+    std::cout << "Compare algorithmic differentiation (AD) with finite differences (FD)" << std::endl;
+    for (size_t i=0; i < last1.size(); ++i) {
+        std::cout << "AD: " << ad::derivative(last1[i]) << "  FD: " << (1./h)*(last2[i]-ad::value(last1[i])) << std::endl;
+    }
 
 
-
-
-    model.check_constraints();
-
-
-
-
-    auto seair = mio::simulate<mio::oseair::Model<FP>,FP>(t0, tmax, dt, model);
-//    const std::string file_name = "seair.txt";
-//    std::cout << "Writing output to " << file_name << std::endl;
-//    mio::time_series_to_file(seair, file_name);
+    return 0;
 
 }
