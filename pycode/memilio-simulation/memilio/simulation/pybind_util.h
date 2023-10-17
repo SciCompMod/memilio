@@ -32,17 +32,18 @@
 namespace pymio
 {
 
+// Enum for controlling pickling support behavior
 enum class EnablePickling {
-    Never,
-    IfAvailable,
-    Required
+    Never,      // Pickling support is disabled.
+    IfAvailable, // Pickling support is enabled if the class matches SFINEA-clause of `serialize_internal` 
+    Required    // Pickling support is required, and an error is raised if not available.
 };
 
 // Tag dispatch to convert value into type
 template <EnablePickling F>
 struct PicklingTag {};
 
-//detect a serialize_internal function
+// Detect serialization by matching a `serialize_internal` function
 template <class IOContext, class T>
 using serialize_internal_t = decltype(mio::serialize_internal(std::declval<IOContext&>(), std::declval<T&>()));
 template <class IOContext, class T>
@@ -72,6 +73,36 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
         }));
 }
 
+/**
+ * Functions are deduced inside the bind_class() function depending on the EnablePickling value. 
+ * Do not call them directly in your code. 
+ * Compile-time errors originating from this function are likely due to issues with the serialization of the given class in the C++ library.
+ * 
+ * Here's a small guideline on when to use each strategy:
+ * 
+ * 1. Use EnablePickling::Never for classes:
+ *    - Containing sensitive or non-serializable data.
+ *    - With complex ownership semantics, especially when serializing the object might lead to unintended side effects.
+ *    - Where pickling/unpickling is not feasible or doesn't make sense.
+ * 
+ * 2. Use EnablePickling::IfAvailable for classes:
+ *    - That are generic and may become picklable in the future or in specific use cases.
+ *    - When you want to allow pickling if the necessary serialization functions are provided in the future.
+ * 
+ *    Important Note:
+ *    This strategy attempts to deduce if serialization is possible during compile-time by checking for a matching serialize_internal function.
+ *    The C++ library does not check pickling for every class during compile-time, which can result in classes unexpectedly lacking serialization support.
+ *    This approach does not account for subclasses contained within the class you intend to pickle. As a result, classes can be deduced as serializable even if they are not, 
+ *    leading to a compile-time error. In such cases, it may be either an error in the C++ class implementation or the class should not be serializable and should use the EnablePickling::Never strategy during binding.
+ * 
+ * 3. Use EnablePickling::Required for classes:
+ *    - That are intended to be used with pickling, and it's critical to have pickling support.
+ *    - When you want to ensure serialization in the C++ library.
+ * 
+ * @{
+ */
+
+
 template <class T, class... Args>
 auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/) {
     auto cls = pybind11::class_<T, Args...>(m, name.c_str());
@@ -94,7 +125,14 @@ auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<Enabl
     pybind_pickle_class<T, Args...>(cls);
     return cls;
 }
+/**@}*/
 
+/**
+ * Bind a class with the specified pickling behavior.
+ * @param m the pybind11 module.
+ * @param name of the class in python.
+ * @return pybind11 class object.
+ */
 template <class T, EnablePickling F, class... Args>
 auto bind_class(pybind11::module& m, std::string const& name) {
     return _bind_class<T, Args...>(m, name, PicklingTag<F>{});
