@@ -88,7 +88,7 @@ public:
             // in-place computation. This is similiar to do_step, but it can update t and dt
             m_stepper.try_step(
                 // reorder arguments of the DerivFunction f for the stepper
-                [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxds, double s) {
+                [&](const Eigen::Matrix<FP,Eigen::Dynamic,1>& x, Eigen::Matrix<FP,Eigen::Dynamic,1>& dxds, FP s) {
                     dxds.resizeLike(x); // try_step calls sys with a vector of size 0 for some reason
                     f(x, s, dxds);
                 },

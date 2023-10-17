@@ -17,12 +17,5 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_seir/model.h"
+#include "ode_seir/model.h" // IWYU pragma: keep
 
-namespace mio
-{
-namespace oseir
-{
-
-} // namespace oseir
-} // namespace mio

@@ -582,7 +582,7 @@ private:
 */
 template<typename FP=double>
 inline auto simulate(double t0, double tmax, double dt, const Model<FP>& model,
-                     std::shared_ptr<IntegratorCore> integrator = nullptr)
+                     std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     return mio::simulate<Model<FP>, double, Simulation<>>(t0, tmax, dt, model, integrator);
 }

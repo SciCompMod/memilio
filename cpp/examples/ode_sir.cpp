@@ -49,11 +49,11 @@ int main()
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
 
     model.check_constraints();
 
-    auto sir = simulate(t0, tmax, dt, model, integrator);
+    auto sir = mio::simulate<mio::osir::Model<double>,double>(t0, tmax, dt, model, integrator);
 
     bool print_to_terminal = true;
 

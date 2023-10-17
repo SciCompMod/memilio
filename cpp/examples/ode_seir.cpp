@@ -59,12 +59,12 @@ int main()
 
     model.check_constraints();
     // print_seir_params(model);
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_shared<mio::RKIntegratorCore<double>>();
     integrator->set_dt_max(dt);
     integrator->set_abs_tolerance(1e-6);
     integrator->set_rel_tolerance(1e-6);
 
-    auto seir = simulate(t0, tmax, dt, model, integrator);
+    auto seir = mio::simulate<mio::oseir::Model<double>,double>(t0, tmax, dt, model, integrator);
     mio::time_series_to_file(seir,"seir.txt");
 
     printf("\n number total: %f\n",
