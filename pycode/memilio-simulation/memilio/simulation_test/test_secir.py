@@ -51,7 +51,9 @@ class Test_secir_integration(unittest.TestCase):
         model.populations[A0, State.Susceptible] = 7600
         model.populations[A0, State.Exposed] = 100
         model.populations[A0, State.InfectedNoSymptoms] = 50
+        model.populations[A0, State.InfectedNoSymptomsConfirmed] = 0
         model.populations[A0, State.InfectedSymptoms] = 50
+        model.populations[A0, State.InfectedSymptomsConfirmed] = 0
         model.populations[A0, State.InfectedSevere] = 20
         model.populations[A0, State.InfectedCritical] = 10
         model.populations[A0, State.Recovered] = 10

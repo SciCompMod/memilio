@@ -44,13 +44,13 @@ void write_log_to_file(const T& history)
     std::string input;
     std::ofstream myfile("test_output.txt");
     myfile << "Locations as numbers:\n";
-    for (auto loc_id_index = 0; loc_id_index < loc_id[0].size(); ++loc_id_index) {
-        myfile << convert_loc_id_to_string(loc_id[0][loc_id_index]) << "\n";
+    for (auto&& id : loc_id[0]) {
+        myfile << convert_loc_id_to_string(id) << "\n";
     }
     myfile << "Timepoints:\n";
 
-    for (int t = 0; t < time_points.size(); ++t) {
-        input += std::to_string(time_points[t]) + " ";
+    for (auto&& t : time_points) {
+        input += std::to_string(t) + " ";
     }
     myfile << input << "\n";
 
@@ -132,10 +132,11 @@ int main()
     // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), start_date,
                                                          infection_state));
     }

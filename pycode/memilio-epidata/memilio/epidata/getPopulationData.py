@@ -37,6 +37,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def read_population_data(username, password, read_data, directory):
     '''! Reads Population data either from regionalstatistik.de or from directory
@@ -65,8 +68,9 @@ def read_population_data(username, password, read_data, directory):
         # navigate to file as in documentation
         twill.commands.follow('Themen')
         twill.commands.follow(filename[:2])
-        # wait 1 second to prevent error
-        time.sleep(1)
+        # wait 2 seconds to prevent error
+        # page needs some time to load
+        time.sleep(2)
         twill.commands.follow(filename.split('-')[0])
         twill.commands.follow(filename)
         # start 'Werteabruf'
@@ -323,7 +327,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         merge_berlin=True, merge_eisenach=merge_eisenach, zfill=True))
     age_cols = df_pop_raw.loc[
         idCounty_idx[0]: idCounty_idx[1] - 2,
-        dd.EngEng['ageRKI']].copy().values
+        dd.EngEng['ageRKI']].values.copy()
     for i in range(len(age_cols)):
         if i == 0:
             upper_bound = str(int(age_cols[i][

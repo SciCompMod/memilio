@@ -79,7 +79,7 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
     bool converged              = false; // carry for convergence criterion
     bool failed_step_size_adapt = false;
 
-    if (m_kt_values.size() == 0) {
+    if (m_yt_eval.size() != yt.size()) {
         m_yt_eval.resize(yt.size());
         m_kt_values.resize(yt.size(), m_tab_final.entries_low.size());
     }

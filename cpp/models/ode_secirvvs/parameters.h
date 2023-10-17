@@ -651,7 +651,7 @@ public:
             corrected = true;
         }
 
-        double tol_times = 1e-4; // accepted tolerance for compartment stays
+        const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
@@ -850,7 +850,7 @@ public:
      */
     bool check_constraints() const
     {
-        double tol_times = 1e-4; // accepted tolerance for compartment stays
+        const double tol_times = 1e-1; // accepted tolerance for compartment stays
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
             log_error("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
             return true;

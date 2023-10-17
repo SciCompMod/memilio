@@ -27,6 +27,7 @@
 #include "abm/trip_list.h"
 #include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
 #include <vector>
@@ -63,10 +64,10 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other)            = default;
+    World(World&& other) = default;
     World& operator=(World&& other) = default;
     World(const World&)             = delete;
-    World& operator=(const World&)  = delete;
+    World& operator=(const World&) = delete;
 
     /** 
      * @brief Prepare the World for the next Simulation step.
@@ -132,6 +133,8 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
+    const Location& find_location(LocationType type, const Person& person) const;
+
     Location& find_location(LocationType type, const Person& person);
 
     /** 
@@ -182,6 +185,16 @@ public:
 
     const TestingStrategy& get_testing_strategy() const;
 
+    /**
+    * Get the RandomNumberGenerator used by this world for random events.
+    * Persons use their own generators with the same key as the global one. 
+    * @return The random number generator.
+    */
+    RandomNumberGenerator& get_rng()
+    {
+        return m_rng;
+    }
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -204,10 +217,12 @@ private:
     MigrationParameters m_migration_parameters; ///< Parameters that describe the migration between Location%s.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+                                           const MigrationParameters&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
+    RandomNumberGenerator m_rng; ///< Global random number generator
 };
 
 } // namespace abm

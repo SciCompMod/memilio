@@ -1,3 +1,5 @@
+# Simulations #
+
 This folder provides three spatially resolved simulations. There are two graph-ODE (or metapopulation) models using one ODE model for each county and realizing inter-county mobility via a graph approach. An agent-based model (abm) using German statistical data is also included.
 
 - 2020_npis_wildtype: Focus on a SECIR model using parameters for Sars-CoV-2 wild type variant and
