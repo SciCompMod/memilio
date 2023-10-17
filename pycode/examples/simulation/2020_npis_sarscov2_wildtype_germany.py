@@ -37,18 +37,12 @@ class InterventionLevel(Enum):
 
 class Simulation:
 
-    def __init__(self, data_dir):
-
-        self.start_date = mio.Date(2020, 5, 15)
-        start_day = (datetime.date(year=2020, month=5,
-                                   day=15) - datetime.date(year=2020, month=1, day=1)).days
-
-        self.end_date = mio.Date(2020, 9, 1)
-
+    def __init__(self, data_dir, start_date):
         self.num_groups = 6
+        self.data_dir = data_dir
+        self.start_date = start_date
 
-        model = Model(self.num_groups)
-
+    def set_covid_parameters(self, model):
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
             if isinstance(
                     min, (int, float)) and isinstance(
@@ -158,58 +152,39 @@ class Simulation:
             deathsPerCriticalMin,
             deathsPerCriticalMax)
 
+        model.parameters.StartDay = (
+            self.start_date - datetime.date(year=self.start_date.year, month=1, day=1)).days
+        model.parameters.Seasonality.value = 0.2
+
+    def set_contact_matrices(self, model):
         contact_matrices = mio.ContactMatrixGroup(
             self.num_groups, len(list(Location)))
         contact_matrices[0] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "baseline_home.txt")),
+                path.join(self.data_dir, "contacts", "baseline_home.txt")),
             mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "minimum_home.txt")))
+                path.join(self.data_dir, "contacts", "minimum_home.txt")))
         contact_matrices[1] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
                 path.join(
-                    data_dir, "contacts", "baseline_school_pf_eig.txt")),
+                    self.data_dir, "contacts", "baseline_school_pf_eig.txt")),
             mio.secir.read_mobility_plain(
                 path.join(
-                    data_dir, "contacts", "minimum_school_pf_eig.txt")))
+                    self.data_dir, "contacts", "minimum_school_pf_eig.txt")))
         contact_matrices[2] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "baseline_work.txt")),
+                path.join(self.data_dir, "contacts", "baseline_work.txt")),
             mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "minimum_work.txt")))
+                path.join(self.data_dir, "contacts", "minimum_work.txt")))
         contact_matrices[3] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "baseline_other.txt")),
+                path.join(self.data_dir, "contacts", "baseline_other.txt")),
             mio.secir.read_mobility_plain(
-                path.join(data_dir, "contacts", "minimum_other.txt")))
+                path.join(self.data_dir, "contacts", "minimum_other.txt")))
 
-        params = model.parameters
-        params.ContactPatterns.cont_freq_mat = contact_matrices
-        params.StartDay = start_day
-        params.Seasonality.value = 0.2
+        model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
-        self.set_npis(params)
-
-        graph = secir.ModelGraph()
-
-        scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
-        scaling_factor_icu = 1.0
-        tnt_capacity_factor = 7.5 / 100000.
-
-        path_population_data = path.join(
-            data_dir, "pydata", "Germany", "county_current_population.json")
-
-        mio.secir.set_nodes(
-            params, self.start_date, self.end_date, data_dir,
-            path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, 0, False)
-
-        mio.secir.set_edges(
-            data_dir, graph, len(Location))
-
-        self.graph = graph
-
-    def set_npis(self, params):
+    def set_npis(self, params, end_date):
         contacts = params.ContactPatterns
         dampings = contacts.dampings
 
@@ -281,13 +256,9 @@ class Simulation:
         # SPRING 2020 LOCKDOWN SCENARIO
         start_spring_date = datetime.date(
             2020, 3, 18)
-        end_date = datetime.date(
-            self.end_date.year, self.end_date.month, self.end_date.day)
-        start_date = datetime.date(
-            self.start_date.year, self.start_date.month, self.start_date.day)
 
         if start_spring_date < end_date:
-            start_spring = (start_spring_date - start_date).days
+            start_spring = (start_spring_date - self.start_date).days
             dampings.append(contacts_at_home(start_spring, 0.6, 0.8))
             dampings.append(school_closure(start_spring, 1.0, 1.0))
             dampings.append(home_office(start_spring, 0.2, 0.3))
@@ -304,9 +275,9 @@ class Simulation:
         # SUMMER 2020 SCENARIO
         start_summer_date = datetime.date(year=2020, month=5, day=15)
         if start_summer_date < end_date:
-            start_summer = (start_summer_date - start_date).days
+            start_summer = (start_summer_date - self.start_date).days
             school_reopen_time = (datetime.date(
-                2020, 6, 15) - start_date).days
+                2020, 6, 15) - self.start_date).days
             dampings.append(contacts_at_home(start_summer, 0.0, 0.2))
             # schools partially reopened
             dampings.append(school_closure(start_summer, 0.5, 0.5))
@@ -326,7 +297,7 @@ class Simulation:
             # autumn enforced attention
             start_autumn_date = datetime.date(year=2020, month=10, day=1)
             if start_autumn_date < end_date:
-                start_autumn = (start_autumn_date - start_date).days
+                start_autumn = (start_autumn_date - self.start_date).days
                 dampings.append(contacts_at_home(start_autumn, 0.2, 0.4))
                 dampings.append(
                     physical_distancing_home_school(
@@ -339,7 +310,7 @@ class Simulation:
             start_autumn_lockdown_date = datetime.date(2020, 11, 1)
             if (start_autumn_lockdown_date < end_date):
                 start_autumn_lockdown = (
-                    start_autumn_lockdown_date - start_date).days
+                    start_autumn_lockdown_date - self.start_date).days
                 dampings.append(contacts_at_home(
                     start_autumn_lockdown, 0.4, 0.6))
                 dampings.append(school_closure(
@@ -363,7 +334,7 @@ class Simulation:
                 min = 0.6
                 max = 0.8  # for strictest scenario: 0.8 - 1.0
                 start_winter_lockdown = (
-                    start_winter_lockdown_date - start_date).days
+                    start_winter_lockdown_date - self.start_date).days
                 dampings.append(contacts_at_home(
                     start_winter_lockdown, min, max))
                 dampings.append(school_closure(
@@ -382,8 +353,8 @@ class Simulation:
                     start_winter_lockdown, 0.0, 0.0))
 
                 # relaxing of restrictions over christmas days
-                xmas_date = mio.Date(2020, 12, 24)
-                xmas = (xmas_date - start_date).days
+                xmas_date = datetime.date(2020, 12, 24)
+                xmas = (xmas_date - self.start_date).days
                 dampings.append(contacts_at_home(xmas, 0.0, 0.0))
                 dampings.append(home_office(xmas, 0.4, 0.5))
                 dampings.append(social_events(xmas, 0.4, 0.6))
@@ -394,7 +365,7 @@ class Simulation:
 
                 # after christmas
                 after_xmas_date = datetime.date(2020, 12, 27)
-                after_xmas = (after_xmas_date - start_date).days
+                after_xmas = (after_xmas_date - self.start_date).days
                 dampings.append(contacts_at_home(after_xmas, min, max))
                 dampings.append(home_office(after_xmas, 0.2, 0.3))
                 dampings.append(social_events(after_xmas, 0.6, 0.8))
@@ -425,16 +396,41 @@ class Simulation:
             contacts.school_holiday_damping = damping_helper(
                 0, 1.0, 1.0, lvl_h, typ_s, [loc_s])
 
-    def run(self, num_runs=10):
-        mio.set_log_level(mio.LogLevel.Warning)
+    def get_graph(self, end_date):
+        model = Model(self.num_groups)
+        self.set_covid_parameters(model)
+        self.set_contact_matrices(model)
+        # self.set_npis(model.parameters, end_date)
 
-        # calculate tmax
-        tmax = (
-            datetime.date(
-                self.end_date.year, self.end_date.month, self.end_date.day) -
-            datetime.date(
-                self.start_date.year, self.start_date.month, self.start_date.
-                day)).days
+        graph = secir.ModelGraph()
+
+        scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+        scaling_factor_icu = 1.0
+        tnt_capacity_factor = 7.5 / 100000.
+
+        path_population_data = path.join(
+            self.data_dir, "pydata", "Germany",
+            "county_current_population.json")
+
+        s_day = mio.Date(self.start_date.year,
+                         self.start_date.month, self.start_date.day)
+        e_day = mio.Date(end_date.year,
+                         end_date.month, end_date.day)
+        mio.secir.set_nodes(
+            model.parameters, s_day, e_day, self.data_dir,
+            path_population_data, True, graph, scaling_factor_infected,
+            scaling_factor_icu, tnt_capacity_factor, 0, False)
+
+        mio.secir.set_edges(
+            self.data_dir, graph, len(Location))
+
+        return graph
+
+    def run(self, num_days_sim, num_runs=10):
+        mio.set_log_level(mio.LogLevel.Warning)
+        end_date = self.start_date + datetime.timedelta(days=num_days_sim)
+
+        graph = self.get_graph(end_date)
 
         def find_indices_of_true_values(boolean_array):
             true_indices = np.where(boolean_array)[0]
@@ -461,30 +457,14 @@ class Simulation:
         # find_indices_of_true_values([np.any(np.isnan(graph.get_node(i).property.result.get_value(0))) for i in range(400)])
 
         def handle_result(graph, run_idx):
-            group = secir.AgeGroup(0)
-            print("run {} with infection rate {:.2G}".format(handle_result.c, graph.get_node(
-                0).property.model.parameters.TransmissionProbabilityOnContact[group].value))
-            print("compartments at t = {}:".format(
-                graph.get_node(0).property.result.get_time(0)))
-            print(graph.get_node(0).property.result.get_value(0))
-            print("compartments at t = {}:".format(
-                graph.get_node(0).property.result.get_last_time()))
-            print(graph.get_node(0).property.result.get_last_value())
-            if (any(np.any(np.isnan(graph.get_node(i).property.result.get_value(1))) for i in range(400))):
-                indx_nan = find_indices_of_true_values(
-                    [np.any(
-                        np.isnan(
-                            graph.get_node(i).property.result.get_value(1)))
-                     for i in range(400)])
-                print_param(graph.get_node(
-                    indx_nan[0]).property.model.parameters)
+            print("run " + str(run_idx))
             handle_result.c += 1
         handle_result.c = 0
 
-        mio.secir.write_graph(self.graph, "graph_python")
+        mio.secir.write_graph(graph, "graph_python")
 
         study = secir.ParameterStudy(
-            self.graph, 0., tmax, 0.5, num_runs)
+            graph, 0., num_days_sim, 0.5, num_runs)
         study.run(handle_result)
 
         # self.last_result = handle_result.interpolated
@@ -493,7 +473,9 @@ class Simulation:
 
 if __name__ == "__main__":
     # TODO: get abs path
-    output_path = path.dirname(path.abspath(__file__))
+    file_path = path.dirname(path.abspath(__file__))
     sim = Simulation(
-        data_dir=path.join(output_path, "../../../data"))
-    sim.run()
+        data_dir=path.join(file_path, "../../../data"),
+        start_date=datetime.date(year=2020, month=12, day=12))
+    num_days_sim = 10
+    sim.run(num_days_sim, num_runs=2)
