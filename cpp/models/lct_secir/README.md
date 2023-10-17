@@ -11,9 +11,14 @@ This model is based on the Linear Chain Trick. The eight compartments
 - Dead
 
 are used to simulate the spread of the disease. 
-It ist possible to include subcompartments for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere,and InfectedCritical.
+It ist possible to include subcompartments for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
 
 
 ## Examples
 
-An example can be found at:
+A simple example can be found at: examples/lct_secir.cpp. 
+More complex examples with simulations of different scenarios can be found at: 
+- examples/lct_secir_initializations.cpp
+- examples/lct_secir_fictional_scenario.cpp 
+- examples/lct_secir_fictional_scenario.cpp
+The parameters used for simulations are calculated via examples/compute_parameters.cpp.

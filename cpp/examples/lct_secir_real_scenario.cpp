@@ -243,7 +243,7 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
     // For the beginning of the time period, we assume only half of the defined proportion of counties is in a hard lockdown.
     lockdown_hard = lockdown_hard / 2;
     // Contact reduction at home.
-    double v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.5;
+    ScalarType v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.5;
     contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
                                                                 mio::DampingLevel(int(InterventionLevel::Main)),
                                                                 mio::DampingType(int(Intervention::Home)), offset_npi);
@@ -334,9 +334,9 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
 {
     // Files in data_dir are containing contact matrices with 6 agegroups. We use this to compute a contact pattern without division of age groups.
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
-    const double age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-    const int total                = 83155031.0;
-    const int numagegroups         = 6;
+    const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
+    const ScalarType total             = 83155031.0;
+    const int numagegroups             = 6;
     mio::Date start_date =
         mio::Date(2020, (int)simulation_parameters["start_month"], (int)simulation_parameters["start_day"]);
     mio::Date end_date = mio::offset_date_by_days(start_date, 45);
@@ -431,16 +431,16 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     // Use subcompartments with a soujourn time of approximately one day in each subcompartment.
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-        round(parameters.get<mio::lsecir::TimeExposed>());
+        (int)round(parameters.get<mio::lsecir::TimeExposed>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-        round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-        round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-        round(parameters.get<mio::lsecir::TimeInfectedSevere>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedSevere>());
     // Both realistic distributions for times corresponding to InfectedCritical of the IDE model are exponential distributions.
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
-        round(parameters.get<mio::lsecir::TimeInfectedCritical>());
+        (int)round(parameters.get<mio::lsecir::TimeInfectedCritical>());
     mio::lsecir::InfectionState infectionState(vec_subcompartments);
 
     // Calculate initial value vector for subcompartments with RKI data.

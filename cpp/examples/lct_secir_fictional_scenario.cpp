@@ -89,7 +89,6 @@ mio::IOResult<void> simulate(ScalarType R0, int num_subcompartments = 3, bool si
         contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
     }
 
-    contact_matrix[0].finalize();
     parameters_lct.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
@@ -159,15 +158,15 @@ mio::IOResult<void> simulate(ScalarType R0, int num_subcompartments = 3, bool si
     else {
         // For approximately soujourn time of one day in each Subcompartment
         vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-            round(parameters_lct.get<mio::lsecir::TimeExposed>());
+            (int)round(parameters_lct.get<mio::lsecir::TimeExposed>());
         vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-            round(parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>());
+            (int)round(parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>());
         vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-            round(parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>());
+            (int)round(parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>());
         vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-            round(parameters_lct.get<mio::lsecir::TimeInfectedSevere>());
+            (int)round(parameters_lct.get<mio::lsecir::TimeInfectedSevere>());
         vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
-            round(parameters_lct.get<mio::lsecir::TimeInfectedCritical>());
+            (int)round(parameters_lct.get<mio::lsecir::TimeInfectedCritical>());
     }
     mio::lsecir::InfectionState infectionState(vec_subcompartments);
 

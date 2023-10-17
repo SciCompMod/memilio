@@ -56,9 +56,8 @@ mio::IOResult<void> simulate(int num_subcompartments = 3, std::string save_dir =
     parameters.get<mio::lsecir::TimeInfectedCritical>()             = 17.476959;
     parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-    contact_matrix[0].finalize();
+    mio::ContactMatrixGroup contact_matrix         = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                              = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
     parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;

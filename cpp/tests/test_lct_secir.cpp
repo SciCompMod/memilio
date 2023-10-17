@@ -436,8 +436,7 @@ TEST(TestLCTSecir, testConstraints)
     parameters_lct.get<mio::lsecir::TimeInfectedCritical>()             = 17.1;
     parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.01;
     mio::ContactMatrixGroup contact_matrix                              = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0].finalize();
-    parameters_lct.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    parameters_lct.get<mio::lsecir::ContactPatterns>()                  = mio::UncertainContactMatrix(contact_matrix);
 
     parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
     parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1;
