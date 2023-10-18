@@ -44,11 +44,12 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
 
     auto testing_criteria_manual = mio::abm::TestingCriteria(
-        {}, std::vector<mio::abm::InfectionState>(
-                {mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::InfectionState::InfectedSymptoms}));
-    ASSERT_EQ(testing_criteria == testing_criteria_manual, true);
-    testing_criteria_manual.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
+        std::vector<mio::abm::AgeGroup>({mio::abm::AgeGroup::Age15to34}),
+        std::vector<mio::abm::InfectionState>({mio::abm::InfectionState::InfectedNoSymptoms}));
     ASSERT_EQ(testing_criteria == testing_criteria_manual, false);
+    testing_criteria_manual.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
+    testing_criteria_manual.remove_age_group(mio::abm::AgeGroup::Age15to34);
+    ASSERT_EQ(testing_criteria == testing_criteria_manual, true);
 }
 
 TEST(TestTestingScheme, runScheme)

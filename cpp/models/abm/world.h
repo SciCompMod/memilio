@@ -55,7 +55,8 @@ public:
      * @param[in] params Parameters of the Infection that are the same everywhere in the World.
      */
     World(const GlobalInfectionParameters& params = {})
-        : m_infection_parameters(params)
+        : m_testing_strategy()
+        , m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
         , m_cemetery_id(add_location(LocationType::Cemetery))
@@ -64,10 +65,10 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other) = default;
+    World(World&& other)            = default;
     World& operator=(World&& other) = default;
     World(const World&)             = delete;
-    World& operator=(const World&) = delete;
+    World& operator=(const World&)  = delete;
 
     /** 
      * @brief Prepare the World for the next Simulation step.

@@ -54,7 +54,7 @@ public:
     /**
      * @brief Compares two TestingCriteria for functional equality.
      */
-    bool operator==(TestingCriteria other) const;
+    bool operator==(const TestingCriteria& other) const;
 
     /**
      * @brief Add an AgeGroup to the set of AgeGroup%s that are either allowed or required to be tested.
@@ -89,19 +89,6 @@ public:
     bool evaluate(const Person& p, TimePoint t) const;
 
 private:
-    /**
-     * @brief Check if a Person has the required age to get tested.
-     * @param[in] p Person to be checked.
-     */
-    bool has_requested_age(const Person& p) const;
-
-    /**
-     * @brief Check if a Person has the required InfectionState to get tested.
-     * @param[in] p Person to be checked.
-     * @param[in] t TimePoint when to check.
-     */
-    bool has_requested_infection_state(const Person& p, TimePoint t) const;
-
     std::bitset<(size_t)AgeGroup::Count>
         m_ages; ///< BitSet of #AgeGroup%s that are either allowed or required to be tested.
     std::bitset<(size_t)InfectionState::Count>
