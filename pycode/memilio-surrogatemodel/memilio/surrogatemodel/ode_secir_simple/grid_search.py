@@ -86,7 +86,7 @@ def train_and_evaluate_model(param):
                 
             model = tf.keras.Sequential([
                 tf.keras.layers.Flatten(),
-                tf.keras.layers.Dense(units=32, activation='relu')])
+                tf.keras.layers.Dense(units=neuron_number, activation='relu')])
                 
             for i in range(layer):
                         model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
@@ -99,7 +99,7 @@ def train_and_evaluate_model(param):
             num_outputs = 8
             model = tf.keras.Sequential([
             tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
-            tf.keras.layers.Conv1D(256, activation='relu',
+            tf.keras.layers.Conv1D(neuron_number, activation='relu',
                                     kernel_size=(conv_size))])
             for i in range(layer):
                 model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
@@ -112,7 +112,7 @@ def train_and_evaluate_model(param):
                 
             num_outputs = 8
             model = tf.keras.Sequential([
-            tf.keras.layers.LSTM(32, return_sequences=False)])
+            tf.keras.layers.LSTM(neuron_number, return_sequences=False)])
             
             for i in range(layer):
                     model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
