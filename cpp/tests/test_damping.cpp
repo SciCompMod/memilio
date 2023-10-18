@@ -114,3 +114,19 @@ TEST(TestDampings, smoothTransitions)
     EXPECT_THAT(print_wrap(dampings.get_matrix_at(1.0)),
                 MatrixNear((dampings.get_matrix_at(0.5) + dampings.get_matrix_at(1.5)) / 2));
 }
+
+TEST(TestDampings, automatic_cache_update)
+{
+    mio::Dampings<mio::Damping<mio::ColumnVectorShape>> dampings(2);
+    auto D1 = 0.25;
+    dampings.set_automatic_cache_update(false);
+    dampings.add(D1, mio::DampingLevel(1), mio::DampingType(2), mio::SimulationTime(1.0));
+
+#ifndef NDEBUG
+    EXPECT_DEATH(dampings.get_matrix_at(2.0), "Cache is not current\\. Did you disable the automatic cache update\\?");
+#endif
+
+    dampings.set_automatic_cache_update(true);
+
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(2.0)), MatrixNear((Eigen::VectorXd(2) << 0.25, 0.25).finished()));
+}

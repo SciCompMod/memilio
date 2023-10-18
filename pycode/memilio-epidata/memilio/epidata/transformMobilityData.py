@@ -26,6 +26,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def getMobilityFromFile(directory, mobility_file):
     """! Gets a mobility matrix that is written in a plain txt file
