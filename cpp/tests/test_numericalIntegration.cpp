@@ -71,7 +71,7 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
-    mio::EulerIntegratorCore euler;
+    mio::EulerIntegratorCore<double> euler;
 
     auto t = t0;
     for (size_t i = 0; i < n - 1; i++) {

@@ -25,7 +25,6 @@
 #include "memilio/epidemiology/contact_matrix.h" // IWYU pragma: keep
 #include "ode_seair/infection_state.h"
 #include "ode_seair/parameters.h"
-#include "ad/ad.hpp"
 
 namespace mio
 {

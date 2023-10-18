@@ -321,7 +321,7 @@ void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated
 {
     auto y0 = migrated.eval();
     auto y1 = migrated;
-    EulerIntegratorCore().step(
+    EulerIntegratorCore<double>().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },

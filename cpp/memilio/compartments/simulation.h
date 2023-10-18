@@ -51,7 +51,8 @@ public:
      */
     Simulation(Model const& model, FP t0 = 0., FP dt = 0.1)
         : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<FP,boost::numeric::odeint::runge_kutta_cash_karp54>>())
+              std::make_shared<mio::ControlledStepperWrapper<FP,
+                   boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(
               [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
