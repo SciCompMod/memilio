@@ -252,7 +252,7 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         py::arg("model"));
 
-    // TODO: These functions are in general not secir dependent, only with the current config
+    // These functions are in general not secir dependent, only with the current config
     m.def(
         "set_nodes",
         [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const std::string& data_dir,

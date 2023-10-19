@@ -472,7 +472,7 @@ class Simulation:
             handle_result.interpolated = interpolate_simulation_result(graph)
             print("run " + str(run_idx))
 
-        mio.secir.write_graph(graph, "graph_python")
+        secir.write_graph(graph, "graph_python")
 
         study = secir.ParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)
