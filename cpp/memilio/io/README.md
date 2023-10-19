@@ -127,10 +127,10 @@ The command line interface (CLI) provides some non-parameter options listed belo
 Name  (Alias) <div style="width:150px"></div> | Description
 ---|---
 `--help` (`-h`) | Shows the basic usage of the CLI, and lists each parameter by name, as well as any alias and description. Takes priority before all other options and exits the programm.
-`--print_option` | Can be used with a (space seperated) list of parameter names or aliases (without dashes) to print the current values each parameter to the terminal. This shows the correct json format used by the parameters. Exits after use.
+`--print_option` | Can be used with a (space separated) list of parameter names or aliases (without dashes) to print the current values of each parameter to the terminal. This shows the correct json format used by the parameters. Exits after use.
 `--read_from_json` | Allows reading parameters from a file instead of the command line. Both parameter names and aliases can be used, for example: <br> ```{ "<ParameterName>" : <value>, "<ParameterAlias>" : <value> }```
  `--write_to_json` | Writes *all* parameters with their current values to a specified file.
 
 In general, an option is defined as a string, which consists either of two dashes followed by a name (e.g. --help), or a single dash followed by an alias (e.g. -h). Apart from the built-in options, the names each refer to a parameter that can be set.
 
-To set the value of a parameter from the command line, first type the corresponding parameter option (see --help), followed by the value that should be assigned (reference --print_option). Values are given as a Json value corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted, e.g. the Json string `"some string"` must be entered as `\"some string\"` or `'"some string"'`.
+To set the value of a parameter from the command line, first type the corresponding parameter option (see --help), followed by the value that should be assigned (reference --print_option). Values are given as a Json value corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted. For example, the Json string `"some string"` must be entered as `\"some string\"` or `'"some string"'`.
