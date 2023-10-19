@@ -55,8 +55,7 @@ public:
      * @param[in] params Parameters of the Infection that are the same everywhere in the World.
      */
     World(const GlobalInfectionParameters& params = {})
-        : m_testing_strategy()
-        , m_infection_parameters(params)
+        : m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
         , m_cemetery_id(add_location(LocationType::Cemetery))

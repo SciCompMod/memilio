@@ -54,21 +54,17 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 
 TEST(TestTestingScheme, runScheme)
 {
-    auto rng = mio::RandomNumberGenerator();
-
-    std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::InfectedSymptoms,
-                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
-    std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
-                                                                    mio::abm::LocationType::Work};
-
-    auto testing_criteria1 = mio::abm::TestingCriteria({}, test_infection_states1);
-
+    auto rng                    = mio::RandomNumberGenerator();
     const auto testing_min_time = mio::abm::days(1);
     const auto start_date       = mio::abm::TimePoint(0);
     const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
     const auto probability      = 0.8;
     const auto test_type        = mio::abm::PCRTest();
 
+    std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
+                                                                   mio::abm::InfectionState::InfectedNoSymptoms};
+
+    auto testing_criteria1 = mio::abm::TestingCriteria({}, test_infection_states);
     auto testing_scheme1 =
         mio::abm::TestingScheme(testing_criteria1, testing_min_time, start_date, end_date, test_type, probability);
 
@@ -85,7 +81,6 @@ TEST(TestTestingScheme, runScheme)
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     auto person1 =
         make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
@@ -104,4 +99,49 @@ TEST(TestTestingScheme, runScheme)
     ASSERT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
     ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
               true); // Person doesn't test
+}
+
+TEST(TestTestingScheme, initAndRunTestingStrategy)
+{
+    auto rng                    = mio::RandomNumberGenerator();
+    const auto testing_min_time = mio::abm::days(1);
+    const auto start_date       = mio::abm::TimePoint(0);
+    const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability      = 0.8;
+    const auto test_type        = mio::abm::PCRTest();
+
+    std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
+                                                                   mio::abm::InfectionState::InfectedNoSymptoms};
+    auto testing_criteria1                                      = mio::abm::TestingCriteria({}, test_infection_states);
+    auto testing_scheme1 =
+        mio::abm::TestingScheme(testing_criteria1, testing_min_time, start_date, end_date, test_type, probability);
+    testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
+    std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
+    auto testing_criteria2 = mio::abm::TestingCriteria({}, test_infection_states2);
+    auto testing_scheme2 =
+        mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
+
+    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
+    auto person1 =
+        make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
+    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
+    auto person2     = make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Recovered);
+    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(3))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(0.9));
+
+    mio::abm::TestingStrategy test_strategy =
+        mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
+    test_strategy.add_testing_scheme(mio::abm::LocationType::Home, testing_scheme1);
+    test_strategy.add_testing_scheme(mio::abm::LocationType::Home, testing_scheme2);
+    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_home, start_date),
+              false); // Person tests and tests positive
+    ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_home, start_date),
+              true); // Person tests and tests negative
+    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_home, start_date), true); // Person doesn't test
 }

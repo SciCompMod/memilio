@@ -163,7 +163,7 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
     }
 
     // Combine two vectors of schemes at corresponding location and location stype
-    std::vector<std::vector<TestingScheme>*> schemes_vector = {
+    std::vector<TestingScheme>* schemes_vector[] = {
         &m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}],
         &m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}]};
 
