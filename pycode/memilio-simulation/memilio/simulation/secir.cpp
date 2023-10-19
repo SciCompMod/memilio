@@ -285,10 +285,11 @@ PYBIND11_MODULE(_simulation_secir, m)
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
+            auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result         = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
                                          mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
                                          decltype(mio::read_mobility_plain)>(
-                data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain);
+                data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
