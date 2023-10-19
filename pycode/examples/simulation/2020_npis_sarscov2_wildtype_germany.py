@@ -20,19 +20,19 @@ class Location(Enum):
 
 
 class Intervention(Enum):
-    Home = auto()
-    SchoolClosure = auto()
-    HomeOffice = auto()
-    GatheringBanFacilitiesClosure = auto()
-    PhysicalDistanceAndMasks = auto()
-    SeniorAwareness = auto()
+    Home = 0
+    SchoolClosure = 1
+    HomeOffice = 2
+    GatheringBanFacilitiesClosure = 3
+    PhysicalDistanceAndMasks = 4
+    SeniorAwareness = 5
 
 
 class InterventionLevel(Enum):
-    Main = auto()
-    PhysicalDistanceAndMasks = auto()
-    SeniorAwareness = auto()
-    Holidays = auto()
+    Main = 0
+    PhysicalDistanceAndMasks = 1
+    SeniorAwareness = 2
+    Holidays = 3
 
 
 class Simulation:
@@ -153,12 +153,20 @@ class Simulation:
             deathsPerCriticalMax)
 
         model.parameters.StartDay = (
-            self.start_date - datetime.date(year=self.start_date.year, month=1, day=1)).days
+            self.start_date -
+            datetime.date(year=self.start_date.year, month=1, day=1)).days + 1
         model.parameters.Seasonality.value = 0.2
+
+        seasonality_min = 0.1
+        seasonality_max = 0.3
+        model.parameters.Seasonality = mio.UncertainValue(
+            0.5 * (seasonality_max + seasonality_min))
+        model.parameters.Seasonality.set_distribution(
+            mio.ParameterDistributionUniform(seasonality_min, seasonality_max))
 
     def set_contact_matrices(self, model):
         contact_matrices = mio.ContactMatrixGroup(
-            self.num_groups, len(list(Location)))
+            len(list(Location)), self.num_groups)
         contact_matrices[0] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
                 path.join(self.data_dir, "contacts", "baseline_home.txt")),
@@ -210,8 +218,10 @@ class Simulation:
         typ_p = Intervention.PhysicalDistanceAndMasks.value
         typ_se = Intervention.SeniorAwareness.value
 
-        def damping_helper(t, min, max, damping_level, type, location):
-            v = mio.UncertainValue()
+        def damping_helper(
+                t, min, max, damping_level, type, location,
+                group_weights=group_weights_all):
+            v = mio.UncertainValue(0.5 * (max + min))
             v.set_distribution(mio.ParameterDistributionUniform(min, max))
             return mio.DampingSampling(
                 value=v,
@@ -219,7 +229,7 @@ class Simulation:
                 type=type,
                 time=t,
                 matrix_indices=location,
-                group_weights=group_weights_all)
+                group_weights=group_weights)
 
         def contacts_at_home(t, min, max):
             return damping_helper(
@@ -243,15 +253,16 @@ class Simulation:
 
         def physical_distancing_home_school(t, min, max):
             return damping_helper(
-                t, min, max, lvl_m, typ_p, [loc_h, loc_s])
+                t, min, max, lvl_p, typ_p, [loc_h, loc_s])
 
         def physical_distancing_work_other(t, min, max):
             return damping_helper(
-                t, min, max, lvl_m, typ_p, [loc_w, loc_o])
+                t, min, max, lvl_p, typ_p, [loc_w, loc_o])
 
         def senior_awareness(t, min, max):
             return damping_helper(
-                t, min, max, lvl_s, typ_se, [loc_h, loc_o])
+                t, min, max, lvl_s, typ_se, [loc_h, loc_o],
+                group_weights_seniors)
 
         # SPRING 2020 LOCKDOWN SCENARIO
         start_spring_date = datetime.date(
@@ -379,7 +390,7 @@ class Simulation:
             local_npis = []
             # increased from [0.4, 0.6] in Nov
             local_npis.append(contacts_at_home(0, 0.6, 0.8))
-            local_npis.append(school_closure(0, 0.2, 0.3))  # see paper
+            local_npis.append(school_closure(0, 0.25, 0.25))  # see paper
             local_npis.append(home_office(0, 0.2, 0.3))
             local_npis.append(social_events(0, 0.6, 0.8))
             local_npis.append(social_events_work(0, 0.1, 0.2))
@@ -395,12 +406,13 @@ class Simulation:
             # school holidays(holiday periods are set per node, see set_nodes)
             contacts.school_holiday_damping = damping_helper(
                 0, 1.0, 1.0, lvl_h, typ_s, [loc_s])
+            contacts.dampings = dampings
 
     def get_graph(self, end_date):
         model = Model(self.num_groups)
         self.set_covid_parameters(model)
         self.set_contact_matrices(model)
-        # self.set_npis(model.parameters, end_date)
+        self.set_npis(model.parameters, end_date)
 
         graph = secir.ModelGraph()
 
@@ -457,25 +469,22 @@ class Simulation:
         # find_indices_of_true_values([np.any(np.isnan(graph.get_node(i).property.result.get_value(0))) for i in range(400)])
 
         def handle_result(graph, run_idx):
+            handle_result.interpolated = interpolate_simulation_result(graph)
             print("run " + str(run_idx))
-            handle_result.c += 1
-        handle_result.c = 0
 
         mio.secir.write_graph(graph, "graph_python")
 
         study = secir.ParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)
         study.run(handle_result)
-
-        # self.last_result = handle_result.interpolated
-        return [ts.as_ndarray() for ts in self.last_result]
+        last_result = handle_result.interpolated
+        return [ts.as_ndarray() for ts in last_result]
 
 
 if __name__ == "__main__":
-    # TODO: get abs path
     file_path = path.dirname(path.abspath(__file__))
     sim = Simulation(
         data_dir=path.join(file_path, "../../../data"),
         start_date=datetime.date(year=2020, month=12, day=12))
-    num_days_sim = 10
+    num_days_sim = 30
     sim.run(num_days_sim, num_runs=2)
