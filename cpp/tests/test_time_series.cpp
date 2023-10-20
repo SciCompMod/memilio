@@ -322,3 +322,12 @@ TYPED_TEST(TestTimeSeries, create)
         }
     }
 }
+
+TEST(TestTimeSeries, printTo)
+{
+    //PrintTo is test code, so we don't check the exact output, just that it exists and doesn't fail
+    auto ts = mio::TimeSeries<double>::zero(3, 2);
+    std::stringstream ss;
+    PrintTo(ts, &ss);
+    ASSERT_FALSE(ss.str().empty());
+}
