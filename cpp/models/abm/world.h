@@ -20,18 +20,19 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
+#include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
 #include "abm/trip_list.h"
 #include "abm/testing_strategy.h"
-#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
-#include "memilio/epidemiology/populations.h"
 
+#include <bitset>
+#include <initializer_list>
 #include <vector>
 #include <memory>
 
@@ -46,7 +47,6 @@ namespace abm
  */
 class World
 {
-
 public:
     using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
     using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
@@ -60,9 +60,9 @@ public:
     World(size_t num_agegroups)
         : parameters(num_agegroups)
         , m_trip_list()
+        , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
     {
-        use_migration_rules(true);
     }
 
     /**
@@ -239,6 +239,29 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
+    /**
+    * @brief Check if at least one Location with a specified LocationType exists.
+    * @return True if there is at least one Location of LocationType `type`. False otherwise.
+    */
+    bool has_location(LocationType type) const
+    {
+        return m_has_locations[size_t(type)];
+    }
+
+    /**
+    * @brief Check if at least one Location of every specified LocationType exists.
+    * @tparam C A type of container of LocationType.
+    * @param location_types A container of LocationType%s.
+    * @return True if there is at least one Location of every LocationType in `location_types`. False otherwise.
+    */
+    template <class C = std::initializer_list<LocationType>>
+    bool has_locations(const C& location_types) const
+    {
+        return std::all_of(location_types.begin(), location_types.end(), [&](auto loc) {
+            return has_location(loc);
+        });
+    }
+
     /** 
      * @brief Get the TestingStrategy.
      * @return Reference to the list of TestingScheme%s that are checked for testing.
@@ -262,6 +285,22 @@ public:
         return m_rng;
     }
 
+    /**
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at all Locations that have 
+     * the LocationType.
+     * @param[in] loc_type LocationId key for TestingScheme to be added.
+     * @param[in] scheme TestingScheme to be added.
+     */
+    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+
+    /**
+     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at all Locations that have 
+     * the LocationType.
+     * @param[in] loc_type LocationId key for TestingScheme to be added.
+     * @param[in] scheme TestingScheme to be added.
+     */
+    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -278,6 +317,8 @@ private:
 
     std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
+    std::bitset<size_t(LocationType::Count)>
+        m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
