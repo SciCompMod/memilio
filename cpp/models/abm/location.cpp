@@ -113,6 +113,11 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
     }
 }
 
+bool Location::may_enter(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t)
+{
+    return m_NPIs(rng, person, *this, t);
+}
+
 void Location::add_person(Person& p, std::vector<uint32_t> cells)
 {
     std::lock_guard<std::mutex> lk(m_mut);
