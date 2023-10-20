@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn , David Kerkmann, Khoa Nguyen
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -38,13 +38,14 @@ namespace abm
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
     LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
-    m_locations.emplace_back(std::make_unique<Location>(id, num_cells));
+    m_locations.emplace_back(std::make_unique<Location>(id, parameters.get_num_groups(), num_cells));
     m_has_locations[size_t(type)] = true;
     return id;
 }
 
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
+    assert((size_t)age.size < (size_t)parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
@@ -69,7 +70,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-        person->interact(personal_rng, t, dt, m_infection_parameters);
+        person->interact(personal_rng, t, dt, parameters);
     }
 }
 
@@ -82,7 +83,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
-            auto target_type       = rule(personal_rng, *person, t, dt, m_migration_parameters);
+            auto target_type       = rule(personal_rng, *person, t, dt, parameters);
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
             if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
@@ -152,7 +153,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
-        location->cache_exposure_rates(t, dt);
+        location->cache_exposure_rates(t, dt, parameters.get_num_groups());
     }
 }
 
@@ -206,26 +207,6 @@ size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, Location
                                return loc->get_type() == type ? running_sum + loc->get_subpopulation(t, s)
                                                               : running_sum;
                            });
-}
-
-MigrationParameters& World::get_migration_parameters()
-{
-    return m_migration_parameters;
-}
-
-const MigrationParameters& World::get_migration_parameters() const
-{
-    return m_migration_parameters;
-}
-
-GlobalInfectionParameters& World::get_global_infection_parameters()
-{
-    return m_infection_parameters;
-}
-
-const GlobalInfectionParameters& World::get_global_infection_parameters() const
-{
-    return m_infection_parameters;
 }
 
 TripList& World::get_trip_list()

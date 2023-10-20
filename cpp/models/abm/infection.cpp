@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
@@ -26,19 +26,19 @@ namespace mio
 namespace abm
 {
 
-Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
-                     const GlobalInfectionParameters& params, TimePoint init_date, InfectionState init_state,
-                     std::pair<ExposureType, TimePoint> latest_protection, bool detected)
+Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
+                     TimePoint init_date, InfectionState init_state, std::pair<ExposureType, TimePoint> latest_exposure,
+                     bool detected)
     : m_virus_variant(virus)
     , m_detected(detected)
 {
-    m_viral_load.start_date = draw_infection_course(rng, age, params, init_date, init_state, latest_protection);
+    m_viral_load.start_date = draw_infection_course(rng, age, params, init_date, init_state, latest_exposure);
 
     auto vl_params                    = params.get<ViralLoadDistributions>()[{virus, age}];
     ScalarType high_viral_load_factor = 1;
-    if (latest_protection.first != ExposureType::NoProtection) {
+    if (latest_exposure.first != ExposureType::NoProtection) {
         high_viral_load_factor -=
-            params.get<HighViralLoadProtectionFactor>()(init_date.days() - latest_protection.second.days());
+            params.get<HighViralLoadProtectionFactor>()(init_date.days() - latest_exposure.second.days());
     }
     m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(rng, vl_params.viral_load_peak.params) *
                         high_viral_load_factor;
@@ -111,9 +111,8 @@ TimePoint Infection::get_start_date() const
     return m_viral_load.start_date;
 }
 
-TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, AgeGroup age,
-                                           const GlobalInfectionParameters& params, TimePoint init_date,
-                                           InfectionState init_state,
+TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                           TimePoint init_date, InfectionState init_state,
                                            std::pair<ExposureType, TimePoint> latest_protection)
 {
     TimePoint start_date = draw_infection_course_backward(rng, age, params, init_date, init_state);
@@ -122,9 +121,8 @@ TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, A
 }
 
 void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age,
-                                              const GlobalInfectionParameters& params, TimePoint init_date,
-                                              InfectionState start_state,
-                                              std::pair<ExposureType, TimePoint> latest_protection)
+                                              const Parameters& params, TimePoint init_date, InfectionState start_state,
+                                              std::pair<ExposureType, TimePoint> latest_exposure)
 {
     auto t = init_date;
     TimeSpan time_period{}; // time period for current infection state
@@ -159,10 +157,10 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
             {
                 ScalarType severity_protection_factor = 0.5;
                 v                                     = uniform_dist(rng);
-                if (latest_protection.first != ExposureType::NoProtection) {
+                if (latest_exposure.first != ExposureType::NoProtection) {
                     severity_protection_factor =
-                        params.get<SeverityProtectionFactor>()[{latest_protection.first, age, m_virus_variant}](
-                            t.days() - latest_protection.second.days());
+                        params.get<SeverityProtectionFactor>()[{latest_exposure.first, age, m_virus_variant}](
+                            t.days() - latest_exposure.second.days());
                 }
                 if (v < (1 - severity_protection_factor) * 0.5) {
                     time_period =
@@ -210,7 +208,7 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
 }
 
 TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerator& rng, AgeGroup age,
-                                                    const GlobalInfectionParameters& params, TimePoint init_date,
+                                                    const Parameters& params, TimePoint init_date,
                                                     InfectionState init_state)
 {
     auto start_date = init_date;

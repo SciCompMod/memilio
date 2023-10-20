@@ -1,6 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
@@ -47,61 +46,61 @@ namespace abm
  * @brief Completely random migration to any other Location.
  */
 LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                              const MigrationParameters& params);
+                              const Parameters& params);
 
 /**
  * @brief School age children go to school in the morning and return later in the day.
  */
 LocationType go_to_school(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                          const MigrationParameters& params);
+                          const Parameters& params);
 
 /** 
  * @brief Adults may go shopping in their free time.
  */
 LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                        const MigrationParameters& params);
+                        const Parameters& params);
 
 /**
  * @brief Person%s might go to social events.
  */
 LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                         const MigrationParameters& params);
+                         const Parameters& params);
 
 /**
  * @brief Adults go to work in the morning and return later in the day.
  */
 LocationType go_to_work(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                        const MigrationParameters& params);
+                        const Parameters& params);
 
 /**
  * @brief Person%s who are in quarantine should go home.
  */
 LocationType go_to_quarantine(Person::RandomNumberGenerator& rng, const Person& person, TimePoint /*t*/,
-                              TimeSpan /*dt*/, const MigrationParameters& /*params*/);
+                              TimeSpan /*dt*/, const Parameters& /*params*/);
 
 /**
  * @brief Infected Person%s may be hospitalized.
  */
 LocationType go_to_hospital(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                            const MigrationParameters& params);
+                            const Parameters& params);
 
 /**
  * @brief Person%s in the hospital may be put in intensive care.
  */
 LocationType go_to_icu(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                       const MigrationParameters& params);
+                       const Parameters& params);
 
 /**
  * @brief Person%s in the hospital/icu return home when they recover.
  */
 LocationType return_home_when_recovered(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t,
-                                        TimeSpan dt, const MigrationParameters& params);
+                                        TimeSpan dt, const Parameters& params);
 
 /**
  * @brief Person%s in the icu go to cemetery when they are dead.
  */
 LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                        const MigrationParameters& params);
+                        const Parameters& params);
 /**@}*/
 
 } // namespace abm
