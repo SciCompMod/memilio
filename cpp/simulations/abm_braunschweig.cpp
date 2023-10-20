@@ -28,6 +28,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 #include "abm/vaccine.h"
+#include "abm/common_abm_loggers.h"
 
 namespace fs = boost::filesystem;
 
@@ -997,31 +998,6 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     auto sim = mio::abm::Simulation(t0, std::move(world));
     return sim;
 }
-struct LogLocationInformation : mio::LogOnceStart {
-    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type location_information{};
-        for (auto&& location : sim.get_world().get_locations()) {
-            location_information.push_back(std::make_tuple(location.get_index(), location.get_geographical_location()));
-        }
-        return location_information;
-    }
-};
-
-struct LogPersonInformation : mio::LogOnceStart {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type person_information{};
-        for (auto&& person : sim.get_world().get_persons()) {
-            person_information.push_back(std::make_tuple(
-                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
-                person.get_age()));
-        }
-        return person_information;
-    }
-};
 
 mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
@@ -1041,7 +1017,9 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(input_file, t0, max_num_persons);
         //output object
-        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
+        mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
+                     mio::abm::LogMovementData>
+            history;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {

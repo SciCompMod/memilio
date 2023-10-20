@@ -28,7 +28,7 @@ namespace mio
 namespace abm
 {
 
-enum TransportMode : uint32_t
+enum class TransportMode : uint32_t
 {
     Bike = 0,
     CarDriver,
@@ -39,7 +39,7 @@ enum TransportMode : uint32_t
     Unknown
 };
 
-enum ActivityType : uint32_t
+enum class ActivityType : uint32_t
 {
     Workplace = 0,
     Education,
