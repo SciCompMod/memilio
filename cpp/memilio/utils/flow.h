@@ -29,7 +29,7 @@ namespace mio
 template <auto Source, auto Target>
 struct Flow {
     using Type = decltype(Source);
-    static_assert(std::is_same<Type, decltype(Target)>::value & std::is_enum<Type>::value,
+    static_assert(std::is_same<Type, decltype(Target)>::value && std::is_enum<Type>::value,
                   "The Source and Target parameters of a Flow must have the same enum type.");
     const static Type source = Source;
     const static Type target = Target;
