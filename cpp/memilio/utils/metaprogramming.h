@@ -21,6 +21,7 @@
 #define EPI_UTILS_METAPROGRAMMING_H
 
 #include <type_traits>
+#include <utility>
 
 namespace mio
 {
@@ -111,7 +112,7 @@ constexpr bool conjunction_v = conjunction<Bs...>::value;
 * see https://en.cppreference.com/w/cpp/types/disjunction.
 * @{
 */
-template<class...>
+template <class...>
 struct disjunction : std::false_type {
     //disjunction of no element is false like in c++17
 };
@@ -119,25 +120,24 @@ template <class B1>
 struct disjunction<B1> : B1 {
     //disjunction of one element is identity
 };
-template<class B1, class... Bn>
+template <class B1, class... Bn>
 struct disjunction<B1, Bn...> : std::conditional<bool(B1::value), B1, disjunction<Bn...>> {
     //disjunction of mutliple elements is equal to the first element if the first element is true.
     //otherwise its equal to the disjunction of the remaining elements.
 };
-template<class... Bn>
+template <class... Bn>
 constexpr bool disjunction_v = disjunction<Bn...>::value;
 /**@}*/
-
 
 namespace details
 {
 //non-copyable but trivally constructible and moveable type
 struct NoCopy {
-    NoCopy(const NoCopy&) = delete;
-    NoCopy()              = default;
-    NoCopy(NoCopy&&)      = default;
+    NoCopy(const NoCopy&)            = delete;
+    NoCopy()                         = default;
+    NoCopy(NoCopy&&)                 = default;
     NoCopy& operator=(const NoCopy&) = delete;
-    NoCopy& operator=(NoCopy&&) = default;
+    NoCopy& operator=(NoCopy&&)      = default;
 };
 
 //trivially constructible, copyable, moveable type
@@ -162,6 +162,70 @@ using not_copyable_if = std::conditional<Cond, details::NoCopy, details::Empty>;
  */
 template <bool Cond>
 using not_copyable_if_t = typename not_copyable_if<Cond>::type;
+
+/**
+ * Finds the type at the Index-th position in the list Types.
+ * @tparam Index An index in `[0, sizeof...(Types))`.
+ * @tparam Types A list of types.
+ */
+template <std::size_t Index, class... Types>
+struct type_at {
+    static_assert(Index < sizeof...(Types), "Index is too large for the list Types.");
+    // template <template <class...> class TypeContainer>
+    // type_at(TypeContainer<Types...>)
+    // {
+    // }
+    using type = typename std::tuple_element<Index, std::tuple<Types...>>::type;
+};
+
+/**
+ * @brief The type at the Index-th position in the list Types.
+ * Equivalent to type_at<Index, Types...>::type.
+ * @see type_at.
+ */
+template <std::size_t Index, class... Types>
+using type_at_t = typename type_at<Index, Types...>::type;
+
+/**
+ * Finds the index of Type in the list Types.
+ * @tparam Type A type contained in Types.
+ * @tparam Types A list of types.
+ */
+template <class Type, class... Types>
+struct index_of {
+    // template <template <class...> class TypeContainer>
+    // index_of(TypeContainer<Types...>)
+    // {
+    // }
+private:
+    /**
+     * @brief Recursively searches Types until Type is found. Asserts that Type is in Types.
+     * @tparam Index Iteration index for Types. Do not change from default value.
+     * @return The index of Type in Types.
+     */
+    template <std::size_t Index = 0>
+    static constexpr std::size_t index_of_impl()
+    {
+        if constexpr (std::is_same_v<Type, type_at_t<Index, Types...>>) {
+            return Index;
+        }
+        else {
+            static_assert(Index < sizeof...(Types), "Type is not contained in given list.");
+            return index_of_impl<Index + 1>();
+        }
+    }
+
+public:
+    static constexpr std::size_t value = index_of_impl();
+};
+
+/**
+ * @brief The index of Type in the list Types.
+ * Equivalent to index_of<Type, Types...>::value.
+ * @see index_of.
+ */
+template <class Type, class... Types>
+constexpr std::size_t index_of_v = index_of<Type, Types...>::value;
 
 } // namespace mio
 

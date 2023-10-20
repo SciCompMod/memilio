@@ -65,6 +65,7 @@ add_library(memilio
     utils/uncertain_value.h
     utils/uncertain_value.cpp
     utils/index.h
+    utils/multi_index.h
     utils/type_list.h
     utils/custom_index_array.h
     utils/memory.h

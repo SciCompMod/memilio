@@ -26,6 +26,7 @@
 #include "memilio/utils/type_list.h"
 #include "memilio/utils/flow.h"
 #include "memilio/utils/metaprogramming.h"
+#include "memilio/utils/multi_index.h"
 #include <cstddef>
 #include <type_traits>
 #include <vector>
@@ -250,14 +251,32 @@ public:
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt.setZero();
-        for (size_t i = 0; i < this->populations.numel() / static_cast<size_t>(Comp::Count); i++) {
-            // see get_flow_index for more info on these index calculations.
-            // the Comp-index is added in get_rhs_impl; the flat PopIndex is
-            //   flat_pop_index = (i % m_comp_factor) + (i / m_comp_factor) * m_comp_factor * Comp::Count;
-            // mind the integer division.
-            get_rhs_impl<0>(flows, dydt,
-                            i + (i / m_comp_factor) * m_comp_factor * (static_cast<size_t>(Comp::Count) - 1),
-                            i * FlowChart().size());
+        auto dims       = this->populations.size();
+        get<Comp>(dims) = Index<Comp>(1);
+        for (auto I : make_range(dims)) {
+            get_rhs_impl2(flows, dydt, I);
+        }
+        // for (size_t i = 0; i < this->populations.numel() / static_cast<size_t>(Comp::Count); i++) {
+        //     // see get_flow_index for more info on these index calculations.
+        //     // the Comp-index is added in get_rhs_impl; the flat PopIndex is
+        //     //   flat_pop_index = (i % m_comp_factor) + (i / m_comp_factor) * m_comp_factor * Comp::Count;
+        //     // mind the integer division.
+        //     get_rhs_impl<0>(flows, dydt,
+        //                     i + (i / m_comp_factor) * m_comp_factor * (static_cast<size_t>(Comp::Count) - 1),
+        //                     i * FlowChart().size());
+        // }
+    }
+
+    template <size_t FlowID = 0>
+    void get_rhs_impl2(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, PopIndex& I) const
+    {
+        using Flow   = type_at_t<FlowID, FlowChart>;
+        get<Comp>(I) = Flow::source;
+        rhs[this->populations.get_flat_index(I)] -= flows[get_flow_index<Flow::source, Flow::target>(reduce_index(I))];
+        get<Comp>(I) = Flow::target;
+        rhs[this->populations.get_flat_index(I)] += flows[get_flow_index<Flow::source, Flow::target>(reduce_index(I))];
+        if constexpr (FlowID + 1 < FlowChart().size()) {
+            get_rhs_impl2<FlowID + 1>(flows, rhs, I);
         }
     }
 
@@ -319,8 +338,13 @@ public:
     template <Comp Source, Comp Target>
     size_t get_flow_index(const FlowIndex& indices) const
     {
-        return flatten_index(indices, m_flow_index_dimensions) * FlowChart().size() +
-               index_of_v<Flow<Source, Target>, FlowChart>;
+        if constexpr (std::is_same_v<FlowIndex, Index<>>) {
+            return get_flow_index<Source, Target>();
+        }
+        else {
+            return flatten_index(indices, m_flow_index_dimensions) * FlowChart().size() +
+                   index_of_v<Flow<Source, Target>, FlowChart>;
+        }
     }
 
     /**

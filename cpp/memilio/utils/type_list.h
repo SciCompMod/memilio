@@ -30,67 +30,16 @@
 namespace mio
 {
 
-template <size_t Index, class... Types>
-struct type_at {
-    template <template <class...> class TypeContainer>
-    type_at(TypeContainer<Types...>)
-    {
-    }
-    using type = typename std::tuple_element<Index, std::tuple<Types...>>::type;
-    // std::remove_reference_t<decltype(std::get<Index>(std::declval<std::tuple<Types...>>()))>;
-};
-
-template <size_t Index, class... Types>
-using type_at_t = typename type_at<Index, Types...>::type;
-
-template <class Type, class... Types>
-struct index_of {
-    template <template <class...> class TypeContainer>
-    index_of(TypeContainer<Types...>)
-    {
-    }
-
-private:
-    template <size_t Index = 0>
-    static constexpr size_t index_of_impl()
-    {
-        if constexpr (std::is_same<Type, typename std::tuple_element<Index, std::tuple<Types...>>::type>::value) {
-            return Index;
-        }
-        else {
-            static_assert(Index < sizeof...(Types), "Type is not contained in given list.");
-            return index_of_impl<Index + 1>();
-        }
-    }
-
-public:
-    static constexpr size_t value = index_of_impl();
-};
-
-template <class Type, class... Types>
-constexpr size_t index_of_v = index_of<Type, Types...>::value;
-
 /// @brief Collection of types. Each type is mapped to an index of type size_t.
 template <class... Types>
 struct TypeList {
-    /**
-     * @brief Get a type by index.
-     * @tparam Index position of a type.
-     * @return The type at position Index of TypeList.
-     */
-    template <size_t Index>
-    constexpr auto get() const
-    {
-        return type_at_t<Index, Types...>();
-    }
-
     /**
      * @brief Get index of a given type.
      * @tparam Type A type contained in TypeList.
      * @return Position of Type within TypeList.
      */
     template <class Type>
-    constexpr size_t get() const
+    constexpr size_t index_of() const
     {
         return index_of_v<Type, Types...>;
     }
@@ -102,10 +51,12 @@ struct TypeList {
     }
 };
 
+/// Specialization of type_at for TypeList. @see type_at.
 template <size_t Index, class... Types>
 struct type_at<Index, TypeList<Types...>> : public type_at<Index, Types...> {
 };
 
+/// Specialization of index_of for TypeList. @see index_of.
 template <class Type, class... Types>
 struct index_of<Type, TypeList<Types...>> : public index_of<Type, Types...> {
 };

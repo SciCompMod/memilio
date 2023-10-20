@@ -63,6 +63,11 @@ public:
 
     static size_t constexpr size = 1;
 
+    static Index constexpr Zero()
+    {
+        return Index((size_t)0);
+    }
+
     /**
      * @brief Constructor from enum, if CategoryTag is an enum
      */
@@ -114,6 +119,11 @@ class Index
 {
 public:
     static size_t constexpr size = sizeof...(CategoryTag);
+
+    static Index constexpr Zero()
+    {
+        return Index(Index<CategoryTag>::Zero()...);
+    }
 
     // constructor from Indices
     Index(Index<CategoryTag> const&... _indices)
