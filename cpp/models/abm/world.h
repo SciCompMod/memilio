@@ -20,6 +20,7 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
+#include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
@@ -30,6 +31,8 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
+#include <bitset>
+#include <initializer_list>
 #include <vector>
 #include <memory>
 
@@ -58,9 +61,9 @@ public:
         : m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
+        , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
     {
-        use_migration_rules(true);
     }
 
     //type is move-only for stable references of persons/locations
@@ -177,6 +180,29 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
+    /**
+    * @brief Check if at least one Location with a specified LocationType exists.
+    * @return True if there is at least one Location of LocationType `type`. False otherwise.
+    */
+    bool has_location(LocationType type) const
+    {
+        return m_has_locations[size_t(type)];
+    }
+
+    /**
+    * @brief Check if at least one Location of every specified LocationType exists.
+    * @tparam C A type of container of LocationType.
+    * @param location_types A container of LocationType%s.
+    * @return True if there is at least one Location of every LocationType in `location_types`. False otherwise.
+    */
+    template <class C = std::initializer_list<LocationType>>
+    bool has_locations(const C& location_types) const
+    {
+        return std::all_of(location_types.begin(), location_types.end(), [&](auto loc) {
+            return has_location(loc);
+        });
+    }
+
     /** 
      * @brief Get the TestingStrategy.
      * @return Reference to the list of TestingScheme%s that are checked for testing.
@@ -211,16 +237,14 @@ private:
 
     std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
+    std::bitset<size_t(LocationType::Count)>
+        m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     GlobalInfectionParameters m_infection_parameters; /** Parameters of the Infection that are the same everywhere in
     the World.*/
     MigrationParameters m_migration_parameters; ///< Parameters that describe the migration between Location%s.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
-                                           const MigrationParameters&),
-                          std::vector<LocationType>>>
-        m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
     RandomNumberGenerator m_rng; ///< Global random number generator
 };
