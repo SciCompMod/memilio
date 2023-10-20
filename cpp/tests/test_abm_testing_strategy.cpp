@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -23,9 +23,9 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0);
-    auto person = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    mio::abm::Location work(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
+    auto person = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
     auto testing_criteria = mio::abm::TestingCriteria();
@@ -38,10 +38,10 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     ASSERT_EQ(testing_criteria.evaluate(person, work, t), true);
     ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
 
-    testing_criteria.add_age_group(mio::abm::AgeGroup::Age35to59);
+    testing_criteria.add_age_group(AGE_GROUP_35_TO_59);
     ASSERT_EQ(testing_criteria.evaluate(person, home, t),
               false); // now it isn't empty and get's evaluated against age group
-    testing_criteria.remove_age_group(mio::abm::AgeGroup::Age35to59);
+    testing_criteria.remove_age_group(AGE_GROUP_35_TO_59);
     ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
@@ -67,7 +67,7 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::InfectedSymptoms,
                                                                     mio::abm::InfectionState::InfectedNoSymptoms};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
-                                                                mio::abm::LocationType::Work};
+                                                                    mio::abm::LocationType::Work};
 
     auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
@@ -93,12 +93,11 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
     testing_scheme.add_testing_criteria(testing_criteria2);
 
-    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
-    auto person1     = make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
+    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
+    auto person1     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
-    auto person2 =
-        make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Recovered);
+    auto person2     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Recovered);
     auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;

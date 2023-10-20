@@ -23,13 +23,19 @@ The result of the simulation is for each time step the count of persons in each 
 ## Example
 An example can also be found at simulations/abm.cpp
 ```
-    //setup the infection parameters
-    mio::abm::GlobalInfectionParameters params;
-    params.incubation_period = 4.7;
+    size_t NUM_AGE_GROUPS         = 4;
+    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 4);
+    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 3);
+    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
+    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 1);
+
+    // Create the world with 4 age groups.
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
+    //setup the parameters
+    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
     //...
 
     //create the world with some nodes and persons
-    mio::abm::World world = mio::abm::World(params);
     mio::abm::Location& home = world.add_location(mio::abm::LocationType::Home);
     mio::abm::Location& school = world.add_location(mio::abm::LocationType::School);
     mio::abm::Location& work = world.add_location(mio::abm::LocationType::Work);

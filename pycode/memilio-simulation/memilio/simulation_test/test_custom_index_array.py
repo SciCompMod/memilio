@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Daniel Abele
 #
@@ -20,9 +20,8 @@
 
 from unittest import TestCase, main
 
-from memilio.simulation import UncertainValue
-from memilio.simulation.secir import (AgeGroup, AgeGroupArray, InfectionState,
-                                      SecirPopulationArray)
+from memilio.simulation import UncertainValue, AgeGroup, AgeGroupArray
+from memilio.simulation.secir import (InfectionState, SecirPopulationArray)
 
 
 class TestCustomIndexArray(TestCase):

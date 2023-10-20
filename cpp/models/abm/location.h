@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
 *
@@ -26,7 +26,7 @@
 #include "abm/location_type.h"
 #include "abm/infection_state.h"
 #include "abm/vaccine.h"
-
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
@@ -66,9 +66,9 @@ struct Cell {
     CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    explicit Cell(std::vector<observer_ptr<Person>> persons = {})
+    Cell(size_t num_agegroups, std::vector<observer_ptr<Person>> persons = {})
         : m_persons(std::move(persons))
-        , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
+        , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup(num_agegroups)}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
         , m_capacity()
     {
@@ -97,17 +97,47 @@ class Location
 {
 public:
     /**
-     * @brief Construct a Location of a certain type.
-     * @param type The #LocationType.
-     * @param index The index of the Location.
-     * @param num_cells [Default: 1] The number of Cell%s in which the Location is divided.
+     * @brief Construct a Location of a certain LocationId.
+     * @param[in] loc_id The #LocationId.
+     * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
+     * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    Location(LocationId loc_id, uint32_t num_cells = 1);
+    Location(LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
 
-    Location(LocationType loc_type, uint32_t loc_index, uint32_t num_cells = 1)
-        : Location(LocationId{loc_index, loc_type}, num_cells)
+    /**
+     * @brief Construct a Location with provided parameters. 
+     * @param[in] loc_type The #LocationType.
+     * @param[in] index The index of the Location.
+     * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
+     * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
+     */
+    Location(LocationType loc_type, uint32_t loc_index, size_t num_agegroups = 1, uint32_t num_cells = 1)
+        : Location(LocationId{loc_index, loc_type}, num_agegroups, num_cells)
     {
     }
+
+    /**
+     * @brief Return a copy of the current Location object.
+     * @param[in] other The original #Location.
+     */
+    Location(const Location& other)
+        : m_id(other.m_id)
+        , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
+        , m_parameters(other.m_parameters)
+        , m_persons(other.m_persons)
+        , m_subpopulations(other.m_subpopulations)
+        , m_cells(other.m_cells)
+        , m_required_mask(other.m_required_mask)
+        , m_npi_active(other.m_npi_active)
+        , m_geographical_location(other.m_geographical_location)
+    {
+    }
+
+    /**
+     * @brief Return a copy of this #Location object with an empty m_persons.
+     * @param[in] num_agegroups The number of age groups in the model.
+     */
+    Location copy_location_without_persons(size_t num_agegroups);
 
     /**
      * @brief Compare two Location%s.
@@ -146,27 +176,30 @@ public:
      * @param[in] virus VirusVariant of interest.
      * @param[in] age_receiver AgeGroup of the receiving Person.
      * @param[in] age_transmitter AgeGroup of the transmitting Person.
+     * @param[in] num_agegroups The number of age groups in the model.
      * @return Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
     */
-    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const;
+    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
+                                             size_t num_agegroups) const;
 
     /**
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
      * @param[in] cell_index Cell index of the Cell.
      * @param[in] virus VirusVariant of interest.
+     * @param[in] global_params The Parameters set of the World. 
      * @return Amount of average Infection%s with the virus per day.
     */
-    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const;
+    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
 
     /** 
      * @brief A Person interacts with the population at this Location and may become infected.
      * @param[in, out] rng Person::RandomNumberGenerator for this Person.
      * @param[in, out] person The Person that interacts with the population.
      * @param[in] dt Length of the current Simulation time step.
-     * @param[in] global_params Global infection parameters.
+     * @param[in] params Parameters of the Model.
      */
     void interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
-                  const GlobalInfectionParameters& global_params) const;
+                  const Parameters& params) const;
 
     /** 
      * @brief Add a Person to the population at this Location.
@@ -185,8 +218,9 @@ public:
      * @brief Prepare the Location for the next Simulation step.
      * @param[in] t Current TimePoint of the Simulation.
      * @param[in] dt The duration of the Simulation step.
+     * @param[in] num_agegroups The number of age groups in the model.
      */
-    void cache_exposure_rates(TimePoint t, TimeSpan dt);
+    void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups);
 
     /**
      * @brief Get the Location specific Infection parameters.
@@ -298,6 +332,36 @@ public:
     void set_npi_active(bool new_status)
     {
         m_npi_active = new_status;
+    }
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Location");
+        obj.add_element("index", m_id.index);
+        obj.add_element("type", m_id.type);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Location> deserialize(IOContext& io)
+    {
+        auto obj   = io.expect_object("Location");
+        auto index = obj.expect_element("index", Tag<uint32_t>{});
+        auto type  = obj.expect_element("type", Tag<uint32_t>{});
+        return apply(
+            io,
+            [](auto&& index_, auto&& type_) {
+                return Location{LocationId{index_, LocationType(type_)}};
+            },
+            index, type);
     }
 
     /**
