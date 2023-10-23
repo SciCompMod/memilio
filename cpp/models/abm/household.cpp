@@ -1,7 +1,7 @@
 /*
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Sascha Korf
+* Authors: Daniel Abele, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -68,7 +68,7 @@ void add_household_to_world(World& world, const Household& household)
 
     for (auto& memberTouple : members) {
         int count;
-        HouseholdMember member;
+        HouseholdMember member  = HouseholdMember(world.parameters.get_num_groups());
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(world.get_rng(), member.get_age_weights());
