@@ -93,14 +93,16 @@ def read_population_data(username, password, read_data, directory):
     return df_pop_raw
 
 
-def read_credentials(username, password):
-    '''! Reads credentials for regionalstatistik.de (needed for dowload).
+def manage_credentials():
+    '''! Manages credentials for regionalstatistik.de (needed for dowload).
 
-    A connfig file inside the epidata folder is written or read with following format
+    A connfig file inside the epidata folder is either written (if not existent yet)
+    with input from user or read with following format:
     [CREDENTIALS]
     Username = XXXXX
     Password = XXXXX
 
+    @return Username and password to sign in at regionalstatistik.de. 
     '''
     # path where ini file is found
     path = os.path.join(os.path.dirname(
@@ -110,13 +112,18 @@ def read_credentials(username, password):
     if not os.path.exists(path):
         print('.ini file not found. Writing CredentialsRegio.ini...')
         username = input(
-            "Please Enter Username for https://www.regionalstatistik.de/genesis/online\n")
+            "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
         password = getpass.getpass(
-            "Please Enter Password for https://www.regionalstatistik.de/genesis/online\n")
+            "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
         # create file
-        string = '[CREDENTIALS]\nUsername = '+username+'\nPassword = '+password
-        with open(path, 'w+') as file:
-            file.write(string)
+        write_ini = gd.user_choice(
+            message='Do you want the credentials to be stored in an unencrypted .ini file?\n'+
+                'The next time this function is called, the credentials can be read from that file.')
+        if write_ini:
+            string = '[CREDENTIALS]\nUsername = ' + \
+                username+'\nPassword = '+password
+            with open(path, 'w+') as file:
+                file.write(string)
 
     else:
         parser = configparser.ConfigParser()
@@ -331,8 +338,10 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
+    # If no username or password is provided, the credentials are either read from an .ini file or,
+    # if the file does not exist they have to be given as user input.
     if (username is None) or (password is None):
-        username, password = read_credentials(username, password)
+        username, password = manage_credentials()
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
