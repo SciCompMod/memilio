@@ -117,8 +117,8 @@ def manage_credentials():
             "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
         # create file
         write_ini = gd.user_choice(
-            message='Do you want the credentials to be stored in an unencrypted .ini file?\n'+
-                'The next time this function is called, the credentials can be read from that file.')
+            message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
+            'The next time this function is called, the credentials can be read from that file.')
         if write_ini:
             string = '[CREDENTIALS]\nUsername = ' + \
                 username+'\nPassword = '+password
