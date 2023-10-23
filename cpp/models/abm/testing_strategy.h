@@ -27,7 +27,6 @@
 #include "memilio/utils/random_number_generator.h"
 #include <bitset>
 #include <unordered_set>
-#include <map>
 
 namespace mio
 {
