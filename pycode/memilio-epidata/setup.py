@@ -6,6 +6,7 @@ from setuptools import Command, find_packages, setup
 
 __version__ = '0.7.0'
 
+
 class PylintCommand(Command):
     """
     Custom command to run pylint and get a report as html.
@@ -42,6 +43,7 @@ class PylintCommand(Command):
 
             lint.Run(options, reporter=self.reporter(
                 report_file), do_exit=False)
+
 
 # Python-magic needs DLLs for libmagic. They have to be installed only on windows.
 if sys.platform == 'win32':
