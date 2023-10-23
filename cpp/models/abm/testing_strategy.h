@@ -26,6 +26,7 @@
 #include "abm/time.h"
 #include "memilio/utils/random_number_generator.h"
 #include <bitset>
+#include <unordered_set>
 #include <map>
 
 namespace mio
@@ -89,8 +90,7 @@ public:
     bool evaluate(const Person& p, TimePoint t) const;
 
 private:
-    std::bitset<(size_t)AgeGroup::Count>
-        m_ages; ///< BitSet of #AgeGroup%s that are either allowed or required to be tested.
+    std::unordered_set<size_t> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::bitset<(size_t)InfectionState::Count>
         m_infection_states; /**< BitSet of #InfectionState%s that are either allowed or required to
     be tested.*/

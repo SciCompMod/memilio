@@ -29,7 +29,7 @@ namespace abm
 TestingCriteria::TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states)
 {
     for (auto age : ages) {
-        m_ages.set(static_cast<size_t>(age), true);
+        m_ages.insert(static_cast<size_t>(age));
     }
     for (auto infection_state : infection_states) {
         m_infection_states.set(static_cast<size_t>(infection_state), true);
@@ -43,12 +43,12 @@ bool TestingCriteria::operator==(const TestingCriteria& other) const
 
 void TestingCriteria::add_age_group(const AgeGroup age_group)
 {
-    m_ages.set(static_cast<size_t>(age_group), true);
+    m_ages.insert(static_cast<size_t>(age_group));
 }
 
 void TestingCriteria::remove_age_group(const AgeGroup age_group)
 {
-    m_ages.set(static_cast<size_t>(age_group), false);
+    m_ages.erase(static_cast<size_t>(age_group));
 }
 
 void TestingCriteria::add_infection_state(const InfectionState infection_state)
@@ -63,7 +63,7 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
 
 bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 {
-    return (m_ages.none() || m_ages[static_cast<size_t>(p.get_age())]) &&
+    return (m_ages.empty() || m_ages.count(static_cast<size_t>(p.get_age()))) &&
            (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
 }
 
