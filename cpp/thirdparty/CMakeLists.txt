@@ -50,6 +50,7 @@ else()
 endif()
 
 # ## IPOPT
+if(NOT WIN32)
 if(MEMILIO_USE_BUNDLED_IPOPT)
     message(STATUS "Downloading Ipopt library")
 
@@ -61,6 +62,8 @@ if(MEMILIO_USE_BUNDLED_IPOPT)
 
     FetchContent_MakeAvailable(Ipopt)
 endif()
+endif()
+
 
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)

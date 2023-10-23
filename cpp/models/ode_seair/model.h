@@ -52,19 +52,7 @@ public:
                          Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> dydt) const override
     {
         auto& params     = this->parameters;
-        /*        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                                   params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Exposed] =
-            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
-        dydt[(size_t)InfectionState::Infected] =
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]; */
 
         auto& alpha_a = params.template get<AlphaA<FP>>();
         auto& alpha_i = params.template get<AlphaI<FP>>();

@@ -25,6 +25,11 @@ target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 add_executable(seair_example seair.cpp)
 target_link_libraries(seair_example PRIVATE memilio ode_seair AD::AD)
 
+if(NOT WIN32 AND MEMILIO_USE_BUNDLED_IPOPT)
+    add_executable(seair_optimization seair_optimization.cpp)
+    target_link_libraries(seair_optimization PRIVATE memilio ode_seair AD::AD Ipopt::Ipopt)
+endif()
+
 add_executable(ad_square_example ad_square_example.cpp)
 target_link_libraries(ad_square_example PRIVATE AD::AD)
 set_target_properties(ad_square_example PROPERTIES CXX_STANDARD 14)
