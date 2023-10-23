@@ -48,7 +48,7 @@ struct LogLocationInformation : mio::LogOnceStart {
 };
 
 struct LogPersonInformation : mio::LogOnceStart {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
+    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::AgeGroup>>;
     static Type log(const mio::abm::Simulation& sim)
     {
         Type person_information{};
@@ -61,12 +61,10 @@ struct LogPersonInformation : mio::LogOnceStart {
     }
 };
 
-static std::vector<mio::abm::movement_data> calculate_movement_data(const mio::abm::Simulation& sim,
-                                                                    std::vector<mio::abm::movement_data> diff_vector)
+static std::vector<mio::abm::movement_data> calculate_movement_data(const mio::abm::Simulation& sim)
 {
     std::vector<mio::abm::movement_data>
         movement_data_vector{}; // Vector of movement data with each entry being from another person who moved
-    mio::unused(diff_vector);
     mio::unused(sim);
     // movement_data.agent_id        = sim.get_world().get_persons().get_person_id();
     // movement_data.from_id         = sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index();
@@ -79,13 +77,10 @@ static std::vector<mio::abm::movement_data> calculate_movement_data(const mio::a
     return movement_data_vector;
 }
 struct LogMovementData : mio::LogAlways {
-
-    std::vector<mio::abm::movement_data> movement_data_vector_difference{};
-
     using Type = std::vector<mio::abm::movement_data>;
     static Type log(const mio::abm::Simulation& sim)
     {
-        return calculate_movement_data(sim, LogMovementData.movement_data_vector_difference);
+        return calculate_movement_data(sim);
     }
 };
 } // namespace abm

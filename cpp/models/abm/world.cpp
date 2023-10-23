@@ -127,6 +127,9 @@ void World::migration(TimePoint t, TimeSpan dt)
     size_t num_trips = m_trip_list.num_trips(weekend);
 
     if (num_trips != 0) {
+        std::cout << "num_trips: " << num_trips << std::endl;
+        std::cout << "next trip time: " << m_trip_list.get_next_trip_time(weekend).seconds() << std::endl;
+        std::cout << "t + dt: " << (t + dt).time_since_midnight().seconds() << std::endl;
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
             auto& trip        = m_trip_list.get_next_trip(weekend);

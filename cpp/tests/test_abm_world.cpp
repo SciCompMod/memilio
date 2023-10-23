@@ -324,12 +324,12 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(home.get_number_persons(), 2);
 
         bool weekend = true;
-        mio::abm::Trip tripweekend1(
-            p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id, work_id);
-        mio::abm::Trip tripweekend2(
-            p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id, event_id);
-        mio::abm::Trip tripweekend3(
-            p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id, event_id);
+        mio::abm::Trip tripweekend1(p1.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id);
+        mio::abm::Trip tripweekend2(p2.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id);
+        mio::abm::Trip tripweekend3(p5.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id);
         data.add_trip(tripweekend1, weekend);
         data.add_trip(tripweekend2, weekend);
         data.add_trip(tripweekend3, weekend);
