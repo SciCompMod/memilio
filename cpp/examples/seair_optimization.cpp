@@ -58,6 +58,113 @@ public:
         Ipopt::Number* g_l,
         Ipopt::Number* g_u
     ) override;
+
+    bool get_starting_point(
+        Ipopt::Index   n,
+        bool    init_x,
+        Ipopt::Number* x,
+        bool    init_z,
+        Ipopt::Number* z_L,
+        Ipopt::Number* z_U,
+        Ipopt::Index   m,
+        bool    init_lambda,
+        Ipopt::Number* lambda
+    ) override;
+
+    /** Method to return the objective value */
+    virtual bool eval_f(
+        Ipopt::Index         n,
+        const Ipopt::Number* x,
+        bool          new_x,
+        Ipopt::Number&       obj_value
+        ) override;
+
+    /** Method to return the gradient of the objective */
+    virtual bool eval_grad_f(
+        Ipopt::Index         n,
+        const Ipopt::Number* x,
+        bool          new_x,
+        Ipopt::Number*       grad_f
+        ) override;
+
+    /** Method to return the constraint residuals */
+    virtual bool eval_g(
+        Ipopt::Index         n,
+        const Ipopt::Number* x,
+        bool          new_x,
+        Ipopt::Index         m,
+        Ipopt::Number*       g
+        ) override;
+
+    /** Method to return:
+    *   1) The structure of the jacobian (if "values" is NULL)
+    *   2) The values of the jacobian (if "values" is not NULL)
+    */
+    virtual bool eval_jac_g(
+        Ipopt::Index         n,
+        const Ipopt::Number* x,
+        bool          new_x,
+        Ipopt::Index         m,
+        Ipopt::Index         nele_jac,
+        Ipopt::Index*        iRow,
+        Ipopt::Index*        jCol,
+        Ipopt::Number*       values
+        ) override;
+
+    /** Method to return:
+    *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
+    *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
+    */
+    virtual bool eval_h(
+        Ipopt::Index         n,
+        const Ipopt::Number* x,
+        bool          new_x,
+        Ipopt::Number        obj_factor,
+        Ipopt::Index         m,
+        const Ipopt::Number* lambda,
+        bool          new_lambda,
+        Ipopt::Index         nele_hess,
+        Ipopt::Index*        iRow,
+        Ipopt::Index*        jCol,
+        Ipopt::Number*       values
+        ) override;
+
+    /** This method is called when the algorithm is complete so the TNLP can store/write the solution */
+    virtual void finalize_solution(
+        Ipopt::SolverReturn               status,
+        Ipopt::Index                      n,
+        const Ipopt::Number*              x,
+        const Ipopt::Number*              z_L,
+        const Ipopt::Number*              z_U,
+        Ipopt::Index                      m,
+        const Ipopt::Number*              g,
+        const Ipopt::Number*              lambda,
+        Ipopt::Number                     obj_value,
+        const Ipopt::IpoptData*           ip_data,
+        Ipopt::IpoptCalculatedQuantities* ip_cq
+        ) override;
+    //@}
+
+    bool intermediate_callback(
+        Ipopt::AlgorithmMode              mode,
+        Ipopt::Index                      iter,
+        Ipopt::Number                     obj_value,
+        Ipopt::Number                     inf_pr,
+        Ipopt::Number                     inf_du,
+        Ipopt::Number                     mu,
+        Ipopt::Number                     d_norm,
+        Ipopt::Number                     regularization_size,
+        Ipopt::Number                     alpha_du,
+        Ipopt::Number                     alpha_pr,
+        Ipopt::Index                      ls_trials,
+        const Ipopt::IpoptData*           ip_data,
+        Ipopt::IpoptCalculatedQuantities* ip_cq
+        ) override;
+
+
+    template<typename FP=double>
+    void eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective);
+
 private:
     const int numControlIntervals_ = 20;
     const int numControls_ = 3;
@@ -67,7 +174,9 @@ private:
     const int n_ = numControlIntervals_ * numControlIntervals_;
     const int m_ = numIntervals_ * numPathConstraints_;
 
+
 };
+
 
 template<typename FP>
 void set_initial_values(mio::oseair::Model<FP>& model) {
@@ -83,52 +192,26 @@ void set_initial_values(mio::oseair::Model<FP>& model) {
 
 }
 
+template<typename FP>
+void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective){
 
+    FP t0   = 0;
+    FP tmax = 100;
+    FP dt=0.2;
+    std::vector<FP> grid(numIntervals_+1);
+    for(int i = 0; i < numIntervals_+1; ++i) {
+        grid[i] = (tmax/numIntervals_)*i +(t0/numIntervals_)*(numIntervals_-i);
+    }
+    mio::oseair::Model<FP> model;
+    set_initial_values(model);
+    for(int i = 0; i < numIntervals_; ++i) {
+        auto seair1 = mio::simulate<mio::oseair::Model<FP>,FP>(grid[i], grid[i+1], dt, model);
+    }
+
+}
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::debug);
-
-    using FP=typename ad::gt1s<double>::type;
-
-
-
-    FP  t0   = 0;
-    FP  tmax = 100;
-    FP  dt   = 0.2;
-
-    mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
-
-    mio::oseair::Model<FP> model1;
-    set_initial_values(model1);
-    FP value = model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}];
-    ad::derivative(value) = 1.0;
-    model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = value;
-    model1.check_constraints();
-    auto seair1 = mio::simulate<mio::oseair::Model<FP>,FP>(t0, tmax, dt, model1);
-
-    mio::oseair::Model<double> model2;
-    set_initial_values(model2);
-    double h = 1e-4;
-    model2.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] += h;
-    model2.check_constraints();
-    auto seair2 = mio::simulate<mio::oseair::Model<double>,double>(0, 100, 0.2, model2);
-
-    const std::string file_name = "seair.txt";
-    std::cout << "Writing output to " << file_name << std::endl;
-    mio::time_series_to_file(seair1, file_name);
-
-    auto last1 = seair1.get_last_value();
-    auto last2 = seair2.get_last_value();
-
-    std::cout << "Last value is" << std::endl;
-    std::cout <<  last2 << std::endl;
-
-    std::cout << "Compare algorithmic differentiation (AD) with finite differences (FD)" << std::endl;
-    for (size_t i=0; i < last1.size(); ++i) {
-        std::cout << "AD: " << ad::derivative(last1[i]) << "  FD: " << (1./h)*(last2[i]-ad::value(last1[i])) << std::endl;
-    }
-
 
     return 0;
 
@@ -184,5 +267,61 @@ bool Seair_NLP::get_bounds_info(
         g_l[i] = 0.0;
         g_u[i] = 1e6/N;
     }
+    return true;
+}
+
+bool Seair_NLP::get_starting_point(
+    Ipopt::Index   n,
+    bool    init_x,
+    Ipopt::Number* x,
+    bool    init_z,
+    Ipopt::Number* z_L,
+    Ipopt::Number* z_U,
+    Ipopt::Index   m,
+    bool    init_lambda,
+    Ipopt::Number* lambda
+    )
+{
+    assert(init_z == false);
+    assert(init_lambda == false);
+
+    for(int i = 0; i < n; ++i) {
+        x[i] = 0.2;
+    }
+    return true;
+}
+
+bool Seair_NLP::eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Number &obj_value)
+{
+    return true;
+}
+
+bool Seair_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Number *grad_f)
+{
+    return true;
+}
+
+bool Seair_NLP::eval_g(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Index m, Ipopt::Number *g)
+{
+    return true;
+}
+
+bool Seair_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac, Ipopt::Index *iRow, Ipopt::Index *jCol, Ipopt::Number *values)
+{
+    return true;
+}
+
+bool Seair_NLP::eval_h(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Number obj_factor, Ipopt::Index m, const Ipopt::Number *lambda, bool new_lambda, Ipopt::Index nele_hess, Ipopt::Index *iRow, Ipopt::Index *jCol, Ipopt::Number *values)
+{
+    return true;
+}
+
+void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, const Ipopt::Number *x, const Ipopt::Number *z_L, const Ipopt::Number *z_U, Ipopt::Index m, const Ipopt::Number *g, const Ipopt::Number *lambda, Ipopt::Number obj_value, const Ipopt::IpoptData *ip_data, Ipopt::IpoptCalculatedQuantities *ip_cq)
+{
+    return;
+}
+
+bool Seair_NLP::intermediate_callback(Ipopt::AlgorithmMode mode, Ipopt::Index iter, Ipopt::Number obj_value, Ipopt::Number inf_pr, Ipopt::Number inf_du, Ipopt::Number mu, Ipopt::Number d_norm, Ipopt::Number regularization_size, Ipopt::Number alpha_du, Ipopt::Number alpha_pr, Ipopt::Index ls_trials, const Ipopt::IpoptData *ip_data, Ipopt::IpoptCalculatedQuantities *ip_cq)
+{
     return true;
 }
