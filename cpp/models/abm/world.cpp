@@ -127,9 +127,6 @@ void World::migration(TimePoint t, TimeSpan dt)
     size_t num_trips = m_trip_list.num_trips(weekend);
 
     if (num_trips != 0) {
-        std::cout << "num_trips: " << num_trips << std::endl;
-        std::cout << "next trip time: " << m_trip_list.get_next_trip_time(weekend).seconds() << std::endl;
-        std::cout << "t + dt: " << (t + dt).time_since_midnight().seconds() << std::endl;
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
             auto& trip        = m_trip_list.get_next_trip(weekend);
@@ -139,7 +136,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location);
+                    person->migrate_to(target_location, trip.trip_mode);
                 }
             }
             m_trip_list.increase_index();

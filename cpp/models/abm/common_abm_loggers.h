@@ -61,6 +61,30 @@ struct LogPersonInformation : mio::LogOnceStart {
     }
 };
 
+mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
+{
+    switch (current_location) {
+    case mio::abm::LocationType::Home:
+        return mio::abm::ActivityType::Home;
+    case mio::abm::LocationType::Work:
+        return mio::abm::ActivityType::Workplace;
+    case mio::abm::LocationType::School:
+        return mio::abm::ActivityType::Education;
+    case mio::abm::LocationType::SocialEvent:
+        return mio::abm::ActivityType::Leisure;
+    case mio::abm::LocationType::BasicsShop:
+        return mio::abm::ActivityType::Shopping;
+    case mio::abm::LocationType::ICU:
+        return mio::abm::ActivityType::OtherActivity;
+    case mio::abm::LocationType::Hospital:
+        return mio::abm::ActivityType::OtherActivity;
+    case mio::abm::LocationType::Cemetery:
+        return mio::abm::ActivityType::OtherActivity;
+    default:
+        return mio::abm::ActivityType::UnknownActivity;
+    }
+}
+
 struct LogDataForMovement : mio::LogAlways {
 
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
@@ -70,8 +94,8 @@ struct LogDataForMovement : mio::LogAlways {
         Type movement_data{};
         for (Person p : sim.get_world().get_persons()) {
             movement_data.push_back(std::make_tuple(
-                p.get_person_id(), p.get_location().get_index(), sim.get_time(), mio::abm::TransportMode::Unknown,
-                mio::abm::ActivityType::UnknownActivity, p.get_infection_state(sim.get_time())));
+                p.get_person_id(), p.get_location().get_index(), sim.get_time(), p.get_last_transport_mode(),
+                guess_activity_type(p.get_location().get_type()), p.get_infection_state(sim.get_time())));
         }
         return movement_data;
     }
