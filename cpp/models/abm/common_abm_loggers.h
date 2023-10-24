@@ -61,26 +61,19 @@ struct LogPersonInformation : mio::LogOnceStart {
     }
 };
 
-static std::vector<mio::abm::movement_data> calculate_movement_data(const mio::abm::Simulation& sim)
-{
-    std::vector<mio::abm::movement_data>
-        movement_data_vector{}; // Vector of movement data with each entry being from another person who moved
-    mio::unused(sim);
-    // movement_data.agent_id        = sim.get_world().get_persons().get_person_id();
-    // movement_data.from_id         = sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index();
-    // movement_data.to_id           = sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index();
-    // movement_data_vectorstart_time = sim.get_time();
-    // movement_data.end_time        = sim.get_world().get_time();
-    // movement_data.transport_mode  = sim.get_world().get_persons().get_transport_mode();
-    // movement_data.activity_type   = sim.get_world().get_persons().get_activity_type();
-    // movement_data.infection_state = sim.get_world().get_persons().get_infection_state();
-    return movement_data_vector;
-}
-struct LogMovementData : mio::LogAlways {
-    using Type = std::vector<mio::abm::movement_data>;
+struct LogDataForMovement : mio::LogAlways {
+
+    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
+                                        mio::abm::ActivityType, mio::abm::InfectionState>>;
     static Type log(const mio::abm::Simulation& sim)
     {
-        return calculate_movement_data(sim);
+        Type movement_data{};
+        for (Person p : sim.get_world().get_persons()) {
+            movement_data.push_back(std::make_tuple(
+                p.get_person_id(), p.get_location().get_index(), sim.get_time(), mio::abm::TransportMode::Unknown,
+                mio::abm::ActivityType::UnknownActivity, p.get_infection_state(sim.get_time())));
+        }
+        return movement_data;
     }
 };
 } // namespace abm

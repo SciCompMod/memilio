@@ -29,12 +29,10 @@ struct LogStepIf : mio::LogIf<example> {
     using Type = int;
     static bool log(const example& ex)
     {
-        std::cout << "StepCondFulfilled" << std::endl;
         return ex.current_time;
     }
     static bool should_log(const example& ex)
     {
-        std::cout << "StepCond" << std::endl;
         return ex.current_time == 1;
     }
 };
