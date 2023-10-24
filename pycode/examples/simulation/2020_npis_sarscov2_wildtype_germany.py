@@ -444,41 +444,24 @@ class Simulation:
 
         graph = self.get_graph(end_date)
 
-        def find_indices_of_true_values(boolean_array):
-            true_indices = np.where(boolean_array)[0]
-            return true_indices
-
-        def print_param(parameters):
-            for i in range(6):
-                A0 = secir.AgeGroup(i)
-                print("age group " + str(i))
-                print(parameters.RelativeTransmissionNoSymptoms[A0].value)
-                print(parameters.TransmissionProbabilityOnContact[A0].value)
-                print(parameters.RecoveredPerInfectedNoSymptoms[A0].value)
-                print(parameters.RiskOfInfectionFromSymptomatic[A0].value)
-                print(parameters.SeverePerInfectedSymptoms[A0].value)
-                print(parameters.CriticalPerSevere[A0].value)
-                print(parameters.DeathsPerCritical[A0].value)
-                print(parameters.MaxRiskOfInfectionFromSymptomatic[A0].value)
-                print(parameters.IncubationTime[A0].value)
-                print(parameters.TimeInfectedSymptoms[A0].value)
-                print(parameters.SerialInterval[A0].value)
-                print(parameters.TimeInfectedSevere[A0].value)
-                print(parameters.TimeInfectedCritical[A0].value)
-
-        # find_indices_of_true_values([np.any(np.isnan(graph.get_node(i).property.result.get_value(0))) for i in range(400)])
-
-        def handle_result(graph, run_idx):
-            handle_result.interpolated = interpolate_simulation_result(graph)
-            print("run " + str(run_idx))
-
         secir.write_graph(graph, "graph_python")
 
         study = secir.ParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)
-        study.run(handle_result)
-        last_result = handle_result.interpolated
-        return [ts.as_ndarray() for ts in last_result]
+        ensemble = study.run()
+
+        ensemble_results = []
+        ensemble_params = []
+        for run in range(num_runs):
+            graph_run = ensemble[run]
+            ensemble_results.append(interpolate_simulation_result(graph_run))
+            ensemble_params.append(
+                [graph_run.get_node(node_indx).property.model
+                 for node_indx in range(graph.num_nodes)])
+
+        # BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
+        # TODO: Einfacher Plot von quartilen maybe?
+        return 0
 
 
 if __name__ == "__main__":
