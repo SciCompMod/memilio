@@ -86,7 +86,6 @@ mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_locati
 }
 
 struct LogDataForMovement : mio::LogAlways {
-
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
                                         mio::abm::ActivityType, mio::abm::InfectionState>>;
     static Type log(const mio::abm::Simulation& sim)
