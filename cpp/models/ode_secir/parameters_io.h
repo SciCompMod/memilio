@@ -403,7 +403,7 @@ IOResult<void> export_input_data_county_timeseries_one_age_group(
             num_InfectedSevere, dummy_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms,
             t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_age_groups));
         BOOST_OUTCOME_TRY(details::read_divi_data(divi_data_path, region, date, num_icu));
-        BOOST_OUTCOME_TRY(num_population, details::read_population_data(population_data_path, region));
+        BOOST_OUTCOME_TRY(num_population, details::read_population_data(population_data_path, region, true));
 
         for (size_t i = 0; i < region.size(); i++) {
             rki_data[i][t]((size_t)InfectionState::Exposed) =

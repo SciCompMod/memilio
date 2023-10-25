@@ -83,11 +83,10 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
     auto scaling_factor_icu      = 1.0;
 
-    BOOST_OUTCOME_TRY(set_age_group_names({"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"},
-                                          {"0-4 years", "5-9 years", "10-14 years", "15-19 years", "20-24 years",
-                                           "25-29 years", "30-34 years", "35-39 years", "40-44 years", "45-49 years",
-                                           "50-54 years", "55-59 years", "60-64 years", "65-69 years", "70-74 years",
-                                           "75-79 years", "80-84 years", "85-89 years", "90+ years"}));
+    BOOST_OUTCOME_TRY(set_age_group_names(
+        {"All"}, {"0-4 years", "5-9 years", "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years",
+                  "35-39 years", "40-44 years", "45-49 years", "50-54 years", "55-59 years", "60-64 years",
+                  "65-69 years", "70-74 years", "75-79 years", "80-84 years", "85-89 years", "90+ years"}));
     //read node ids
     BOOST_OUTCOME_TRY(
         node_ids,
@@ -186,7 +185,7 @@ mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> get_grap
 */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
 {
-    const mio::Date start_date = mio::Date(2021, 6, 1);
+    const mio::Date start_date = mio::Date(2021, 12, 1);
     const auto num_days        = 90.0;
 
     //create or load graph
