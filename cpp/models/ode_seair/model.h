@@ -78,7 +78,7 @@ public:
         dydt[(size_t)InfectionState::Infected] = kappa * a - beta * i - mu * i;
         dydt[(size_t)InfectionState::Recovered] = rho * a + beta * i - gamma * r;
         dydt[(size_t)InfectionState::Perished] = mu * i;
-        dydt[(size_t)InfectionState::ObjectiveFunction] = -alpha_i  -alpha_a + 0.1 * kappa;
+        dydt[(size_t)InfectionState::ObjectiveFunction] =1 -alpha_i  - alpha_a + 0.1 * kappa;
     }
 };
 

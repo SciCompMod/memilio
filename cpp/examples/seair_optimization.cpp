@@ -28,6 +28,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/time_series_to_file.h"
 #include "IpTNLP.hpp" // IWYU pragma: keep
+#include "IpIpoptApplication.hpp"
 #include <fstream>
 
 
@@ -165,13 +166,17 @@ public:
     template<typename FP=double>
     void eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective);
 
+public:
+    int getN() { return n_; }
+    int getM() { return m_; }
+
 private:
     const int numControlIntervals_ = 20;
     const int numControls_ = 3;
     const int numPathConstraints_ = 1;
     const int pcresolution_ = 5;
     const int numIntervals_ = pcresolution_ * numControlIntervals_;
-    const int n_ = numControlIntervals_ * numControlIntervals_;
+    const int n_ = numControlIntervals_ * numControls_;
     const int m_ = numIntervals_ * numPathConstraints_;
 
 
@@ -203,15 +208,100 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
         grid[i] = (tmax/numIntervals_)*i +(t0/numIntervals_)*(numIntervals_-i);
     }
     mio::oseair::Model<FP> model;
+    auto& params     = model.parameters;
+
+
     set_initial_values(model);
-    for(int i = 0; i < numIntervals_; ++i) {
-        auto seair1 = mio::simulate<mio::oseair::Model<FP>,FP>(grid[i], grid[i+1], dt, model);
+    int gridindex=0;
+    for(int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
+        model.parameters.template get<mio::oseair::AlphaA<FP>>() = x[controlIndex];
+        model.parameters.template get<mio::oseair::AlphaI<FP>>() = x[controlIndex + numControlIntervals_];
+        model.parameters.template get<mio::oseair::Kappa<FP>>()  = x[controlIndex + 2 * numControlIntervals_];
+
+        for(int i = 0; i < pcresolution_; ++i,++gridindex) {
+
+            auto result = mio::simulate<mio::oseair::Model<FP>,FP>(grid[gridindex], grid[gridindex+1], dt, model);
+
+            for(int j = 0; j < (int) mio::oseair::InfectionState::Count; ++j) {
+                model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
+            }
+            if(gridindex == numIntervals_-1) {
+                objective = result.get_last_value()[(int) mio::oseair::InfectionState::ObjectiveFunction];
+            }
+            constraints[gridindex] = result.get_last_value()[(int) mio::oseair::InfectionState::Infected];
+        }
+
     }
 
+    return;
 }
 
-int main()
+int main() {
+
+    // Create a new instance of your nlp
+    //  (use a SmartPtr, not raw)
+    Ipopt::SmartPtr<Ipopt::TNLP> mynlp = new Seair_NLP();
+
+    // Create a new instance of IpoptApplication
+    //  (use a SmartPtr, not raw)
+    // We are using the factory, since this allows us to compile this
+    // example with an Ipopt Windows DLL
+    Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
+
+    // Change some options
+    // Note: The following choices are only examples, they might not be
+    //       suitable for your optimization problem.
+    app->Options()->SetNumericValue("tol", 1e-6);
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
+    app->Options()->SetStringValue("output_file", "ipopt.out");
+    app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    app->Options()->SetStringValue("limited_memory_update_type", "bfgs");
+
+    // Initialize the IpoptApplication and process the options
+    Ipopt::ApplicationReturnStatus status;
+    status = app->Initialize();
+    if( status != Ipopt::Solve_Succeeded )
+    {
+        std::cout << std::endl << std::endl << "*** Error during initialization!" << std::endl;
+        return (int) status;
+    }
+
+    // Ask Ipopt to solve the problem
+    status = app->OptimizeTNLP(mynlp);
+
+    if( status == Ipopt::Solve_Succeeded )
+    {
+        std::cout << std::endl << std::endl << "*** The problem solved!" << std::endl;
+    }
+    else
+    {
+        std::cout << std::endl << std::endl << "*** The problem FAILED!" << std::endl;
+    }
+
+    // As the SmartPtrs go out of scope, the reference count
+    // will be decremented and the objects will automatically
+    // be deleted.
+
+    return (int) status;
+}
+
+int main_old()
 {
+    Seair_NLP nlp;
+    using FP=ad::gt1s<double>::type;
+    std::vector<double> x(nlp.getN());
+    std::vector<FP> t1_x(nlp.getN());
+    std::vector<FP> constraints(nlp.getM());
+    FP objective;
+
+    for(size_t i=0; i < x.size(); ++i) {
+        ad::value(t1_x[i]) = x[i];
+    }
+    ad::derivative(t1_x[0]) = 1;
+
+    nlp.get_starting_point(nlp.getN(),true,x.data(),false,nullptr,nullptr,nlp.getM(),false,nullptr);
+    nlp.eval_objective_constraints(t1_x,constraints,objective);
+    std::cout << "directional derivitive of objective function is  " << ad::derivative(objective) << std::endl;
 
     return 0;
 
@@ -253,7 +343,7 @@ bool Seair_NLP::get_bounds_info(
     )
 {
     // controls order: 1. alpha_a, 2. alpha_i, 3. kappa
-    for(int i=0; i < numControls_; ++i) {
+    for(int i=0; i < numControlIntervals_; ++i) {
         x_l[i] = 0.05; // lower bound of alpha_a
         x_u[i] = 0.5;  // upper bound of alpha_a
         x_l[i + numControlIntervals_] = 0.01; // lower bound of alpha_i
@@ -293,21 +383,71 @@ bool Seair_NLP::get_starting_point(
 
 bool Seair_NLP::eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Number &obj_value)
 {
+    std::vector<double> xx(getN());
+    std::vector<double> constraints(getM());
+    for(int i =0; i < n; ++i) xx[i] = x[i];
+    eval_objective_constraints(xx,constraints,obj_value);
     return true;
 }
 
 bool Seair_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Number *grad_f)
 {
+    using FP = ad::gt1s<double>::type;
+    std::vector<FP> xx(getN());
+    std::vector<FP> constraints(getM());
+    FP objective;
+    for(int i = 0; i < n; ++i) ad::value(xx[i]) = x[i];
+    for(int i = 0; i < n; ++i) {
+        ad::derivative(xx[i]) = 1.0;
+        eval_objective_constraints(xx,constraints,objective);
+        grad_f[i] = ad::derivative(objective);
+        ad::derivative(xx[i]) = 0.0;
+    }
     return true;
 }
 
 bool Seair_NLP::eval_g(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Index m, Ipopt::Number *g)
 {
+    std::vector<double> xx(getN());
+    std::vector<double> constraints(getM());
+    double obj_value=0;
+    for(int i =0; i < n; ++i) xx[i] = x[i];
+    eval_objective_constraints(xx,constraints,obj_value);
+    for(int i = 0; i < m; ++i) g[i] = constraints[i];
     return true;
 }
 
-bool Seair_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac, Ipopt::Index *iRow, Ipopt::Index *jCol, Ipopt::Number *values)
+bool Seair_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt::Index m,
+                           Ipopt::Index nele_jac, Ipopt::Index *iRow, Ipopt::Index *jCol, Ipopt::Number *values)
 {
+
+    if(values == nullptr) {
+        int jac_index=0;
+        for(int i = 0; i < n; ++i) {
+            for(int j=0; j < m; ++j) {
+                iRow[jac_index] = j;
+                jCol[jac_index] = i;
+                ++jac_index;
+            }
+        }
+    }
+    else {
+        using FP = ad::gt1s<double>::type;
+        std::vector<FP> xx(getN());
+        std::vector<FP> constraints(getM());
+        FP objective;
+        int jac_index=0;
+        for(int i = 0; i < n; ++i) ad::value(xx[i]) = x[i];
+        for(int i = 0; i < n; ++i) {
+            ad::derivative(xx[i]) = 1.0;
+            eval_objective_constraints(xx,constraints,objective);
+            for(int j=0; j < m; ++j) {
+                values[jac_index] = ad::derivative(constraints[j]);
+                ++jac_index;
+            }
+            ad::derivative(xx[i]) = 0.0;
+        }
+    }
     return true;
 }
 
@@ -318,6 +458,10 @@ bool Seair_NLP::eval_h(Ipopt::Index n, const Ipopt::Number *x, bool new_x, Ipopt
 
 void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, const Ipopt::Number *x, const Ipopt::Number *z_L, const Ipopt::Number *z_U, Ipopt::Index m, const Ipopt::Number *g, const Ipopt::Number *lambda, Ipopt::Number obj_value, const Ipopt::IpoptData *ip_data, Ipopt::IpoptCalculatedQuantities *ip_cq)
 {
+    std::cout << "optiomal solution is\n";
+    for (int i =0; i < n; ++i) {
+        std::cout << x[i] << std::endl;
+    }
     return;
 }
 
