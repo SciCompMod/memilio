@@ -20,7 +20,7 @@
 #ifndef SEIR_MODEL_H
 #define SEIR_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/type_list.h"
@@ -42,9 +42,9 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
+class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
+    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
 
 public:
     Model()

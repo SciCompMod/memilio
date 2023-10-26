@@ -52,10 +52,9 @@ struct CatC : public mio::Index<CatC> {
     }
 };
 
-class TestModel
-    : public mio::CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>
+class TestModel : public mio::FlowModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>
 {
-    using Base = CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
+    using Base = FlowModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
 
 public:
     TestModel(Populations::Index dimensions)

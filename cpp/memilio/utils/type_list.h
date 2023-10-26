@@ -39,13 +39,13 @@ struct TypeList {
      * @return Position of Type within TypeList.
      */
     template <class Type>
-    constexpr size_t index_of() const
+    static constexpr size_t index_of()
     {
         return index_of_v<Type, Types...>;
     }
 
     /// @brief returns the number of Types in TypeList
-    constexpr size_t size() const
+    static constexpr size_t size()
     {
         return sizeof...(Types);
     }

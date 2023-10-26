@@ -20,7 +20,7 @@
 #ifndef ODESECIRVVS_MODEL_H
 #define ODESECIRVVS_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secirvvs/infection_state.h"
@@ -84,9 +84,9 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::SusceptibleImprovedImmunity>>;
 // clang-format on
 
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows>
+class Model : public FlowModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters, Flows>;
+    using Base = FlowModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters, Flows>;
 
 public:
     Model(const Populations& pop, const ParameterSet& params)

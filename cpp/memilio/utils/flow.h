@@ -25,7 +25,10 @@
 namespace mio
 {
 
-/// @brief A Flow defines a transition between two Compartments in a CompartmentalModel. Use with TypeList
+/**
+ * @brief A Flow defines a possible transition between two Compartments in a FlowModel.
+ * Use in a TypeList to define the "Flows" parameter of a FlowModel.
+ */
 template <auto Source, auto Target>
 struct Flow {
     using Type = decltype(Source);
