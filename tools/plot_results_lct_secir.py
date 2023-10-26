@@ -19,7 +19,7 @@
 #############################################################################
 """@plot_results_lct_secir.py
 Functions to plot and compare results of simulations with different kind of models,
-eg LCT IDE or ODE SECIR models without division in agegroups.
+eg LCT, IDE or ODE SECIR models without division in agegroups.
 
 The data to be plotted should be stored in a '../data/simulation_lct' folder as .h5 files.
 Data could be generated eg by executing the file ./cpp/examples/lct_secir_initializations.cpp.
@@ -54,21 +54,22 @@ parameters = {
 # Define color and style to be used while plotting for different models to make plots consistent.
 color_dict = {'ODE': '#1f77b4',
               'LCT': '#ff7f0e',
-              'LCT 3': '#d62728',
+              'LCT 3': '#2ca02c',
               'LCT 10': '#ff7f0e',
               'LCT 20': '#9467bd',
-              'LCT var': '#2ca02c',
-              'IDE 10': '#17becf',
-              'IDE var': '#e377c2',
+              'LCT var': '#d62728',
+              'IDE 3': '#e377c2',
+              'IDE 10': '#17becf'
               }
 linestyle_dict = {'ODE': 'solid',
                   'LCT': 'solid',
-                  'LCT 3': 'dashdot',
+                  'LCT 3': 'solid',
                   'LCT 10': 'solid',
                   'LCT 20': 'dashdot',
-                  'LCT var': 'solid',
-                  'IDE 10': 'dashed',
-                  'IDE var': 'dashed'}
+                  'LCT var': 'dashdot',
+                  'IDE 3': 'dashed',
+                  'IDE 10': 'dashed'
+                  }
 
 
 def load_data(file):
@@ -175,14 +176,14 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
     plt.ylabel(labely, fontsize=14)
     plt.xlim(left=0, right=num_days-1)
     # Define x-ticks.
-    datelist = np.array(pd.date_range(parameters["start_date"].date(
-    ), periods=num_days, freq='D').strftime('%m-%d').tolist())
-    tick_range = (np.arange(int((num_days-1) / 3) + 1) * 3)
+    datelist = np.array(pd.date_range(parameters["start_date"].date(),
+                                      periods=num_days, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int((num_days-1) / 5) + 1) * 5)
     plt.xticks(tick_range, datelist[tick_range],
                rotation=45, fontsize=12)
     plt.xticks(np.arange(num_days), minor=True)
 
-    plt.legend(legendplot, fontsize=14)
+    plt.legend(legendplot, fontsize=14, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -239,14 +240,13 @@ def plot_new_infections_real(files, datafile, legendplot, filename_plot="compare
     plt.ylabel('Neuansteckungen pro Tag', fontsize=14)
     plt.xlim(left=0, right=num_days-1)
     # Define x-ticks.
-    datelist = np.array(pd.date_range(parameters["start_date"].date(
-    ), periods=num_days, freq='D').strftime('%m-%d').tolist())
-    tick_range = (np.arange(int((num_days - 1) / 3) + 1) * 3)
+    datelist = np.array(pd.date_range(parameters["start_date"].date(),
+                                      periods=num_days, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int((num_days - 1) / 5) + 1) * 5)
     plt.xticks(tick_range, datelist[tick_range],
                rotation=45, fontsize=12)
     plt.xticks(np.arange(num_days), minor=True)
-
-    plt.legend(legendplot, fontsize=14)
+    plt.legend(legendplot, fontsize=14, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -349,7 +349,12 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
             raise gd.DataError(
                 "Expected a different number of compartments.")
         incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
-
+        if (file == 0):
+            incidence_ref = incidence
+            print("Relative deviation of the new infections at time " +
+                  str(dates[-1])+" from the results of "+legendplot[0])
+        deviation = (incidence[-1]-incidence_ref[-1])/incidence_ref[-1]
+        print(legendplot[file]+": "+str(deviation))
         # Plot result.
         if legendplot[file] in linestyle_dict:
             plt.plot(dates[1:], incidence, linewidth=1.2,
@@ -363,7 +368,7 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
     plt.ylabel('Neuansteckungen pro Tag', fontsize=14)
     plt.ylim(bottom=0, top=ylim)
     plt.xlim(left=0, right=dates[-1])
-    plt.legend(legendplot, fontsize=14)
+    plt.legend(legendplot, fontsize=14, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -383,65 +388,56 @@ if __name__ == '__main__':
 
     if case == 1:
         # Compare different initalization method.
-        plot_new_infections([os.path.join(data_dir, "init", "lct_init_transitions_20"), os.path.join(data_dir, "init", "lct_init_mean_20"), os.path.join(data_dir, "init", "lct_init_first_20")],
-                            6000, legendplot=list(["Übergänge", "Mittelwerte", "Erstes Subkompartiment"]), filename_plot="compare_new_infections_initialization20")
         compare_all_compartments([os.path.join(data_dir, "init", "lct_init_transitions_20"), os.path.join(data_dir, "init", "lct_init_mean_20"), os.path.join(data_dir, "init", "lct_init_first_20")],
-                                 legendplot=list(["Übergänge", "Mittelwerte", "Erstes Subkompartiment"]), filename_plot="compare_compartments_initialization20")
+                                 legendplot=list(["Übergänge", "Koslow", "Hurtado"]), filename_plot="compare_compartments_initialization20")
         plot_new_infections([os.path.join(data_dir, "init", "lct_init_transitions_20_long"), os.path.join(data_dir, "init", "lct_init_mean_20_long"), os.path.join(data_dir, "init", "lct_init_first_20_long")],
-                            6000, legendplot=list(["Übergänge", "Mittelwerte", "Erstes Subkompartiment"]), filename_plot="compare_new_infections_initialization_20_long")
+                            6000, legendplot=list(["Übergänge", "Koslow", "Hurtado"]), filename_plot="compare_new_infections_initialization_20_long")
         compare_all_compartments([os.path.join(data_dir, "init", "lct_init_transitions_20_long"), os.path.join(data_dir, "init", "lct_init_mean_20_long"), os.path.join(data_dir, "init", "lct_init_first_20_long")],
-                                 legendplot=list(["Übergänge", "Mittelwerte", "Erstes Subkompartiment"]), filename_plot="compare_compartments_initialization_20_long")
+                                 legendplot=list(["Übergänge", "Koslow", "Hurtado"]), filename_plot="compare_compartments_initialization_20_long")
         plot_new_infections([os.path.join(data_dir, "init", "lct_init_transitions_20"), os.path.join(data_dir, "init", "lct_init_mean_20"), os.path.join(data_dir, "init", "lct_init_first_3"), os.path.join(data_dir, "init", "lct_init_first_10"), os.path.join(data_dir, "init", "lct_init_first_20")],
-                            6000, legendplot=list(["Übergänge (20)", "Mittelwerte (20)", "Erstes Subkompartiment 3", "Erstes Subkompartiment 10", "Erstes Subkompartiment 20"]), filename_plot="compare_new_infections_initialization_diffnums")
+                            6000, legendplot=list(["Übergänge (20)", "Koslow (20)", "Hurtado 3", "Hurtado 10", "Hurtado 20"]), filename_plot="compare_new_infections_initialization_diffnums")
 
     elif case == 2:
         # Compare simulation results of different models with a drop of R0.
-        plot_new_infections([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_0"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_3"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_20")],
-                            4100, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_new_infections_lct_drop")
-        compare_all_compartments([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_0"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_3"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_20")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_compartments_lct_drop")
-        plot_new_infections([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_0"), os.path.join(data_dir, "dropR0", "fictional_ide_0.5_10"),  os.path.join(data_dir, "dropR0", "fictional_ide_0.5_0")],
-                            4100, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_new_infections_ide_drop")
-        compare_all_compartments([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_0"), os.path.join(data_dir, "dropR0", "fictional_ide_0.5_10"),  os.path.join(data_dir, "dropR0", "fictional_ide_0.5_0")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_compartments_ide_drop")
+        plot_new_infections([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_3"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_20"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_0")],
+                            4100, legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),  filename_plot="compare_new_infections_lct_drop")
+        compare_all_compartments([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_3"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_20"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_0")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),  filename_plot="compare_compartments_lct_drop")
+        plot_new_infections([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_3"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"), os.path.join(data_dir, "dropR0", "fictional_ide_0.5_3"),  os.path.join(data_dir, "dropR0", "fictional_ide_0.5_10")],
+                            4100, legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]),  filename_plot="compare_new_infections_ide_drop")
+        compare_all_compartments([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"), os.path.join(data_dir, "dropR0", "fictional_lct_0.5_3"),  os.path.join(data_dir, "dropR0", "fictional_lct_0.5_10"), os.path.join(data_dir, "dropR0", "fictional_ide_0.5_3"),  os.path.join(data_dir, "dropR0", "fictional_ide_0.5_10")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]), filename_plot="compare_compartments_ide_drop")
 
     if case == 3:
         # Compare simulation results of different models with a rise of R0.
-        plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_1"),   os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_0"), os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_3"), os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_20")],
-                            81000, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_new_infections_lct_rise4")
-        compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_1"),   os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_0"), os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_3"), os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_20")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_compartments_lct_rise4")
-        plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_1"),  os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_0"), os.path.join(data_dir, "riseR0short", "fictional_ide_4.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_ide_4.0_0")],
-                            81000, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_new_infections_ide_rise4")
-        compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_1"),  os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_4.0_0"), os.path.join(data_dir, "riseR0short", "fictional_ide_4.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_ide_4.0_0")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_compartments_ide_rise4")
-        plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_0"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_3"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_20")],
-                            15500, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_new_infections_lct_rise2")
-        compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_0"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_3"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_20")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_compartments_lct_rise2")
-        plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_0"), os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_0")],
-                            15500, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_new_infections_ide_rise2")
-        compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_0"), os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_10"),  os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_0")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_compartments_ide_rise2")
+        plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_3"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_20"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_0")],
+                            15500, legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),  filename_plot="compare_new_infections_lct_rise2")
+        compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_3"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_20"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_0")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),   filename_plot="compare_compartments_lct_rise2")
+        plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_3"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"), os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_3"),  os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_10")],
+                            15500, legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]),  filename_plot="compare_new_infections_ide_rise2")
+        compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"), os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_3"),  os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_10"), os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_3"),  os.path.join(data_dir, "riseR0short", "fictional_ide_2.0_10")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]),   filename_plot="compare_compartments_ide_rise2")
 
     if case == 4:
         # Compare simulation results of different models with a rise of R0 and a long simulation time.
-        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),   os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_3_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_20_long")],
-                            6e6, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_new_infections_lct_rise4long")
-        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),   os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_3_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_20_long")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_compartments_lct_rise4long")
-        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_0_long")],
-                            6e6, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_new_infections_ide_rise4long")
-        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_0_long")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_compartments_ide_rise4long")
-        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_3_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_20_long")],
-                            2e6, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),  filename_plot="compare_new_infections_lct_rise2long")
-        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_3_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_20_long")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "LCT 3",  "LCT 20"]),   filename_plot="compare_compartments_lct_rise2long")
-        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_0_long")],
-                            2e6, legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),  filename_plot="compare_new_infections_ide_rise2long")
-        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_0_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_10_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_0_long")],
-                                 legendplot=list(["ODE",  "LCT 10",  "LCT var",  "IDE 10",  "IDE var"]),    filename_plot="compare_compartments_ide_rise2long")
+        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),   os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_20_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_0_long")],
+                            6e6, legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),  filename_plot="compare_new_infections_lct_rise4long")
+        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),   os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_20_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_0_long")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),   filename_plot="compare_compartments_lct_rise4long")
+        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_10_long")],
+                            6e6, legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]),  filename_plot="compare_new_infections_ide_rise4long")
+        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_4.0_10_long")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]), filename_plot="compare_compartments_ide_rise4long")
+
+        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_20_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_0_long")],
+                            2e6, legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),  filename_plot="compare_new_infections_lct_rise2long")
+        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_20_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_0_long")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",    "LCT 20",  "LCT var"]),   filename_plot="compare_compartments_lct_rise2long")
+        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_10_long")],
+                            2e6, legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]),  filename_plot="compare_new_infections_ide_rise2long")
+        compare_all_compartments([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"), os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_10_long"), os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_3_long"),  os.path.join(data_dir, "riseR0long", "fictional_ide_2.0_10_long")],
+                                 legendplot=list(["ODE",  "LCT 3", "LCT 10",   "IDE 3", "IDE 10"]),    filename_plot="compare_compartments_ide_rise2long")
 
     if case == 5:
         # Attention: also change values in the dictionary parameters!

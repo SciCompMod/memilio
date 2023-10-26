@@ -319,7 +319,7 @@ int main()
     // First case: drop R0 to 0.5.
     // Paths are valid if file is executed eg in memilio/build/bin
     std::string save_dir = "../../data/simulation_lct/dropR0/";
-    auto result          = simulate(0.5, 0, true, true, save_dir);
+    auto result          = simulate(0.5, 3, true, true, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
@@ -329,7 +329,7 @@ int main()
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
-    for (int i : {1, 3, 20}) {
+    for (int i : {0, 1, 20}) {
         result = simulate(0.5, i, true, false, save_dir);
         if (!result) {
             printf("%s\n", result.error().formatted_message().c_str());
@@ -337,37 +337,35 @@ int main()
         }
     }
 
-    // Second case: Rise R0 to 2 or 4.
+    // Second case: Rise R0 to 2.
     save_dir = "../../data/simulation_lct/riseR0short/";
-    for (int j : {2, 4}) {
-        for (int i : {0, 10}) {
-            result = simulate(j, i, true, true, save_dir);
-            if (!result) {
-                printf("%s\n", result.error().formatted_message().c_str());
-                return -1;
-            }
+    for (int i : {3, 10}) {
+        result = simulate(2, i, true, true, save_dir);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
         }
     }
-    for (int j : {2, 4}) {
-        for (int i : {1, 3, 20}) {
-            result = simulate(j, i, true, false, save_dir);
-            if (!result) {
-                printf("%s\n", result.error().formatted_message().c_str());
-                return -1;
-            }
+
+    for (int i : {0, 1, 20}) {
+        result = simulate(2, i, true, false, save_dir);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
         }
     }
+
     // Third case: Rise R0 to 2 or 4 long term.
     save_dir = "../../data/simulation_lct/riseR0long/";
 
-    for (int i : {0, 10}) {
+    for (int i : {3, 10}) {
         result = simulate(2, i, true, true, save_dir, 150);
         if (!result) {
             printf("%s\n", result.error().formatted_message().c_str());
             return -1;
         }
     }
-    for (int i : {1, 3, 20}) {
+    for (int i : {0, 1, 20}) {
         result = simulate(2, i, true, false, save_dir, 150);
         if (!result) {
             printf("%s\n", result.error().formatted_message().c_str());
@@ -375,14 +373,14 @@ int main()
         }
     }
 
-    for (int i : {0, 10}) {
+    for (int i : {3, 10}) {
         result = simulate(4, i, true, true, save_dir, 75);
         if (!result) {
             printf("%s\n", result.error().formatted_message().c_str());
             return -1;
         }
     }
-    for (int i : {1, 3, 20}) {
+    for (int i : {0, 1, 20}) {
         result = simulate(4, i, true, false, save_dir, 75);
         if (!result) {
             printf("%s\n", result.error().formatted_message().c_str());
