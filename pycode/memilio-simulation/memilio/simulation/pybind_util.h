@@ -101,45 +101,52 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
  * 
  * @{
  */
-
-
-template <class T, class... Args>
-auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/) {
-    auto cls = pybind11::class_<T, Args...>(m, name.c_str());
-    return cls;
-}
-
-template <class T, class... Args>
-auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::IfAvailable> /*tags*/) {
-    auto cls = pybind11::class_<T, Args...>(m, name.c_str());
-    // Bind the class depending on its features
-    if constexpr (has_serialize_internal<mio::PickleSerializer, T>::value) {
-        pybind_pickle_class<T, Args...>(cls);
+template<class T, EnablePickling F, class... Args>
+struct BindClassHelper
+{
+    template <class... Options>
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/, Options&&... options) const {
+        auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
+        return cls;
     }
-    return cls;
-}
 
-template <class T, class... Args>
-auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Required> /*tags*/) {
-    auto cls = pybind11::class_<T, Args...>(m, name.c_str());
-    pybind_pickle_class<T, Args...>(cls);
-    return cls;
-}
-/**@}*/
+    template <class... Options>
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::IfAvailable> /*tags*/, Options&&... options) const {
+        auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
+        // Bind the class depending on its features
+        if constexpr (has_serialize_internal<mio::PickleSerializer, T>::value) {
+            pybind_pickle_class<T, Args...>(cls);
+        }
+        return cls;
+    }
+
+    template <class... Options>
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Required> /*tags*/, Options&&... options) const {
+        auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
+        pybind_pickle_class<T, Args...>(cls);
+        return cls;
+    }
+
+    template <class... Options>
+    auto operator()(pybind11::module& m, std::string const& name, Options&&... options) const {
+        return _bind_class(m, name, PicklingTag<F>{}, std::forward<Options>(options)...);
+    }
+
+};
 
 /**
- * Bind a class with the specified pickling behavior.
+ * Interface for binding class with pybind.
  * @tparam T class for binding
  * @tparam F value of enum EnablePickling defining pickling behaviour
  * @tparam Args base class of T.
  * @param m the pybind11 module.
  * @param name of the class in python.
+ * @param options optional arguments for pybind11::class_.
  * @return instance of pybind class_.
  */
-template <class T, EnablePickling F, class... Args>
-auto bind_class(pybind11::module& m, std::string const& name) {
-    return _bind_class<T, Args...>(m, name, PicklingTag<F>{});
-}
+template<class T, EnablePickling F, class... Args>
+constexpr BindClassHelper<T, F, Args...> bind_class;
+/**@}*/
 
 // the following functions help bind class template realizations
 //https://stackoverflow.com/questions/64552878/how-can-i-automatically-bind-templated-member-functions-of-variadic-class-templa
@@ -227,8 +234,8 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
 //bind an enum class that can be iterated over
 //requires the class to have a member `Count`
 //adds a static `values` method to the enum class that returns an iterable list of the values
-template <class E>
-auto iterable_enum(pybind11::module_& m, const std::string& name)
+template <class E, class... Args>
+auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args)
 {
     using T = std::underlying_type_t<E>;
 
@@ -236,7 +243,7 @@ auto iterable_enum(pybind11::module_& m, const std::string& name)
     //not meant to be used directly by users, so name starts with _
     struct Values {
     };
-    bind_class<Values, EnablePickling::Never>(m, ("_" + name + "Values").c_str())
+    bind_class<Values, EnablePickling::Never>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
         .def("__iter__",
              [](Values& /*self*/) {
                  return E(0);
@@ -245,7 +252,7 @@ auto iterable_enum(pybind11::module_& m, const std::string& name)
             return (size_t)E::Count; //len() expects integer
         });
 
-    auto enum_class = pybind11::enum_<E>(m, name.c_str());
+    auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
     enum_class.def_static("values", []() {
         return Values{};
     });

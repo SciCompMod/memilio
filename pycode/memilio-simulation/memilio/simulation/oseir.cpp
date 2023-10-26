@@ -64,7 +64,7 @@ PYBIND11_MODULE(_simulation_oseir, m)
 
     pymio::bind_ParameterSet<mio::oseir::ParametersBase>(m, "ParametersBase");
 
-    pymio::bind_class<mio::oseir::Parameters, pymio::EnablePickling::Required, mio::oseir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::oseir::Parameters, pymio::EnablePickling::Required, mio::oseir::ParametersBase>(m, "Parameters", py::module_local{})
         .def(py::init<>())
         .def("check_constraints", &mio::oseir::Parameters::check_constraints);
 
