@@ -392,6 +392,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
  *        "RelativeTransmissionNoSymptoms", "RiskOfInfectionFromSymptomatic", "scale_confirmed_cases" (to scale the RKI data while computing an initialization vector),
  *        "lockdown_hard" (Proportion of counties for which a hard lockdown is implemented) and 
  *        "scale_contacts" (scales contacts per hand to match the new infections in the RKI data).
+ *        The assumption regarding the number of subcompartments of the LCT model can be controlled via the parameter "num_subcompartments".
  * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
  * @param[in] print_result Specifies if the results should be printed.
  * @returns Any io errors that happen during reading of the RKI file or files for contact matrices or saving the results.
@@ -429,18 +430,31 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
 
     // Define number of subcompartments.
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
-    // Use subcompartments with a soujourn time of approximately one day in each subcompartment.
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-        (int)round(parameters.get<mio::lsecir::TimeExposed>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedSevere>());
-    // Both realistic distributions for times corresponding to InfectedCritical of the IDE model are exponential distributions.
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedCritical>());
+    if (!(simulation_parameters["num_subcompartments"] == 0)) {
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
+            simulation_parameters["num_subcompartments"];
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
+            simulation_parameters["num_subcompartments"];
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
+            simulation_parameters["num_subcompartments"];
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
+            simulation_parameters["num_subcompartments"];
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
+            simulation_parameters["num_subcompartments"];
+    }
+    else {
+        // Use subcompartments with a soujourn time of approximately one day in each subcompartment.
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
+            (int)round(parameters.get<mio::lsecir::TimeExposed>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
+            (int)round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
+            (int)round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
+            (int)round(parameters.get<mio::lsecir::TimeInfectedSevere>());
+        vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] =
+            (int)round(parameters.get<mio::lsecir::TimeInfectedCritical>());
+    }
     mio::lsecir::InfectionState infectionState(vec_subcompartments);
 
     // Calculate initial value vector for subcompartments with RKI data.
@@ -465,38 +479,26 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations_lct = model_lct.calculate_populations(result_lct);
 
-    // Initialize ODE model and perform simulation.
-    mio::lsecir::InfectionState infectionState_ode(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count, 1));
-    mio::lsecir::Model model_ode(std::move(init_base), infectionState_ode, std::move(parameters));
-    mio::TimeSeries<ScalarType> result_ode = mio::lsecir::simulate(
-        0, mio::get_offset_in_days(end_date, start_date), 0.1, model_ode,
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
-                                                                                                         0.1));
-
     if (print_result) {
         // Print results.
-        std::cout << "Result LCT model:" << std::endl;
+        std::cout << "Result of LCT " << (int)simulation_parameters["num_subcompartments"] << " model:" << std::endl;
         mio::lsecir::print_TimeSeries(populations_lct, model_lct.get_heading_CompartmentsBase());
-        std::cout << "Result ODE model:" << std::endl;
-        mio::lsecir::print_TimeSeries(result_ode, model_ode.get_heading_CompartmentsBase());
     }
     if (!save_dir.empty()) {
         // Save results.
-        std::string filename = save_dir + "real_lct_2020_" + std::to_string((int)simulation_parameters["start_month"]) +
-                               "_" + std::to_string((int)simulation_parameters["start_day"]) + ".h5";
+        std::string filename = save_dir + "real_lct" +
+                               std::to_string((int)simulation_parameters["num_subcompartments"]) + "_2020_" +
+                               std::to_string((int)simulation_parameters["start_month"]) + "_" +
+                               std::to_string((int)simulation_parameters["start_day"]) + ".h5";
         auto save_result_status = mio::save_result({populations_lct}, {0}, 1, filename);
-        filename = save_dir + "real_ode_2020_" + std::to_string((int)simulation_parameters["start_month"]) + "_" +
-                   std::to_string((int)simulation_parameters["start_day"]) + ".h5";
-        save_result_status = mio::save_result({result_ode}, {0}, 1, filename);
     }
     // Print commands to get the number of new infections on the first day of simulation. Could be used to scale the contacts.
-    std::cout << "Number of new infections on the first day of simulation: " << std::endl;
-    std::cout << "LCT model:"
+    std::cout << "Number of new infections on the first day of simulation for LCT model with "
+              << (int)simulation_parameters["num_subcompartments"] << " subcompartments: " << std::endl;
+    std::cout << std::fixed << std::setprecision(1)
               << (populations_lct[0][0] - populations_lct[1][0]) /
                      (populations_lct.get_time(1) - populations_lct.get_time(0))
               << std::endl;
-    std::cout << "ODE model:"
-              << (result_ode[0][0] - result_ode[1][0]) / (result_ode.get_time(1) - result_ode.get_time(0)) << std::endl;
 
     return mio::success();
 }
@@ -504,23 +506,25 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
 int main()
 {
     std::string save_dir                                               = "../../data/simulation_lct/real/";
-    std::map<std::string, ScalarType> simulation_parameters_2020_06_01 = {{"start_month", 6},
+    std::map<std::string, ScalarType> simulation_parameters_2020_06_01 = {{"num_subcompartments", 1},
+                                                                          {"start_month", 6},
                                                                           {"start_day", 1},
                                                                           {"seasonality", 0.2},
                                                                           {"RelativeTransmissionNoSymptoms", 0.7},
                                                                           {"RiskOfInfectionFromSymptomatic", 0.2},
                                                                           {"scale_confirmed_cases", 1.},
                                                                           {"lockdown_hard", 0.03 * 14 / (45 * 401.)},
-                                                                          {"scale_contacts", 445. / 516.7}};
+                                                                          {"scale_contacts", 445.7694 / 516.8929}};
 
-    std::map<std::string, ScalarType> simulation_parameters_2020_10_01 = {{"start_month", 10},
+    std::map<std::string, ScalarType> simulation_parameters_2020_10_01 = {{"num_subcompartments", 1},
+                                                                          {"start_month", 10},
                                                                           {"start_day", 1},
                                                                           {"seasonality", 0.2},
                                                                           {"RelativeTransmissionNoSymptoms", 1},
                                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                                           {"scale_confirmed_cases", 2.},
                                                                           {"lockdown_hard", 371 * 14 / (45 * 401.)},
-                                                                          {"scale_contacts", 11154.2 / 13106.}};
+                                                                          {"scale_contacts", 11154.2091 / 13106.6115}};
     /* Values for "RelativeTransmissionNoSymptoms", "RelativeTransmissionNoSymptoms" and "seasonality" are suitable values based on doi: 10.1016/j.mbs.2021.108648.
     "scale_confirmed_cases" are values directly from this paper. 
     "lockdown_hard" is based on the number of beginnings of a strict lockdown for 14 days of the 45 days simulation period in the lockdown. Value is not used for 01/06/2020 and 
@@ -529,13 +533,53 @@ int main()
     "scale_contacts" is used to match the predicted number of new infections on the first simulation day to the RKI data. */
 
     // Paths are valid if file is executed eg in memilio/build/bin
+    // Simulation with start date 01.06.2020 with 1 subcompartment.
     auto result =
         simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_06_01, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
+    // Simulation with start date 01.06.2020 with 3 subcompartments.
+    simulation_parameters_2020_06_01["num_subcompartments"] = 3;
+    simulation_parameters_2020_06_01["scale_contacts"]      = 445.7694 / 516.6578;
+    result =
+        simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_06_01, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    // Simulation with start date 01.06.2020 with 10 subcompartments.
+    simulation_parameters_2020_06_01["num_subcompartments"] = 10;
+    simulation_parameters_2020_06_01["scale_contacts"]      = 445.7694 / 516.5778;
+    result =
+        simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_06_01, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
 
+    // Simulation with start date 01.10.2020 with 1 subcompartment.
+    result =
+        simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_10_01, save_dir);
+
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    // Simulation with start date 01.10.2020 with 3 subcompartments.
+    simulation_parameters_2020_10_01["num_subcompartments"] = 3;
+    simulation_parameters_2020_10_01["scale_contacts"]      = 11154.2091 / 13105.7208;
+    result =
+        simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_10_01, save_dir);
+
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    // Simulation with start date 01.10.2020 with 10 subcompartments.
+    simulation_parameters_2020_10_01["num_subcompartments"] = 10;
+    simulation_parameters_2020_10_01["scale_contacts"]      = 11154.2091 / 13102.1831;
     result =
         simulate("../../data/pydata/Germany/cases_all_germany_ma7.json", simulation_parameters_2020_10_01, save_dir);
 
