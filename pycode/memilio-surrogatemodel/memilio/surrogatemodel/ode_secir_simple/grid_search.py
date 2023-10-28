@@ -16,7 +16,7 @@ path_data = os.path.join(os.path.dirname(os.path.realpath(
     
 filename = "data_secir_simple.pickle"
 filename_df = "dataframe"
-max_epochs = 2
+
 label_width = 30 
 early_stop = 100
 
@@ -44,15 +44,15 @@ df_results  = pd.DataFrame(
 
 #for param in parameters: 
 
-def train_and_evaluate_model(param):
+def train_and_evaluate_model(param, max_epochs):
     layer =param[0]
     neuron_number = param[1]
     modelname = param[2]
     
 
     
-    if not os.path.isfile(os.path.join(path, 'data_secir_simple.pickle')):
-        ValueError("no dataset found in path: " + path)
+    if not os.path.isfile(os.path.join(path_data, 'data_secir_simple.pickle')):
+        ValueError("no dataset found in path: " + path_data)
 
     file = open(os.path.join(path_data,filename), 'rb')
 
@@ -185,10 +185,19 @@ def train_and_evaluate_model(param):
 
 
 
+start_hyper = time.perf_counter()
+max_epochs = 1500
 
+for param in parameters:
+     train_and_evaluate_model(param, max_epochs)
 
-
-
+elapsed_hyper = time.perf_counter() - start_hyper
+print(
+    "Time for hyperparameter testing: {:.4f} minutes".format(
+        elapsed_hyper / 60))
+print(
+    "Time for hyperparameter testing: {:.4f} hours".format(
+        elapsed_hyper / 60 / 60))
 
 
 
