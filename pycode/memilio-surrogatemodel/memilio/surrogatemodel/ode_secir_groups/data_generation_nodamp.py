@@ -35,6 +35,20 @@ from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
                                       interpolate_simulation_result, simulate)
 
 
+
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    new_dataset_entries = []
+    for i in dataset_entries : 
+      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+      dataset_entries_reshaped[:, 4] = sum_inf_symp
+      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+    return new_dataset_entries
+
+
+
 def run_secir_groups_simulation(days, populations):
     """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region. 
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
@@ -107,13 +121,13 @@ def run_secir_groups_simulation(days, populations):
     minimum = getMinimumMatrix()
 
 
-    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
-        (num_groups, num_groups)) * 10
+    #model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
+    #    (num_groups, num_groups)) * 10
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
+    #model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
 
 
 
@@ -129,9 +143,10 @@ def run_secir_groups_simulation(days, populations):
     # Using an array instead of a list to avoid problems with references
     result_array = result.as_ndarray()
 
-    # Omit first column, as the time points are not of interest here.
+    # Omit first column, as the time points are not of interest here. and remove confirmed compartments
     dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
-    return dataset_entries.tolist()
+    dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    return dataset_entires_withut_confirmed
     #return dataset_entries.tolist(), damped_contact_matrix
 
 
@@ -209,7 +224,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_90days_nodamp.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_30days_nodamp.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -295,7 +310,7 @@ if __name__ == "__main__":
         r"data//pydata//Germany//county_population.json")
 
     input_width = 5
-    label_width = 90
+    label_width = 30
     num_runs = 10000
     data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width)
