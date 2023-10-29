@@ -114,17 +114,22 @@ struct TimeSeriesWriter {
         std::get<details::index_templ_pack<Logger, Loggers...>()>(data).setZero();
         std::get<details::index_templ_pack<Logger, Loggers...>()>(data).get_last_value() = t.second;
     }
+
+    static Data cstr()
+    {
+        return Data(mio::TimeSeries<typename Loggers::Type>(Eigen::Index(mio::abm::InfectionState::Count))...);
+    }
 };
 
 /*
 * @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState.
 */
-struct LogInfectionStates : mio::LogAlways {
+struct LogInfectionState : mio::LogAlways {
     using Type = std::tuple<mio::abm::TimePoint, Eigen::VectorXd>;
     static Type log(const mio::abm::Simulation& sim)
     {
         Type infection_state{};
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(InfectionState::Count));
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         for (auto i = size_t(0); i < sim.get_world().get_locations().size(); ++i) {
             auto&& location = sim.get_world().get_locations()[i];
             sum += location.get_subpopulations().get_last_value().cast<ScalarType>();

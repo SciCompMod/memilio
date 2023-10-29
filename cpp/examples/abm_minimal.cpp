@@ -23,6 +23,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include "abm/common_abm_loggers.h"
 
 void write_results_to_file(const mio::abm::Simulation& sim)
 {
@@ -170,7 +171,9 @@ int main()
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-    sim.advance(tmax);
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries;
+
+    sim.advance(tmax, historyTimeSeries);
 
     write_results_to_file(sim);
 }

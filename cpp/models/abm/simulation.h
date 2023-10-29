@@ -37,7 +37,6 @@ namespace abm
  */
 class Simulation
 {
-    using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
 
 public:
     /**
