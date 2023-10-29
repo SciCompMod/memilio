@@ -99,6 +99,40 @@ struct LogDataForMovement : mio::LogAlways {
         return movement_data;
     }
 };
+
+/*
+* @brief This is like the DataWriterToMemory, but it only logs time series data.
+* @tparam Loggers The loggers that are used to log data. The loggers must return a touple with a TimePoint and a value.
+*/
+template <class... Loggers>
+struct TimeSeriesWriter {
+    using Data = std::tuple<mio::TimeSeries<typename Loggers::Type>...>;
+    template <class Logger>
+    static void log_this(const typename Logger::Type& t, Data& data)
+    {
+        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).add_time_point(t.first);
+        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).setZero();
+        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).get_last_value() = t.second;
+    }
+};
+
+/*
+* @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState.
+*/
+struct LogInfectionStates : mio::LogAlways {
+    using Type = std::tuple<mio::abm::TimePoint, Eigen::VectorXd>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type infection_state{};
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(InfectionState::Count));
+        for (auto i = size_t(0); i < sim.get_world().get_locations().size(); ++i) {
+            auto&& location = sim.get_world().get_locations()[i];
+            sum += location.get_subpopulations().get_last_value().cast<ScalarType>();
+        }
+        return std::make_tuple(sim.get_time(), sum);
+    }
+};
+
 } // namespace abm
 } // namespace mio
 #endif //ABM_COMMON_LOGGERS_H

@@ -69,17 +69,18 @@ public:
      * @param[in] tmax Time to stop.
      * @param[in] history History object to log data of the Simulation.
      */
-    template <typename History>
-    void advance(TimePoint tmax, History& history)
+    template <typename... History>
+    void advance(TimePoint tmax, History&... history)
     {
         //log initial system state
+        mio::unused(history...);
         initialize_locations(m_t);
         store_result_at(m_t);
-        history.log(*this);
+        (history.log(*this), ...);
         while (m_t < tmax) {
             evolve_world(tmax);
             store_result_at(m_t);
-            history.log(*this);
+            (history.log(*this), ...);
         }
     }
 
