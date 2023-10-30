@@ -62,6 +62,7 @@ struct LogIf {
 * @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
 * @tparam Loggers The loggers that are used to log data.
 */
+
 template <class... Loggers>
 struct DataWriterToMemory {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
@@ -69,11 +70,6 @@ struct DataWriterToMemory {
     static void log_this(const typename Logger::Type& t, Data& data)
     {
         std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(t);
-    }
-
-    static Data cstr()
-    {
-        return Data(std::vector<typename Loggers::Type>()...);
     }
 };
 
@@ -85,7 +81,6 @@ struct DataWriterToMemory {
 * A Logger has a type "Type", a function "static Type log(const T&)" and is derived from either LogOnceStart or LogAlways.
 * LogOnceStart is only passed to Writer on the first call to History::log, LogAlways on all calls.
 * The Writer defines the type "Data" of the record, and defines with "static void log_this(const Logger::Type&, Data&)" how log values are added to it.
-* It also needs to provide a static function "static Data cstr()" that returns the constructor arguments for Data if it is not trivial.
 * @tparam Writer The writer that is used to handle the data, e.g. store it into an array.
 * @tparam Loggers The loggers that are used to log data.
 */
@@ -96,9 +91,15 @@ class History
 public:
     using WriteWrapper = Writer<Loggers...>;
 
-    //if WriteWrapper::Data needs a constructor, we need to call it here
-    History()
-        : m_data(WriteWrapper::cstr())
+    History() = default;
+
+    History(typename WriteWrapper::Data data)
+        : m_data(data)
+    {
+    }
+
+    History(typename Loggers::Type... args)
+        : m_data(std::tie(args...))
     {
     }
 

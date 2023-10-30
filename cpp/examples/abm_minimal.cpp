@@ -171,7 +171,8 @@ int main()
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries;
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
 
     sim.advance(tmax, historyTimeSeries);
 
