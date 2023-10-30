@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+#import torch
+#import torch.nn as nn
+#import torch.nn.functional as F
 import pickle
 import spektral
 import time
@@ -24,7 +24,8 @@ from keras.layers import Dense
 from keras.losses import MeanAbsolutePercentageError
 from keras.metrics import mean_absolute_percentage_error
 from keras.models import Model
-from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
+from keras.optimizers.legacy import Adam, Nadam, RMSprop, SGD, Adagrad
+# from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
 
 from sklearn.model_selection import KFold
 
@@ -93,6 +94,11 @@ for l in layers:
         for nl in number_of_layers:
             for o in optimizers:
                 parameters.append((l, a, nl, o))
+
+##########
+# only for the rest which is not done already
+parameters = parameters[101:]
+
 
 df = pd.DataFrame(
     columns=['layer', 'number_of_layers', 'activation',
@@ -229,6 +235,9 @@ def train_and_evaluate_model(
         pred = model(inputs, training=False)
 
         mean_per_batch = []
+        states_array = []
+        for i in InfectionState.values():
+            states_array.append(i)
 
         for batch_p, batch_t in zip(pred, target):
             MAPE_v = []
@@ -251,7 +260,9 @@ def train_and_evaluate_model(
         mean_percentage = pd.DataFrame(
             data=np.asarray(mean_per_batch).transpose().mean(axis=1),
             index=[str(compartment).split('.')[1]
-                   for compartment in InfectionState.values()],
+                   for compartment in states_array[:8]],
+            # index=[str(compartment).split('.')[1]
+            #       for compartment in InfectionState.values()],
             columns=['Percentage Error'])
 
         return mean_percentage
@@ -333,8 +344,8 @@ def train_and_evaluate_model(
         ################################################################################
         model.set_weights(best_weights)  # Load best model
         test_loss, test_acc = evaluate(loader_te)
-        test_MAPE = test_evaluation(loader_te)
-        print(test_MAPE)
+        # test_MAPE = test_evaluation(loader_te)
+        # print(test_MAPE)
 
         print(
             "Done. Test loss: {:.4f}. Test acc: {:.2f}".format(
@@ -348,14 +359,14 @@ def train_and_evaluate_model(
     elapsed = time.perf_counter() - start
 
     # plot the losses
-    plt.figure()
-    plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
-    plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss ( MAPE)')
-    plt.title('Loss for' + str(layer))
-    plt.legend()
-    plt.savefig('losses'+str(layer)+'.png')
+    # plt.figure()
+    # plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
+    # plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss ( MAPE)')
+    # plt.title('Loss for' + str(layer))
+    # plt.legend()
+    # plt.savefig('losses'+str(layer)+'.png')
 
     # print out stats
     print("Best train losses: {} ".format(train_losses))
@@ -374,14 +385,16 @@ def train_and_evaluate_model(
                              np.mean(val_losses),
                              np.mean(test_scores),
                              (elapsed / 60),
-                             [np.asarray(losses_history_all).mean(axis=0)],
-                             [np.asarray(val_losses_history_all).mean(axis=0)]]
+                             [losses_history_all],
+                             [val_losses_history_all]]
+    # [np.asarray(losses_history_all).mean(axis=0)],
+    # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'dataframe_hyperparameters')
+        'dataframe_hyperparameters_')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = file_path+filename
@@ -389,11 +402,15 @@ def train_and_evaluate_model(
 
 
 start_hyper = time.perf_counter()
-epochs = 2
-filename = '/dataframe_hyperparameter_tuning_test.csv'
+epochs = 1000
+filename = '/dataframe_hyperparameter_tuning_part6.csv'
 for param in parameters:
     train_and_evaluate_model(epochs, 0.001, param)
 
 elapsed_hyper = time.perf_counter() - start_hyper
-print("Time for hyperparameter testing: {:.4f} minutes".format(elapsed_hyper/60))
-print("Time for hyperparameter testing: {:.4f} hours".format(elapsed_hyper/60/60))
+print(
+    "Time for hyperparameter testing: {:.4f} minutes".format(
+        elapsed_hyper / 60))
+print(
+    "Time for hyperparameter testing: {:.4f} hours".format(
+        elapsed_hyper / 60 / 60))
