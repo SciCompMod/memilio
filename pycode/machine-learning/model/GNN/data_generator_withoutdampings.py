@@ -243,7 +243,7 @@ def generate_data(
 
 
 # def get_population(path="data\pydata\Germany\county_population_dim401.json"):
-def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pydata/Germany/county_population_dim401.json"):
+def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pydata/Germany/county_population.json"):
 
     with open(path) as f:
         data = json.load(f)
@@ -353,11 +353,11 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_100pop_nodamp_30days_1k')
+        'data_GNN_20pop_nodamp_30days_100k')
 
     input_width = 5
     days = 30
-    num_runs = 1000
-    number_of_populations = 100
+    num_runs = 100000
+    number_of_populations = 20
     generate_data(num_runs, path_data, input_width,
                   days, number_of_populations)
