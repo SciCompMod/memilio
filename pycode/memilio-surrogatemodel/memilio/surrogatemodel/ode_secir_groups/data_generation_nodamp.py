@@ -173,9 +173,7 @@ def generate_data(
     bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
 
-        # Generate a random damping day
-        damping_day = random.randrange(
-            input_width, input_width+label_width)
+   
 
 
         data_run = run_secir_groups_simulation(
@@ -209,7 +207,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_90days_nodamp.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_30days_nodamp.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -295,7 +293,7 @@ if __name__ == "__main__":
         r"data//pydata//Germany//county_population.json")
 
     input_width = 5
-    label_width = 90
+    label_width = 30
     num_runs = 10000
     data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width)
