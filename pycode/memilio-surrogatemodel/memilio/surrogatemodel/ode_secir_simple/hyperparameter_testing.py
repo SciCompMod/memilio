@@ -9,6 +9,7 @@ from sklearn.model_selection import KFold
 import numpy as np
 
 
+# grid serach of activation and optimizer for our best model: the CNN 
 
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
@@ -20,23 +21,23 @@ filename_df = "dataframe"
 label_width = 30 
 early_stop = 100
 
-hidden_layers = [0,1,2,3,4]
-neurons_in_hidden_layer = [32, 62, 128, 512, 1024]
-models = ["Dense", "CNN", "LSTM"]
+activations= ['relu', 'elu', 'softmax',  'sigmoid', 'linear', 'tanh']
+optimizers = ['Adam', 'Nadam', 'SGD', 'Adagrad', 'RMSProp']
+
 
 label_width = 30
 
 
 parameters = []
-for layer in hidden_layers:
-    for neuron_number in neurons_in_hidden_layer:
-        for modelname in models:
-            parameters.append((layer, neuron_number, modelname))
+for a in activations:
+    for o in optimizers:
+        
+        parameters.append((a, o))
 
-
+modelname = 'CNN'
 
 df_results  = pd.DataFrame(
-    columns=['model', 'number_of_hidden_layers', 'number_of_neurons',
+    columns=['model', 'activation', 'optimizer',
              'mean_test_MAPE', 'kfold_train',
              'kfold_val', 'kfold_test', 'training_time',
              'train_losses', 'val_losses'])            
@@ -45,9 +46,9 @@ df_results  = pd.DataFrame(
 #for param in parameters: 
 
 def train_and_evaluate_model(param, max_epochs):
-    layer =param[0]
-    neuron_number = param[1]
-    modelname = param[2]
+    activation =param[0]
+    optimizer = param[1]
+    
     
 
     
@@ -82,44 +83,22 @@ def train_and_evaluate_model(param, max_epochs):
     start = time.perf_counter()
     for train_idx, test_idx in zip(train_idxs, test_idxs):
 
-        if modelname == 'Dense':
-                
-            model = tf.keras.Sequential([
-                tf.keras.layers.Flatten(),
-                tf.keras.layers.Dense(units=neuron_number, activation='relu')])
-                
-            for i in range(layer):
-                        model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
-                    
-            model.add(tf.keras.layers.Dense(units=label_width*8))
-            model.add(tf.keras.layers.Reshape([label_width,8]))
-
-        elif modelname == 'CNN':
-            conv_size=3
-            num_outputs = 8
-            model = tf.keras.Sequential([
-            tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
-            tf.keras.layers.Conv1D(neuron_number, activation='relu',
+ 
+    
+        conv_size=3
+        num_outputs = 8
+        model = tf.keras.Sequential([
+        tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
+        tf.keras.layers.Conv1D(32, activation=activation,
                                     kernel_size=(conv_size))])
-            for i in range(layer):
-                model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
+        
+        model.add(tf.keras.layers.Dense(units=32, activation= activation))
                 
-            model.add(tf.keras.layers.Dense(label_width*num_outputs,
+        model.add(tf.keras.layers.Dense(label_width*num_outputs,
                                     kernel_initializer=tf.initializers.zeros()))
-            model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
+        model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
 
-        elif modelname == "LSTM":
-                
-            num_outputs = 8
-            model = tf.keras.Sequential([
-            tf.keras.layers.LSTM(neuron_number, return_sequences=False)])
-            
-            for i in range(layer):
-                    model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
-            
-            model.add(tf.keras.layers.Dense(label_width*num_outputs,
-                                    kernel_initializer=tf.initializers.zeros()))
-            model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
+ 
         #import torch
         #x = torch.take(data['inputs'], torch.tensor(train_idx[:(int(0.8*len(train_idx)))]))
          
@@ -134,7 +113,7 @@ def train_and_evaluate_model(param, max_epochs):
 
         model.compile(
             loss=tf.keras.losses.MeanAbsolutePercentageError(),
-            optimizer=tf.keras.optimizers.Adam(),
+            optimizer=optimizer,
             metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
         history = model.fit(train_inputs, train_labels, epochs=max_epochs,
@@ -165,7 +144,7 @@ def train_and_evaluate_model(param, max_epochs):
     print("Time for training: {:.4f} seconds".format(elapsed))
     print("Time for training: {:.4f} minutes".format(elapsed/60))
 
-    df_results.loc[len(df_results.index)] = [modelname, layer, neuron_number,  df.mean()[0] , np.mean(train_losses),
+    df_results.loc[len(df_results.index)] = [modelname, activation, optimizer,  df.mean()[0] , np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
                              (elapsed / 60),
@@ -176,7 +155,7 @@ def train_and_evaluate_model(param, max_epochs):
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'secir_simple_grid_search')
+        'CNN_hyper_activation_optimizer_2')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path,filename_df)

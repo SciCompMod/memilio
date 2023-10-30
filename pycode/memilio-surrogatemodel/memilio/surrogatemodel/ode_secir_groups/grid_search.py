@@ -1,5 +1,5 @@
-from memilio.surrogatemodel.ode_secir_simple import network_architectures
-from memilio.surrogatemodel.ode_secir_simple.model import split_data, get_test_statistic
+from memilio.surrogatemodel.ode_secir_groups import network_architectures
+from memilio.surrogatemodel.ode_secir_groups.model import split_data, get_test_statistic
 import os 
 import tensorflow as tf
 import pickle
@@ -14,7 +14,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-filename = "data_secir_simple.pickle"
+filename = "data_secir_groups_30days_nodamp.pickle"
 filename_df = "dataframe"
 
 label_width = 30 
@@ -91,12 +91,12 @@ def train_and_evaluate_model(param, max_epochs):
             for i in range(layer):
                         model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
                     
-            model.add(tf.keras.layers.Dense(units=label_width*8))
-            model.add(tf.keras.layers.Reshape([label_width,8]))
+            model.add(tf.keras.layers.Dense(units=label_width*8*6))
+            model.add(tf.keras.layers.Reshape([label_width,8*6]))
 
         elif modelname == 'CNN':
             conv_size=3
-            num_outputs = 8
+            num_outputs = 8*6
             model = tf.keras.Sequential([
             tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
             tf.keras.layers.Conv1D(neuron_number, activation='relu',
@@ -110,7 +110,7 @@ def train_and_evaluate_model(param, max_epochs):
 
         elif modelname == "LSTM":
                 
-            num_outputs = 8
+            num_outputs = 8*6
             model = tf.keras.Sequential([
             tf.keras.layers.LSTM(neuron_number, return_sequences=False)])
             
@@ -176,7 +176,7 @@ def train_and_evaluate_model(param, max_epochs):
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'secir_simple_grid_search')
+        'secir_groups_grid_search')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path,filename_df)
@@ -186,7 +186,7 @@ def train_and_evaluate_model(param, max_epochs):
 
 
 start_hyper = time.perf_counter()
-max_epochs = 1500
+max_epochs = 2
 
 for param in parameters:
      train_and_evaluate_model(param, max_epochs)
