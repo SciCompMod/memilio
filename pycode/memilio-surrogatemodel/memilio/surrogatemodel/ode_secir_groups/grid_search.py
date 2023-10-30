@@ -179,7 +179,7 @@ def train_and_evaluate_model(param, max_epochs):
         'secir_groups_grid_search')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
-    file_path = file_path+filename_df
+    file_path = os.path.join(file_path,filename_df)
     df_results.to_csv(file_path)
 
 
