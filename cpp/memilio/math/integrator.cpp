@@ -23,36 +23,37 @@
 namespace mio
 {
 
-Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
+Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(const DerivFunction& f, const double tmax, double& dt,
+                                                   TimeSeries<double>& results)
 {
-    const double t0 = m_result.get_time(m_result.get_num_time_points() - 1);
+    const double t0 = results.get_time(results.get_num_time_points() - 1);
     assert(tmax > t0);
+    assert(dt > 0);
 
-    const size_t nb_steps = (int)(ceil((tmax - t0) / m_dt)); // estimated number of time steps (if equidistant)
+    const size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
-    m_result.reserve(m_result.get_num_time_points() + nb_steps);
+    results.reserve(results.get_num_time_points() + nb_steps);
 
     bool step_okay = true;
 
     double t = t0;
-    size_t i = m_result.get_num_time_points() - 1;
+    size_t i = results.get_num_time_points() - 1;
     while (std::abs((tmax - t) / (tmax - t0)) > 1e-10) {
         //we don't make timesteps too small as the error estimator of an adaptive integrator
         //may not be able to handle it. this is very conservative and maybe unnecessary,
         //but also unlikely to happen. may need to be reevaluated
 
-        auto dt_eff = std::min(m_dt, tmax - t);
-        m_result.add_time_point();
-        step_okay &= m_core->step(m_f, m_result[i], t, dt_eff, m_result[i + 1]);
-        m_result.get_last_time() = t;
-        m_next_dt                = dt_eff;
+        auto dt_eff = std::min(dt, tmax - t);
+        results.add_time_point();
+        step_okay &= m_core->step(f, results[i], t, dt_eff, results[i + 1]);
+        results.get_last_time() = t;
 
         ++i;
 
-        if (std::abs((tmax - t) / (tmax - t0)) > 1e-10 || dt_eff > m_dt) {
+        if (std::abs((tmax - t) / (tmax - t0)) > 1e-10 || dt_eff > dt) {
             //store dt only if it's not the last step as it is probably smaller than required for tolerances
             //except if the step function returns a bigger step size so as to not lose efficiency
-            m_dt = dt_eff;
+            dt = dt_eff;
         }
     }
 
@@ -66,7 +67,7 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
         log_info("Adaptive step sizing successful to tolerances.");
     }
 
-    return m_result.get_last_value();
+    return results.get_last_value();
 }
 
 } // namespace mio
