@@ -60,12 +60,6 @@ public:
     /** 
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
-     */
-    void advance(TimePoint tmax);
-
-    /** 
-     * @brief Run the Simulation from the current time to tmax.
-     * @param[in] tmax Time to stop.
      * @param[in] history History object to log data of the Simulation.
      */
     template <typename... History>
@@ -73,22 +67,11 @@ public:
     {
         //log initial system state
         initialize_locations(m_t);
-        store_result_at(m_t);
         (history.log(*this), ...);
         while (m_t < tmax) {
             evolve_world(tmax);
-            store_result_at(m_t);
             (history.log(*this), ...);
         }
-    }
-
-    /**
-     * @brief Get the result of the Simulation.
-     * Sum over all Location%s of the number of Person%s in an #InfectionState.
-     */
-    const TimeSeries<ScalarType>& get_result() const
-    {
-        return m_result;
     }
 
     /**
@@ -117,7 +100,6 @@ private:
     void evolve_world(TimePoint tmax);
 
     World m_world; ///< The World to simulate.
-    TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

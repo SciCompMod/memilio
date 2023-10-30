@@ -25,24 +25,26 @@
 #include <iostream>
 #include "abm/common_abm_loggers.h"
 
-void write_results_to_file(const mio::abm::Simulation& sim)
+template <typename T>
+void write_results_to_file(const T& history)
 {
+    auto logg = std::get<0>(history.get_log());
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
     std::ofstream myfile("abm_minimal.txt", std::ios::out);
     myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        myfile << sim.get_result().get_time(i);
-        auto v = sim.get_result().get_value(i);
+    for (auto i = 0; i < logg.get_num_time_points(); ++i) {
+        myfile << logg.get_time(i);
+        auto v = logg.get_value(i);
         for (auto j = 0; j < v.size(); ++j) {
             myfile << v[j];
             if (j < v.size() - 1) {
                 myfile << " ";
             }
         }
-        if (i < sim.get_result().get_num_time_points() - 1) {
+        if (i < logg.get_num_time_points() - 1) {
             myfile << "\n";
         }
     }
@@ -173,8 +175,7 @@ int main()
 
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
+    sim.advance(tmax);
 
-    sim.advance(tmax, historyTimeSeries);
-
-    write_results_to_file(sim);
+    write_results_to_file(historyTimeSeries);
 }

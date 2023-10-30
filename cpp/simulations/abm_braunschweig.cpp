@@ -941,7 +941,6 @@ void write_log_to_file(const T& history)
 
     //TODO:
     //1. write this function so it calcutes the trips
-    //2. put timeseries into a logger
     //3. Maybe put the write to file function into another function
     //4. write another writer, which only saves the delta of the data
 }
@@ -966,16 +965,18 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         //output object
         mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
                      mio::abm::LogDataForMovement>
-            history;
+            historyPersonInf;
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+            Eigen::Index(mio::abm::InfectionState::Count)};
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
-        sim.advance(tmax, history);
+        sim.advance(tmax, historyPersonInf, historyTimeSeries);
         // TODO: update result of the simulation to be a vector of location result.
-        auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
+        auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
         // Push result of the simulation back to the result vector
         ensemble_results.push_back(temp_sim_result);
         // Option to save the current run result to file
@@ -983,7 +984,7 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
             BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
-        write_log_to_file(history);
+        write_log_to_file(historyPersonInf);
         ++run_idx;
     }
     BOOST_OUTCOME_TRY(save_result_result);
