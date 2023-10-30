@@ -237,6 +237,8 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
 }
 
 int main() {
+    //switch of logging for mio
+    mio::set_log_level(mio::LogLevel::off);
 
     // Create a new instance of your nlp
     //  (use a SmartPtr, not raw)
