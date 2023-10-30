@@ -49,7 +49,7 @@ public:
     * @param[in] Dead_before The total number of deaths at the time point - dt_init.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before, std::vector<ScalarType> SECIHUR0,
+    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
           const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
@@ -82,173 +82,36 @@ public:
         parameters.check_constraints();
     }
 
-    void compute_initial_flows_from_compartments2(mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
-                                                  ScalarType dt)
-    {
-        std::cout << "Computing initial flows. \n";
-        int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    /********************************************************
+    * Compute initial flows based on given compartment data *
+    ********************************************************/
 
-        // get (global) support_max to determine how many flows in the past we have to compute
-        ScalarType global_support_max         = this->get_global_support_max(dt);
-        Eigen::Index global_support_max_index = std::ceil(global_support_max / dt);
-        std::cout << "Global support_max: " << global_support_max << "\n";
+    /**
+     * @brief Computes initial flows from ODE results using compartments directly.
+     * 
+     * Uses differences in compartment sizes over time to compute flows that are needed for iniitalization of IDE model.
+     * 
+     * @param[in] secihurd_ode Time series containing results of ODE simulation   
+     * @param[in] t0_ide Start time of IDE simulation.
+     * @param[in] dt Time discretization step size.         
+     */
+    void compute_initial_flows_from_ode_compartments(mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
+                                                     ScalarType dt);
+    /**
+     * @brief Computes initial flows from ODE results by calculating flows based on preceeding flow.
+     * 
+     * Uses differences in compartment for Susceptibles to compute flow from Susceptible to Exposed. The remaining flows
+     * are using the compute_flow() function from IDE solver which uses preceeding flows.
+     * 
+     * @param[in] secihurd_ode Time series containing results of ODE simulation   
+     * @param[in] t0_ide Start time of IDE simulation.
+     * @param[in] dt Time discretization step size.         
+     */
+    void compute_initial_flows_from_flows(mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide, ScalarType dt);
 
-        // remove time point
-        this->m_transitions.remove_last_time_point();
-
-        ScalarType t0_ide_index = std::ceil(t0_ide / dt);
-        unused(secihurd_ode);
-        int init_start_index = t0_ide_index - global_support_max_index + 1;
-        // flow from S to E for -6*global_support_max, ..., 0 (directly from compartments)
-        // add time points to init_transitions here
-        for (int i = init_start_index; i <= t0_ide_index; i++) {
-            this->m_transitions.add_time_point(i * dt,
-                                               mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
-            this->m_transitions.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] =
-                secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::Susceptible)] -
-                secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
-        }
-
-        // compute resulting flows as combination of change in compartments and previously computed flows
-        // Eigen::Index start_shift = t0_ide_index - 6 * global_support_max_index;
-
-        // flow from E to C for -global_support_max, ..., 0
-        for (int i = init_start_index; i <= t0_ide_index; i++) {
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] =
-                secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::Exposed)] -
-                secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Exposed)] +
-                this->m_transitions[i - init_start_index]
-                                   [Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)];
-        }
-
-        // flow from C to I and from C to R for -global_support_max, ..., 0
-        for (int i = init_start_index; i <= t0_ide_index; i++) {
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-                0.5 * (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)] -
-                       secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)] +
-                       this->m_transitions[i - init_start_index][Eigen::Index(
-                           mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]);
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
-                this->m_transitions[i - init_start_index][Eigen::Index(
-                    mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)];
-        }
-
-        // flow from I to H and from I to R for -global_support_max, ..., 0
-        for (int i = init_start_index; i <= t0_ide_index; i++) {
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
-                0.5 * (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)] -
-                       secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)] +
-                       this->m_transitions[i - init_start_index][Eigen::Index(
-                           mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]);
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
-                this->m_transitions[i - init_start_index]
-                                   [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)];
-        }
-
-        // flow from H to U and from H to R for -global_support_max, ..., 0
-        for (int i = init_start_index; i <= t0_ide_index; i++) {
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)] =
-                0.5 * (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedSevere)] -
-                       secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedSevere)] +
-                       this->m_transitions[i - init_start_index][Eigen::Index(
-                           mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)]);
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
-                this->m_transitions[i - init_start_index]
-                                   [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)];
-        }
-
-        // flow from U to D and from U to R for -global_support_max, ..., 0
-        for (int i = init_start_index; i <= t0_ide_index; i++) {
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] =
-                0.5 * (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedCritical)] -
-                       secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedCritical)] +
-                       this->m_transitions[i - init_start_index][Eigen::Index(
-                           mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)]);
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)] =
-                this->m_transitions[i - init_start_index]
-                                   [Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)];
-        }
-    }
-
-    // define function that computes flows needed for initalization of IDE for a given result/compartments of the ODE model
-    // we assume that the ODE simulation starts at t0=0
-    void compute_initial_flows_from_compartments(mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
-                                                 ScalarType dt)
-    {
-        int num_transitions = (int)mio::isecir::InfectionTransition::Count;
-
-        // get (global) support_max to determine how many flows in the past we have to compute
-        ScalarType global_support_max         = this->get_global_support_max(dt);
-        Eigen::Index global_support_max_index = std::ceil(global_support_max / dt);
-        std::cout << "Global support_max: " << global_support_max << "\n";
-
-        // remove time point
-        this->m_transitions.remove_last_time_point();
-
-        ScalarType t0_ide_index = std::ceil(t0_ide / dt);
-        unused(secihurd_ode);
-        // flow from S to E for -6*global_support_max, ..., 0 (directly from compartments)
-        // add time points to init_transitions here
-        for (int i = t0_ide_index - 6 * global_support_max_index + 1; i <= t0_ide_index; i++) {
-            this->m_transitions.add_time_point(i * dt,
-                                               mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
-            this->m_transitions.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] =
-                secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::Susceptible)] -
-                secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
-        }
-
-        std::cout << "Computing flows for initialization. \n";
-
-        // then use compute_flow function to compute following flows
-
-        Eigen::Index start_shift = t0_ide_index - 6 * global_support_max_index;
-
-        // flow from E to C for -5*global_support_max, ..., 0
-        for (int i = t0_ide_index - 5 * global_support_max_index + 1; i <= t0_ide_index; i++) {
-            this->compute_flow(1, 0, dt, true, i - start_shift);
-        }
-
-        // flow from C to I for -4*global_support_max, ..., 0
-        for (int i = t0_ide_index - 4 * global_support_max_index + 1; i <= t0_ide_index; i++) {
-            // C to I
-            this->compute_flow(2, 1, dt, true, i - start_shift);
-        }
-
-        // flow from I to H for -3*global_support_max, ..., 0
-        for (int i = t0_ide_index - 3 * global_support_max_index + 1; i <= t0_ide_index; i++) {
-            // I to H
-            this->compute_flow(4, 2, dt, true, i - start_shift);
-        }
-
-        // flow from H to U for -2*global_support_max, ..., 0
-        for (int i = t0_ide_index - 2 * global_support_max_index + 1; i <= t0_ide_index; i++) {
-            // H to U
-            this->compute_flow(6, 4, dt, true, i - start_shift);
-        }
-
-        // flow from U to D and C, I, H, U to R for -1*global_support_max, ..., 0
-        for (int i = t0_ide_index - 1 * global_support_max_index + 1; i <= t0_ide_index; i++) {
-            // U to D
-            this->compute_flow(8, 6, dt, true, i - start_shift);
-            // C to R
-            this->compute_flow(3, 1, dt, true, i - start_shift);
-            // I to R
-            this->compute_flow(5, 2, dt, true, i - start_shift);
-            // H to R
-            this->compute_flow(7, 4, dt, true, i - start_shift);
-            // U to R
-            this->compute_flow(9, 6, dt, true, i - start_shift);
-        }
-    }
+    /***********************
+    * Solver for IDE model *
+    ***********************/
 
     /**
      * @brief Calculate the number of individuals in each compartment for time 0.
@@ -346,6 +209,10 @@ public:
      */
     void compute_recovered();
 
+    /*******************
+    * Helper functions *
+    *******************/
+
     /**
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
@@ -369,7 +236,6 @@ private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
     ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
-    std::vector<ScalarType> m_SECIHUR0;
 };
 
 } // namespace isecir

@@ -62,10 +62,8 @@ int main()
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
-    std::vector<ScalarType> S0(7, 0);
-
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, Dead_before, S0);
+    mio::isecir::Model model(std::move(init), N, Dead_before);
 
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;

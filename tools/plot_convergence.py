@@ -45,7 +45,7 @@ def read_data(data_dir, timesteps):
 
     return results
 
-# Compute between a one-dimensional timeseries
+# Compute norm of a one-dimensional timeseries
 
 
 def compute_norm(timeseries, timestep):
@@ -54,12 +54,12 @@ def compute_norm(timeseries, timestep):
 
     return norm
 
-# Compute the error between time series for S from ODE and time series for S from IDE
+# Compute norm of the difference between time series for S from ODE and time series for S from IDE
 # TODO: Überlegen, ob wir hier den ersten Zeitschritt rausnehmen, damit
 # besser vergleichbar zwischen verschiedenen Zeitschrittgrößen
 
 
-def compute_error_norm_S(results, timesteps):
+def compute_error_norm_S_timeseries(results, timesteps):
     errors = []
 
     # Compute error for S for every time step
@@ -73,26 +73,50 @@ def compute_error_norm_S(results, timesteps):
 
     return errors
 
+# Compute norm of the difference between S from ODE and IDE at tmax, respectively.
+
+
+def compute_error_norm_S_endpoint(results, timesteps):
+    errors = []
+
+    # Compute error for S for every time step
+    for i in range(len(results['ode'])):
+        timestep = timesteps[i]
+        num_timepoints = len(results['ide'][i])
+        # for now, compute only difference for S
+        difference = results['ode'][i][-1][0]-results['ide'][i][-1][0]
+        errors.append(np.sqrt(difference ** 2))
+
+    return errors
+
 # Plot errors against timesteps.
 
 
 def plot_convergence(errors, timesteps, save=False):
     fig, ax = plt.subplots()
 
-    ax.plot(timesteps, errors)
-    ax.scatter(timesteps, errors)
+    ax.plot(timesteps, errors, '-o', label='Results')
+    comparison = [2400 * dt for dt in timesteps]
+    ax.plot(timesteps, comparison, color='lightgray',
+            label=r"$\mathcal{O}(\Delta t)$")
+    # ax.scatter(timesteps, errors)
     # ax.plot(np.linspace(timesteps[0], timesteps[-1],1000), )
     ax.set_xscale("log", base=10)
     ax.set_yscale("log", base=10)
     ax.invert_xaxis()
 
-    plt.show()
+    fig.supxlabel('Time step')
+    fig.supylabel(r"$\Vert S_{IDE}(t_{max}) - S_{ODE}(t_{max})\Vert$")
+
+    plt.legend()
 
     if save:
         if not os.path.isdir('Plots'):
             os.makedirs('Plots')
-    plt.savefig('Plots/plot_convergence.png',
-                bbox_inches='tight', dpi=500)
+        plt.savefig('Plots/convergence.png',
+                    bbox_inches='tight', dpi=500)
+
+    plt.show()
 
 # Compute order of convergence between two consecutive time step sizes
 
@@ -105,20 +129,37 @@ def compute_order_of_convergence(errors, timesteps):
 
     return order
 
+# Print relatie and absolute results of ODE and IDE simulations
+
+
+def print_results(results, timesteps):
+
+    for i in range(len(timesteps)-1):
+        print('ODE: ', results['ode'][i][-1][0]/results['ode'][i+1][-1][0])
+
+    for i in range(len(timesteps)-1):
+        print('IDE: ', results['ide'][i][-1][0]/results['ide'][i+1][-1][0])
+
+    for i in range(len(timesteps)):
+        print('ODE: ', results['ode'][i][-1][0])
+        print('IDE: ', results['ide'][i][-1][0])
+
 
 if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "cpp/examples")
+        __file__), "..", "results")
 
     timesteps = ['1e-2', '1e-3', '1e-4']
 
     results = read_data(data_dir, timesteps)
 
     timesteps = [1e-2, 1e-3, 1e-4]
-    errors = compute_error_norm_S(results, timesteps)
+    errors = compute_error_norm_S_endpoint(results, timesteps)
 
-    plot_convergence(errors, timesteps)
+    plot_convergence(errors, timesteps, save=True)
 
     order = compute_order_of_convergence(errors, timesteps)
 
     print('Orders of convergence: ', order)
+
+    print_results(results, timesteps)

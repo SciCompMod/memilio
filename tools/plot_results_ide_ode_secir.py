@@ -48,6 +48,7 @@ def compare_results(files, legendplot, save=True):
     fig, axs = plt.subplots(4, 2, sharex='all', num='Compare files')
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
+    linestyles = ['-', '--']
     # add results to plot
     for file in range(len(files)):
         # load data
@@ -75,7 +76,7 @@ def compare_results(files, legendplot, save=True):
         # plot data
         for i in range(8):
             axs[int(i/2), i % 2].plot(dates,
-                                      total[:, i], label=legendplot[file], color=colors[file])
+                                      total[:, i], label=legendplot[file], color=colors[file], linestyle=linestyles[file])
 
         h5file.close()
 
@@ -87,9 +88,11 @@ def compare_results(files, legendplot, save=True):
         axs[int(i/2), i % 2].grid(True, linestyle='--')
         axs[int(i/2), i % 2].legend(fontsize=8)
 
-    fig.supxlabel('           Time')
+    fig.supxlabel(' Time')
     fig.supylabel('Number of persons')
-    plt.tight_layout(pad=0, w_pad=0.5, h_pad=0)
+    plt.subplots_adjust(left=None, bottom=None, right=None,
+                        top=None, wspace=None, hspace=0.6)
+    # plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.3)
 
     # save result
     if save:
@@ -155,26 +158,10 @@ def plot_new_infections(files, legendplot, save=True):
 
 
 if __name__ == '__main__':
-    # simulation results should be stored in folder "../data/simulation_lct"
+    # Path to simulation results
     data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "cpp/examples")
+        __file__), "..", "results")
 
-    # plot results
-    """arr = list(range(1, 5))
-    arr.append(7)
-    plot_lct_result(os.path.join(data_dir, "result_lct"), arr)
-    plot_lct_subcompartments(file=os.path.join(
-        data_dir, "result_lct_subcompartments"), save=True)"""
-
-    # compare ide and ode model
+    # Plot comparison of ODE and IDE models
     compare_results([os.path.join(data_dir, "result_ode_dt=1e-3_setting2"), os.path.join(data_dir, "result_ide_dt=1e-3_setting2")],
                     legendplot=list(["ODE", "IDE"]), save=True)
-    # """plot_new_infections([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
-    #                     legendplot=list(["LCT", "ODE"]), save=True)"""
-    # plot_new_infections([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_10")],
-    #                     legendplot=list(["LCT1", "LCT10"]), save=True)
-
-    # plot_new_infections([os.path.join(data_dir, "result_lct_real"), os.path.join(data_dir, "result_lct_initmean"), os.path.join(data_dir, "result_lct_initjump")],
-    #                    legendplot=list(["real", "mean", "jump"]), save=True)
-    # compare_results([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_3"), os.path.join(data_dir, "result_lct_fictional_7"), os.path.join(data_dir, "result_lct_fictional_10")],
-    #                legendplot=list(["LCT1", "LCT3", "LCT7", "LCT10"]), save=True)
