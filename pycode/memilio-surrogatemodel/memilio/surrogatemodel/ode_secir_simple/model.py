@@ -232,7 +232,7 @@ if __name__ == "__main__":
     elif model == "LSTM":
         model = network_architectures.lstm_multi_input_multi_output(30)
     elif model == "CNN":
-        model = network_architectures.cnn_multi_input_multi_output(30)
+        model = network_architectures.cnn_multi_input_multi_output_best(30)
 
     model_output = network_fit(
         path_data, model=model,
