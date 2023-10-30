@@ -110,9 +110,12 @@ struct TimeSeriesWriter {
     template <class Logger>
     static void log_this(const typename Logger::Type& t, Data& data)
     {
-        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).add_time_point(t.first);
-        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).setZero();
-        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).get_last_value() = t.second;
+        // std::get<details::index_templ_pack<Logger, Loggers...>()>(data).add_time_point(std::get<0>(t));
+        // std::get<details::index_templ_pack<Logger, Loggers...>()>(data).setZero();
+        // std::get<details::index_templ_pack<Logger, Loggers...>()>(data).get_last_value(std::get<1>(t));
+        auto test = std::get<details::index_templ_pack<Logger, Loggers...>()>(data);
+        mio::unused(t);
+        mio::unused(test);
     }
 
     static Data cstr()
@@ -125,10 +128,10 @@ struct TimeSeriesWriter {
 * @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState.
 */
 struct LogInfectionState : mio::LogAlways {
-    using Type = std::tuple<mio::abm::TimePoint, Eigen::VectorXd>;
-    static Type log(const mio::abm::Simulation& sim)
+    using Type = ScalarType;
+    static std::tuple<mio::abm::TimePoint, Eigen::VectorXd> log(const mio::abm::Simulation& sim)
     {
-        Type infection_state{};
+        std::tuple<mio::abm::TimePoint, Eigen::VectorXd> infection_state{};
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         for (auto i = size_t(0); i < sim.get_world().get_locations().size(); ++i) {
             auto&& location = sim.get_world().get_locations()[i];
