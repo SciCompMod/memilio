@@ -86,7 +86,7 @@ def plot_compartment_prediction_model(
     plt.savefig('plots/evaluation_secir_simple_' + plot_compartment + '.png')
 
 
-def network_fit(path, model, max_epochs=30, early_stop=100, plot=True):
+def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -99,7 +99,7 @@ def network_fit(path, model, max_epochs=30, early_stop=100, plot=True):
     if not os.path.isfile(os.path.join(path, 'data_secir_simple.pickle')):
         ValueError("no dataset found in path: " + path)
 
-    file = open(os.path.join(path, 'data_secir_simple.pickle'), 'rb')
+    file = open(os.path.join(path,filename), 'rb')
 
     data = pickle.load(file)
     data_splitted = split_data(data['inputs'], data['labels'])
@@ -132,6 +132,20 @@ def network_fit(path, model, max_epochs=30, early_stop=100, plot=True):
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
         print('mean: ',  df.mean())
+
+    
+        path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(
+            os.path.dirname(
+                os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+            'secir_simple_dataframes')
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+        file_path = file_path+'secir_simple_4layers'+modelname
+        df.to_csv(file_path)
+
+
+
     return history
 
 
@@ -171,10 +185,18 @@ def get_test_statistic(test_inputs, test_labels, model):
     # reshape [batch, time, features] -> [features, time * batch]
     relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
+        
+    # delete the two confirmed compartments from InfectionStates
+    compartment_array = []
+    for compartment in InfectionState.values():
+        compartment_array.append(compartment) 
+    index = [3,5]
+    compartments_cleaned= np.delete(compartment_array, index)
+
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
         index=[str(compartment).split('.')[1]
-               for compartment in InfectionState.values()],
+               for compartment in compartments_cleaned],
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -224,16 +246,45 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
+    
+    filename = "data_secir_simple_150days.pickle"
     max_epochs = 1500
+    label_width = 150 
+
+
+
+    # models = ['Dense','LSTM','CNN' ]
+    # for modelname in models: 
+
+    #     model = modelname
+    #     if model == "Dense_single":
+    #         model = network_architectures.mlp_multi_input_single_output()
+    #     elif model == "Dense":
+    #             model = network_architectures.mlp_multi_input_multi_output(label_width)
+    #     elif model == "LSTM":
+    #         model = network_architectures.lstm_multi_input_multi_output(label_width)
+    #     elif model == "CNN":
+    #         model = network_architectures.cnn_multi_input_multi_output(label_width)
+
+        
+    #     model_output = network_fit(
+    #         path_data, filename, model=model, modelname = modelname, 
+    #         max_epochs=max_epochs)
+
+
+
+
 
     model = "CNN"
-    if model == "Dense":
+    if model == "Dense_single":
         model = network_architectures.mlp_multi_input_single_output()
+    elif model == "Dense":
+            model = network_architectures.mlp_multi_input_multi_output(label_width)
     elif model == "LSTM":
-        model = network_architectures.lstm_multi_input_multi_output(30)
+        model = network_architectures.lstm_multi_input_multi_output(label_width)
     elif model == "CNN":
-        model = network_architectures.cnn_multi_input_multi_output(30)
+        model = network_architectures.cnn_multi_input_multi_output(label_width)
 
     model_output = network_fit(
-        path_data, model=model,
+        path_data, filename, model=model,
         max_epochs=max_epochs)
