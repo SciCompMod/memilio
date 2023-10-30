@@ -31,7 +31,7 @@ from spektral.utils.convolution import gcn_filter, line_graph, incidence_matrix
 from spektral.utils.sparse import sp_matrix_to_sp_tensor
 from utils.gnn_utils import incidence_matrix
 
-from data_generator_withoutdampings_all401 import get_population
+from data_generator_withoutdampings_all400 import get_population
 from memilio.simulation.secir import InfectionState
 
 from sklearn.preprocessing import FunctionTransformer
