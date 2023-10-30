@@ -5,6 +5,74 @@ from matplotlib.lines import Line2D
 import matplotlib as mpl
 import re
 
+
+##############  hyperparameter grid search: activation function and optimizer ##########
+plot_neuronsdf = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/CNN_hyper_activation_optimizer/dataframe')
+
+
+
+def heatmap():
+    df_heatmap1 = pd.DataFrame(data =  df[['activation', 'optimizer', 'mean_test_MAPE']])
+    # seems we have duplicates 
+    df_heatmap1.drop_duplicates(subset=['activation', 'optimizer'], keep='first', inplace = True)
+    df_heatmap1= df_heatmap1.pivot(index='activation', columns='optimizer', values='mean_test_MAPE')
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(df_heatmap1.values)
+
+    # Show all ticks and label them with the respective list entries
+    ax.set_xticks(np.arange(len(df_heatmap1.columns)), labels=df_heatmap1.columns)
+    ax.set_yticks(np.arange(len(df_heatmap1.index)), labels=df_heatmap1.index)
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+            rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations.
+    for i in range(len(df_heatmap1.index)):
+        for j in range(len(df_heatmap1.columns)):
+            text = ax.text(j, i, np.around(df_heatmap1.values, decimals=2)[i, j],
+                        ha="center", va="center", color="w")
+
+
+    cbar_kw = {}        
+    cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+    cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")        
+
+
+    ax.set_title("Activation anf Optimizer for CNN")
+    fig.tight_layout()
+    plt.show()
+    plt.savefig("heatmap_activation_optimizer_CNN.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+######## grid search analysis of layers and neurons ####################################
+
+
 df = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_searchdataframe')
 
 
@@ -227,7 +295,7 @@ def plot_layer():
 
 def plot_neurons():
     plt.figure().clf() 
-    fig, axs = plt.subplots(nrows = 5, ncols = 1, sharex=True, layout='constrained', figsize = (15, 30))
+    fig, axs = plt.subplots(nrows = 5, ncols = 1, sharex=True, layout='constrained', figsize = (15, 20))
 
 
     for layers, ax in zip(df['number_of_hidden_layers'].unique(),axs.flat):
@@ -253,7 +321,7 @@ def plot_neurons():
         ax.set_ylabel('MAPE loss')
         
 
-    plt.rcParams.update({'font.size': 8})
+    plt.rcParams.update({'font.size': 10})
     plt.savefig("neurons_simple.png")
 
 
