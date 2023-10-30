@@ -19,6 +19,8 @@
 #############################################################################
 import tensorflow as tf
 
+# here we present the best models based on the grid serach 
+
 
 def mlp_multi_input_single_output():
     """! Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for one single time step.
@@ -31,6 +33,25 @@ def mlp_multi_input_single_output():
         tf.keras.layers.Dense(units=32, activation='relu'),
         tf.keras.layers.Dense(units=8),
         tf.keras.layers.Reshape([1, -1]), ])
+    return model
+
+
+
+def mlp_multi_input_multi_output(label_width):
+    """! Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for one single time step.
+
+    Reshaping adds an extra dimension to the output, so the shape of the output is 1x8. This makes the shape comparable to that of the multi-output models.
+    """
+    model = tf.keras.Sequential([
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(units=512, activation='relu'),
+        tf.keras.layers.Dense(units=512, activation='relu'),
+        tf.keras.layers.Dense(units=512, activation='relu'),
+        tf.keras.layers.Dense(units=512, activation='relu'),        
+        tf.keras.layers.Dense(units=label_width*8),
+        tf.keras.layers.Reshape([label_width,8])
+        ])
+        
     return model
 
 
@@ -60,12 +81,37 @@ def cnn_multi_input_multi_output(label_width, conv_size=3):
     num_outputs = 8
     model = tf.keras.Sequential([
         tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
-        tf.keras.layers.Conv1D(256, activation='relu',
+        tf.keras.layers.Conv1D(256, activation='softmax',
                                kernel_size=(conv_size)),
         tf.keras.layers.Dense(label_width*num_outputs,
                               kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, num_outputs])
     ])
+    return model
+
+
+
+def cnn_multi_input_multi_output_best(label_width, conv_size=3):
+    """! CNN Network which uses multiple time steps as input and returns the 8 compartments for multiple time step in the future.
+
+    Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
+    The parameter conv_size describes the kernel_size of the 1d Conv layer.
+    We also use the parameter in combination with a lambda layer to transform the input to shape [batch, CONV_WIDTH, features].  
+
+
+    @param label_width Number of time steps in the output.
+    @param conv_size [Default: 3] Convolution kernel width which is 3 per default.
+    """
+    num_outputs = 8
+    model = tf.keras.Sequential([
+        tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
+        tf.keras.layers.Conv1D(32, activation='relu',
+                               kernel_size=(conv_size)),
+        tf.keras.layers.Dense(units=32, activation='relu'),
+        tf.keras.layers.Dense(label_width*num_outputs,
+                                    kernel_initializer=tf.initializers.zeros()),
+        tf.keras.layers.Reshape([label_width, num_outputs])
+        ])
     return model
 
 
