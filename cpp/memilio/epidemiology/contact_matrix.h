@@ -61,7 +61,6 @@ public:
         , m_dampings(Shape::get_shape_of(m_baseline))
     {
         assert(Shape::get_shape_of(m_minimum) == Shape::get_shape_of(m_baseline));
-        m_dampings.finalize();
     }
 
     /**
@@ -172,11 +171,12 @@ public:
     }
 
     /**
-     * update internal cache to make get_matrix_at thread safe.
+     * Enable/disable automatic cache update of the dampings.
+     * @see Dampings::set_automatic_cache_update
      */
-    void finalize()
+    void set_automatic_cache_update(bool b)
     {
-        m_dampings.finalize();
+        m_dampings.set_automatic_cache_update(b);
     }
 
     /**
@@ -372,12 +372,13 @@ public:
     }
 
     /**
-     * update internal cache to make get_matrix_at thread safe.
+     * Enable/disable automatic cache update for each contained matrix.
+     * @see Dampings::set_automatic_cache_update
      */
-    void finalize()
+    void set_automatic_cache_update(bool b)
     {
         for (auto& m : *this) {
-            m.finalize();
+            m.set_automatic_cache_update(b);
         }
     }
 

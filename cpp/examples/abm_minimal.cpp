@@ -20,9 +20,6 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
-#include "abm/world.h"
-#include "memilio/io/io.h"
-#include "abm/location_type.h"
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -33,7 +30,7 @@ void write_results_to_file(const mio::abm::Simulation& sim)
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream myfile("abm_minimal.txt");
+    std::ofstream myfile("abm_minimal.txt", std::ios::out);
     myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         myfile << sim.get_result().get_time(i);
@@ -48,32 +45,44 @@ void write_results_to_file(const mio::abm::Simulation& sim)
             myfile << "\n";
         }
     }
-    myfile.close();
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
 int main()
 {
-    // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::GlobalInfectionParameters infection_params;
+    // This is a minimal example with children and adults < 60 year old.
+    // We divided them into 3 different age groups, which are defined as follows:
+    size_t NUM_AGE_GROUPS         = 4;
+    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 4);
+    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 3);
+    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
+    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 1);
+
+    // Create the world with 3 age groups.
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    infection_params.get<mio::abm::IncubationPeriod>() = 4.;
+    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
-    // Create the world with infection parameters.
-    auto world = mio::abm::World(infection_params);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
+    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+
+    // Check if the parameters satisfy their contraints.
+    world.parameters.check_constraints();
 
     // There are 3 households for each household group.
     int n_households = 3;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
-    child.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
+    auto child = mio::abm::HouseholdMember(NUM_AGE_GROUPS); // A child is 50/50% 0-4 or 5-14.
+    child.set_age_weight(AGE_GROUP_0_TO_4, 1);
+    child.set_age_weight(AGE_GROUP_0_TO_4, 1);
 
-    auto parent = mio::abm::HouseholdMember(); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 1);
-    parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
+    auto parent = mio::abm::HouseholdMember(NUM_AGE_GROUPS); // A parent is 50/50% 15-34 or 35-59.
+    parent.set_age_weight(AGE_GROUP_15_TO_34, 1);
+    parent.set_age_weight(AGE_GROUP_35_TO_59, 1);
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -129,10 +138,11 @@ int main()
     for (auto& person : persons) {
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
-        if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), start_date,
-                                                         infection_state));
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        if (infection_state != mio::abm::InfectionState::Susceptible) {
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.parameters, start_date, infection_state));
+        }
     }
 
     // Assign locations to the people
@@ -144,17 +154,17 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+        if (person.get_age() == AGE_GROUP_0_TO_4) {
             person.set_assigned_location(school);
         }
-        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
+        if (person.get_age() == AGE_GROUP_15_TO_34 || person.get_age() == AGE_GROUP_35_TO_59) {
             person.set_assigned_location(work);
         }
     }
 
     // During the lockdown, social events are closed for 90% of people.
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
-    mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
+    mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
 
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);

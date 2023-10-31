@@ -618,8 +618,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         make_plot = False
         split_berlin = True
         rep_date = False
-        files = ['infected_county', 'all_county',
-                 'all_county_age', 'all_county_gender']
+        files = ['infected_county']
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -636,13 +635,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             moving_average=moving_average, make_plot=make_plot,
             split_berlin=split_berlin, rep_date=rep_date, files=files)
 
-        self.assertEqual(len(os.listdir(directory)), 5)
+        self.assertEqual(len(os.listdir(directory)), 2)
         # many files are tested before, don't test them again
         files = [
-            "cases_all_county_split_berlin_all_dates.json",
-            "cases_infected_county_split_berlin_all_dates.json",
-            "cases_all_county_gender_split_berlin_all_dates.json",
-            "cases_all_county_age_split_berlin_all_dates.json"]
+            "CaseDataFull.json",
+            "cases_infected_county_split_berlin_all_dates.json"]
         for file in files:
             self.assertTrue(file in os.listdir(directory))
 

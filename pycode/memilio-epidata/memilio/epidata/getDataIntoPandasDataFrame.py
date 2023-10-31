@@ -44,6 +44,9 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import progress_indicator
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def user_choice(message, default=False):
     while True:
@@ -412,9 +415,10 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     - json
     - json_timeasstring [Default]
     - hdf5
+    - csv
     - txt
     The file_type defines the file format and thus also the file ending.
-    The file format can be json, hdf5 or txt.
+    The file format can be json, hdf5, csv or txt.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
@@ -428,6 +432,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
                'hdf5': [".h5", {"key": "data"}],
+               'csv': [".csv", {}],
                'txt': [".txt", param_dict]}
 
     try:
@@ -436,7 +441,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring, hdf5 or txt.")
+            " does not exist. Use json, json_timeasstring, hdf5, csv or txt.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -449,6 +454,8 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
+    elif file_type == 'csv':
+        df.to_csv(out_path)
     elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 

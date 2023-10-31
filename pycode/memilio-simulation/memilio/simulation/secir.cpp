@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -140,6 +140,7 @@ std::string pretty_name<mio::osecir::InfectionState>()
 {
     return "InfectionState";
 }
+
 template <>
 std::string pretty_name<mio::AgeGroup>()
 {
@@ -170,13 +171,13 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Susceptible", mio::osecir::InfectionState::Susceptible)
         .value("Exposed", mio::osecir::InfectionState::Exposed)
         .value("InfectedNoSymptoms", mio::osecir::InfectionState::InfectedNoSymptoms)
+        .value("InfectedNoSymptomsConfirmed", mio::osecir::InfectionState::InfectedNoSymptomsConfirmed)
         .value("InfectedSymptoms", mio::osecir::InfectionState::InfectedSymptoms)
+        .value("InfectedSymptomsConfirmed", mio::osecir::InfectionState::InfectedSymptomsConfirmed)
         .value("InfectedSevere", mio::osecir::InfectionState::InfectedSevere)
         .value("InfectedCritical", mio::osecir::InfectionState::InfectedCritical)
         .value("Recovered", mio::osecir::InfectionState::Recovered)
         .value("Dead", mio::osecir::InfectionState::Dead);
-
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
     pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
 
@@ -187,7 +188,6 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-    pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
                                                                                                            "ModelBase");
     pymio::bind_class<mio::osecir::Model, pymio::EnablePickling::Required,

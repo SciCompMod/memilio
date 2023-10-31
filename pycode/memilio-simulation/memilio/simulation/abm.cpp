@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
@@ -43,19 +43,12 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Recovered", mio::abm::InfectionState::Recovered)
         .value("Dead", mio::abm::InfectionState::Dead);
 
-    pymio::iterable_enum<mio::abm::AgeGroup>(m, "AgeGroup")
-        .value("Age0to4", mio::abm::AgeGroup::Age0to4)
-        .value("Age5to14", mio::abm::AgeGroup::Age5to14)
-        .value("Age15to34", mio::abm::AgeGroup::Age15to34)
-        .value("Age35to59", mio::abm::AgeGroup::Age35to59)
-        .value("Age60to79", mio::abm::AgeGroup::Age60to79)
-        .value("Age80plus", mio::abm::AgeGroup::Age80plus);
+    pymio::iterable_enum<mio::abm::ExposureType>(m, "ExposureType")
+        .value("NoProtection", mio::abm::ExposureType::NoProtection)
+        .value("NaturalInfection", mio::abm::ExposureType::NaturalInfection)
+        .value("GenericVaccine", mio::abm::ExposureType::GenericVaccine);
 
     pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
-
-    pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
-        .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
-        .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
 
     pymio::iterable_enum<mio::abm::LocationType>(m, "LocationType")
         .value("Home", mio::abm::LocationType::Home)
@@ -74,13 +67,15 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
-    pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::abm::AgeGroup,
-                                 mio::abm::VaccinationState>(m, "_AgeVaccinationParameterArray");
-    pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
-    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
-    pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(
+        m, "_AgeParameterArray");
+    pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
+    pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
+    pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
+        .def(py::init<int>())
+        .def("check_constraints", &mio::abm::Parameters::check_constraints);
+
+    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<size_t>());
 
     pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::IfAvailable>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -143,7 +138,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
     pymio::bind_class<mio::abm::TestingCriteria, pymio::EnablePickling::IfAvailable>(m, "TestingCriteria")
-        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
+        .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
                       const std::vector<mio::abm::InfectionState>&>(),
              py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
 
@@ -158,6 +153,11 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
+    pymio::bind_class<mio::abm::Vaccination, pymio::EnablePickling::IfAvailable>(m, "Vaccination")
+        .def(py::init<mio::abm::ExposureType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
+        .def_readwrite("exposure_type", &mio::abm::Vaccination::exposure_type)
+        .def_readwrite("time", &mio::abm::Vaccination::time);
+
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::IfAvailable>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
 
@@ -170,6 +170,7 @@ PYBIND11_MODULE(_simulation_abm, m)
                           self.get_infection_parameters() = params;
                       });
 
+    //copying and moving of ranges enabled below, see PYMIO_IGNORE_VALUE_TYPE
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
 
@@ -186,13 +187,12 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
         .def(py::init<>())
-        .def("add_trip", &mio::abm::TripList::add_trip)
-        .def_property_readonly("next_trip", &mio::abm::TripList::get_next_trip)
-        .def_property_readonly("num_trips", &mio::abm::TripList::num_trips);
+        .def("add_trip", &mio::abm::TripList::add_trip, py::arg("trip"), py::arg("weekend") = false)
+        .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
+        .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
 
     pymio::bind_class<mio::abm::World, pymio::EnablePickling::Never>(m, "World")
-        .def(py::init<mio::abm::GlobalInfectionParameters>(),
-             py::arg("infection_parameters") = mio::abm::GlobalInfectionParameters{})
+        .def(py::init<int32_t>())
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
         .def("add_person", &mio::abm::World::add_person, py::arg("location_id"), py::arg("age_group"),
              py::return_value_policy::reference_internal)
@@ -207,18 +207,7 @@ PYBIND11_MODULE(_simulation_abm, m)
             py::return_value_policy::reference_internal)
         .def_property("use_migration_rules", py::overload_cast<>(&mio::abm::World::use_migration_rules, py::const_),
                       py::overload_cast<bool>(&mio::abm::World::use_migration_rules))
-        .def_property(
-            "infection_parameters", py::overload_cast<>(&mio::abm::World::get_global_infection_parameters, py::const_),
-            [](mio::abm::World& self, mio::abm::GlobalInfectionParameters params) {
-                self.get_global_infection_parameters() = params;
-            },
-            py::return_value_policy::reference_internal)
-        .def_property(
-            "migration_parameters", py::overload_cast<>(&mio::abm::World::get_migration_parameters, py::const_),
-            [](mio::abm::World& self, mio::abm::MigrationParameters params) {
-                self.get_migration_parameters() = params;
-            },
-            py::return_value_policy::reference_internal)
+        .def_readwrite("parameters", &mio::abm::World::parameters)
         .def_property(
             "testing_strategy", py::overload_cast<>(&mio::abm::World::get_testing_strategy, py::const_),
             [](mio::abm::World& self, mio::abm::TestingStrategy strategy) {
@@ -227,10 +216,13 @@ PYBIND11_MODULE(_simulation_abm, m)
             py::return_value_policy::reference_internal);
 
     pymio::bind_class<mio::abm::Simulation, pymio::EnablePickling::Never>(m, "Simulation")
-        .def(py::init<mio::abm::TimePoint>())
+        .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
              static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
              py::arg("tmax"))
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
 }
+
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_persons()))
