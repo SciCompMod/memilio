@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
-# Authors: Agatha Schmidt, Henrik Zunker
+# Authors: Agatha Schmidt, Henrik Zunker, Khoa Nguyen
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -29,9 +29,9 @@ import tensorflow as tf
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.simulation import (ContactMatrix, Damping, LogLevel,
+from memilio.simulation import (AgeGroup, ContactMatrix, Damping, LogLevel,
                                 UncertainContactMatrix, set_log_level)
-from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
+from memilio.simulation.secir import (Index_InfectionState,
                                       InfectionState, Model, Simulation,
                                       interpolate_simulation_result, simulate)
 

@@ -355,3 +355,12 @@ TYPED_TEST(TestTimeSeries, print_table)
     std::string actual_output_3 = output.str();
     EXPECT_EQ(expected_output_3, actual_output_3);
 }
+
+TEST(TestTimeSeries, printTo)
+{
+    //PrintTo is test code, so we don't check the exact output, just that it exists and doesn't fail
+    auto ts = mio::TimeSeries<double>::zero(3, 2);
+    std::stringstream ss;
+    PrintTo(ts, &ss);
+    ASSERT_FALSE(ss.str().empty());
+}

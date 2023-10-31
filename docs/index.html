@@ -57,10 +57,11 @@
 
 <body style="background-color:#FFFFFF; overflow-x:hidden; overflow-y:scroll">
 
-  <div id="header" style="width:100%; background-color:#A9E2FF; margin:0px; position:fixed; z-index:6;">
+  <div id="header" style="width:100%; background-color:#FFFFFF; margin:0px; position:fixed; z-index:6;">
 
     <div id="header_left" style="padding-left:20px; padding-top:0px; width:30%; position:relative; float:left;">
-      <p style='font-size:32pt'>MEmilio</p>
+      <img src="https://raw.githubusercontent.com/DLR-SC/memilio/main/docs/memilio-small.png" width="350" height="114"
+        alt="MEmilio-Logo">
     </div>
     <div id="header_right" style="padding-left:20px; padding-top:40px; width:65%; position:relative; float:right;">
       <div class='menu_div'><a class='menu' href='index.html#start'>Start</a></div>
@@ -74,16 +75,19 @@
 
   <div id='content' style="text-align:left; width:100%; margin:0px;">
 
-    <div id="start" style="position:relative; float:left; width:100%; box-sizing: border-box; padding-top:95px">
+    <div id="start"
+      style="position:relative; float:left; width:100%; box-sizing: border-box; padding-top:120px; background-color:#777676;">
       <h1>MEmilio - a high performance Modular EpideMIcs simuLatIOn software</h1>
 
       <div class="content">
-        MEmilio is a common project between the Institute for Software Technology of the German Aerospace Center (DLR)
-        and the department of Systems Immunology (SIMM) of the Helmholtz Center for Infection Research (HZI). This
-        project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a
-        precise and high-resolution spatiotemporal pandemic simulation for entire countries. MEmilio is still under
-        developement but it is available as Open Source and we encourage everyone to make use of it. If you use it,
-        please cite:
+        MEmilio implements various models for infectious disease dynamics, from simple compartmental models through
+        Integro-Differential equation-based models to agent- or individual-based models. Its modular design allows the
+        combination of different models with different mobility patterns. Through efficient implementation and
+        parallelization, MEmilio brings cutting edge and compute intensive epidemiological models to a large scale,
+        enabling a precise and high-resolution spatiotemporal infectious disease dynamics. MEmilio will be extended
+        continuously. It is available open-source and we encourage everyone to make use of it.<p></p>
+
+        If you use MEmilio, please cite our works:
 
         <ul>
           <li> Kühn, Martin Joachim und Abele, Daniel und Kerkmann, David und Korf, Sascha Alexander und Zunker, Henrik
@@ -112,7 +116,7 @@
   </div>
 
   <div id="footer"
-    style="position:relative; float:left; width:100%; box-sizing: border-box; background-color:#A9E2FF; bottom:0px; text-align:center">
+    style="position:relative; float:left; width:100%; box-sizing: border-box; background-color:#777676; bottom:0px; text-align:center">
     <a href="" style="padding-right:10px">Imprint and terms of use</a>
     <a href="" style="padding-right:10px">Privacy</a>
     <a href="" style="padding-right:10px">Cookies & Tracking</a>

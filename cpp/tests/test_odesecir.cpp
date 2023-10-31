@@ -858,8 +858,10 @@ TEST(Secir, check_constraints_parameters)
 
 TEST(Secir, apply_constraints_parameters)
 {
-    auto model         = mio::osecir::Model(1);
-    auto indx_agegroup = mio::AgeGroup(0);
+    auto model             = mio::osecir::Model(1);
+    auto indx_agegroup     = mio::AgeGroup(0);
+    const double tol_times = 1e-1;
+
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
@@ -873,27 +875,27 @@ TEST(Secir, apply_constraints_parameters)
 
     model.parameters.set<mio::osecir::IncubationTime>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecir::IncubationTime>()[indx_agegroup], 2e-4);
+    EXPECT_EQ(model.parameters.get<mio::osecir::IncubationTime>()[indx_agegroup], 2 * tol_times);
 
     model.parameters.set<mio::osecir::SerialInterval>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 0.00015, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 0.15, 1e-13);
 
     model.parameters.set<mio::osecir::SerialInterval>(5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 0.00015, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 0.15, 1e-13);
 
     model.parameters.set<mio::osecir::TimeInfectedSymptoms>(1e-8);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[indx_agegroup], 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[indx_agegroup], tol_times);
 
     model.parameters.set<mio::osecir::TimeInfectedSevere>(-1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedSevere>()[indx_agegroup], 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedSevere>()[indx_agegroup], tol_times);
 
     model.parameters.set<mio::osecir::TimeInfectedCritical>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedCritical>()[indx_agegroup], 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedCritical>()[indx_agegroup], tol_times);
 
     model.parameters.set<mio::osecir::TransmissionProbabilityOnContact>(2.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

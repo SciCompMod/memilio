@@ -10,4 +10,8 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     add_executable(abm_simulation abm.cpp)
     target_link_libraries(abm_simulation PRIVATE memilio abm Boost::filesystem ${HDF5_C_LIBRARIES})
     target_compile_options(abm_simulation PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+    add_executable(abm_braunschweig abm_braunschweig.cpp)
+    target_link_libraries(abm_braunschweig PRIVATE memilio abm Boost::filesystem ${HDF5_C_LIBRARIES})
+    target_compile_options(abm_braunschweig PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()

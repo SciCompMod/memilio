@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -17,13 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/random_number_generator.h"
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    mio::abm::Location work(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
+    auto person = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
     auto testing_criteria = mio::abm::TestingCriteria();
@@ -36,10 +38,10 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     ASSERT_EQ(testing_criteria.evaluate(person, work, t), true);
     ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
 
-    testing_criteria.add_age_group(mio::abm::AgeGroup::Age35to59);
+    testing_criteria.add_age_group(AGE_GROUP_35_TO_59);
     ASSERT_EQ(testing_criteria.evaluate(person, home, t),
               false); // now it isn't empty and get's evaluated against age group
-    testing_criteria.remove_age_group(mio::abm::AgeGroup::Age35to59);
+    testing_criteria.remove_age_group(AGE_GROUP_35_TO_59);
     ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
@@ -60,6 +62,8 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 
 TEST(TestTestingScheme, runScheme)
 {
+    auto rng = mio::RandomNumberGenerator();
+
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::InfectedSymptoms,
                                                                     mio::abm::InfectionState::InfectedNoSymptoms};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
@@ -89,11 +93,12 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
     testing_scheme.add_testing_criteria(testing_criteria2);
 
-    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person1  = make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto person2 =
-        make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Recovered);
+    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
+    auto person1     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
+    auto person2     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Recovered);
+    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -103,13 +108,15 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.9));
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date),
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date),
+              false); // Person tests and tests positive
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person2, person2, loc_work, start_date),
+              true); // Person tests and  tests negative
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date),
               true); // Person is in quarantine and wants to go home -> can do so
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
 
     testing_scheme.add_testing_criteria(testing_criteria1);
     testing_scheme.remove_testing_criteria(testing_criteria1);
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), true);
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date), true);
 }
