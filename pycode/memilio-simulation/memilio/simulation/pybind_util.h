@@ -74,8 +74,8 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 }
 
 /**
- * Functions are deduced inside the bind_class() function depending on the EnablePickling value. 
- * Do not call them directly in your code. 
+ * Call binding for a class with bind_class<...>(...).
+ * Strategy for pickling is deduced depending on the EnablePickling value.
  * Compile-time errors originating from this function are likely due to issues with the serialization of the given class in the C++ library.
  * 
  * Here's a small guideline on when to use each strategy:
@@ -104,6 +104,7 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 template<class T, EnablePickling F, class... Args>
 struct BindClassHelper
 {
+private:
     template <class... Options>
     auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/, Options&&... options) const {
         auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
@@ -127,6 +128,7 @@ struct BindClassHelper
         return cls;
     }
 
+public:
     template <class... Options>
     auto operator()(pybind11::module& m, std::string const& name, Options&&... options) const {
         return _bind_class(m, name, PicklingTag<F>{}, std::forward<Options>(options)...);
