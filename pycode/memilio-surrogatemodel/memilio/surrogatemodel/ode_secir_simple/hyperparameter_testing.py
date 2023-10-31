@@ -34,7 +34,8 @@ for a in activations:
         
         parameters.append((a, o))
 
-modelname = 'CNN'
+
+modelname = 'LSTM'
 
 df_results  = pd.DataFrame(
     columns=['model', 'activation', 'optimizer',
@@ -83,20 +84,31 @@ def train_and_evaluate_model(param, max_epochs):
     start = time.perf_counter()
     for train_idx, test_idx in zip(train_idxs, test_idxs):
 
- 
-    
-        conv_size=3
+
         num_outputs = 8
         model = tf.keras.Sequential([
-        tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
-        tf.keras.layers.Conv1D(32, activation=activation,
-                                    kernel_size=(conv_size))])
-        
-        model.add(tf.keras.layers.Dense(units=32, activation= activation))
-                
+        tf.keras.layers.LSTM(32, return_sequences=False)])
+            
+           
+            
         model.add(tf.keras.layers.Dense(label_width*num_outputs,
                                     kernel_initializer=tf.initializers.zeros()))
         model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
+
+ 
+    
+        #conv_size=3
+        #num_outputs = 8
+        #model = tf.keras.Sequential([
+        #tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
+        #tf.keras.layers.Conv1D(32, activation=activation,
+        #                            kernel_size=(conv_size))])
+        
+        #model.add(tf.keras.layers.Dense(units=32, activation= activation))
+                
+        #model.add(tf.keras.layers.Dense(label_width*num_outputs,
+        #                            kernel_initializer=tf.initializers.zeros()))
+        #model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
 
  
         #import torch
@@ -155,7 +167,7 @@ def train_and_evaluate_model(param, max_epochs):
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'CNN_hyper_activation_optimizer_2')
+        'LSTM_hyper_activation_optimizer')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path,filename_df)
