@@ -893,10 +893,10 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
 template <typename T>
 void write_log_to_file(const T& history)
 {
-    auto logg          = history.get_log();
-    auto loc_id        = std::get<0>(logg)[0];
-    auto agent_id      = std::get<1>(logg)[0];
-    auto movement_data = std::get<2>(logg);
+    auto logg     = history.get_log();
+    auto loc_id   = std::get<0>(logg)[0];
+    auto agent_id = std::get<1>(logg)[0];
+    // auto movement_data = std::get<2>(logg);
     // Write lo to a text file.
     std::ofstream myfile("locations_lookup.txt");
     myfile << "location_id, latitude, longitude\n";
@@ -938,11 +938,6 @@ void write_log_to_file(const T& history)
     //     myfile3 << "timestep Nr.:" << movement_data_index << "\n";
     // }
     // myfile3.close();
-
-    //TODO:
-    //1. write this function so it calcutes the trips
-    //3. Maybe put the write to file function into another function
-    //4. write another writer, which only saves the delta of the data
 }
 
 mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
@@ -968,13 +963,14 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
             historyPersonInf;
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
             Eigen::Index(mio::abm::InfectionState::Count)};
+        mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
-        sim.advance(tmax, historyPersonInf, historyTimeSeries);
+        sim.advance(tmax, historyPersonInf, historyTimeSeries, historyPersonInfDelta);
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
         // Push result of the simulation back to the result vector

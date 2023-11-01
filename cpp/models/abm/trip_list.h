@@ -24,7 +24,6 @@
 #include "abm/location.h"
 #include "abm/infection.h"
 #include "abm/location_type.h"
-#include "abm/movement_data.h"
 
 #include "memilio/math/eigen.h"
 #include <array>

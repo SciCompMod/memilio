@@ -51,17 +51,6 @@ enum class ActivityType : uint32_t
     UnknownActivity
 };
 
-struct movement_data {
-    uint32_t agent_id;
-    uint32_t from_id;
-    uint32_t to_id;
-    mio::abm::TimePoint start_time;
-    mio::abm::TimePoint end_time;
-    mio::abm::TransportMode transport_mode;
-    mio::abm::ActivityType activity_type;
-    mio::abm::InfectionState infection_state;
-};
-
 } // namespace abm
 } // namespace mio
 

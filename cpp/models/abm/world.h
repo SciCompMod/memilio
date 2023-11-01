@@ -30,7 +30,6 @@
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
-#include "abm/movement_data.h"
 
 #include <bitset>
 #include <initializer_list>

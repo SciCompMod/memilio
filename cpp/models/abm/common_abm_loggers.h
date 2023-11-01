@@ -30,6 +30,16 @@ namespace mio
 namespace abm
 {
 
+struct movement_data {
+    uint32_t agent_id;
+    uint32_t from_id;
+    uint32_t to_id;
+    mio::abm::TimePoint start_time;
+    mio::abm::TimePoint end_time;
+    mio::abm::TransportMode transport_mode;
+    mio::abm::ActivityType activity_type;
+    mio::abm::InfectionState infection_state;
+};
 struct LogLocationInformation : mio::LogOnceStart {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation, size_t, int>>;
     static Type log(const mio::abm::Simulation& sim)
@@ -107,7 +117,7 @@ struct LogDataForMovement : mio::LogAlways {
 */
 template <class... Loggers>
 struct TimeSeriesWriter {
-    using Data = std::tuple<mio::TimeSeries<ScalarType>...>;
+    using Data = std::tuple<mio::TimeSeries<ScalarType>>;
     template <class Logger>
     static void log_this(const typename Logger::Type& t, Data& data)
     {
@@ -128,6 +138,38 @@ struct LogInfectionState : mio::LogAlways {
             sum += location.get_subpopulations().get_last_value().cast<ScalarType>();
         }
         return std::make_pair(sim.get_time(), sum);
+    }
+};
+
+/*
+* @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
+* Thhis speciializiation just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
+* @tparam Loggers The loggers that are used to log data.
+*/
+
+template <class... Loggers>
+struct DataWriterToMemoryDelta {
+    using Data = std::tuple<std::vector<typename Loggers::Type>...>;
+    template <class Logger>
+    static void log_this(const typename Logger::Type& t, Data& data)
+    {
+
+        if (std::get<details::index_templ_pack<Logger, Loggers...>()>(data).size() > 0) {
+            typename Logger::Type diff_vector{};
+            auto& current_state_vec = std::get<details::index_templ_pack<Logger, Loggers...>()>(data).front();
+            for (auto i = 0; i < (int)current_state_vec.size(); i++) {
+                if (std::get<1>(t[i]) != std::get<1>(current_state_vec[i])) {
+                    std::get<1>(current_state_vec[i]) = std::get<1>(t[i]);
+                    diff_vector.push_back(t[i]);
+                }
+            }
+            std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(diff_vector);
+        }
+        else {
+            std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(
+                t); // We use the first entry as a reference for the current position
+            std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(t);
+        }
     }
 };
 

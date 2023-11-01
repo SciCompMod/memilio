@@ -175,7 +175,7 @@ int main()
 
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    sim.advance(tmax);
+    sim.advance(tmax, historyTimeSeries);
 
     write_results_to_file(historyTimeSeries);
 }
