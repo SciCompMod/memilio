@@ -33,7 +33,7 @@ struct LogStepIf : mio::LogIf<example> {
     }
     static bool should_log(const example& ex)
     {
-        return ex.current_time == 1;
+        return ex.current_time == 0;
     }
 };
 

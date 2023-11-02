@@ -25,6 +25,7 @@
 #include "models/abm/location_type.h"
 #include "abm/movement_data.h"
 #include "abm/abm.h"
+#include "memilio/utils/mioomp.h"
 namespace mio
 {
 namespace abm
@@ -132,7 +133,9 @@ struct LogInfectionState : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
     static Type log(const mio::abm::Simulation& sim)
     {
+
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
+        PRAGMA_OMP(for)
         for (auto i = size_t(0); i < sim.get_world().get_locations().size(); ++i) {
             auto&& location = sim.get_world().get_locations()[i];
             sum += location.get_subpopulations().get_last_value().cast<ScalarType>();

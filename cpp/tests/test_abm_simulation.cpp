@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
+#include "abm/common_abm_loggers.h"
 #include "memilio/io/history.h"
 
 struct LogTimePoint : mio::LogAlways {
@@ -44,12 +45,16 @@ TEST(TestSimulation, advance_random)
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 
-    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
-    // ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
-    // ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
-    // for (auto&& v : sim.get_result()) {
-    //     ASSERT_EQ(v.sum(), 4);
-    // }
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50), historyTimeSeries);
+    auto log = std::get<0>(historyTimeSeries.get_log());
+    ASSERT_EQ(log.get_num_time_points(), 51);
+    ASSERT_THAT(log.get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
+    for (auto&& v : log) {
+        ASSERT_EQ(v.sum(), 4);
+    }
 }
 
 TEST(TestSimulation, advance_subpopulation)
