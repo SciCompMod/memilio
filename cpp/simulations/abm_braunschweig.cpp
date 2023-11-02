@@ -891,12 +891,11 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
 }
 
 template <typename T>
-void write_log_to_file(const T& history)
+void write_log_to_file_person_and_location_data(const T& history)
 {
     auto logg     = history.get_log();
     auto loc_id   = std::get<0>(logg)[0];
     auto agent_id = std::get<1>(logg)[0];
-    // auto movement_data = std::get<2>(logg);
     // Write lo to a text file.
     std::ofstream myfile("locations_lookup.txt");
     myfile << "location_id, latitude, longitude\n";
@@ -917,27 +916,52 @@ void write_log_to_file(const T& history)
         myfile2 << id << ", " << home_id << ", " << age << "\n";
     }
     myfile2.close();
+}
 
-    // std::ofstream myfile3("movement_data.txt");
-    // myfile3 << "trip_id, agent_id, start_location, end_location, start_time, end_time, transport_mode, activity, "
-    //            "infection_state \n";
-    // int trips_id = 0;
-    // for (uint32_t movement_data_index = 0; movement_data_index < movement_data.size(); ++movement_data_index) {
-    //     for (uint32_t trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
-    //         auto start_location  = movement_data[movement_data_index][trip_index].from_id;
-    //         auto end_location    = movement_data[movement_data_index][trip_index].to_id;
-    //         auto start_time      = movement_data[movement_data_index][trip_index].start_time.seconds();
-    //         auto end_time        = movement_data[movement_data_index][trip_index].end_time.seconds();
-    //         auto transport_mode  = (int)movement_data[movement_data_index][trip_index].transport_mode;
-    //         auto activity        = (int)movement_data[movement_data_index][trip_index].activity_type;
-    //         auto infection_state = (int)movement_data[movement_data_index][trip_index].infection_state;
-    //         myfile3 << trips_id << ", " << start_location << " , " << end_location << " , " << start_time << " , "
-    //                 << end_time << " , " << transport_mode << " , " << activity << " , " << infection_state << "\n";
-    //         trips_id++;
-    //     }
-    //     myfile3 << "timestep Nr.:" << movement_data_index << "\n";
-    // }
-    // myfile3.close();
+template <typename T>
+void write_log_to_file_trip_data(const T& history)
+{
+
+    auto movement_data = std::get<0>(history.get_log());
+    std::ofstream myfile3("movement_data.txt");
+    myfile3 << "agent_id, trip_id, start_location, end_location, start_time, transport_mode, activity, "
+               "infection_state \n";
+    int trips_id = 0;
+    for (uint32_t movement_data_index = 2; movement_data_index < movement_data.size(); ++movement_data_index) {
+        for (uint32_t trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
+            auto agent_id = (int)std::get<0>(movement_data[movement_data_index][trip_index]);
+
+            int start_index = movement_data_index - 1;
+            using Type      = std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
+                                    mio::abm::ActivityType, mio::abm::InfectionState>;
+            while (!std::binary_search(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
+                                       movement_data[movement_data_index][trip_index],
+                                       [](const Type& v1, const Type& v2) {
+                                           return std::get<0>(v1) < std::get<0>(v2);
+                                       })) {
+                start_index--;
+            }
+            auto start_location_pointer =
+                std::lower_bound(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
+                                 movement_data[movement_data_index][trip_index], [](const Type& v1, const Type& v2) {
+                                     return std::get<0>(v1) < std::get<0>(v2);
+                                 });
+            int start_location = (int)std::get<1>(*start_location_pointer);
+
+            auto end_location = (int)std::get<1>(movement_data[movement_data_index][trip_index]);
+
+            auto start_time = (int)std::get<2>(movement_data[movement_data_index][trip_index]).seconds();
+
+            auto transport_mode  = (int)std::get<3>(movement_data[movement_data_index][trip_index]);
+            auto activity        = (int)std::get<4>(movement_data[movement_data_index][trip_index]);
+            auto infection_state = (int)std::get<5>(movement_data[movement_data_index][trip_index]);
+            myfile3 << agent_id << ", " << trips_id << ", " << start_location << " , " << end_location << " , "
+                    << start_time << " , " << transport_mode << " , " << activity << " , " << infection_state << "\n";
+            trips_id++;
+        }
+        myfile3 << "timestep Nr.:" << movement_data_index << "\n";
+    }
+    myfile3.close();
 }
 
 mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
@@ -980,7 +1004,8 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
             BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
-        write_log_to_file(historyPersonInf);
+        write_log_to_file_person_and_location_data(historyPersonInf);
+        write_log_to_file_trip_data(historyPersonInfDelta);
         ++run_idx;
     }
     BOOST_OUTCOME_TRY(save_result_result);
