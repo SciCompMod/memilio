@@ -299,5 +299,9 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
         t.days() - latest_protection.second.days());
 }
 
+bool Person::has_valid_test(TimePoint t) const {
+    return t > m_latest_test_result.time && m_latest_test_result.result;
+}
+
 } // namespace abm
 } // namespace mio

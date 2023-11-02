@@ -456,6 +456,11 @@ public:
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
     /**
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+    */
+    bool has_valid_test(TimePoint t) const;
+
+    /**
      * serialize this. 
      * @see mio::serialize
      */
@@ -488,6 +493,12 @@ public:
     }
 
 private:
+    struct TestingResult {
+        TimePoint time;
+        GenericTest type;
+        bool result;
+    };
+
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
     Person always visits the same Home or School etc. */
@@ -507,6 +518,7 @@ private:
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    TestingResult m_latest_test_result;
 };
 
 } // namespace abm

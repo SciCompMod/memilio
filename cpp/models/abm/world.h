@@ -301,6 +301,13 @@ public:
      */
     void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
+    /**
+     * @brief Update the trip list in accodance with the tests. 
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
+     */
+    void update_trip_list(TimePoint t, TimeSpan dt);
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.

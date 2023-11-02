@@ -239,5 +239,10 @@ const TestingStrategy& World::get_testing_strategy() const
     return m_testing_strategy;
 }
 
+void World::update_trip_list(TimePoint t, TimeSpan dt)
+{
+    
+}
+
 } // namespace abm
 } // namespace mio

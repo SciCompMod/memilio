@@ -34,6 +34,8 @@ namespace mio
 namespace abm
 {
 
+class Infection;
+
 /**
  * @brief A trip describes a migration from one Location to another Location.
  */

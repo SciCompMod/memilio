@@ -314,17 +314,34 @@ struct HighViralLoadProtectionFactor {
 struct TestParameters {
     UncertainValue sensitivity;
     UncertainValue specificity;
+    TimeSpan required_time;
+    TimeSpan validity_time;
 };
 
 struct GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.9, 0.99};
+        return Type{0.9, 0.99, hours(24), hours(24)};
     }
     static std::string name()
     {
         return "GenericTest";
+    }
+};
+
+/**
+ * @brief Reliability of an AntibodyTest.
+ */
+struct AntibodyTest : public GenericTest {
+    using Type = TestParameters;
+    static Type get_default()
+    {
+        return Type{0.8, 0.88, minutes(30), hours(24)};
+    }
+    static std::string name()
+    {
+        return "AntigenTest";
     }
 };
 
@@ -335,7 +352,7 @@ struct AntigenTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.8, 0.88};
+        return Type{0.8, 0.88, minutes(30), hours(24)};
     }
     static std::string name()
     {
@@ -350,7 +367,7 @@ struct PCRTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.9, 0.99};
+        return Type{0.9, 0.99, days(1), days(3)};
     }
     static std::string name()
     {
