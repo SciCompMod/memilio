@@ -1017,7 +1017,7 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    std::string input_file = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/bs_sorted.csv";
+    std::string input_file = "";
     size_t num_runs;
     bool save_single_runs = true;
 
