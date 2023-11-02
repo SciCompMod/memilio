@@ -1,7 +1,7 @@
 import numpy as np
 import datetime
 import copy
-import os.path as path
+import os
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
 
@@ -37,10 +37,13 @@ class InterventionLevel(Enum):
 
 class Simulation:
 
-    def __init__(self, data_dir, start_date):
+    def __init__(self, data_dir, start_date, results_dir):
         self.num_groups = 6
         self.data_dir = data_dir
         self.start_date = start_date
+        self.results_dir = results_dir
+        if not os.path.exists(self.results_dir):
+            os.makedirs(self.results_dir)
 
     def set_covid_parameters(self, model):
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
@@ -169,26 +172,26 @@ class Simulation:
             len(list(Location)), self.num_groups)
         contact_matrices[0] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
-                path.join(self.data_dir, "contacts", "baseline_home.txt")),
+                os.path.join(self.data_dir, "contacts", "baseline_home.txt")),
             mio.secir.read_mobility_plain(
-                path.join(self.data_dir, "contacts", "minimum_home.txt")))
+                os.path.join(self.data_dir, "contacts", "minimum_home.txt")))
         contact_matrices[1] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
-                path.join(
+                os.path.join(
                     self.data_dir, "contacts", "baseline_school_pf_eig.txt")),
             mio.secir.read_mobility_plain(
-                path.join(
+                os.path.join(
                     self.data_dir, "contacts", "minimum_school_pf_eig.txt")))
         contact_matrices[2] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
-                path.join(self.data_dir, "contacts", "baseline_work.txt")),
+                os.path.join(self.data_dir, "contacts", "baseline_work.txt")),
             mio.secir.read_mobility_plain(
-                path.join(self.data_dir, "contacts", "minimum_work.txt")))
+                os.path.join(self.data_dir, "contacts", "minimum_work.txt")))
         contact_matrices[3] = mio.ContactMatrix(
             mio.secir.read_mobility_plain(
-                path.join(self.data_dir, "contacts", "baseline_other.txt")),
+                os.path.join(self.data_dir, "contacts", "baseline_other.txt")),
             mio.secir.read_mobility_plain(
-                path.join(self.data_dir, "contacts", "minimum_other.txt")))
+                os.path.join(self.data_dir, "contacts", "minimum_other.txt")))
 
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
@@ -420,7 +423,7 @@ class Simulation:
         scaling_factor_icu = 1.0
         tnt_capacity_factor = 7.5 / 100000.
 
-        path_population_data = path.join(
+        path_population_data = os.path.join(
             self.data_dir, "pydata", "Germany",
             "county_current_population.json")
 
@@ -459,15 +462,22 @@ class Simulation:
                 [graph_run.get_node(node_indx).property.model
                  for node_indx in range(graph.num_nodes)])
 
-        # BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
-        # TODO: Einfacher Plot von quartilen maybe?
+        node_ids = [graph.get_node(i).id for i in range(graph.num_nodes)]
+
+        save_percentiles = True
+        save_single_runs = False
+
+        secir.save_results(
+            ensemble_results, ensemble_params, node_ids, self.results_dir,
+            save_single_runs, save_percentiles)
         return 0
 
 
 if __name__ == "__main__":
-    file_path = path.dirname(path.abspath(__file__))
+    file_path = os.path.dirname(os.path.abspath(__file__))
     sim = Simulation(
-        data_dir=path.join(file_path, "../../../data"),
-        start_date=datetime.date(year=2020, month=12, day=12))
+        data_dir=os.path.join(file_path, "../../../data"),
+        start_date=datetime.date(year=2020, month=12, day=12),
+        results_dir=os.path.join(file_path, "../../../results_secir"))
     num_days_sim = 30
     sim.run(num_days_sim, num_runs=2)

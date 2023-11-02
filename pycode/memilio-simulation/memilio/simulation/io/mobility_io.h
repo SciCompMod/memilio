@@ -28,13 +28,7 @@
 
 namespace pymio
 {
-// template <class Model>
-// IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& directory,
-//                            int ioflags = IOF_None)
 
-/*
- * @brief bind GraphSimulation for any node and edge type
- */
 template <class Model>
 void bind_write_graph(pybind11::module_& m)
 {
