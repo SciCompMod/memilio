@@ -142,24 +142,23 @@ Then we set the duration of the simulation. We run the simulation and save the r
 ## Structure
 
 The model consists of the following major classes:
-1. Person: represents the agents of the model. A person has an assigned infection state (similar to the compartments of the SECIR model) and location. 
-2. Location: represents locations in the world where people meet and interact, e.g. home, school, work, social events.
-3. World: collection of all persons and locations.
-4. Simulation: run the simulation and store results.
+1. Person: represents the agents of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations they visit during the simulation. Every person has lists with experienced infections and vaccinations. They can perform tests and wear masks.
+2. Infection: collection of all information about a persons infection, i.e. infectiousness, infection course, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model. 
+3. Location: represents locations in the world where people meet and interact, e.g. home, school, work, social events. A location can be split into cells to model parts of a location like classrooms in a school. Some infection parameters are location specific and one can activate NPIs like mandatory masks or tests to enter the location.
+4. World: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the migration phase.
+5. Simulation: run the simulation and store results.
 
 ## Simulation
 
 The simulation runs in discrete time steps. Each step is in two phases, an interaction phase and a migration phase. 
 
-First each person interacts with the other persons at the same location. This interaction determines their infection state transitions. A susceptible person may become exposed by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infectee and the immunity level of the susceptible person.
+First each person interacts with the other persons at the same location. This interaction determines the transmission of the desease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infectee and the immunity level of the susceptible person.
 
 During the migration phase, each person may change location. Migration follows complex rules, taking into account the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend).
 
+Another way of migration we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a timepoint when this trip is performed and where the person is heading to. In the beginning of the simulation a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week but other than that the agents do the same trips every day assuming they are not in quarantine or in the hospital.
+
 The result of the simulation is for each time step the count of persons in each infection state at that time.
-
-## Simulation Braunschweig
-
-
 
 ## Example
 
