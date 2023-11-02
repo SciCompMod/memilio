@@ -33,6 +33,16 @@ namespace mio
 {
 
 /**
+ * @brief Computes if a given year is a leap year
+ * @param year year
+ * @return bool
+ */
+inline bool is_leap_year(int year)
+{
+    return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+}
+
+/**
  * Simple date representation as year, month, and day.
  * month in [1, 12], day in [1, 31]
  */
@@ -55,7 +65,8 @@ struct Date {
         , day(d)
     {
         assert(month > 0 && month < 13);
-        assert(day > 0 && day < 32);
+        assert(day > 0 &&
+               day <= ((is_leap_year(year)) ? month_lengths_leap_year[month - 1] : month_lengths[month - 1]));
     }
 
     /**
@@ -131,8 +142,8 @@ struct Date {
             [](auto&& y_, auto&& m_, auto&& d_) -> IOResult<Date> {
                 if (m_ <= 0 || m_ > 12)
                     return failure(StatusCode::OutOfRange, "Month must be between 1 and 12 (inclusive).");
-                if (d_ <= 0 || d_ > 31)
-                    return failure(StatusCode::OutOfRange, "Day must be between 1 and 31 (inclusive).");
+                if (d_ <= 0 || d_ > ((is_leap_year(y_)) ? month_lengths_leap_year[m_ - 1] : month_lengths[m_ - 1]))
+                    return failure(StatusCode::OutOfRange, "Day is not valid for the given month.");
                 return success(Date{y_, m_, d_});
             },
             y, m, d);
@@ -141,7 +152,20 @@ struct Date {
     int year;
     int month;
     int day;
+    static constexpr std::array<int, 12> month_lengths           = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    static constexpr std::array<int, 12> month_lengths_leap_year = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 };
+
+/**
+ * @brief Computes the length of a month for a given date.
+ * @param date date.
+ * @return length of month for given date
+ */
+inline int get_month_length(Date date)
+{
+    return ((is_leap_year(date.year)) ? date.month_lengths_leap_year[date.month - 1]
+                                      : date.month_lengths[date.month - 1]);
+}
 
 /**
  * parses a date from a string.
@@ -156,7 +180,7 @@ inline IOResult<Date> parse_date(const std::string& date_str)
         date.year  = std::stoi(date_str.substr(0, 4));
         date.month = std::stoi(date_str.substr(5, 2));
         date.day   = std::stoi(date_str.substr(8, 2));
-        if (date.month < 1 || date.month > 12 || date.day < 1 || date.day > 31) {
+        if (date.month < 1 || date.month > 12 || date.day < 1 || date.day > get_month_length(date)) {
             return failure(StatusCode::OutOfRange, "Argument is not a valid date.");
         }
         return success(date);
@@ -177,22 +201,20 @@ inline Date offset_date_by_days(Date date, int offset_days)
     auto year  = date.year;
     auto month = date.month;
     auto day   = date.day;
-    assert(month > 0 && month < 13 && day > 0 && day < 32);
+    assert(month > 0 && month < 13 && day > 0 && day <= get_month_length(date));
 
-    std::array<int, 12> month_len;
-    if (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0)) {
-        // leap year
-        month_len = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    }
-    else {
-        month_len = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    }
-    if (day + offset_days > 0 && day + offset_days <= month_len[month - 1]) {
+    if (day + offset_days > 0 && day + offset_days <= get_month_length(date)) {
         return {year, month, day + offset_days};
     }
     else {
         std::array<int, 12> part_sum;
-        std::partial_sum(month_len.begin(), month_len.end(), part_sum.begin());
+        if (is_leap_year(year)) {
+            std::partial_sum(date.month_lengths_leap_year.begin(), date.month_lengths_leap_year.end(),
+                             part_sum.begin());
+        }
+        else {
+            std::partial_sum(date.month_lengths.begin(), date.month_lengths.end(), part_sum.begin());
+        }
 
         int day_in_year = day + offset_days;
         if (month > 1) {
@@ -228,20 +250,18 @@ inline int get_day_in_year(Date date)
     auto year  = date.year;
     auto month = date.month;
     auto day   = date.day;
-    assert(month > 0 && month < 13 && day > 0 && day < 32);
+    assert(month > 0 && month < 13 && day > 0 && day <= get_month_length(date));
 
     if (month > 1) {
-        std::array<int, 12> month_len;
-        if (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0)) {
-            // leap year
-            month_len = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-        }
-        else {
-            month_len = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-        }
 
         std::array<int, 12> part_sum;
-        std::partial_sum(month_len.begin(), month_len.end(), part_sum.begin());
+        if (is_leap_year(year)) {
+            std::partial_sum(date.month_lengths_leap_year.begin(), date.month_lengths_leap_year.end(),
+                             part_sum.begin());
+        }
+        else {
+            std::partial_sum(date.month_lengths.begin(), date.month_lengths.end(), part_sum.begin());
+        }
 
         // take month-2 since end of last month has to be found and due to start at 0 of C++ (against January=1 in date format)
         int day_in_year = part_sum[month - 2] + day;
@@ -280,7 +300,7 @@ inline int get_offset_in_days(Date date1, Date date2)
             int sum_days = 0;
             for (int i = year1; i < year2; i++) {
                 sum_days += 365;
-                if (((i % 4 == 0) && (i % 100 != 0)) || (i % 400 == 0)) {
+                if (is_leap_year(i)) {
                     sum_days += 1;
                 }
             }
@@ -290,7 +310,7 @@ inline int get_offset_in_days(Date date1, Date date2)
             int sum_days = 0;
             for (int i = year2; i < year1; i++) {
                 sum_days += 365;
-                if (((i % 4 == 0) && (i % 100 != 0)) || (i % 400 == 0)) {
+                if (is_leap_year(i)) {
                     sum_days += 1;
                 }
             }

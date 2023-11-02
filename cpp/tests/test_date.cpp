@@ -28,6 +28,24 @@ TEST(TestDate, init)
     EXPECT_EQ(date.day, 12);
 }
 
+TEST(TestDate, is_leap_year)
+{
+    EXPECT_TRUE(mio::is_leap_year(2000));
+    EXPECT_TRUE(mio::is_leap_year(2020));
+    EXPECT_FALSE(mio::is_leap_year(2021));
+    EXPECT_FALSE(mio::is_leap_year(2100));
+}
+
+TEST(TestDate, get_month_length)
+{
+    EXPECT_EQ(mio::get_month_length(mio::Date(2022, 8, 12)), 31);
+    EXPECT_EQ(mio::get_month_length(mio::Date(2024, 4, 12)), 30);
+
+    EXPECT_EQ(mio::get_month_length(mio::Date(2022, 2, 12)), 28);
+    EXPECT_EQ(mio::get_month_length(mio::Date(2000, 2, 12)), 29);
+    EXPECT_EQ(mio::get_month_length(mio::Date(2100, 2, 12)), 28);
+}
+
 TEST(TestDate, comparison)
 {
     EXPECT_EQ(mio::Date(2021, 3, 12), mio::Date(2021, 3, 12));

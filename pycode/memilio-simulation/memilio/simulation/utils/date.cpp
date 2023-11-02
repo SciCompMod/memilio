@@ -21,8 +21,6 @@
 #include "pybind_util.h"
 #include "memilio/utils/date.h"
 
-//#include <pybind11/operators.h>
-
 namespace py = pybind11;
 
 namespace pymio
@@ -35,33 +33,39 @@ void bind_date(py::module_& m, std::string const& name)
         .def_readwrite("year", &mio::Date::year)
         .def_readwrite("month", &mio::Date::month)
         .def_readwrite("day", &mio::Date::day)
-        .def_property_readonly("day_in_year", [](const mio::Date &self) {
-            return mio::get_day_in_year(self);
-        })
+        .def_property_readonly("day_in_year",
+                               [](const mio::Date& self) {
+                                   return mio::get_day_in_year(self);
+                               })
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def(py::self < py::self)
         .def(py::self <= py::self)
         .def(py::self > py::self)
         .def(py::self >= py::self)
-        .def("__add__", [](const mio::Date &self, int offset_days) {
-            return mio::offset_date_by_days(self, offset_days);
-        })
-        .def("__iadd__", [](mio::Date &self, int offset_days) {
-            self = mio::offset_date_by_days(self, offset_days);
-            return self;
-        })
-        .def("__sub__", [](const mio::Date &self, int offset_days) {
-            return mio::offset_date_by_days(self, -offset_days);
-        })
-        .def("__isub__", [](mio::Date &self, int offset_days) {
-            self = mio::offset_date_by_days(self, -offset_days);
-            return self;
-        })
-        .def("__sub__", [](const mio::Date &self, const mio::Date &other) {
-            return mio::get_offset_in_days(self, other);
-        })
-        .def("__str__", [](const mio::Date &self) {
+        .def("__add__",
+             [](const mio::Date& self, int offset_days) {
+                 return mio::offset_date_by_days(self, offset_days);
+             })
+        .def("__iadd__",
+             [](mio::Date& self, int offset_days) {
+                 self = mio::offset_date_by_days(self, offset_days);
+                 return self;
+             })
+        .def("__sub__",
+             [](const mio::Date& self, int offset_days) {
+                 return mio::offset_date_by_days(self, -offset_days);
+             })
+        .def("__isub__",
+             [](mio::Date& self, int offset_days) {
+                 self = mio::offset_date_by_days(self, -offset_days);
+                 return self;
+             })
+        .def("__sub__",
+             [](const mio::Date& self, const mio::Date& other) {
+                 return mio::get_offset_in_days(self, other);
+             })
+        .def("__str__", [](const mio::Date& self) {
             return std::to_string(self.year) + "." + std::to_string(self.month) + "." + std::to_string(self.day);
         });
 }
