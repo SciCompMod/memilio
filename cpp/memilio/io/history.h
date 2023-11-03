@@ -55,7 +55,7 @@ struct LogAlways {
 
 template <typename Cond>
 struct LogIf {
-    static bool should_log(const Cond& cond);
+    bool should_log(const Cond& cond);
 };
 
 /*

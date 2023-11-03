@@ -61,5 +61,5 @@ TEST(HistoryObject, log)
     ASSERT_EQ(std::get<0>(data)[0], std::get<0>(data)[1]);
     ASSERT_EQ(std::get<0>(data)[0], std::make_pair(ex.a, ex.b));
     ASSERT_EQ(std::get<1>(data)[0], ex.a);
-    ASSERT_EQ(std::get<2>(data)[0], 1);
+    ASSERT_EQ(std::get<2>(data)[0], 0);
 }
