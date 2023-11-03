@@ -21,14 +21,6 @@
 #include "abm/common_abm_loggers.h"
 #include "memilio/io/history.h"
 
-struct LogTimePoint : mio::LogAlways {
-    using Type = double;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        return sim.get_time().hours();
-    }
-};
-
 TEST(TestSimulation, advance_random)
 {
     auto world     = mio::abm::World(NUM_AGE_GROUPS);
@@ -112,12 +104,25 @@ TEST(TestSimulation, advanceWithHistory)
 {
     auto world = mio::abm::World(NUM_AGE_GROUPS);
     auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
-    mio::HistoryWithMemoryWriter<LogTimePoint> history;
+    mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
+                 mio::abm::LogDataForMovement>
+        historyPersonInf;
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+    mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
 
-    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(2), history);
-    ASSERT_EQ(std::get<0>(history.get_log()).size(), 3);
-    ASSERT_NEAR(std::get<0>(history.get_log())[0], 0.0, 1e-14);
-    ASSERT_NEAR(std::get<0>(history.get_log())[1], 1.0, 1e-14);
-    auto test_get_templ_log = history.get_log<LogTimePoint>();
-    ASSERT_NEAR(test_get_templ_log[2], 2.0, 1e-14);
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(2), historyPersonInf, historyTimeSeries,
+                historyPersonInfDelta);
+
+    auto logLocationInfo      = std::get<0>(historyPersonInf.get_log());
+    auto logPersonInfo        = std::get<1>(historyPersonInf.get_log());
+    auto logMovementInfo      = std::get<2>(historyPersonInf.get_log());
+    auto logTimeSeries        = std::get<0>(historyTimeSeries.get_log());
+    auto logMovementInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
+
+    ASSERT_EQ(logLocationInfo.size(), 1);
+    ASSERT_EQ(logPersonInfo[0].empty(), true);
+    ASSERT_EQ(logMovementInfo.size(), 3);
+    ASSERT_EQ(logTimeSeries.get_num_time_points(), 3);
+    ASSERT_EQ(logMovementInfoDelta.size(), 4);
 }
