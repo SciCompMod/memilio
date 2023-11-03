@@ -25,7 +25,6 @@
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
-#include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 #include "abm/vaccine.h"
 
@@ -113,7 +112,15 @@ void split_line(std::string string, std::vector<int32_t>* row)
     while ((pos = string.find(x)) != std::string::npos) {
         string.replace(pos, 2, y);
     } // Temporary fix to handle empty cells.
-    boost::split(strings, string, boost::is_any_of(","));
+    size_t start = 0;
+    size_t end   = string.find(",");
+    while (end != std::string::npos) {
+        strings.push_back(string.substr(start, end - start));
+        start = end + 1;
+        end   = string.find(",", start);
+    }
+    strings.push_back(string.substr(start, end));
+
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
         if (s.find(":") != std::string::npos) {
             return stringToMinutes(s);
@@ -196,7 +203,14 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     std::getline(fin, line);
     line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     std::vector<std::string> titles;
-    boost::split(titles, line, boost::is_any_of(","));
+    size_t start = 0;
+    size_t end   = line.find(",");
+    while (end != std::string::npos) {
+        titles.push_back(line.substr(start, end - start));
+        start = end + 1;
+        end   = line.find(",", start);
+    }
+    titles.push_back(line.substr(start, end));
     uint32_t count_of_titles              = 0;
     std::map<std::string, uint32_t> index = {};
     for (auto const& title : titles) {
