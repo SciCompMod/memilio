@@ -129,7 +129,7 @@ public:
                                   riskFromInfectedSymptomatic * pop[ISyj]);
 
                 // Susceptible -> Exposed
-                flows[get_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] += dummy_S;
+                flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] += dummy_S;
             }
 
             // ICU capacity shortage is close
@@ -140,45 +140,46 @@ public:
             double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
             // Exposed -> InfectedNoSymptoms
-            flows[get_flow_index<InfectionState::Exposed, InfectionState::InfectedNoSymptoms>({i})] = rateE * y[Ei];
+            flows[get_flat_flow_index<InfectionState::Exposed, InfectionState::InfectedNoSymptoms>({i})] =
+                rateE * y[Ei];
 
             // InfectedNoSymptoms -> InfectedSymptoms / Recovered
-            flows[get_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::InfectedSymptoms>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::InfectedSymptoms>({i})] =
                 (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi];
-            flows[get_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::Recovered>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::Recovered>({i})] =
                 params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSi];
 
             // InfectedNoSymptomsConfirmed -> InfectedSymptomsConfirmed / Recovered
-            flows[get_flow_index<InfectionState::InfectedNoSymptomsConfirmed,
-                                 InfectionState::InfectedSymptomsConfirmed>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed,
+                                      InfectionState::InfectedSymptomsConfirmed>({i})] =
                 (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSCi];
-            flows[get_flow_index<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>({i})] =
                 params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSCi];
 
             // InfectedSymptoms -> InfectedSevere / Recovered
-            flows[get_flow_index<InfectionState::InfectedSymptoms, InfectionState::InfectedSevere>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::InfectedSevere>({i})] =
                 params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi];
-            flows[get_flow_index<InfectionState::InfectedSymptoms, InfectionState::Recovered>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::Recovered>({i})] =
                 (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyi];
 
             // InfectedSymptomsConfirmed -> InfectedSevere / Recovered
-            flows[get_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::InfectedSevere>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::InfectedSevere>({i})] =
                 params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyCi];
-            flows[get_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::Recovered>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::Recovered>({i})] =
                 (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyCi];
 
             // InfectedSevere -> InfectedCritical / Recovered / Dead
-            flows[get_flow_index<InfectionState::InfectedSevere, InfectionState::InfectedCritical>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::InfectedCritical>({i})] =
                 criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
-            flows[get_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})] =
                 (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevi];
-            flows[get_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>({i})] =
                 deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
 
             // InfectedCritical -> Dead / Recovered
-            flows[get_flow_index<InfectionState::InfectedCritical, InfectionState::Dead>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Dead>({i})] =
                 params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICri];
-            flows[get_flow_index<InfectionState::InfectedCritical, InfectionState::Recovered>({i})] =
+            flows[get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Recovered>({i})] =
                 (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICri];
         }
     }

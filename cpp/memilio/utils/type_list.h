@@ -39,9 +39,9 @@ struct TypeList {
      * @return Position of Type within TypeList.
      */
     template <class Type>
-    static constexpr size_t index_of()
+    static constexpr size_t index_of_type()
     {
-        return index_of_v<Type, Types...>;
+        return index_of_type_v<Type, Types...>;
     }
 
     /// @brief returns the number of Types in TypeList
@@ -51,14 +51,14 @@ struct TypeList {
     }
 };
 
-/// Specialization of type_at for TypeList. @see type_at.
+/// Specialization of type_at_index for TypeList. @see type_at_index.
 template <size_t Index, class... Types>
-struct type_at<Index, TypeList<Types...>> : public type_at<Index, Types...> {
+struct type_at_index<Index, TypeList<Types...>> : public type_at_index<Index, Types...> {
 };
 
-/// Specialization of index_of for TypeList. @see index_of.
+/// Specialization of index_of_type for TypeList. @see index_of_type.
 template <class Type, class... Types>
-struct index_of<Type, TypeList<Types...>> : public index_of<Type, Types...> {
+struct index_of_type<Type, TypeList<Types...>> : public index_of_type<Type, Types...> {
 };
 
 } // namespace mio

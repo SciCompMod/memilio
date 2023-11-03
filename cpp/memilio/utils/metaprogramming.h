@@ -169,34 +169,26 @@ using not_copyable_if_t = typename not_copyable_if<Cond>::type;
  * @tparam Types A list of types.
  */
 template <std::size_t Index, class... Types>
-struct type_at {
+struct type_at_index {
     static_assert(Index < sizeof...(Types), "Index is too large for the list Types.");
-    // template <template <class...> class TypeContainer>
-    // type_at(TypeContainer<Types...>)
-    // {
-    // }
     using type = typename std::tuple_element<Index, std::tuple<Types...>>::type;
 };
 
 /**
  * @brief The type at the Index-th position in the list Types.
  * Equivalent to type_at<Index, Types...>::type.
- * @see type_at.
+ * @see type_at_index.
  */
 template <std::size_t Index, class... Types>
-using type_at_t = typename type_at<Index, Types...>::type;
+using type_at_index_t = typename type_at_index<Index, Types...>::type;
 
 /**
- * Finds the index of Type in the list Types.
+ * Finds the index of a Type in the list Types.
  * @tparam Type A type contained in Types.
  * @tparam Types A list of types.
  */
 template <class Type, class... Types>
-struct index_of {
-    // template <template <class...> class TypeContainer>
-    // index_of(TypeContainer<Types...>)
-    // {
-    // }
+struct index_of_type {
 private:
     /**
      * @brief Recursively searches Types until Type is found. Asserts that Type is in Types.
@@ -206,7 +198,7 @@ private:
     template <std::size_t Index = 0>
     static constexpr std::size_t index_of_impl()
     {
-        if constexpr (std::is_same_v<Type, type_at_t<Index, Types...>>) {
+        if constexpr (std::is_same_v<Type, type_at_index_t<Index, Types...>>) {
             return Index;
         }
         else {
@@ -221,11 +213,11 @@ public:
 
 /**
  * @brief The index of Type in the list Types.
- * Equivalent to index_of<Type, Types...>::value.
- * @see index_of.
+ * Equivalent to index_of_type<Type, Types...>::value.
+ * @see index_of_type.
  */
 template <class Type, class... Types>
-constexpr std::size_t index_of_v = index_of<Type, Types...>::value;
+constexpr std::size_t index_of_type_v = index_of_type<Type, Types...>::value;
 
 } // namespace mio
 

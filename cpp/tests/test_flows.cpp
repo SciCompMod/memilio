@@ -26,6 +26,7 @@
 #include "ode_seir/parameters.h"
 #include "memilio/utils/type_list.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "gtest/gtest.h"
 #include "matchers.h"
 
@@ -68,29 +69,29 @@ TEST(TestFlows, FlowChart)
     EXPECT_EQ(Flows().size(), 3);
     // Testing get (by index) function, verifying with source members.
     auto flow0        = mio::Flow<I::Susceptible, I::Exposed>().source;
-    auto test_source0 = mio::type_at_t<0, Flows>::source;
+    auto test_source0 = mio::type_at_index_t<0, Flows>::source;
     EXPECT_EQ(flow0, test_source0);
 
     auto flow1        = mio::Flow<I::Exposed, I::Infected>().source;
-    auto test_source1 = mio::type_at_t<1, Flows>::source;
+    auto test_source1 = mio::type_at_index_t<1, Flows>::source;
     EXPECT_EQ(flow1, test_source1);
 
     auto flow2        = mio::Flow<I::Infected, I::Recovered>().source;
-    auto test_source2 = mio::type_at_t<2, Flows>::source;
+    auto test_source2 = mio::type_at_index_t<2, Flows>::source;
     EXPECT_EQ(flow2, test_source2);
 
     // Testing get (by Flow) function.
-    const size_t index0 = mio::index_of_v<mio::Flow<I::Susceptible, I::Exposed>, Flows>;
+    const size_t index0 = mio::index_of_type_v<mio::Flow<I::Susceptible, I::Exposed>, Flows>;
     EXPECT_EQ(index0, 0);
 
-    const size_t index1 = mio::index_of_v<mio::Flow<I::Exposed, I::Infected>, Flows>;
+    const size_t index1 = mio::index_of_type_v<mio::Flow<I::Exposed, I::Infected>, Flows>;
     EXPECT_EQ(index1, 1);
 
-    const size_t index2 = mio::index_of_v<mio::Flow<I::Infected, I::Recovered>, Flows>;
+    const size_t index2 = mio::index_of_type_v<mio::Flow<I::Infected, I::Recovered>, Flows>;
     EXPECT_EQ(index2, 2);
 }
 
-TEST(TestFlows, SimulationFlows)
+TEST(TestFlows, FlowSimulation)
 {
     mio::set_log_level(mio::LogLevel::off);
 
@@ -179,20 +180,20 @@ TEST(TestFlows, GetInitialFlows)
 
 TEST(TestFlows, GetFlowIndex)
 {
-    // test get_flow_index with some prime number products
+    // test get_flat_flow_index with some prime number products
     TestModel m({I::Count, CatA(11), CatB(5), CatC(7)});
-    auto idx0 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(0), CatC(1)});
+    auto idx0 = m.get_flat_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(0), CatC(1)});
     EXPECT_EQ(idx0, 3);
 
-    auto idx1 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(1), CatC(0)});
+    auto idx1 = m.get_flat_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(1), CatC(0)});
     EXPECT_EQ(idx1, 7 * 3);
 
-    auto idx2 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(0), CatC(0)});
+    auto idx2 = m.get_flat_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(0), CatC(0)});
     EXPECT_EQ(idx2, 5 * 7 * 3);
 
-    auto idx3 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(1), CatC(1)});
+    auto idx3 = m.get_flat_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(1), CatC(1)});
     EXPECT_EQ(idx3, (5 * 7 * 3) + (7 * 3) + (3));
 
-    auto idx4 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(10), CatB(4), CatC(6)});
+    auto idx4 = m.get_flat_flow_index<I::Susceptible, I::Exposed>({CatA(10), CatB(4), CatC(6)});
     EXPECT_EQ(idx4, 10 * (5 * 7 * 3) + 4 * (7 * 3) + 6 * (3));
 }

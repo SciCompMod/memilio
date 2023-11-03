@@ -23,6 +23,7 @@ add_library(memilio
     compartments/compartmentalmodel.h
     compartments/flow_model.h
     compartments/simulation.h
+    compartments/flow_simulation.h
     compartments/parameter_studies.h
     io/io.h
     io/io.cpp

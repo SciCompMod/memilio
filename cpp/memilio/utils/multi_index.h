@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*
+* Authors: René Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef MIO_UTILS_MULTI_INDEX_H_
 #define MIO_UTILS_MULTI_INDEX_H_
 
@@ -62,13 +81,11 @@ public:
         template <size_t I = MultiIndex::size - 1>
         inline void increment_index()
         {
-            // TODO: should we allow dims[I] == 0? It makes sense not to (if any dims[.] is 0, the total "volume" of dims is 0, too), but it is easy to deal with (treat 0 as 1)
-            assert(mio::get<I>(m_dims).get() > 0 && "Dimensions must be positive.");
+            assert(mio::get<I>(m_dims).get() > 0 && "All dimensions must be positive.");
             assert(mio::get<I>(m_index) < mio::get<I>(m_dims) && "Index out of bounds.");
             if constexpr (I > 0) {
                 ++mio::get<I>(m_index);
-                // usually, "==" would be enough. but we use ">=" in case m_dims[I] is 0
-                if (mio::get<I>(m_index) >= mio::get<I>(m_dims)) {
+                if (mio::get<I>(m_index) == mio::get<I>(m_dims)) {
                     mio::get<I>(m_index) = mio::get<I>(m_index).Zero();
                     increment_index<I - 1>();
                 }
@@ -81,11 +98,11 @@ public:
         reference m_dims;
     };
 
-    MultiIndexIterator begin()
+    MultiIndexIterator begin() const
     {
         return MultiIndexIterator(MultiIndex::Zero(), m_dimensions);
     }
-    MultiIndexIterator end()
+    MultiIndexIterator end() const
     {
         return MultiIndexIterator(m_end, m_dimensions);
     }
@@ -100,13 +117,6 @@ private:
     const MultiIndex m_dimensions; ///< Upper bound for each Index in MultiIndex.
     const MultiIndex m_end; ///< Index returned by
 };
-
-// TODO: rename, remove, ...
-template <class... CategoryTags>
-MultiIndexRange<Index<CategoryTags...>> make_range(Index<CategoryTags...> dimensions)
-{
-    return MultiIndexRange<Index<CategoryTags...>>(dimensions);
-}
 
 } // namespace mio
 

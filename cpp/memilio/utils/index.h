@@ -181,6 +181,14 @@ public:
     std::tuple<Index<CategoryTag>...> indices;
 };
 
+template <size_t Index, class... CategoryTags>
+struct type_at_index<Index, ::mio::Index<CategoryTags...>> : public type_at_index<Index, CategoryTags...> {
+};
+
+template <class CategoryTag, class... CategoryTags>
+struct index_of_type<CategoryTag, ::mio::Index<CategoryTags...>> : public index_of_type<CategoryTag, CategoryTags...> {
+};
+
 // retrieves the Index at the Ith position for a Index with more than one Tag
 template <size_t I, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) > 1), void>* = nullptr>
 constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTags>...>>::type&
@@ -245,6 +253,36 @@ constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
     using IndexTag = std::tuple_element_t<0, std::tuple<CategoryTags...>>;
     static_assert(std::is_same<Tag, IndexTag>::value, "Tags must match for an Index with just one template parameter");
     return i;
+}
+
+namespace details
+{
+/// @brief Extracts CategoryTags from the tagged Index and returns a subindex of SuperIndex with the given categories.
+template <class... CategoryTags, class SuperIndex>
+inline Index<CategoryTags...> reduce_index_impl(const SuperIndex& i, mio::Tag<Index<CategoryTags...>>)
+{
+    // the subindex may not be trivially constructible, so we pass its type using mio::Tag
+    // the type has to be passed as an argument to determine its CategoryTags
+
+    // below, we use get<index_of_type<>> instead of get<> directly to handle categories that are not unique
+    // (that is, `get<CategoryTags>(i)...` fails to compile for SuperIndex=Index<T, T>)
+    return Index<CategoryTags...>{get<index_of_type_v<CategoryTags, SuperIndex>>(i)...};
+}
+} // namespace details
+
+/**
+ * @brief Create a SubIndex by copying values from SuperIndex.
+ * If a type T is contained multiple times in SuperIndex, only the first occurance of T is used.
+ * For example, `reduce_index<Index<T, T>>(Index<T, T, T>{1,2,3})` returns `{1,1}`.
+ * @param[in] index An instance of SuperIndex
+ * @tparam SubIndex An Index that contains a subset of the categories from SuperIndex.
+ * @tparam SuperIndex Any Index.
+ * @return An index with the given categories and values from index.
+ */
+template <class SubIndex, class SuperIndex>
+SubIndex reduce_index(const SuperIndex& index)
+{
+    return details::reduce_index_impl(index, mio::Tag<SubIndex>{});
 }
 
 } // namespace mio

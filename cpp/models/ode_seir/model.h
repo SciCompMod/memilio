@@ -67,11 +67,11 @@ public:
         double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        flows[get_flow_index<InfectionState::Susceptible, InfectionState::Exposed>()] =
+        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>()] =
             coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        flows[get_flow_index<InfectionState::Exposed, InfectionState::Infected>()] =
+        flows[get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>()] =
             (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
-        flows[get_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
+        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 
