@@ -120,13 +120,13 @@ def run_secir_groups_simulation(days, damping_day, populations):
     minimum = getMinimumMatrix()
 
 
-    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
-        (num_groups, num_groups)) * 10
+    #model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
+    #    (num_groups, num_groups)) * 10
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
+    #model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
 
     # Generate a damping matrix and assign it to the model
     damping = np.ones((num_groups, num_groups)
