@@ -67,8 +67,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(
-        m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
     pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
     py::class_<mio::abm::Parameters, mio::abm::ParametersBase>(m, "Parameters")
@@ -220,7 +219,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("advance",
              static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
              py::arg("tmax"))
-        .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
 }
 
