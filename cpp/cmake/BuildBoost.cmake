@@ -18,7 +18,6 @@ target_include_directories(boost SYSTEM INTERFACE
     $<BUILD_INTERFACE:${BOOST_DIR}>
 )
 
-
 add_library(boost_disable_autolink INTERFACE)
 target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
 add_library(Boost::disable_autolinking ALIAS boost_disable_autolink)
