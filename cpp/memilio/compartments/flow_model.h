@@ -202,7 +202,7 @@ public:
 
 private:
     FlowIndex m_flow_index_dimensions; ///< The dimensions of a FlowIndex.
-    const MultiIndexRange<PopIndex> m_flow_range; ///< Range used to iterate over all categories except for Comp.
+    MultiIndexRange<PopIndex> m_flow_range; ///< Range used to iterate over all categories except for Comp.
     mutable Eigen::VectorXd m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
 
     /**

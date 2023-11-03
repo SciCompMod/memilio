@@ -29,9 +29,13 @@ template <class MultiIndex>
 class MultiIndexRange
 {
 public:
-    MultiIndexRange(MultiIndex dimensions)
+    MultiIndexRange(const MultiIndex& dimensions)
         : m_dimensions(dimensions)
-        , m_end(make_end_index())
+        , m_end([](const MultiIndex& dims) {
+            auto end         = MultiIndex::Zero();
+            mio::get<0>(end) = mio::get<0>(dims);
+            return end;
+        }(dimensions))
     {
     }
 
@@ -108,14 +112,8 @@ public:
     }
 
 private:
-    MultiIndex make_end_index()
-    {
-        auto end         = MultiIndex::Zero();
-        mio::get<0>(end) = mio::get<0>(m_dimensions);
-        return end;
-    }
-    const MultiIndex m_dimensions; ///< Upper bound for each Index in MultiIndex.
-    const MultiIndex m_end; ///< Index returned by
+    MultiIndex m_dimensions; ///< Contains strict upper bounds for each Index in MultiIndex.
+    MultiIndex m_end; ///< Index to stop at when iterating using increments.
 };
 
 } // namespace mio
