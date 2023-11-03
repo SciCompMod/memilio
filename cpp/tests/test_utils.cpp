@@ -67,9 +67,9 @@ TEST(TestUtils, MultiIndexRange)
     EXPECT_EQ(*range.end(), reference_end);
     // test increments
     auto iterator = range.begin();
-    for (int i = 0; i < 2 * 3 * 5; i++) {
+    for (size_t i = 0; i < 2 * 3 * 5; i++) {
         // manually compute flatten_index(*iterator, dims)
-        int flat_index =
+        size_t flat_index =
             (3 * 5) * mio::get<0>(*iterator).get() + (5) * mio::get<1>(*iterator).get() + mio::get<2>(*iterator).get();
         ASSERT_EQ(flat_index, i);
         iterator++;
