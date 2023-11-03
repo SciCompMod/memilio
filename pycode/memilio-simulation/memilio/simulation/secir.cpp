@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "memilio/config.h"
 #include "pybind_util.h"
 #include "compartments/simulation.h"
 #include "compartments/compartmentalmodel.h"
@@ -236,7 +237,10 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
     pymio::bind_write_graph<mio::osecir::Model>(m);
+
+#ifdef MEMILIO_HAS_HDF5
     pymio::bind_save_results<mio::osecir::Model>(m);
+#endif // MEMILIO_HAS_HDF5
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
