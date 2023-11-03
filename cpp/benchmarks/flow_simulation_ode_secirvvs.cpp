@@ -19,6 +19,7 @@
 */
 #include "benchmarks/simulation.h"
 #include "benchmarks/flow_simulation_ode_secirvvs.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
 #include "ode_secirvvs/model.h"
 #include <string>
@@ -93,7 +94,7 @@ void flow_sim(::benchmark::State& state)
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
-        mio::osecirvvs::Simulation<mio::SimulationFlows<Model>> sim(model, cfg.t0, cfg.dt);
+        mio::osecirvvs::Simulation<mio::FlowSimulation<Model>> sim(model, cfg.t0, cfg.dt);
         sim.set_integrator(I);
         // run sim
         sim.advance(cfg.t_max);
@@ -110,6 +111,6 @@ BENCHMARK(flowless_sim)
     ->Name(
         "osecirvvs::Simulation<mio::Simulation> on osecirvvs::Model (osecirvvs::* from pre 511 branch) without flows");
 BENCHMARK(flow_sim_comp_only)->Name("osecirvvs::Simulation<mio::Simulation> on osecirvvs::Model with flows");
-BENCHMARK(flow_sim)->Name("osecirvvs::Simulation<mio::SimulationFlows> on osecirvvs::Model with flows");
+BENCHMARK(flow_sim)->Name("osecirvvs::Simulation<mio::FlowSimulation> on osecirvvs::Model with flows");
 // run all benchmarks
 BENCHMARK_MAIN();

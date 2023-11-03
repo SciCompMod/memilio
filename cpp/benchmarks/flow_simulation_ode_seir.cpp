@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "benchmarks/simulation.h"
+#include "benchmarks/flow_simulation.h"
 #include "ode_seir/model.h"
 #include <string>
 
@@ -168,6 +168,6 @@ BENCHMARK(flowless_sim)->Name("Dummy 3/3");
 // actual benchmarks
 BENCHMARK(flowless_sim)->Name("mio::Simulation on oseir::Model (pre 511 branch) without flows");
 BENCHMARK(flow_sim_comp_only)->Name("mio::Simulation on oseir::Model with flows");
-BENCHMARK(flow_sim)->Name("mio::SimulationFlows on oseir::Model with flows");
+BENCHMARK(flow_sim)->Name("mio::FlowSimulation on oseir::Model with flows");
 // run all benchmarks
 BENCHMARK_MAIN();

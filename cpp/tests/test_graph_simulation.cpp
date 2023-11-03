@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
@@ -202,7 +203,7 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
-    
+
     //set seeds
     sim.get_rng().seed({114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203});
 
@@ -269,9 +270,9 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     auto sim_no_flows = create_simulation(
         mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax, dt);
 
-    auto sim_flows = create_simulation(
-        mio::Graph<mio::SimulationNode<mio::SimulationFlows<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax,
-        dt);
+    auto sim_flows =
+        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::oseir::Model>>, mio::MigrationEdge>(),
+                          model, t0, tmax, dt);
 
     //test if all results of both simulations are equal for all nodes
     for (size_t node_id = 0; node_id < sim_no_flows.get_graph().nodes().size(); ++node_id) {
@@ -307,10 +308,10 @@ namespace
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly(const MoveOnly&)            = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&)      = default;
 };
 using MoveOnlyGraph    = mio::Graph<MoveOnly, MoveOnly>;
 using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph>;
