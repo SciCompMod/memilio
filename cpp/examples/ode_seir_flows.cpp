@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/compartments/flow_simulation.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/model.h"
