@@ -548,16 +548,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
                     model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
                     model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
-                    (model[region].populations[{i, InfectionState::ExposedNaive}] +
-                     model[region].populations[{i, InfectionState::ExposedPartialImmunity}] +
-                     model[region].populations[{i, InfectionState::ExposedImprovedImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedNoSymptomsNaive}] +
-                     model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedNoSymptomsNaiveConfirmed}] +
-                     model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] +
-                     model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] +
-                     model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] +
+                    (model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] +
                      model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
                      model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
                      model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
