@@ -7,15 +7,15 @@ import re
 
 
 ##############  hyperparameter grid search: activation function and optimizer ##########
-plot_neuronsdf = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/CNN_hyper_activation_optimizer/dataframe')
+df_act_opt = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/LSTM_hyper_activation_optimizer/hyper_LSTM_concatenated')
 
 
 
-def heatmap():
-    df_heatmap1 = pd.DataFrame(data =  df[['activation', 'optimizer', 'mean_test_MAPE']])
+def heatmap_act_opt(df):
+    df_heatmap1 = pd.DataFrame(data =  df[['activation', 'optimizer', 'kfold_test']])
     # seems we have duplicates 
     df_heatmap1.drop_duplicates(subset=['activation', 'optimizer'], keep='first', inplace = True)
-    df_heatmap1= df_heatmap1.pivot(index='activation', columns='optimizer', values='mean_test_MAPE')
+    df_heatmap1= df_heatmap1.pivot(index='activation', columns='optimizer', values='kfold_test')
 
     fig, ax = plt.subplots()
     im = ax.imshow(df_heatmap1.values)
@@ -40,10 +40,10 @@ def heatmap():
     cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")        
 
 
-    ax.set_title("Activation anf Optimizer for CNN")
+    ax.set_title("Activation anf Optimizer for LSTM")
     fig.tight_layout()
     plt.show()
-    plt.savefig("heatmap_activation_optimizer_CNN.png")
+    plt.savefig("heatmap_activation_optimizer_LSTM.png")
 
 
 
@@ -130,9 +130,9 @@ def plot_max_min_losses(min_loss_train, min_loss_val, max_loss_train, max_loss_v
 
 
 
-def heatmap():
-    df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+def heatmap(df):
+    df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
     fig, ax = plt.subplots()
     im = ax.imshow(df_heatmap1.values)
@@ -168,15 +168,15 @@ def heatmap():
 
 
 
-def heatmaps():
-    df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+def heatmaps(df):
+    df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
-    df_heatmap2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap2= df_heatmap2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    df_heatmap2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_heatmap2= df_heatmap2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
-    df_heatmap3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap3= df_heatmap3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    df_heatmap3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_heatmap3= df_heatmap3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
     fig, (ax0, ax1, ax2) = plt.subplots(nrows = 1, ncols = 3, sharex=True, figsize = (25,10))
 
@@ -327,8 +327,10 @@ def plot_neurons():
 
 
 plot_max_min_losses(min_loss_train, min_loss_val, max_loss_train, max_loss_val)
-heatmap()
-plot_layer()
+heatmap_act_opt(df_act_opt) #heatmap for hyperparameter testint with activation function and optimizer
+heatmap(df) # heatmap layer neurons for a specific model 
+heatmaps(df) # heatmaps layer neurons for all models 
+plot_layer(df)
 
 for i in df.columns[1:5]:
     print('Mean Test MAPE by ' + i ,':',  pd.DataFrame(data = df[[i, 'kfold_test']]).groupby([i]).mean())
