@@ -137,31 +137,20 @@ public:
         return populations.get_compartments();
     }
 
-    // TODO: if constexpr as soon as we open for C++17
-    template <typename T = ParameterSet>
-    std::enable_if_t<has_apply_constraints_member_function<T>::value> apply_constraints()
+    void apply_constraints()
     {
         populations.apply_constraints();
-        parameters.apply_constraints();
+        if constexpr (has_apply_constraints_member_function<ParameterSet>::value) {
+            parameters.apply_constraints();
+        }
     }
 
-    template <typename T = ParameterSet>
-    std::enable_if_t<!has_apply_constraints_member_function<T>::value> apply_constraints()
-    {
-        populations.apply_constraints();
-    }
-
-    template <typename T = ParameterSet>
-    std::enable_if_t<has_check_constraints_member_function<T>::value> check_constraints() const
+    void check_constraints() const
     {
         populations.check_constraints();
-        parameters.check_constraints();
-    }
-
-    template <typename T = ParameterSet>
-    std::enable_if_t<!has_check_constraints_member_function<T>::value> check_constraints() const
-    {
-        populations.check_constraints();
+        if constexpr (has_check_constraints_member_function<ParameterSet>::value) {
+            parameters.check_constraints();
+        }
     }
 
     Populations populations{};
