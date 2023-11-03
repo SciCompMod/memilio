@@ -20,6 +20,10 @@
 #ifndef PYMIO_IO_RESULT_IO_H
 #define PYMIO_IO_RESULT_IO_H
 
+#include "memilio/config.h"
+
+#ifdef MEMILIO_HAS_HDF5
+
 #include "memilio/io/result_io.h"
 
 #include "pybind11/pybind11.h"
@@ -42,5 +46,7 @@ void bind_save_results(pybind11::module_& m)
 }
 
 } // namespace pymio
+
+#endif // MEMILIO_HAS_HDF5
 
 #endif //PYMIO_IO_RESULT_IO_H
