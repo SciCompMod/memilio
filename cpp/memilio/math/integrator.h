@@ -77,7 +77,7 @@ public:
      * @param[in, out] dt Initial integration step size. May be changed by the IntegratorCore.
      * @param[in, out] results List of results. Must contain at least one time point. The last entry is used as
      * intitial time and value. A new entry is added for each integration step.
-     * @return The last result.
+     * @return A reference to the last value in the results time series.
      */
     Eigen::Ref<Eigen::VectorXd> advance(const DerivFunction& f, const double tmax, double& dt,
                                         TimeSeries<double>& results);

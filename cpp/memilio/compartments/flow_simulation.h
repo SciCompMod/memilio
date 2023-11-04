@@ -87,7 +87,7 @@ public:
      * To get the correct index for the flow between two compartments use FlowModel::get_flat_flow_index.
      *
      * @return a TimeSeries to represent a numerical solution for the flows in the model. 
-     * For each simulated time step, the TimeSeries containts the value for each flow. 
+     * For each simulated time step, the TimeSeries contains the value for each flow. 
      * @{
      */
     TimeSeries<ScalarType>& get_flows()

@@ -26,7 +26,7 @@ namespace mio
 Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(const DerivFunction& f, const double tmax, double& dt,
                                                    TimeSeries<double>& results)
 {
-    const double t0 = results.get_time(results.get_num_time_points() - 1);
+    const double t0 = results.get_last_time();
     assert(tmax > t0);
     assert(dt > 0);
 

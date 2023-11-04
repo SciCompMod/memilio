@@ -146,7 +146,7 @@ public:
 private:
     std::shared_ptr<IntegratorCore> m_integratorCore;
     std::unique_ptr<Model> m_model;
-    // DerivFunction m_f;
+
 protected:
     OdeIntegrator m_integrator;
     TimeSeries<ScalarType> m_result;
