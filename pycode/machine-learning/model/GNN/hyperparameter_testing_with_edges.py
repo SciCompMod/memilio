@@ -24,7 +24,7 @@ from keras.layers import Dense
 from keras.losses import MeanAbsolutePercentageError
 from keras.metrics import mean_absolute_percentage_error
 from keras.models import Model
-from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
+from keras.optimizers.legacy import Adam, Nadam, RMSprop, SGD, Adagrad
 
 from sklearn.model_selection import KFold
 
@@ -75,27 +75,51 @@ sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
 
 adjacency_matrix = np.asarray(sub_matrix)
 
+df = pd.DataFrame(data=np.asarray(sub_matrix))
+
+# df = pd.DataFrame(data=adjacency_list)
+edge_features = df.rename_axis('Source')\
+    .reset_index()\
+    .melt('Source', value_name='Weight', var_name='Target')\
+    .reset_index(drop=True)
+
+
+edge_features = edge_features[
+    edge_features.Weight != 0]  # 157864 edges
+
+
+
+transformer = FunctionTransformer(np.log1p, validate=True)
+scaled_edges = transformer.transform(
+    edge_features['Weight'].values.reshape(-1, 1))
+edge_features['Weight']=scaled_edges
+
 # adjacency_matrix[adjacency_matrix > 0] = 1
 node_features = new_inputs
 
 node_labels = new_labels
 
 
-layers = [XENetConvBatch, CensNetConv]
-activations = ['relu', 'LeakyReLu', 'sigmoid']
+layers = [XENetConvBatch, CensNetConv, ECCConv]
+#activations = ['relu', 'LeakyReLu', 'sigmoid', 'tanh', 'elu']
+number_of_channels = [32, 64, 128]
 number_of_layers = [1, 2, 3]
-learning_rates = [0.01, 0.001, 0.0001]
-optimizers = [Adam, Nadam, SGD]
+#learning_rates = [0.01, 0.001, 0.0001]
+optimizers = [Adam, Nadam, RMSprop]
 
 parameters = []
 for l in layers:
-    for a in activations:
+    for c in number_of_channels:
         for nl in number_of_layers: 
             for o in optimizers: 
-                parameters.append((l,a,nl,o))
+                parameters.append((l,c,nl,o))
+
+
+
+parameters = [parameters[0], parameters[30],parameters[80]]                
 
 df = pd.DataFrame(
-    columns=['layer', 'number_of_layers', 'activation',
+    columns=['layer', 'number_of_layers', 'channels',
              'optimizer', 'learning_rate', 'kfold_train',
              'kfold_val', 'kfold_test', 'training_time', 'train_losses', 'val_losses'])
 
@@ -118,9 +142,9 @@ matrix_tuple = [laplacian, edge_laplacian, incidence]
 
 
 def train_and_evaluate_model(
-        epochs, learning_rate, param):
+        epochs, learning_rate, param, filename):
     
-    layer, activation, number_of_layer, optimizer = param
+    layer, channels, number_of_layer, optimizer = param
 
     class MyDataset(spektral.data.dataset.Dataset):
         def read(self):
@@ -134,8 +158,10 @@ def train_and_evaluate_model(
 
             # self.a = normalized_adjacency(adjacency_matrix)
             # self.a = rescale_laplacian(normalized_laplacian(adjacency_matrix))
+            self.e = scaled_edges.reshape(np.asarray(
+            edge_features['Weight']).shape[0], 1)
 
-            return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, node_labels)]
+            return [spektral.data.Graph(x=x, y=y, a = self.a, e= self.e) for x, y in zip(node_features, node_labels)]
 
             super().__init__(**kwargs)
 
@@ -149,7 +175,7 @@ def train_and_evaluate_model(
         class Net(Model):
             def __init__(self):
                 super().__init__()
-                self.conv1 = layer(32, 240,1, activation=activation)
+                self.conv1 = layer(channels, 240,1, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
             def call(self, inputs):
@@ -167,8 +193,8 @@ def train_and_evaluate_model(
         class Net(Model):
             def __init__(self):
                 super().__init__()
-                self.conv1 = layer(32, 240, 1, activation=activation)
-                self.conv2 = layer(32, 240, 1, activation=activation)
+                self.conv1 = layer(channels, 240, 1, activation='relu')
+                self.conv2 = layer(channels, 240, 1, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
             def call(self, inputs):
@@ -189,9 +215,9 @@ def train_and_evaluate_model(
                         super().__init__()
 
                         
-                        self.conv1 = layer(32, 240, 1, activation=activation)
-                        self.conv2 = layer(32, 240, 1, activation=activation)
-                        self.conv3 = layer(32, 240, 1, activation=activation)
+                        self.conv1 = layer(channels, 240, 1, activation='relu')
+                        self.conv2 = layer(channels, 240, 1, activation='relu')
+                        self.conv3 = layer(channels, 240, 1, activation='relu')
                         self.dense = Dense(data.n_labels, activation="linear")
 
                     def call(self, inputs):
@@ -230,6 +256,7 @@ def train_and_evaluate_model(
             step += 1
             inputs, target = loader.__next__()
             pred = model(inputs, training=False)
+            #pred = model.predict(inputs)
             outs = (
                 loss_fn(target, pred),
                 tf.reduce_mean(mean_absolute_percentage_error(target, pred)),
@@ -246,6 +273,7 @@ def train_and_evaluate_model(
 
         inputs, target = loader.__next__()
         pred = model(inputs, training=False)
+        #pred = model.predict(inputs)
 
         mean_per_batch = []
 
@@ -267,10 +295,16 @@ def train_and_evaluate_model(
 
             mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
 
+        # delete the two confirmed compartments from InfectionStates
+        compartment_array = []
+        for compartment in InfectionState.values():
+            compartment_array.append(compartment) 
+        index = [3,5]
+        compartments_cleaned= np.delete(compartment_array, index)
         mean_percentage = pd.DataFrame(
             data=np.asarray(mean_per_batch).transpose().mean(axis=1),
             index=[str(compartment).split('.')[1]
-                   for compartment in InfectionState.values()],
+                   for compartment in compartments_cleaned],
             columns=['Percentage Error'])
 
         return mean_percentage
@@ -369,15 +403,15 @@ def train_and_evaluate_model(
 
     elapsed = time.perf_counter() - start
 
-    # plot the losses
-    plt.figure()
-    plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
-    plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss ( MAPE)')
-    plt.title('Loss for' + str(layer))
-    plt.legend()
-    plt.savefig('losses'+str(layer)+'.png')
+    # # plot the losses
+    # plt.figure()
+    # plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
+    # plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss ( MAPE)')
+    # plt.title('Loss for' + str(layer))
+    # plt.legend()
+    # plt.savefig('losses'+str(layer)+'.png')
 
     # print out stats
     print("Best train losses: {} ".format(train_losses))
@@ -391,19 +425,19 @@ def train_and_evaluate_model(
     print("Time for training: {:.4f} seconds".format(elapsed))
     print("Time for training: {:.4f} minutes".format(elapsed/60))
 
-    df.loc[len(df.index)] = [layer, number_of_layers, activation, optimizer,
+    df.loc[len(df.index)] = [layer, number_of_layer, channels, optimizer,
                              learning_rate, np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
                              (elapsed / 60), 
                              np.asarray(losses_history_all).mean(axis = 0), 
-                             np.asarray(val_losses_history_all.mean(axis = 0))]
+                             np.asarray(val_losses_history_all).mean(axis = 0)]
 
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'dataframe_hyperparameters')
+        'dataframe_hyperparameters_we')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = file_path+filename
@@ -411,10 +445,10 @@ def train_and_evaluate_model(
 
 
 start_hyper = time.perf_counter()
-epochs = 2
+epochs = 1500
 filename = '/dataframe_hyperparameter_tuning_withedges.csv'
-for param in parameters[:2]:
-    train_and_evaluate_model(epochs, 0.001, param)
+for param in parameters:
+    train_and_evaluate_model(epochs, 0.001, param, filename)
 
 elapsed_hyper = time.perf_counter() - start_hyper
 print("Time for hyperparameter testing: {:.4f} seconds".format(elapsed_hyper))
