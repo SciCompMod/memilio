@@ -69,8 +69,9 @@ using filtered_index_t = decltype(as_index<IndexTemplate>(
 template <class Comp, class Pop, class Params, class Flows>
 struct FlowModel : public CompartmentalModel<Comp, Pop, Params> {
     using PopIndex = typename Pop::Index;
-    // FlowIndex is the same as PopIndex without the category Comp. It is used as argument type for get_flow_index,
-    // since a flow is used to determine only the compartment (i.e. Index<Comp>) for the population of the model.
+    // FlowIndex is the same as PopIndex without the category Comp. It is used as argument type for
+    // get_flat_flow_index, since a flow is used to determine only the compartment (i.e. Index<Comp>) for the
+    // population of the model.
     // The remaining indices (those contained in FlowIndex) must still be provided to get an entry of population.
     // This approach only works with exactly one category of type Comp in PopIndex (hence the assertion below).
     using FlowIndex = details::filtered_index_t<Comp, Index, PopIndex>;
@@ -124,7 +125,7 @@ public:
     /**
      * @brief Compute the right-hand-side f(y, t) of the ODE and store it in dydt.
      *
-     * This function uses get_flow(..., flows) and get_derivatives(flows, dydt) to provide the
+     * This function uses get_flows(..., flows) and get_derivatives(flows, dydt) to provide the
      * same interface as a CompartmentalModel.
      *
      * @param[in] pop The current population of the model as a flat array.
@@ -233,6 +234,41 @@ private:
         }
     }
 };
+
+/**
+ * Detect whether certain member functions (the name before '_expr_t') exist.
+ * If the member function exists in the type M, this template when instatiated
+ * will be equal to the return type of the function. Otherwise the template is invalid.
+ * @tparam M Any class, e.g. FlowModel.
+ * @{
+ */
+template <class M>
+using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
+    std::declval<Eigen::Ref<const Eigen::VectorXd>>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+
+template <class M>
+using get_flows_expr_t =
+    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
+                                                std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
+                                                std::declval<double>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+
+template <class M>
+using get_initial_flows_expr_t =
+    decltype(std::declval<Eigen::VectorXd>() = std::declval<const M&>().get_initial_flows());
+/** @} */
+
+/**
+ * Template meta function to check if a type is a valid flow model. 
+ * Defines a static constant of name `value`. 
+ * The constant `value` will be equal to true if M is a valid flow model type.
+ * Otherwise, `value` will be equal to false.
+ * @tparam Model A type that may or may not be a flow model.
+ */
+template <class Model>
+using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, Model>::value &&
+                                                    is_expression_valid<get_flows_expr_t, Model>::value &&
+                                                    is_expression_valid<get_initial_flows_expr_t, Model>::value &&
+                                                    is_compartment_model<Model>::value)>;
 
 } // namespace mio
 

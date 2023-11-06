@@ -45,10 +45,10 @@ public:
     using Model = M;
 
     /**
-     * @brief setup the simulation with an ODE solver
-     * @param[in] model: An instance of a compartmental model
-     * @param[in] t0 start time
-     * @param[in] dt initial step size of integration
+     * @brief Setup the simulation with an ODE solver.
+     * @param[in] model An instance of a compartmental model
+     * @param[in] t0 Start time.
+     * @param[in] dt Initial step size of integration
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
         : m_integratorCore(std::make_shared<DefaultIntegratorCore>())
@@ -60,7 +60,8 @@ public:
     }
 
     /**
-     * @brief set the core integrator used in the simulation
+     * @brief Set the integrator core used in the simulation.
+     * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
      */
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
@@ -69,22 +70,20 @@ public:
     }
 
     /**
-     * @brief get_integrator
-     * @return reference to the core integrator used in the simulation
+     * @brief Access the integrator core used in the simulation.
+     * @return A reference to the integrator core used in the simulation
+     * @{
      */
     IntegratorCore& get_integrator()
     {
         return *m_integratorCore;
     }
 
-    /**
-     * @brief get_integrator
-     * @return reference to the core integrator used in the simulation
-     */
     IntegratorCore const& get_integrator() const
     {
         return *m_integratorCore;
     }
+    /** @} */
 
     /**
      * @brief advance simulation to tmax
@@ -101,56 +100,72 @@ public:
     }
 
     /**
-     * @brief Get the result of the simulation.
-     * Return the number of persons in all InfectionState%s.
-     * @return The result of the simulation.
+     * @brief Returns the simulation result describing the model population in each time step.
+     *
+     * Which compartments are used by the model is defined by the Comp template argument for the CompartmentalModel
+     * (usually an enum named InfectionState).
+     *
+     * @return A TimeSeries to represent a numerical solution for the population of the model.
+     * For each simulated time step, the TimeSeries contains the population size in each compartment.
+     * @{
      */
     TimeSeries<ScalarType>& get_result()
     {
         return m_result;
     }
 
-    /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
-     */
     const TimeSeries<ScalarType>& get_result() const
     {
         return m_result;
     }
+    /** @} */
 
     /**
-     * @brief returns the simulation model used in simulation
+     * @brief Get a reference to the model owned and used by the simulation.
+     * @return The simulation model.
+     * @{
      */
     const Model& get_model() const
     {
         return *m_model;
     }
 
-    /**
-     * @brief returns the simulation model used in simulation
-     */
     Model& get_model()
     {
         return *m_model;
     }
+    /** @} */
 
     /**
-     * @brief returns the next time step chosen by integrator
-    */
-    double get_dt() const
+     * @brief Returns the step size used by the integrator.
+     * When using a integration scheme with adaptive time stepping, the integrator will store its estimate for the
+     * next step size in this value.
+     * @{
+     */
+    double& get_dt()
     {
         return m_dt;
     }
 
-private:
-    std::shared_ptr<IntegratorCore> m_integratorCore;
-    std::unique_ptr<Model> m_model;
+    const double& get_dt() const
+    {
+        return m_dt;
+    }
+    /** @} */
 
 protected:
-    OdeIntegrator m_integrator;
-    TimeSeries<ScalarType> m_result;
-    ScalarType m_dt;
+    /// @brief Get a reference to the integrater. Can be used to overwrite advance.
+    OdeIntegrator& get_ode_integrator()
+    {
+        return m_integrator;
+    }
+
+private:
+    std::shared_ptr<IntegratorCore> m_integratorCore; ///< Defines the integration scheme via its step function.
+    std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
+    OdeIntegrator m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
+    TimeSeries<ScalarType> m_result; ///< The simulation results.
+    ScalarType m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
 };
 
 /**
