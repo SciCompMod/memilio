@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -27,25 +27,22 @@ namespace mio
 namespace abm
 {
 
-void set_home_office(TimePoint t_begin, double p, MigrationParameters& params)
+void set_home_office(TimePoint t_begin, double p, Parameters& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
-    params.get<WorkRatio>().finalize();
 }
 
-void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params)
+void set_school_closure(TimePoint t_begin, double p, Parameters& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.get<SchoolRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
-    params.get<SchoolRatio>().finalize();
 }
 
-void close_social_events(TimePoint t_begin, double p, MigrationParameters& params)
+void close_social_events(TimePoint t_begin, double p, Parameters& params)
 {
-    auto damping1 = Eigen::VectorXd::Constant((size_t)AgeGroup::Count, p);
+    auto damping1 = Eigen::VectorXd::Constant(params.get_num_groups(), p);
     params.get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
-    params.get<SocialEventRate>().finalize();
 }
 
 } // namespace abm
