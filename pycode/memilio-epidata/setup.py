@@ -84,7 +84,7 @@ setup(
         'requests',
         'pyxlsb',
         'wget',
-        'twill',
+        'twill==3.1',
         'python-magic==0.4.13'  # fails for other versions
     ],
     extras_require={
