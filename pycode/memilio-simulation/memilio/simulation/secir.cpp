@@ -236,11 +236,6 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
-    pymio::bind_write_graph<mio::osecir::Model>(m);
-
-#ifdef MEMILIO_HAS_HDF5
-    pymio::bind_save_results<mio::osecir::Model>(m);
-#endif // MEMILIO_HAS_HDF5
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
@@ -300,6 +295,12 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         py::return_value_policy::move);
 
+#ifdef MEMILIO_HAS_HDF5
+    pymio::bind_save_results<mio::osecir::Model>(m);
+#endif // MEMILIO_HAS_HDF5
+
+#ifdef MEMILIO_HAS_JSONCPP
+    pymio::bind_write_graph<mio::osecir::Model>(m);
     m.def(
         "read_input_data_county",
         [](std::vector<mio::osecir::Model>& model, mio::Date date, const std::vector<int>& county,
@@ -312,17 +313,18 @@ PYBIND11_MODULE(_simulation_secir, m)
         py::return_value_policy::move);
 
     m.def(
-        "read_mobility_plain",
-        [](const std::string& filename) {
-            auto result = mio::read_mobility_plain(filename);
-            return pymio::check_and_throw(result);
-        },
-        py::return_value_policy::move);
-
-    m.def(
         "get_node_ids",
         [](const std::string& path, bool is_node_for_county) {
             auto result = mio::get_node_ids(path, is_node_for_county);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+#endif // MEMILIO_HAS_JSONCPP
+
+    m.def(
+        "read_mobility_plain",
+        [](const std::string& filename) {
+            auto result = mio::read_mobility_plain(filename);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
