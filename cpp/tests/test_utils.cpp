@@ -19,7 +19,7 @@
 */
 #include <gtest/gtest.h>
 #include "memilio/utils/index.h"
-#include "memilio/utils/multi_index.h"
+#include "memilio/utils/multi_index_range.h"
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {

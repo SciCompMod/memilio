@@ -26,7 +26,7 @@
 #include "memilio/utils/type_list.h"
 #include "memilio/utils/flow.h"
 #include "memilio/utils/metaprogramming.h"
-#include "memilio/utils/multi_index.h"
+#include "memilio/utils/multi_index_range.h"
 #include <cstddef>
 #include <type_traits>
 #include <vector>
