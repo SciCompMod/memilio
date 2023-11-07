@@ -43,24 +43,29 @@ void bind_date(py::module_& m, std::string const& name)
         .def(py::self <= py::self)
         .def(py::self > py::self)
         .def(py::self >= py::self)
+        // Add offset to a date (new_date = date + offset)
         .def("__add__",
              [](const mio::Date& self, int offset_days) {
                  return mio::offset_date_by_days(self, offset_days);
              })
+        // In-place add offset to a date (date += offset)
         .def("__iadd__",
              [](mio::Date& self, int offset_days) {
                  self = mio::offset_date_by_days(self, offset_days);
                  return self;
              })
+        // Substract offset from a date (new_date = date - offset)
         .def("__sub__",
              [](const mio::Date& self, int offset_days) {
                  return mio::offset_date_by_days(self, -offset_days);
              })
+        // In-place substract offset from a date (date -= offset)
         .def("__isub__",
              [](mio::Date& self, int offset_days) {
                  self = mio::offset_date_by_days(self, -offset_days);
                  return self;
              })
+        // Substract dare from date to get their difference (difference = date1 - date2)
         .def("__sub__",
              [](const mio::Date& self, const mio::Date& other) {
                  return mio::get_offset_in_days(self, other);
