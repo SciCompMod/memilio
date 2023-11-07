@@ -148,7 +148,7 @@ std::string pretty_name<mio::AgeGroup>()
 
 } // namespace pymio
 
-PYBIND11_MODULE(_simulation_secir, m)
+PYBIND11_MODULE(_simulation_osecir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
     m.def("interpolate_simulation_result",
