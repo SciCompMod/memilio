@@ -100,10 +100,15 @@ public:
     {
     }
 
+    // LCOV_EXCL_START
+    // Exclude FLowModel::get_flows from coverage, as the function does nothing. It is intended to be overwritten by
+    // specific flow model implementations.
+
     // Note: use get_flow_index when accessing flows
     // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
-    virtual void get_flows(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
-                           Eigen::Ref<Eigen::VectorXd> /*flows*/) const {};
+    virtual void get_flows(Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> /*y*/,
+                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const {};
+    // LCOV_EXCL_STOP
 
     /**
      * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.
