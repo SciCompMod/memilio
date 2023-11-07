@@ -27,9 +27,11 @@ TEST(TestDate, init)
     EXPECT_EQ(date.month, 3);
     EXPECT_EQ(date.day, 12);
 
+#ifndef NDEBUG
     // check if init fails for non-existing dates
     ASSERT_DEATH(mio::Date(2021, 2, 29), ".*");
     ASSERT_DEATH(mio::Date(2021, 4, 31), ".*");
+#endif
 }
 
 TEST(TestDate, is_leap_year)
