@@ -590,7 +590,7 @@ def convert_loc_id_to_string(loc_id):
     if int(loc_id[1]) < 10:
         index = "0" + index
 
-    return "I" + type + index
+    return type + index
 
 
 def get_agents_per_location(loc_id, agents):
@@ -706,8 +706,10 @@ def run_abm_simulation():
     # distribution used to distribute the residential areas to one-, two-, three-, four- and five-person households
     household_distribution = [0.4084, 0.3375, 0.1199, 0.0965, 0.0377]
     # read txt file with inputs
-    areas = read_txt(os.path.join(input_path, 'INSIDe_Demonstrator_AreaList_modified.txt'))
-    parameters = pd.read_csv(os.path.join(input_path, 'parameter_table.csv'), index_col=0)
+    areas = read_txt(os.path.join(
+        input_path, 'INSIDe_Demonstrator_AreaList_modified.txt'))
+    parameters = pd.read_csv(os.path.join(
+        input_path, 'parameter_table.csv'), index_col=0)
     # create simulation
     sim = abm.Simulation(t0)
     # set infection parameters
@@ -732,7 +734,8 @@ def run_abm_simulation():
     write_location_mapping_to_file(
         os.path.join(output_path, 'location_mapping.txt'), mapping)
     # write infection paths per agent to file
-    write_infection_paths_to_file(os.path.join(output_path, 'infection_paths.txt'), log)
+    write_infection_paths_to_file(os.path.join(
+        output_path, 'infection_paths.txt'), log)
 
     # print compartment values to csv
     # only used for validation purposes
