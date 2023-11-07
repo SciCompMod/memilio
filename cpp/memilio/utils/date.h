@@ -35,7 +35,7 @@ namespace mio
 /**
  * @brief Computes if a given year is a leap year
  * @param year year as integer
- * @return bool
+ * @return true if year is a leap year, false otherwise
  */
 inline bool is_leap_year(int year)
 {
