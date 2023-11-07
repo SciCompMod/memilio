@@ -39,19 +39,11 @@
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
 #include "Eigen/Core"
-#include <pybind11/pybind11.h>
 #include "pybind11/stl_bind.h"
 
-#include <pybind11/stl.h>
-#include <pybind11/functional.h>
-#include <pybind11/chrono.h>
-#include <pybind11/complex.h>
-
 #include <vector>
-#include <functional>
 
 namespace py = pybind11;
-using namespace py::literals;
 
 namespace
 {

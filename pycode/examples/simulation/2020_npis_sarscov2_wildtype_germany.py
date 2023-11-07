@@ -1,15 +1,12 @@
 import numpy as np
 import datetime
-import copy
 import os
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
 
-from enum import Enum, auto
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
-from memilio.simulation.secir import InfectionState as State
+from enum import Enum
 from memilio.simulation.secir import (Model, Simulation,
-                                      interpolate_simulation_result, simulate)
+                                      interpolate_simulation_result)
 
 
 class Location(Enum):
@@ -441,13 +438,17 @@ class Simulation:
 
         return graph
 
-    def run(self, num_days_sim, num_runs=10):
+    def run(self, num_days_sim, num_runs=10, save_graph=True):
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
 
         graph = self.get_graph(end_date)
 
-        secir.write_graph(graph, "graph_python")
+        if save_graph:
+            path_graph = os.path.join(self.results_dir, "graph")
+            if not os.path.exists(path_graph):
+                os.makedirs(path_graph)
+            secir.write_graph(graph, path_graph)
 
         study = secir.ParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)

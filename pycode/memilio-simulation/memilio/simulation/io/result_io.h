@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Henrik Zunker
+* Authors: Henrik Zunker, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *

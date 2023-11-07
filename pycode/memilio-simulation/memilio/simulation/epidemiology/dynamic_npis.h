@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Henrik Zunker
+* Authors: Henrik Zunker, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -69,8 +69,7 @@ void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
         .def("set_threshold", [](mio::DynamicNPIs& self, double threshold, const std::vector<mio::DampingSampling>& v) {
             self.set_threshold(threshold, v);
         });
-
-} // namespace pymio
+}
 
 } // namespace pymio
 
