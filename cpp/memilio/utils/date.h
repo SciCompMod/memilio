@@ -168,6 +168,23 @@ inline int get_month_length(Date date)
 }
 
 /**
+ * @brief Computes the partial sums of the months of a year
+ * @param date date.
+ * @return array with partial sum for each month
+ */
+inline std::array<int, 12> calculate_partial_sum_of_months(Date date)
+{
+    std::array<int, 12> part_sum;
+    if (is_leap_year(date.year)) {
+        std::partial_sum(date.month_lengths_leap_year.begin(), date.month_lengths_leap_year.end(), part_sum.begin());
+    }
+    else {
+        std::partial_sum(date.month_lengths.begin(), date.month_lengths.end(), part_sum.begin());
+    }
+    return part_sum;
+}
+
+/**
  * parses a date from a string.
  * uses fixed format YYYY.MM.DD or YYYY-MM-DD.
  * @param date_str date as a string.
@@ -207,14 +224,7 @@ inline Date offset_date_by_days(Date date, int offset_days)
         return {year, month, day + offset_days};
     }
     else {
-        std::array<int, 12> part_sum;
-        if (is_leap_year(year)) {
-            std::partial_sum(date.month_lengths_leap_year.begin(), date.month_lengths_leap_year.end(),
-                             part_sum.begin());
-        }
-        else {
-            std::partial_sum(date.month_lengths.begin(), date.month_lengths.end(), part_sum.begin());
-        }
+        auto part_sum = calculate_partial_sum_of_months(date);
 
         int day_in_year = day + offset_days;
         if (month > 1) {
@@ -247,21 +257,13 @@ inline Date offset_date_by_days(Date date, int offset_days)
  */
 inline int get_day_in_year(Date date)
 {
-    auto year  = date.year;
     auto month = date.month;
     auto day   = date.day;
     assert(month > 0 && month < 13 && day > 0 && day <= get_month_length(date));
 
     if (month > 1) {
 
-        std::array<int, 12> part_sum;
-        if (is_leap_year(year)) {
-            std::partial_sum(date.month_lengths_leap_year.begin(), date.month_lengths_leap_year.end(),
-                             part_sum.begin());
-        }
-        else {
-            std::partial_sum(date.month_lengths.begin(), date.month_lengths.end(), part_sum.begin());
-        }
+        auto part_sum = calculate_partial_sum_of_months(date);
 
         // take month-2 since end of last month has to be found and due to start at 0 of C++ (against January=1 in date format)
         int day_in_year = part_sum[month - 2] + day;

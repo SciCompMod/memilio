@@ -26,6 +26,10 @@ TEST(TestDate, init)
     EXPECT_EQ(date.year, 2021);
     EXPECT_EQ(date.month, 3);
     EXPECT_EQ(date.day, 12);
+
+    // check if init fails for non-existing dates
+    ASSERT_DEATH(mio::Date(2021, 2, 29), ".*");
+    ASSERT_DEATH(mio::Date(2021, 4, 31), ".*");
 }
 
 TEST(TestDate, is_leap_year)
@@ -44,6 +48,14 @@ TEST(TestDate, get_month_length)
     EXPECT_EQ(mio::get_month_length(mio::Date(2022, 2, 12)), 28);
     EXPECT_EQ(mio::get_month_length(mio::Date(2000, 2, 12)), 29);
     EXPECT_EQ(mio::get_month_length(mio::Date(2100, 2, 12)), 28);
+}
+
+TEST(TestDate, calculate_partial_sum_of_months)
+{
+    std::array<int, 12> part_sum = {31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
+    EXPECT_EQ(mio::calculate_partial_sum_of_months(mio::Date(2022, 8, 12)), part_sum);
+    part_sum = {31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366};
+    EXPECT_EQ(mio::calculate_partial_sum_of_months(mio::Date(2024, 4, 12)), part_sum);
 }
 
 TEST(TestDate, comparison)
