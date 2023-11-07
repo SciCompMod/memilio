@@ -27,45 +27,47 @@
 #include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
+#include <utility>
 
 namespace pymio
 {
 
 void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
 {
+    bind_Range<decltype(std::declval<mio::DynamicNPIs>().get_thresholds())>(m, "_ThresholdRange");
     using C = mio::DynamicNPIs;
     pybind11::class_<C>(m, name.c_str())
         .def(pybind11::init<>())
         .def_property(
             "interval",
             [](mio::DynamicNPIs& self) {
-                return self.get_interval();
+                return static_cast<double>(self.get_interval());
             },
             [](mio::DynamicNPIs& self, double v) {
-                return self.set_interval(mio::SimulationTime(v));
+                self.set_interval(mio::SimulationTime(v));
             })
         .def_property(
             "duration",
             [](mio::DynamicNPIs& self) {
-                return self.get_duration();
+                return static_cast<double>(self.get_duration());
             },
             [](mio::DynamicNPIs& self, double v) {
-                return self.set_duration(mio::SimulationTime(v));
+                self.set_duration(mio::SimulationTime(v));
             })
         .def_property(
             "base_value",
             [](mio::DynamicNPIs& self) {
-                return self.get_base_value();
+                return static_cast<double>(self.get_base_value());
             },
             [](mio::DynamicNPIs& self, double v) {
-                return self.set_base_value(v);
+                self.set_base_value(v);
             })
         .def_property_readonly("threshold",
                                [](mio::DynamicNPIs& self) {
                                    return self.get_thresholds();
                                })
         .def("set_threshold", [](mio::DynamicNPIs& self, double threshold, const std::vector<mio::DampingSampling>& v) {
-            return self.set_threshold(threshold, v);
+            self.set_threshold(threshold, v);
         });
 
 } // namespace pymio
