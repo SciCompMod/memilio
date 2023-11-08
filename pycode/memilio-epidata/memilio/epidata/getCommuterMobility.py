@@ -250,10 +250,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             np.zeros(len(gov_county_table[gov_region])))
 
                     # merge eisenach and wartburgkreis
-                    commuter_migration_file.iloc[:, 2].replace(
-                        '16056', '16063', inplace=True)
-                    commuter_migration_file.iloc[:, 0].replace(
-                        '16056', '16063', inplace=True)
+                    commuter_migration_file.replace({commuter_migration_file.columns[2]:
+                                                     {'16056': '16063'}}, inplace=True)
+                    commuter_migration_file.replace({commuter_migration_file.columns[0]:
+                                                     {'16056': '16063'}}, inplace=True)
 
                     current_col = countykey2numlist[commuter_migration_file.iloc[i, 0]]
                     curr_county_migratedto = commuter_migration_file.iloc[i, 1]
