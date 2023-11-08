@@ -236,8 +236,8 @@ def compare_estimated_and_rki_deathsnumbers(
     df_cases["deaths_estimated_daily"] = df_cases['Deaths_estimated'] - \
         df_cases['Deaths_estimated'].shift(periods=1, fill_value=0)
     df_cases_week = df_cases.groupby("week").agg(
-        {"deaths_daily": sum, "deaths_estimated_daily": sum}).reset_index()
-    df_jh_week = df_jh.groupby("week").agg({"deaths_daily": sum}).reset_index()
+        {"deaths_daily": "sum", "deaths_estimated_daily": "sum"}).reset_index()
+    df_jh_week = df_jh.groupby("week").agg({"deaths_daily": "sum"}).reset_index()
     df_cases_week.rename(
         columns={'deaths_daily': 'Deaths_weekly',
                  'deaths_estimated_daily': 'Deaths_estimated_weekly'},
