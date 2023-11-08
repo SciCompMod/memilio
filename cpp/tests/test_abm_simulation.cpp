@@ -102,8 +102,22 @@ TEST(TestSimulation, getWorldAndTimeConst)
 
 TEST(TestSimulation, advanceWithHistory)
 {
-    auto world = mio::abm::World(NUM_AGE_GROUPS);
-    auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    auto world              = mio::abm::World(NUM_AGE_GROUPS);
+    auto school_location_id = world.add_location(mio::abm::LocationType::School);
+    auto home_location_id   = world.add_location(mio::abm::LocationType::Home);
+
+    auto& person1 = add_test_person(world, home_location_id, AGE_GROUP_5_TO_14, mio::abm::InfectionState::Exposed);
+    auto& person2 =
+        add_test_person(world, home_location_id, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
+    auto& person3 = add_test_person(world, home_location_id, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Exposed);
+    person1.set_assigned_location(home_location_id);
+    person2.set_assigned_location(home_location_id);
+    person3.set_assigned_location(home_location_id);
+    person1.set_assigned_location(school_location_id);
+    person2.set_assigned_location(school_location_id);
+    person3.set_assigned_location(school_location_id);
+
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
     mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
                  mio::abm::LogDataForMovement>
         historyPersonInf;
@@ -111,7 +125,7 @@ TEST(TestSimulation, advanceWithHistory)
         Eigen::Index(mio::abm::InfectionState::Count)};
     mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
 
-    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(2), historyPersonInf, historyTimeSeries,
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(24), historyPersonInf, historyTimeSeries,
                 historyPersonInfDelta);
 
     auto logLocationInfo      = std::get<0>(historyPersonInf.get_log());
@@ -120,9 +134,13 @@ TEST(TestSimulation, advanceWithHistory)
     auto logTimeSeries        = std::get<0>(historyTimeSeries.get_log());
     auto logMovementInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
 
-    ASSERT_EQ(logLocationInfo.size(), 1);
-    ASSERT_EQ(logPersonInfo[0].empty(), true);
-    ASSERT_EQ(logMovementInfo.size(), 3);
-    ASSERT_EQ(logTimeSeries.get_num_time_points(), 3);
-    ASSERT_EQ(logMovementInfoDelta.size(), 4);
+    ASSERT_EQ(logLocationInfo[0].size(), 3);
+    ASSERT_EQ(logPersonInfo[0].size(), 3);
+    ASSERT_EQ(logMovementInfo.size(), 25);
+    ASSERT_EQ(logTimeSeries.get_num_time_points(), 25);
+    ASSERT_EQ(logMovementInfoDelta.size(), 26);
+    ASSERT_EQ(logMovementInfoDelta[0].size(), 3);
+    ASSERT_EQ(logMovementInfoDelta[1].size(), 3);
+    ASSERT_EQ(logMovementInfoDelta[2].size(), 0);
+    ASSERT_EQ(logMovementInfoDelta[17].size(), 1); //everyine returns from school at 15 o 'clock
 }

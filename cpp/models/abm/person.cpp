@@ -43,6 +43,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
     , m_cells{0}
+    , m_last_transport_mode(TransportMode::Unknown)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
