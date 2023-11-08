@@ -222,7 +222,7 @@ def split_column_based_on_values(
         df_reduced = df_to_split[df_to_split[column_to_split] == column_identifiers[i]].rename(
             columns={column_vals_name: new_column_labels[i]}).drop(columns=column_to_split)
         df_reduced = df_reduced.groupby(
-            groupby_list).agg({new_column_labels[i]: sum})
+            groupby_list).agg({new_column_labels[i]: "sum"})
         if compute_cumsum:
             # compute cummulative sum over level index of ID_County and level
             # index of Age_RKI

@@ -112,7 +112,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     ########### Countries ##########################
 
     gb = df.groupby(['CountryRegion', 'Date']).agg(
-        {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
+        {"Confirmed": "sum", "Recovered": "sum", "Deaths": "sum"})
 
     gd.write_dataframe(gb.reset_index(), out_folder,
                        "all_countries_jh", file_format)
@@ -133,7 +133,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     dfD = df[~df["ProvinceState"].isnull()]
 
     gb = dfD.groupby(['CountryRegion', 'ProvinceState', 'Date']).agg(
-        {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
+        {"Confirmed": "sum", "Recovered": "sum", "Deaths": "sum"})
 
     gd.write_dataframe(gb.reset_index(), out_folder,
                        "all_provincestate_jh", file_format)

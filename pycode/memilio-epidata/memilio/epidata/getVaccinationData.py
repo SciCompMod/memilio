@@ -171,7 +171,7 @@ def sanitizing_extrapolation_mobility(
     max_sanit_threshold_arr = np.zeros(len(age_groups))
 
     # compute average vaccination ratio per age group for full vaccinations
-    aver_ratio = df.groupby(dd.EngEng['ageRKI']).agg({column_names[1]: sum})[
+    aver_ratio = df.groupby(dd.EngEng['ageRKI']).agg({column_names[1]: "sum"})[
         column_names[1]].values/age_population[age_groups].sum().values
 
     # compute maximum_sanitizing threshold per age group as maxmimum of country-wide ratio + 10%
@@ -186,7 +186,7 @@ def sanitizing_extrapolation_mobility(
     vacc_sums_nonsanit = df.groupby(
         [dd.EngEng['idCounty'],
             dd.EngEng['ageRKI']]).agg(
-        {column_names[1]: sum}).reset_index()
+        {column_names[1]: "sum"}).reset_index()
     # create new data frame and reshape it
     df_fullsum = compute_vaccination_ratios(
         age_groups, vacc_sums_nonsanit, column_names[1],
@@ -354,7 +354,7 @@ def sanitizing_extrapolation_mobility(
                     dd.EngEng['idCounty'], dd.EngEng['ageRKI']]
     df = df.groupby(
         groupby_list).agg(
-        {column_new: sum for column_new in column_names})
+        {column_new: "sum" for column_new in column_names})
     df = df.groupby(
         level=[groupby_list.index(dd.EngEng['idCounty']),
                groupby_list.index(dd.EngEng['ageRKI'])]).cumsum().reset_index()
@@ -550,8 +550,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         # remove unknown locations if only modest number (i.e. less than 0.1%)
         if df_data[
                 df_data[dd.EngEng['idCounty']] == 'u'].agg(
-                {'Number': sum}).Number / df_data.agg(
-                {'Number': sum}).Number < 0.001:
+                {'Number': "sum"}).Number / df_data.agg(
+                {'Number': "sum"}).Number < 0.001:
             df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
         else:
             raise gd.DataError(
@@ -560,8 +560,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
         if df_data[
                 df_data[dd.EngEng['ageRKI']] == 'u'].agg(
-                {'Number': sum}).Number / df_data.agg(
-                {'Number': sum}).Number < 0.001:
+                {'Number': "sum"}).Number / df_data.agg(
+                {'Number': "sum"}).Number < 0.001:
             df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
         else:
             raise gd.DataError(
@@ -873,7 +873,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         [dd.EngEng['date'],
          dd.EngEng['idState'],
          dd.EngEng['ageRKI']]).agg(
-        {column: sum for column in vacc_column_names}).reset_index()
+        {column: "sum" for column in vacc_column_names}).reset_index()
     gd.write_dataframe(df_data_agevacc_state_cs,
                        directory, filename, file_format)
 
@@ -918,7 +918,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         [dd.EngEng['date'],
          dd.EngEng['idState'],
          dd.EngEng['idCounty']]).agg(
-        {col_new: sum for col_new in vacc_column_names}).reset_index()
+        {col_new: "sum" for col_new in vacc_column_names}).reset_index()
 
     # store data for all counties
     filename = 'vacc_county'
@@ -932,7 +932,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     df_data_state_cs = df_data_county_cs.groupby(
         [dd.EngEng['date'],
          dd.EngEng['idState']]).agg(
-        {column: sum for column in vacc_column_names}).reset_index()
+        {column: "sum" for column in vacc_column_names}).reset_index()
     gd.write_dataframe(df_data_state_cs,
                        directory, filename, file_format)
 
@@ -964,7 +964,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         [dd.EngEng['date'],
          dd.EngEng['idState'],
          dd.EngEng['ageRKI']]).agg(
-        {column: sum for column in vacc_column_names}).reset_index()
+        {column: "sum" for column in vacc_column_names}).reset_index()
     gd.write_dataframe(df_data_ageinf_state_cs,
                        directory, filename, file_format)
 
@@ -1009,7 +1009,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             population_new_ages.loc[population_new_ages[dd.EngEng["idState"]]
                                     == countyid, dd.EngEng["idState"]] = county_to_state[countyid]
         population_new_ages_states = population_new_ages.groupby(dd.EngEng['idState']).agg(
-            {age_group: sum for age_group in unique_age_groups_new}).reset_index()
+            {age_group: "sum" for age_group in unique_age_groups_new}).reset_index()
 
         df_fullsum_state = compute_vaccination_ratios(
             unique_age_groups_new, vacc_sums, vacc_column_names[1],
