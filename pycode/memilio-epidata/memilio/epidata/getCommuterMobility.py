@@ -378,13 +378,13 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         elif ((str(commuter_migration_file.iloc[i, 3]) == 'Übrige Regierungsbezirke (Bundesland)' and str(
                                 commuter_migration_file.iloc[i, 4]).isdigit())
                               or ((commuter_migration_file.iloc[i, 2]).isdigit() and str(
-                                commuter_migration_file.iloc[i - 1][2]).startswith('nan'))
+                                commuter_migration_file.iloc[i - 1, 2]).startswith('nan'))
                               or (len(str(commuter_migration_file.iloc[i, 2])) == 2 and
                                   abs(float(commuter_migration_file.iloc[i, 2]) - float(
-                                      commuter_migration_file.iloc[i - 1][2])) == 1)
+                                      commuter_migration_file.iloc[i - 1, 2])) == 1)
                               or (len(str(commuter_migration_file.iloc[i, 2])) == 2 and
                                   abs(float(commuter_migration_file.iloc[i, 2]) - float(
-                                      commuter_migration_file.iloc[i - 1][2])) == 2)):
+                                      commuter_migration_file.iloc[i - 1, 2])) == 2)):
 
                             # auxiliary key of Bundesland (key translated to int starting at zero)
                             dummy_key = int(

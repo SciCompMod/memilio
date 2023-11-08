@@ -116,7 +116,7 @@ def impute_and_reduce_df(
 
         if len(df_local) > 0:
             # create values for first date
-            values = {column: df_local[column][0]
+            values = {column: df_local[column].iloc[0]
                       for column in df_local.columns}
             # depending on 'start_w_firstval', missing values at the beginning
             # of the frame will either be set to zero or to the first available
