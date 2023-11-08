@@ -638,8 +638,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         min_age_new = [0, 5, 15, 35, 60, 80, max_age_all]
 
         # combine all age group breaks
-        min_all_ages = sorted(pd.unique(list(itertools.chain(
-            min_age_old, min_age_pop, min_age_new))))
+        min_all_ages = sorted(pd.unique(np.array(list(
+            itertools.chain(min_age_old, min_age_pop, min_age_new)))))
 
         # check if the vaccinated age groups in old age groups start at zero
         if min_age_old[0] == 0:
