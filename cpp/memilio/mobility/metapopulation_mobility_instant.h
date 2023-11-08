@@ -20,6 +20,7 @@
 #ifndef METAPOPULATION_MOBILITY_INSTANT_H
 #define METAPOPULATION_MOBILITY_INSTANT_H
 
+#include "memilio/config.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
@@ -51,6 +52,22 @@ public:
         : m_simulation(std::forward<Args>(args)...)
         , m_last_state(m_simulation.get_result().get_last_value())
         , m_t0(m_simulation.get_result().get_last_time())
+    {
+    }
+
+    // when this is called with property(property_arg, m_t0, m_dt_integration). Write the correct constructor
+    SimulationNode(const Sim& property_arg, double t0, double dt_integration)
+        : m_simulation(property_arg, t0, dt_integration)
+        , m_last_state(m_simulation.get_result().get_last_value())
+        , m_t0(m_simulation.get_result().get_last_time())
+    {
+    }
+
+    // Copy-Konstruktor
+    SimulationNode(const SimulationNode& other)
+        : m_simulation(other.m_simulation)
+        , m_last_state(other.m_last_state)
+        , m_t0(other.m_t0)
     {
     }
 
@@ -255,7 +272,6 @@ public:
         : m_parameters(params)
         , m_migrated(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
-        , m_return_migrated(false)
     {
     }
 
@@ -267,7 +283,6 @@ public:
         : m_parameters(coeffs)
         , m_migrated(coeffs.rows())
         , m_return_times(0)
-        , m_return_migrated(false)
     {
     }
 
@@ -290,13 +305,12 @@ public:
      * @param node_to node that people migrated to, return from
      */
     template <class Sim>
-    void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
+    void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to, int mode);
 
 private:
     MigrationParameters m_parameters;
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;
-    bool m_return_migrated;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
 };
@@ -313,16 +327,53 @@ private:
  * @param dt time between migration and return
  */
 template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Sim>::value>>
-void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim,
-                                 Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
+void update_status_migrated(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim, IntegratorCore& integrator,
+                            Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
 {
+    mio::unused(integrator);
     auto y0 = migrated.eval();
     auto y1 = migrated;
+    // integrator.step(
+    //     [&](auto&& y, auto&& t_, auto&& dydt) {
+    //         sim.get_model().get_derivatives(total, y, t_, dydt);
+    //     },
+    //     y0, t, dt, y1);
     EulerIntegratorCore().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },
         y0, t, dt, y1);
+}
+
+template <typename FP>
+using Vector = Eigen::Matrix<FP, Eigen::Dynamic, 1>;
+
+/*
+    * move migrated people from one node to another.
+    * @param migrated number of people that migrated 
+    * @param results_from current state of node that people migrated from
+    * @param results_to current state of node that people migrated to
+*/
+template <typename FP>
+void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> results_from,
+                   Eigen::Ref<Vector<FP>> results_to)
+{
+    // The performance of the low order integrator often fails for small compartments i.e. compartments are sometimes negative.
+    // We handel this by checking for values below 0 in m_migrated and add them to the highest value
+    Eigen::Index max_index_migrated, max_index_results_from;
+    for (size_t i = 0; i < migrated.size(); ++i) {
+        migrated.maxCoeff(&max_index_migrated);
+        if (migrated(i) < 0) {
+            migrated(max_index_migrated) -= migrated(i);
+            migrated(i) = 0;
+        }
+        if (results_from(i) < migrated(i)) {
+            migrated(max_index_migrated) -= (migrated(i) - results_from(i));
+            migrated(i) = results_from(i);
+        }
+        results_from(i) -= migrated(i);
+        results_to(i) += migrated(i);
+    }
 }
 
 /**
@@ -389,8 +440,8 @@ auto get_migration_factors(const SimulationNode<Sim>& node, double t, const Eige
  * detect a get_migration_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(test_commuters(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(
+    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when migrating from their source node.
@@ -413,7 +464,8 @@ void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migra
 }
 
 template <class Sim>
-void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
+void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to,
+                                    int mode)
 {
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -438,54 +490,92 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         m_t_last_dynamic_npi_check = t;
     }
 
-    //returns
-    for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
-        if (m_return_times.get_time(i) <= t) {
-            auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
-            assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_migration_returns(m_migrated[i], node_to.get_simulation(), *v0, m_migrated.get_time(i), dt);
+    // //returns
+    // for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
+    //     if (mode == 1) {
+    //         auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
+    //         assert(v0 != node_to.get_result().rend() && "unexpected error.");
+    //         IntegratorCore& integrator_node = node_to.get_simulation().get_integrator();
+    //         update_status_migrated(m_migrated[i], node_to.get_simulation(), integrator_node, *v0,
+    //                                m_migrated.get_time(i), dt);
 
-            //the lower-order return calculation may in rare cases produce negative compartments,
-            //especially at the beginning of the simulation.
-            //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
-            Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_migrated[i]).eval();
-            for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
-                if (remaining_after_return(j) < 0) {
-                    auto num_comparts = (Eigen::Index)Sim::Model::Compartments::Count;
-                    auto group        = Eigen::Index(j / num_comparts);
-                    auto compart      = j % num_comparts;
-                    log(remaining_after_return(j) < -1e-3 ? LogLevel::warn : LogLevel::info,
-                        "Underflow during migration returns at time {}, compartment {}, age group {}: {}", t, compart,
-                        group, remaining_after_return(j));
-                    Eigen::Index max_index;
-                    slice(remaining_after_return, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
-                    log_info("Transferring to compartment {}", max_index);
-                    max_index += group * num_comparts;
-                    m_migrated[i](max_index) -= remaining_after_return(j);
-                    m_migrated[i](j) += remaining_after_return(j);
-                }
-            }
-            node_from.get_result().get_last_value() += m_migrated[i];
-            node_to.get_result().get_last_value() -= m_migrated[i];
-            m_migrated.remove_time_point(i);
-            m_return_times.remove_time_point(i);
-        }
-    }
+    //         //the lower-order return calculation may in rare cases produce negative compartments,
+    //         //especially at the beginning of the simulation.
+    //         //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
+    //         Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_migrated[i]).eval();
+    //         for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
+    //             if (remaining_after_return(j) < 0) {
+    //                 auto num_comparts = (Eigen::Index)Sim::Model::Compartments::Count;
+    //                 auto group        = Eigen::Index(j / num_comparts);
+    //                 auto compart      = j % num_comparts;
+    //                 log(remaining_after_return(j) < -1e-3 ? LogLevel::warn : LogLevel::info,
+    //                     "Underflow during migration returns at time {}, compartment {}, age group {}: {}", t, compart,
+    //                     group, remaining_after_return(j));
+    //                 Eigen::Index max_index;
+    //                 slice(remaining_after_return, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
+    //                 log_info("Transferring to compartment {}", max_index);
+    //                 max_index += group * num_comparts;
+    //                 m_migrated[i](max_index) -= remaining_after_return(j);
+    //                 m_migrated[i](j) += remaining_after_return(j);
+    //             }
+    //         }
+    //         node_from.get_result().get_last_value() += m_migrated[i];
+    //         node_to.get_result().get_last_value() -= m_migrated[i];
+    //         m_migrated.remove_time_point(i);
+    //         m_return_times.remove_time_point(i);
+    //     }
+    // }
 
-    if (!m_return_migrated && (m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
+    if (mode == 0) {
         //normal daily migration
         m_migrated.add_time_point(
             t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array() *
                 get_migration_factors(node_from, t, node_from.get_last_state()).array())
                    .matrix());
         m_return_times.add_time_point(t + dt);
-
-        test_commuters(node_from, m_migrated.get_last_value(), t);
-
-        node_to.get_result().get_last_value() += m_migrated.get_last_value();
-        node_from.get_result().get_last_value() -= m_migrated.get_last_value();
+        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+                      node_to.get_result().get_last_value());
     }
-    m_return_migrated = !m_return_migrated;
+    // change county of migrated
+    else if (mode == 1) {
+        // update status of migrated before moving to next county
+        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+        update_status_migrated(m_migrated.get_last_value(), node_from.get_simulation(), integrator_node,
+                               node_from.get_result().get_last_value(), t, dt);
+        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+                      node_to.get_result().get_last_value());
+    }
+    // option for last time point to remove time points
+    else if (mode == 2) {
+        Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
+        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+        update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
+                               node_from.get_result().get_last_value(), t, dt);
+
+        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+                      node_to.get_result().get_last_value());
+
+        for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
+            if (m_return_times.get_time(i) <= t) {
+                m_migrated.remove_time_point(i);
+                m_return_times.remove_time_point(i);
+            }
+        }
+    }
+    // just update status of migrated
+    else if (mode == 3) {
+        Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
+        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+        update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
+                               node_from.get_result().get_last_value(), t, dt);
+
+        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+                      node_from.get_result().get_last_value());
+    }
+    else {
+        std::cout << "Invalid input mode. Should be 0 or 1."
+                  << "\n";
+    }
 }
 
 /**
@@ -504,11 +594,10 @@ void evolve_model(double t, double dt, SimulationNode<Sim>& node)
  */
 template <class Sim>
 void apply_migration(double t, double dt, MigrationEdge& migrationEdge, SimulationNode<Sim>& node_from,
-                     SimulationNode<Sim>& node_to)
+                     SimulationNode<Sim>& node_to, int mode)
 {
-    migrationEdge.apply_migration(t, dt, node_from, node_to);
+    migrationEdge.apply_migration(t, dt, node_from, node_to, mode);
 }
-
 /**
  * create a migration simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge

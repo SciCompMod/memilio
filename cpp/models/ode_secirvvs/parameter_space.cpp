@@ -22,6 +22,7 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/model.h"
+#include "ode_secirvvs/parameters.h"
 
 namespace mio
 {
@@ -52,11 +53,18 @@ void draw_sample_demographics(Model& model)
         model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
         double diff                                              = model.populations.get_group_total(i) - group_total;
         if (diff > 0) {
-            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -= diff;
-            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
-                log_error("Negative Compartment after sampling.");
+            if (model.populations[{i, InfectionState::TemporaryImmunity2}] - diff > 0) {
+                model.populations[{i, InfectionState::TemporaryImmunity2}] =
+                    model.populations[{i, InfectionState::TemporaryImmunity2}] - diff - 1;
             }
-            assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
+            else {
+                model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+                    model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] - diff - 1;
+            }
+            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
+                log_error("Compartment SusceptibleImprovedImmunity negative after sampling.");
+            }
+            assert(group_total - model.populations.get_group_total(i) > 1e-10 && "Sanity check.");
         }
         model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive}, group_total);
     }
@@ -72,6 +80,8 @@ void draw_sample_infection(Model& model)
     model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ImmunityInterval1>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ImmunityInterval2>()[AgeGroup(0)].draw_sample();
 
     model.parameters.get<ReducExposedPartialImmunity>()[AgeGroup(0)].draw_sample();
     model.parameters.get<ReducExposedImprovedImmunity>()[AgeGroup(0)].draw_sample();
@@ -130,7 +140,7 @@ void draw_sample(Model& model)
 Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high)
 {
     Graph<Model, MigrationParameters> sampled_graph;
-
+    mio::unused(variant_high);
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
     draw_sample_infection(shared_params_model);
@@ -139,53 +149,37 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
 
-    double delta_fac;
-    if (variant_high) {
-        delta_fac = 1.6;
-    }
-    else {
-        delta_fac = 1.4;
-    }
-
-    //infectiousness of virus variants is not sampled independently but depend on base infectiousness
-    for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-        shared_params_model.parameters.template get<BaseInfectiousnessB117>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i];
-        shared_params_model.parameters.template get<BaseInfectiousnessB161>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i] * delta_fac;
-    }
-
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
 
         //sample local parameters
-        draw_sample_demographics(params_node.property);
+        // draw_sample_demographics(params_node.property);
 
         //copy global parameters
         //save demographic parameters so they aren't overwritten
         auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
         auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
         auto local_holidays     = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
-        auto local_daily_v1     = node_model.parameters.template get<DailyFirstVaccination>();
+        auto local_daily_v1     = node_model.parameters.template get<DailyPartialVaccination>();
         auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccination>();
         node_model.parameters   = shared_params_model.parameters;
         node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
-        node_model.parameters.template get<DailyFirstVaccination>()                 = local_daily_v1;
+        node_model.parameters.template get<DailyPartialVaccination>()               = local_daily_v1;
         node_model.parameters.template get<DailyFullVaccination>()                  = local_daily_v2;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();
         node_model.apply_constraints();
 
-        sampled_graph.add_node(params_node.id, node_model);
+        sampled_graph.add_node(params_node.id, params_node.stay_duration, node_model, params_node.node_pt);
     }
 
     for (auto& edge : graph.edges()) {
         auto edge_params = edge.property;
         //no dynamic NPIs
         //TODO: add switch to optionally enable dynamic NPIs to edges
-        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
+        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.path, edge_params);
     }
 
     return sampled_graph;

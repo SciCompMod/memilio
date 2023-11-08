@@ -232,7 +232,10 @@ public:
                             pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
                             pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
+                double divNj = 0;
+                if (Nj > 0) {
+                    divNj = 1.0 / Nj; // precompute 1.0/Nj
+                }
 
                 double ext_inf_force_dummy = cont_freq_eff * divNj *
                                              params.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] *
@@ -609,77 +612,77 @@ public:
         }
     }
 
-    /**
-     * @brief advance simulation to tmax.
-     * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.
-     * @see Simulation::advance
-     * @param tmax next stopping point of simulation
-     * @return value at tmax
-     */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
-    {
-        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
-        auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
+    // /**
+    //  * @brief advance simulation to tmax.
+    //  * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.
+    //  * @see Simulation::advance
+    //  * @param tmax next stopping point of simulation
+    //  * @return value at tmax
+    //  */
+    // Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    // {
+    //     auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
+    //     auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
+    //     auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
 
-        double delay_lockdown;
-        auto t        = Base::get_result().get_last_time();
-        const auto dt = dyn_npis.get_interval().get();
-        while (t < tmax) {
+    //     double delay_lockdown;
+    //     auto t        = Base::get_result().get_last_time();
+    //     const auto dt = dyn_npis.get_interval().get();
+    //     while (t < tmax) {
 
-            auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
-            if (dt_eff >= 1.0) {
-                dt_eff = 1.0;
-            }
+    //         auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
+    //         if (dt_eff >= 1.0) {
+    //             dt_eff = 1.0;
+    //         }
 
-            if (t == 0) {
-                //this->apply_vaccination(t); // done in init now?
-                this->apply_b161(t);
-            }
-            Base::advance(t + dt_eff);
-            if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
-                this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_b161(t);
-            }
+    //         if (t == 0) {
+    //             //this->apply_vaccination(t); // done in init now?
+    //             this->apply_b161(t);
+    //         }
+    //         Base::advance(t + dt_eff);
+    //         if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
+    //             this->apply_vaccination(t + 0.5 + dt_eff);
+    //             this->apply_b161(t);
+    //         }
 
-            if (t > 0) {
-                delay_lockdown = 7;
-            }
-            else {
-                delay_lockdown = 0;
-            }
-            t = t + dt_eff;
+    //         if (t > 0) {
+    //             delay_lockdown = 7;
+    //         }
+    //         else {
+    //             delay_lockdown = 0;
+    //         }
+    //         t = t + dt_eff;
 
-            if (dyn_npis.get_thresholds().size() > 0) {
-                if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
-                    if (t < t_end_dyn_npis) {
-                        auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
-                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                            (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
+    //         if (dyn_npis.get_thresholds().size() > 0) {
+    //             if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
+    //                 if (t < t_end_dyn_npis) {
+    //                     auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
+    //                                    dyn_npis.get_base_value();
+    //                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+    //                     if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+    //                         (exceeded_threshold->first > m_dynamic_npi.first ||
+    //                          t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
-                            auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
-                            this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
-                            this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
-                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                   t_start, t_end, [](auto& g) {
-                                                       return make_contact_damping_matrix(g);
-                                                   });
-                        }
-                    }
-                    m_t_last_npi_check = t;
-                }
-            }
-            else {
-                m_t_last_npi_check = t;
-            }
-        }
-        return this->get_result().get_last_value();
-    }
+    //                         auto t_start = SimulationTime(t + delay_lockdown);
+    //                         auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
+    //                         this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
+    //                         this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
+    //                         m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+    //                         implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+    //                                                t_start, t_end, [](auto& g) {
+    //                                                    return make_contact_damping_matrix(g);
+    //                                                });
+    //                     }
+    //                 }
+    //                 m_t_last_npi_check = t;
+    //             }
+    //         }
+    //         else {
+    //             m_t_last_npi_check = t;
+    //         }
+    //     }
+    //     return this->get_result().get_last_value();
+    // }
 
 private:
     double m_t_last_npi_check;
