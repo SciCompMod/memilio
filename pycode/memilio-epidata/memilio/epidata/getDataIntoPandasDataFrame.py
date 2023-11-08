@@ -312,7 +312,9 @@ def cli(what):
         parser.add_argument(
             '-s', '--start-date', default=start_date_default,
             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is 2020-01-01 (2020-4-24 for divi and 2020-1-22 for jh)',
+            'Default is ' +
+            str(dd.defaultDict['start_date']) +
+            ' (2020-04-24 for divi and 2020-01-22 for jh)',
             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'end_date' in what_list:
         parser.add_argument(
@@ -328,7 +330,7 @@ def cli(what):
     if 'moving_average' in what_list:
         parser.add_argument(
             '-m', '--moving-average', type=int, default=dd.defaultDict['moving_average'],
-            help='Compute a moving average of N days over the time series')
+            help='Compute a moving average of N days over the time series. Default is ' + str(dd.defaultDict['moving_average']))
     if 'make_plot' in what_list:
         parser.add_argument('-p', '--make-plot', default=dd.defaultDict['make_plot'], help='Plots the data.',
                             action='store_true')
