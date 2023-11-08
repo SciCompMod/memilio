@@ -265,8 +265,8 @@ void calculate_migration_returns(Eigen::Ref<mio::TimeSeries<double>::Vector>, co
 
 TEST(DynamicNPIs, migration)
 {
-    mio::SimulationNode<mio_test::DummySim> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
-    mio::SimulationNode<mio_test::DummySim> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
 
     auto last_state_safe = (Eigen::VectorXd(2) << 0.01, 0.99).finished();
     auto last_state_crit = (Eigen::VectorXd(2) << 0.02, 0.98).finished();

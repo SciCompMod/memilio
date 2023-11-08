@@ -79,7 +79,7 @@ setup(
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
-        'pandas>=1.2.2',
+        'pandas>=2.0.0',
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
@@ -90,7 +90,7 @@ setup(
         'requests',
         'pyxlsb',
         'wget',
-        'twill',
+        'twill==3.1',
         pymagic
     ],
     extras_require={

@@ -35,6 +35,9 @@ from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getJHData as gjd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def get_case_data_with_estimations(
         read_data=dd.defaultDict['read_data'],
@@ -159,7 +162,7 @@ WARNING: This file is experimental and has not been tested.
             df_cases.loc[(df_cases[dstr] == date_jh), deaths_estimated] = np.round(
                 fraction_deaths_conf * df_cases.loc[(df_cases[dstr] == date_jh), confirmed])
 
-        df_cases = df_cases.drop([dstr], axis=1)
+        df_cases.drop([dstr], axis=1, inplace=True)
         gd.write_dataframe(df_cases, data_path,
                            file_to_change + "_estimated", file_format)
 
