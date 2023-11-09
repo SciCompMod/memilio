@@ -130,13 +130,6 @@ TEST(TestSimulation, advanceWithHistory)
     person3.set_assigned_location(basics_id);
     person2.set_assigned_location(public_id);
 
-    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
-    mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
-                 mio::abm::LogDataForMovement>
-        historyPersonInf;
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-        Eigen::Index(mio::abm::InfectionState::Count)};
-    mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
     mio::abm::TripList& trip_list = world.get_trip_list();
 
     mio::abm::Trip trip1(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
@@ -155,6 +148,13 @@ TEST(TestSimulation, advanceWithHistory)
     trip_list.add_trip(trip6);
     trip_list.add_trip(trip7);
 
+    mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
+                 mio::abm::LogDataForMovement>
+        historyPersonInf;
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+    mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(24), historyPersonInf, historyTimeSeries,
                 historyPersonInfDelta);
 
