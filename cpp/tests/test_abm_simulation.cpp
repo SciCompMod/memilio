@@ -113,7 +113,7 @@ TEST(TestSimulation, advanceWithHistory)
     auto public_id   = world.add_location(mio::abm::LocationType::PublicTransport);
 
     auto& person1 = add_test_person(world, home_id, AGE_GROUP_5_TO_14, mio::abm::InfectionState::Exposed);
-    auto& person2 = add_test_person(world, home_id, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
+    auto& person2 = add_test_person(world, home_id, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Exposed);
     auto& person3 = add_test_person(world, home_id, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Dead);
     person1.set_assigned_location(home_id);
     person2.set_assigned_location(home_id);
