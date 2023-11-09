@@ -47,7 +47,6 @@ public:
     /**
      * @brief Create a TestingCriteria.
      * @param[in] ages Vector of AgeGroup%s that are either allowed or required to be tested.
-     * @param[in] locations Vector of #Location%s or #LocationType%s that are either allowed or required to be tested.
      * @param[in] infection_states Vector of #InfectionState%s that are either allowed or required to be tested.
      * An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property
      * is set!
