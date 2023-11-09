@@ -6,14 +6,14 @@ This module models and simulates the epidemic using an agent based model (*ABM*)
 
 The model consists of the following major classes:
 1. Person: represents the agents of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations they visit during the simulation. Every person has lists with experienced infections and vaccinations. They can perform tests and wear masks.
-2. Infection: collection of all information about a persons infection, i.e. infectiousness, infection course, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model. 
+2. Infection: collection of all information about a persons infection, i.e. infectiousness, infection course, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model.
 3. Location: represents locations in the world where people meet and interact, e.g. home, school, work, social events. A location can be split into cells to model parts of a location like classrooms in a school. Some infection parameters are location specific and one can activate NPIs like mandatory masks or tests to enter the location.
 4. World: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the migration phase.
 5. Simulation: run the simulation and store results.
 
 ## Simulation
 
-The simulation runs in discrete time steps. Each step is in two phases, an interaction phase and a migration phase. 
+The simulation runs in discrete time steps. Each step is in two phases, an interaction phase and a migration phase.
 
 First each person interacts with the other persons at the same location. This interaction determines the transmission of the desease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infectee and the immunity level of the susceptible person.
 
@@ -25,7 +25,7 @@ The result of the simulation is for each time step the count of persons in each 
 
 ## Get Started
 
-You can find a full example in the [abm minimal example](../../examples/abm_minimal.cpp).
+You can find a full example in the [abm minimal example](../../examples/abm_minimal.cpp) and a more detailed documentation [here](https://dlr-sc.github.io/memilio/documentation/index.html). For a guide on installation and running the simulations and examples see this [README](../../README.md).
 
 Every person in the ABM belongs to an AgeGroup which we can define:
 ```
@@ -53,7 +53,7 @@ person.set_assigned_location(home);
 ```
 
 For adding more people to the world we create households. A Household holds a vector with HouseholdMembers, i.e. a vector with weighted age distribution from which the age of the Persons belonging to this Household can be calculated. A Household and the amount of times it exists is gathered in a HouseholdGroup.
-For example, we have children which either belong to AgeGroup(0) or AgeGroup(1) with probability 0.5 in each case and parents which belong to AgeGroup(2) or AgeGroup(3) similarly. We then add households with a parent and a child and households with two parents and one child. 
+For example, we have children which either belong to AgeGroup(0) or AgeGroup(1) with probability 0.5 in each case and parents which belong to AgeGroup(2) or AgeGroup(3) similarly. We then add households with a parent and a child and households with two parents and one child.
 ```
 auto child = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
 child.set_age_weight(AGE_GROUP_0_TO_4, 1);
@@ -85,7 +85,7 @@ auto testing_scheme_work =
     mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
 world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 ```
-For some infections to happen during the simulation we have to initialize people with infections. 
+For some infections to happen during the simulation we have to initialize people with infections.
 ```
 person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(), world.parameters, start_date, infection_state));
 ```
