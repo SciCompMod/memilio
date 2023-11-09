@@ -247,12 +247,17 @@ def test_total_population(df_pop, age_cols):
 
     total_sum_2020 = 83155031
     total_sum_2021 = 83237124
+    total_sum_2022 = 84358845
+    total_sum = df_pop[age_cols].sum().sum()
 
-    if df_pop[age_cols].sum().sum() != total_sum_2021:
-        if df_pop[age_cols].sum().sum() == total_sum_2020:
-            warnings.warn('Using data of 2020. Newer data is available.')
-        else:
-            raise gd.DataError('Total Population does not match expectation.')
+    if total_sum == total_sum_2022:
+        pass
+    elif total_sum == total_sum_2021:
+        warnings.warn('Using data of 2021. Newer data is available.')
+    elif total_sum == total_sum_2020:
+        warnings.warn('Using data of 2020. Newer data is available.')
+    else:
+        raise gd.DataError('Total Population does not match expectation.')
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
