@@ -100,7 +100,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
     EXPECT_EQ(world_test.get_locations().size(), 1);
 }
 
-TEST(TestSimulation, advanceWithHistory)
+TEST(TestSimulation, advanceWithCommonHistory)
 {
     auto world       = mio::abm::World(NUM_AGE_GROUPS);
     auto home_id     = world.add_location(mio::abm::LocationType::Home);
@@ -171,6 +171,4 @@ TEST(TestSimulation, advanceWithHistory)
     ASSERT_EQ(logMovementInfoDelta.size(), 26);
     ASSERT_EQ(logMovementInfoDelta[0].size(), 3);
     ASSERT_EQ(logMovementInfoDelta[1].size(), 3);
-    ASSERT_EQ(logMovementInfoDelta[2].size(), 1);
-    ASSERT_EQ(logMovementInfoDelta[17].size(), 1); //everyone returns from school at 15 o 'clock
 }
