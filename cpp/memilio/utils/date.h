@@ -168,11 +168,11 @@ inline int get_month_length(Date date)
 }
 
 /**
- * @brief Computes the partial sums of the months of a year
- * @param date date.
+ * @brief Computes the cumulative number of days at the end of each month for a given year.
+ * @param date Date object representing the year we use to compute the cumulative days.
  * @return array with partial sum for each month
  */
-inline std::array<int, 12> calculate_partial_sum_of_months(Date date)
+inline std::array<int, 12> calculate_partial_sum_of_months(const Date& date)
 {
     std::array<int, 12> part_sum;
     if (is_leap_year(date.year)) {
