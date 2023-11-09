@@ -63,6 +63,7 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
 
 bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 {
+    // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set. 
     return (m_ages.empty() || m_ages.count(static_cast<size_t>(p.get_age()))) &&
            (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
 }
@@ -126,23 +127,11 @@ void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const Testing
     }
 }
 
-void TestingStrategy::add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
-{
-    auto loc_id = LocationId{INVALID_LOCATION_INDEX, loc_type};
-    add_testing_scheme(loc_id, scheme);
-}
-
 void TestingStrategy::remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
     auto& schemes_vector = m_location_to_schemes_map[loc_id];
     auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
     schemes_vector.erase(last, schemes_vector.end());
-}
-
-void TestingStrategy::remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
-{
-    auto loc_id = LocationId{INVALID_LOCATION_INDEX, loc_type};
-    remove_testing_scheme(loc_id, scheme);
 }
 
 void TestingStrategy::update_activity_status(TimePoint t)

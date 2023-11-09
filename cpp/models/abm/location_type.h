@@ -99,15 +99,12 @@ struct GeographicalLocation {
 } // namespace abm
 } // namespace mio
 
-namespace std
-{
 template <>
-struct hash<mio::abm::LocationId> {
+struct std::hash<mio::abm::LocationId> {
     std::size_t operator()(const mio::abm::LocationId& loc_id) const
     {
-        return (hash<uint32_t>()(loc_id.index)) ^ (hash<uint32_t>()(static_cast<uint32_t>(loc_id.type)));
+        return (std::hash<uint32_t>()(loc_id.index)) ^ (std::hash<uint32_t>()(static_cast<uint32_t>(loc_id.type)));
     }
 };
-} // namespace std
 
 #endif

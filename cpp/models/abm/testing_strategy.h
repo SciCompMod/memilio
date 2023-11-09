@@ -40,15 +40,18 @@ class TestingCriteria
 {
 public:
     /**
+     * @brief Create a TestingCriteria where everyone is tested.
+     */
+    TestingCriteria() = default;
+
+    /**
      * @brief Create a TestingCriteria.
      * @param[in] ages Vector of AgeGroup%s that are either allowed or required to be tested.
      * @param[in] locations Vector of #Location%s or #LocationType%s that are either allowed or required to be tested.
      * @param[in] infection_states Vector of #InfectionState%s that are either allowed or required to be tested.
-     * An empty vector of ages/#LocationType%s/#InfectionStates% means that no condition on the corresponding property
+     * An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property
      * is set!
      */
-    TestingCriteria() = default;
-
     TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states);
 
     /**
@@ -141,7 +144,7 @@ public:
     bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
 private:
-    TestingCriteria m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
+    TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.
@@ -177,7 +180,10 @@ public:
      * @param[in] loc_type LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
+    {
+        add_testing_scheme(LocationId{INVALID_LOCATION_INDEX, loc_type}, scheme);
+    }
 
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
@@ -193,7 +199,10 @@ public:
      * @param[in] loc_type LocationType key for TestingScheme to be remove.
      * @param[in] scheme TestingScheme to be removed.
      */
-    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
+    {
+        remove_testing_scheme(LocationId{INVALID_LOCATION_INDEX, loc_type}, scheme);
+    }
 
     /**
      * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
