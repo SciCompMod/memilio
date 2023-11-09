@@ -67,7 +67,7 @@ using filtered_index_t = decltype(as_index<IndexTemplate>(
  * Some examples can be found in the cpp/models/ directory, within the model.h files.
  */
 template <class Comp, class Pop, class Params, class Flows>
-struct FlowModel : public CompartmentalModel<Comp, Pop, Params> {
+class FlowModel : public CompartmentalModel<Comp, Pop, Params> {
     using PopIndex = typename Pop::Index;
     // FlowIndex is the same as PopIndex without the category Comp. It is used as argument type for
     // get_flat_flow_index, since a flow is used to determine only the compartment (i.e. Index<Comp>) for the
