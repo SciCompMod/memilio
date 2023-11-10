@@ -45,6 +45,12 @@ class PylintCommand(Command):
                 report_file), do_exit=False)
 
 
+# Python-magic needs DLLs for libmagic. They have to be installed only on windows.
+if sys.platform == 'win32':
+    pymagic = 'python-magic-bin'
+else:
+    pymagic = 'python-magic'
+
 setup(
     name='memilio-epidata',
     version=__version__,
@@ -84,8 +90,8 @@ setup(
         'requests',
         'pyxlsb',
         'wget',
-        'twill',
-        'python-magic==0.4.13'  # fails for other versions
+        'twill==3.1',
+        pymagic
     ],
     extras_require={
         'dev': [
