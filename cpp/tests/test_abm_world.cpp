@@ -455,6 +455,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 
 TEST(TestWorld, checkParameterConstraints)
 {
+    mio::set_log_level(mio::LogLevel::critical); //errors inevitable as these are wanted
     auto world  = mio::abm::World(NUM_AGE_GROUPS);
     auto params = world.parameters;
 

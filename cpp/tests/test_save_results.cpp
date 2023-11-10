@@ -113,6 +113,7 @@ TEST(TestSaveResult, save_result)
 
 TEST(TestSaveResult, save_result_with_params)
 {
+    mio::set_log_level(mio::LogLevel::err); // suppress warnings because this is inevatible here
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -125,22 +126,24 @@ TEST(TestSaveResult, save_result_with_params)
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.2;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * num_dead_t0;
+        params.get<mio::osecir::Seasonality>()          = 0.0;
+        params.get<mio::osecir::ICUCapacity>()          = 0.09;
+        params.get<mio::osecir::TestAndTraceCapacity>() = 0.09;
+
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
@@ -148,6 +151,7 @@ TEST(TestSaveResult, save_result_with_params)
         params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
         params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()   = 0.85;
         params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
         params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
@@ -236,22 +240,24 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.8;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * num_dead_t0;
+        params.get<mio::osecir::Seasonality>()          = 0.0;
+        params.get<mio::osecir::ICUCapacity>()          = 100.0;
+        params.get<mio::osecir::TestAndTraceCapacity>() = 10.0;
+
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
@@ -259,6 +265,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
         params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
         params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()   = 0.85;
         params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
         params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;

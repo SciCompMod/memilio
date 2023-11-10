@@ -345,6 +345,8 @@ struct ConstantFunction : public StateAgeFunction {
      * For ConstantFunction the maximum of the support would be infinity. This is why we do not want to use it 
      * as a TransitionDistribution and getting the maximum of the support doe not make sense. 
      *
+     * This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
+     * of type b); see documentation of StateAgeFunction Base class.
      * @param[in] dt Time step size. 
      * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
      * @return ScalarType support_max
@@ -358,9 +360,6 @@ struct ConstantFunction : public StateAgeFunction {
         unused(dt);
         unused(tol);
         m_support_max = -2.;
-
-        log_error("This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
-                  "of type b); see documentation of StateAgeFunction Base class.");
 
         return m_support_max;
     }
