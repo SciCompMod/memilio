@@ -6,7 +6,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
 {
     auto rng = mio::RandomNumberGenerator();
     rng.seed(seeds);
-    auto world      = mio::abm::World();
+    auto world      = mio::abm::World(5);
     world.get_rng() = rng;
 
     //create persons at home
@@ -23,8 +23,8 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
             home_size         = 0;
         }
 
-        auto age = mio::abm::AgeGroup(
-            mio::UniformIntDistribution<int>::get_instance()(world.get_rng(), 0, int(mio::abm::AgeGroup::Count) - 1));
+        auto age     = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
+            world.get_rng(), size_t(0), world.parameters.get_num_groups() - 1));
         auto& person = world.add_person(home, age);
         person.set_assigned_location(home);
         home_size++;
@@ -49,7 +49,6 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
     }
 
     //infections
-    size_t num_infections = 0;
     for (auto& person : world.get_persons()) {
         auto prng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
         //~0.5% of people are infected, large enough to have some infection activity without everyone dying
@@ -58,12 +57,10 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
                 mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
             auto infection =
                 mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                    world.get_global_infection_parameters(), mio::abm::TimePoint(0), state);
+                                    world.parameters, mio::abm::TimePoint(0), state);
             person.add_new_infection(std::move(infection));
-            ++num_infections;
         }
     }
-    std::cout << "num persons / num_infections = " << num_persons << "/" << num_infections << "\n";
 
     //testing schemes
     const auto num_testing_schemes = 4;
@@ -72,19 +69,24 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
             std::shuffle(v.begin(), v.end(), world.get_rng());
             return std::vector<typename decltype(v)::value_type>(v.begin(), v.begin() + n);
         };
-
-        auto num_criteria = 2;
-        auto criteria     = std::vector<mio::abm::TestingCriteria>(num_criteria);
-        std::generate(criteria.begin(), criteria.end(), [&] {
-            auto loc_types = sample(mio::enum_members<mio::abm::LocationType>(), 4);
-            auto ages      = sample(mio::enum_members<mio::abm::AgeGroup>(), 2);
-            auto states    = std::vector<mio::abm::InfectionState>(0);
-            return mio::abm::TestingCriteria(ages, loc_types, states);
+        std::vector<mio::AgeGroup> ages;
+        std::generate_n(std::back_inserter(ages), world.parameters.get_num_groups(), [a = 0]() mutable {
+            return mio::AgeGroup(a++);
         });
+        auto random_criteria = [&]() {
+            auto random_ages   = sample(ages, 2);
+            auto random_states = std::vector<mio::abm::InfectionState>(0);
+            return mio::abm::TestingCriteria(random_ages, random_states);
+        };
 
-        auto scheme = mio::abm::TestingScheme(criteria, mio::abm::days(2), mio::abm::TimePoint(0),
-                                              mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5);
-        world.get_testing_strategy().add_testing_scheme(scheme);
+        world.get_testing_strategy().add_testing_scheme(
+            mio::abm::LocationType::School,
+            mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                    mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+        world.get_testing_strategy().add_testing_scheme(
+            mio::abm::LocationType::SocialEvent,
+            mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                    mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
     }
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
