@@ -22,6 +22,7 @@
 
 #include "memilio/utils/metaprogramming.h"
 
+#include <numeric>
 #include <vector>
 #include <algorithm>
 #include <utility>
@@ -271,6 +272,30 @@ template <class Iter, class Pred>
 bool contains(Iter b, Iter e, Pred p)
 {
     return find_if(b, e, p) != e;
+}
+
+/**
+ * Get an std::array that contains all members of an enum class.
+ * The enum class must be a valid index, i.e. members must be sequential starting at 0 and there must
+ * be a member `Count` at the end, that will not be included in the array.
+ * Example:
+ * ```
+ * enum class E { A, B, Count };
+ * assert(enum_members<E>() == std::array<2, E>(E::A, E::B));
+ * ``` 
+ * @tparam T An enum class that is a valid index.
+ * @return Array of all members of the enum class not including T::Count.
+ */
+template<class T>
+constexpr std::array<T, size_t(T::Count)> enum_members()
+{
+    auto enum_members = std::array<T, size_t(T::Count)>{};
+    auto indices      = std::array<std::underlying_type_t<T>, size_t(T::Count)>{};
+    std::iota(indices.begin(), indices.end(), std::underlying_type_t<T>(0));
+    std::transform(indices.begin(), indices.end(), enum_members.begin(), [](auto i) {
+        return T(i);
+    });
+    return enum_members;
 }
 
 } // namespace mio
