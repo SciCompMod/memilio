@@ -43,6 +43,7 @@ set(TESTSOURCES
     testmain.cpp
     test_populations.cpp
     test_odeseir.cpp
+    test_odesir.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
     test_damping.cpp
@@ -90,6 +91,7 @@ set(TESTSOURCES
     abm_helpers.h
     abm_helpers.cpp
     test_ide_secir.cpp
+    test_state_age_function.cpp
     distributions_helpers.h
     distributions_helpers.cpp
     actions.h

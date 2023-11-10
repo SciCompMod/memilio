@@ -26,6 +26,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def getMobilityFromFile(directory, mobility_file):
     """! Gets a mobility matrix that is written in a plain txt file
@@ -133,7 +136,10 @@ def updateMobility2022(directory, mobility_file):
 
 def main():
     """! Main program entry."""
-    directory = dd.defaultDict['out_folder'].split('/pydata')[0]
+
+    arg_dict = gd.cli("commuter_official")
+
+    directory = arg_dict['out_folder'].split('/pydata')[0]
     directory = os.path.join(directory, 'mobility/')
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be

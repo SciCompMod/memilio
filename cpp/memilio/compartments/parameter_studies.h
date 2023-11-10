@@ -30,7 +30,9 @@
 #include "memilio/compartments/simulation.h"
 
 #include <cmath>
+#include <cstdint>
 #include <iterator>
+#include <limits>
 #include <numeric>
 
 namespace mio
@@ -128,7 +130,7 @@ public:
      * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraph and an index of type size_t.
      */
     template <class SampleGraphFunction, class HandleSimulationResultFunction>
-    std::vector<std::result_of_t<HandleSimulationResultFunction(SimulationGraph, size_t)>>
+    std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>>
     run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
     {
         int num_procs, rank;
@@ -138,31 +140,44 @@ public:
 #else
         num_procs = 1;
         rank      = 0;
-#endif
+#endif  
+        
+        //The ParameterDistributions used for sampling parameters use thread_local_rng()
+        //So we set our own RNG to be used.
+        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
+        m_rng.synchronize();
+        thread_local_rng() = m_rng;
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
         auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        std::vector<std::result_of_t<HandleSimulationResultFunction(SimulationGraph, size_t)>> ensemble_result;
+        std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
-            //ensure reproducible results if the number of runs or MPI process changes.
-            //assumptions:
-            //- the sample_graph functor uses the RNG provided by our library
-            //- the RNG has been freshly seeded/initialized before this call
-            //- the seeds are identical on all MPI processes
-            //- the block size of the RNG is sufficiently big to cover one run
-            //  (when in doubt, use a larger block size; fast-forwarding the RNG is cheap and the period length 
-            //   of the mt19937 RNG is huge)
-            mio::thread_local_rng().forward_to_block(run_idx);
+            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
 
+            //prepare rng for this run by setting the counter to the right offset
+            //Add the old counter so that this call of run() produces different results
+            //from the previous call
+            auto run_rng_counter = m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(
+                                                             static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
+            thread_local_rng().set_counter(run_rng_counter);
+
+            //sample
             auto sim = create_sampled_simulation(sample_graph);
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (thread_local_rng().get_counter() - run_rng_counter).get());
+
+            //perform run
             sim.advance(m_tmax);
 
+            //handle result and store
             ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
         }
+
+        //Set the counter of our RNG so that future calls of run() produce different parameters.
+        m_rng.set_counter(m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
 
 #ifdef MEMILIO_ENABLE_MPI
         //gather results
@@ -205,12 +220,32 @@ public:
         std::vector<SimulationGraph> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
+        //The ParameterDistributions used for sampling parameters use thread_local_rng()
+        //So we set our own RNG to be used.
+        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
+        thread_local_rng() = m_rng;
+
         for (size_t i = 0; i < m_num_runs; i++) {
+            log(LogLevel::info, "ParameterStudies: run {}", i);
+
+            //prepare rng for this run by setting the counter to the right offset
+            //Add the old counter so that this call of run() produces different results
+            //from the previous call
+            auto run_rng_counter = m_rng.get_counter() +
+                                   rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(i), Counter<uint32_t>(0));
+            thread_local_rng().set_counter(run_rng_counter);
+
             auto sim = create_sampled_simulation(sample_graph);
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
+                (thread_local_rng().get_counter() - run_rng_counter).get());
+
             sim.advance(m_tmax);
 
             ensemble_result.emplace_back(std::move(sim).get_graph());
         }
+
+        //Set the counter of our RNG so that future calls of run() produce different parameters.
+        m_rng.set_counter(m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
 
         return ensemble_result;
     }
@@ -293,6 +328,10 @@ public:
     }
     /** @} */
 
+    RandomNumberGenerator& get_rng() {
+        return m_rng;
+    }
+
 private:
     //sample parameters and create simulation
     template <class SampleGraphFunction>
@@ -339,6 +378,8 @@ private:
     double m_dt_graph_sim;
     // adaptive time step of the integrator (will be corrected if too large/small)
     double m_dt_integration = 0.1;
+    //
+    RandomNumberGenerator m_rng;
 };
 
 } // namespace mio

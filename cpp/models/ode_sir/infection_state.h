@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,31 +17,28 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_AGE_H
-#define EPI_ABM_AGE_H
+
+#ifndef ODESIR_INFECTIONSTATE_H
+#define ODESIR_INFECTIONSTATE_H
 
 namespace mio
 {
-namespace abm
+namespace osir
 {
 
 /**
- * age groups like RKI.
- * EXPERIMENTAL; will be merged with new model framework soon.
- */
-enum class AgeGroup
+     * @brief The InfectionState enum describes the possible
+     * categories for the infectious state of persons
+     */
+enum class InfectionState
 {
-    Age0to4 = 0,
-    Age5to14,
-    Age15to34,
-    Age35to59,
-    Age60to79,
-    Age80plus,
-
+    Susceptible,
+    Infected,
+    Recovered,
     Count
 };
 
-} // namespace abm
+} // namespace osir
 } // namespace mio
 
-#endif //EPI_ABM_AGE_H
+#endif // ODESIR_INFECTIONSTATE_H

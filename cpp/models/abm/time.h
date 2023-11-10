@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -195,6 +195,14 @@ public:
     int day_of_week() const
     {
         return int(days()) % 7;
+    }
+
+    /**
+     * @brief If the current time is on a weekend, e.g. day_of_the_week is 5 = Sat or 6 = Sun.
+     */
+    bool is_weekend() const
+    {
+        return (day_of_week() > 4) ? true : false;
     }
 
     /**

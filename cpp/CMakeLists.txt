@@ -18,6 +18,7 @@ option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." OFF)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
+option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
 
 mark_as_advanced(MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -85,7 +86,7 @@ endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERS
 # add flags to each target separately instead of globally so users have the choice to use their own flags
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated-copy")
+        "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated-copy;-Wno-expansion-to-defined")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "-Wno-unknown-warning-option;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments")
@@ -105,6 +106,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
+    add_subdirectory(models/ode_sir)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)

@@ -522,9 +522,9 @@ TEST(TestOdeSECIRVVS, read_data)
          3.21484, 0.0633116, 0.221057, 1.42882, 0.0351731, 0.29682, 0, 0, 0, 6.93838, 0.0725173, 0.206715, 0, 0, 0,
          0.0337498, 1.23324e-05, 0.000208293, 0.0292822, 5.8568e-05, 0.000406386, 1340.42, 0, 0, 0, 0, 17067.6, 220.137,
          7.64078, 0.0970237, 0.381933, 4.91193, 0.0779655, 0.741778, 0, 0, 0, 11.7286, 0.0890643, 0.286235, 0, 0, 0,
-         0.0434344, 8.40756e-06, 0.000160098, 0.0294125, 3.7932e-05, 0.000296738, 1891.19, 0, 0, 0, 0, 72490.2, 176.267,
+         0.0434344, 8.40756e-06, 0.000160098, 0.0294125, 3.7932e-05, 0.000296738, 1891.19, 0, 0, 0, 0, 72501, 176.267,
          47.227, 0.113013, 0.490073, 24.4094, 0.0730141, 0.765246, 0, 0, 0, 64.6789, 0.0855947, 0.303032, 0, 0, 0,
-         1.23754, 4.5968e-05, 0.000964262, 0.0751837, 1.82724e-05, 0.000157466, 1681.05, 0, 0, 0, 0, 80790.1, 184.645,
+         1.23754, 4.5968e-05, 0.000964262, 0.0751837, 1.82724e-05, 0.000157466, 1670.26, 0, 0, 0, 0, 80790.1, 184.645,
          44.5477, 0.100229, 0.50512, 23.6881, 0.0666206, 0.811467, 0, 0, 0, 58.9805, 0.0758111, 0.31192, 0, 0, 0,
          3.75961, 0.000136175, 0.00331973, 0.486628, 0.000111199, 0.00111367, 2022.58, 0, 0, 0, 0, 41581, 177.478,
          9.27393, 0.0389771, 0.216151, 5.77433, 0.030336, 0.4066, 0, 0, 0, 13.3664, 0.0312302, 0.141394, 0, 0, 0, 3.119,
@@ -706,7 +706,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
          0.000203391, 0.000653659, 0, 0, 0, 0.0439275, 1.87568e-08, 3.5717e-07, 0.0297464, 8.46241e-08, 6.62006e-07,
          1891.15, 0, 0, 0, 0, 1.92155e+07, 176.538, 47.6768, 0.00043128, 0.00187022, 24.642, 0.000278636, 0.00292033, 0,
          0, 0, 65.1411, 0.000325876, 0.0011537, 0, 0, 0, 1.24042, 1.74173e-07, 3.65358e-06, 0.0753588, 6.9234e-08,
-         5.96637e-07, 1680.98, 0, 0, 0, 0, 3.00317e+07, 184.888, 44.9988, 0.000272769, 0.00137466, 23.9279, 0.000181305,
+         5.96637e-07, 1671.81, 0, 0, 0, 0, 3.00317e+07, 184.888, 44.9988, 0.000272769, 0.00137466, 23.9279, 0.000181305,
          0.00220837, 0, 0, 0, 59.4274, 0.000205796, 0.000846734, 0, 0, 0, 3.76905, 3.67799e-07, 8.9664e-06, 0.48785,
          3.00341e-07, 3.00797e-06, 2022.51, 0, 0, 0, 0, 1.65123e+07, 177.579, 9.4638, 0.000100211, 0.00055573, 5.89255,
          7.79946e-05, 0.00104538, 0, 0, 0, 13.5709, 7.98864e-05, 0.000361685, 0, 0, 0, 3.13496, 5.30384e-07, 1.4228e-05,
@@ -1004,6 +1004,127 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRVVS, apply_constraints_parameters)
+{
+    const double tol_times = 1e-1;
+    auto model             = mio::osecirvvs::Model(1);
+    auto indx_agegroup     = mio::AgeGroup(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 0);
+
+    mio::set_log_level(mio::LogLevel::off);
+
+    model.parameters.set<mio::osecirvvs::Seasonality>(-0.2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::Seasonality>(), 0);
+
+    model.parameters.set<mio::osecirvvs::ICUCapacity>(-2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::Seasonality>(), 0);
+
+    model.parameters.set<mio::osecirvvs::IncubationTime>(-2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[indx_agegroup], 2 * tol_times);
+
+    model.parameters.set<mio::osecirvvs::SerialInterval>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 0.15, 1e-14);
+
+    model.parameters.set<mio::osecirvvs::SerialInterval>(5);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 0.15, 1e-14);
+
+    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(1e-5);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[indx_agegroup], tol_times);
+
+    model.parameters.set<mio::osecirvvs::TimeInfectedSevere>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[indx_agegroup], tol_times);
+
+    model.parameters.set<mio::osecirvvs::TimeInfectedCritical>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[indx_agegroup], tol_times);
+
+    model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(2.0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[indx_agegroup], 0.0, 1e-14);
+
+    model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms>(-1.0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>(3.0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic>(-0.8);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms>(-0.1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::CriticalPerSevere>(-1.0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::CriticalPerSevere>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::DeathsPerCritical>(1.1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DeathsPerCritical>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::VaccinationGap>(-0.2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::VaccinationGap>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(-2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectivePartialImmunity>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(-0.2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity>()[indx_agegroup], 1);
+
+    model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity>(-0.2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity>()[indx_agegroup], 1);
+
+    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>()[indx_agegroup], 1);
+
+    model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(0.);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[indx_agegroup], 1);
+
+    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(-4);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[indx_agegroup], 1);
+
+    model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(-4);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[indx_agegroup],
+              1);
+
+    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[indx_agegroup], 1);
+
+    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB117>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB161>()[indx_agegroup], 0);
 
     mio::set_log_level(mio::LogLevel::warn);
 }

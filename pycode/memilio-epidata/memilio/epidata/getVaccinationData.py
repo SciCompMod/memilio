@@ -33,10 +33,13 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def download_vaccination_data(read_data, filename, directory):
 
-    url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
+    url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Deutschland_Landkreise_COVID-19-Impfungen.csv"
     path = os.path.join(directory + filename + ".json")
     df_data = gd.get_file(path, url, read_data, param_dict={'dtype': {
         'LandkreisId_Impfort': "string", 'Altersgruppe': "string", 'Impfschutz': int, 'Anzahl': int}}, interactive=True)
@@ -112,13 +115,14 @@ def sanitizing_average_regions(
     @return New DataFrame with sanitized data.
     """
 
-    df_total = pd.DataFrame()
+    # create list of DataFrames, later to be merged
+    df_total = []
     # computation is done for all Age Groups seperately
     for age in age_groups:
         # create subframe with specific age group
-        df_age = df[df[dd.EngEng['ageRKI']] == age].copy()
+        df_age = df[df[dd.EngEng['ageRKI']] == age]
         # loop over all regions
-        for region, counties_list in to_county_map.items():
+        for counties_list in to_county_map.values():
             vacc_sums = df_age.loc[df_age[dd.EngEng['idCounty']].isin(
                 counties_list)].groupby(dd.EngEng['date'])[column_names].sum()
             # get sums of all vaccinations in this region and agegroup
@@ -141,7 +145,9 @@ def sanitizing_average_regions(
                 df_age.loc[df_age[dd.EngEng['idCounty']].isin(
                     counties_list), column] = vacc_sums[column].values*population_ratios.values
 
-        df_total = pd.concat([df_total, df_age], ignore_index=True, sort=False)
+        df_total.append(df_age)
+
+    df_total = pd.concat(df_total, ignore_index=True, sort=False)
 
     return df_total
 
@@ -174,7 +180,7 @@ def sanitizing_extrapolation_mobility(
         max_sanit_threshold_arr[kk] = min(1, aver_ratio[kk]+0.1)
 
     # create copy of dataframe
-    df_san = df.copy()
+    df_san = df[:]
 
     # aggregate total number of vaccinations per county and age group
     vacc_sums_nonsanit = df.groupby(
@@ -341,7 +347,7 @@ def sanitizing_extrapolation_mobility(
                 + str(id) + '. Exiting program.')
 
     # create copy only for possible comparison reasons now
-    df = df_san.copy()
+    df = df_san[:]
 
     # create cumulative sum
     groupby_list = [dd.EngEng['date'], dd.EngEng['idState'],
@@ -387,7 +393,8 @@ def extrapolate_age_groups_vaccinations(
     @return New DataFrame with new age groups.
     """
 
-    df_data_ageinf_county_cs = pd.DataFrame()
+    # create list of dataframes, later to be merged
+    df_data_ageinf_county_cs = []
     groupby_list = list(df_data.columns)
     for i in range(len(column_names)):
         groupby_list.remove(column_names[i])
@@ -399,7 +406,7 @@ def extrapolate_age_groups_vaccinations(
         # get population data for all age groups in current county
         pop_state = population_all_ages[population_all_ages[dd.EngEng['idCounty']] == countyID]
         # create empty dataframe for each county
-        total_county_df = pd.DataFrame()
+        total_county_df = []
 
         for i in range(0, len(unique_age_groups_old)):
 
@@ -411,7 +418,7 @@ def extrapolate_age_groups_vaccinations(
                 column_names, axis=1).drop(
                 dd.EngEng['ageRKI'], axis=1)
             # create new dataframe for vaccination data
-            vacc_data_df = pd.DataFrame()
+            vacc_data_df = []
 
             # get total population in old agegroup
             total_pop = 0
@@ -426,24 +433,27 @@ def extrapolate_age_groups_vaccinations(
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
                 new_dataframe[dd.EngEng['ageRKI']] = unique_age_groups_new[j]
-                vacc_data_df = pd.concat(
-                    [vacc_data_df, pd.concat(
-                        [info_df, new_dataframe],
-                        axis=1)])
+                vacc_data_df.append(pd.concat(
+                    [info_df, new_dataframe],
+                    axis=1))
+            vacc_data_df = pd.concat(vacc_data_df)
 
             # merge all dataframes for each age group into one dataframe
-            total_county_df = pd.concat([vacc_data_df, total_county_df]).groupby(
-                groupby_list).sum().reset_index()
+            total_county_df.append(vacc_data_df)
 
-        # merge all county specific dataframes
-        df_data_ageinf_county_cs = pd.concat(
-            [df_data_ageinf_county_cs, total_county_df])
+        total_county_df = pd.concat(total_county_df).groupby(
+            groupby_list).sum().reset_index()
+
+        df_data_ageinf_county_cs.append(total_county_df)
 
         # test if number of vaccinations in current county are equal in old and new dataframe for random chosen date
         for vacc in column_names:
             if total_county_df[total_county_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() - vacc_df[vacc_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() > 1e-5:
                 print(
                     "Error in transformation...")
+
+    # merge all county specific dataframes
+    df_data_ageinf_county_cs = pd.concat(df_data_ageinf_county_cs)
 
     return df_data_ageinf_county_cs
 
@@ -605,7 +615,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         print("Population data was not found. Download it from the internet.")
         population = gpd.get_population_data(
             read_data=False, file_format=file_format, out_folder=out_folder,
-            no_raw=no_raw, split_gender=False, merge_eisenach=True)
+            no_raw=no_raw, merge_eisenach=True)
 
     with progress_indicator.Spinner(message='Preparing Population data and age groups'):
         min_age_pop = []
@@ -820,8 +830,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             # commuter inflow from other counties as first weight to distribute
             # vaccinations from vaccination county to extrapolated home counties
             neighbors_mobility = gcm.get_neighbors_mobility_all(
-                direction='in', abs_tol=10, merge_eisenach=True,
-                out_folder=out_folder)
+                direction='in', abs_tol=10, out_folder=out_folder)
             df_data_agevacc_county_cs = sanitizing_extrapolation_mobility(
                 df_data_agevacc_county_cs, unique_age_groups_old,
                 vacc_column_names, population_old_ages, neighbors_mobility)
@@ -939,7 +948,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 age_old_to_all_ages_indices, min_all_ages,
                 all_ages_to_age_new_share)
 
-    df_data_ageinf_county_cs = df_data_ageinf_county_cs.reset_index(drop=True)
+    df_data_ageinf_county_cs.reset_index(drop=True, inplace=True)
 
     # store data for all counties
     filename = 'vacc_county_ageinf'

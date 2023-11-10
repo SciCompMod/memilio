@@ -154,6 +154,7 @@ TEST(ParameterStudies, sample_graph)
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto study   = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 0.0, 0.5, 1);
+    mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
     auto results = study.run([](auto&& g) {
         return draw_sample(g);
     });
@@ -282,13 +283,15 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
         model.populations.set_total(num_total_t0);
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = num_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = num_dead_t0;
         model.populations.set_difference_from_total({i, mio::osecir::InfectionState::Susceptible}, num_total_t0);
 
         params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
@@ -306,6 +309,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
     mio::ParameterStudy<mio::osecir::Simulation<>> parameter_study(model, t0, tmax, 1);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     // Run parameter study
     parameter_study.set_num_runs(1);

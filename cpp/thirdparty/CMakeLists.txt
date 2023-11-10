@@ -6,6 +6,7 @@ set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_BOOST_VERSION "1.75.0")
 include(FetchContent)
 #TODO: There can be a heavy reduction in setup if we set some things right here
+set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 
 # ## SPDLOG
 MESSAGE(STATUS "Searching for SPDLOG and downloading if not found")
@@ -87,3 +88,25 @@ endif()
 if (MEMILIO_ENABLE_MPI)
     find_package(MPI REQUIRED COMPONENTS CXX)
 endif()
+
+if (MEMILIO_ENABLE_OPENMP)
+    find_package(OpenMP REQUIRED COMPONENTS CXX)
+endif()
+
+#Random123 library for random number generators
+message(STATUS "Downloading Random123 library")
+
+include(FetchContent)
+FetchContent_Declare(Random123
+    GIT_REPOSITORY https://github.com/DEShawResearch/random123
+    GIT_TAG ${MEMILIO_RANDOM123_VERSION}
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND "")
+FetchContent_GetProperties(Random123)
+
+if(NOT Random123_POPULATED)
+    FetchContent_Populate(Random123)
+endif()
+
+add_library(Random123 INTERFACE)
+target_include_directories(Random123 INTERFACE ${random123_SOURCE_DIR}/include)
