@@ -22,6 +22,7 @@
 
 #include "memilio/utils/metaprogramming.h"
 
+#include <array>
 #include <numeric>
 #include <vector>
 #include <algorithm>
