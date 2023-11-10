@@ -118,3 +118,10 @@ Then we run the simulation.
 ```cpp
 sim.advance(mio::abm::TimePoint(0) + mio::abm::days(30));
 ```
+
+## Current Limitations
+
+Currently a few things are not yet implemanted such as:
+
+- Different trips for each day.
+- Test and Trace functionality
