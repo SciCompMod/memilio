@@ -63,31 +63,36 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
     }
 
     //testing schemes
-    const auto num_testing_schemes = 4;
-    for (auto i = 0; i < num_testing_schemes; ++i) {
-        auto sample = [&](auto v, size_t n) { //selects n elements from list v
-            std::shuffle(v.begin(), v.end(), world.get_rng());
-            return std::vector<typename decltype(v)::value_type>(v.begin(), v.begin() + n);
-        };
-        std::vector<mio::AgeGroup> ages;
-        std::generate_n(std::back_inserter(ages), world.parameters.get_num_groups(), [a = 0]() mutable {
-            return mio::AgeGroup(a++);
-        });
-        auto random_criteria = [&]() {
-            auto random_ages   = sample(ages, 2);
-            auto random_states = std::vector<mio::abm::InfectionState>(0);
-            return mio::abm::TestingCriteria(random_ages, random_states);
-        };
+    auto sample = [&](auto v, size_t n) { //selects n elements from list v
+        std::shuffle(v.begin(), v.end(), world.get_rng());
+        return std::vector<typename decltype(v)::value_type>(v.begin(), v.begin() + n);
+    };
+    std::vector<mio::AgeGroup> ages;
+    std::generate_n(std::back_inserter(ages), world.parameters.get_num_groups(), [a = 0]() mutable {
+        return mio::AgeGroup(a++);
+    });
+    auto random_criteria = [&]() {
+        auto random_ages   = sample(ages, 2);
+        auto random_states = std::vector<mio::abm::InfectionState>(0);
+        return mio::abm::TestingCriteria(random_ages, random_states);
+    };
 
-        world.get_testing_strategy().add_testing_scheme(
-            mio::abm::LocationType::School,
-            mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
-                                    mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
-        world.get_testing_strategy().add_testing_scheme(
-            mio::abm::LocationType::SocialEvent,
-            mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
-                                    mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
-    }
+    world.get_testing_strategy().add_testing_scheme(
+        mio::abm::LocationType::School,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+    world.get_testing_strategy().add_testing_scheme(
+        mio::abm::LocationType::Work,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+    world.get_testing_strategy().add_testing_scheme(
+        mio::abm::LocationType::Home,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+    world.get_testing_strategy().add_testing_scheme(
+        mio::abm::LocationType::SocialEvent,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 }
