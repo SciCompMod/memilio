@@ -44,9 +44,12 @@ TEST(TestMigrationRules, student_goes_to_school)
     auto child_rng              = mio::abm::Person::RandomNumberGenerator(rng, p_child);
     auto adult_rng              = mio::abm::Person::RandomNumberGenerator(rng, p_child);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     ASSERT_EQ(mio::abm::go_to_school(child_rng, p_child, t_morning, dt, params), mio::abm::LocationType::School);
     ASSERT_EQ(mio::abm::go_to_school(adult_rng, p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
@@ -85,9 +88,12 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
 
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     ASSERT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_6, p_child_goes_to_school_at_6, t_morning_6, dt, params),
@@ -142,9 +148,12 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
     auto dt                     = mio::abm::seconds(1800);
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     ASSERT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_6, p_child_goes_to_school_at_6, t_morning_6, dt, params),
@@ -203,9 +212,12 @@ TEST(TestMigrationRules, worker_goes_to_work)
 
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     ASSERT_EQ(mio::abm::go_to_work(rng_retiree, p_retiree, t_morning, dt, params), mio::abm::LocationType::Home);
     ASSERT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
@@ -240,9 +252,12 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     ASSERT_EQ(mio::abm::go_to_work(rng_retiree, p_retiree, t_morning, dt, params), mio::abm::LocationType::Home);
     ASSERT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
@@ -278,9 +293,12 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
     auto dt                     = mio::abm::hours(1);
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     ASSERT_EQ(mio::abm::go_to_work(rng_adult_goes_to_work_at_6, p_adult_goes_to_work_at_6, t_morning_6, dt, params),
               mio::abm::LocationType::Work);

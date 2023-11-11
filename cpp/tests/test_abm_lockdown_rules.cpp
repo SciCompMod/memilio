@@ -53,9 +53,12 @@ TEST(TestLockdownRules, school_closure)
     p2.set_assigned_location(school);
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
     mio::abm::set_school_closure(t, 0.7, params);
 
     auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, p1);
@@ -88,9 +91,12 @@ TEST(TestLockdownRules, school_opening)
     p.set_assigned_location(school);
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
     mio::abm::set_school_closure(t_closing, 1., params);
     mio::abm::set_school_closure(t_opening, 0., params);
 
@@ -110,9 +116,12 @@ TEST(TestLockdownRules, home_office)
     mio::abm::Parameters params(NUM_AGE_GROUPS);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     mio::abm::set_home_office(t, 0.4, params);
 
@@ -164,9 +173,12 @@ TEST(TestLockdownRules, no_home_office)
     p.set_assigned_location(work);
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_15_TO_34] = true;
+    params.get<mio::abm::AgeGroupGotoWork>()[AGE_GROUP_35_TO_59] = true;
 
     mio::abm::set_home_office(t_closing, 0.5, params);
     mio::abm::set_home_office(t_opening, 0., params);
