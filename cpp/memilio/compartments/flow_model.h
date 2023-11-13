@@ -22,7 +22,9 @@
 #define MIO_FLOW_MODEL_H_
 
 #include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/utils/multi_index_range.h"
+#include "memilio/utils/index_range.h"
+#include "memilio/utils/flow.h"
+#include "memilio/utils/type_list.h"
 
 namespace mio
 {
@@ -115,7 +117,7 @@ public:
             get_rhs_impl(flows, dydt, Index<>{});
         }
         else {
-            for (FlowIndex I : make_multi_index_range(reduce_index<FlowIndex>(this->populations.size()))) {
+            for (FlowIndex I : make_index_range(reduce_index<FlowIndex>(this->populations.size()))) {
                 get_rhs_impl(flows, dydt, I);
             }
         }

@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <gtest/gtest.h>
 #include "memilio/utils/index.h"
-#include "memilio/utils/multi_index_range.h"
+#include "memilio/utils/index_range.h"
+
+#include <gtest/gtest.h>
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {
@@ -54,11 +55,11 @@ TEST(TestUtils, reduce_index)
     EXPECT_EQ(result_j, reference_j);
 }
 
-TEST(TestUtils, MultiIndexRange)
+TEST(TestUtils, IndexRange)
 {
     using I = mio::Index<CategoryTag<1>, CategoryTag<2>, CategoryTag<3>>;
     I dims{CategoryTag<1>(2), CategoryTag<2>(3), CategoryTag<3>(5)};
-    mio::MultiIndexRange<I> range(dims);
+    mio::IndexRange<I> range(dims);
 
     I reference_begin{CategoryTag<1>(0), CategoryTag<2>(0), CategoryTag<3>(0)};
     I reference_end{CategoryTag<1>(2), CategoryTag<2>(0), CategoryTag<3>(0)};

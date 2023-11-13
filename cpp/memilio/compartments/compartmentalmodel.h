@@ -23,10 +23,7 @@
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/type_list.h"
-#include "memilio/utils/flow.h"
 #include "memilio/utils/metaprogramming.h"
-#include "memilio/utils/multi_index_range.h"
 #include <cstddef>
 #include <type_traits>
 #include <vector>
