@@ -62,6 +62,10 @@ public:
         : Base(Populations(dimensions, 0.), mio::oseir::Parameters{})
     {
     }
+    void get_flows(Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
+                   Eigen::Ref<Eigen::VectorXd> /*flows*/) const override
+    {
+    }
 };
 
 TEST(TestFlows, FlowChart)

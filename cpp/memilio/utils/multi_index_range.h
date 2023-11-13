@@ -36,18 +36,10 @@ public:
     /**
      * @brief Construct a Range that can be used to iterate over all MultiIndices in the given dimensions.
      * The range for each Index i in the MultiIndex is determined by [0, d_i), where d_i is the dimension of i.
-     * @param[in] dimensions A MultIndex that contains the dimension for each Category.
+     * @param[in] dimensions A MultiIndex that contains the dimension for each Category.
      */
     MultiIndexRange(const MultiIndex& dimensions)
         : m_dimensions(dimensions)
-        , m_end([](const MultiIndex& dims) {
-            // set end to the first invalid index that is reached by increments of 1,
-            // i.e. 0 everywhere except for the most significant index (position 0),
-            // which is set to its dimension
-            auto end         = MultiIndex::Zero();
-            mio::get<0>(end) = mio::get<0>(dims);
-            return end;
-        }(dimensions))
     {
     }
 
@@ -131,7 +123,7 @@ public:
             }
         }
         value_type m_index; ///< Index used for iteration.
-        reference m_dims; ///< Read only reference to range dimensions.
+        value_type m_dims; ///< Copy of range dimensions.
     };
 
     /**
@@ -149,13 +141,30 @@ public:
      */
     MultiIndexIterator end() const
     {
-        return MultiIndexIterator(m_end, m_dimensions);
+        // set end to the first invalid index that is reached by increments of 1,
+        // i.e. 0 everywhere except for the most significant index (position 0),
+        // which is set to its dimension
+        MultiIndex end = MultiIndex::Zero();
+        if constexpr (MultiIndex::size > 0) {
+            mio::get<0>(end) = mio::get<0>(m_dimensions);
+        }
+        return MultiIndexIterator(end, m_dimensions);
     }
 
 private:
     MultiIndex m_dimensions; ///< Contains strict upper bounds for each Index in MultiIndex.
-    MultiIndex m_end; ///< Index to stop at when iterating using increments.
 };
+
+/**
+ * @brief Construct a Range that can be used to iterate over all MultiIndices in the given dimensions.
+ * The range for each Index i in the MultiIndex is determined by [0, d_i), where d_i is the dimension of i.
+ * @param[in] dimensions A MultiIndex that contains the dimension for each Category.
+ */
+template <class MultiIndex>
+MultiIndexRange<MultiIndex> make_multi_index_range(const MultiIndex& dimensions)
+{
+    return MultiIndexRange<MultiIndex>(dimensions);
+}
 
 } // namespace mio
 

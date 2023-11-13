@@ -22,6 +22,7 @@
 #define MIO_FLOW_MODEL_H_
 
 #include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/utils/multi_index_range.h"
 
 namespace mio
 {
@@ -67,7 +68,8 @@ using filtered_index_t = decltype(as_index<IndexTemplate>(
  * Some examples can be found in the cpp/models/ directory, within the model.h files.
  */
 template <class Comp, class Pop, class Params, class Flows>
-class FlowModel : public CompartmentalModel<Comp, Pop, Params> {
+class FlowModel : public CompartmentalModel<Comp, Pop, Params>
+{
     using PopIndex = typename Pop::Index;
     // FlowIndex is the same as PopIndex without the category Comp. It is used as argument type for
     // get_flat_flow_index, since a flow is used to determine only the compartment (i.e. Index<Comp>) for the
@@ -87,28 +89,14 @@ public:
     template <class... Args>
     FlowModel(Args... args)
         : CompartmentalModel<Comp, Pop, Params>(args...)
-        , m_flow_index_dimensions(reduce_index<FlowIndex>(this->populations.size()))
-        , m_flow_range([&]() {
-            // take population dimensions, and set the compartment dimension to 1. this allows us to effectively
-            // iterate over all flow indices, but still have the corresponding PopIndex, where we can insert the
-            // flow source or target.
-            PopIndex dims   = this->populations.size();
-            get<Comp>(dims) = Index<Comp>{1};
-            return MultiIndexRange<PopIndex>(dims);
-        }())
         , m_flow_values((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size())
     {
     }
 
-    // LCOV_EXCL_START
-    // Exclude FLowModel::get_flows from coverage, as the function does nothing. It is intended to be overwritten by
-    // specific flow model implementations.
-
-    // Note: use get_flow_index when accessing flows
+    // Note: use get_flat_flow_index when accessing flows
     // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
     virtual void get_flows(Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const {};
-    // LCOV_EXCL_STOP
+                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const = 0;
 
     /**
      * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.
@@ -122,8 +110,14 @@ public:
     {
         // set dydt to 0, then iteratively add all flow contributions
         dydt.setZero();
-        for (PopIndex I : m_flow_range) { // take I by value, so we can safely manipulate it
-            get_rhs_impl(flows, dydt, I);
+        if constexpr (std::is_same_v<FlowIndex, Index<>>) {
+            // special case where PopIndex only contains Comp, hence FlowIndex has no dimensions to iterate over
+            get_rhs_impl(flows, dydt, Index<>{});
+        }
+        else {
+            for (FlowIndex I : make_multi_index_range(reduce_index<FlowIndex>(this->populations.size()))) {
+                get_rhs_impl(flows, dydt, I);
+            }
         }
     }
 
@@ -164,8 +158,8 @@ public:
      * = I_{n} + I_{n-1} * D_{n} + I_{n-2} * D_{n} * D_{n-1} + ... + I_{1} * D_{n} * ... * D_{2}
      * for indices (I_{1}, ... , I_{n}) and dimension (D_{1}, ... , D_{n}).
      *   
-     * The flows use their position in the FlowChart instead of the template argument Comp from the base class,
-     * i.e. they use the Population::Index type without Comp. The position is determined by the Source and Target 
+     * The flows use their position in the TypeList Flows instead of the template argument Comp from the base class,
+     * hence they use the Population::Index type without Comp. The position is determined by the Source and Target 
      * template arguments instead. As this dimension (the number of flows) may be larger or smaller
      * (e.g. a S->I->R model has 3 Comp's, but 2 Flows) than Comp::Count, we cannot simply use
      * this->populations.get_flat_index.
@@ -188,7 +182,8 @@ public:
             return get_flat_flow_index<Source, Target>();
         }
         else {
-            return flatten_index(indices, m_flow_index_dimensions) * Flows::size() +
+            const FlowIndex flow_index_dimensions = reduce_index<FlowIndex>(this->populations.size());
+            return flatten_index(indices, flow_index_dimensions) * Flows::size() +
                    index_of_type_v<Flow<Source, Target>, Flows>;
         }
     }
@@ -207,8 +202,6 @@ public:
     }
 
 private:
-    FlowIndex m_flow_index_dimensions; ///< The dimensions of a FlowIndex.
-    MultiIndexRange<PopIndex> m_flow_range; ///< Range used to iterate over all categories except for Comp.
     mutable Eigen::VectorXd m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
 
     /**
@@ -222,17 +215,16 @@ private:
      */
     template <size_t I = 0>
     inline void get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs,
-                             PopIndex& index) const
+                             const FlowIndex& index) const
     {
-        using Flow = type_at_index_t<I, Flows>;
-        // subtract outflow from source compartment
-        get<Comp>(index) = Flow::source;
-        rhs[Base::populations.get_flat_index(index)] -=
-            flows[get_flat_flow_index<Flow::source, Flow::target>(reduce_index<FlowIndex>(index))];
-        // add outflow to target compartment
-        get<Comp>(index) = Flow::target;
-        rhs[Base::populations.get_flat_index(index)] +=
-            flows[get_flat_flow_index<Flow::source, Flow::target>(reduce_index<FlowIndex>(index))];
+        using Flow                 = type_at_index_t<I, Flows>;
+        const auto flat_flow_index = get_flat_flow_index<Flow::source, Flow::target>(index);
+        const auto flat_source_population =
+            this->populations.get_flat_index(extend_index<PopIndex>(index, (size_t)Flow::source));
+        const auto flat_target_population =
+            this->populations.get_flat_index(extend_index<PopIndex>(index, (size_t)Flow::target));
+        rhs[flat_source_population] -= flows[flat_flow_index]; // subtract outflow from source compartment
+        rhs[flat_target_population] += flows[flat_flow_index]; // add outflow to target compartment
         // handle next flow (if there is one)
         if constexpr (I + 1 < Flows::size()) {
             get_rhs_impl<I + 1>(flows, rhs, index);

@@ -268,6 +268,30 @@ inline Index<CategoryTags...> reduce_index_impl(const SuperIndex& i, mio::Tag<In
     // (that is, `get<CategoryTags>(i)...` fails to compile for SuperIndex=Index<T, T>)
     return Index<CategoryTags...>{get<index_of_type_v<CategoryTags, SuperIndex>>(i)...};
 }
+
+/// @brief Creates and returns a SuperIndex from SubIndex, using entries from the given SubIndex or fill_value.
+template <class... CategoryTags, class... Subset>
+inline Index<CategoryTags...> extend_index_impl(const Index<Subset...>& i, const size_t fill_value,
+                                                mio::Tag<Index<CategoryTags...>>)
+{
+    using SuperIndex = Index<CategoryTags...>;
+    using SubIndex   = Index<Subset...>;
+    // The superindex may not be trivially constructible, so we pass its type using mio::Tag.
+    // The type has to be passed as an argument to determine its CategoryTags.
+
+    return SuperIndex{[&]() {
+        // This is an IIFE, which is invoked for each category (note the '...' after the function call).
+        // So CategoryTags without a '...' is seen by each IIFE as exactly one category from this variadic template.
+        if constexpr (is_type_in_list_v<CategoryTags, Subset...>) {
+            // We use get<index_of_type<>> instead of get<> directly to handle categories that are not unique
+            // (that is, `get<CategoryTags>(i)...` fails to compile for SuperIndex=Index<T, T>)
+            return get<index_of_type_v<CategoryTags, SubIndex>>(i);
+        }
+        else {
+            return Index<CategoryTags>(fill_value);
+        }
+    }()...};
+}
 } // namespace details
 
 /**
@@ -277,12 +301,28 @@ inline Index<CategoryTags...> reduce_index_impl(const SuperIndex& i, mio::Tag<In
  * @param[in] index An instance of SuperIndex
  * @tparam SubIndex An Index that contains a subset of the categories from SuperIndex.
  * @tparam SuperIndex Any Index.
- * @return An index with the given categories and values from index.
+ * @return A (sub)index with the given categories and values from index.
  */
 template <class SubIndex, class SuperIndex>
 SubIndex reduce_index(const SuperIndex& index)
 {
     return details::reduce_index_impl(index, mio::Tag<SubIndex>{});
+}
+
+/**
+ * @brief Create a SuperIndex by copying values from SubIndex, filling new categories with fill_value.
+ * If a type T is contained multiple times in SubIndex, only the first occurance of T is used.
+ * For example, `extend_index<Index<T, T, T>>(Index<T, T>{1,2})` returns `{1,1,1}`.
+ * @param[in] index An instance of SubIndex
+ * @param[in] fill_value The value to use for categories not in SubIndex.
+ * @tparam SuperIndex Any Index.
+ * @tparam SubIndex An Index that contains a subset of the categories from SuperIndex.
+ * @return A (super)index with the given categories and values from index.
+ */
+template <class SuperIndex, class SubIndex>
+SuperIndex extend_index(const SubIndex& index, size_t fill_value = 0)
+{
+    return details::extend_index_impl(index, fill_value, mio::Tag<SuperIndex>{});
 }
 
 } // namespace mio
