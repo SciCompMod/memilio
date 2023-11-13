@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_UTILS_MULTI_INDEX_RANGE_H_
-#define MIO_UTILS_MULTI_INDEX_RANGE_H_
+#ifndef MIO_UTILS_INDEX_RANGE_H_
+#define MIO_UTILS_INDEX_RANGE_H_
 
 #include "memilio/utils/index.h"
 
@@ -30,7 +30,7 @@ namespace mio
  * @tparam MultiIndex A type mio::Index<Categories...> for some set of categories.
  */
 template <class MultiIndex>
-class MultiIndexRange
+class IndexRange
 {
 public:
     /**
@@ -38,7 +38,7 @@ public:
      * The range for each Index i in the MultiIndex is determined by [0, d_i), where d_i is the dimension of i.
      * @param[in] dimensions A MultiIndex that contains the dimension for each Category.
      */
-    MultiIndexRange(const MultiIndex& dimensions)
+    IndexRange(const MultiIndex& dimensions)
         : m_dimensions(dimensions)
     {
     }
@@ -49,15 +49,28 @@ public:
     class MultiIndexIterator
     {
     public:
-        using value_type = MultiIndex;
-        using reference  = const MultiIndex&;
+        using iterator_category = std::forward_iterator_tag;
+        using value_type        = MultiIndex;
+        using reference         = value_type;
+        using pointer           = void;
+        using difference_type   = std::ptrdiff_t;
+
+        /**
+         * @brief Default constructed MultiIndexIterator.
+         * This will not construct a valid iterator. 
+         */
+        MultiIndexIterator()
+            : m_index(MultiIndex::Zero())
+            , m_dims(MultiIndex::Zero())
+        {
+        }
 
         /**
          * @brief Iterator for MultiIndices.
          * @param index Initial value for the iterator position.
          * @param dimensions A reference to the dimensions of the MultiIndex.
          */
-        explicit MultiIndexIterator(value_type index, reference dimensions)
+        MultiIndexIterator(value_type index, reference dimensions)
             : m_index(index)
             , m_dims(dimensions)
         {
@@ -127,7 +140,7 @@ public:
     };
 
     /**
-     * @brief STL iterator for a MultiIndexRange.
+     * @brief STL iterator for a IndexRange.
      * @return Returns the first index for the given dimensions, i.e. 0.
      */
     MultiIndexIterator begin() const
@@ -136,7 +149,7 @@ public:
     }
 
     /**
-     * @brief STL iterator for a MultiIndexRange.
+     * @brief STL iterator for a IndexRange.
      * @return Returns the first index outside of the given dimensions.
      */
     MultiIndexIterator end() const
@@ -161,11 +174,11 @@ private:
  * @param[in] dimensions A MultiIndex that contains the dimension for each Category.
  */
 template <class MultiIndex>
-MultiIndexRange<MultiIndex> make_multi_index_range(const MultiIndex& dimensions)
+IndexRange<MultiIndex> make_index_range(const MultiIndex& dimensions)
 {
-    return MultiIndexRange<MultiIndex>(dimensions);
+    return IndexRange<MultiIndex>(dimensions);
 }
 
 } // namespace mio
 
-#endif // MIO_UTILS_MULTI_INDEX_RANGE_H_
+#endif // MIO_UTILS_INDEX_RANGE_H_
