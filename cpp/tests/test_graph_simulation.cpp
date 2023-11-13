@@ -206,6 +206,8 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<ScalarType>>>>
         mock_exponential_dist;
     // use pregenerated exp(1) random values
+    // all values are used to set normalized_waiting_time in GraphSimulationStochastic<...>::advance,
+    // the first value is used at the function start, all others later during the while loop
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
         .Times(testing::Exactly(10))
         .WillOnce(testing::Return(0.446415))
@@ -220,6 +222,7 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
         .WillOnce(testing::Return(1.204045));
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    // these values determine which transition event should occur in GraphSimulationStochastic<...>::advance
     // during this short sim, the chance of event==0 is ~70% every time
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke)
         .Times(testing::Exactly(9))
