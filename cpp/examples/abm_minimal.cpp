@@ -123,17 +123,15 @@ int main()
     world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
-    auto testing_min_time = mio::abm::days(1);
-    auto probability      = 0.5;
-    auto start_date       = mio::abm::TimePoint(0);
-    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto test_type        = mio::abm::AntigenTest();
-    auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
+    auto testing_min_time      = mio::abm::days(1);
+    auto probability           = 0.5;
+    auto start_date            = mio::abm::TimePoint(0);
+    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(30);
+    auto test_type             = mio::abm::AntigenTest();
+    auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
-    world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly.
