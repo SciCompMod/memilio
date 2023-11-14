@@ -41,8 +41,7 @@ void draw_sample_demographics(Model& model)
             if (inf_state != InfectionState::SusceptibleNaive && //not sampled, fixed after sampling everything else
                 inf_state != InfectionState::DeadNaive && //not sampled, fixed from data
                 inf_state != InfectionState::DeadPartialImmunity && //not sampled, fixed from data
-                inf_state != InfectionState::DeadImprovedImmunity && //not sampled, fixed from data
-                inf_state != InfectionState::TotalInfections) { //not sampled, only for record keeping
+                inf_state != InfectionState::DeadImprovedImmunity) { //not sampled, fixed from data
                 model.populations[{i, inf_state}].draw_sample();
             }
         }
