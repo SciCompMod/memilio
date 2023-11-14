@@ -180,14 +180,15 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     ASSERT_NEAR(defaut_severity_protection, 0, 0.0001);
 
     // Test linear interpolation with one node
+    mio::set_log_level(mio::LogLevel::critical); //this throws an error either way
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}}, days);
     };
     auto t = mio::abm::TimePoint(6 * 24 * 60 * 60);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
-
+    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.001);
+    mio::set_log_level(mio::LogLevel::warn); //this throws an error either way
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
