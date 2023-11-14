@@ -19,7 +19,6 @@
 */
 #include "abm/abm.h"
 #include "abm/household.h"
-
 #include <fstream>
 #include <string>
 #include <iostream>
