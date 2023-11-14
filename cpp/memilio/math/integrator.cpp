@@ -55,8 +55,7 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
             m_dt = dt_eff;
         }
     }
-    auto test = std::abs((tmax - t) / (tmax - t0));
-    mio::unused(test);
+
     if (!step_okay) {
         log_warning("Adaptive step sizing failed.");
     }

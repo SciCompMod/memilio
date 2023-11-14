@@ -151,8 +151,9 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
 
     model.parameters.get<mio::osecirvvs::Seasonality>() = 0.2;
 
+    mio::set_log_level(mio::LogLevel::err);
     model.apply_constraints();
-
+    mio::set_log_level(mio::LogLevel::warn);
     // TODO: gets stuck by division by zero!!
     // auto integrator = std::make_shared<mio::RKIntegratorCore>();
     // integrator->set_dt_min(0.3);

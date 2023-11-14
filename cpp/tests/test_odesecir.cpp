@@ -574,7 +574,7 @@ TEST(TestOdeSecir, testModelConstraints)
 
     model.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]       = 5.2;
     model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = 5;
-    model.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]       = 3.8;
+    model.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]       = 3.9;
     model.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]   = 10.;
     model.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 8.;
 
