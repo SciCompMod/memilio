@@ -18,7 +18,7 @@ from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import progress_indicator
 
 
-def read_input_data(start_date, path_to_input_data, username='', password=''):
+def read_input_data(end_date, path_to_input_data, username='', password=''):
     """! Reads data needed to compute number of individuals in compartments. 
 
     Downloads case data, population data, DIVI data and vaccination data.
@@ -26,13 +26,11 @@ def read_input_data(start_date, path_to_input_data, username='', password=''):
     @param[in] start_date Start date of data.
     @param[in] path_to_input_data Path where data is saved.
     """
-    arg_dict = {'out_folder': "{}/pydata".format(path_to_input_data),
+    arg_dict = {'out_folder': "{}/pydata".format(path_to_input_data), 'end_date': end_date,
                 'moving_average': 7}
     arg_dict_pop = {'out_folder': "{}/pydata".format(path_to_input_data),
                     "username": username,
                     "password": password}
-    arg_dict_vacc = {'out_folder': "{}/pydata".format(path_to_input_data),
-                     'moving_average': 7}
 
     progress_indicator.ProgressIndicator.disable_indicators(True)
     gcd.get_case_data(**arg_dict)
@@ -132,13 +130,17 @@ def main(path_to_esid):
     num_days_sim = 10
 
     # Set start date relative to current date
-    start_date = date.today() - datetime.timedelta(days=num_days_sim)
+    # Add 1 because the data we fetch today only contains data until yesterday,
+    # so start_date needs to be computed wrt to yesterday
+    start_date = date.today() - datetime.timedelta(days=num_days_sim+1)
+    # Set end_date to yesterday because we can only fetch data from the day before
+    end_date = date.today() - datetime.timedelta(days=1)
 
     # Set paths to folder with input data and folder with output data
     path_to_input_data = './data_test'
     path_to_output_data = './data_test'
 
-    read_input_data(start_date, path_to_input_data)
+    read_input_data(end_date, path_to_input_data)
 
     compute_compartments_from_input_data(
         start_date, path_to_input_data, num_days_sim)
