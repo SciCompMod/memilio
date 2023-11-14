@@ -78,9 +78,9 @@ struct SimulationConfig {
         auto dt_max_io        = obj.expect_element("dt_max", mio::Tag<double>{});
         return mio::apply(
             io,
-            [](auto&& num_agegroups, auto&& t0, auto&& t_max, auto&& dt, auto&& abs_tol, auto&& rel_tol, auto&& dt_min,
-               auto&& dt_max) {
-                return SimulationConfig{num_agegroups, t0, t_max, dt, abs_tol, rel_tol, dt_min, dt_max};
+            [](auto&& num_agegroups_, auto&& t0_, auto&& t_max_, auto&& dt_, auto&& abs_tol_, auto&& rel_tol_,
+               auto&& dt_min_, auto&& dt_max_) {
+                return SimulationConfig{num_agegroups_, t0_, t_max_, dt_, abs_tol_, rel_tol_, dt_min_, dt_max_};
             },
             num_agegroups_io, t_io, t_max_io, dt_io, abs_tol_io, rel_tol_io, dt_min_io, dt_max_io);
     }
