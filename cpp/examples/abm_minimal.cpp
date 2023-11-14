@@ -29,10 +29,10 @@ int main()
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
     size_t NUM_AGE_GROUPS         = 4;
-    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
-    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
-    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
-    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
+    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 4);
+    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 3);
+    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
+    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 1);
 
     // Create the world with 4 age groups.
     auto world = mio::abm::World(NUM_AGE_GROUPS);
@@ -49,7 +49,7 @@ int main()
     world.parameters.check_constraints();
 
     // There are 3 households for each household group.
-    int n_households = 3;
+    int n_households = 10;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(NUM_AGE_GROUPS); // A child is 50/50% 0-4 or 5-14.
@@ -93,13 +93,20 @@ int main()
     world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     // At every workplace, maximum contacts are 10.
     auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+
+    // Increase aerosol transmission for all locations
+    world.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
+    // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
+    world.get_individualized_location(work)
+        .get_infection_parameters()
+        .get<mio::abm::ContactRates>()[{AGE_GROUP_15_TO_34, AGE_GROUP_15_TO_34}] = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
     auto testing_min_time      = mio::abm::days(1);
     auto probability           = 0.5;
     auto start_date            = mio::abm::TimePoint(0);
-    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(30);
+    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
     auto test_type             = mio::abm::AntigenTest();
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work =
@@ -108,7 +115,7 @@ int main()
 
     // Assign infection state to each person.
     // The infection states are chosen randomly with the following distribution
-    std::vector<double> population_distribution{0.6, 0.2, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+    std::vector<double> population_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
     for (auto& person : world.get_persons()) {
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
@@ -142,7 +149,7 @@ int main()
     mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
 
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(10);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
     sim.advance(tmax);
