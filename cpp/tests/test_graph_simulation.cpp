@@ -240,9 +240,6 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& mode
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 
-    //set seeds
-    sim.get_rng().seed({114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203});
-
     sim.advance(tmax);
 
     return sim;
