@@ -47,7 +47,7 @@ int main()
     // Check if the parameters satisfy their contraints.
     world.parameters.check_constraints();
 
-    // There are 3 households for each household group.
+    // There are 10 households for each household group.
     int n_households = 10;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
@@ -90,7 +90,7 @@ int main()
     // At every school, the maximum contacts are 20.
     auto school = world.add_location(mio::abm::LocationType::School);
     world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every workplace, maximum contacts are 10.
+    // At every workplace, maximum contacts are 20.
     auto work = world.add_location(mio::abm::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
 
@@ -101,7 +101,7 @@ int main()
         .get_infection_parameters()
         .get<mio::abm::ContactRates>()[{AGE_GROUP_15_TO_34, AGE_GROUP_15_TO_34}] = 10.0;
 
-    // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
+    // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto testing_min_time      = mio::abm::days(1);
     auto probability           = 0.5;
     auto start_date            = mio::abm::TimePoint(0);
@@ -114,11 +114,10 @@ int main()
 
     // Assign infection state to each person.
     // The infection states are chosen randomly with the following distribution
-    std::vector<double> population_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+    std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
     for (auto& person : world.get_persons()) {
-        mio::abm::InfectionState infection_state =
-            (mio::abm::InfectionState)mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
-                                                                                        population_distribution);
+        mio::abm::InfectionState infection_state = mio::abm::InfectionState(
+            mio::DiscreteDistribution<uint32_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
         auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
@@ -154,6 +153,11 @@ int main()
     sim.advance(tmax);
 
     std::ofstream outfile("abm_minimal.txt");
+
+    // The results are saved in a table with 9 rows.
+    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
+    // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
+    // I_Crit = InfectedCritical, R = Recovered, D = Dead
     sim.get_result().print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
 
     std::cout << "Results written to abm_minimal.txt" << std::endl;
