@@ -315,7 +315,7 @@ struct TestParameters {
     UncertainValue sensitivity;
     UncertainValue specificity;
     TimeSpan required_time;
-    TimeSpan validity_time;
+    TimeSpan validity_period;
 };
 
 struct GenericTest {
