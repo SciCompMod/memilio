@@ -108,7 +108,7 @@ int stringToMinutes(const std::string& input)
 
 int longlattoint(const std::string& input)
 {
-    int y = std::stod(input) * 1e+5; //we want the 5 numbers after digit
+    double y = std::stod(input) * 1e+5; //we want the 5 numbers after digit
     return (int)y;
 }
 void split_line(std::string string, std::vector<int32_t>* row)
