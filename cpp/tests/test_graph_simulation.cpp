@@ -239,7 +239,6 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& mode
     }
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
-
     sim.advance(tmax);
 
     return sim;
