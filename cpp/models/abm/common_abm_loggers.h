@@ -42,7 +42,7 @@ struct movement_data {
     mio::abm::InfectionState infection_state;
 };
 struct LogLocationInformation : mio::LogOnceStart {
-    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation, size_t, int>>;
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
     static Type log(const mio::abm::Simulation& sim)
     {
         Type location_information{};
@@ -52,8 +52,9 @@ struct LogLocationInformation : mio::LogOnceStart {
             for (int i = 0; i < (int)n_cells; i++) {
                 loc_capacity += location.get_capacity(i).persons;
             }
-            location_information.push_back(
-                std::make_tuple(location.get_index(), location.get_geographical_location(), n_cells, loc_capacity));
+            location_information.push_back(std::make_tuple(location.get_index(), location.get_type(),
+                                                           location.get_geographical_location(), n_cells,
+                                                           loc_capacity));
         }
         return location_information;
     }
