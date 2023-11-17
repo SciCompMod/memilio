@@ -48,7 +48,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         }
     }
 
-    //infections
+    //infections and masks
     for (auto& person : world.get_persons()) {
         auto prng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
         //~0.5% of people are infected, large enough to have some infection activity without everyone dying
@@ -60,6 +60,23 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
                                     world.parameters, mio::abm::TimePoint(0), state);
             person.add_new_infection(std::move(infection));
         }
+
+        //equal chance of mask refusal and mask eagerness
+        auto mask_value =
+            -1 + 0.5 * mio::DiscreteDistribution<int>::get_instance()(
+                           prng, std::array{0.05 /*-1*/, 0.2 /*-0.5*/, 0.5 /*0*/, 0.2 /*0.5*/, 0.05 /*1*/});
+        person.set_mask_preferences({size_t(mio::abm::LocationType::Count), mask_value});
+    }
+
+    //masks at locations
+    for (auto& loc : world.get_locations())
+    {
+        //20% of locations require masks
+        //skip homes so persons always have a place to go, simulation might break otherwise
+        auto npi = loc.get_type() == mio::abm::LocationType::Home
+                       ? false
+                       : bool(mio::DiscreteDistribution<int>::get_instance()(world.get_rng(), std::array{0.8, 0.2}));
+        loc.set_npi_active(npi);
     }
 
     //testing schemes
@@ -110,7 +127,19 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
         state.PauseTiming(); //exclude the setup from the benchmark
         auto sim = make_simulation(num_persons, seeds);
         state.ResumeTiming();
-        sim.advance(sim.get_time() + mio::abm::days(10));
+
+        //simulated time should be long enough to have full infection runs and migration to every location
+        auto final_time = sim.get_time() + mio::abm::days(10); 
+        sim.advance(final_time);
+
+        //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
+        //normally should have no significant effect on runtime
+        const bool monitor_infection_activity = true;
+        if constexpr (monitor_infection_activity) {
+            std::cout << "num_persons = " << num_persons << "\n";
+            std::cout << sim.get_result()[0].transpose() << "\n";
+            std::cout << sim.get_result().get_last_value().transpose() << "\n";
+        }
     }
 }
 
