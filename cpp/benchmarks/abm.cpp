@@ -32,7 +32,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
 
     //create other locations
     for (auto loc_type : mio::enum_members<mio::abm::LocationType>()) {
-        if (loc_type == mio::abm::LocationType::Home) {
+        if (loc_type == mio::abm::LocationType::Home || loc_type == mio::abm::LocationType::Cemetery) {
             continue; //homes already created
         }
 
