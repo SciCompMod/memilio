@@ -31,12 +31,11 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
     }
 
     //create other locations
-    for (auto loc_type : mio::enum_members<mio::abm::LocationType>()) {
-        if (loc_type == mio::abm::LocationType::Home || loc_type == mio::abm::LocationType::Cemetery) {
-            continue; //homes already created
-        }
+    for (auto loc_type :
+         {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
+          mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
 
-        const auto num_locs = std::max(size_t(1), num_persons / 5'000);
+        const auto num_locs = std::max(size_t(1), num_persons / 2'000);
         std::vector<mio::abm::LocationId> locs(num_locs);
         std::generate(locs.begin(), locs.end(), [&] {
             return world.add_location(loc_type);
@@ -51,8 +50,8 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
     //infections and masks
     for (auto& person : world.get_persons()) {
         auto prng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
-        //~0.5% of people are infected, large enough to have some infection activity without everyone dying
-        if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < 0.005) {
+        //~1% of people are infected, large enough to have some infection activity without everyone dying
+        if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < 0.05) {
             auto state = mio::abm::InfectionState(
                 mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
             auto infection =
@@ -134,7 +133,7 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 
         //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
         //normally should have no significant effect on runtime
-        const bool monitor_infection_activity = true;
+        const bool monitor_infection_activity = false;
         if constexpr (monitor_infection_activity) {
             std::cout << "num_persons = " << num_persons << "\n";
             std::cout << sim.get_result()[0].transpose() << "\n";
