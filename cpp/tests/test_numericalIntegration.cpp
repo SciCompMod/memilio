@@ -165,18 +165,21 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     EXPECT_CALL(*mock_core, step).Times(100);
 
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 1e-2, mock_core);
-    integrator.advance(1);
-    EXPECT_EQ(integrator.get_result().get_num_time_points(), 101);
+    auto integrator = mio::OdeIntegrator(mock_core);
+    mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
+    double dt = 1e-2;
+    integrator.advance(f, 1, dt, result);
+    EXPECT_EQ(result.get_num_time_points(), 101);
 }
 
 TEST(TestOdeIntegrator, integratorStopsAtTMax)
 {
-    auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 0.137,
-                                         std::make_shared<testing::NiceMock<MockIntegratorCore>>());
-    integrator.advance(2.34);
-    EXPECT_DOUBLE_EQ(integrator.get_result().get_last_time(), 2.34);
+    auto f = [](auto&&, auto&&, auto&&) {};
+    mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
+    double dt       = 0.137;
+    auto integrator = mio::OdeIntegrator(std::make_shared<testing::NiceMock<MockIntegratorCore>>());
+    integrator.advance(f, 2.34, dt, result);
+    EXPECT_DOUBLE_EQ(result.get_last_time(), 2.34);
 }
 
 auto DoStepAndIncreaseStepsize(double new_dt)
@@ -215,10 +218,12 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(6), _)).Times(1);
     }
 
-    auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0), 1.0, mock_core);
-    integrator.advance(10.0);
-    integrator.advance(23.0);
+    auto f = [](auto&&, auto&&, auto&&) {};
+    mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
+    double dt       = 1.0;
+    auto integrator = mio::OdeIntegrator(mock_core);
+    integrator.advance(f, 10.0, dt, result);
+    integrator.advance(f, 23.0, dt, result);
 }
 
 auto DoStepAndIncreaseY(const Eigen::VectorXd& dy)
@@ -232,12 +237,14 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     using testing::_;
     using testing::Eq;
 
-    double dt       = 0.25;
+    double dt0      = 0.25;
+    double dt       = dt0;
     auto dy         = Eigen::VectorXd::Constant(1, 1);
     auto y0         = Eigen::VectorXd::Constant(1, 0);
     auto mock_core  = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, y0, dt, mock_core);
+    auto integrator = mio::OdeIntegrator(mock_core);
+    mio::TimeSeries<double> result(0, y0);
 
     {
         testing::InSequence seq;
@@ -248,6 +255,6 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
         EXPECT_CALL(*mock_core, step(_, Eq(y0 + 4 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
     }
 
-    integrator.advance(4 * dt);
-    integrator.advance(5 * dt);
+    integrator.advance(f, 4 * dt0, dt, result);
+    integrator.advance(f, 5 * dt0, dt, result);
 }
