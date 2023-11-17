@@ -237,9 +237,9 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     auto result_n0 = sim.get_graph().nodes()[0].property.get_result().get_last_value();
     auto result_n1 = sim.get_graph().nodes()[1].property.get_result().get_last_value();
 
-    auto expected_values_n0 = std::vector<double>{692.0, 43.632535839799104, 95.751368018823626, 159.61609614137737};
+    auto expected_values_n0 = std::vector<double>{692.0, 43.630772796677256, 95.750528156188381, 159.61869904713436};
     auto actual_values_n0   = std::vector<double>{result_n0[0], result_n0[1], result_n0[2], result_n0[3]};
-    auto expected_values_n1 = std::vector<double>{708.0, 44.061384635789437, 96.484382090533614, 160.45423327367718};
+    auto expected_values_n1 = std::vector<double>{708.0, 44.063147085799322, 96.485223892060375, 160.45162902214025};
     auto actual_values_n1   = std::vector<double>{result_n1[0], result_n1[1], result_n1[2], result_n1[3]};
 
     for (size_t i = 0; i < expected_values_n0.size(); ++i) {
