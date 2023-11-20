@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, Sascha Korf, Carlotta Gerstein
 *
@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <functional>
 
 namespace mio
 {
@@ -67,6 +68,14 @@ struct LocationId {
     {
         return !(index == rhs.index && type == rhs.type);
     }
+
+    bool operator<(const LocationId& rhs) const
+    {
+        if (type == rhs.type) {
+            return index < rhs.index;
+        }
+        return (type < rhs.type);
+    }
 };
 
 struct GeographicalLocation {
@@ -89,5 +98,13 @@ struct GeographicalLocation {
 
 } // namespace abm
 } // namespace mio
+
+template <>
+struct std::hash<mio::abm::LocationId> {
+    std::size_t operator()(const mio::abm::LocationId& loc_id) const
+    {
+        return (std::hash<uint32_t>()(loc_id.index)) ^ (std::hash<uint32_t>()(static_cast<uint32_t>(loc_id.type)));
+    }
+};
 
 #endif

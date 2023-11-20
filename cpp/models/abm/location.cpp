@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa Nguyen, David Kerkmann
 *
@@ -31,34 +31,50 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationId loc_id, uint32_t num_cells)
+Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     : m_id(loc_id)
     , m_capacity_adapted_transmission_risk(false)
-    , m_cells(num_cells)
+    , m_parameters(num_agegroups)
+    , m_cells(num_cells, num_agegroups)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
-ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const
+Location Location::copy_location_without_persons(size_t num_agegroups)
+{
+    Location copy_loc  = Location(*this);
+    copy_loc.m_persons = std::vector<observer_ptr<Person>>();
+    copy_loc.m_cells   = std::vector<Cell>{num_agegroups};
+    for (uint32_t idx = 0; idx < m_cells.size(); idx++) {
+        copy_loc.set_capacity(get_capacity(idx).persons, get_capacity(idx).volume, idx);
+        copy_loc.get_cached_exposure_rate_contacts(idx) = get_cached_exposure_rate_contacts(idx);
+        copy_loc.get_cached_exposure_rate_air(idx)      = get_cached_exposure_rate_air(idx);
+    }
+    return copy_loc;
+}
+
+ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
+                                                   size_t num_agegroups) const
 {
     ScalarType prob = 0;
-    for (uint32_t age_transmitter = 0; age_transmitter != static_cast<uint32_t>(AgeGroup::Count); ++age_transmitter) {
+    for (uint32_t age_transmitter = 0; age_transmitter != num_agegroups; ++age_transmitter) {
         prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
                 m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
     }
     return prob;
 }
 
-ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const
+ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
+                                              const Parameters& global_params) const
 {
     return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
-           m_parameters.get<AerosolTransmissionRates>()[{virus}];
+           global_params.get<AerosolTransmissionRates>()[{virus}];
 }
 
 void Location::interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
-                        const GlobalInfectionParameters& global_params) const
+                        const Parameters& global_params) const
 {
     // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
@@ -70,9 +86,10 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus = static_cast<VirusVariant>(v);
             ScalarType local_indiv_trans_prob_v =
-                (std::min(m_parameters.get<MaximumContacts>(),
-                          transmission_contacts_per_day(cell_index, virus, age_receiver)) +
-                 transmission_air_per_day(cell_index, virus)) *
+                (std::min(
+                     m_parameters.get<MaximumContacts>(),
+                     transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups())) +
+                 transmission_air_per_day(cell_index, virus, global_params)) *
                 (1 - mask_protection) * dt.days() * (1 - person.get_protection_factor(t, virus, global_params));
 
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
@@ -88,12 +105,12 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
     }
 }
 
-void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
+void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     for (auto& cell : m_cells) {
-        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup::Count}, 0.};
+        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup(num_agegroups)}, 0.};
         cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
         for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {

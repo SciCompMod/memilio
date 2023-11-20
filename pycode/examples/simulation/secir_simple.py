@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
-# Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
+# Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele, Khoa Nguyen
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,8 +24,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import (Model, Simulation,
                                       interpolate_simulation_result, simulate)
