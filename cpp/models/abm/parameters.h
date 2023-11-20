@@ -125,7 +125,7 @@ struct SymptomsPerInfectedNoSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, .5);
     }
     static std::string name()
     {
@@ -140,7 +140,7 @@ struct SeverePerInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, .5);
     }
     static std::string name()
     {
@@ -155,7 +155,7 @@ struct CriticalPerInfectedSevere {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, .5);
     }
     static std::string name()
     {
@@ -170,7 +170,7 @@ struct DeathsPerInfectedCritical {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, .5);
     }
     static std::string name()
     {
