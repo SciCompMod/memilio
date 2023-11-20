@@ -39,14 +39,17 @@ namespace mio
 namespace abm
 {
 
+// Distribution that can be used for the time spend in InfectionStates
+using InfectionStateTimesDistributionsParameters = UniformDistribution<double>::ParamType;
+
 /**
- * @brief Time that a Person is infected but not yet infectious.
+ * @brief Time that a Person is infected but not yet infectious in day unit
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
@@ -54,113 +57,127 @@ struct IncubationPeriod {
     }
 };
 
-struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+* @brief Time that a Person is infected but nonsymptomatic in day unit
+*/
+struct TimeInfectedNoSymptoms {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "InfectedNoSymptomsToSymptoms";
+        return "TimeInfectedNoSymptoms";
     }
 };
 
-struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+* @brief Time that a Person is infected and symptomatic but
+*        who do not need to be hospitalized (yet) in day unit
+*/
+struct TimeInfectedSymptoms {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "InfectedNoSymptomsToRecovered";
+        return "TimeInfectedSymptoms";
     }
 };
 
-struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+ * @brief Time that a Person is infected and 'simply' hospitalized in day unit
+ */
+struct TimeInfectedSevere {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "InfectedSymptomsToRecovered";
+        return "TimeInfectedSevere";
     }
 };
 
-struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+ * @brief Time that a Person is treated by ICU in day unit
+ */
+struct TimeInfectedCritical {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "InfectedSymptomsToSevere";
+        return "TimeInfectedCritical";
     }
 };
 
-struct SevereToCritical {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+* @brief the percentage of symptomatic cases
+*/
+struct SymptomsPerInfectedNoSymptoms {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "SevereToCritical";
+        return "SymptomaticPerInfectedNoSymptoms";
     }
 };
 
-struct SevereToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+* @brief the percentage of hospitalized patients per infected patients
+*/
+struct SeverePerInfectedSymptoms {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "SevereToRecovered";
+        return "SeverePerInfectedSymptoms";
     }
 };
 
-struct CriticalToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+* @brief the percentage of ICU patients per hospitalized patients
+*/
+struct CriticalPerInfectedSevere {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "CriticalToRecovered";
+        return "CriticalPerInfectedSevere";
     }
 };
 
-struct CriticalToDead {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+/**
+* @brief the percentage of dead patients per ICU patients
+*/
+struct DeathsPerInfectedCritical {
+    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, 1.);
+        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
     }
     static std::string name()
     {
-        return "CriticalToDead";
+        return "DeathsPerInfectedCritical";
     }
 };
 
-struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({VirusVariant::Count, size}, 1.);
-    }
-    static std::string name()
-    {
-        return "RecoveredToSusceptible";
-    }
-};
 /**
  * @brief Parameters for the ViralLoad course. Default values taken as constant values from the average from
  * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
@@ -363,7 +380,7 @@ struct PCRTest : public GenericTest {
  */
 struct LockdownDate {
     using Type = TimePoint;
-    static auto get_default(AgeGroup /*size*/)
+    static auto get_default()
     {
         return TimePoint(std::numeric_limits<int>::max());
     }
@@ -524,11 +541,11 @@ struct AgeGroupGotoWork {
 };
 
 using ParametersBase =
-    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
-                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
-                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
+    ParameterSet<IncubationPeriod, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere,
+                 TimeInfectedCritical, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
+                 CriticalPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions,
+                 DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate, SocialEventRate,
+                 BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
                  GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
                  InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
@@ -597,8 +614,9 @@ public:
     {
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}] < 0) {
-                log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
+            if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}].params.a() < 0) {
+                log_error("Constraint check: Lower end of parameter range IncubationPeriod of age group {:.0f} smaller "
+                          "than {:.4f}",
                           (size_t)i, 0);
                 return true;
             }
