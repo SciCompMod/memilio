@@ -58,12 +58,13 @@ Location Location::copy_location_without_persons(size_t num_agegroups)
 ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
                                                    size_t num_agegroups) const
 {
-    ScalarType prob = 0;
+    ScalarType transmissions = 0;
     for (uint32_t age_transmitter = 0; age_transmitter != num_agegroups; ++age_transmitter) {
-        prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
-                m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
+        transmissions +=
+            m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
+            m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
     }
-    return prob;
+    return transmissions;
 }
 
 ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
@@ -118,12 +119,22 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
                 auto virus = inf.get_virus_variant();
                 auto age   = p->get_age();
                 /* average infectivity over the time step 
-                 *  to second order accuracy using midpoint rule
+                 * to second order accuracy using midpoint rule
                 */
                 cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
                 cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2);
             }
         }
+
+        for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_agegroups); age_group++) {
+            for (auto& v : cell.m_cached_exposure_rate_contacts.slice(AgeGroup(age_group))) {
+                v = v /
+                    std::count_if(cell.m_persons.begin(), cell.m_persons.end(), [age_group](observer_ptr<Person> p) {
+                        return p->get_age() == age_group;
+                    });
+            }
+        }
+
         if (m_capacity_adapted_transmission_risk) {
             cell.m_cached_exposure_rate_air.array() *= cell.compute_space_per_person_relative();
         }
