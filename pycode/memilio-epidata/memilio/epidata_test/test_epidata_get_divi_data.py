@@ -27,7 +27,6 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getDIVIData as gdd
-from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):
@@ -65,42 +64,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
 
-    @patch('memilio.epidata.getDIVIData.pd.read_json')
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
-    def test_exit_strings(self, mocklcsv, mockrjson):
-
-        # test read_data Error call if json file is not found
-        mockrjson.side_effect = ValueError
-        with self.assertRaises(FileNotFoundError) as error:
-            gdd.get_divi_data(read_data=True, out_folder=self.path)
-        file_in = os.path.join(self.path, "Germany/FullData_DIVI.json")
-        error_message = "Error: The file: " + file_in + " does not exist. "\
-            "Call program without -r flag to get it."
-        self.assertEqual(str(error.exception), error_message)
-
-        # test loadCsv Error if file can't be downloaded
-        mocklcsv.side_effect = FileNotFoundError
-        with self.assertRaises(FileNotFoundError) as error:
-            gdd.get_divi_data(read_data=False)
-        error_message = "Error: Download link for Divi data has changed."
-        self.assertEqual(str(error.exception), error_message)
-
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
-    def test_df_empty(self, mocklcsv):
-
-        # new test function because of the new mock value
-        # test Error for empty returned dataframe
-        mocklcsv.value = pd.DataFrame()
-        with self.assertRaises(gd.DataError) as error:
-            gdd.get_divi_data(read_data=False)
-        error_message = "Something went wrong, dataframe is empty."
-        self.assertEqual(str(error.exception), error_message)
-
     @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
-    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
+    @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
-    def test_get_divi_data_prints(self, mock_print, mock_csv, mock_san):
-        mock_csv.return_value = self.df_test
+    def test_get_divi_data_prints(self, mock_print, mock_file, mock_san):
+        mock_file.return_value = self.df_test
         # case with start_date before 2020-04-24
         gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
         expected_call = [
@@ -112,10 +80,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_san.assert_has_calls([call(self.df_test)])
 
     @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
-    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
+    @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
-    def test_get_divi_data(self, mock_print, mock_csv, mock_san):
-        mock_csv.return_value = self.df_test
+    def test_get_divi_data(self, mock_print, mock_file, mock_san):
+        mock_file.return_value = self.df_test
         # test case with standard parameters
         (df, df_county, df_states, df_ger) = gdd.get_divi_data(out_folder=self.path)
         mock_san.assert_has_calls([call(self.df_test)])
@@ -148,10 +116,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             2)
 
     @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
-    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
+    @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
-    def test_gdd_ma(self, mock_print, mock_csv, mock_san):
-        mock_csv.return_value = self.df_test
+    def test_gdd_ma(self, mock_print, mock_file, mock_san):
+        mock_file.return_value = self.df_test
         # test case with moving average
         (df, df_county, df_states, df_ger) = gdd.get_divi_data(
             out_folder=self.path, moving_average=3)
@@ -185,14 +153,15 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             13+(1/3.0))
 
     @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
-    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
+    @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
-    def test_gdd_all_dates(self, mock_print, mock_csv, mock_san):
-        mock_csv.return_value = self.df_test
+    def test_gdd_all_dates(self, mock_print, mock_file, mock_san):
+        mock_file.return_value = self.df_test.copy()
         # test case with impute dates is True
         (df, df_county, df_states, df_ger) = gdd.get_divi_data(
             out_folder=self.path, impute_dates=True)
-        mock_san.assert_has_calls([call(self.df_test)])
+        # Test if sanity check was called
+        self.assertTrue(mock_san.called)
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertEqual(
             df_ger[df_ger["Date"] == "2021-05-26"]["ICU"].item(), 119)
@@ -221,9 +190,9 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              (df_county["ID_County"] == 1051)]["ICU_ventilated"].item(),
             6)
 
-    @patch('memilio.epidata.getDIVIData.pd.read_json',
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
            return_value=df_test_error)
-    def test_divi_data_sanity_checks(self, mockrjson3):
+    def test_divi_data_sanity_checks(self, mock_file):
 
         # first test
         # get random dataframe
@@ -234,7 +203,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         # second test
-        # get dataframe with 11 columns but different names
+        # get dataframe with 13 columns but different names
         df = pd.DataFrame(
             {'date_fake': [1, 2, 3],
              '6': [6, 7, 8],
@@ -244,6 +213,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              '9': [9, 0, 1],
              '10': [0, 1, 2],
              '11': [0, 0, 0],
+             'a': [0, 1, 2],
+             'b': [0, 0, 0],
              'gemeindeschluessel_fake': [3, 4, 5],
              'faelle_covid_aktuell_fake': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
@@ -253,16 +224,18 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         # third test
-        # get dataframe with 11 columns and same headers but only 3 rows
+        # get dataframe with 13 columns and same headers but only 3 rows
         df = pd.DataFrame(
-            {'date': [1, 2, 3],
+            {'datum': [1, 2, 3],
              '6': [6, 7, 8],
              '7': [7, 8, 9],
              '8': [8, 9, 0],
-             'bundesland': [2, 3, 4],
-             '9': [9, 0, 1],
-             '10': [0, 1, 2],
-             '11': [0, 0, 0],
+             'bundesland_name': ['a', 'b', 'c'],
+             'bundesland_id': [9, 0, 1],
+             'landkreis_name': ['def', 'asd', 'xyz'],
+             'landkreis_id': [182041, 767890, 1],
+             'a': [0, 1, 2],
+             'b': [0, 0, 0],
              'gemeindeschluessel': [3, 4, 5],
              'faelle_covid_aktuell': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})

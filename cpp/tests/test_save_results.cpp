@@ -18,16 +18,17 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
+#include "matchers.h"
+#include "temp_file_register.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/io/result_io.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/time_series.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/io/result_io.h"
-#include "temp_file_register.h"
 #include <gtest/gtest.h>
 #include <string>
-#include "matchers.h"
-#include "memilio/compartments/parameter_studies.h"
 
 TEST(TestSaveResult, save_result)
 {
@@ -112,6 +113,7 @@ TEST(TestSaveResult, save_result)
 
 TEST(TestSaveResult, save_result_with_params)
 {
+    mio::set_log_level(mio::LogLevel::err); // suppress warnings because this is inevatible here
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -124,12 +126,16 @@ TEST(TestSaveResult, save_result_with_params)
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.9;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+
+        params.get<mio::osecir::Seasonality>()          = 0.0;
+        params.get<mio::osecir::ICUCapacity>()          = 0.09;
+        params.get<mio::osecir::TestAndTraceCapacity>() = 0.09;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
@@ -145,6 +151,7 @@ TEST(TestSaveResult, save_result_with_params)
         params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
         params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()   = 0.85;
         params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
         params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
@@ -158,10 +165,11 @@ TEST(TestSaveResult, save_result_with_params)
     auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -172,12 +180,11 @@ TEST(TestSaveResult, save_result_with_params)
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_status = mio::IOResult<void>(mio::success());
-    auto run_idx            = size_t(0);
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
-        [&](auto results_graph) {
+        [&](auto results_graph, auto run_idx) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -190,7 +197,7 @@ TEST(TestSaveResult, save_result_with_params)
             save_result_status = save_result_with_params(ensemble_results.back(), ensemble_params.back(), {0, 1},
                                                          tmp_results_dir, run_idx);
 
-            ++run_idx;
+            return 0; //function needs to return something
         });
     ASSERT_TRUE(save_result_status);
     auto results_from_file = mio::read_result(tmp_results_dir + "/run0/Result.h5");
@@ -233,12 +240,16 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.8;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+
+        params.get<mio::osecir::Seasonality>()          = 0.0;
+        params.get<mio::osecir::ICUCapacity>()          = 100.0;
+        params.get<mio::osecir::TestAndTraceCapacity>() = 10.0;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
@@ -254,6 +265,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
         params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
         params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()   = 0.85;
         params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
         params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
@@ -267,10 +279,11 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -280,12 +293,11 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
-    auto run_idx = size_t(0);
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
-        [&](auto results_graph) {
+        [&](auto results_graph, auto /*run_idx*/) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -294,7 +306,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                            std::back_inserter(ensemble_params.back()), [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
-            ++run_idx;
+            return 0; //function needs to return something
         });
 
     auto save_results_status = save_results(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir);

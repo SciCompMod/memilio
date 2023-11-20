@@ -1,6 +1,5 @@
 name: "📚 Documentation"
 description: "Report Documentation Issues."
-title: "[Doc]"
 labels:
   - "class::documentation"
 body:

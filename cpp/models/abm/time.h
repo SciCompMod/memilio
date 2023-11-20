@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -198,6 +198,14 @@ public:
     }
 
     /**
+     * @brief If the current time is on a weekend, e.g. day_of_the_week is 5 = Sat or 6 = Sun.
+     */
+    bool is_weekend() const
+    {
+        return (day_of_week() > 4) ? true : false;
+    }
+
+    /**
      * @brief Hour in the current day (0 - 23).
      */
     int hour_of_day() const
@@ -314,6 +322,11 @@ inline TimeSpan hours(int hours)
 inline TimeSpan days(int days)
 {
     return TimeSpan(days * 24 * 60 * 60);
+}
+
+inline TimeSpan days(double days)
+{
+    return TimeSpan((int)(days * 24 * 60 * 60));
 }
 
 } // namespace abm

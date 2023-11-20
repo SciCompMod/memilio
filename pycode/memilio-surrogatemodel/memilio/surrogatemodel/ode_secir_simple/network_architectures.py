@@ -19,7 +19,7 @@
 #############################################################################
 import tensorflow as tf
 
-# here we present the best models based on the grid serach 
+# here we present the best models based on the grid serach
 
 
 def mlp_multi_input_single_output():
@@ -36,7 +36,6 @@ def mlp_multi_input_single_output():
     return model
 
 
-
 def mlp_multi_input_multi_output(label_width):
     """! Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for one single time step.
 
@@ -47,11 +46,11 @@ def mlp_multi_input_multi_output(label_width):
         tf.keras.layers.Dense(units=512, activation='relu'),
         tf.keras.layers.Dense(units=512, activation='relu'),
         tf.keras.layers.Dense(units=512, activation='relu'),
-        tf.keras.layers.Dense(units=512, activation='relu'),        
+        tf.keras.layers.Dense(units=512, activation='relu'),
         tf.keras.layers.Dense(units=label_width*8),
-        tf.keras.layers.Reshape([label_width,8])
-        ])
-        
+        tf.keras.layers.Reshape([label_width, 8])
+    ])
+
     return model
 
 
@@ -90,7 +89,6 @@ def cnn_multi_input_multi_output(label_width, conv_size=3):
     return model
 
 
-
 def cnn_multi_input_multi_output_best(label_width, conv_size=3):
     """! CNN Network which uses multiple time steps as input and returns the 8 compartments for multiple time step in the future.
 
@@ -109,9 +107,9 @@ def cnn_multi_input_multi_output_best(label_width, conv_size=3):
                                kernel_size=(conv_size)),
         tf.keras.layers.Dense(units=32, activation='relu'),
         tf.keras.layers.Dense(label_width*num_outputs,
-                                    kernel_initializer=tf.initializers.zeros()),
+                              kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, num_outputs])
-        ])
+    ])
     return model
 
 

@@ -42,7 +42,8 @@ defaultDict = {
     'read_data': False,
     'make_plot': False,
     'out_folder': default_file_path,
-    'start_date': date(2020, 4, 24),
+    'update_data': False,
+    'start_date': date(2020, 1, 1),
     'end_date': date.today(),
     'split_berlin': False,
     'impute_dates': False,
@@ -94,6 +95,7 @@ EngEng = {
     'vaccPartial': "Vacc_partially",
     'vaccComplete': "Vacc_completed",
     'vaccRefresh': "Vacc_refreshed",
+    'vaccNotComplete': "Vacc_not_completed",
     # test data
     'positiveRate': 'Positive_rate',
     # NPI data
@@ -102,16 +104,24 @@ EngEng = {
     'nuts3': 'NUTS3',
     'total_volume': 'Unique_trips',
     'region_name': 'County',
-    'region_id': 'ID_County'
+    'region_id': 'ID_County',
+    'desc': 'Description',
+    'incidence': 'Incidence'
 }
 
 GerEng = {
+    'datum': EngEng['date'],
+    'date': EngEng['date'],
     'Geschlecht': EngEng['gender'],
     'AnzahlFall': EngEng['confirmed'],
     'AnzahlGenesen': EngEng['recovered'],
     'AnzahlTodesfall': EngEng['deaths'],
     'IdBundesland': EngEng['idState'],
     'Bundesland': EngEng['state'],
+    'bundesland_id': EngEng['idState'],
+    'landkreis_id': EngEng['idCounty'],
+    'bundesland_name': EngEng['state'],
+    'landkreis_name': EngEng['county'],
     'IdLandkreis': EngEng['idCounty'],
     'Landkreis': EngEng['county'],
     'Altersgruppe': EngEng['ageRKI'],

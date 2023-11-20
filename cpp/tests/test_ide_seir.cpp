@@ -25,7 +25,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <gtest/gtest.h>
 
-TEST(TestIdeSeirMin, simulateDefault)
+TEST(ModelTestIdeSeirMin, simulateDefault)
 {
     int tmax  = 1;
     double dt = 0.1;
@@ -38,7 +38,7 @@ TEST(TestIdeSeirMin, simulateDefault)
         init.add_time_point(init.get_last_time() + dt, Vec::Constant(1, 10.));
     }
 
-    mio::iseir::IdeSeirModel model(std::move(init), dt, 10);
+    mio::iseir::Model model(std::move(init), dt, 10);
     model.simulate(tmax);
     auto result = model.calculate_EIR();
 
@@ -47,7 +47,7 @@ TEST(TestIdeSeirMin, simulateDefault)
     EXPECT_NEAR(result.get_last_time(), (double)tmax + 0.1, 1e-10);
 }
 
-class TestIdeSeir : public testing::Test
+class ModelTestIdeSeir : public testing::Test
 {
 protected:
     virtual void SetUp()
@@ -63,7 +63,7 @@ protected:
                                   Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time()));
         }
 
-        model = new mio::iseir::IdeSeirModel(std::move(result), dt, N);
+        model = new mio::iseir::Model(std::move(result), dt, N);
 
         model->parameters.set<mio::iseir::LatencyTime>(3.3);
         model->parameters.set<mio::iseir::InfectiousTime>(8.2);
@@ -80,10 +80,10 @@ protected:
     }
 
 public:
-    mio::iseir::IdeSeirModel* model = nullptr;
+    mio::iseir::Model* model = nullptr;
 };
 
-TEST_F(TestIdeSeir, compareWithPreviousRun)
+TEST_F(ModelTestIdeSeir, compareWithPreviousRun)
 {
 
     auto compare = load_test_data_csv<double>("ide-seir-compare.csv");

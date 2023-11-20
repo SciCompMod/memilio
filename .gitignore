@@ -280,3 +280,12 @@ pycode/machine learning/data/*
 pycode/machine learning/model/GNN/data/commuter_migration_scaled.txt
 .vscode/settings.json
 data/pydata/Germany/county_population_dim401.json
+
+data/pydata
+.vscode/*
+commuter_work.txt
+tools/vg2500_12-31.utm32s.shape/
+pycode/examples/plot/plot_gif
+results_paper/
+cpp/.vscode/*
+data/contacts/contacts_transport.txt

@@ -1,6 +1,5 @@
 name: "⭐️ Feature"
 description: "Use this template to propose a new feature for MEmilio"
-title: "[Feature]"
 labels:
   - "class::feature"
 body:

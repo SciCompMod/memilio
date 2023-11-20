@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -26,7 +26,7 @@
 #include "utils/parameter_set.h"
 #include "utils/index.h"
 #include "mobility/graph_simulation.h"
-#include "mobility/meta_mobility_instant.h"
+#include "mobility/metapopulation_mobility_instant.h"
 #include "ode_secir/model.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
@@ -57,7 +57,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
  * @brief bind ParameterStudy for any model
  */
 template <class Simulation>
-void bind_ParameterStudy(py::module& m, std::string const& name)
+void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
     py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
@@ -82,13 +82,19 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def(
             "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>
+                   handle_result) {
                 self.run(
                     [](auto&& g) {
                         return draw_sample(g);
                     },
-                    [&handle_result](auto&& g) {
-                        handle_result(std::move(g));
+                    [&handle_result](auto&& g, auto&& run_idx) {
+                        //handle_result_function needs to return something
+                        //we don't want to run an unknown python object through parameterstudies, so
+                        //we just return 0 and ignore the list returned by run().
+                        //So python will behave slightly different than c++
+                        handle_result(std::move(g), run_idx);
+                        return 0;
                     });
             },
             py::arg("handle_result_func"))
@@ -100,13 +106,14 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
              })
         .def(
             "run_single",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
+            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation, size_t)> handle_result) {
                 self.run(
                     [](auto&& g) {
                         return draw_sample(g);
                     },
-                    [&handle_result](auto&& r) {
-                        handle_result(std::move(r.nodes()[0].property.get_simulation()));
+                    [&handle_result](auto&& r, auto&& run_idx) {
+                        handle_result(std::move(r.nodes()[0].property.get_simulation()), run_idx);
+                        return 0;
                     });
             },
             py::arg("handle_result_func"))
@@ -163,13 +170,13 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Susceptible", mio::osecir::InfectionState::Susceptible)
         .value("Exposed", mio::osecir::InfectionState::Exposed)
         .value("InfectedNoSymptoms", mio::osecir::InfectionState::InfectedNoSymptoms)
+        .value("InfectedNoSymptomsConfirmed", mio::osecir::InfectionState::InfectedNoSymptomsConfirmed)
         .value("InfectedSymptoms", mio::osecir::InfectionState::InfectedSymptoms)
+        .value("InfectedSymptomsConfirmed", mio::osecir::InfectionState::InfectedSymptomsConfirmed)
         .value("InfectedSevere", mio::osecir::InfectionState::InfectedSevere)
         .value("InfectedCritical", mio::osecir::InfectionState::InfectedCritical)
         .value("Recovered", mio::osecir::InfectionState::Recovered)
         .value("Dead", mio::osecir::InfectionState::Dead);
-
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
     pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
 
@@ -180,7 +187,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
                                                                                                            "ModelBase");
     py::class_<mio::osecir::Model,

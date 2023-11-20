@@ -14,28 +14,34 @@ The model consists of the following major classes:
 
 The simulation runs in discrete time steps. Each step is in two phases, an interaction phase and a migration phase. 
 
-First each person interacts with the other persons at the same location. This interaction determines their infection state transitions. A susceptible person may become exposed by contact with a carrier, an asymptomatic carrier can become symptomatic (infected), etc. The transitions are determined by chance. The probability of a transition depends on the parameters of the infection and the population at this location. 
+First each person interacts with the other persons at the same location. This interaction determines their infection state transitions. A susceptible person may become exposed by contact with an infected person without symptoms. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infectee and the immunity level of the susceptible person.
 
 During the migration phase, each person may change location. Migration follows complex rules, taking into account the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend).
 
 The result of the simulation is for each time step the count of persons in each infection state at that time.
 
 ## Example
-An example can also be found at examples/abm.cpp
+An example can also be found at simulations/abm.cpp
 ```
-    //setup the infection parameters
-    mio::abm::GlobalInfectionParameters params;
-    params.incubation_period = 4.7;
+    size_t NUM_AGE_GROUPS         = 4;
+    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 4);
+    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 3);
+    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
+    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 1);
+
+    // Create the world with 4 age groups.
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
+    //setup the parameters
+    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
     //...
 
     //create the world with some nodes and persons
-    mio::abm::World world = mio::abm::World(params);
     mio::abm::Location& home = world.add_location(mio::abm::LocationType::Home);
     mio::abm::Location& school = world.add_location(mio::abm::LocationType::School);
     mio::abm::Location& work = world.add_location(mio::abm::LocationType::Work);
     mio::abm::Person& p1 = world.add_person(home, mio::abm::InfectionState::Susceptible);
     mio::abm::Person& p2 = world.add_person(home, mio::abm::InfectionState::Susceptible);
-    mio::abm::Person& p3 = world.add_person(home, mio::abm::InfectionState::Carrier);
+    mio::abm::Person& p3 = world.add_person(home, mio::abm::InfectionState::InfectedNoSymptoms);
     mio::abm::Person& p4 = world.add_person(home, mio::abm::InfectionState::Susceptible);
 
     //setup the simulation

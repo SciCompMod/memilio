@@ -24,11 +24,9 @@
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/eigen_util.h"
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wc++17-extensions")
 #include "boost/outcome/result.hpp"
 #include "boost/outcome/try.hpp"
-GCC_CLANG_DIAGNOSTIC(pop)
+#include "boost/optional.hpp"
 #include <tuple>
 #include <iostream>
 
@@ -54,6 +52,8 @@ enum class StatusCode
 
 /**
  * flags to determine the behavior of the serialization process.
+ * Objects must be deseralized with the same set of flags as
+ * they were serialized.
  */
 enum IOFlags
 {
@@ -73,6 +73,12 @@ enum IOFlags
      * from which new values can be sampled, e.g., UncertainValue.
      */
     IOF_OmitValues = 1 << 1,
+
+    /**
+    * Include type info in the serialization.
+    * Can Increase file size a lot, mostly for debugging.
+    */
+    IOF_IncludeTypeInfo = 1 << 2,
 };
 
 } // namespace mio
@@ -428,17 +434,17 @@ struct IsIOResult<IOResult<T>> : std::true_type {
 //if F(T...) returns an IOResult<U>, apply returns that directly
 //if F(T...) returns a different type U, apply returns IOResult<U>
 template <class F, class... T>
-using ApplyResultT = FlattenIOResultT<std::result_of_t<F(T...)>>;
+using ApplyResultT = FlattenIOResultT<std::invoke_result_t<F, T...>>;
 
 //evaluates the function f using the values of the given IOResults as arguments, assumes all IOResults are succesful
 //overload for functions that do internal validation, so return an IOResult
-template <class F, class... T, std::enable_if_t<IsIOResult<std::result_of_t<F(T...)>>::value, void*> = nullptr>
+template <class F, class... T, std::enable_if_t<IsIOResult<std::invoke_result_t<F, T...>>::value, void*> = nullptr>
 ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
 {
     return f(rs.value()...);
 }
 //overload for functions that can't fail because all values are acceptable, so return some other type
-template <class F, class... T, std::enable_if_t<!IsIOResult<std::result_of_t<F(T...)>>::value, void*> = nullptr>
+template <class F, class... T, std::enable_if_t<!IsIOResult<std::invoke_result_t<F, T...>>::value, void*> = nullptr>
 ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
 {
     return success(f(rs.value()...));

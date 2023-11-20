@@ -21,19 +21,25 @@ add_library(memilio
     epidemiology/simulation_day.h
     geography/holiday_data.ipp
     compartments/compartmentalmodel.h
+    compartments/flow_model.h
     compartments/simulation.h
+    compartments/flow_simulation.h
     compartments/parameter_studies.h
     io/io.h
     io/io.cpp
     io/hdf5_cpp.h
     io/json_serializer.h
     io/json_serializer.cpp
+    io/binary_serializer.h
+    io/binary_serializer.cpp
+    io/history.h
     io/mobility_io.h
     io/mobility_io.cpp
     io/result_io.h
     io/result_io.cpp
     io/epi_data.h
     io/epi_data.cpp
+    io/cli.h
     math/euler.cpp
     math/euler.h
     math/smoother.h
@@ -49,8 +55,10 @@ add_library(memilio
     math/matrix_shape.cpp
     math/interpolation.h
     math/interpolation.cpp
-    mobility/meta_mobility_instant.h
-    mobility/meta_mobility_instant.cpp
+    mobility/metapopulation_mobility_instant.h
+    mobility/metapopulation_mobility_instant.cpp
+    mobility/metapopulation_mobility_stochastic.h
+    mobility/metapopulation_mobility_stochastic.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h
@@ -58,7 +66,9 @@ add_library(memilio
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp
+    utils/index_range.h
     utils/index.h
+    utils/flow.h
     utils/custom_index_array.h
     utils/memory.h
     utils/parameter_distributions.h
@@ -74,6 +84,10 @@ add_library(memilio
     utils/date.cpp
     utils/random_number_generator.h
     utils/random_number_generator.cpp
+    utils/miompi.h
+    utils/miompi.cpp
+    utils/mioomp.h
+    utils/type_list.h
 )
 
 target_include_directories(memilio PUBLIC
@@ -82,8 +96,8 @@ target_include_directories(memilio PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features(memilio PUBLIC cxx_std_14)
-target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking)
+target_compile_features(memilio PUBLIC cxx_std_17)
+target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123)
 target_compile_options(memilio
     PRIVATE
     ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
@@ -98,4 +112,12 @@ endif()
 
 if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
+endif()
+
+if(MEMILIO_ENABLE_MPI)
+    target_link_libraries(memilio PUBLIC MPI::MPI_CXX)
+endif()
+
+if(MEMILIO_ENABLE_OPENMP)
+    target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
 endif()

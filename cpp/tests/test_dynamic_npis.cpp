@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/epidemiology/dynamic_npis.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "ode_secir/model.h"
 #include "matchers.h"
 
@@ -89,8 +89,8 @@ TEST(DynamicNPIs, get_active_damping)
     dampexpr.add_damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.4));
     dampexpr.add_damping(0.6, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.6));
     dampexpr.add_damping(0.5, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5));
-    dampexpr.add_damping(0.7, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7));
-    dampexpr.add_damping(0.9, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9));
+    dampexpr.add_damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7));
+    dampexpr.add_damping(0.5, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9));
 
     auto a = mio::get_active_damping(dampexpr, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6));
     EXPECT_EQ(print_wrap(a), print_wrap(Eigen::MatrixXd::Constant(1, 1, 0.4)));
@@ -100,6 +100,9 @@ TEST(DynamicNPIs, get_active_damping)
 
     auto c = mio::get_active_damping(dampexpr, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.4));
     EXPECT_EQ(print_wrap(c), print_wrap(Eigen::MatrixXd::Constant(1, 1, 0.0)));
+
+    auto d = mio::get_active_damping(dampexpr, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.8));
+    EXPECT_EQ(print_wrap(d), print_wrap(Eigen::MatrixXd::Constant(1, 1, 0.4)));
 }
 
 TEST(DynamicNPIs, get_active_damping_empty)
@@ -147,17 +150,17 @@ TEST(DynamicNPIs, implement)
         return (Eigen::MatrixXd(3, 1) << g(0, 0), g(1, 0), g(2, 0)).finished();
     };
 
-    dampexprs[0].add_damping(0.3, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.3));
-    dampexprs[0].add_damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.4));
-    dampexprs[0].add_damping(0.5, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5));
-    dampexprs[0].add_damping(0.7, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7));
+    dampexprs[0].add_damping(0.15, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.3));
+    dampexprs[0].add_damping(0.2, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.4));
+    dampexprs[0].add_damping(0.25, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5));
+    dampexprs[0].add_damping(0.35, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7));
 
-    dampexprs[1].add_damping(0.5, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.5));
-    dampexprs[1].add_damping(0.9, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9));
+    dampexprs[1].add_damping(0.25, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.5));
+    dampexprs[1].add_damping(0.45, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9));
 
     {
         auto dynamic_npis = std::vector<mio::DampingSampling>(
-            {mio::DampingSampling(0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0, 1},
+            {mio::DampingSampling(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0, 1},
                                   Eigen::MatrixXd::Ones(3, 1))});
         mio::implement_dynamic_npis(dampexprs, dynamic_npis, mio::SimulationTime(0.45), mio::SimulationTime(0.6),
                                     make_mask);
@@ -166,24 +169,24 @@ TEST(DynamicNPIs, implement)
     EXPECT_THAT(
         dampexprs[0].get_dampings(),
         testing::ElementsAre(
-            Damping(0.3, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.3), 3, 1), //before npi
-            Damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.4), 3, 1), //before npi
-            Damping(0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3, 1), //npi begins
-            Damping(0.5, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1), //other type
-            Damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6), 3, 1), //npi ends
-            Damping(0.7, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7), 3, 1))); //after npi
+            Damping(0.15, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.3), 3, 1), //before npi
+            Damping(0.2, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.4), 3, 1), //before npi
+            Damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3, 1), //npi begins
+            Damping(0.25, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1), //other type
+            Damping(0.2, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6), 3, 1), //npi ends
+            Damping(0.35, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7), 3, 1))); //after npi
 
     EXPECT_THAT(
         dampexprs[1].get_dampings(),
         testing::ElementsAre(
-            Damping(0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3, 1), //npi begins
-            Damping(0.5, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1), //other type/level
+            Damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3, 1), //npi begins
+            Damping(0.25, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1), //other type/level
             Damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6), 3, 1), //npi ends
-            Damping(0.9, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9), 3, 1))); //after npi
+            Damping(0.45, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9), 3, 1))); //after npi
 
     {
         auto dynamic_npis = std::vector<mio::DampingSampling>({mio::DampingSampling(
-            0.6, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::MatrixXd::Ones(3, 1))});
+            0.3, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::MatrixXd::Ones(3, 1))});
         mio::implement_dynamic_npis(dampexprs, dynamic_npis, mio::SimulationTime(0.3), mio::SimulationTime(0.9),
                                     make_mask);
     }
@@ -191,23 +194,23 @@ TEST(DynamicNPIs, implement)
     EXPECT_THAT(
         dampexprs[0].get_dampings(),
         testing::ElementsAre(
-            Damping(0.6, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.3), 3, 1), //new npi begins
-            Damping(0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3,
+            Damping(0.3, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.3), 3, 1), //new npi begins
+            Damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3,
                     1), //old npi begins, is kept because it's bigger
-            Damping(0.5, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1), //other type
-            Damping(0.6, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6), 3,
+            Damping(0.25, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1), //other type
+            Damping(0.3, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6), 3,
                     1), //old npi ends, down to value of new npi
             Damping(
-                0.7, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7), 3,
+                0.35, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7), 3,
                 1))); //bigger than new npi, new npi ends at t = 0.9, but is already overwritten here by a higher value
 
     //second matrix not changed by the new npi
     EXPECT_THAT(
         dampexprs[1].get_dampings(),
-        testing::ElementsAre(Damping(0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3, 1),
-                             Damping(0.5, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1),
+        testing::ElementsAre(Damping(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.45), 3, 1),
+                             Damping(0.25, mio::DampingLevel(1), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1),
                              Damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6), 3, 1),
-                             Damping(0.9, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9), 3, 1)));
+                             Damping(0.45, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9), 3, 1)));
 }
 
 namespace mio_test
@@ -262,8 +265,8 @@ void calculate_migration_returns(Eigen::Ref<mio::TimeSeries<double>::Vector>, co
 
 TEST(DynamicNPIs, migration)
 {
-    mio::SimulationNode<mio_test::DummySim> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
-    mio::SimulationNode<mio_test::DummySim> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
 
     auto last_state_safe = (Eigen::VectorXd(2) << 0.01, 0.99).finished();
     auto last_state_crit = (Eigen::VectorXd(2) << 0.02, 0.98).finished();

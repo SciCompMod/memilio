@@ -30,7 +30,7 @@ namespace pymio
 
 //bind class and add pickling based on memilio serialization framework
 template <class T, class... Args>
-decltype(auto) pybind_pickle_class(pybind11::module& m, const char* name)
+decltype(auto) pybind_pickle_class(pybind11::module_& m, const char* name)
 {
     decltype(auto) pickle_class = pybind11::class_<T, Args...>(m, name);
     pickle_class.def(pybind11::pickle(
@@ -101,8 +101,14 @@ void bind_shape_property(C& cl)
     });
 }
 
+/**
+* Bind a specialization of mio::Range class template.
+* The python class will be a read-only container/iterable.
+* You probably also want to use PYMIO_IGNORE_VALUE_TYPE to
+* enable copying and moving in all cases.
+*/
 template <class Range>
-auto bind_Range(pybind11::module& m, const std::string& class_name)
+auto bind_Range(pybind11::module_& m, const std::string& class_name)
 {
     //bindings for iterator for the range
     struct Iterator {
@@ -134,11 +140,30 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
         .def("__len__", &Range::size);
 }
 
+/**
+* A Range looks like a container, so pybind11 checks the value_type alias to see if 
+* the Range can be copied or moved. But since a Range is just a view and does not own its contents,
+* it can always be copied and moved, even if the value_type is uncopieable/unmovable.
+* This macro stops the value_type check.
+* see {Pybind11_SRC_DIR}/include/pybind11/detail/type_caster_base.h and {Pybind11_SRC_DIR}/tests/test_stl_binders.cpp
+*/
+#define PYMIO_IGNORE_VALUE_TYPE(Range)                                                                                 \
+    namespace pybind11                                                                                                 \
+    {                                                                                                                  \
+    namespace detail                                                                                                   \
+    {                                                                                                                  \
+    template <typename SFINAE>                                                                                         \
+    struct recursive_container_traits<Range, SFINAE> {                                                                 \
+        using type_to_check_recursively = recursive_bottom;                                                            \
+    };                                                                                                                 \
+    }                                                                                                                  \
+}
+
 //bind an enum class that can be iterated over
 //requires the class to have a member `Count`
 //adds a static `values` method to the enum class that returns an iterable list of the values
 template <class E, class... Args>
-auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
+auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args)
 {
     using T = std::underlying_type_t<E>;
 

@@ -45,6 +45,12 @@ class PylintCommand(Command):
                 report_file), do_exit=False)
 
 
+# Python-magic needs DLLs for libmagic. They have to be installed only on windows.
+if sys.platform == 'win32':
+    pymagic = 'python-magic-bin'
+else:
+    pymagic = 'python-magic'
+
 setup(
     name='memilio-epidata',
     version=__version__,
@@ -73,24 +79,29 @@ setup(
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
-        'pandas>=1.2.2',
+        'pandas>=2.0.0',
         'matplotlib',
         'tables',
-        'numpy>=1.22',  # smaller numpy versions cause a security issue
+        # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+        'numpy>=1.22,<1.25',
         'openpyxl',
         'xlrd',
+        'xlsxwriter',
         'requests',
         'pyxlsb',
-        'wget'
+        'wget',
+        'twill==3.1',
+        pymagic
     ],
     extras_require={
         'dev': [
-            # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
-            'pyfakefs>=4.2.1',
+            # first support of python 3.11
+            'pyfakefs>=4.6',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
-            'pylint<=2.11.1',
-            'pylint_json2html<=0.3.0',
+            # pylint 2.16 creates problem with wrapt package version
+            'pylint>=2.13.0,<2.16',
+            'pylint_json2html==0.4.0',
         ],
     },
     cmdclass={

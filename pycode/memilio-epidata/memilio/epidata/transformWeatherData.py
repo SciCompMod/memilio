@@ -29,6 +29,9 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def transformWeatherData(read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
@@ -61,7 +64,9 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
     if not read_data:
 
-        df_weather_old = gd.loadCsv('', 'wetterdaten', '.csv')
+        df_weather_old = pd.read_csv(
+            'https://opendata.arcgis.com/datasets/wetterdaten.csv', sep=',',
+            header=0, dtype=None)
         df_weather_old.rename(dd.GerEng, axis=1, inplace=True)
         col_old = ['kr_tamm_',  # average temperature
                    'kr_tadn_',  # temperature minimum
@@ -131,7 +136,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
             # get county-local data frame
             df_local_old = df_weather_old[df_weather_old[dd.EngEng['idCounty']]
-                                          == countyID].copy()
+                                          == countyID]
 
             # create columns for date, county ID and NPI code
             df_local_new = pd.DataFrame(columns=df_weather.columns)
@@ -162,16 +167,16 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                 max_date=max_date,
                 start_w_firstval=True)
 
-            df_weather = pd.concat([df_weather, df_local_new.copy()])
+            df_weather = pd.concat([df_weather, df_local_new])
 
         # reset index and drop old index column
-        df_weather.reset_index(inplace=True)
+        df_weather.reset_index(drop=False, inplace=True)
         try:
-            df_weather = df_weather.drop(columns='index')
+            df_weather.drop(columns='index', inplace=True)
         except KeyError:
             pass
         try:
-            df_weather = df_weather.drop(columns='level_0')
+            df_weather.drop(columns='level_0', inplace=True)
         except KeyError:
             pass
 

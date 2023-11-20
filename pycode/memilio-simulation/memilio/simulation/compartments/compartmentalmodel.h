@@ -31,13 +31,13 @@ namespace pymio
  * @brief bind a compartmental model for any Populations and Parameters class
  */
 template <class InfectionState, class Populations, class Parameters>
-void bind_CompartmentalModel(pybind11::module& m, std::string const& name)
+void bind_CompartmentalModel(pybind11::module_& m, std::string const& name)
 {
     using Model = mio::CompartmentalModel<InfectionState, Populations, Parameters>;
     pybind11::class_<Model>(m, name.c_str())
         .def(pybind11::init<Populations const&, Parameters const&>())
-        .def("apply_constraints", &Model::template apply_constraints<Parameters>)
-        .def("check_constraints", &Model::template check_constraints<Parameters>)
+        .def("apply_constraints", &Model::template apply_constraints)
+        .def("check_constraints", &Model::template check_constraints)
         .def("get_initial_values", &Model::get_initial_values)
         .def_property(
             "populations", [](const Model& self) -> auto& { return self.populations; },

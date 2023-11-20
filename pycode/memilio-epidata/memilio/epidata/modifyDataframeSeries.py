@@ -30,6 +30,9 @@ import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def impute_and_reduce_df(
         df_old, group_by_cols, mod_cols, impute='forward', moving_average=0,
@@ -38,7 +41,7 @@ def impute_and_reduce_df(
     Extracts Dates between min and max date.
 
     @param df_old old pandas dataframe
-    @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county oder federal state IDs)
+    @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county or federal state IDs)
     @param mod_cols List of columns for which the imputation and/or moving average is conducted (e.g., Confirmed or ICU)
     @param impute [Default: 'forward'] imputes either based on older values ('forward') or zeros ('zeros')
     @param moving_average [Default: 0, no averaging] Number of days over which to compute the moving average
@@ -62,7 +65,7 @@ def impute_and_reduce_df(
 
     # remove 'index' column if available
     try:
-        df_new = df_new.drop(columns='index')
+        df_new.drop(columns='index', inplace=True)
     except KeyError:
         pass
 
@@ -78,30 +81,29 @@ def impute_and_reduce_df(
     if isinstance(max_date, str) == True:
         max_date = datetime.strptime(max_date, "%Y-%m-%d")
 
-    start_date = min_date
-    end_date = max_date
     # shift start and end date for relevant dates to compute moving average.
     # if moving average is odd, both dates are shifted equaly.
     # if moving average is even, start date is shifted one day more than end date.
     if moving_average > 0:
-        end_date = end_date + timedelta(int(np.floor((moving_average-1)/2)))
-        start_date = start_date - timedelta(int(np.ceil((moving_average-1)/2)))
+        max_date = max_date + timedelta(int(np.floor((moving_average-1)/2)))
+        min_date = min_date - timedelta(int(np.ceil((moving_average-1)/2)))
 
-    idx = pd.date_range(start_date, end_date)
+    idx = pd.date_range(min_date, max_date)
 
     # create list of all possible groupby columns combinations
-    unique_ids = []
-    for group_key in group_by_cols.keys():
-        unique_ids.append(group_by_cols[group_key])
+    unique_ids = [group_by_cols[group_key]
+                  for group_key in group_by_cols.keys()]
     unique_ids_comb = list(itertools.product(*unique_ids))
     # create list of keys/group_by column names
     group_by = list(group_by_cols.keys())
-
+    # create to store DataFrames in to be concatenated.
+    # pd.concat is not called inside the loop for performance reasons.
+    df_list = [df_new]
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
+        # filter df
         df_local = df_old.copy()
         counter = 0
-        # filter df
         while counter < len(ids):
             df_local = df_local[df_local[group_by[counter]] == ids[counter]]
             counter += 1
@@ -114,9 +116,8 @@ def impute_and_reduce_df(
 
         if len(df_local) > 0:
             # create values for first date
-            values = {}
-            for column in df_local.columns:
-                values[column] = df_local[column][0]
+            values = {column: df_local[column][0]
+                      for column in df_local.columns}
             # depending on 'start_w_firstval', missing values at the beginning
             # of the frame will either be set to zero or to the first available
             # value in the data frame
@@ -126,19 +127,17 @@ def impute_and_reduce_df(
 
             if impute == 'zeros':
                 # impute zeros at missing dates
-                for keys, vals in values.items():
-                    df_local_new[keys].fillna(vals, inplace=True)
-            else:
+                df_local_new.fillna(values, inplace=True)
+            elif impute == 'forward':
                 # fill values of missing dates based on last entry
-                df_local_new.fillna(method='ffill', inplace=True)
+                df_local_new.ffill(inplace=True)
                 # fill value of the first date, if it doesn't exist yet
-                # has to be conducted in second step to not impute 'value'
-                # at first missing value if start is present
-                for keys, vals in values.items():
-                    df_local_new[keys].fillna(vals, limit=1, inplace=True)
-                # fill remaining values (between first date and first
+                # and remaining values (between first date and first
                 # reported date of the df_local)
-                df_local_new.fillna(method='ffill', inplace=True)
+                df_local_new.fillna(values, inplace=True)
+            else:
+                raise ValueError(
+                    'Invalid imputation method. Expected zeros or forward. Got ' + str(impute) + '.')
 
             # compute 'moving average'-days moving average
             if moving_average > 0:
@@ -172,13 +171,11 @@ def impute_and_reduce_df(
             # TODO: by this the corresponding columns will be zero-filled
             #       other entries such as names etc will get lost here
             #       any idea to introduce these names has to be found.
-            for keys, vals in values.items():
-                df_local_new[keys].fillna(vals, inplace=True)
-
+            df_local_new.fillna(values, inplace=True)
         # append current local entity (i.e., county or state)
-        df_new = pd.concat([df_new, df_local_new])
-        # rearrange indices from 0 to N
-        df_new.index = (range(len(df_new)))
+        df_list.append(df_local_new)
+
+    df_new = pd.concat(df_list, ignore_index=True)
 
     # extract min and max date
     df_new = extract_subframe_based_on_dates(df_new, min_date, max_date)
@@ -188,7 +185,7 @@ def impute_and_reduce_df(
 
 def split_column_based_on_values(
         df_to_split, column_to_split, column_vals_name, groupby_list,
-        new_column_labels, compute_cumsum):
+        column_identifiers_to_names_dict, compute_cumsum):
     """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
     all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
 
@@ -196,17 +193,25 @@ def split_column_based_on_values(
     @param column_to_split identifier of the column for which separate values will define separate dataframes
     @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
     @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
-    @param new_column_labels New labels for resulting columns. There have to be the same amount of names and unique values as in groupby_list.
+    @param column_identifiers_to_names_dict Dict for new labels of resulting columns.
     @param compute_cumsum Computes cumulative sum in new generated columns
     @return a dataframe with the new splitted columns
     """
-    # TODO: Maybe we should input a map e.g. 1->Vacc_partially, 2->Vacc_completed etc. This is more future proof.
-    # check number of given names and correct if necessary
     column_identifiers = sorted(df_to_split[column_to_split].unique())
-    i = 2
-    while len(column_identifiers) > len(new_column_labels):
-        new_column_labels.append(new_column_labels[-1]+'_'+str(i))
-        i += 1
+    new_column_labels = []
+    # for column identifiers not in column_identifiers_to_names_dict.keys()
+    # use the dict value with key 'additional identifiers' and add _2,_3,_4...
+    key_to_start_count = [
+        key for key, value in column_identifiers_to_names_dict.items()
+        if value == column_identifiers_to_names_dict['additional identifiers']][0]
+
+    for i in column_identifiers:
+        if i in column_identifiers_to_names_dict.keys():
+            new_column_labels.append(column_identifiers_to_names_dict[i])
+        else:
+            new_column_labels.append(
+                column_identifiers_to_names_dict['additional identifiers'] + '_' +
+                str(i - key_to_start_count + 1))
 
     # create empty copy of the df_to_split
     df_joined = pd.DataFrame(
@@ -270,7 +275,7 @@ def insert_column_by_map(df, col_to_map, new_col_name, map):
     @param map List of tuples of values in the column to be added and values in the given column
     @return dataframe df with column of state names correspomding to state ids
     """
-    df_new = df.copy()
+    df_new = df[:]
     loc_new_col = df_new.columns.get_loc(col_to_map)+1
     df_new.insert(loc=loc_new_col, column=new_col_name,
                   value=df_new[col_to_map])
