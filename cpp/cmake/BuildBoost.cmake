@@ -38,7 +38,7 @@ add_library(boost_filesystem STATIC
 target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
 set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_library(Boost::filesystem ALIAS boost_filesystem)
-if(NOT MSVC)
+if(NOT MSVC) #on gcc and clang apple we need to define BOOST_NO_CXX98_FUNCTION_BASE because a deprecated function is sometimes used in boost 
     target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
 endif( )
 
