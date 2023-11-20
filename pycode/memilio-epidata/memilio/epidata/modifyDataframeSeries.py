@@ -58,17 +58,6 @@ def impute_and_reduce_df(
         df_old[dd.EngEng['date']] = pd.to_datetime(df_old[dd.EngEng['date']])
         df_old.Date = df_old.Date.dt.date.astype(df_old.dtypes.Date)
 
-    # create empty copy of the df
-    df_new = pd.DataFrame(columns=df_old.columns)
-    # make pandas use the same data types....
-    df_new = df_new.astype(dtype=dict(zip(df_old.columns, df_old.dtypes)))
-
-    # remove 'index' column if available
-    try:
-        df_new.drop(columns='index', inplace=True)
-    except KeyError:
-        pass
-
     # range of dates which should be filled
     if min_date == '':
         min_date = min(df_old[dd.EngEng['date']])
@@ -96,9 +85,9 @@ def impute_and_reduce_df(
     unique_ids_comb = list(itertools.product(*unique_ids))
     # create list of keys/group_by column names
     group_by = list(group_by_cols.keys())
-    # create to store DataFrames in to be concatenated.
+    # create list to store DataFrames in to be concatenated.
     # pd.concat is not called inside the loop for performance reasons.
-    df_list = [df_new]
+    df_list = []
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
         # filter df
