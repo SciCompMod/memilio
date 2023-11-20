@@ -122,10 +122,10 @@ struct TimeInfectedCritical {
 * @brief the percentage of symptomatic cases
 */
 struct SymptomsPerInfectedNoSymptoms {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -137,10 +137,10 @@ struct SymptomsPerInfectedNoSymptoms {
 * @brief the percentage of hospitalized patients per infected patients
 */
 struct SeverePerInfectedSymptoms {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -152,10 +152,10 @@ struct SeverePerInfectedSymptoms {
 * @brief the percentage of ICU patients per hospitalized patients
 */
 struct CriticalPerInfectedSevere {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -167,10 +167,10 @@ struct CriticalPerInfectedSevere {
 * @brief the percentage of dead patients per ICU patients
 */
 struct DeathsPerInfectedCritical {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -613,77 +613,87 @@ public:
     bool check_constraints() const
     {
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
+            for (auto&& v : enum_members<VirusVariant>()) {
 
-            if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}].params.a() < 0) {
-                log_error("Constraint check: Lower end of parameter range IncubationPeriod of age group {:.0f} smaller "
-                          "than {:.4f}",
-                          (size_t)i, 0);
-                return true;
-            }
+                if (this->get<IncubationPeriod>()[{v, i}].params.a() < 0) {
+                    log_error("Constraint check: Lower end of parameter range IncubationPeriod of virus variant {} and "
+                              "age group {:.0f} smaller "
+                              "than {:.4f}",
+                              v, (size_t)i, 0);
+                    return true;
+                }
 
-            if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller than {:d}",
-                    (size_t)i, 0);
-                return true;
-            }
+                if (this->get<TimeInfectedNoSymptoms>()[{v, i}].params.a() < 0.0) {
+                    log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptoms of virus variant "
+                              "{} and age group {:.0f} smaller "
+                              "than {:d}",
+                              v, (size_t)i, 0);
+                    return true;
+                }
 
-            if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller than {:d}",
-                    (size_t)i, 0);
-                return true;
-            }
+                if (this->get<TimeInfectedSymptoms>()[{v, i}].params.a() < 0.0) {
+                    log_error("Constraint check: Lower end of parameter range TimeInfectedSymptoms of virus variant {} "
+                              "and age group {:.0f} smaller "
+                              "than {:d}",
+                              v, (size_t)i, 0);
+                    return true;
+                }
 
-            if (this->get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedSymptomsToRecovered of age group {:.0f} smaller than {:d}",
-                    (size_t)i, 0);
-                return true;
-            }
+                if (this->get<TimeInfectedSevere>()[{v, i}].params.a() < 0.0) {
+                    log_error("Constraint check: Lower end of parameter range TimeInfectedSevere of virus variant {} "
+                              "and age group {:.0f} smaller "
+                              "than {:d}",
+                              v, (size_t)i, 0);
+                    return true;
+                }
 
-            if (this->get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter InfectedSymptomsToSevere of age group {:.0f} smaller than {:d}",
-                          (size_t)i, 0);
-                return true;
-            }
+                if (this->get<TimeInfectedCritical>()[{v, i}].params.a() < 0.0) {
+                    log_error("Constraint check: Lower end of parameter range TimeInfectedCritical of virus variant {} "
+                              "and age group {:.0f} smaller "
+                              "than {:d}",
+                              v, (size_t)i, 0);
+                    return true;
+                }
 
-            if (this->get<SevereToCritical>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller than {:d}",
-                          (size_t)i, 0);
-                return true;
-            }
+                if (this->get<SymptomsPerInfectedNoSymptoms>()[{v, i}] < 0.0 ||
+                    this->get<SymptomsPerInfectedNoSymptoms>()[{v, i}] > 1.0) {
+                    log_error("Constraint check: Parameter SymptomsPerInfectedNoSymptoms of virus variant {} and age "
+                              "group {:.0f} smaller than {:d} or larger than {:d}",
+                              v, (size_t)i, 0, 1);
+                    return true;
+                }
 
-            if (this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller than {:d}",
-                          (size_t)i, 0);
-                return true;
-            }
+                if (this->get<SeverePerInfectedSymptoms>()[{v, i}] < 0.0 ||
+                    this->get<SeverePerInfectedSymptoms>()[{v, i}] > 1.0) {
+                    log_error("Constraint check: Parameter SeverePerInfectedSymptoms of virus variant {} and age group "
+                              "{:.0f} smaller than {:d} or larger than {:d}",
+                              v, (size_t)i, 0, 1);
+                    return true;
+                }
 
-            if (this->get<CriticalToDead>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller than {:d}", (size_t)i,
-                          0);
-                return true;
-            }
+                if (this->get<CriticalPerInfectedSevere>()[{v, i}] < 0.0 ||
+                    this->get<CriticalPerInfectedSevere>()[{v, i}] > 1.0) {
+                    log_error("Constraint check: Parameter CriticalPerInfectedSevere of virus variant {} and age group "
+                              "{:.0f} smaller than {:d} or larger than {:d}",
+                              v, (size_t)i, 0, 1);
+                    return true;
+                }
 
-            if (this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller than {:d}",
-                          (size_t)i, 0);
-                return true;
-            }
+                if (this->get<DeathsPerInfectedCritical>()[{v, i}] < 0.0 ||
+                    this->get<DeathsPerInfectedCritical>()[{v, i}] > 1.0) {
+                    log_error("Constraint check: Parameter DeathsPerInfectedCritical of age group {:.0f} smaller than "
+                              "{:d} or larger than {:d}",
+                              v, (size_t)i, 0, 1);
+                    return true;
+                }
 
-            if (this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller than {:d}",
-                          (size_t)i, 0);
-                return true;
-            }
-
-            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller than {:d} or "
-                          "larger than {:d}",
-                          (size_t)i, 0, 1);
-                return true;
+                if (this->get<DetectInfection>()[{v, i}] < 0.0 || this->get<DetectInfection>()[{v, i}] > 1.0) {
+                    log_error("Constraint check: Parameter DetectInfection of virus variant {} and age group {:.0f} "
+                              "smaller than {:d} or "
+                              "larger than {:d}",
+                              v, (size_t)i, 0, 1);
+                    return true;
+                }
             }
 
             if (this->get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
