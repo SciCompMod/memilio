@@ -344,7 +344,7 @@ TEST(TestEpiData, set_vaccination_data)
 
     ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
                 MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination>().array()),
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyPartialVaccination>().array()),
                 MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
 }
 

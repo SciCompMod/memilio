@@ -68,8 +68,8 @@ mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
     const size_t vacc_full                                       = 5;
     model.parameters.get<mio::osecirvvs::ICUCapacity>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() = 0.0143;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(vacc_first);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(vacc_first);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(tmax));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(vacc_full);
 

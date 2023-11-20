@@ -139,22 +139,6 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
 
-    double delta_fac;
-    if (variant_high) {
-        delta_fac = 1.6;
-    }
-    else {
-        delta_fac = 1.4;
-    }
-
-    //infectiousness of virus variants is not sampled independently but depend on base infectiousness
-    for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-        shared_params_model.parameters.template get<BaseInfectiousnessB117>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i];
-        shared_params_model.parameters.template get<BaseInfectiousnessB161>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i] * delta_fac;
-    }
-
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
 
@@ -166,13 +150,13 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
         auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
         auto local_holidays     = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
-        auto local_daily_v1     = node_model.parameters.template get<DailyFirstVaccination>();
+        auto local_daily_v1     = node_model.parameters.template get<DailyPartialVaccination>();
         auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccination>();
         node_model.parameters   = shared_params_model.parameters;
         node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
-        node_model.parameters.template get<DailyFirstVaccination>()                 = local_daily_v1;
+        node_model.parameters.template get<DailyPartialVaccination>()               = local_daily_v1;
         node_model.parameters.template get<DailyFullVaccination>()                  = local_daily_v2;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();

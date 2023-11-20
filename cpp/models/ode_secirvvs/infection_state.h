@@ -58,10 +58,12 @@ enum class InfectionState
     InfectedCriticalNaive,
     InfectedCriticalPartialImmunity,
     InfectedCriticalImprovedImmunity,
-    SusceptibleImprovedImmunity, //includes all with improved immunity, either through infection or at least two vaccinations
+    SusceptibleImprovedImmunity,
     DeadNaive,
     DeadPartialImmunity,
     DeadImprovedImmunity,
+    TemporaryImmunity1,
+    TemporaryImmunity2,
 
     Count
 };

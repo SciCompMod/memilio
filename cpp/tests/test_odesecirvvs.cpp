@@ -60,8 +60,8 @@ TEST(TestOdeSECIRVVS, simulateDefault)
     model.populations.set_total(10);
     model.populations.set_difference_from_total({(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptibleNaive},
                                                 10);
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(0);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
@@ -114,8 +114,8 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
 
     model.parameters.get<mio::osecirvvs::ICUCapacity>()          = 10000;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() = 10000;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(0);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
 
@@ -267,8 +267,8 @@ void set_demographic_parameters(mio::osecirvvs::Model::ParameterSet& parameters,
     assign_uniform_distribution(parameters.get<mio::osecirvvs::ICUCapacity>(), 20, 50, set_invalid_initial_value);
     assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity>(), 100, 200,
                                 set_invalid_initial_value);
-    parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);
+    parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(5);
     parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
 }
@@ -457,9 +457,6 @@ TEST(TestOdeSECIRVVS, draw_sample)
 
     // special cases
     ASSERT_NEAR(populations0.get_total(), 1000 * num_age_groups, 1e-2);
-    ASSERT_TRUE((parameters0.get<mio::osecirvvs::BaseInfectiousnessB161>().array(),
-                 parameters0.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array() * 1.6) //using high variant
-                    .all());
 
     // spot check for parameters that should be equal or different between nodes
     auto& parameters1  = sampled_graph.nodes()[1].property.parameters;
@@ -995,14 +992,6 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(-0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(1);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -1115,14 +1104,6 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[indx_agegroup], 1);
-
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB117>()[indx_agegroup], 0);
-
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB161>()[indx_agegroup], 0);
 
     mio::set_log_level(mio::LogLevel::warn);
 }

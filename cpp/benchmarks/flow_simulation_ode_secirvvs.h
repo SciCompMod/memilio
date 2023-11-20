@@ -432,9 +432,9 @@ public:
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
                 (1 - share_new_variant) *
-                    this->get_model().parameters.template get<osecirvvs::BaseInfectiousnessB117>()[(AgeGroup)i] +
+                    this->get_model().parameters.template get<osecirvvs::BaseInfectiousness>()[(AgeGroup)i] +
                 share_new_variant *
-                    this->get_model().parameters.template get<osecirvvs::BaseInfectiousnessB161>()[(AgeGroup)i];
+                    this->get_model().parameters.template get<osecirvvs::BaseInfectiousnessNewVariant>()[(AgeGroup)i];
             this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] =
                 new_transmission;
         }
@@ -457,13 +457,13 @@ public:
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<osecirvvs::DailyFirstVaccination>()[{(AgeGroup)i, t_idx}];
+                first_vacc = params.template get<osecirvvs::DailyPartialVaccination>()[{(AgeGroup)i, t_idx}];
                 full_vacc  = params.template get<osecirvvs::DailyFullVaccination>()[{(AgeGroup)i, t_idx}];
             }
             else {
                 first_vacc =
-                    params.template get<osecirvvs::DailyFirstVaccination>()[{(AgeGroup)i, t_idx}] -
-                    params.template get<osecirvvs::DailyFirstVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                    params.template get<osecirvvs::DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] -
+                    params.template get<osecirvvs::DailyPartialVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
                 full_vacc =
                     params.template get<osecirvvs::DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
                     params.template get<osecirvvs::DailyFullVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
@@ -627,8 +627,8 @@ void setup_model(Model& model)
 
     model.parameters.template get<osecirvvs::ICUCapacity>()          = 100;
     model.parameters.template get<osecirvvs::TestAndTraceCapacity>() = 0.0143;
-    model.parameters.template get<osecirvvs::DailyFirstVaccination>().resize(SimulationDay(size_t(1000)));
-    model.parameters.template get<osecirvvs::DailyFirstVaccination>().array().setConstant(5);
+    model.parameters.template get<osecirvvs::DailyPartialVaccination>().resize(SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyPartialVaccination>().array().setConstant(5);
     model.parameters.template get<osecirvvs::DailyFullVaccination>().resize(SimulationDay(size_t(1000)));
     model.parameters.template get<osecirvvs::DailyFullVaccination>().array().setConstant(3);
 
