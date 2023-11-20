@@ -155,7 +155,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert end_date == dd.defaultDict['end_date']
-        assert start_date == dd.defaultDict['start_date']
+        assert start_date == date(2020, 4, 24)
         assert impute_dates == dd.defaultDict['impute_dates']
         assert moving_average == dd.defaultDict['moving_average']
         assert no_raw == dd.defaultDict['no_raw']
@@ -507,6 +507,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         arg_dict_divi = {
             **arg_dict_all, **arg_dict_data_download}
+        # change start-date of divi to 2020-04-24
+        arg_dict_divi["start_date"] = date(2020, 4, 24)
 
         arg_dict_vaccination = {
             **arg_dict_all, **arg_dict_data_download,
@@ -515,6 +517,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         arg_dict_cases_est = {**arg_dict_cases}
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
+        # change start-date of jh to 2020-01-22
+        arg_dict_jh["start_date"] = date(2020, 1, 22)
 
         arg_dict_popul = {**arg_dict_all, "username": None, "password": None}
 

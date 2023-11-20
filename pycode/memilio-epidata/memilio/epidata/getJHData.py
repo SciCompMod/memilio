@@ -69,6 +69,11 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
         to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
    """
+    if start_date < date(2020, 1, 22):
+        print("Warning: First data available on 2020-01-22. "
+              "You asked for " + start_date.strftime("%Y-%m-%d") +
+              ". Changed it to 2020-01-22.")
+        start_date = date(2020, 1, 22)
 
     filename = "FullData_JohnHopkins"
     url = "https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv"
