@@ -28,7 +28,7 @@ Another way of migration we use in the simulation of Braunschweig (simulations/a
 
 ## Get Started
 
-This section gives an introduction how to use the ABM and setup your own simulation. For a quick overview can find a full example in the [abm minimal example](../../examples/abm_minimal.cpp) and a more detailed doxygen documentation [here](https://dlr-sc.github.io/memilio/documentation/index.html). For a guide on installation and running the simulations and examples see this [README](../../README.md).
+This section gives an introduction how to use the ABM and setup your own simulation. For a quick overview can find a full example in the [abm minimal example](../../examples/abm_minimal.cpp) and a more detailed doxygen documentation [here](https://scicompmod.github.io/memilio/documentation/index.html ). For a guide on installation and running the simulations and examples see this [README](../../README.md).
 
 Every person in the ABM belongs to an AgeGroup which we can define:
 
