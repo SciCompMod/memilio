@@ -1,14 +1,14 @@
 # Agent Based Model
 
-This module models and simulates the epidemic using an agent based model (*ABM*) approach. Unlike the SECIR compartment model that uses an ODE, this model simulates the spread of COVID19 in a population with actual persons (the agents) moving throughout locations in the world and interacting (infecting) with each other.
+This module models and simulates the epidemic using an agent based model (*ABM*) approach. Unlike the [SECIR](../ode_secir/README.md) compartmental model that uses a system of ODEs, this model simulates the spread of COVID19 in a population with discrete persons (the agents) moving throughout locations in the world and interacting with (infecting) each other.
 
 ## Structure
 
 The model consists of the following major classes:
 
-1. Person: represents the agents of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations they visit during the simulation. They can perform tests and wear masks. Every person has lists with past and current infections and vaccinations.
+1. Person: represents an agent of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations they visit during the simulation. They can perform tests and wear masks. Every person has lists with past and current infections and vaccinations.
 2. Infection: collection of all information about a persons infection, i.e. infectiousness, infection course, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model.
-3. Location: represents locations in the world where people meet and interact, e.g. home, school, work, social events. A location can be split into cells to model parts of a location like classrooms in a school. Some infection parameters are location specific and one can activate NPIs like mandatory masks or tests to enter the location.
+3. Location: represents places in the world where people meet and interact, e.g. home, school, work, social event sites. A location can be split into cells to model parts of a location like classrooms in a school. Some infection parameters are location specific and one can activate NPIs like mandatory masks or tests to enter the location.
 4. World: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the migration phase.
 5. Simulation: runs the simulation and stores results.
 
@@ -18,13 +18,13 @@ The simulation runs in discrete time steps. Each step has two phases, an interac
 
 ### Interaction Phase
 
-In this phase each person interacts with the other persons at the same location. This interaction determines the transmission of the desease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infectee and the immunity level of the susceptible person.
+In this phase each person interacts with the other persons at the same location. This interaction determines the transmission of the disease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infectee and the immunity level of the susceptible person.
 
 ### Migration Phase
 
-During the migration phase, each person may change location. Migration follows complex rules, taking into account the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend).
+During the migration phase, each person may change their location. Migration follows complex [rules](../abm/migration_rules.cpp), taking into account the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are infected they are quarantined and cannot migrate. You can restrict some migration rules by allowing only a proportion of people to enter specific locations.
 
-Another way of migration we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a timepoint when this trip is performed and where the person is heading to. In the beginning of the simulation a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week but other than that the agents do the same trips every day assuming they are not in quarantine or in the hospital.
+Another way of migration we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a timepoint when this trip is performed and where the person is heading to. In the beginning of the simulation a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week but other than that the agents do the same trips every day. As before agents that are in quarantine or in the hospital cannot migrate.
 
 ## Get Started
 
@@ -34,7 +34,7 @@ Every person in the ABM belongs to an AgeGroup which we can define:
 
 ```cpp
 size_t NUM_AGE_GROUPS         = 4;
-const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 4);
+const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
 ```
 
 The initial empty world is created with the number of age groups:
@@ -43,7 +43,7 @@ The initial empty world is created with the number of age groups:
 auto world = mio::abm::World(NUM_AGE_GROUPS);
 ```
 
-We can set a lot of general parameters. Here is an example where we set the duration of the incubation period to 4 days:
+We can set a lot of general parameters which you can find [here](../abm/parameters.h). Here is an example where we set the duration of the incubation period to 4 days:
 
 ```cpp
 world.parameters.get<mio::abm::IncubationPeriod>() = 4.
