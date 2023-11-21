@@ -13,7 +13,7 @@ except ImportError:
         [sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 setup(
     name='memilio-simulation', version=__version__, author='DLR-SC',
