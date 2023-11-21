@@ -175,7 +175,7 @@ int main()
             return sim.get_time().hours();
         }
     };
-    struct LogLocationIds : mio::LogOnceStart {
+    struct LogLocationIds : mio::LogOnce {
         using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
         static Type log(const mio::abm::Simulation& sim)
         {

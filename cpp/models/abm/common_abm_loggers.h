@@ -41,7 +41,7 @@ struct movement_data {
     mio::abm::ActivityType activity_type;
     mio::abm::InfectionState infection_state;
 };
-struct LogLocationInformation : mio::LogOnceStart {
+struct LogLocationInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
     static Type log(const mio::abm::Simulation& sim)
     {
@@ -60,7 +60,7 @@ struct LogLocationInformation : mio::LogOnceStart {
     }
 };
 
-struct LogPersonInformation : mio::LogOnceStart {
+struct LogPersonInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::AgeGroup>>;
     static Type log(const mio::abm::Simulation& sim)
     {
@@ -121,9 +121,9 @@ template <class... Loggers>
 struct TimeSeriesWriter {
     using Data = std::tuple<mio::TimeSeries<ScalarType>>;
     template <class Logger>
-    static void log_this(const typename Logger::Type& t, Data& data)
+    static void add_record(const typename Logger::Type& t, Data& data)
     {
-        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).add_time_point(t.first.days(), t.second);
+        std::get<index_of_type_v<Logger, Loggers...>>(data).add_time_point(t.first.days(), t.second);
     }
 };
 
@@ -155,24 +155,24 @@ template <class... Loggers>
 struct DataWriterToMemoryDelta {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
-    static void log_this(const typename Logger::Type& t, Data& data)
+    static void add_record(const typename Logger::Type& t, Data& data)
     {
 
-        if (std::get<details::index_templ_pack<Logger, Loggers...>()>(data).size() > 0) {
+        if (std::get<index_of_type_v<Logger, Loggers...>>(data).size() > 0) {
             typename Logger::Type diff_vector{};
-            auto& current_state_vec = std::get<details::index_templ_pack<Logger, Loggers...>()>(data).front();
+            auto& current_state_vec = std::get<index_of_type_v<Logger, Loggers...>>(data).front();
             for (auto i = 0; i < (int)current_state_vec.size(); i++) {
                 if (std::get<1>(t[i]) != std::get<1>(current_state_vec[i])) {
                     std::get<1>(current_state_vec[i]) = std::get<1>(t[i]);
                     diff_vector.push_back(t[i]);
                 }
             }
-            std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(diff_vector);
+            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(diff_vector);
         }
         else {
-            std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(
+            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(
                 t); // We use the first entry as a reference for the current position
-            std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(t);
+            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
         }
     }
 };

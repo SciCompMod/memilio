@@ -17,7 +17,7 @@ struct LogPair : mio::LogAlways {
         return {ex.a, ex.b};
     }
 };
-struct LogAOnce : mio::LogOnceStart {
+struct LogAOnce : mio::LogOnce {
     using Type = int;
     static Type log(const example& ex)
     {
@@ -25,7 +25,7 @@ struct LogAOnce : mio::LogOnceStart {
     }
 };
 
-struct LogStepIf : mio::LogIf<example> {
+struct LogStepIf {
     using Type = int;
     static bool log(const example& ex)
     {
@@ -34,15 +34,6 @@ struct LogStepIf : mio::LogIf<example> {
     static bool should_log(const example& ex)
     {
         return ex.current_time == 0;
-    }
-};
-
-template <class... Loggers>
-struct Dummy {
-    template <class T>
-    size_t type_index()
-    {
-        return mio::details::index_templ_pack<T, Loggers...>();
     }
 };
 
