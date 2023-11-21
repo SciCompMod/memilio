@@ -51,7 +51,7 @@ setup(
     author='DLR-SC',
     author_email='martin.kuehn@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, plots data to maps or visualizes simulation curves.',
     entry_points={
         'console_scripts': [

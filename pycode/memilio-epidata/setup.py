@@ -57,7 +57,7 @@ setup(
     author='DLR-SC',
     author_email='daniel.abele@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
     entry_points={
         'console_scripts': [

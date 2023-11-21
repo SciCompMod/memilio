@@ -8,7 +8,7 @@ setup(
     name='memilio-surrogatemodel', version=__version__, author='DLR-SC',
     author_email='henrik.zunker@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, implementation of surrogate models for the existing models in MEmilio.',
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),

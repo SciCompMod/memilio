@@ -21,7 +21,7 @@ setup(
     author='DLR-SC',
     author_email='maximilian.betz@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, automatic generation of model specific python bindings.',
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
