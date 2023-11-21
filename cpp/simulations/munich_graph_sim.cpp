@@ -80,7 +80,7 @@ mio::IOResult<void> set_age_group_names(std::vector<const char*> confirmed_cases
 mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
                               const mio::osecir::Parameters& params, const fs::path& data_dir, mio::Date start_date)
 {
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
 
     BOOST_OUTCOME_TRY(set_age_group_names(
@@ -99,7 +99,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
         node.parameters = params;
     }
     auto read = mio::osecir::read_input_data_one_age_group(nodes, start_date, node_ids, scaling_factor_infected,
-                                                           scaling_factor_icu, data_dir.string(), 90, true);
+                                                           scaling_factor_icu, data_dir.string(), 90, false);
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
         params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
@@ -160,8 +160,9 @@ mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> get_grap
     double contact_freq                     = 10;
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_freq));
-    //set npis?
-    //TODO
+    //set npis
+    contact_matrix.add_damping(0.7, mio::SimulationTime(30));
+    contact_matrix.add_damping(0.1, mio::SimulationTime(50));
 
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     //set nodes
@@ -185,7 +186,7 @@ mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> get_grap
 */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
 {
-    const mio::Date start_date = mio::Date(2021, 12, 1);
+    const mio::Date start_date = mio::Date(2022, 1, 1);
     const auto num_days        = 90.0;
 
     //create or load graph
