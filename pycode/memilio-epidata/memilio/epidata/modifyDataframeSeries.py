@@ -99,8 +99,10 @@ def impute_and_reduce_df(
     if moving_average > 0:
         first_date = first_date - timedelta(int(np.ceil((moving_average-1)/2)))
         last_date = last_date + timedelta(int(np.floor((moving_average-1)/2)))
-        min_date_to_use = min_date - timedelta(int(np.ceil((moving_average-1)/2)))
-        max_date_to_use = max_date + timedelta(int(np.floor((moving_average-1)/2)))
+        min_date_to_use = min_date - \
+            timedelta(int(np.ceil((moving_average-1)/2)))
+        max_date_to_use = max_date + \
+            timedelta(int(np.floor((moving_average-1)/2)))
         if first_date > min_date_to_use:
             first_date = min_date_to_use
         if last_date < max_date_to_use:
@@ -160,7 +162,8 @@ def impute_and_reduce_df(
             # compute 'moving average'-days moving average
             if moving_average > 0:
                 # extract subframe to prevent unnecessary computation
-                df_local_new = extract_subframe_based_on_dates(df_local_new, min_date_to_use, max_date_to_use)
+                df_local_new = extract_subframe_based_on_dates(
+                    df_local_new, min_date_to_use, max_date_to_use)
                 for avg in mod_cols:
                     # compute moving average in new column
                     df_local_new['MA' + avg] = df_local_new[avg].rolling(
