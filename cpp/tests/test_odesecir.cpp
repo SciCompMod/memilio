@@ -929,6 +929,8 @@ TEST(Secir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
+#if defined(MEMILIO_HAS_JSONCPP)
+
 TEST(Secir, read_population_data_one_age_group){
      std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
      const std::vector<int> region{1001};
@@ -945,3 +947,5 @@ TEST(Secir, read_population_data_one_age_group){
      EXPECT_EQ(result_multiple_age_groups[0].size(), 6);
      EXPECT_EQ(result_multiple_age_groups[0][0], 3433.0);     
 }
+
+#endif
