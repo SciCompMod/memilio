@@ -87,7 +87,6 @@ def impute_and_reduce_df(
         last_date = last_date.date()
     except:
         pass
-
     # range of dates which should be in output
     if min_date is None:
         min_date = first_date
@@ -99,6 +98,12 @@ def impute_and_reduce_df(
         min_date = datetime.strptime(min_date, "%Y-%m-%d")
     if isinstance(max_date, str) == True:
         max_date = datetime.strptime(max_date, "%Y-%m-%d")
+
+    try:
+        min_date = min_date.date()
+        max_date = max_date.date()
+    except:
+        pass
 
     # shift start and end date for relevant dates to compute moving average.
     # if moving average is odd, both dates are shifted equaly.
