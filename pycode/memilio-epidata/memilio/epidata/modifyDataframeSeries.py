@@ -81,6 +81,13 @@ def impute_and_reduce_df(
     if isinstance(last_date, str) == True:
         last_date = datetime.strptime(last_date, "%Y-%m-%d")
 
+    # Transform timestamp to date
+    try:
+        first_date = first_date.date()
+        last_date = last_date.date()
+    except:
+        pass
+
     # range of dates which should be in output
     if min_date is None:
         min_date = first_date
