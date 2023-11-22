@@ -88,9 +88,9 @@ def impute_and_reduce_df(
     except:
         pass
     # range of dates which should be in output
-    if min_date is None:
+    if (min_date is None) or (min_date == ''):
         min_date = first_date
-    if max_date is None:
+    if (max_date is None) or (max_date == ''):
         max_date = last_date
 
     # Transform dates to datetime
