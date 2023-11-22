@@ -322,7 +322,7 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
                                                         scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date,
                                                         scaling_factor_inf));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}, false));
     return success();
 }
 
@@ -352,7 +352,7 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
                                                         date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state,
                                                         date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), state));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), state, false));
     return success();
 }
 
@@ -382,7 +382,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(
         model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(
-        model, path_join(dir, "pydata/Germany", "county_current_population.json"), county));
+        model, path_join(dir, "pydata/Germany", "county_current_population.json"), county, false));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
