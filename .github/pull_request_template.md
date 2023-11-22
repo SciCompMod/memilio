@@ -6,12 +6,12 @@ Please **briefly list the changes** made, additional Information and what the Re
 
 ## Merge Request - Guideline Checklist
 
-Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
+Please check our [git workflow](https://github.com/SciCompMod/memilio/wiki/git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
 
 ### Checks by code author
 
 - [ ] Every addressed issue is linked (use the "Closes #ISSUE" keyword below)
-- [ ] New code adheres to [coding guidelines](https://github.com/DLR-SC/memilio/wiki/Coding-guidelines)
+- [ ] New code adheres to [coding guidelines](https://github.com/SciCompMod/memilio/wiki/Coding-guidelines)
 - [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
 - [ ] Tests are added for new functionality and a local test run was successful
 - [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and Markdown files if necessary)
