@@ -394,3 +394,17 @@ TEST(TestEpiData, vaccination_data_error_age)
     auto r = mio::deserialize_vaccination_data(js);
     ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::InvalidValue));
 }
+
+TEST(TestEpiData, set_age_groups)
+{
+    std::vector<const char*> name = {"All"};
+    auto r1 = mio::set_confirmed_cases_age_group_names(name);
+    auto r2 = mio::set_population_data_age_group_names(name);
+    auto r3 = mio::set_vaccination_data_age_group_names(name);
+    ASSERT_EQ(mio::ConfirmedCasesDataEntry::age_group_names.size(), 1);
+    ASSERT_EQ(mio::ConfirmedCasesDataEntry::age_group_names[0], name[0]);
+    ASSERT_EQ(mio::PopulationDataEntry::age_group_names.size(), 1);
+    ASSERT_EQ(mio::PopulationDataEntry::age_group_names[0], name[0]);
+    ASSERT_EQ(mio::VaccinationDataEntry::age_group_names.size(), 1);
+    ASSERT_EQ(mio::VaccinationDataEntry::age_group_names[0], name[0]);
+}

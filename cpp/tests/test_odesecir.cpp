@@ -24,6 +24,7 @@
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameters.h"
+#include "ode_secir/parameters_io.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
@@ -926,3 +927,14 @@ TEST(Secir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerCritical>()[indx_agegroup], 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
+
+// TEST(Secir, read_population_data_one_age_group){
+//      std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+//      const std::vector<int> region{1001};
+//      auto r2 = mio::set_population_data_age_group_names({"<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
+//     "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"});
+//      auto result = mio::osecir::details::read_population_data(path, region, true).value();
+//      EXPECT_EQ(result.size(), 1);
+//      EXPECT_EQ(result[0].size(), 1);
+//      EXPECT_EQ(result[0][0], 90163.0);
+// }
