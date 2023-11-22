@@ -25,6 +25,7 @@
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameters.h"
 #include "ode_secir/parameters_io.h"
+#include "memilio/io/epi_data.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
