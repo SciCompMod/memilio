@@ -98,8 +98,8 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     for (auto& node : nodes) {
         node.parameters = params;
     }
-    auto read = mio::osecir::read_input_data_one_age_group(nodes, start_date, node_ids, scaling_factor_infected,
-                                                           scaling_factor_icu, data_dir.string(), 90, false);
+    auto read = mio::osecir::read_input_data(nodes, start_date, node_ids, scaling_factor_infected,
+                                                           scaling_factor_icu, data_dir.string(), 90, true);
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
         params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
