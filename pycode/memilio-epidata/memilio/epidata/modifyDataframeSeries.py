@@ -97,10 +97,14 @@ def impute_and_reduce_df(
     # if moving average is odd, both dates are shifted equaly.
     # if moving average is even, start date is shifted one day more than end date.
     if moving_average > 0:
-        first_date = first_date - timedelta(int(np.floor((moving_average-1)/2)))
-        last_date = last_date + timedelta(int(np.ceil((moving_average-1)/2)))
-        min_date_to_use = min_date - timedelta(int(np.floor((moving_average-1)/2)))
+        first_date = first_date - timedelta(int(np.ceil((moving_average-1)/2)))
+        last_date = last_date + timedelta(int(np.floor((moving_average-1)/2)))
+        min_date_to_use = min_date - timedelta(int(np.ceil((moving_average-1)/2)))
         max_date_to_use = max_date + timedelta(int(np.floor((moving_average-1)/2)))
+        if first_date > min_date_to_use:
+            first_date = min_date_to_use
+        if last_date < max_date_to_use:
+            last_date = max_date_to_use
 
     idx = pd.date_range(first_date, last_date)
 
