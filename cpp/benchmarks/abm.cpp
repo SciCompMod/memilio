@@ -50,8 +50,9 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
     //infections and masks
     for (auto& person : world.get_persons()) {
         auto prng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
-        //~1% of people are infected, large enough to have some infection activity without everyone dying
-        if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < 0.05) {
+        //some % of people are infected, large enough to have some infection activity without everyone dying
+        auto pct_infected = 0.05;
+        if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
             auto state = mio::abm::InfectionState(
                 mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
             auto infection =
@@ -60,22 +61,21 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
             person.add_new_infection(std::move(infection));
         }
 
-        //equal chance of mask refusal and mask eagerness
-        auto mask_value =
-            -1 + 0.5 * mio::DiscreteDistribution<int>::get_instance()(
-                           prng, std::array{0.05 /*-1*/, 0.2 /*-0.5*/, 0.5 /*0*/, 0.2 /*0.5*/, 0.05 /*1*/});
+        //equal chance of (moderate) mask refusal and (moderate) mask eagerness
+        auto pct_mask_values = std::array{0.05 /*-1*/, 0.2 /*-0.5*/, 0.5 /*0*/, 0.2 /*0.5*/, 0.05 /*1*/};
+        auto mask_value      = -1 + 0.5 * mio::DiscreteDistribution<int>::get_instance()(prng, pct_mask_values);
         person.set_mask_preferences({size_t(mio::abm::LocationType::Count), mask_value});
     }
 
     //masks at locations
     for (auto& loc : world.get_locations())
     {
-        //20% of locations require masks
+        //some % of locations require masks
         //skip homes so persons always have a place to go, simulation might break otherwise
-        auto npi = loc.get_type() == mio::abm::LocationType::Home
-                       ? false
-                       : bool(mio::DiscreteDistribution<int>::get_instance()(world.get_rng(), std::array{0.8, 0.2}));
-        loc.set_npi_active(npi);
+        auto pct_require_mask = 0.2;
+        auto requires_mask    = loc.get_type() != mio::abm::LocationType::Home &&
+                             mio::UniformDistribution<double>::get_instance()(world.get_rng()) < pct_require_mask;
+        loc.set_npi_active(requires_mask);
     }
 
     //testing schemes
