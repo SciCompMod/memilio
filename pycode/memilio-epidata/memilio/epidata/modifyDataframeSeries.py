@@ -87,16 +87,16 @@ def impute_and_reduce_df(
         last_date = last_date.date()
     except:
         pass
+
     # range of dates which should be in output
+    # Transform dates to datetime
     if (min_date is None) or (min_date == ''):
         min_date = first_date
+    elif isinstance(min_date, str) == True:
+        min_date = datetime.strptime(min_date, "%Y-%m-%d")
     if (max_date is None) or (max_date == ''):
         max_date = last_date
-
-    # Transform dates to datetime
-    if isinstance(min_date, str) == True:
-        min_date = datetime.strptime(min_date, "%Y-%m-%d")
-    if isinstance(max_date, str) == True:
+    elif isinstance(max_date, str) == True:
         max_date = datetime.strptime(max_date, "%Y-%m-%d")
 
     try:
