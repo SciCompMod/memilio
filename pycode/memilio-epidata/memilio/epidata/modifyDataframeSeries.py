@@ -70,10 +70,22 @@ def impute_and_reduce_df(
         pass
 
     # range of dates which should be filled
-    if min_date == '':
-        min_date = min(df_old[dd.EngEng['date']])
-    if max_date == '':
-        max_date = max(df_old[dd.EngEng['date']])
+    # to prevent inconsistent data with different start dates, all dates are filled
+    # TODO: find a better method, to prevent unnecessary computation of dates before start date
+    first_date = min(df_old[dd.EngEng['date']])
+    last_date = max(df_old[dd.EngEng['date']])
+
+    # Transform dates to datetime
+    if isinstance(first_date, str) == True:
+        first_date = datetime.strptime(first_date, "%Y-%m-%d")
+    if isinstance(last_date, str) == True:
+        last_date = datetime.strptime(last_date, "%Y-%m-%d")
+
+    # range of dates which should be in output
+    if min_date is None:
+        min_date = first_date
+    if max_date is None:
+        max_date = last_date
 
     # Transform dates to datetime
     if isinstance(min_date, str) == True:
@@ -85,10 +97,12 @@ def impute_and_reduce_df(
     # if moving average is odd, both dates are shifted equaly.
     # if moving average is even, start date is shifted one day more than end date.
     if moving_average > 0:
-        max_date = max_date + timedelta(int(np.floor((moving_average-1)/2)))
-        min_date = min_date - timedelta(int(np.ceil((moving_average-1)/2)))
+        first_date = first_date - timedelta(int(np.floor((moving_average-1)/2)))
+        last_date = last_date + timedelta(int(np.ceil((moving_average-1)/2)))
+        min_date_to_use = min_date - timedelta(int(np.floor((moving_average-1)/2)))
+        max_date_to_use = max_date + timedelta(int(np.floor((moving_average-1)/2)))
 
-    idx = pd.date_range(min_date, max_date)
+    idx = pd.date_range(first_date, last_date)
 
     # create list of all possible groupby columns combinations
     unique_ids = [group_by_cols[group_key]
@@ -141,6 +155,8 @@ def impute_and_reduce_df(
 
             # compute 'moving average'-days moving average
             if moving_average > 0:
+                # extract subframe to prevent unnecessary computation
+                df_local_new = extract_subframe_based_on_dates(df_local_new, min_date_to_use, max_date_to_use)
                 for avg in mod_cols:
                     # compute moving average in new column
                     df_local_new['MA' + avg] = df_local_new[avg].rolling(

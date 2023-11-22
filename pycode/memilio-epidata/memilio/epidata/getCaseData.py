@@ -137,6 +137,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     if files == 'Plot':
         # only consider plotable files
         files = ['infected', 'deaths', 'all_gender', 'all_age']
+    # handle error of passing a string of one file instead of a list
+    if isinstance(files, str):
+        files = [files]
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
