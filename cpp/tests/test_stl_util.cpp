@@ -243,6 +243,17 @@ TEST(TestContains, empty)
     }));
 }
 
+TEST(EnumMembers, works)
+{
+    enum class E
+    {
+        A,
+        B,
+        Count
+    };
+    ASSERT_THAT(mio::enum_members<E>(), testing::ElementsAre(E::A, E::B));
+}
+
 TEST(TestContains, set_ostream_format)
 {
     std::ostringstream output;
