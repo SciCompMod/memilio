@@ -35,4 +35,4 @@ runs:
         name: abm-benchmark-report
         path: cpp/build/bin/abm_benchmark.json
         if-no-files-found: error
-        retention-days: 1
+        retention-days: 10
