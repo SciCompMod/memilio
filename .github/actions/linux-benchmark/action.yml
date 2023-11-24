@@ -27,7 +27,7 @@ runs:
       shell: bash
       run: |
         cd cpp/build/bin
-        sudo chmod a+x memilio-test
+        sudo chmod a+x abm_benchmark
         ./abm_benchmark  --benchmark_out="abm_benchmark.json"
     - name: Upload benchmark result
       uses: actions/upload-artifact@v3
