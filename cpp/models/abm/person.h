@@ -156,7 +156,7 @@ public:
 
     /** 
      * @brief Migrate to a different Location.
-     * @param[in] loc_new The new Location of the Person.
+     * @param[in, out] loc_new The new Location of the Person.
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0})
