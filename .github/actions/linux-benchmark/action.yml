@@ -28,7 +28,7 @@ runs:
       run: |
         cd cpp/build/bin
         sudo chmod a+x abm_benchmark
-        ./abm_benchmark  --benchmark_out="abm_benchmark.json"
+        ./abm_benchmark  --benchmark_out="abm_benchmark.json" --benchmark_repetitions=10
     - name: Upload benchmark result
       uses: actions/upload-artifact@v3
       with:
