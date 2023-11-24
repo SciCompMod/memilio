@@ -5,10 +5,10 @@ name: abm_benchmark_test
 on:
   schedule:
     - cron: "0 3,9,15,21 * * *" #every day on a few different hours
-  workflow-dispatch:
-  pull-request:
+  pull_request:
     branches:
       - '841-*'
+  workflow_dispatch:
 
 jobs:
   build:
