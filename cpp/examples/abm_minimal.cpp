@@ -154,9 +154,9 @@ int main()
 
     std::ofstream outfile("abm_minimal.txt");
 
-    // The results are saved in a table with 9 rows.
-    // The first row is Time. The other rows correspond to the number of people with a certain infection state at this Time:
-    // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
+    // The results are saved in a table with 9 columns.
+    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
+    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
     sim.get_result().print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
 
