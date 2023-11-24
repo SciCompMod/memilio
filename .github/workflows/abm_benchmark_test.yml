@@ -8,7 +8,7 @@ on:
   workflow-dispatch:
   pull-request:
     branches:
-      - *
+      - '841-*'
 
 jobs:
   build:
