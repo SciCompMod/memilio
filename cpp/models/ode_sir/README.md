@@ -10,7 +10,7 @@ We assume simulations over short periods of time, so that the population size ca
 
 Below is an overview of the model architecture and its compartments.
 
-![SIR_model](https://github.com/DLR-SC/memilio/assets/69154294/01c9a2ae-2f5c-4bad-b7f0-34de651f2c73)
+![SIR_model](https://github.com/SciCompMod/memilio/assets/69154294/01c9a2ae-2f5c-4bad-b7f0-34de651f2c73)
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\phi$                      |  `ContactPatterns`               | Daily contact rate / Number of daily contacts. |

@@ -8,7 +8,7 @@ This model is a very simple ODE model with only four compartments and few parame
 
 Below is an overview of the model architecture and its compartments.
 
-![SEIR_model](https://github.com/DLR-SC/memilio/assets/69154294/80a36be5-57d9-4012-9b5f-25eb08ec8837)
+![SEIR_model](https://github.com/SciCompMod/memilio/assets/69154294/80a36be5-57d9-4012-9b5f-25eb08ec8837)
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\phi$                      |  `ContactPatterns`               | Daily contact rate / Number of daily contacts. |

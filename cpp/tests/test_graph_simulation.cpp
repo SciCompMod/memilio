@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm_helpers.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -183,46 +184,69 @@ TEST(TestGraphSimulation, persistentChangesDuringSimulation)
     EXPECT_THAT(sim.get_graph().edges(), testing::ElementsAreArray(v_e));
 }
 
-// test design needs to be improved -> Issue #815
-// TEST(TestGraphSimulation, consistencyStochasticMobility)
-// {
-//     using testing::_;
-//     using testing::Eq;
+TEST(TestGraphSimulation, consistencyStochasticMobility)
+{
+    using testing::_;
+    using testing::Eq;
 
-//     const auto t0   = 0.0;
-//     const auto tmax = 20.;
-//     const auto dt   = 0.076;
+    const auto t0   = 0.0;
+    const auto tmax = 10.;
+    const auto dt   = 0.076;
 
-//     mio::oseir::Model model;
-//     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.7;
-//     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.3;
-//     model.populations.set_total(1000);
+    mio::oseir::Model model;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.7;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.3;
+    model.populations.set_total(1000);
 
-//     mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
-//     g.add_node(0, model, t0);
-//     g.add_node(1, model, t0);
-//     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
+    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
+    g.add_node(0, model, t0);
+    g.add_node(1, model, t0);
+    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
-//     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 
-//     //set seeds
-//     sim.get_rng().seed({114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203});
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<ScalarType>>>>
+        mock_exponential_dist;
+    // use pregenerated exp(1) random values
+    // all values are used to set normalized_waiting_time in GraphSimulationStochastic<...>::advance,
+    // the first value is used at the function start, all others later during the while loop
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
+        .Times(testing::Exactly(10))
+        .WillOnce(testing::Return(0.446415))
+        .WillOnce(testing::Return(1.04048))
+        .WillOnce(testing::Return(0.136687))
+        .WillOnce(testing::Return(2.50697))
+        .WillOnce(testing::Return(1.61943))
+        .WillOnce(testing::Return(0.267578))
+        .WillOnce(testing::Return(1.03696))
+        .WillOnce(testing::Return(0.58395))
+        .WillOnce(testing::Return(0.113943))
+        .WillOnce(testing::Return(1.204045));
 
-//     sim.advance(tmax);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    // these values determine which transition event should occur in GraphSimulationStochastic<...>::advance
+    // during this short sim, the chance of event==0 is ~70% every time
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke)
+        .Times(testing::Exactly(9))
+        .WillOnce(testing::Return(0))
+        .WillOnce(testing::Return(1))
+        .WillRepeatedly(testing::Return(0));
 
-//     auto result_n0 = sim.get_graph().nodes()[0].property.get_result().get_last_value();
-//     auto result_n1 = sim.get_graph().nodes()[1].property.get_result().get_last_value();
+    sim.advance(tmax);
 
-//     auto expected_values_n0 = std::vector<double>{687.0, 6.3624463711313268, 31.61724873461494, 254.0203048942538};
-//     auto actual_values_n0   = std::vector<double>{result_n0[0], result_n0[1], result_n0[2], result_n0[3]};
-//     auto expected_values_n1 = std::vector<double>{713.0, 6.4545879236128822, 32.787911286182755, 268.7575007902044};
-//     auto actual_values_n1   = std::vector<double>{result_n1[0], result_n1[1], result_n1[2], result_n1[3]};
+    auto result_n0 = sim.get_graph().nodes()[0].property.get_result().get_last_value();
+    auto result_n1 = sim.get_graph().nodes()[1].property.get_result().get_last_value();
 
-//     for (size_t i = 0; i < expected_values_n0.size(); ++i) {
-//         EXPECT_THAT(expected_values_n0[i], testing::DoubleNear(actual_values_n0[i], 1e-8));
-//         EXPECT_THAT(expected_values_n1[i], testing::DoubleNear(actual_values_n1[i], 1e-8));
-//     }
-// }
+    auto expected_values_n0 = std::vector<double>{692.0, 43.630772796677256, 95.750528156188381, 159.61869904713436};
+    auto actual_values_n0   = std::vector<double>{result_n0[0], result_n0[1], result_n0[2], result_n0[3]};
+    auto expected_values_n1 = std::vector<double>{708.0, 44.063147085799322, 96.485223892060375, 160.45162902214025};
+    auto actual_values_n1   = std::vector<double>{result_n1[0], result_n1[1], result_n1[2], result_n1[3]};
+
+    for (size_t i = 0; i < expected_values_n0.size(); ++i) {
+        EXPECT_THAT(expected_values_n0[i], testing::DoubleNear(actual_values_n0[i], 1e-8));
+        EXPECT_THAT(expected_values_n1[i], testing::DoubleNear(actual_values_n1[i], 1e-8));
+    }
+}
 
 template <typename Graph>
 mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& model, double t0, double tmax, double dt)
@@ -239,6 +263,7 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& mode
     }
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+
     sim.advance(tmax);
 
     return sim;
@@ -246,7 +271,6 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& mode
 
 TEST(TestGraphSimulation, consistencyFlowMobility)
 {
-
     double t0   = 0;
     double tmax = 1;
     double dt   = 0.001;
