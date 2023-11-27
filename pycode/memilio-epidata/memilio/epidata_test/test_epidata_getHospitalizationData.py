@@ -74,7 +74,6 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('builtins.print')
     def test_divi_data_hospit_sanity_checks(self, mock_print):

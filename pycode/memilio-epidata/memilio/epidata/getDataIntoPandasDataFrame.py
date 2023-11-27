@@ -31,21 +31,77 @@ This tool contains
 
 import os
 import argparse
+import configparser
 import datetime
 import requests
 import magic
 import urllib3
+import warnings
 from io import BytesIO
 from zipfile import ZipFile
-from warnings import warn
+from enum import Enum
 
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import progress_indicator
 
-# activate CoW for more predictable behaviour of pandas DataFrames
-pd.options.mode.copy_on_write = True
+class VerbosityLevel(Enum):
+    Off = 0
+    Critical = 1
+    Error = 2
+    Warning = 3
+    Info = 4
+    Debug = 5
+    Trace = 6
+    
+
+class Conf:
+    """Configures all relevant dwonload outputs etc."""
+
+    v_level = 'Critical'
+
+    def __init__(self, out_folder, **kwargs):
+        path = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), 'download_config.conf')
+        parser = configparser.ConfigParser()
+        parser.read(path)
+        # all values will be read in as string
+        if parser['STATICS']['Cow'] == str(True):
+            # activate CoW for more predictable behaviour of pandas DataFrames
+            pd.options.mode.copy_on_write = True
+        
+        if parser['SETTINGS']['path_to_use'] == 'default':
+            self.path_to_use = out_folder
+        else:
+            self.path_to_use = parser['SETTINGS']['path_to_use']
+
+        # merge kwargs with config data
+        # Do not overwrite kwargs, just add from parser
+        for key in parser['SETTINGS']:
+            if key not in kwargs:
+                kwargs.update({key: parser['SETTINGS'][key]})
+        
+        show_progr = bool(kwargs['show_progress'])
+        v_level = str(kwargs['verbosity_level'])
+        self.checks = bool(kwargs['run_checks'])
+        self.interactive = bool(kwargs['interactive'])
+        self.plot = bool(kwargs['make_plot'])
+        self.no_raw = bool(kwargs['no_raw'])
+
+        # suppress Future & DepricationWarnings
+        if v_level != 2:
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+            warnings.simplefilter(action='ignore', category=DeprecationWarning)
+        # deactivate (or activate progress indicator)
+        if show_progr == True:
+            progress_indicator.ProgressIndicator.disable_indicators(False)
+        else:
+            progress_indicator.ProgressIndicator.disable_indicators(True)
+
+def default_print(verbosity_level, message):
+    if VerbosityLevel[verbosity_level].value <= VerbosityLevel[Conf.v_level].value:
+        print(message)
 
 
 def user_choice(message, default=False):
@@ -80,7 +136,7 @@ def download_file(
     @return File as BytesIO
     """
     if verify not in [True, False, "interactive"]:
-        warn('Invalid input for argument verify. Expected True, False, or'
+        warnings.warn('Invalid input for argument verify. Expected True, False, or'
              ' "interactive", got ' + str(verify) + '.'
              ' Proceeding with "verify=True".', category=RuntimeWarning)
         verify = True
@@ -465,7 +521,8 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 
-    print("Information: Data has been written to", out_path)
+    
+    default_print('Info', "Information: Data has been written to "+ out_path)
 
 
 class DataError(Exception):
