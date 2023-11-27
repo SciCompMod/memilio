@@ -5,7 +5,7 @@ labels:
 body:
 - type: markdown
   attributes:
-    value: "Please check our [existing issues](https://github.com/DLR-SC/memilio/issues) beforehand."
+    value: "Please check our [existing issues](https://github.com/SciCompMod/memilio/issues) beforehand."
 - type: textarea
   id: doc-description
   attributes:
