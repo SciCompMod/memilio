@@ -54,14 +54,15 @@ void interpolate_ages(const std::vector<double>& age_ranges, std::vector<std::ve
 
 /**
      * @brief reads populations data from RKI
-     * @param path Path to RKI file
-     * @param region vector of keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
-     * @param num_* output vector for number of people in the corresponding compartement
-     * @param t_* vector average time it takes to get from one compartement to another for each age group
-     * @param mu_* vector probabilities to get from one compartement to another for each age group
+     * @param[in] path Path to RKI file
+     * @param[in] rki_data Vector of ConfirmedCasesDataEntry%s  
+     * @param[in] region vector of keys of the region of interest
+     * @param[in] year Specifies year at which the data is read
+     * @param[in] month Specifies month at which the data is read
+     * @param[in] day Specifies day at which the data is read
+     * @param[in, out] num_* output vector for number of people in the corresponding compartement
+     * @param[in] t_* vector average time it takes to get from one compartement to another for each age group
+     * @param[in] mu_* vector probabilities to get from one compartement to another for each age group
      */
 IOResult<void> read_confirmed_cases_data(
     std::string const& path, std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
@@ -74,20 +75,6 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
     const std::vector<double>& scaling_factor_inf);
-
-/**
-     * @brief sets populations data from RKI into a Model
-     * @param model vector of objects in which the data is set
-     * @param path Path to RKI file
-     * @param region vector of keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
-     * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
-     */
-// IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
-//                                         std::vector<int> const& region, Date date,
-//                                         const std::vector<double>& scaling_factor_inf);
 
 /**
      * @brief sets populations data from json file with multiple age groups into a Model with one age group
@@ -129,20 +116,20 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
                              Date date, double scaling_factor_icu);
 
 /**
-     * @brief reads population data from census data
-     * @param path Path to RKI file
-     * @param vregion vector of keys of the regions of interest
-     * @param one_age_group specifies whether population data sould be accumulated to one age group
+     * @brief Reads population data from census data
+     * @param[in] path Path to RKI file
+     * @param[in] vregion Vector of keys of the regions of interest
+     * @param[in] one_age_group Specifies whether population data sould be accumulated to one age group
      */
 IOResult<std::vector<std::vector<double>>>
 read_population_data(const std::string& path, const std::vector<int>& vregion, bool one_age_group = false);
 
 /**
      * @brief sets population data from census data
-     * @param model vector of objects in which the data is set
-     * @param path Path to RKI file
-     * @param vregion vector of keys of the regions of interest
-     * @param one_age_group specifies whether population data sould be accumulated to one age group
+     * @param[in, out] model vector of objects in which the data is set
+     * @param[in] path Path to RKI file
+     * @param[in] vregion vector of keys of the regions of interest
+     * @param[in] one_age_group specifies whether population data sould be accumulated to one age group
      */
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                                    bool one_age_group = false);
@@ -400,7 +387,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 }
 
 /**
- * @brief reads population data from population files for the specified nodes for one age group
+ * @brief reads population data from population files for the specified nodes
  * @param model vector of model in which the data is set
  * @param date Date for which the data should be read
  * @param county vector of region keys of interest

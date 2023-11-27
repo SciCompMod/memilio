@@ -258,6 +258,7 @@ private:
  * @param[in] tnt_capacity_factor Factor for test and trace capacity.
  * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ * @param[in] rki_age_groups Specifies whether rki-age_groups should be used.
  */
 template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
           class ReadFunction, class NodeIdFunction>
