@@ -27,22 +27,22 @@ int main()
 {
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
-    size_t NUM_AGE_GROUPS         = 4;
-    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 4);
-    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 3);
-    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
-    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 1);
+    size_t num_age_groups         = 4;
+    const auto age_group_0_to_4   = mio::AgeGroup(0);
+    const auto age_group_5_to_14  = mio::AgeGroup(1);
+    const auto age_group_15_to_34 = mio::AgeGroup(2);
+    const auto age_group_35_to_59 = mio::AgeGroup(3);
 
     // Create the world with 4 age groups.
-    auto world = mio::abm::World(NUM_AGE_GROUPS);
+    auto world = mio::abm::World(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {age_group_5_to_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
-    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {age_group_15_to_34, age_group_35_to_59};
 
     // Check if the parameters satisfy their contraints.
     world.parameters.check_constraints();
@@ -51,13 +51,13 @@ int main()
     int n_households = 10;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(NUM_AGE_GROUPS); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(AGE_GROUP_0_TO_4, 1);
-    child.set_age_weight(AGE_GROUP_0_TO_4, 1);
+    auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
+    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_0_to_4, 1);
 
-    auto parent = mio::abm::HouseholdMember(NUM_AGE_GROUPS); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(AGE_GROUP_15_TO_34, 1);
-    parent.set_age_weight(AGE_GROUP_35_TO_59, 1);
+    auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
+    parent.set_age_weight(age_group_15_to_34, 1);
+    parent.set_age_weight(age_group_35_to_59, 1);
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -99,7 +99,7 @@ int main()
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
     world.get_individualized_location(work)
         .get_infection_parameters()
-        .get<mio::abm::ContactRates>()[{AGE_GROUP_15_TO_34, AGE_GROUP_15_TO_34}] = 10.0;
+        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto testing_min_time      = mio::abm::days(1);
@@ -134,10 +134,10 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == AGE_GROUP_0_TO_4) {
+        if (person.get_age() == age_group_0_to_4) {
             person.set_assigned_location(school);
         }
-        if (person.get_age() == AGE_GROUP_15_TO_34 || person.get_age() == AGE_GROUP_35_TO_59) {
+        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
             person.set_assigned_location(work);
         }
     }
