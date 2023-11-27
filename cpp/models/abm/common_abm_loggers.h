@@ -136,12 +136,14 @@ struct LogInfectionState : mio::LogAlways {
     {
 
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
+        auto curr_time      = sim.get_time();
         PRAGMA_OMP(for)
-        for (auto i = size_t(0); i < sim.get_world().get_locations().size(); ++i) {
-            auto&& location = sim.get_world().get_locations()[i];
-            sum += location.get_subpopulations().get_last_value().cast<ScalarType>();
+        for (auto&& location : sim.get_world().get_locations()) {
+            for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+                sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
+            }
         }
-        return std::make_pair(sim.get_time(), sum);
+        return std::make_pair(curr_time, sum);
     }
 };
 

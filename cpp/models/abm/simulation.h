@@ -66,7 +66,6 @@ public:
     void advance(TimePoint tmax, History&... history)
     {
         //log initial system state
-        initialize_locations(m_t);
         (history.log(*this), ...);
         while (m_t < tmax) {
             evolve_world(tmax);
@@ -95,7 +94,6 @@ public:
     }
 
 private:
-    void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
     void evolve_world(TimePoint tmax);
 

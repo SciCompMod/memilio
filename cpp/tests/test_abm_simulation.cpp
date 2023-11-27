@@ -49,43 +49,6 @@ TEST(TestSimulation, advance_random)
     }
 }
 
-TEST(TestSimulation, advance_subpopulation)
-{
-    auto world       = mio::abm::World(NUM_AGE_GROUPS);
-    auto location_id = world.add_location(mio::abm::LocationType::School);
-    auto& school     = world.get_individualized_location(location_id);
-    auto& person1 = add_test_person(world, location_id, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
-    auto& person2 = add_test_person(world, location_id, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
-    auto& person3 = add_test_person(world, location_id, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Exposed);
-    person1.set_assigned_location(location_id);
-    person2.set_assigned_location(location_id);
-    person3.set_assigned_location(location_id);
-
-    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
-    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
-
-    for (size_t i = 0; i < 51; i++) {
-        auto v = school.get_subpopulations().get_value(i);
-        // Check whether the number of persons in infected state at the location is consistent
-        ASSERT_LE(v[size_t(mio::abm::InfectionState::InfectedSymptoms)], 3);
-        // Check the time evolution is correct
-        ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
-    }
-}
-
-TEST(TestSimulation, initializeSubpopulation)
-{
-    auto world  = mio::abm::World(NUM_AGE_GROUPS);
-    auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
-    auto& loc   = world.get_individualized_location(loc_id);
-    ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
-
-    auto t   = mio::abm::TimePoint(0);
-    auto sim = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
-
-    ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
-}
-
 TEST(TestSimulation, getWorldAndTimeConst)
 {
 

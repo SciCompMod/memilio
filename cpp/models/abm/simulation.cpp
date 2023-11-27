@@ -32,14 +32,6 @@ Simulation::Simulation(TimePoint t, World&& world)
     , m_t(t)
     , m_dt(hours(1))
 {
-    initialize_locations(m_t);
-}
-
-void Simulation::initialize_locations(TimePoint t)
-{
-    for (auto& location : m_world.get_locations()) {
-        location.initialize_subpopulations(t);
-    }
 }
 
 void Simulation::evolve_world(TimePoint tmax)
