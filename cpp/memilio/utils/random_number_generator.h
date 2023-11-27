@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -665,6 +665,13 @@ using UniformIntDistribution = DistributionAdapter<std::uniform_int_distribution
  */
 template <class Real>
 using UniformDistribution = DistributionAdapter<std::uniform_real_distribution<Real>>;
+
+/**
+ * adapted poisson_distribution.
+ * @see DistributionAdapter
+ */
+template <class Int>
+using PoissonDistribution = DistributionAdapter<std::poisson_distribution<Int>>;
 
 } // namespace mio
 

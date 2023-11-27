@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -73,7 +73,7 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0] = 0.45;
     model.parameters.get<mio::osecir::TestAndTraceCapacity>()                                = 35;
     model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                 = 0.25;
+    model.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                 = 0.3;
     model.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]                 = 0.3;
 
     model.apply_constraints();
@@ -559,6 +559,8 @@ TEST(TestOdeSecir, testSettersAndGetters)
 
 TEST(TestOdeSecir, testModelConstraints)
 {
+    mio::set_log_level(
+        mio::LogLevel::err); //as many random things are drawn, warnings are inevitable and cluster output
     double t0   = 0;
     double tmax = 57; // after 57 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
@@ -572,9 +574,13 @@ TEST(TestOdeSecir, testModelConstraints)
 
     model.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]       = 5.2;
     model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = 5;
-    model.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]       = 4.2;
+    model.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]       = 3.9;
     model.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]   = 10.;
     model.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 8.;
+
+    model.parameters.get<mio::osecir::Seasonality>()          = 0.0;
+    model.parameters.get<mio::osecir::ICUCapacity>()          = 100.0;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 10.0;
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = nb_exp_t0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
@@ -589,6 +595,7 @@ TEST(TestOdeSecir, testModelConstraints)
     model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 0.05;
     model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1;
     model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]   = 0.09;
+    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()                  = 0.85;
     model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 0.25;
     model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.2;
     model.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                = 0.25;
@@ -628,27 +635,14 @@ TEST(TestOdeSecir, testModelConstraints)
         EXPECT_GE(secihurd_season2_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
     }
 
-    // params.set_icu_capacity(max_icu_cap - 3);
-
-    // secihurd = simulate(t0, tmax, dt, params);
-    // for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
-    //     EXPECT_LE(secihurd.get_value(i)[5], max_icu_cap - 2.5) << " at row " << i;
-    // }
-
     // temporary test for random variables
-    set_params_distributions_normal(model, t0, tmax, 0.2);
 
+    set_params_distributions_normal(model, t0, tmax, 0.2);
+    model.parameters.set<mio::osecir::Seasonality>(mio::UncertainValue(0.0));
+    model.parameters.set<mio::osecir::ICUCapacity>(mio::UncertainValue(8000));
     for (size_t j = 0; j < 10; j++) {
         draw_sample(model);
-        model.parameters.set<mio::osecir::ICUCapacity>(8000);
         secihurd = simulate(t0, tmax, dt, model);
-        // max_icu_cap = 0;
-        // for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
-        //     if (secihurd.get_value(i)[5] > max_icu_cap) {
-        //         max_icu_cap = secihurd.get_value(i)[5];
-        //     }
-        // }
-        // printf("\n max cap: %.4f ", max_icu_cap);
         for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
             EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
         }

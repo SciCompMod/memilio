@@ -14,7 +14,7 @@ The model consists of the following major classes:
 
 Below is an overview of the model architecture and its compartments.
 
-![secir_model](https://github.com/DLR-SC/memilio/assets/69154294/d99b257b-1cc2-447d-8e32-ba3aa8329c0c)
+![secir_model](https://github.com/SciCompMod/memilio/assets/69154294/d99b257b-1cc2-447d-8e32-ba3aa8329c0c)
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\phi$                      |  `ContactPatterns`               | Matrix of daily contact rates / number of daily contacts between different age groups. |

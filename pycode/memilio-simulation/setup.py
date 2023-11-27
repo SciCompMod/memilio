@@ -13,12 +13,12 @@ except ImportError:
         [sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 setup(
     name='memilio-simulation', version=__version__, author='DLR-SC',
     author_email='daniel.abele@dlr.de', maintainer_email='Martin.Kuehn@DLR.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),

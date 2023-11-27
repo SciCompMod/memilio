@@ -4,7 +4,7 @@ import sys
 
 from setuptools import Command, find_packages, setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 
 class PylintCommand(Command):
@@ -57,7 +57,7 @@ setup(
     author='DLR-SC',
     author_email='daniel.abele@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
     entry_points={
         'console_scripts': [

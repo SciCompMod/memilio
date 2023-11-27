@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -68,7 +68,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
         params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
         params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.3;
         params.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
     }
 

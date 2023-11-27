@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow, Martin J. Kuehn, Annette Lutz
 #
@@ -70,7 +70,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
                   out_folder=dd.defaultDict['out_folder'],
                   no_raw=dd.defaultDict['no_raw'],
-                  start_date=date(2020, 1, 1),
+                  start_date=dd.defaultDict['start_date'],
                   end_date=dd.defaultDict['end_date'],
                   impute_dates=dd.defaultDict['impute_dates'],
                   moving_average=dd.defaultDict['moving_average'],
@@ -137,6 +137,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     if files == 'Plot':
         # only consider plotable files
         files = ['infected', 'deaths', 'all_gender', 'all_age']
+    # handle error of passing a string of one file instead of a list
+    if isinstance(files, str):
+        files = [files]
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
