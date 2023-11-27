@@ -67,5 +67,19 @@ void TripList::add_trip(Trip trip, bool weekend)
     }
 }
 
+std::vector<const Trip*> TripList::get_trips_after(TimePoint time, bool weekend) const
+{
+    std::vector<const Trip*> futureTrips;
+    const auto& trips = weekend ? m_trips_weekend : m_trips_weekday;
+
+    for (const auto& trip : trips) {
+        if (trip.time > time) {
+            futureTrips.push_back(&trip);
+        }
+    }
+
+    return futureTrips;
+}
+
 } // namespace abm
 } // namespace mio

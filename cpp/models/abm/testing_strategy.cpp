@@ -63,7 +63,7 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
 
 bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 {
-    // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set. 
+    // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set.
     return (m_ages.empty() || m_ages.count(static_cast<size_t>(p.get_age()))) &&
            (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
 }
@@ -111,6 +111,12 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
         }
     }
     return true;
+}
+
+bool TestingScheme::is_applicable(Person& person, TimePoint trip_time, TimePoint curr_time) const
+{
+    return m_testing_criteria.evaluate(person, curr_time) && (!person.has_valid_test_result(m_test_type, trip_time)) &&
+           (trip_time - curr_time >= m_test_type.get_default().required_time);
 }
 
 TestingStrategy::TestingStrategy(
@@ -164,6 +170,28 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
         }
     }
     return true;
+}
+
+std::vector<const TestingScheme*> TestingStrategy::get_applicable_schemes(const Person& person,
+                                                                          const Location& location, TimePoint trip_time,
+                                                                          TimePoint curr_time) const
+{
+    std::vector<const TestingScheme*> applicable_schemes;
+
+    // Combine two vectors of schemes at corresponding location and location stype
+    std::vector<TestingScheme>* schemes_vector[] = {
+        &m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}],
+        &m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}]};
+
+    for (auto vec_ptr : schemes_vector) {
+        for (const auto& scheme : *vec_ptr) {
+            if (scheme.is_active() && scheme.is_applicable(person, trip_time, curr_time)) {
+                applicable_schemes.push_back(&scheme);
+            }
+        }
+    }
+
+    return applicable_schemes;
 }
 
 } // namespace abm

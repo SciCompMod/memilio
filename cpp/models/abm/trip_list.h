@@ -190,6 +190,14 @@ public:
         return m_current_index;
     }
 
+    /**
+     * @brief Get trips after a given time.
+     * @param time The time after which to find the trips.
+     * @param weekend Whether to search in weekend trips or weekday trips.
+     * @return A vector of pointers to the trips after the given time.
+     */
+    std::vector<const Trip*> get_trips_after(TimePoint time, bool weekend) const;
+
 private:
     std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
     std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.

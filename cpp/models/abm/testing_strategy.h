@@ -142,6 +142,17 @@ public:
      */
     bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
+    bool is_applicable(Person& person, TimePoint t) const;
+
+    /**
+     * @brief Get the type of the TestingScheme.
+     * @return The type of the TestingScheme.
+     */
+    GenericTest get_type()
+    {
+        return m_test_type;
+    }
+
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
@@ -219,6 +230,17 @@ public:
      * @return If the Person is allowed to enter the Location.
      */
     bool run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+
+    /**
+    * @brief Get and returns a list of testing schemes that are applicable to a given person at a specific location and time.
+    * @param person The Person for whom the testing schemes are to be evaluated.
+    * @param location The Location where the testing schemes are to be applied.
+    * @param trip_time The TimePoint at which the trip takes place.
+    * @param curr_time The current TimePoint.
+    * @return A vector of pointers to the TestingScheme instances that are applicable.
+    */
+    std::vector<const TestingScheme*> get_applicable_schemes(const Person& person, const Location& location,
+                                                             TimePoint trip_time, TimePoint curr_time) const;
 
 private:
     std::unordered_map<LocationId, std::vector<TestingScheme>>

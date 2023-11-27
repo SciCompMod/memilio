@@ -299,13 +299,18 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
         t.days() - latest_protection.second.days());
 }
 
-void Person::add_test_result(const TestResult& result)
+void Person::add_test_result(TimePoint t, GenericTest type, bool result)
 {
+    TestResult result;
+    result.time_of_testing = t;
+    result.type            = type;
+    result.result          = result;
     // Remove outdated test results or replace the old result of the same type
     m_test_results.erase(std::remove_if(m_test_results.begin(), m_test_results.end(),
                                         [result](const TestResult& old_result) {
                                             return old_result.type.name == result.type.name ||
-                                                   (old_result.time_of_testing + old_result.validity_period) <
+                                                   (old_result.time_of_testing +
+                                                    old_result.type.get_default().validity_period) <
                                                        result.time_of_testing;
                                         }),
                          m_test_results.end());
@@ -317,7 +322,7 @@ bool Person::has_valid_test_result(GenericTest type, TimePoint t) const
 {
     for (const auto& result : m_test_results) {
         if (result.type.name == type.name && result.result == true &&
-            (result.time_of_testing + result.validity_period) > t) {
+            (result.time_of_testing + result.type.get_default().validity_period) > t) {
             return true;
         }
     }

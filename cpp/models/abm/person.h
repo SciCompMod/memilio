@@ -493,13 +493,12 @@ public:
     }
 
     struct TestResult {
-        TimePoint time_of_testing;
-        GenericTest type;
-        bool result;
-        TimeSpan validity_period;
+        TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
+        GenericTest type; ///< The type of the test. 
+        bool result; ///< The result of the test.
     };
 
-    void add_test_result(const TestResult& result);
+    void add_test_result(TimePoint t, GenericTest type, bool result);
 
     bool has_valid_test_result(GenericTest type, TimePoint t) const;
 

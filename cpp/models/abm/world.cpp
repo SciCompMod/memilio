@@ -77,9 +77,28 @@ void World::interaction(TimePoint t, TimeSpan dt)
 void World::migration(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
+    bool weekend = t.is_weekend();
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
+
+        // Check and process future trips for the person
+        auto future_trips = m_trip_list.get_trips_after(t, weekend);
+        for (const auto& trip : future_trips) {
+            auto& target_location = find_location(trip->migration_destination.type, *person);
+
+            // Get applicable testing schemes for the person and future trip location
+            auto applicable_schemes = m_testing_strategy.get_applicable_schemes(*person, target_location, trip->time, t);
+
+            // Process each applicable scheme
+            for (const auto* scheme : applicable_schemes) {
+                if (!scheme->run_scheme(personal_rng, *person, t)) {
+                    // Handle the case where the test fails (e.g., person cannot make the trip)
+                }
+                // Optionally, save the test result in the person's record
+                person.add_test_result(t, scheme->get_type(), true)
+            }
+        }
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
@@ -123,7 +142,6 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 
     // check if a person makes a trip
-    bool weekend     = t.is_weekend();
     size_t num_trips = m_trip_list.num_trips(weekend);
 
     if (num_trips != 0) {
@@ -241,7 +259,6 @@ const TestingStrategy& World::get_testing_strategy() const
 
 void World::update_trip_list(TimePoint t, TimeSpan dt)
 {
-    
 }
 
 } // namespace abm

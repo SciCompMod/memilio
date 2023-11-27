@@ -331,7 +331,7 @@ struct GenericTest {
 };
 
 /**
- * @brief Reliability of an AntibodyTest.
+ * @brief Parameters of an AntibodyTest.
  */
 struct AntibodyTest : public GenericTest {
     using Type = TestParameters;
@@ -346,7 +346,7 @@ struct AntibodyTest : public GenericTest {
 };
 
 /**
- * @brief Reliability of an AntigenTest.
+ * @brief Parameters of an AntigenTest.
  */
 struct AntigenTest : public GenericTest {
     using Type = TestParameters;
