@@ -22,6 +22,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include "abm/common_abm_loggers.h"
 
 int main()
 {
@@ -149,20 +150,22 @@ int main()
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
+    auto sim  = mio::abm::Simulation(t0, std::move(world));
 
+    // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    sim.advance(tmax, historyTimeSeries);
 
-    std::ofstream outfile("abm_minimal.txt");
+    // Run the simulation until tmax with the history object.
+    sim.advance(tmax, historyTimeSeries);
 
     // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
     // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::get<0>(history.get_log());
-    .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-
+    std::ofstream outfile("abm_minimal.txt");
+    std::get<0>(historyTimeSeries.get_log())
+        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 
     return 0;
