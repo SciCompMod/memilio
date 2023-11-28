@@ -113,7 +113,7 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
     return true;
 }
 
-bool TestingScheme::is_applicable(Person& person, TimePoint trip_time, TimePoint curr_time) const
+bool TestingScheme::is_applicable(const Person& person, TimePoint trip_time, TimePoint curr_time) const
 {
     return m_testing_criteria.evaluate(person, curr_time) && (!person.has_valid_test_result(m_test_type, trip_time)) &&
            (trip_time - curr_time >= m_test_type.get_default().required_time);
@@ -174,7 +174,7 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
 
 std::vector<const TestingScheme*> TestingStrategy::get_applicable_schemes(const Person& person,
                                                                           const Location& location, TimePoint trip_time,
-                                                                          TimePoint curr_time) const
+                                                                          TimePoint curr_time)
 {
     std::vector<const TestingScheme*> applicable_schemes;
 

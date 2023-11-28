@@ -96,7 +96,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                     // Handle the case where the test fails (e.g., person cannot make the trip)
                 }
                 // Optionally, save the test result in the person's record
-                person.add_test_result(t, scheme->get_type(), true)
+                //person->add_test_result(t, scheme.get_type(), true)
             }
         }
 
@@ -257,7 +257,7 @@ const TestingStrategy& World::get_testing_strategy() const
     return m_testing_strategy;
 }
 
-void World::update_trip_list(TimePoint t, TimeSpan dt)
+void World::update_trip_list(TimePoint /*t*/, TimeSpan /*dt*/)
 {
 }
 

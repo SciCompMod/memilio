@@ -122,7 +122,7 @@ public:
     bool operator==(const TestingScheme& other) const;
 
     /**
-     * @brief Get the activity status of the scheme.
+     * @brief Gets the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
      */
     bool is_active() const;
@@ -142,16 +142,20 @@ public:
      */
     bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
-    bool is_applicable(Person& person, TimePoint t) const;
+    /**
+     * @brief Checks if the TestScheme is applicable for the given Person, trip TimePoint and current TimePoint
+     * @param[in] person Person to check.
+     * @param[in] trip_time TimePoint when the trip is schedules. 
+     * @param[in] curr_time TimePoint of the current time.
+     * @return If the TestScheme is applicable for the given Person, trip TimePoint and current TimePoint
+     */
+    bool is_applicable(const Person& person, TimePoint trip_time, TimePoint curr_time) const;
 
     /**
-     * @brief Get the type of the TestingScheme.
+     * @brief Gets the type of the TestingScheme.
      * @return The type of the TestingScheme.
      */
-    GenericTest get_type()
-    {
-        return m_test_type;
-    }
+    GenericTest get_type();
 
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
@@ -240,7 +244,7 @@ public:
     * @return A vector of pointers to the TestingScheme instances that are applicable.
     */
     std::vector<const TestingScheme*> get_applicable_schemes(const Person& person, const Location& location,
-                                                             TimePoint trip_time, TimePoint curr_time) const;
+                                                             TimePoint trip_time, TimePoint curr_time);
 
 private:
     std::unordered_map<LocationId, std::vector<TestingScheme>>
