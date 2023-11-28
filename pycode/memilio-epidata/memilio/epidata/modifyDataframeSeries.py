@@ -58,17 +58,6 @@ def impute_and_reduce_df(
         df_old[dd.EngEng['date']] = pd.to_datetime(df_old[dd.EngEng['date']])
         df_old.Date = df_old.Date.dt.date.astype(df_old.dtypes.Date)
 
-    # create empty copy of the df
-    df_new = pd.DataFrame(columns=df_old.columns)
-    # make pandas use the same data types....
-    df_new = df_new.astype(dtype=dict(zip(df_old.columns, df_old.dtypes)))
-
-    # remove 'index' column if available
-    try:
-        df_new.drop(columns='index', inplace=True)
-    except KeyError:
-        pass
-
     # range of dates which should be filled
     # to prevent inconsistent data with different start dates, all dates are filled
     # TODO: find a better method, to prevent unnecessary computation of dates before start date
@@ -128,9 +117,9 @@ def impute_and_reduce_df(
     unique_ids_comb = list(itertools.product(*unique_ids))
     # create list of keys/group_by column names
     group_by = list(group_by_cols.keys())
-    # create to store DataFrames in to be concatenated.
+    # create list to store DataFrames in to be concatenated.
     # pd.concat is not called inside the loop for performance reasons.
-    df_list = [df_new]
+    df_list = []
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
         # filter df
@@ -148,7 +137,7 @@ def impute_and_reduce_df(
 
         if len(df_local) > 0:
             # create values for first date
-            values = {column: df_local[column][0]
+            values = {column: df_local[column].iloc[0]
                       for column in df_local.columns}
             # depending on 'start_w_firstval', missing values at the beginning
             # of the frame will either be set to zero or to the first available
@@ -257,7 +246,7 @@ def split_column_based_on_values(
         df_reduced = df_to_split[df_to_split[column_to_split] == column_identifiers[i]].rename(
             columns={column_vals_name: new_column_labels[i]}).drop(columns=column_to_split)
         df_reduced = df_reduced.groupby(
-            groupby_list).agg({new_column_labels[i]: sum})
+            groupby_list).agg({new_column_labels[i]: "sum"})
         if compute_cumsum:
             # compute cummulative sum over level index of ID_County and level
             # index of Age_RKI
