@@ -119,6 +119,26 @@ Then we run the simulation.
 sim.advance(mio::abm::TimePoint(0) + mio::abm::days(30));
 ```
 
+If we want to track things in the simulation, we need to setup a logger, for example to track all the TimePoints of each simulation step:
+
+```cpp
+struct LogTimePoint : mio::LogAlways {
+        using Type = double;
+        static Type log(const mio::abm::Simulation& sim)
+        {
+            return sim.get_time().hours();
+        }
+    };
+```
+
+Now we just need to setup the History object and run the simulation with it. As a writer we use the predefined DataWriterToMemory, which just saves the Timepoints in a vector. Aftwerwards one can access it through get_log.
+
+```cpp
+    mio::History<mio::DataWriterToMemory, LogTimePoint> history;
+    sim.advance(tmax, history);
+    auto log = history.get_log();
+``````
+
 ## Current Limitations
 
 Currently, a few things are not yet implemented, such as:
