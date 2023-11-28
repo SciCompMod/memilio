@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -20,8 +20,11 @@
 #ifndef SEIR_MODEL_H
 #define SEIR_MODEL_H
 
+#include "memilio/compartments/flow_model.h"
+#include "memilio/epidemiology/populations.h"
+#include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/utils/type_list.h"
 #include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/config.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/io/io.h"
@@ -38,12 +41,18 @@ namespace oseir
 {
 
 /********************
-    * define the model *
-    ********************/
+ * define the model *
+ ********************/
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+// clang-format off
+using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed>,
+                       Flow<InfectionState::Exposed,     InfectionState::Infected>,
+                       Flow<InfectionState::Infected,    InfectionState::Recovered>>;
+// clang-format on
+
+class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
 
 public:
     Model(const Populations& pop, const ParameterSet& params)
@@ -56,22 +65,18 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                   Eigen::Ref<Eigen::VectorXd> flows) const override
     {
         auto& params     = this->parameters;
         double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Exposed] =
-            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
+        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>()] =
+            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+        flows[get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>()] =
             (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
-        dydt[(size_t)InfectionState::Infected] =
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] =
+        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 

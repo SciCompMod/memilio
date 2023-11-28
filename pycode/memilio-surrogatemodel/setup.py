@@ -2,13 +2,13 @@ import os
 
 from setuptools import find_packages, setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 setup(
     name='memilio-surrogatemodel', version=__version__, author='DLR-SC',
     author_email='henrik.zunker@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, implementation of surrogate models for the existing models in MEmilio.',
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),

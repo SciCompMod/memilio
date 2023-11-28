@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack
 #
@@ -306,46 +306,52 @@ def cli(what):
         action='store_true')
 
     if 'start_date' in what_list:
+        if what == 'divi':
+            start_date_default = datetime.date(2020, 4, 24)
+        elif what == 'jh':
+            start_date_default = datetime.date(2020, 1, 22)
+        else:
+            start_date_default = dd.defaultDict['start_date']
         parser.add_argument(
-            '-s', '--start-date',
+            '-s', '--start-date', default=start_date_default,
             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is 2020-04-24',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['start_date'])
+            'Default is ' +
+            str(dd.defaultDict['start_date']) +
+            ' (2020-04-24 for divi and 2020-01-22 for jh)',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'end_date' in what_list:
         parser.add_argument(
-            '-e', '--end-date',
+            '-e', '--end-date', default=dd.defaultDict['end_date'],
             help='Defines date after which data download is stopped.'
             'Should have form: YYYY-mm-dd. Default is today',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['end_date'])
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'impute_dates' in what_list:
         parser.add_argument(
-            '-i', '--impute-dates',
+            '-i', '--impute-dates', default=dd.defaultDict['impute_dates'],
             help='the resulting dfs contain all dates instead of'
             ' omitting dates where no data was reported', action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument(
-            '-m', '--moving-average', type=int, default=0,
-            help='Compute a moving average of N days over the time series')
+            '-m', '--moving-average', type=int, default=dd.defaultDict['moving_average'],
+            help='Compute a moving average of N days over the time series. Default is ' + str(dd.defaultDict['moving_average']))
     if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', help='Plots the data.',
+        parser.add_argument('-p', '--make-plot', default=dd.defaultDict['make_plot'], help='Plots the data.',
                             action='store_true')
     if 'split_berlin' in what_list:
         parser.add_argument(
-            '-b', '--split-berlin',
+            '-b', '--split-berlin', default=dd.defaultDict['split_berlin'],
             help='Berlin data is split into different counties,'
             ' instead of having only one county for Berlin.',
             action='store_true')
     if 'rep_date' in what_list:
         parser.add_argument(
-            '--rep-date', default=False,
+            '--rep-date', default=dd.defaultDict['rep_date'],
             help='If reporting date is activated, the reporting date'
             'will be prefered over possibly given dates of disease onset.',
             action='store_true')
     if 'sanitize_data' in what_list:
         parser.add_argument(
-            '-sd', '--sanitize_data', type=int, default=1,
+            '-sd', '--sanitize_data', type=int, default=dd.defaultDict['sanitize_data'],
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
 

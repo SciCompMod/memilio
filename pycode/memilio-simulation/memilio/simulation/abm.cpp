@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
@@ -67,8 +67,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(
-        m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
     pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
     pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
@@ -138,17 +137,16 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
     pymio::bind_class<mio::abm::TestingCriteria, pymio::EnablePickling::IfAvailable>(m, "TestingCriteria")
-        .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
-                      const std::vector<mio::abm::InfectionState>&>(),
-             py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
-
+        .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
+             py::arg("age_groups"), py::arg("infection_states"));
+             
     pymio::bind_class<mio::abm::GenericTest, pymio::EnablePickling::IfAvailable>(m, "GenericTest").def(py::init<>());
     pymio::bind_class<mio::abm::AntigenTest, pymio::EnablePickling::IfAvailable, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
     pymio::bind_class<mio::abm::PCRTest, pymio::EnablePickling::IfAvailable, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
 
     pymio::bind_class<mio::abm::TestingScheme, pymio::EnablePickling::IfAvailable>(m, "TestingScheme")
-        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint,
-                      mio::abm::TimePoint, const mio::abm::GenericTest&, double>(),
+        .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
+                      const mio::abm::GenericTest&, double>(),
              py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"),
              py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
@@ -159,7 +157,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::Vaccination::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::IfAvailable>(m, "TestingStrategy")
-        .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
+        .def(py::init<const std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
 
     pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Never>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
 *
@@ -101,6 +101,9 @@ TEST(TestStateAgeFunction, testSettersAndGettersForParameter)
 
 TEST(TestStateAgeFunction, testGetSupportMax)
 {
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
     ScalarType dt = 0.5;
 
     // test get_support_max for all derived classes as this method can be overridden
@@ -119,10 +122,16 @@ TEST(TestStateAgeFunction, testGetSupportMax)
     EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
     constfunc.set_parameter(2.0);
     EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
 {
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
     ScalarType dt = 0.5;
     mio::SmootherCosine smoothcos(1.0);
     mio::StateAgeFunctionWrapper wrapper(smoothcos);
@@ -176,6 +185,9 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     mio::StateAgeFunctionWrapper wrapper_const(constfunc);
     EXPECT_NEAR(wrapper_const.get_parameter(), 1.0, 1e-14);
     EXPECT_NEAR(wrapper_const.get_support_max(dt), -2.0, 1e-14);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)

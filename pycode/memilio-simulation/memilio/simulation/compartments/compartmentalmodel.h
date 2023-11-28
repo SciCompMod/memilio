@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -37,8 +37,8 @@ void bind_CompartmentalModel(pybind11::module_& m, std::string const& name)
     using Model = mio::CompartmentalModel<InfectionState, Populations, Parameters>;
     bind_class<Model, EnablePickling::Never>(m, name.c_str())
         .def(pybind11::init<Populations const&, Parameters const&>())
-        .def("apply_constraints", &Model::template apply_constraints<Parameters>)
-        .def("check_constraints", &Model::template check_constraints<Parameters>)
+        .def("apply_constraints", &Model::template apply_constraints)
+        .def("check_constraints", &Model::template check_constraints)
         .def("get_initial_values", &Model::get_initial_values)
         .def_property(
             "populations",
