@@ -43,7 +43,7 @@ The initial empty world is created with the number of age groups:
 auto world = mio::abm::World(num_age_groups);
 ```
 
-We can set plenty of general parameters, which you can find [here](../abm/parameters.h). Here is an example where we set the duration of the incubation period to 4 days:
+We can set several general parameters, which you can find [here](../abm/parameters.h). Here is an example where we set the duration of the incubation period to 4 days:
 
 ```cpp
 world.parameters.get<mio::abm::IncubationPeriod>() = 4.
