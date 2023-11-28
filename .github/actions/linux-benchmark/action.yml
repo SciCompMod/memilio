@@ -1,0 +1,38 @@
+name: "Linux Benchmark"
+description: "Run the C++ unit tests on linux."
+inputs:
+  build-artifact:
+    description: "Name of the build artifact that contains the benchmark binary."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
+        sudo apt-get -qq update
+    - name: Download built test directory
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.build-artifact }}
+        path: cpp
+    - name: extract build archive
+      shell: bash
+      run: |
+        cd cpp
+        tar -xzf build.tar.gz
+    - name: Run benchmark
+      shell: bash
+      run: |
+        cd cpp/build/bin
+        sudo chmod a+x abm_benchmark
+        ./abm_benchmark  --benchmark_out="abm_benchmark.json" --benchmark_repetitions=10
+    - name: Upload benchmark result
+      uses: actions/upload-artifact@v3
+      with:
+        name: abm-benchmark-report
+        path: cpp/build/bin/abm_benchmark.json
+        if-no-files-found: error
+        retention-days: 10

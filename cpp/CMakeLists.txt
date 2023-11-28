@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
 project(memilio 
-    VERSION 0.7.0 
+    VERSION 1.0.0 
     DESCRIPTION "A library for simulations of pandemics."
     HOMEPAGE_URL "https://github.com/DLR-SC/memilio" 
     LANGUAGES CXX)

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Rene Schmieding, Daniel Abele, Martin J. Kuehn
 *
@@ -38,7 +38,7 @@ using namespace oseir;
 
 // For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
 // For more details see the original implementation in:
-// https://github.com/DLR-SC/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_seir/model.h
+// https://github.com/SciCompMod/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_seir/model.h
 class FlowlessModel : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
 {
     using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
