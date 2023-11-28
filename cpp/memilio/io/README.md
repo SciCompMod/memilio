@@ -137,3 +137,17 @@ Name  (Alias) | Description
 In general, an option is defined as a string, which consists either of two dashes followed by a name (e.g. --help), or a single dash followed by an alias (e.g. -h). Apart from the built-in options, the names each refer to a parameter that can be set.
 
 To set the value of a parameter from the command line, first type the corresponding parameter option (see --help), followed by the value that should be assigned (reference --print_option). Values are given as a Json value corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted. For example, the Json string `"some string"` must be entered as `\"some string\"` or `'"some string"'`.
+
+## The history object
+
+The `history.h` file defines a `History` class that handles writers and loggers for saving current parameters of our models.
+
+- The `History` class provides a function `log` to add a new record and a function `get_log` to access all records.
+
+- The `History` class uses `Loggers` to retrieve data from a given input, and a `Writer` to record this data.
+
+- A `Logger` is a struct with a type `Type` and functions `Type log(const T&)` and `bool should_log(const T&)`. All `Loggers` must be unique types and default constructible/destructible. Their member `should_log` indicates whether to log, while `Type` and `log` determine what is logged. The input for `should_log` and `log` is the same input of type `T` that is given to `History::log`.
+
+- The `Writer` defines the type `Data` to store all records (i.e., the return values of `Logger::log`), and the function `template <class Logger> static void add_record(const Logger::Type&, Data&)` to add a new record. `add_record` is used whenever `History::log` was called and `Logger::should_log` is true.
+
+- The `History` class is templated on the `Writer` that is used to handle the data (e.g., store it into an array), and the `Loggers` that are used to log data. The `Loggers` used for a `History` must be unique.
