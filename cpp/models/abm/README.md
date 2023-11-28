@@ -62,7 +62,7 @@ auto person = world.add_person(home, mio::AgeGroup(0));
 person.set_assigned_location(home);
 ```
 
-For adding more people to the world, we create households. A Household holds a vector with HouseholdMembers, i.e. a vector with weighted age distribution from which the age of the Persons belonging to this Household can be calculated. A Household and the number of times it exists is gathered in a Household Group.
+For adding more people to the world, we create households. A Household holds a vector with HouseholdMembers, i.e. a vector with weighted age distribution from which the age of the Persons belonging to this Household can be calculated. A Household and the number of times it exists is gathered in a HouseholdGroup.
 For example, we have children who either belong to AgeGroup(0) or AgeGroup(1) with probability 0.5 in each case and parents which belong to AgeGroup(2) or AgeGroup(3) similarly. We then add households with a parent and a child and households with two parents and one child.
 
 ```cpp
