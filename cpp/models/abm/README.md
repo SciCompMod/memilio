@@ -30,7 +30,7 @@ Another way of migration we use in the simulation of Braunschweig (simulations/a
 
 This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, can find a full example in the [ABM minimal example](../../examples/abm_minimal.cpp) and a more detailed Doxygen documentation [here](https://scicompmod.github.io/memilio/documentation/index.html ). For a guide on installation and running the simulations and examples, see this [README](../../README.md).
 
-Every person in the ABM belongs to an Age Group, which we can define as the following. Note that every age group has to have values strictly smaller than num_age_groups.
+Every person in the ABM belongs to an AgeGroup, which we can define as the following. Note that every age group has to have values strictly smaller than num_age_groups.
 
 ```cpp
 size_t num_age_groups         = 4;
@@ -62,7 +62,7 @@ auto person = world.add_person(home, mio::AgeGroup(0));
 person.set_assigned_location(home);
 ```
 
-For adding more people to the world, we create households. A Household holds a vector with Household Members, i.e. a vector with weighted age distribution from which the age of the Persons belonging to this Household can be calculated. A Household and the number of times it exists is gathered in a Household Group.
+For adding more people to the world, we create households. A Household holds a vector with HouseholdMembers, i.e. a vector with weighted age distribution from which the age of the Persons belonging to this Household can be calculated. A Household and the number of times it exists is gathered in a Household Group.
 For example, we have children who either belong to AgeGroup(0) or AgeGroup(1) with probability 0.5 in each case and parents which belong to AgeGroup(2) or AgeGroup(3) similarly. We then add households with a parent and a child and households with two parents and one child.
 
 ```cpp
