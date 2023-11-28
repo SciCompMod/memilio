@@ -462,7 +462,7 @@ public:
      * @param out Which ostream to use. Prints to terminal by default.
      */
     void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
-                     std::ostream& out = std::cout)
+                     std::ostream& out = std::cout) const
     {
         // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
         // print column labels
@@ -560,8 +560,7 @@ inline Eigen::Index next_pow2(Eigen::Index i)
     i |= i >> 4;
     i |= i >> 8;
     i |= i >> 16;
-    if constexpr (sizeof(Eigen::Index) == 8)
-    {
+    if constexpr (sizeof(Eigen::Index) == 8) {
         i |= i >> 32;
     }
     ++i;
