@@ -1,0 +1,38 @@
+SCOREP_FILE_NAMES_BEGIN # This is a comment
+    EXCLUDE *
+    INCLUDE */models/*
+    INCLUDE */simulations/*
+    INCLUDE */memilio/*
+SCOREP_FILE_NAMES_END
+
+SCOREP_REGION_NAMES_BEGIN
+    EXCLUDE *
+    INCLUDE *mio::abm*
+    # initialization
+    EXCLUDE *determine_infection_state* *pick_age_group_from_age_distribution* *add_household_to_world*
+    EXCLUDE *add_household_group_to_world* *make_uniform_households* *make_homes_with_families* *assign_infection_state*
+    EXCLUDE *set_parameters* *create_world_from_statistical_data* *create_assign_locations* *create_sampled_simulation*
+    EXLCUDE *set_home_office* *set_school_closure* *close_social_events*
+    EXCLUDE *World::add_person* *World::add_location* *World::prepare* *World::use_migration_rules*
+    EXCLUDE *Simulation::initialize_locations*
+    EXCLUDE *Household::add_members*
+    EXCLUDE *HouseholdGroup::add_households*
+
+    EXCLUDE *TestingScheme::is_active*
+    EXCLUDE *TestingCriteria::has_requested_age* *TestingCriteria::is_requested_location_type* *TestingCriteria::evaluate*
+    EXCLUDE *TestingCriteria::has_requested_infection_state*
+    EXCLUDE *World::get_individualized_location* *World::find_location* *World::get_global_infection_parameters* *World::get_persons*
+    EXCLUDE *World::get_testing_strategy* *World::get_locations* *World::get_migration_parameters*
+    EXCLUDE *Person::get_location* *Person::get_assigned_location_index* *Person::get_person_id* *Person::get_infection_state*
+    EXLCUDE *Person::get_cells* *Person::is_infected* *Person::get_mask_protective_factor* *Person::migrate_to*
+    EXCLUDE *Person::get_go_to_school_time* *Person::apply_mask_intervention* *Person::set_assigned_location* *Person::goes_to_work*
+    EXCLUDE *Person::goes_to_school* *Person::get_infection*
+    EXCLUDE *Location::get_number_persons* *Location::lock* *Location::unlock*
+    EXCLUDE *Infection::get_virus_variant*
+    EXCLUDE *get_buried* *return_home_when_recovered* *go_to_hospital* *go_to_icu* *go_to_school* *go_to_work* *go_to_shop*
+    EXCLUDE *go_to_event* *go_to_quarantine* *random_transition*
+    EXCLUDE *mio::rng_totalsequence_counter* *mio::flatten_index*
+    EXCLUDE *operator* *::product* *internal::check_for_aliasing* *internal::smart_copy*
+    EXCLUDE *std::enable_if*
+    EXCLUDE *TestingStrategy::run_strategy*
+SCOREP_REGION_NAMES_END
