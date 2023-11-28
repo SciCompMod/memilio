@@ -146,15 +146,17 @@ int main()
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
     mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
 
+    // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(10);
-    auto sim  = mio::abm::Simulation(t0, std::move(world));
+    auto tmax = t0 + mio::abm::days(10);
 
+    // Create and run the simualtion for the scenario defined above.
+    auto sim = mio::abm::Simulation(t0, std::move(world));
     sim.advance(tmax);
 
     std::ofstream outfile("abm_minimal.txt");
 
-    // The results are saved in a table with 9 columns.
+    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
     // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
