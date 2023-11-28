@@ -299,6 +299,8 @@ jobs:
 
   pages:
     if: github.event.pull_request.draft == false
+    permissions:
+      pages: write
     needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel]
     runs-on: ubuntu-latest
     steps:
