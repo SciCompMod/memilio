@@ -378,16 +378,16 @@ data_te = data_test
 
 
 # Data loaders
-# loader_tr = BatchLoader(
-#     data_tr, batch_size=batch_size, epochs=epochs)
-# loader_va = BatchLoader(data_va,  batch_size=batch_size)
-# loader_te = BatchLoader(data_te, batch_size=data_te.n_graphs)
-
-# Data loaders
-loader_tr = MixedLoader(
+loader_tr = BatchLoader(
     data_tr, batch_size=batch_size, epochs=epochs)
-loader_va = MixedLoader(data_va,  batch_size=batch_size)
-loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
+loader_va = BatchLoader(data_va,  batch_size=batch_size)
+loader_te = BatchLoader(data_te, batch_size=data_te.n_graphs)
+
+# # Data loaders
+# loader_tr = MixedLoader(
+#     data_tr, batch_size=batch_size, epochs=epochs)
+# loader_va = MixedLoader(data_va,  batch_size=batch_size)
+# loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
 
 
 learning_rate = 0.001
@@ -482,7 +482,7 @@ path_models = os.path.join(
 if not os.path.isdir(path_models):
     os.mkdir(path_models)
 
-# model.save(path_models, 'model_400pop_30days.h5')
+model.save(path_models, 'model_400pop_30days.h5')
 
 
 print("Time for training: {:.4f} seconds".format(elapsed))
