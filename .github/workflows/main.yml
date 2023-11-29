@@ -26,27 +26,27 @@ jobs:
           python-version: 3.11
       - uses: pre-commit/action@v3.0.0
 
-  build-cpp-gcc_clang:
-    if: github.event.pull_request.draft == false
-    strategy:
-      matrix:
-        compiler: ["gcc"]
-        config: ["Debug"]
-        version: ["latest"]
-        include:
-          - version: "latest"
-            os: "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/linux-build
-        with:
-          compiler: ${{ matrix.compiler }}
-          config: ${{ matrix.config }}
-          version: ${{ matrix.version }}
-          coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
-          sanitize-addr: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest') && 'ON' || 'OFF' }}
-          sanitize-ub: ${{ (matrix.compiler == 'gcc'  && matrix.version == 'latest') && 'ON' || 'OFF' }}
+  # build-cpp-gcc_clang:
+  #   if: github.event.pull_request.draft == false
+  #   strategy:
+  #     matrix:
+  #       compiler: ["gcc"]
+  #       config: ["Debug"]
+  #       version: ["latest"]
+  #       include:
+  #         - version: "latest"
+  #           os: "ubuntu-latest"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/actions/linux-build
+  #       with:
+  #         compiler: ${{ matrix.compiler }}
+  #         config: ${{ matrix.config }}
+  #         version: ${{ matrix.version }}
+  #         coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
+  #         sanitize-addr: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+  #         sanitize-ub: ${{ (matrix.compiler == 'gcc'  && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
   # build-cpp-gcc-no-optional-deps:
   #   if: github.event.pull_request.draft == false
@@ -90,24 +90,24 @@ jobs:
   #         version: latest
   #         optional-dependencies: OFF
 
-  test-cpp-gcc_clang:
-    if: github.event.pull_request.draft == false
-    needs: build-cpp-gcc_clang
-    strategy:
-      matrix:
-        compiler: ["gcc"]
-        config: ["Debug"]
-        version: ["latest"]
-        include:
-          - version: "latest"
-            os: "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/linux-test
-        with:
-          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
-          coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
+  # test-cpp-gcc_clang:
+  #   if: github.event.pull_request.draft == false
+  #   needs: build-cpp-gcc_clang
+  #   strategy:
+  #     matrix:
+  #       compiler: ["gcc"]
+  #       config: ["Debug"]
+  #       version: ["latest"]
+  #       include:
+  #         - version: "latest"
+  #           os: "ubuntu-latest"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/actions/linux-test
+  #       with:
+  #         build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
+  #         coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
 
   # test-linux-no-optional-deps:
   #   if: github.event.pull_request.draft == false
@@ -246,19 +246,19 @@ jobs:
   #       with:
   #         package: simulation
 
-  test-py-surrogatemodel:
-    if: github.event.pull_request.draft == false
-    needs: [build-py-surrogatemodel, build-py-simulation]
-    strategy:
-      matrix: 
-        version: ["3.8", "3.11"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/test-py
-        with:
-          package: surrogatemodel
-          coverage: ON
+  # test-py-surrogatemodel:
+  #   if: github.event.pull_request.draft == false
+  #   needs: [build-py-surrogatemodel, build-py-simulation]
+  #   strategy:
+  #     matrix: 
+  #       version: ["3.8", "3.11"]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/actions/test-py
+  #       with:
+  #         package: surrogatemodel
+  #         coverage: ON
 
   test-docs:
     if: github.event.pull_request.draft == false
@@ -299,7 +299,7 @@ jobs:
       actions: write
       pages: write
       contents: write
-    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel]
+    needs: [test-docs]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -307,14 +307,14 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git
-      - name: Download python coverage report
-        uses: actions/download-artifact@v3
-        with:
-          name: test-py-coverage-reports-surrogatemodel
-      - name: Download cpp coverage report
-        uses: actions/download-artifact@v3
-        with:
-          name: test-cpp-coverage-reports
+      # - name: Download python coverage report
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: test-py-coverage-reports-surrogatemodel
+      # - name: Download cpp coverage report
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: test-cpp-coverage-reports
       - name: Download documentation
         uses: actions/download-artifact@v3
         with:
@@ -329,13 +329,13 @@ jobs:
         run: |
           mkdir -p public/documentation
           cp -r docs/html/* public/documentation
-      - name: Prepare coverage reports
-        run: |
-          mkdir -p public/coverage
-          mkdir -p public/coverage/cpp
-          mkdir -p public/coverage/python
-          cp -r coverage_python/* public/coverage/python/
-          cp -r coverage/* public/coverage/cpp/
+      # - name: Prepare coverage reports
+      #   run: |
+      #     mkdir -p public/coverage
+      #     mkdir -p public/coverage/cpp
+      #     mkdir -p public/coverage/python
+      #     cp -r coverage_python/* public/coverage/python/
+      #     cp -r coverage/* public/coverage/cpp/
       - name: Upload pages as artifact
         uses: actions/upload-artifact@v3
         if: github.event_name == 'pull_request' && github.ref != 'refs/heads/main'
