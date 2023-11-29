@@ -323,7 +323,7 @@ jobs:
         with:
             github_token: ${{secrets.GITHUB_TOKEN}}
             workflow: epidata_main.yml
-            name: pylint-report
+            name: pylint-report-epidata
             path: pycode/build_pylint
       - name: Download documentation
         uses: actions/download-artifact@v3
