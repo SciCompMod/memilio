@@ -301,7 +301,7 @@ jobs:
     if: github.event.pull_request.draft == false
     permissions:
       contents: write
-    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel,test-pylint-epidata]
+    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
