@@ -319,8 +319,10 @@ jobs:
           name: test-cpp-coverage-reports
       - name: Download pylint report
         #if an error occurs here, the pylint report was not built, probably manually trigger epidata-ci
-        uses: actions/download-artifact@v3
+        uses: dawidd6/action-download-artifact@v2
         with:
+            github_token: ${{secrets.GITHUB_TOKEN}}
+            workflow: epidata_main.yml
             name: pylint-report
             path: pycode/build_pylint
       - name: Download documentation
