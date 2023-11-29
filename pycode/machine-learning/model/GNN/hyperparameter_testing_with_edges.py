@@ -10,9 +10,6 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import pickle
 import spektral
 import time
@@ -114,9 +111,7 @@ for l in layers:
             for o in optimizers: 
                 parameters.append((l,c,nl,o))
 
-
-
-parameters = [parameters[0], parameters[30],parameters[80]]                
+           
 
 df = pd.DataFrame(
     columns=['layer', 'number_of_layers', 'channels',
@@ -296,16 +291,22 @@ def train_and_evaluate_model(
             mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
 
         # delete the two confirmed compartments from InfectionStates
-        compartment_array = []
-        for compartment in InfectionState.values():
-            compartment_array.append(compartment) 
-        index = [3,5]
-        compartments_cleaned= np.delete(compartment_array, index)
+        #compartment_array = []
+        #for compartment in InfectionState.values():
+        #    compartment_array.append(compartment) 
+        #index = [3,5]
+        #compartments_cleaned= np.delete(compartment_array, index)
+        #mean_percentage = pd.DataFrame(
+        #    data=np.asarray(mean_per_batch).transpose().mean(axis=1),
+        #    index=[str(compartment).split('.')[1]
+        #           for compartment in compartments_cleaned],
+        #    columns=['Percentage Error'])
         mean_percentage = pd.DataFrame(
-            data=np.asarray(mean_per_batch).transpose().mean(axis=1),
-            index=[str(compartment).split('.')[1]
-                   for compartment in compartments_cleaned],
-            columns=['Percentage Error'])
+           data=np.asarray(mean_per_batch).transpose().mean(axis=1),
+           index=[str(compartment).split('.')[1]
+                  for compartment in InfectionState.values()],
+           columns=['Percentage Error'])
+
 
         return mean_percentage
 
