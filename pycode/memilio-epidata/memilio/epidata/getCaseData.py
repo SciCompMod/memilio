@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow, Martin J. Kuehn, Annette Lutz
 #
@@ -137,6 +137,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     if files == 'Plot':
         # only consider plotable files
         files = ['infected', 'deaths', 'all_gender', 'all_age']
+    # handle error of passing a string of one file instead of a list
+    if isinstance(files, str):
+        files = [files]
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -265,47 +268,47 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     # dict for all files
     # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
     dict_files = {
-        'infected': [dateToUse, {AnzahlFall: sum}, None, {}, ['Confirmed']],
-        'deaths': [dateToUse, {AnzahlTodesfall: sum}, None, {}, ['Deaths']],
-        'all_germany': [dateToUse, {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
+        'infected': [dateToUse, {AnzahlFall: "sum"}, None, {}, ['Confirmed']],
+        'deaths': [dateToUse, {AnzahlTodesfall: "sum"}, None, {}, ['Deaths']],
+        'all_germany': [dateToUse, {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                         None, {}, ['Confirmed', 'Deaths', 'Recovered']],
-        'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
+        'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
-        'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
+        'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                       [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
-        'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
+        'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
-        'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
+        'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
-        'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
+        'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(
                            df[dd.EngEng["gender"]].unique())},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_gender': [[dateToUse, IdBundesland, Geschlecht],
-                             {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
+                             {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
                                  IdBundesland, Geschlecht],
                              {dd.EngEng["idState"]: geoger.get_state_ids(), dd.EngEng["gender"]: list(
                                  df[dd.EngEng["gender"]].unique())},
                              ['Confirmed', 'Deaths', 'Recovered']],
         'all_county_gender': [[dateToUse, IdLandkreis, Geschlecht],
-                              {AnzahlFall: sum, AnzahlTodesfall: sum,
-                                  AnzahlGenesen: sum}, [IdLandkreis, Geschlecht],
+                              {AnzahlFall: "sum", AnzahlTodesfall: "sum",
+                                  AnzahlGenesen: "sum"}, [IdLandkreis, Geschlecht],
                               {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(
                               ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
-        'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
+        'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                     [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
-                          {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
+                          {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
                               IdBundesland, Altersgruppe],
                           {dd.EngEng["idState"]: geoger.get_state_ids(
                           ), dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                           ['Confirmed', 'Deaths', 'Recovered']],
         'all_county_age': [[dateToUse, IdLandkreis, Altersgruppe],
-                           {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
+                           {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
                                IdLandkreis, Altersgruppe],
                            {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(),
                            dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
@@ -364,7 +367,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                     plt.tight_layout()
                     plt.show()
 
-                    df.agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
+                    df.agg({AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}) \
                         .plot(title='COVID-19 infections, deaths, recovered', grid=True,
                               kind='bar')
                     plt.tight_layout()
@@ -372,8 +375,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
                 if file == 'all_gender':
                     df.groupby(Geschlecht).agg(
-                        {AnzahlFall: sum, AnzahlTodesfall: sum,
-                         AnzahlGenesen: sum}).plot(
+                        {AnzahlFall: "sum", AnzahlTodesfall: "sum",
+                         AnzahlGenesen: "sum"}).plot(
                         title='COVID-19 infections, deaths, recovered',
                         grid=True, kind='bar')
                     plt.tight_layout()
@@ -381,7 +384,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
                 if file == 'all_age':
                     df.groupby(Altersgruppe).agg(
-                        {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}).plot(
+                        {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}).plot(
                         title='COVID-19 infections, deaths, recovered for diff ages',
                         grid=True, kind='bar')
                     plt.tight_layout()
@@ -389,7 +392,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
                     # Dead by "Altersgruppe":
                     df_local = df.groupby(Altersgruppe).agg(
-                        {AnzahlTodesfall: sum})
+                        {AnzahlTodesfall: "sum"})
 
                     df_local.plot(title='COVID-19 deaths', grid=True,
                                   kind='bar')
