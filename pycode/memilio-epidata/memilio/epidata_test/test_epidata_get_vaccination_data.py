@@ -28,7 +28,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import progress_indicator
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
@@ -106,7 +105,6 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)

@@ -231,10 +231,10 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
         elif len(county_id) < 5:
             pass
         else:
-            print('no data for ' + df_pop_raw.loc
-                  [start_idx, dd.EngEng['idCounty']])
             raise gd.DataError(
-                'Error. County ID in input population data '
+                'No data for ' + df_pop_raw.loc
+                [start_idx, dd.EngEng['idCounty']] +
+                'County ID in input population data '
                 'found which could not be assigned.')
 
     return df_pop

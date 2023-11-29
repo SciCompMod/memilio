@@ -210,16 +210,18 @@ def check_for_all_counties(
     missing = len(get_county_ids(merge_berlin, merge_eisenach)
                   )-len(unique_county_list)
     if missing != 0:
-        print("Downloaded data is not complete. Missing " +
-              str(missing) + " counties.")
+        message = "Downloaded data is not complete. Missing " + \
+            str(missing) + " counties. "
         if missing < 0:
             # Returning True if source data file contains more counties than list
-            print('Source data frame contains more counties than official '
-                  'county list. This could be OK, please verify yourself.')
+            gd.default_print('Warning', message + 'Source data frame contains '
+                             'more counties than official county list. '
+                             'This could be OK, please verify yourself.')
             return True
         elif missing < 10:
-            print('Missing counties: ' + str(list(set(get_county_ids(merge_berlin,
-                  merge_eisenach)).difference(unique_county_list).difference(set({11000})))))
+            gd.default_print('Error', message + 'Missing counties: ' +
+                             str(list(set(get_county_ids(merge_berlin,
+                                                         merge_eisenach)).difference(unique_county_list).difference(set({11000})))))
         # Returning False if source data file lacks at least one county
         return False
 

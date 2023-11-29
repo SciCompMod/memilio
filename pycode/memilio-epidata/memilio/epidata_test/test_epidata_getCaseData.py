@@ -29,7 +29,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import progress_indicator
 
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
@@ -138,7 +137,6 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def write_case_data(self, out_folder):
         # write dataset for reading data

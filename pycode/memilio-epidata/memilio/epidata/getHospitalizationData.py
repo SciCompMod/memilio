@@ -56,7 +56,7 @@ def hospit_sanity_checks(df):
     actual_strings_list = df.columns.tolist()
     # check number of data categories
     if len(actual_strings_list) != 6:
-        print("Warning: Number of data categories changed.")
+        gd.default_print("Warning", "Number of data categories changed.")
 
     # these strings need to be in the header
     test_strings = {
@@ -119,7 +119,8 @@ def get_hospitailzations_per_day(seven_days_values):
 
     # break after 5 runs to prevent endless loop
     if run == 5:
-        print("Can't get hospitalizations per day from incidence.")
+        gd.default_print(
+            "Error", "Can't get hospitalizations per day from incidence.")
     if len(daily_values[daily_values < 0]) > 0:
         raise gd.DataError('Negative hospitalizations found.')
     # check that daily values are calculated correctly
@@ -177,7 +178,8 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     filename = "RKIHospitFull"
     url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv"
     path = os.path.join(directory + filename + ".json")
-    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=conf.interactive)
+    df_raw = gd.get_file(path, url, read_data, param_dict={},
+                         interactive=conf.interactive)
 
     if conf.checks == True:
         hospit_sanity_checks(df_raw)

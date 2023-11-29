@@ -46,7 +46,7 @@ def verify_sorted(countykey_list):
     if countykey_list_is_sorted:
         return True
     else:
-        print('Error. Input list not sorted.')
+        gd.default_print('Error', 'Input list not sorted.')
         return False
 
 
@@ -96,7 +96,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     gov_county_table.append(col_list)
 
     if len(gov_county_table) != len(govkey_list):
-        print('Error. Number of government regions wrong.')
+        gd.default_print('Error', 'Number of government regions wrong.')
 
     # create a unique hash map from county key to its government region and
     # a global key to local (in gov region) key ordering
@@ -437,19 +437,19 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                     if abs_err < setup_dict['abs_tol'] and abs_err / checksum < setup_dict['rel_tol']:
                         checksum = 0
                     else:
-                        print('Error in calculations for county ', curr_county_migratedto,
-                              '\nAccumulated values:', checksum,
-                              ', correct sum:', commuter_migration_file.iloc[i, 4])
-                        print('Absolute error:', abs_err,
-                              ', relative error:', abs_err / checksum)
+                        gd.default_print('Warning', 'Error in calculations for county ', curr_county_migratedto,
+                                         '\nAccumulated values:', checksum,
+                                         ', correct sum:', commuter_migration_file.iloc[i, 4])
+                        gd.default_print('Debug', 'Absolute error:', abs_err,
+                                         ', relative error:', abs_err / checksum)
 
             if np.isnan(mat_commuter_migration).any():
                 raise gd.DataError(
                     'NaN encountered in mobility matrix, exiting '
                     'getCommuterMobility(). Mobility data will be incomplete.')
 
-    print('Maximum absolute error:', max_abs_err)
-    print('Maximum relative error:', max_rel_err)
+    gd.default_print('Debug', 'Maximum absolute error:', max_abs_err)
+    gd.default_print('Debug', 'Maximum relative error:', max_rel_err)
 
     countykey_list = [int(id) for id in countykey_list]
     df_commuter_migration = pd.DataFrame(
@@ -540,7 +540,8 @@ def get_neighbors_mobility(
         commuter = gd.get_file(os.path.join(
             directory, "migration_bfa_"+str(ref_year)+"_dim400.json"), read_data=True)
     except FileNotFoundError:
-        print("Commuter data was not found. Download and process it from the internet.")
+        gd.default_print(
+            "Info", "Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year)
 
     countykey_list = commuter.columns

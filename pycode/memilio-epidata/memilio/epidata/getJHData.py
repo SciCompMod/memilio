@@ -70,9 +70,9 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
    """
     if start_date < date(2020, 1, 22):
-        print("Warning: First data available on 2020-01-22. "
-              "You asked for " + start_date.strftime("%Y-%m-%d") +
-              ". Changed it to 2020-01-22.")
+        gd.default_print("Warning", "First data available on 2020-01-22. "
+                         "You asked for " + start_date.strftime("%Y-%m-%d") +
+                         ". Changed it to 2020-01-22.")
         start_date = date(2020, 1, 22)
 
     filename = "FullData_JohnHopkins"
@@ -85,7 +85,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
     df.rename({'Country/Region': 'CountryRegion',
               'Province/State': 'ProvinceState'}, axis=1, inplace=True)
-    print("Available columns:", df.columns)
+    gd.default_print("Debug", "Available columns:", df.columns)
 
     # extract subframe of dates
     df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
@@ -142,9 +142,6 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
     gd.write_dataframe(gb.reset_index(), out_folder,
                        "all_provincestate_jh", file_format)
-
-    # print(dfD[dfD.ProvinceState=="Saskatchewan"])
-    # print(gb.reset_index()[gb.reset_index().ProvinceState=="Saskatchewan"])
 
     # TODO: How to handle empty values which become NaN in the beginnin but after woking on the data its just 0.0
     # One solution is to preserve them with : df['b'] = df['b'].astype(str)

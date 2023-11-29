@@ -162,7 +162,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
     else:
         # try another possibility if df was empty or incomplete
-        print("Note: Case data is incomplete. Trying another source.")
+        gd.default_print(
+            "Info", "Case data is incomplete. Trying another source.")
         try:
             url = "https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
@@ -173,7 +174,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         except:
             pass
         if not complete:
-            print("Note: Case data is still incomplete. Trying a thrid source.")
+            gd.default_print(
+                "Info", "Case data is still incomplete. Trying a thrid source.")
             try:
                 # If the data on github is not available we download the case data from rki from covid-19 datahub
                 url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" +\
@@ -275,12 +277,14 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]
+                          : geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]
+                           : df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
                        [Geschlecht], {dd.EngEng["gender"]: list(
@@ -299,7 +303,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                               ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                    [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]
+                        : df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
                           {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [

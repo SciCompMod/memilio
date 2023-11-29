@@ -28,7 +28,6 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getHospitalizationData as ghd
-from memilio.epidata import progress_indicator
 
 
 class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):

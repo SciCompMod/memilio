@@ -367,7 +367,8 @@ def sanitizing_extrapolation_mobility(
             b = df[(df.ID_County == id) & (
                 df.Age_RKI == age)].loc[:, column_names].iloc[-1]
             if sum(a-b) > 1e-8:
-                print("Error in: " + str(id) + " " + str(age))
+                gd.default_print(
+                    "Error", "Cumulative sum error in: " + str(id) + " " + str(age))
     ### end of to be removed ###
 
     return df
@@ -449,8 +450,8 @@ def extrapolate_age_groups_vaccinations(
         # test if number of vaccinations in current county are equal in old and new dataframe for random chosen date
         for vacc in column_names:
             if total_county_df[total_county_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() - vacc_df[vacc_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() > 1e-5:
-                print(
-                    "Error in transformation...")
+                gd.default_print("Error",
+                                 "Error in transformation...")
 
     # merge all county specific dataframes
     df_data_ageinf_county_cs = pd.concat(df_data_ageinf_county_cs)
@@ -523,7 +524,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     """
     # data for all dates is automatically added
     if impute_dates == False:
-        print('Setting impute_dates = True as data for all dates is automatically added.')
+        gd.default_print(
+            'Warning', 'Setting impute_dates = True as data for all dates is automatically added.')
         impute_dates = True
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -575,9 +577,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             df_data[dd.EngEng['idCounty']
                     ] = df_data[dd.EngEng['idCounty']].astype(int)
         except ValueError:
-            print('Data items in ID_County could not be converted to integer. '
-                  'Imputation and/or moving_average computation will FAIL.')
-            raise
+            gd.default_print("Error", 'Data items in ID_County could not be converted to integer. '
+                             'Imputation and/or moving_average computation will FAIL.')
 
         # NOTE: the RKI vaccination table contains about
         # 180k 'complete' vaccinations in id 17000 Bundesressorts, which
@@ -604,8 +605,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 min_age_old.append(int(age.split('+')[0]))
             else:
                 extrapolate_agegroups = False
-                print("Error in provided age groups from vaccination data; "
-                      "can not extrapolate to infection number age groups.")
+                gd.default_print(
+                    "Error", "can not extrapolate provided age groups from vaccination data to infection number age groups.")
         min_age_old.append(max_age_all)
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
@@ -614,7 +615,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             directory + "counsty_current_population.json")
     # pandas>1.5 raise FileNotFoundError instead of ValueError
     except (ValueError, FileNotFoundError):
-        print("Population data was not found. Download it from the internet.")
+        gd.default_print(
+            "Info", "Population data was not found. Download it from the internet.")
         population = gpd.get_population_data(
             read_data=False, file_format=file_format, out_folder=out_folder,
             no_raw=no_raw, merge_eisenach=True)
@@ -632,8 +634,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 min_age_pop.append(0)
             else:
                 extrapolate_agegroups = False
-                print("Error in provided age groups from population data;"
-                      " can not extrapolate to infection number age groups.")
+                gd.default_print(
+                    "Error", "can not extrapolate provided age groups from vaccination data to infection number age groups.")
         min_age_pop.append(max_age_all)
 
         # new age groups, here taken from definition of RKI infection data
@@ -710,7 +712,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 population[unique_age_groups_pop].sum(axis=1) -
                 population_all_ages[[str(i) for i in min_all_ages]].sum(
                     axis=1))) > 1e-8:
-            print("ERROR")
+            gd.default_print("Error", "Population does not match expectations")
 
         population_old_ages = pd.DataFrame(population[dd.EngEng['idCounty']])
         for i in range(len(age_old_to_all_ages_indices)):
@@ -813,11 +815,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         if sanitize_data == 1 or sanitize_data == 2:
 
             if sanitize_data == 1:
-                print('Sanitizing activated: Using federal state average values.')
+                gd.default_print(
+                    'Info', 'Sanitizing activated: Using federal state average values.')
                 to_county_map = geoger.get_stateid_to_countyids_map(
                     merge_eisenach=True)
             elif sanitize_data == 2:
-                print('Sanitizing activated: Using intermediate region average values.')
+                gd.default_print(
+                    'Info', 'Sanitizing activated: Using intermediate region average values.')
                 to_county_map = geoger.get_intermediateregionid_to_countyids_map(
                     merge_eisenach=True)
 
@@ -826,8 +830,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 unique_age_groups_old, vacc_column_names, population_old_ages)
 
         elif sanitize_data == 3:
-            print(
-                'Sanitizing activated: Using mobility-based vaccination redistribution approach.')
+            gd.default_print('Info',
+                             'Sanitizing activated: Using mobility-based vaccination redistribution approach.')
             # get neighbors based on mobility pattern and store
             # commuter inflow from other counties as first weight to distribute
             # vaccinations from vaccination county to extrapolated home counties
@@ -846,7 +850,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 min_date=start_date, max_date=end_date)
         else:
             spinner.stop()
-            print('Sanitizing deactivated.')
+            gd.default_print('Info', 'Sanitizing deactivated.')
 
     if make_plot:
         # have a look extrapolated vaccination ratios (TODO: create plotting for production)

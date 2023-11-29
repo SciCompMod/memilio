@@ -46,6 +46,7 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import progress_indicator
 
+
 class VerbosityLevel(Enum):
     Off = 0
     Critical = 1
@@ -54,7 +55,7 @@ class VerbosityLevel(Enum):
     Info = 4
     Debug = 5
     Trace = 6
-    
+
 
 class Conf:
     """Configures all relevant dwonload outputs etc."""
@@ -67,10 +68,10 @@ class Conf:
         parser = configparser.ConfigParser()
         parser.read(path)
         # all values will be read in as string
-        if parser['STATICS']['Cow'] == str(True):
-            # activate CoW for more predictable behaviour of pandas DataFrames
-            pd.options.mode.copy_on_write = True
-        
+
+        # activate CoW for more predictable behaviour of pandas DataFrames
+        pd.options.mode.copy_on_write = True
+
         if parser['SETTINGS']['path_to_use'] == 'default':
             self.path_to_use = out_folder
         else:
@@ -81,7 +82,7 @@ class Conf:
         for key in parser['SETTINGS']:
             if key not in kwargs:
                 kwargs.update({key: parser['SETTINGS'][key]})
-        
+
         show_progr = bool(kwargs['show_progress'])
         v_level = str(kwargs['verbosity_level'])
         self.checks = bool(kwargs['run_checks'])
@@ -99,9 +100,10 @@ class Conf:
         else:
             progress_indicator.ProgressIndicator.disable_indicators(True)
 
+
 def default_print(verbosity_level, message):
     if VerbosityLevel[verbosity_level].value <= VerbosityLevel[Conf.v_level].value:
-        print(message)
+        print(verbosity_level, ": ", message)
 
 
 def user_choice(message, default=False):
@@ -137,8 +139,8 @@ def download_file(
     """
     if verify not in [True, False, "interactive"]:
         warnings.warn('Invalid input for argument verify. Expected True, False, or'
-             ' "interactive", got ' + str(verify) + '.'
-             ' Proceeding with "verify=True".', category=RuntimeWarning)
+                      ' "interactive", got ' + str(verify) + '.'
+                      ' Proceeding with "verify=True".', category=RuntimeWarning)
         verify = True
     # send GET request as stream so the content is not downloaded at once
     try:
@@ -521,8 +523,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 
-    
-    default_print('Info', "Information: Data has been written to "+ out_path)
+    default_print('Info', "Data has been written to " + out_path)
 
 
 class DataError(Exception):

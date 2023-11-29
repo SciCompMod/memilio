@@ -132,7 +132,8 @@ WARNING: This file is experimental and has not been tested.
             df_cases = pd.read_json(case_data_file)
         # pandas>1.5 raise FileNotFoundError instead of ValueError
         except (ValueError, FileNotFoundError):
-            print("WARNING: The file ", file_to_change + ".json does not exist.")
+            gd.default_print("Warning", "The file ",
+                             file_to_change + ".json does not exist.")
             continue
 
         # generate new columns to store estimated values

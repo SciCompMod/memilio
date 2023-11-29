@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
@@ -194,7 +195,7 @@ def impute_and_reduce_df(
             # at all (e.g., many counties do not have had any kind of
             # refreshing vaccinations so far.) Then, the following warning
             # is misleading.
-            # print('Warning: Tuple ' + str(ids) + ' not found in local data frame. Imputing zeros.')
+            # gd.deafult_print('Warning', 'Tuple ' + str(ids) + ' not found in local data frame. Imputing zeros.')
             # create zero values for non-existent time series
             values = {}
             counter = 0
@@ -341,8 +342,8 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     """
     if (from_lower_bounds[0] != to_lower_bounds[0] or
             from_lower_bounds[-1] != to_lower_bounds[-1]):
-        print("Range of intervals mapped from is different than range of " +
-              "intervals mapped to. Therefore, empty entries are possible.")
+        gd.default_print("Warning", "Range of intervals mapped from is different than range of " +
+                         "intervals mapped to. Therefore, empty entries are possible.")
 
     extended_begin = False
     extended_end = False
@@ -462,8 +463,8 @@ def fit_age_group_intervals(
         else:
             raise ValueError("Undefined entry for one age group in age_out")
     if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
-        print(
-            "Data from input data frame does not fit to desired output. Required data that is missing is interpreted as zero.")
+        gd.default_print("Warning",
+                         "Data from input data frame does not fit to desired output. Required data that is missing is interpreted as zero.")
     if max_entry_in not in age_out_min:
         age_out_min.append(max_entry_in)
 
@@ -508,8 +509,8 @@ def fit_age_group_intervals(
                 raise ValueError(
                     "Undefined entry for one age group in population data")
         if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
-            print(
-                "Data from input data frame does not fit to population data. Required data that is missing is interpreted as zero.")
+            gd.default_print("Warning",
+                             "Data from input data frame does not fit to population data. Required data that is missing is interpreted as zero.")
         if max_entry_in not in age_pop_min:
             age_pop_min.append(max_entry_in)
 

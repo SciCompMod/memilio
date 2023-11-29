@@ -180,8 +180,8 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
         except KeyError:
             pass
 
-        print(
-            "Time needed: " + str(time.perf_counter()-start_time) + " sec")
+        gd.default_print("Info",
+                         "Time needed: " + str(time.perf_counter()-start_time) + " sec")
 
         #### start validation ####
 

@@ -28,7 +28,6 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
-from memilio.epidata import progress_indicator
 
 
 class TestCommuterMigration(fake_filesystem_unittest.TestCase):
@@ -71,7 +70,6 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('builtins.print')
     def test_verify_sorted(self, mock_print):
