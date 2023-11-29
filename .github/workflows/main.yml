@@ -301,7 +301,7 @@ jobs:
     if: github.event.pull_request.draft == false
     permissions:
       contents: write
-    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel]
+    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel,test-pylint-epidata]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -317,6 +317,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: test-cpp-coverage-reports
+      - name: Download pylint report
+        uses: actions/download-artifact@v3
+        with:
+            name: pylint-report
+            path: pycode/build_pylint
       - name: Download documentation
         uses: actions/download-artifact@v3
         with:
@@ -327,6 +332,10 @@ jobs:
           mkdir -p public
           cp docs/style.css public/style.css
           cp docs/index.html public/index.html
+      - name: Prepare pylint reports
+        run: |
+            mkdir -p public/pylint
+            cp pycode/build_pylint/pylint.html public/pylint/index.html
       - name: Prepare documentation
         run: |
           mkdir -p public/documentation
