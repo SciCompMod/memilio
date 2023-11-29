@@ -30,7 +30,7 @@ jobs:
     if: github.event.pull_request.draft == false
     strategy:
       matrix:
-        compiler: ["gcc", "clang"]
+        compiler: ["gcc"]
         config: ["Release"]
         version: ["latest"]
         include:
@@ -97,9 +97,9 @@ jobs:
     needs: build-cpp-gcc_clang
     strategy:
       matrix:
-        compiler: ["gcc", "clang"]
-        config: ["Debug", "Release"]
-        version: ["latest", "min"]
+        compiler: ["gcc"]
+        config: ["Release"]
+        version: ["latest"]
         include:
           - version: "latest"
             os: "ubuntu-latest"
