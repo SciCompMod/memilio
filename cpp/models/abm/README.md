@@ -65,8 +65,16 @@ auto person = world.add_person(home, age_group_0_to_4);
 person.set_assigned_location(home);
 ```
 
-For adding more people to the world, we create households. A Household holds a vector with HouseholdMembers, i.e. a vector with weighted age distribution from which the age of the Persons belonging to this Household can be calculated. A Household and the number of times it exists is gathered in a HouseholdGroup.
-For example, we have children who either belong to AgeGroup(0) or AgeGroup(1) with probability 0.5 in each case and parents which belong to AgeGroup(2) or AgeGroup(3) similarly. We then add households with a parent and a child and households with two parents and one child.
+For adding more people to the world, we create households. A Household holds a vector of HouseholdMembers, which in turn hold a weighted distribution, such that we can randomly draw the age of each Person belonging to the Household. To manage multiple Households of the same type, we can use a HouseholdGroup.
+In our example, we categorize individuals into two groups: children and parents.
+
+- Children: They can either belong to AgeGroup(0) or AgeGroup(1). The probability of a child belonging to either group is 0.5.
+- Parents: They can either belong to AgeGroup(2) or AgeGroup(3). The probability of a parent belonging to either group is also 0.5.
+
+We then form households in two ways:
+
+1. Households with one parent and one child.
+2. Households with two parents and one child.
 
 ```cpp
 auto child = mio::abm::HouseholdMember(num_age_groups);
@@ -122,25 +130,26 @@ Then we run the simulation.
 sim.advance(mio::abm::TimePoint(0) + mio::abm::days(30));
 ```
 
-If we want to track things in the simulation, we need to set up a logger, for example, to track all the TimePoints of each simulation step:
+Alternitavely if we want to track things in the simulation, we need to set up a [history](../../memilio/io/README.md#the-history-object), for example, to track all the Infection states of each simulation step.
 
 ```cpp
-struct LogTimePoint : mio::LogAlways {
-        using Type = double;
-        static Type log(const mio::abm::Simulation& sim)
-        {
-            return sim.get_time().hours();
-        }
-    };
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> history;
 ```
 
-Now we just need to set up the History object and run the simulation with it. As a writer, we use the predefined DataWriterToMemory, which just saves the Timepoints in a vector. Afterwards, one can access it through get_log.
+Then we can run the simulation with the history object and one can access the data it through get_log.
 
 ```cpp
-    mio::History<mio::DataWriterToMemory, LogTimePoint> history;
     sim.advance(tmax, history);
     auto log = history.get_log();
-``````
+```
+
+Finally we can print the data to a text file.
+
+```cpp
+    std::ofstream outfile("abm_minimal.txt");
+    std::get<0>(log).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+    std::cout << "Results written to abm_minimal.txt" << std::endl;
+```
 
 ## Current Limitations
 
