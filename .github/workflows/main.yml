@@ -31,13 +31,11 @@ jobs:
     strategy:
       matrix:
         compiler: ["gcc"]
-        config: ["Release"]
+        config: ["Debug"]
         version: ["latest"]
         include:
           - version: "latest"
             os: "ubuntu-latest"
-          - version: "min"
-            os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -98,13 +96,11 @@ jobs:
     strategy:
       matrix:
         compiler: ["gcc"]
-        config: ["Release"]
+        config: ["Debug"]
         version: ["latest"]
         include:
           - version: "latest"
             os: "ubuntu-latest"
-          - version: "min"
-            os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
