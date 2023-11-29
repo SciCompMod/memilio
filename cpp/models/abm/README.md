@@ -30,14 +30,17 @@ Another way of migration we use in the simulation of Braunschweig (simulations/a
 
 This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, can find a full example in the [ABM minimal example](../../examples/abm_minimal.cpp) and a more detailed Doxygen documentation [here](https://scicompmod.github.io/memilio/documentation/index.html ). For a guide on installation and running the simulations and examples, see this [README](../../README.md).
 
-Every person in the ABM belongs to an AgeGroup, which we can define as the following. Note that every age group has to have values strictly smaller than num_age_groups.
+Every person in the ABM belongs to an AgeGroup, which we can define as follows:  
 
-```cpp
-size_t num_age_groups         = 4;
-const auto age_group_0_to_4   = mio::AgeGroup(0);
-```
+```cpp  
+size_t num_age_groups         = 4;  
+const auto age_group_0_to_4   = mio::AgeGroup(0);  
+const auto age_group_5_to_14  = mio::AgeGroup(1);  
+...                           = ...  
+```  
 
-The initial empty world is created with the number of age groups:
+Note that every age group has to have values strictly smaller than the number of age groups `num_age_groups`.  
+With this number we create an empty world:  
 
 ```cpp
 auto world = mio::abm::World(num_age_groups);
@@ -58,7 +61,7 @@ auto home = world.add_location(mio::abm::LocationType::Home);
 People are added with an age. Then we have to assign them, so the world knows they can travel to this location.
 
 ```cpp
-auto person = world.add_person(home, mio::AgeGroup(0));
+auto person = world.add_person(home, age_group_0_to_4);
 person.set_assigned_location(home);
 ```
 

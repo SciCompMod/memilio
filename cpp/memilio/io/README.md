@@ -22,23 +22,23 @@ access to the data for deserialization. Implementations of this concept may stor
 they want including binary. The data may also be written directly to disk. The context also keeps track
 of errors. An IOContext object `io` allows the following operations:
 
-     - `io.create_object("Type")`:
-          Returns an IOObject for the type called `"Type"`. The IOObject (see below) allows adding data that describes
-          the object to be serialized. The function must return something that can be assigned to a local
-          variable, e.g., a temporary or copyable function. IOObject may store references to the context internally,
-          so the lifetime of the local IOObject may not exceed the lifetime of the IOContext that created it.
-     - `io.expect_object("Type")`:
-          Returns an IOObject for the type called `"Type"`.
-          The IOObject (see below) provides access to the data needed for deserialization.
-     - `io.flags()`:
-          Returns the flags that determine the behavior of serialization; see IOFlags.
-     - `io.error()`:
-          Returns an IOStatus object to check if there were any errors during serialization.
-          Usually it is not necessary to check this manually but can be used to report the error faster and
-          avoid expensive operations that would be wasted anyway.
-     - `io.set_error(s)` with some IOStatus object:
-          Stores an error that was generated outside of the IOContext, e.g., if a value that was deserialized
-          is outside an allowed range.
+    - `io.create_object("Type")`:
+        Returns an IOObject for the type called `"Type"`. The IOObject (see below) allows adding data that describes
+        the object to be serialized. The function must return something that can be assigned to a local
+        variable, e.g., a temporary or copyable function. IOObject may store references to the context internally,
+        so the lifetime of the local IOObject may not exceed the lifetime of the IOContext that created it.
+    - `io.expect_object("Type")`:
+        Returns an IOObject for the type called `"Type"`.
+        The IOObject (see below) provides access to the data needed for deserialization.
+    - `io.flags()`:
+        Returns the flags that determine the behavior of serialization; see IOFlags.
+    - `io.error()`:
+        Returns an IOStatus object to check if there were any errors during serialization.
+        Usually it is not necessary to check this manually but can be used to report the error faster and
+        avoid expensive operations that would be wasted anyway.
+    - `io.set_error(s)` with some IOStatus object:
+        Stores an error that was generated outside of the IOContext, e.g., if a value that was deserialized
+        is outside an allowed range.
 
 1. IOObject
 Gives structured access to serialized data. During serialization, data can be added with `add_...` operations.
@@ -70,7 +70,7 @@ for an IOObject `obj`:
 
 Errors are handled by returning error codes. The type IOStatus contains an error code and an optional string with additional
 information. The type IOResult contains either a value or an IOStatus that describes an error. Operations that can fail return
-an ```IOResult<T>``` where T is the type of the value that is produced by the operation if it is succesful. Except where necessary
+an `IOResult<T>` where T is the type of the value that is produced by the operation if it is succesful. Except where necessary
 because of dependencies, the framework does not throw nor catch any exceptions. IOContext and IOObject implementations are
 expected to store errors. During serialization, `add_...` operations fail without returning errors, but the error is stored
 in the IOObject and subsequent calls are usually no-ops. During deserialization, the values produced must usually be used or

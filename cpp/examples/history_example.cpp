@@ -13,7 +13,7 @@ struct MyLogger : mio::LogAlways {
 
 int main()
 {
-    // Create a History object
+    // Create a History object with an Writer and a Logger. The Writer is used to store the data in the History object and the Logger is used to specify which data is stored, as described in the Logger section.
     mio::History<mio::DataWriterToMemory, MyLogger> history;
 
     // Log some data
@@ -22,7 +22,7 @@ int main()
     }
 
     // Get the log data
-    auto logData = history.get_log<MyLogger>();
+    std::vector<int> logData = history.get_log<MyLogger>();
 
     // Print the log data
     for (const auto& data : logData) {
