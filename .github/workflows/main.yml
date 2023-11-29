@@ -318,6 +318,7 @@ jobs:
         with:
           name: test-cpp-coverage-reports
       - name: Download pylint report
+        #if an error occurs here, the pylint report was not built, probably manually trigger epidata-ci
         uses: actions/download-artifact@v3
         with:
             name: pylint-report
