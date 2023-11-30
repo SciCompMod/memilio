@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Daniel Abele, Khoa Nguyen
 #
@@ -55,10 +55,9 @@ class TestAbm(unittest.TestCase):
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
 
-        testing_locations = [abm.LocationType.Home]
         testing_inf_states = []
-        testing_crit = [abm.TestingCriteria(
-            testing_ages, testing_locations, testing_inf_states)]
+        testing_crit = abm.TestingCriteria(
+            testing_ages, testing_inf_states)
         testing_scheme = abm.TestingScheme(testing_crit, abm.days(
             1), t0, t0 + abm.days(1), abm.AntigenTest(), 1.0)
         # initially false, will only active once simulation starts

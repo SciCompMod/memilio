@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack
 #
@@ -69,6 +69,11 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
         to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
    """
+    if start_date < date(2020, 1, 22):
+        print("Warning: First data available on 2020-01-22. "
+              "You asked for " + start_date.strftime("%Y-%m-%d") +
+              ". Changed it to 2020-01-22.")
+        start_date = date(2020, 1, 22)
 
     filename = "FullData_JohnHopkins"
     url = "https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv"
@@ -112,7 +117,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     ########### Countries ##########################
 
     gb = df.groupby(['CountryRegion', 'Date']).agg(
-        {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
+        {"Confirmed": "sum", "Recovered": "sum", "Deaths": "sum"})
 
     gd.write_dataframe(gb.reset_index(), out_folder,
                        "all_countries_jh", file_format)
@@ -133,7 +138,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     dfD = df[~df["ProvinceState"].isnull()]
 
     gb = dfD.groupby(['CountryRegion', 'ProvinceState', 'Date']).agg(
-        {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
+        {"Confirmed": "sum", "Recovered": "sum", "Deaths": "sum"})
 
     gd.write_dataframe(gb.reset_index(), out_folder,
                        "all_provincestate_jh", file_format)
