@@ -140,24 +140,48 @@ To set the value of a parameter from the command line, first type the correspond
 
 ## The history object
 
-To log data throughout an simulation one can use our history object.
-This object provides an interface where one can specify which data of a given object should be saved through loggers and how it should be saved through writers.
-Afterwards one can access this data from the history object and manipulate it.
+The history object provides a way to save data throughout a simulation. It provides an interface where one can specify which data of a given object should be saved through loggers and how it should be saved through writers.
+Afterward, one can access this data from the history object and manipulate it.
+As an example for a basic logger use case refer to [this example](../../examples/history.cpp) and for an example which demonstrates using a logger in the ABM refer to [this example](../../examples/abm_history_example.cpp).
+
+1. History
+     - The `History` class is used to manage the Writers and Loggers and provides an interface to log data.
+     - It is templated on one `Writer`and several suitable and unique `Loggers`.
+     - To use the Writer to log something the `History` provides the function `void log(const T& t)` to call the `add_record` function of the `Writer` if the logger function `should_log` returns true.
+     - To access the data from the `History` class after logging we provide the function `get_log` to access all records. For this, the lifetime of the `History` has to be as long as one wants to have access to the data, e.g. a history should not be constructed in the function it is called in when data is needed later.
+     - To access data from a specific logger one can use `std::get<x>` where x is the position of the Logger in the template argument list of the `History` object.
+     - Again refer to [this example](../../examples/history.cpp) for a simple implementation of a history object and [this full ABM example](../../simulation/abm.cpp) for a more advanced use case of the History Object with several History objects in use.
+     - As mentioned multiple Loggers can be constructed and this may be necessary if multiple Writer have to be used.
+
+## Working with the History Object
+
+The History Object is providing a way to save data throughout the simulation process. It offers an interface where users can define the data to be saved from a given object using loggers and the method of saving it using writers. Afterward, the user can access this data from the History Object and manipulate it. For a basic logger use case, refer to [this example](../../examples/history.cpp). For an example demonstrating using a logger in the ABM, refer to [this example](../../examples/abm_history_example.cpp).
 
 ### Loggers
 
-- A `Logger` is a struct with a type `Type` and functions `Type log(const T&)` and `bool should_log(const T&)`. All `Loggers` must be unique types and default constructible/destructible. Their member `should_log` indicates whether to log, while `Type` and `log` determine what is logged. The input for `should_log` and `log` is the same input of type `T` that is given to `History::log`.
+The `Logger` struct is a tool for logging data from a given object. Each user-implemented logger must have a `Type` and implement two functions: `Type log(const T&)` and `bool should_log(const T&)`. The input `T` for these functions is the same as the one given to the `History` member-function `History::log`.
+
+- `Type`: Return Type of `log`.
+- `log`: This function determines which data from the input `T` is saved. It must have the same return Type `Type` as the loggers Type `Type`.
+- `should_log`: This function must return a boolean to determine if data should be logged and can use the input `T` for this, e.g. if `T` fullfills some criteria.
+
+Users can derive their loggers from `LogOnce` or `LogAlways` to use a predefined `should_log` function. `LogOnce` logs only at the first call of `log`, while `LogAlways` logs every time `log` is called. All implemented loggers must have unique types and be constructible/destructible. For user-defined examples in the ABM, refer to [this file](../../models/abm/common_abm_loggers.h).
 
 ### Writers
 
-- The `Writer` defines the type `Data` to store all records (i.e., the return values of `Logger::log`), and the function `template <class Logger> static void add_record(const Logger::Type&, Data&)` to add a new record. `add_record` is used whenever `History::log` was called and `Logger::should_log` is true.
+The `Writer` struct defines how to store the logged data from one or more implemented `Loggers`. Each user-implemented `Writer` must have a `Data` Type and implement the `static void add_record(const typename Logger::Type& t, Data& data)` function.
+
+- `Data`: This is a `std::tuple` of classes which store the data returned by the Loggers. For example, this can be Vectors or TimeSeries.
+- `add_record`. This should manipulate the data of the Writer to store the data returned by the loggers. It is used whenever `History::log` was called and `Logger::should_log` is true.
+
+A predefined universal `Writer` is already implemented in [history.h](history.h). This stores the data from the loggers in a vector every time the logger is called. Another `Writer` can be found in [this file](../../models/abm/common_abm_loggers.h), which saves data in a Timeseries. The according Logger has to have a suitable return type.
 
 ### History
 
-The `history.h` file defines a `History` class that handles writers and loggers for saving current parameters of our models.
+The `History` class manages the Writers and Loggers and provides an interface to log data. It is templated on one `Writer` and several suitable and unique `Loggers`. To use the Writer to log something, the `History` provides the function `void log(const T& t)` to call the `add_record` function of the `Writer` if the logger function `should_log` returns true.
 
-- The `History` class provides a function `log` to add a new record and a function `get_log` to access all records.
+To access the data from the `History` class after logging, we provide the function `get_log` to access all records. For this, the lifetime of the `History` has to be as long as one wants to have access to the data, e.g. a history should not be constructed in the function it is called in when data is needed later.
 
-- The `History` class uses `Loggers` to retrieve data from a given input, and a `Writer` to record this data.
+To access data from a specific logger, one can use `std::get<x>` where x is the position of the Logger in the template argument list of the `History` object. Refer to [this example](../../examples/history.cpp) for a simple implementation of a history object and [this full ABM example](../../simulation/abm.cpp) for a more advanced use case of the History Object with several History objects in use.
 
-- The `History` class is templated on the `Writer` that is used to handle the data (e.g., store it into an array), and the `Loggers` that are used to log data. The `Loggers` used for a `History` must be unique.
+As mentioned, multiple Loggers can be constructed and this may be necessary if multiple Writers have to be used.
