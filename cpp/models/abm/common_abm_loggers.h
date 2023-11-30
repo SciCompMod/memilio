@@ -41,38 +41,6 @@ struct movement_data {
     mio::abm::ActivityType activity_type;
     mio::abm::InfectionState infection_state;
 };
-struct LogLocationInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type location_information{};
-        for (auto&& location : sim.get_world().get_locations()) {
-            auto n_cells     = location.get_cells().size();
-            int loc_capacity = 0;
-            for (int i = 0; i < (int)n_cells; i++) {
-                loc_capacity += location.get_capacity(i).persons;
-            }
-            location_information.push_back(std::make_tuple(location.get_index(), location.get_type(),
-                                                           location.get_geographical_location(), n_cells,
-                                                           loc_capacity));
-        }
-        return location_information;
-    }
-};
-
-struct LogPersonInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::AgeGroup>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type person_information{};
-        for (auto&& person : sim.get_world().get_persons()) {
-            person_information.push_back(std::make_tuple(
-                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
-                person.get_age()));
-        }
-        return person_information;
-    }
-};
 
 mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
 {
@@ -98,6 +66,48 @@ mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_locati
     }
 }
 
+/**
+ * @brief Logger to log the LocationInformation of the simulation.
+ */
+struct LogLocationInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type location_information{};
+        for (auto&& location : sim.get_world().get_locations()) {
+            auto n_cells     = location.get_cells().size();
+            int loc_capacity = 0;
+            for (int i = 0; i < (int)n_cells; i++) {
+                loc_capacity += location.get_capacity(i).persons;
+            }
+            location_information.push_back(std::make_tuple(location.get_index(), location.get_type(),
+                                                           location.get_geographical_location(), n_cells,
+                                                           loc_capacity));
+        }
+        return location_information;
+    }
+};
+
+/**
+ * @brief Logger to log the Person%s Information in the simulation.
+ */
+struct LogPersonInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::AgeGroup>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type person_information{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            person_information.push_back(std::make_tuple(
+                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+                person.get_age()));
+        }
+        return person_information;
+    }
+};
+
+/**
+ * @brief Logger to log Movement Data of the agents in the simulation.
+ */
 struct LogDataForMovement : mio::LogAlways {
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
                                         mio::abm::ActivityType, mio::abm::InfectionState>>;
@@ -113,21 +123,7 @@ struct LogDataForMovement : mio::LogAlways {
     }
 };
 
-/*
-* @brief This is like the DataWriterToMemory, but it only logs time series data.
-* @tparam Loggers The loggers that are used to log data. The loggers must return a touple with a TimePoint and a value.
-*/
-template <class... Loggers>
-struct TimeSeriesWriter {
-    using Data = std::tuple<mio::TimeSeries<ScalarType>>;
-    template <class Logger>
-    static void add_record(const typename Logger::Type& t, Data& data)
-    {
-        std::get<index_of_type_v<Logger, Loggers...>>(data).add_time_point(t.first.days(), t.second);
-    }
-};
-
-/*
+/**
 * @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState.
 */
 struct LogInfectionState : mio::LogAlways {
@@ -147,7 +143,21 @@ struct LogInfectionState : mio::LogAlways {
     }
 };
 
-/*
+/**
+* @brief This is like the DataWriterToMemory, but it only logs time series data.
+* @tparam Loggers The loggers that are used to log data. The loggers must return a touple with a TimePoint and a value.
+*/
+template <class... Loggers>
+struct TimeSeriesWriter {
+    using Data = std::tuple<mio::TimeSeries<ScalarType>>;
+    template <class Logger>
+    static void add_record(const typename Logger::Type& t, Data& data)
+    {
+        std::get<index_of_type_v<Logger, Loggers...>>(data).add_time_point(t.first.days(), t.second);
+    }
+};
+
+/**
 * @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
 * Thhis speciializiation just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
 * @tparam Loggers The loggers that are used to log data.
