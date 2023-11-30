@@ -27,7 +27,7 @@ struct LogAOnce : mio::LogOnce {
 
 struct LogStepIf {
     using Type = int;
-    static int log(const example& ex)
+    static Type log(const example& ex)
     {
         return ex.current_time;
     }
