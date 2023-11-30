@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -241,4 +241,42 @@ TEST(TestContains, empty)
     ASSERT_FALSE(mio::contains(v.begin(), v.end(), [](auto&&) {
         return true;
     }));
+}
+
+TEST(EnumMembers, works)
+{
+    enum class E
+    {
+        A,
+        B,
+        Count
+    };
+    ASSERT_THAT(mio::enum_members<E>(), testing::ElementsAre(E::A, E::B));
+}
+
+TEST(TestContains, set_ostream_format)
+{
+    std::ostringstream output;
+
+    mio::set_ostream_format(output, 10, 2, '*');
+    output << 3.14159;
+    std::string expected_output_1 = "******3.14";
+    std::string actual_output_1   = output.str();
+    EXPECT_EQ(expected_output_1, actual_output_1);
+
+    output.str("");
+
+    mio::set_ostream_format(output, 7, 3, '#');
+    output << 42.12345678;
+    std::string expected_output_2 = "#42.123";
+    std::string actual_output_2   = output.str();
+    EXPECT_EQ(expected_output_2, actual_output_2);
+
+    output.str("");
+
+    mio::set_ostream_format(output, 8, 4);
+    output << 123.456;
+    std::string expected_output_3 = "123.4560";
+    std::string actual_output_3   = output.str();
+    EXPECT_EQ(expected_output_3, actual_output_3);
 }

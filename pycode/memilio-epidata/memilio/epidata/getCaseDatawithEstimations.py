@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow
 #
@@ -44,7 +44,7 @@ def get_case_data_with_estimations(
         file_format=dd.defaultDict['file_format'],
         out_folder=dd.defaultDict['out_folder'],
         no_raw=dd.defaultDict['no_raw'],
-        start_date=date(2020, 1, 1),
+        start_date=dd.defaultDict['start_date'],
         end_date=dd.defaultDict['end_date'],
         impute_dates=dd.defaultDict['impute_dates'],
         moving_average=dd.defaultDict['moving_average'],
@@ -236,8 +236,9 @@ def compare_estimated_and_rki_deathsnumbers(
     df_cases["deaths_estimated_daily"] = df_cases['Deaths_estimated'] - \
         df_cases['Deaths_estimated'].shift(periods=1, fill_value=0)
     df_cases_week = df_cases.groupby("week").agg(
-        {"deaths_daily": sum, "deaths_estimated_daily": sum}).reset_index()
-    df_jh_week = df_jh.groupby("week").agg({"deaths_daily": sum}).reset_index()
+        {"deaths_daily": "sum", "deaths_estimated_daily": "sum"}).reset_index()
+    df_jh_week = df_jh.groupby("week").agg(
+        {"deaths_daily": "sum"}).reset_index()
     df_cases_week.rename(
         columns={'deaths_daily': 'Deaths_weekly',
                  'deaths_estimated_daily': 'Deaths_estimated_weekly'},
