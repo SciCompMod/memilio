@@ -13,19 +13,22 @@ struct MyLogger : mio::LogAlways {
 
 int main()
 {
-    // Create a History object with an Writer and a Logger.
-    // The Writer is used to store the data in the History object and the Logger is used to specify which data is stored, as described in the Logger section.
+    // Create a History object with the predefined Writer DataWriterToMemory and our above defined Logger MyLogger.
+    // The Writer DataWriterToMemory uses an std::vector to store the data.
     mio::History<mio::DataWriterToMemory, MyLogger> history;
 
-    // Log some data
+    // Log some data.
     for (int i = 0; i < 10; ++i) {
-        history.log(i); // The data specified by the logger is stored in the History object using the Writer.
+        history.log(i); // The data specified by the Logger is stored in the History object using the Writer.
     }
 
-    // Get the log data. One has to specify which from which logger the data should be retrieved.
+    // Get the log data.
+    // For this one has to specify which from which Logger the data should be retrieved.
+    // Also the data type of this is an std::vector<int> as the Writer has a tuple of std::vector<x> where x is specified by the Type of the logger, in this case int.
     std::vector<int> logData = std::get<0>(history.get_log()); // The first logger is MyLogger
 
-    // Print the log data
+    // Print the logged data.
+    std::cout << "Logged data from MyLogger:" << std::endl;
     for (const auto& data : logData) {
         std::cout << data << std::endl;
     }
