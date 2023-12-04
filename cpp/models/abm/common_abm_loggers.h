@@ -159,7 +159,7 @@ struct TimeSeriesWriter {
 
 /**
 * @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
-* Thhis speciializiation just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
+* This specializiation just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
 * @tparam Loggers The loggers that are used to log data.
 */
 
