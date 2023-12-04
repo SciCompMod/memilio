@@ -131,7 +131,7 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 
         //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
         //normally should have no significant effect on runtime
-        const bool monitor_infection_activity = true;
+        const bool monitor_infection_activity = false;
         if constexpr (monitor_infection_activity) {
             std::cout << "num_persons = " << num_persons << "\n";
             for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
