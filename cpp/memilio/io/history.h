@@ -52,7 +52,7 @@ struct DataWriterToMemory {
 
 /** 
  * @brief History class that handles writers and loggers.
- * History provides a function "log" to add a new record and a function "get_log" to access alls records.
+ * History provides a function "log" to add a new record and a function "get_log" to access all records.
  *
  * The History class uses Loggers to retrieve data from a given input, and a Writer to record this data.
  * A Logger is a struct with a type `Type` and functions `Type log(const T&)` and `bool should_log(const T&)`.

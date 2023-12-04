@@ -186,7 +186,7 @@ struct TimeSeriesWriter {
     using Data = std::tuple<mio::TimeSeries<ScalarType>>;
     template <class Logger>
     /**
-     * @brief This function adds an entry to the Timeseries consisting of the TimePoint and the value. The Loggers must return a touple with a TimePoint and a value of return type Eigen::VectorXd.
+     * @brief This function adds an entry to the TimeSeries consisting of the TimePoint and the value. The Loggers must return a touple with a TimePoint and a value of return type Eigen::VectorXd.
      * @param[in] t The data from the logger.
      * @param[in,out] data The data tuple.
     */
@@ -198,7 +198,7 @@ struct TimeSeriesWriter {
 
 /**
 * @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
-* This specializiation just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
+* This specialization just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
 * @tparam Loggers The loggers that are used to log data.
 */
 template <class... Loggers>
