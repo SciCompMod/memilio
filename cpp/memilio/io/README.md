@@ -138,9 +138,9 @@ In general, an option is defined as a string, which consists either of two dashe
 
 To set the value of a parameter from the command line, first type the corresponding parameter option (see --help), followed by the value that should be assigned (reference --print_option). Values are given as a Json value corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted. For example, the Json string `"some string"` must be entered as `\"some string\"` or `'"some string"'`.
 
-## Working with the History Object
+## Working with the History object
 
-The History Object is providing a way to save data throughout the simulation process. It offers an interface where users can define the data to be saved from a given object using Loggers and the method of saving it using Writers. Afterward, the user can access this data from the History Object and manipulate it. For a basic Logger use case, refer to [this example](../../examples/history.cpp). For an example demonstrating using a Logger in the ABM, refer to [this example](../../examples/abm_history_example.cpp).
+The History object provides a way to save data throughout the simulation process. It offers an interface where users can define the data to be saved from a given object using Loggers and the method of saving it using Writers. Afterward, the user can access this data from the History object and manipulate it. For a basic Logger use case, refer to [this example](../../examples/history.cpp). For an example demonstrating using a Logger in the ABM, refer to [this example](../../examples/abm_history_example.cpp).
 
 ### Loggers
 
@@ -172,8 +172,8 @@ struct LoggerExample{ /* :LogOnce/LogAlways if one wants to derive the should lo
 
 The `Writer` struct defines how to store the logged data from one or more implemented `Loggers`. Each user-implemented `Writer` must have a `Data` Type and implement the `template <class Logger> static void add_record(const typename Logger::Type& t, Data& data)` function.
 
-- `Data`: This is normally a container of classes which stores the data returned by the Loggers. For example, this can be a tuple of Vectors or TimeSeries.
-- `add_record`. This should manipulate the passed Data Member of the the `History` class to store the value `t` returned by the Loggers. It is used whenever `History::log` is called and `Logger::should_log` is true.
+- `Data`: This is some kind of container that stores the data returned by the Loggers. For example, this can be a TimeSeries or depend on the Loggers (like `std::tuple<std::vector<Logger::Type>...>`).
+- `add_record`. This manipulates the passed Data member of the `History` class to store the value `t` returned by the Loggers. It is used whenever `History::log` is called and `Logger::should_log` is true.
 
 A predefined universal `Writer` `DataWriterToMemory` is already implemented in [history.h](history.h). This stores the data from the loggers in a tuple of vectors every time the Logger is called. Another `Writer`  `TimeSeriesWriter` can be found in [this file](../../models/abm/common_abm_loggers.h), which saves data in a Timeseries. The according Logger has to have a suitable return type.
 
@@ -195,6 +195,6 @@ The `History` class manages the Writers and Loggers and provides an interface to
 
 To access the data from the `History` class after logging, we provide the function `get_log` to access all records. For this, the lifetime of the `History` has to be as long as one wants to have access to the data, e.g. a history should not be constructed in the function it is called in when data is needed later.
 
-To access data from a specific Logger, one can use `std::get<x>` where x is the position of the Logger in the template argument list of the `History` object. Refer to [this example](../../examples/history.cpp) for a simple implementation of a history object and [this full ABM example](../../simulation/abm.cpp) for a more advanced use case of the History Object with several History Objects in use.
+To access data from a specific Logger, one can use `std::get<x>` where x is the position of the Logger in the template argument list of the `History` object. Refer to [this example](../../examples/history.cpp) for a simple implementation of a history object and [this full ABM example](../../simulation/abm.cpp) for a more advanced use case of the History object with several History objects in use.
 
-As mentioned, if multiple Writers have to be used simultaniously, a seperate History Object is needed for each Writer.  For a Use Case of this refer to [the ABM Simulation advance funcion.](../../models/abm/simulation.cpp)
+As mentioned, if multiple Writers have to be used simultaneously, a separate History object is needed for each Writer. For a use case of this, refer to [the ABM Simulation advance function.](../../models/abm/simulation.cpp)
