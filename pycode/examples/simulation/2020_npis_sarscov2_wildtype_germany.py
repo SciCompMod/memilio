@@ -152,7 +152,9 @@ class Simulation:
             deathsPerCriticalMin,
             deathsPerCriticalMax)
 
+        # start day is set to the n-th day of the year
         model.parameters.StartDay = self.start_date.timetuple().tm_yday
+
         model.parameters.Seasonality.value = 0.2
 
         seasonality_min = 0.1
