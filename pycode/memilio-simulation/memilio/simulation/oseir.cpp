@@ -23,6 +23,7 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
 #include "ode_seir/model.h"
@@ -79,6 +80,13 @@ PYBIND11_MODULE(_simulation_oseir, m)
         "simulate",
         [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
             return mio::simulate(t0, tmax, dt, model);
+        },
+        "Simulates a oseir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+
+    m.def(
+        "simulate_flows",
+        [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
+            return mio::simulate_flows(t0, tmax, dt, model);
         },
         "Simulates a oseir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
