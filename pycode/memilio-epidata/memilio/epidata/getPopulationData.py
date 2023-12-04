@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow
 #
@@ -37,6 +37,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def read_population_data(username, password, read_data, directory):
     '''! Reads Population data either from regionalstatistik.de or from directory
@@ -65,8 +68,9 @@ def read_population_data(username, password, read_data, directory):
         # navigate to file as in documentation
         twill.commands.follow('Themen')
         twill.commands.follow(filename[:2])
-        # wait 1 second to prevent error
-        time.sleep(1)
+        # wait 2 seconds to prevent error
+        # page needs some time to load
+        time.sleep(2)
         twill.commands.follow(filename.split('-')[0])
         twill.commands.follow(filename)
         # start 'Werteabruf'
@@ -243,12 +247,17 @@ def test_total_population(df_pop, age_cols):
 
     total_sum_2020 = 83155031
     total_sum_2021 = 83237124
+    total_sum_2022 = 84358845
+    total_sum = df_pop[age_cols].sum().sum()
 
-    if df_pop[age_cols].sum().sum() != total_sum_2021:
-        if df_pop[age_cols].sum().sum() == total_sum_2020:
-            warnings.warn('Using data of 2020. Newer data is available.')
-        else:
-            raise gd.DataError('Total Population does not match expectation.')
+    if total_sum == total_sum_2022:
+        pass
+    elif total_sum == total_sum_2021:
+        warnings.warn('Using data of 2021. Newer data is available.')
+    elif total_sum == total_sum_2020:
+        warnings.warn('Using data of 2020. Newer data is available.')
+    else:
+        raise gd.DataError('Total Population does not match expectation.')
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
@@ -323,7 +332,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         merge_berlin=True, merge_eisenach=merge_eisenach, zfill=True))
     age_cols = df_pop_raw.loc[
         idCounty_idx[0]: idCounty_idx[1] - 2,
-        dd.EngEng['ageRKI']].copy().values
+        dd.EngEng['ageRKI']].values.copy()
     for i in range(len(age_cols)):
         if i == 0:
             upper_bound = str(int(age_cols[i][

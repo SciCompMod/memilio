@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker
 *
@@ -113,12 +113,7 @@ TEST(TestSaveResult, save_result)
 
 TEST(TestSaveResult, save_result_with_params)
 {
-    //rng needs to be reseeded right before using parallel parameterstudies
-    //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto rng                = mio::thread_local_rng();
-    mio::thread_local_rng() = mio::RandomNumberGenerator();
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
+    mio::set_log_level(mio::LogLevel::err); // suppress warnings because this is inevatible here
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -131,22 +126,24 @@ TEST(TestSaveResult, save_result_with_params)
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.9;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * num_dead_t0;
+        params.get<mio::osecir::Seasonality>()          = 0.0;
+        params.get<mio::osecir::ICUCapacity>()          = 0.09;
+        params.get<mio::osecir::TestAndTraceCapacity>() = 0.09;
+
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
@@ -154,6 +151,7 @@ TEST(TestSaveResult, save_result_with_params)
         params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
         params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()   = 0.85;
         params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
         params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
@@ -171,6 +169,7 @@ TEST(TestSaveResult, save_result_with_params)
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -225,18 +224,10 @@ TEST(TestSaveResult, save_result_with_params)
                   .nodes()[0]
                   .property.parameters.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)],
               params.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)]);
-
-    mio::thread_local_rng() = rng;
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
 {
-    //rng needs to be reseeded right before using parallel parameterstudies
-    //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto prev_rng           = mio::thread_local_rng();
-    mio::thread_local_rng() = mio::RandomNumberGenerator();
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -249,22 +240,24 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.8;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * num_dead_t0;
+        params.get<mio::osecir::Seasonality>()          = 0.0;
+        params.get<mio::osecir::ICUCapacity>()          = 100.0;
+        params.get<mio::osecir::TestAndTraceCapacity>() = 10.0;
+
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
@@ -272,6 +265,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
         params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
         params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()   = 0.85;
         params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
         params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
@@ -289,6 +283,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -347,6 +342,4 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ASSERT_TRUE(results_run2);
     auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
     ASSERT_TRUE(results_run2_sum);
-
-    mio::thread_local_rng() = prev_rng;
 }

@@ -14,7 +14,7 @@ endif()
 # boost
 add_library(boost INTERFACE)
 add_library(Boost::boost ALIAS boost)
-target_include_directories(boost INTERFACE
+target_include_directories(boost SYSTEM INTERFACE
     $<BUILD_INTERFACE:${BOOST_DIR}>
 )
 
@@ -38,6 +38,11 @@ add_library(boost_filesystem STATIC
 target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
 set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_library(Boost::filesystem ALIAS boost_filesystem)
+if(NOT MSVC)
+    target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
+endif( )
+
+
 
 set(Boost_LIBRARIES Boost::boost Boost::filesystem)
 set(Boost_FOUND ON)

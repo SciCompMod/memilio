@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
 *
@@ -97,7 +97,7 @@ public:
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
 
-        parameters.check_constraints(dt);
+        parameters.check_constraints();
     }
 
     /**
