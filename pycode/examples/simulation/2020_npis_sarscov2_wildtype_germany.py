@@ -55,9 +55,9 @@ class Simulation:
                     "Invalid type for parameter 'min' or 'max. \
                             Expected a scalar or a list. Must be the same for both.")
             for i in range(num_groups):
-                param[secir.AgeGroup(i)] = mio.UncertainValue(
+                param[mio.AgeGroup(i)] = mio.UncertainValue(
                     0.5 * (max[i] + min[i]))
-                param[secir.AgeGroup(i)].set_distribution(
+                param[mio.AgeGroup(i)].set_distribution(
                     mio.ParameterDistributionUniform(min[i], max[i]))
 
         t_incubation = 5.2
@@ -152,9 +152,7 @@ class Simulation:
             deathsPerCriticalMin,
             deathsPerCriticalMax)
 
-        model.parameters.StartDay = (
-            self.start_date -
-            datetime.date(year=self.start_date.year, month=1, day=1)).days + 1
+        model.parameters.StartDay = self.start_date.timetuple().tm_yday
         model.parameters.Seasonality.value = 0.2
 
         seasonality_min = 0.1
@@ -412,12 +410,12 @@ class Simulation:
             self.data_dir, "pydata", "Germany",
             "county_current_population.json")
 
-        s_day = mio.Date(self.start_date.year,
-                         self.start_date.month, self.start_date.day)
-        e_day = mio.Date(end_date.year,
-                         end_date.month, end_date.day)
         mio.secir.set_nodes(
-            model.parameters, s_day, e_day, self.data_dir,
+            model.parameters,
+            mio.Date(self.start_date.year,
+                     self.start_date.month, self.start_date.day),
+            mio.Date(end_date.year,
+                     end_date.month, end_date.day), self.data_dir,
             path_population_data, True, graph, scaling_factor_infected,
             scaling_factor_icu, tnt_capacity_factor, 0, False)
 
