@@ -49,11 +49,11 @@ class Simulation:
                         max, (int, float)):
                 min = min * np.ones(num_groups)
                 max = max * np.ones(num_groups)
-            elif not (isinstance(min, (list, tuple)) and isinstance(
-                    max, (list, tuple))):
+            elif not (isinstance(min, (list)) and isinstance(
+                    max, (list))):
                 raise TypeError(
                     "Invalid type for parameter 'min' or 'max. \
-                            Expected a scalar or a vector. Must be the same for both.")
+                            Expected a scalar or a list. Must be the same for both.")
             for i in range(num_groups):
                 param[secir.AgeGroup(i)] = mio.UncertainValue(
                     0.5 * (max[i] + min[i]))
@@ -167,29 +167,17 @@ class Simulation:
     def set_contact_matrices(self, model):
         contact_matrices = mio.ContactMatrixGroup(
             len(list(Location)), self.num_groups)
-        contact_matrices[0] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                os.path.join(self.data_dir, "contacts", "baseline_home.txt")),
-            mio.secir.read_mobility_plain(
-                os.path.join(self.data_dir, "contacts", "minimum_home.txt")))
-        contact_matrices[1] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                os.path.join(
-                    self.data_dir, "contacts", "baseline_school_pf_eig.txt")),
-            mio.secir.read_mobility_plain(
-                os.path.join(
-                    self.data_dir, "contacts", "minimum_school_pf_eig.txt")))
-        contact_matrices[2] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                os.path.join(self.data_dir, "contacts", "baseline_work.txt")),
-            mio.secir.read_mobility_plain(
-                os.path.join(self.data_dir, "contacts", "minimum_work.txt")))
-        contact_matrices[3] = mio.ContactMatrix(
-            mio.secir.read_mobility_plain(
-                os.path.join(self.data_dir, "contacts", "baseline_other.txt")),
-            mio.secir.read_mobility_plain(
-                os.path.join(self.data_dir, "contacts", "minimum_other.txt")))
+        locations = ["home", "school_pf_eig", "work", "other"]
 
+        for i, location in enumerate(locations):
+            baseline_file = os.path.join(
+                self.data_dir, "contacts", "baseline_" + location + ".txt")
+            minimum_file = os.path.join(
+                self.data_dir, "contacts", "minimum_" + location + ".txt")
+            contact_matrices[i] = mio.ContactMatrix(
+                mio.secir.read_mobility_plain(baseline_file),
+                mio.secir.read_mobility_plain(minimum_file)
+            )
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
     def set_npis(self, params, end_date):
@@ -201,22 +189,22 @@ class Simulation:
             lambda i: 1.0 if i == 5 else (0.5 if i == 4 else 0.0))(
             np.arange(self.num_groups))
 
-        loc_h = Location.Home.value
-        loc_s = Location.School.value
-        loc_w = Location.Work.value
-        loc_o = Location.Other.value
+        loc_home = Location.Home.value
+        loc_school = Location.School.value
+        loc_work = Location.Work.value
+        loc_other = Location.Other.value
 
-        lvl_m = InterventionLevel.Main.value
-        lvl_p = InterventionLevel.PhysicalDistanceAndMasks.value
-        lvl_s = InterventionLevel.SeniorAwareness.value
-        lvl_h = InterventionLevel.Holidays.value
+        lvl_main = InterventionLevel.Main.value
+        lvl_pd_and_masks = InterventionLevel.PhysicalDistanceAndMasks.value
+        lvl_seniors = InterventionLevel.SeniorAwareness.value
+        lvl_holidays = InterventionLevel.Holidays.value
 
-        typ_h = Intervention.Home.value
-        typ_s = Intervention.SchoolClosure.value
-        typ_ho = Intervention.HomeOffice.value
-        typ_g = Intervention.GatheringBanFacilitiesClosure.value
-        typ_p = Intervention.PhysicalDistanceAndMasks.value
-        typ_se = Intervention.SeniorAwareness.value
+        typ_home = Intervention.Home.value
+        typ_school = Intervention.SchoolClosure.value
+        typ_home = Intervention.HomeOffice.value
+        typ_gathering = Intervention.GatheringBanFacilitiesClosure.value
+        typ_distance = Intervention.PhysicalDistanceAndMasks.value
+        typ_senior = Intervention.SeniorAwareness.value
 
         def damping_helper(
                 t, min, max, damping_level, type, location,
@@ -233,35 +221,35 @@ class Simulation:
 
         def contacts_at_home(t, min, max):
             return damping_helper(
-                t, min, max, lvl_m, typ_h, [loc_h])
+                t, min, max, lvl_main, typ_home, [loc_home])
 
         def school_closure(t, min, max):
             return damping_helper(
-                t, min, max, lvl_m, typ_s, [loc_s])
+                t, min, max, lvl_main, typ_school, [loc_school])
 
         def home_office(t, min, max):
             return damping_helper(
-                t, min, max, lvl_m, typ_ho, [loc_w])
+                t, min, max, lvl_main, typ_home, [loc_work])
 
         def social_events(t, min, max):
             return damping_helper(
-                t, min, max, lvl_m, typ_g, [loc_o])
+                t, min, max, lvl_main, typ_gathering, [loc_other])
 
         def social_events_work(t, min, max):
             return damping_helper(
-                t, min, max, lvl_m, typ_g, [loc_w])
+                t, min, max, lvl_main, typ_gathering, [loc_work])
 
         def physical_distancing_home_school(t, min, max):
             return damping_helper(
-                t, min, max, lvl_p, typ_p, [loc_h, loc_s])
+                t, min, max, lvl_pd_and_masks, typ_distance, [loc_home, loc_school])
 
         def physical_distancing_work_other(t, min, max):
             return damping_helper(
-                t, min, max, lvl_p, typ_p, [loc_w, loc_o])
+                t, min, max, lvl_pd_and_masks, typ_distance, [loc_work, loc_other])
 
         def senior_awareness(t, min, max):
             return damping_helper(
-                t, min, max, lvl_s, typ_se, [loc_h, loc_o],
+                t, min, max, lvl_seniors, typ_senior, [loc_home, loc_other],
                 group_weights_seniors)
 
         # SPRING 2020 LOCKDOWN SCENARIO
@@ -405,7 +393,7 @@ class Simulation:
 
             # school holidays(holiday periods are set per node, see set_nodes)
             contacts.school_holiday_damping = damping_helper(
-                0, 1.0, 1.0, lvl_h, typ_s, [loc_s])
+                0, 1.0, 1.0, lvl_holidays, typ_school, [loc_school])
             contacts.dampings = dampings
 
     def get_graph(self, end_date):
