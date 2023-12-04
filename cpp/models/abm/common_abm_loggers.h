@@ -71,6 +71,16 @@ mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_locati
  */
 struct LogLocationInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
+    /**
+     * @brief Log the LocationInformation of the simulation. 
+     * @param[in] sim The simulation of the abm.
+     * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
+     * -# The index of the location.
+     * -# The type of the location.
+     * -# The geographical location of the location.
+     * -# The number of cells in the location.
+     * -# The capacity of the location.
+    */
     static Type log(const mio::abm::Simulation& sim)
     {
         Type location_information{};
@@ -93,6 +103,14 @@ struct LogLocationInformation : mio::LogOnce {
  */
 struct LogPersonInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::AgeGroup>>;
+    /** 
+     * @brief Log the LocationInformation of the simulation. 
+     * @param[in] sim The simulation of the abm.
+     * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
+     * -# The person id.
+     * -# The index of the home location.
+     * -# The age group of the person.
+    */
     static Type log(const mio::abm::Simulation& sim)
     {
         Type person_information{};
@@ -111,6 +129,17 @@ struct LogPersonInformation : mio::LogOnce {
 struct LogDataForMovement : mio::LogAlways {
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
                                         mio::abm::ActivityType, mio::abm::InfectionState>>;
+    /** 
+     * @brief Log the Movement Data of the agents in the simulation.
+     * @param[in] sim The simulation of the abm.
+     * @return A vector of tuples with the Movement Data, where each tuple contains the following information:
+     * -# The person id.
+     * -# The index of the location.
+     * -# The time point.
+     * -# The transport mode.
+     * -# The activity type.
+     * -# The infection state.
+     */
     static Type log(const mio::abm::Simulation& sim)
     {
         Type movement_data{};
@@ -128,6 +157,11 @@ struct LogDataForMovement : mio::LogAlways {
 */
 struct LogInfectionState : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+     */
     static Type log(const mio::abm::Simulation& sim)
     {
 
@@ -151,6 +185,11 @@ template <class... Loggers>
 struct TimeSeriesWriter {
     using Data = std::tuple<mio::TimeSeries<ScalarType>>;
     template <class Logger>
+    /**
+     * @brief This function adds an entry to the Timeseries consisting of the TimePoint and the value. The Loggers must return a touple with a TimePoint and a value of return type Eigen::VectorXd.
+     * @param[in] t The data from the logger.
+     * @param[in,out] data The data tuple.
+    */
     static void add_record(const typename Logger::Type& t, Data& data)
     {
         std::get<index_of_type_v<Logger, Loggers...>>(data).add_time_point(t.first.days(), t.second);
@@ -162,11 +201,16 @@ struct TimeSeriesWriter {
 * This specializiation just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
 * @tparam Loggers The loggers that are used to log data.
 */
-
 template <class... Loggers>
 struct DataWriterToMemoryDelta {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
+    /**
+     * @brief This function adds an entry to the data vector. 
+     * @param[in] t The data from the logger.
+     * @param[in,out] data The data tuple.
+     * @details The data is only added if it differs from the last entry. For this we use the first entry as a reference for the current position.
+    */
     static void add_record(const typename Logger::Type& t, Data& data)
     {
 
@@ -183,7 +227,7 @@ struct DataWriterToMemoryDelta {
         }
         else {
             std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(
-                t); // We use the first entry as a reference for the current position
+                t); // We use the first entry as a reference for the current position.
             std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
         }
     }
