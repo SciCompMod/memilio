@@ -150,19 +150,20 @@ The `Logger` struct is a tool for logging data from a given object. Each user-im
 - `log`: This function determines which data from the input `T` is saved. It must have the same return Type `Type` as the Loggers Type `Type`.
 - `should_log`: This function must return a boolean to determine if data should be logged and can use the input `T` for this, e.g. if `T` fullfills some criteria.
 
-Users can derive their Loggers from `LogOnce` or `LogAlways` to use a predefined `should_log` function. `LogOnce` logs only at the first call of `Logger::log()`, while `LogAlways` logs every time `log` is called. All implemented Logger must be default constructible/destructible. For user-defined examples in the ABM, refer to [this file](../../models/abm/common_abm_loggers.h).
+Users can derive their Loggers from `LogOnce` or `LogAlways` to use a predefined `should_log` function. `LogOnce` logs only at the first call of `Logger::log()`, while `LogAlways` logs every time `log` is called. All implemented Loggers must be default constructible/destructible. For user-defined examples in the ABM, refer to [this file](../../models/abm/common_abm_loggers.h).
 
 ```cpp
-struct LoggerExample{ /* :LogOnce/LogAlways if one wants to derive the should log from these
+struct LoggerExample{ /* :LogOnce/LogAlways if one wants to derive the should log from these. */
     using Type = /* type of the record */;
-    static Type log(const T& t) //T is the same type as the type t from History::log(t) gets called with 
+    /* Below, T must be replaced by the type T from History::log(t). */
+    Type log(const T& t) 
     {
-        return /* something with the same Type of `Type` defined above*/;
+        return /* something of type Type */;
     }
-    constexpr bool should_log(const T& t)
+    bool should_log(const T& t) 
     {
-          /*logic to derive if this logger should log, supposedly based on input t */
-          return /*true or false*/
+          /* Determine wether log and add_record should be called by History::log(t). */
+          return /* true or false */
     }
 };
 ```
@@ -179,11 +180,11 @@ A predefined universal `Writer` `DataWriterToMemory` is already implemented in [
 ```cpp
 template <class... Loggers>
 struct DataWriterExample {
-    using Data = /*Container for the stored data of the Loggers*/;
+    using Data = /* Container for the stored data of the Loggers */;
     template <class Logger>
     static void add_record(const typename Logger::Type& t, Data& data)
     {
-          /*Manipulation of data to store the value t returned by the Loggers*/;
+          /* Manipulation of data to store the value t returned by the Loggers */;
     }
 };
 ```
