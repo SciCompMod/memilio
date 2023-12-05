@@ -700,7 +700,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
             Eigen::Index(mio::abm::InfectionState::Count)};
         // Advance the world to tmax
-        sim.advance(tmax);
+        sim.advance(tmax, historyTimeSeries);
         // Collect the results from the simulation
         ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())});
         // Increase the run index

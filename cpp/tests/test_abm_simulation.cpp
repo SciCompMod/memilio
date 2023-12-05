@@ -95,6 +95,7 @@ TEST(TestSimulation, advanceWithCommonHistory)
 
     mio::abm::TripList& trip_list = world.get_trip_list();
 
+    // We add trips for person two to test the history and if it is working correctly
     mio::abm::Trip trip1(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
     mio::abm::Trip trip2(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
     mio::abm::Trip trip3(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id);
@@ -127,11 +128,17 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto logTimeSeries        = std::get<0>(historyTimeSeries.get_log());
     auto logMovementInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
 
-    ASSERT_EQ(logLocationInfo[0].size(), 9);
-    ASSERT_EQ(logPersonInfo[0].size(), 3);
-    ASSERT_EQ(logMovementInfo.size(), 25);
-    ASSERT_EQ(logTimeSeries.get_num_time_points(), 25);
-    ASSERT_EQ(logMovementInfoDelta.size(), 26);
-    ASSERT_EQ(logMovementInfoDelta[0].size(), 3);
-    ASSERT_EQ(logMovementInfoDelta[1].size(), 3);
+    ASSERT_EQ(logLocationInfo[0].size(), 9); // Check if all locations are in the log, 9 locations
+    ASSERT_EQ(logPersonInfo[0].size(), 3); // Check if all persons are in the log, 3 persons
+    ASSERT_EQ(
+        logMovementInfo.size(),
+        25); // Check if for all time points Movement data is in the log, 25 time points (24 hours + 1 for the initial state)
+    ASSERT_EQ(logTimeSeries.get_num_time_points(),
+              25); // Check if all time points are in the log, 25 time points (24 hours + 1 for the initial state)
+    ASSERT_EQ(
+        logMovementInfoDelta.size(),
+        26); // Check if for all time points Movement data is in the log, 26 time points (24 hours + 1 for the initial state + 1 helper entry for calculating the delta)
+    ASSERT_EQ(logMovementInfoDelta[0].size(),
+              3); // Check if all persons are in the delta-logger Movement helper entry 0, 3 persons
+    ASSERT_EQ(logMovementInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
 }
