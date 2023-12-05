@@ -86,6 +86,13 @@ public:
     {
     }
 
+    /**
+     * @brief Logs new records according to the Writer and Loggers.
+     *
+     * Calls the log_impl function for every Logger for Input t to record data.
+     * @tparam T The type of the record.
+     * @param[in] t The input to record.
+     */
     template <class T>
     void log(const T& t)
     {

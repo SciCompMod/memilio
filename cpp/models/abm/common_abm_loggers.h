@@ -31,6 +31,11 @@ namespace mio
 namespace abm
 {
 
+/**
+ * @brief Struct to save spcific movement data of an agent.
+ * The Data consists of :
+ * 
+ */
 struct movement_data {
     uint32_t agent_id;
     uint32_t from_id;
