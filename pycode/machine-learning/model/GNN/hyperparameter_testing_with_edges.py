@@ -99,7 +99,7 @@ node_labels = new_labels
 
 layers = [XENetConvBatch, CensNetConv, ECCConv]
 #activations = ['relu', 'LeakyReLu', 'sigmoid', 'tanh', 'elu']
-number_of_channels = [32, 64, 128]
+number_of_channels = [32, 64, 128,1024]
 number_of_layers = [1, 2, 3]
 #learning_rates = [0.01, 0.001, 0.0001]
 optimizers = [Adam, Nadam, RMSprop]
@@ -244,7 +244,7 @@ def train_and_evaluate_model(
                 target, predictions))
         return loss, acc
 
-    def evaluate(loader):
+    def evaluate_va(loader):
         output = []
         step = 0
         while step < loader.steps_per_epoch:
@@ -261,6 +261,25 @@ def train_and_evaluate_model(
             if step == loader.steps_per_epoch:
                 output = np.array(output)
                 return np.average(output[:, :-1], 0, weights=output[:, -1])
+                
+    def evaluate_te(loader):
+            output = []
+            step = 0
+            while step < loader.steps_per_epoch:
+                step += 1
+                inputs, target = loader.__next__()
+                #pred = model(inputs, training=False)
+                pred = model.predict(inputs)
+                outs = (
+                    loss_fn(target, pred),
+                    tf.reduce_mean(mean_absolute_percentage_error(target, pred)),
+                    len(target),  # Keep track of batch size
+                )
+                output.append(outs)
+                if step == loader.steps_per_epoch:
+                    output = np.array(output)
+                    return np.average(output[:, :-1], 0, weights=output[:, -1])
+
 
     n_days = int(new_labels.shape[2]/48)
 
@@ -337,8 +356,8 @@ def train_and_evaluate_model(
         loader_tr = BatchLoader(
             data_tr, batch_size=batch_size, epochs=epochs)
         loader_va = BatchLoader(data_va,  batch_size=batch_size)
-        loader_te = BatchLoader(data_te, batch_size=data_te.n_graphs)
-
+        #loader_te = BatchLoader(data_te, batch_size=data_te.n_graphs)
+        loader_te = BatchLoader(data_te, batch_size=batch_size)
 
         epoch = step = 0
         best_val_loss = np.inf
@@ -359,7 +378,7 @@ def train_and_evaluate_model(
                 epoch += 1
 
                 # Compute validation loss and accuracy
-                val_loss, val_acc = evaluate(loader_va)
+                val_loss, val_acc = evaluate_va(loader_va)
                 print(
                     "Ep. {} - Loss: {:.3f} - Acc: {:.3f} - Val loss: {:.3f} - Val acc: {:.3f}".format(
                         epoch, *np.mean(results, 0), val_loss, val_acc
@@ -387,7 +406,7 @@ def train_and_evaluate_model(
         # Evaluate model
         ################################################################################
         model.set_weights(best_weights)  # Load best model
-        test_loss, test_acc = evaluate(loader_te)
+        test_loss, test_acc = evaluate_va(loader_te)
         test_MAPE = test_evaluation(loader_te)
         print(test_MAPE)
 
