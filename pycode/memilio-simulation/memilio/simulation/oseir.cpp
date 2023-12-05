@@ -25,6 +25,7 @@
 #include "compartments/simulation.h"
 #include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
+#include "compartments/flow_model.h"
 #include "epidemiology/populations.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
@@ -76,6 +77,9 @@ PYBIND11_MODULE(_simulation_oseir, m)
                mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>>(m, "Model")
         .def(py::init<>());
 
+    pymio::bind_FlowModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters, mio::oseir::Flows>(
+        m, "FlowModel");
+
     m.def(
         "simulate",
         [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
@@ -88,7 +92,8 @@ PYBIND11_MODULE(_simulation_oseir, m)
         [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
             return mio::simulate_flows(t0, tmax, dt, model);
         },
-        "Simulates a oseir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates a oseir with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        py::arg("model"));
 
     m.attr("__version__") = "dev";
 }

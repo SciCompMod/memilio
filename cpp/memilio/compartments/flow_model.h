@@ -55,8 +55,8 @@ using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()
 
 // Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
 template <class OmittedTag, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
+using filtered_index_t = decltype(
+    as_index<IndexTemplate>(std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
 
 } //namespace details
 
@@ -98,7 +98,7 @@ public:
     // Note: use get_flat_flow_index when accessing flows
     // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
     virtual void get_flows(Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const = 0;
+                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const;
 
     /**
      * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.
