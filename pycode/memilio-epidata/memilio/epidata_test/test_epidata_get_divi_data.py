@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz, Annette Lutz
 #
@@ -156,11 +156,12 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_gdd_all_dates(self, mock_print, mock_file, mock_san):
-        mock_file.return_value = self.df_test
+        mock_file.return_value = self.df_test.copy()
         # test case with impute dates is True
         (df, df_county, df_states, df_ger) = gdd.get_divi_data(
             out_folder=self.path, impute_dates=True)
-        mock_san.assert_has_calls([call(self.df_test)])
+        # Test if sanity check was called
+        self.assertTrue(mock_san.called)
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertEqual(
             df_ger[df_ger["Date"] == "2021-05-26"]["ICU"].item(), 119)

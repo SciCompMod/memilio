@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,6 +23,8 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/populations.h"
 #include "memilio/io/history.h"
 
 namespace mio
@@ -51,8 +53,8 @@ public:
      * @see Simulation::get_world
      * @param[in] t0 The starting time of the Simulation.
      */
-    Simulation(TimePoint t0)
-        : Simulation(t0, World())
+    Simulation(TimePoint t0, size_t num_agegroups)
+        : Simulation(t0, World(num_agegroups))
     {
     }
 

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,6 +20,7 @@
 #ifndef INDEX_H
 #define INDEX_H
 
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/type_safe.h"
 
 namespace mio
@@ -53,15 +54,20 @@ class Index;
  *
  */
 template <typename CategoryTag>
-class Index<CategoryTag> : public TypeSafe<size_t, Index<CategoryTag>>,
-                           public OperatorComparison<Index<CategoryTag>>,
-                           public OperatorAdditionSubtraction<Index<CategoryTag>>,
-                           public OperatorScalarMultiplicationDivision<Index<CategoryTag>, size_t>
+class MEMILIO_ENABLE_EBO Index<CategoryTag> : public TypeSafe<size_t, Index<CategoryTag>>,
+                                              public OperatorComparison<Index<CategoryTag>>,
+                                              public OperatorAdditionSubtraction<Index<CategoryTag>>,
+                                              public OperatorScalarMultiplicationDivision<Index<CategoryTag>, size_t>
 {
 public:
     using TypeSafe<size_t, Index<CategoryTag>>::TypeSafe;
 
     static size_t constexpr size = 1;
+
+    static Index constexpr Zero()
+    {
+        return Index((size_t)0);
+    }
 
     /**
      * @brief Constructor from enum, if CategoryTag is an enum
@@ -114,6 +120,11 @@ class Index
 {
 public:
     static size_t constexpr size = sizeof...(CategoryTag);
+
+    static Index constexpr Zero()
+    {
+        return Index(Index<CategoryTag>::Zero()...);
+    }
 
     // constructor from Indices
     Index(Index<CategoryTag> const&... _indices)
@@ -168,6 +179,14 @@ public:
     }
 
     std::tuple<Index<CategoryTag>...> indices;
+};
+
+template <size_t Index, class... CategoryTags>
+struct type_at_index<Index, ::mio::Index<CategoryTags...>> : public type_at_index<Index, CategoryTags...> {
+};
+
+template <class CategoryTag, class... CategoryTags>
+struct index_of_type<CategoryTag, ::mio::Index<CategoryTags...>> : public index_of_type<CategoryTag, CategoryTags...> {
 };
 
 // retrieves the Index at the Ith position for a Index with more than one Tag
@@ -234,6 +253,76 @@ constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
     using IndexTag = std::tuple_element_t<0, std::tuple<CategoryTags...>>;
     static_assert(std::is_same<Tag, IndexTag>::value, "Tags must match for an Index with just one template parameter");
     return i;
+}
+
+namespace details
+{
+/// @brief Extracts CategoryTags from the tagged Index and returns a subindex of SuperIndex with the given categories.
+template <class... CategoryTags, class SuperIndex>
+inline Index<CategoryTags...> reduce_index_impl(const SuperIndex& i, mio::Tag<Index<CategoryTags...>>)
+{
+    // the subindex may not be trivially constructible, so we pass its type using mio::Tag
+    // the type has to be passed as an argument to determine its CategoryTags
+
+    // below, we use get<index_of_type<>> instead of get<> directly to handle categories that are not unique
+    // (that is, `get<CategoryTags>(i)...` fails to compile for SuperIndex=Index<T, T>)
+    return Index<CategoryTags...>{get<index_of_type_v<CategoryTags, SuperIndex>>(i)...};
+}
+
+/// @brief Creates and returns a SuperIndex from SubIndex, using entries from the given SubIndex or fill_value.
+template <class... CategoryTags, class... Subset>
+inline Index<CategoryTags...> extend_index_impl(const Index<Subset...>& i, const size_t fill_value,
+                                                mio::Tag<Index<CategoryTags...>>)
+{
+    using SuperIndex = Index<CategoryTags...>;
+    using SubIndex   = Index<Subset...>;
+    // The superindex may not be trivially constructible, so we pass its type using mio::Tag.
+    // The type has to be passed as an argument to determine its CategoryTags.
+
+    return SuperIndex{[&]() {
+        // This is an IIFE, which is invoked for each category (note the '...' after the function call).
+        // So CategoryTags without a '...' is seen by each IIFE as exactly one category from this variadic template.
+        if constexpr (is_type_in_list_v<CategoryTags, Subset...>) {
+            // We use get<index_of_type<>> instead of get<> directly to handle categories that are not unique
+            // (that is, `get<CategoryTags>(i)...` fails to compile for SuperIndex=Index<T, T>)
+            return get<index_of_type_v<CategoryTags, SubIndex>>(i);
+        }
+        else {
+            return Index<CategoryTags>(fill_value);
+        }
+    }()...};
+}
+} // namespace details
+
+/**
+ * @brief Create a SubIndex by copying values from SuperIndex.
+ * If a type T is contained multiple times in SuperIndex, only the first occurance of T is used.
+ * For example, `reduce_index<Index<T, T>>(Index<T, T, T>{1,2,3})` returns `{1,1}`.
+ * @param[in] index An instance of SuperIndex
+ * @tparam SubIndex An Index that contains a subset of the categories from SuperIndex.
+ * @tparam SuperIndex Any Index.
+ * @return A (sub)index with the given categories and values from index.
+ */
+template <class SubIndex, class SuperIndex>
+SubIndex reduce_index(const SuperIndex& index)
+{
+    return details::reduce_index_impl(index, mio::Tag<SubIndex>{});
+}
+
+/**
+ * @brief Create a SuperIndex by copying values from SubIndex, filling new categories with fill_value.
+ * If a type T is contained multiple times in SubIndex, only the first occurance of T is used.
+ * For example, `extend_index<Index<T, T, T>>(Index<T, T>{1,2})` returns `{1,1,1}`.
+ * @param[in] index An instance of SubIndex
+ * @param[in] fill_value The value to use for categories not in SubIndex.
+ * @tparam SuperIndex Any Index.
+ * @tparam SubIndex An Index that contains a subset of the categories from SuperIndex.
+ * @return A (super)index with the given categories and values from index.
+ */
+template <class SuperIndex, class SubIndex>
+SuperIndex extend_index(const SubIndex& index, size_t fill_value = 0)
+{
+    return details::extend_index_impl(index, fill_value, mio::Tag<SuperIndex>{});
 }
 
 } // namespace mio

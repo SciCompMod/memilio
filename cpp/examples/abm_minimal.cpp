@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Khoa Nguyen
 *
@@ -19,61 +19,45 @@
 */
 #include "abm/abm.h"
 #include "abm/household.h"
-#include <cstdio>
-#include "abm/world.h"
-#include "memilio/io/io.h"
-#include "abm/location_type.h"
 #include <fstream>
 #include <string>
 #include <iostream>
 
-void write_results_to_file(const mio::abm::Simulation& sim)
-{
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream myfile("abm_minimal.txt");
-    myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        myfile << sim.get_result().get_time(i);
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            myfile << v[j];
-            if (j < v.size() - 1) {
-                myfile << " ";
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            myfile << "\n";
-        }
-    }
-    myfile.close();
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
-}
-
 int main()
 {
-    // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::GlobalInfectionParameters infection_params;
+    // This is a minimal example with children and adults < 60 year old.
+    // We divided them into 4 different age groups, which are defined as follows:
+    size_t num_age_groups         = 4;
+    const auto age_group_0_to_4   = mio::AgeGroup(0);
+    const auto age_group_5_to_14  = mio::AgeGroup(1);
+    const auto age_group_15_to_34 = mio::AgeGroup(2);
+    const auto age_group_35_to_59 = mio::AgeGroup(3);
+
+    // Create the world with 4 age groups.
+    auto world = mio::abm::World(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    infection_params.get<mio::abm::IncubationPeriod>() = 4.;
+    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
-    // Create the world with infection parameters.
-    auto world = mio::abm::World(infection_params);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {age_group_5_to_14};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
+    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {age_group_15_to_34, age_group_35_to_59};
 
-    // There are 3 households for each household group.
-    int n_households = 3;
+    // Check if the parameters satisfy their contraints.
+    world.parameters.check_constraints();
+
+    // There are 10 households for each household group.
+    int n_households = 10;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
-    child.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
+    auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
+    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_0_to_4, 1);
 
-    auto parent = mio::abm::HouseholdMember(); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 1);
-    parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
+    auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
+    parent.set_age_weight(age_group_15_to_34, 1);
+    parent.set_age_weight(age_group_35_to_59, 1);
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -106,38 +90,43 @@ int main()
     // At every school, the maximum contacts are 20.
     auto school = world.add_location(mio::abm::LocationType::School);
     world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every workplace, maximum contacts are 10.
+    // At every workplace, maximum contacts are 20.
     auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
 
-    // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
-    auto testing_min_time = mio::abm::days(1);
-    auto probability      = 0.5;
-    auto start_date       = mio::abm::TimePoint(0);
-    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto test_type        = mio::abm::AntigenTest();
-    auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
+    // Increase aerosol transmission for all locations
+    world.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
+    // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
+    world.get_individualized_location(work)
+        .get_infection_parameters()
+        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+
+    // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
+    auto testing_min_time      = mio::abm::days(1);
+    auto probability           = 0.5;
+    auto start_date            = mio::abm::TimePoint(0);
+    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
+    auto test_type             = mio::abm::AntigenTest();
+    auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
-    world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
-    // The infection states are chosen randomly.
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        mio::abm::InfectionState infection_state =
-            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
+    // The infection states are chosen randomly with the following distribution
+    std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+    for (auto& person : world.get_persons()) {
+        mio::abm::InfectionState infection_state = mio::abm::InfectionState(
+            mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), start_date,
-                                                         infection_state));
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.parameters, start_date, infection_state));
         }
     }
 
     // Assign locations to the people
-    for (auto& person : persons) {
+    for (auto& person : world.get_persons()) {
         //assign shop and event
         person.set_assigned_location(event);
         person.set_assigned_location(shop);
@@ -145,23 +134,35 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+        if (person.get_age() == age_group_0_to_4) {
             person.set_assigned_location(school);
         }
-        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
+        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
             person.set_assigned_location(work);
         }
     }
 
     // During the lockdown, social events are closed for 90% of people.
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
-    mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
+    mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
 
+    // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto sim  = mio::abm::Simulation(t0, std::move(world));
+    auto tmax = t0 + mio::abm::days(10);
 
+    // Create and run the simualtion for the scenario defined above.
+    auto sim = mio::abm::Simulation(t0, std::move(world));
     sim.advance(tmax);
 
-    write_results_to_file(sim);
+    std::ofstream outfile("abm_minimal.txt");
+
+    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
+    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
+    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
+    // I_Crit = InfectedCritical, R = Recovered, D = Dead
+    sim.get_result().print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+
+    std::cout << "Results written to abm_minimal.txt" << std::endl;
+
+    return 0;
 }

@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,31 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_AGE_H
-#define EPI_ABM_AGE_H
+
+#include "ode_sir/model.h"
 
 namespace mio
 {
-namespace abm
+namespace osir
 {
 
-/**
- * age groups like RKI.
- * EXPERIMENTAL; will be merged with new model framework soon.
- */
-enum class AgeGroup
-{
-    Age0to4 = 0,
-    Age5to14,
-    Age15to34,
-    Age35to59,
-    Age60to79,
-    Age80plus,
-
-    Count
-};
-
-} // namespace abm
+} // namespace osir
 } // namespace mio
-
-#endif //EPI_ABM_AGE_H

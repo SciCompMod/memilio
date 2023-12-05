@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -32,6 +32,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 
 def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,

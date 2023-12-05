@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -176,7 +176,7 @@ public:
         size_t idx                    = this->get_flat_index(midx);
         current_population -= this->array()[idx];
 
-        assert(current_population <= total_group_population);
+        assert(current_population <= total_group_population + 1e-10);
 
         this->array()[idx] = total_group_population - current_population;
     }

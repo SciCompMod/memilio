@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -18,6 +18,9 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/mioomp.h"
+#include <random>
 
 namespace mio
 {
@@ -62,8 +65,23 @@ void Simulation::store_result_at(TimePoint t)
 {
     m_result.add_time_point(t.days());
     m_result.get_last_value().setZero();
-    for (auto& location : m_world.get_locations()) {
-        m_result.get_last_value() += location.get_subpopulations().get_last_value().cast<ScalarType>();
+
+    //Use a manual parallel reduction to sum up the subpopulations
+    //The reduction clause of `omp parallel for` doesn't work well for `Eigen::VectorXd`
+    PRAGMA_OMP(parallel)
+    {
+        //thread local sum of subpopulations, computed in parallel
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(m_result.get_num_elements());
+        PRAGMA_OMP(for)
+        for (auto i = size_t(0); i < m_world.get_locations().size(); ++i) {
+            auto&& location = m_world.get_locations()[i];
+            sum += location.get_subpopulations().get_last_value().cast<ScalarType>();
+        }
+        //synchronized total sum
+        PRAGMA_OMP(critical)
+        {
+            m_result.get_last_value() += sum;
+        }
     }
 }
 

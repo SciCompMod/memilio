@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow
 #
@@ -35,13 +35,16 @@ from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getJHData as gjd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def get_case_data_with_estimations(
         read_data=dd.defaultDict['read_data'],
         file_format=dd.defaultDict['file_format'],
         out_folder=dd.defaultDict['out_folder'],
         no_raw=dd.defaultDict['no_raw'],
-        start_date=date(2020, 1, 1),
+        start_date=dd.defaultDict['start_date'],
         end_date=dd.defaultDict['end_date'],
         impute_dates=dd.defaultDict['impute_dates'],
         moving_average=dd.defaultDict['moving_average'],
@@ -159,7 +162,7 @@ WARNING: This file is experimental and has not been tested.
             df_cases.loc[(df_cases[dstr] == date_jh), deaths_estimated] = np.round(
                 fraction_deaths_conf * df_cases.loc[(df_cases[dstr] == date_jh), confirmed])
 
-        df_cases = df_cases.drop([dstr], axis=1)
+        df_cases.drop([dstr], axis=1, inplace=True)
         gd.write_dataframe(df_cases, data_path,
                            file_to_change + "_estimated", file_format)
 
@@ -233,8 +236,9 @@ def compare_estimated_and_rki_deathsnumbers(
     df_cases["deaths_estimated_daily"] = df_cases['Deaths_estimated'] - \
         df_cases['Deaths_estimated'].shift(periods=1, fill_value=0)
     df_cases_week = df_cases.groupby("week").agg(
-        {"deaths_daily": sum, "deaths_estimated_daily": sum}).reset_index()
-    df_jh_week = df_jh.groupby("week").agg({"deaths_daily": sum}).reset_index()
+        {"deaths_daily": "sum", "deaths_estimated_daily": "sum"}).reset_index()
+    df_jh_week = df_jh.groupby("week").agg(
+        {"deaths_daily": "sum"}).reset_index()
     df_cases_week.rename(
         columns={'deaths_daily': 'Deaths_weekly',
                  'deaths_estimated_daily': 'Deaths_estimated_weekly'},

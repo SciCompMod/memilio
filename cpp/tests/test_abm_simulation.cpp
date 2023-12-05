@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -30,13 +30,13 @@ struct LogTimePoint : mio::LogAlways {
 
 TEST(TestSimulation, advance_random)
 {
-    auto world     = mio::abm::World();
+    auto world     = mio::abm::World(NUM_AGE_GROUPS);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto& p1       = world.add_person(location1, mio::abm::AgeGroup::Age5to14);
-    auto& p2       = world.add_person(location1, mio::abm::AgeGroup::Age5to14);
-    auto& p3       = world.add_person(location2, mio::abm::AgeGroup::Age5to14);
-    auto& p4       = world.add_person(location2, mio::abm::AgeGroup::Age5to14);
+    auto& p1       = world.add_person(location1, AGE_GROUP_5_TO_14);
+    auto& p2       = world.add_person(location1, AGE_GROUP_5_TO_14);
+    auto& p3       = world.add_person(location2, AGE_GROUP_5_TO_14);
+    auto& p4       = world.add_person(location2, AGE_GROUP_5_TO_14);
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);
@@ -52,37 +52,14 @@ TEST(TestSimulation, advance_random)
     }
 }
 
-TEST(TestDiscreteDistribution, generate)
-{
-    using namespace mio;
-    auto distribution = mio::DiscreteDistribution<size_t>();
-
-    std::vector<double> weights;
-    for (size_t i = 0; i < 50; i++) {
-        weights = {};
-        ASSERT_EQ(distribution(weights), 0);
-
-        weights = {0.5};
-        ASSERT_EQ(distribution(weights), 0);
-
-        weights = {0.5, 1.3, 0.1, 0.4, 0.3};
-        auto d  = distribution(weights);
-        ASSERT_GE(d, 0);
-        ASSERT_LE(d, 4);
-    }
-}
-
 TEST(TestSimulation, advance_subpopulation)
 {
-    auto world       = mio::abm::World();
+    auto world       = mio::abm::World(NUM_AGE_GROUPS);
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
-    auto& person1 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms);
-    auto& person2 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
-    auto& person3 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
+    auto& person1 = add_test_person(world, location_id, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
+    auto& person2 = add_test_person(world, location_id, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
+    auto& person3 = add_test_person(world, location_id, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Exposed);
     person1.set_assigned_location(location_id);
     person2.set_assigned_location(location_id);
     person3.set_assigned_location(location_id);
@@ -101,9 +78,9 @@ TEST(TestSimulation, advance_subpopulation)
 
 TEST(TestSimulation, initializeSubpopulation)
 {
-    auto world  = mio::abm::World();
+    auto world  = mio::abm::World(NUM_AGE_GROUPS);
     auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
-    auto loc    = world.get_individualized_location(loc_id);
+    auto& loc   = world.get_individualized_location(loc_id);
     ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
 
     auto t   = mio::abm::TimePoint(0);
@@ -116,7 +93,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
 {
 
     auto t     = mio::abm::TimePoint(0);
-    auto world = mio::abm::World();
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
     auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
 
     auto t_test = mio::abm::days(7);
@@ -128,8 +105,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
 
 TEST(TestSimulation, advanceWithHistory)
 {
-
-    auto world = mio::abm::World();
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
     auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
     mio::HistoryWithMemoryWriter<LogTimePoint> history;
 
