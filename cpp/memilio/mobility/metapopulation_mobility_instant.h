@@ -42,9 +42,6 @@ namespace mio
 /**
  * represents the simulation in one node of the graph.
  */
-/**
- * represents the simulation in one node of the graph.
- */
 template <class Sim>
 class SimulationNode
 {
