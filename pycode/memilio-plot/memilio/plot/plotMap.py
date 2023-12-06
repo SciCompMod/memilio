@@ -299,7 +299,8 @@ def plot_map(data: pd.DataFrame,
              output_path: str = '',
              fig_name: str = 'customPlot',
              dpi: int = 300,
-             outercolor='white'):
+             outercolor='white',
+             log_scale=False):
     """! Plots region-specific information onto a interactive html map and
     returning svg and png image. Allows the comparisons of a variable list of
     data sets.
@@ -315,6 +316,7 @@ def plot_map(data: pd.DataFrame,
     @param[in] fig_name Name of the figure created.
     @param[in] dpi Dots-per-inch value for the exported figure.
     @param[in] outercolor Background color of the plot image.
+    @param[in] log_scale Defines if the colorbar is plotted in log scale.
     """
     region_classifier = data.columns[0]
     region_data = data[region_classifier].to_numpy().astype(int)
@@ -377,28 +379,25 @@ def plot_map(data: pd.DataFrame,
     else:
         cax = None
 
-    # log scale of colorbar.
-    # norm = mcolors.LogNorm(vmin=scale_colors[0], vmax=scale_colors[1])
+    if log_scale:
+        norm = mcolors.LogNorm(vmin=scale_colors[0], vmax=scale_colors[1])
 
     for i in range(len(data_columns)):
 
         ax = fig.add_subplot(gs[:, i+2])
-        if cax is not None:
+        if log_scale:
+            map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
+                          norm=norm)
+        elif cax is not None:
             map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
                           vmin=scale_colors[0], vmax=scale_colors[1])
-            # map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True, norm=norm)
         else:
             # Do not plot colorbar.
             map_data.plot(data_columns[i], ax=ax, legend=False,
                           vmin=scale_colors[0], vmax=scale_colors[1])
-            # map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True, norm=norm)
 
         ax.set_title(legend[i], fontsize=12)
         ax.set_axis_off()
 
     plt.subplots_adjust(bottom=0.1)
-
     plt.savefig(os.path.join(output_path, fig_name + '.png'), dpi=dpi)
-    plt.savefig(os.path.join(output_path, fig_name + '.svg'), dpi=dpi)
-
-    plt.show()

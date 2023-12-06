@@ -140,11 +140,11 @@ def create_gif_map_plot(input_data, output_dir, compartments, filename="simulati
                                 compartments, file_format, relative, age_groups)
 
                 image = imageio.v2.imread(
-                    os.path.join(tmpdirname, "filename.png"))
+                    os.path.join(tmpdirname, filename + ".png"))
                 frames.append(image)
                 indicator.set_progress((day+1)/num_days)
 
     imageio.mimsave(os.path.join(output_dir, filename + '.gif'),
                     frames,         # array of input frames
-                    duration=10,    # duration of each frame in milliseconds
+                    duration=0.2,    # duration of each frame in seconds
                     loop=0)         # optional: frames per second

@@ -474,5 +474,5 @@ if __name__ == "__main__":
         data_dir=os.path.join(file_path, "../../../data"),
         start_date=datetime.date(year=2020, month=12, day=12),
         results_dir=os.path.join(file_path, "../../../results_secir"))
-    num_days_sim = 30
+    num_days_sim = 50
     sim.run(num_days_sim, num_runs=2)
