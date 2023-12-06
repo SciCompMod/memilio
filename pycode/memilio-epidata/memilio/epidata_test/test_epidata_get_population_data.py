@@ -108,7 +108,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.assertEqual(parser['CREDENTIALS']['Username'], self.test_username)
         self.assertEqual(parser['CREDENTIALS']['Password'], self.test_password)
 
-    
     @patch('os.path.abspath', return_value='')
     @patch('memilio.epidata.getPopulationData.read_population_data', return_value=df_pop_raw)
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
@@ -118,16 +117,18 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.assertFalse(self.config_file_name in os.listdir(os.getcwd()))
         # Create config file.
         string = '[CREDENTIALS]\nUsername = ' + \
-                self.test_username+'\nPassword = '+self.test_password
+            self.test_username+'\nPassword = '+self.test_password
         path = os.path.join(os.getcwd(), self.config_file_name)
         with open(path, 'w+') as file:
-                file.write(string)
+            file.write(string)
         # Check if the file is written.
         self.assertTrue(self.config_file_name in os.listdir(os.getcwd()))
         # The download and assigning to counties of the population data is mocked.
-        gpd.get_population_data(username=None, password=None, read_data=False, out_folder=self.path)
+        gpd.get_population_data(
+            username=None, password=None, read_data=False, out_folder=self.path)
         # The file exist in the directory (mocked) and the credentials should be read.
-        mock_read.assert_called_with(self.test_username, self.test_password, False, os.path.join(self.path, 'Germany'))
+        mock_read.assert_called_with(
+            self.test_username, self.test_password, False, os.path.join(self.path, 'Germany'))
 
 
 if __name__ == '__main__':
