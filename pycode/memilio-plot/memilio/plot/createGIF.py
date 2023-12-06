@@ -25,6 +25,7 @@ import tempfile
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import memilio.epidata.getPopulationData as gpd
 import memilio.plot.plotMap as pm
@@ -142,6 +143,9 @@ def create_gif_map_plot(input_data, output_dir, compartments, filename="simulati
                 image = imageio.v2.imread(
                     os.path.join(tmpdirname, filename + ".png"))
                 frames.append(image)
+
+                # Close the current figure to free up memory
+                plt.close('all')
                 indicator.set_progress((day+1)/num_days)
 
     imageio.mimsave(os.path.join(output_dir, filename + '.gif'),
