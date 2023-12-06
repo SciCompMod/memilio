@@ -76,7 +76,10 @@ setup(
         'matplotlib',
         'mapclassify',
         'geopandas',
-        'h5py'
+        'h5py',
+        'imageio',
+        'tempfile',
+        'datetime'
     ],
     extras_require={
         'dev': [

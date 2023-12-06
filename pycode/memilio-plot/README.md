@@ -59,6 +59,9 @@ Required python packages:
 - mapclassify
 - geopandas
 - h5py
+- imageio
+- tempfile
+- datetime
 
 Testing and Coverage
 --------------------

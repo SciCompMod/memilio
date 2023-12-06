@@ -1,3 +1,23 @@
+#############################################################################
+# Copyright (C) 2020-2024 MEmilio
+#
+# Authors: Henrik Zunker, Maximilian Betz
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
+
 import datetime as dt
 import os.path
 import imageio
@@ -14,20 +34,24 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def create_plot_map(day, age_groups, relative, filename, file_format, files_input, output_path):
+def create_plot_map(day, filename, files_input, output_path, compartments,  file_format='h5', relative=False,  age_groups={0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'}):
+    """! Plots region-specific information for a single day of the simulation.
+    @param[in] day Day of the simulation.
+    @param[in] filename Name of the file to be created.
+    @param[in] files_input Dictionary of input files.
+    @param[in] output_path Output path for the figure.
+    @param[in] compartments List of compartments to be plotted.
+    @param[in] file_format Format of the file to be created. Either 'h5' or 'json'.
+    @param[in] relative Defines if data should be scaled relative to population.
+    @param[in] age_groups Dictionary of age groups to be considered.
+    """
 
     i = 0
     for file in files_input.values():
-        # MEmilio backend hdf5 example
-
-        deads = [24, 25, 26]
-        susceptible = [0, 1, 23]
-        infected = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                    12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
         df = pm.extract_data(
             file, region_spec=None, column=None, date=day,
-            filters={'Group': filter_age, 'InfectionState': infected},
+            filters={'Group': filter_age, 'InfectionState': compartments},
             file_format=file_format)
 
         if relative:
@@ -72,6 +96,46 @@ def create_plot_map(day, age_groups, relative, filename, file_format, files_inpu
         output_path=output_path,
         fig_name=filename, dpi=300,
         outercolor=[205 / 255, 238 / 255, 251 / 255])
+
+
+def create_gif_map_plot(output_dir, filename="simulation", relative=False):
+    """! Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then storing the single plots in a temporary directory.
+    """
+
+    files_input = {'Data set': 'p75/Results'}
+    file_format = 'h5'
+
+    # Define age groups which will be considered through filtering
+    age_groups = {0: '0-4', 1: '5-14', 2: '15-34',
+                  3: '35-59', 4: '60-79', 5: '80+'}
+    if len(age_groups) == 6:
+        filter_age = None
+    else:
+        if file_format == 'json':
+            filter_age = [val for val in age_groups.values()]
+        else:
+            filter_age = ['Group' + str(key) for key in age_groups.keys()]
+
+    # TODO: not working for json
+    num_days = pm.extract_time_steps(
+        files_input[list(files_input.keys())[0]], file_format=file_format)
+
+    # create gif
+    frames = []
+    with progind.Percentage() as indicator:
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            for day in range(0, num_days):
+                create_plot_map(day, age_groups, relative, filename,
+                                file_format, files_input, tmpdirname)
+                image = imageio.v2.imread(
+                    os.path.join(tmpdirname, "tempplot.png"))
+                frames.append(image)
+                indicator.set_progress((day+1)/num_days)
+
+    imageio.mimsave(os.path.join(output_dir, filename + '.gif'),
+                    frames,         # array of input frames
+                    duration=10,    # duration of each frame in milliseconds
+                    loop=0)         # optional: frames per second
 
 
 if __name__ == '__main__':
