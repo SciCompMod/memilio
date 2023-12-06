@@ -78,7 +78,6 @@ setup(
         'geopandas',
         'h5py',
         'imageio',
-        'tempfile',
         'datetime'
     ],
     extras_require={

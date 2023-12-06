@@ -3,6 +3,7 @@ import datetime
 import os
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
+import memilio.plot.createGIF as mp
 
 from enum import Enum
 from memilio.simulation.secir import (Model, Simulation,
@@ -426,7 +427,7 @@ class Simulation:
 
         return graph
 
-    def run(self, num_days_sim, num_runs=10, save_graph=True):
+    def run(self, num_days_sim, num_runs=10, save_graph=True, create_gif=True):
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
 
@@ -459,6 +460,11 @@ class Simulation:
         secir.save_results(
             ensemble_results, ensemble_params, node_ids, self.results_dir,
             save_single_runs, save_percentiles)
+        if create_gif:
+            # any compartments in the model (see InfectionStates)
+            compartments = [1, 2, 3, 4]
+            mp.create_gif_map_plot(
+                self.results_dir + "/p75", self.results_dir, compartments)
         return 0
 
 

@@ -60,7 +60,6 @@ Required python packages:
 - geopandas
 - h5py
 - imageio
-- tempfile
 - datetime
 
 Testing and Coverage

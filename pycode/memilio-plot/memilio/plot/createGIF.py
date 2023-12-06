@@ -47,6 +47,14 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
     """
 
     i = 0
+    if len(age_groups) == 6:
+        filter_age = None
+    else:
+        if file_format == 'json':
+            filter_age = [val for val in age_groups.values()]
+        else:
+            filter_age = ['Group' + str(key) for key in age_groups.keys()]
+
     for file in files_input.values():
 
         df = pm.extract_data(
@@ -98,11 +106,18 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
         outercolor=[205 / 255, 238 / 255, 251 / 255])
 
 
-def create_gif_map_plot(output_dir, filename="simulation", relative=False):
-    """! Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then storing the single plots in a temporary directory.
+def create_gif_map_plot(input_data, output_dir, compartments, filename="simulation", relative=True):
+    """! Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then 
+    storing the single plots in a temporary directory. Currently only works for the results created by the parameter study.
+
+    @param[in] input_data Path to the input data. The Path should contain a file called 'Results' which contains 
+        the simulation results. This is the default output folder of the parameter study.
+    @param[in] output_dir Path where the gif should be stored.
+    @param[in] filename Name of the temporary file.
+    @param[in] relative Defines if data should be scaled relative to population.
     """
 
-    files_input = {'Data set': 'p75/Results'}
+    files_input = {'Data set':  input_data + '/Results'}
     file_format = 'h5'
 
     # Define age groups which will be considered through filtering
@@ -111,12 +126,8 @@ def create_gif_map_plot(output_dir, filename="simulation", relative=False):
     if len(age_groups) == 6:
         filter_age = None
     else:
-        if file_format == 'json':
-            filter_age = [val for val in age_groups.values()]
-        else:
-            filter_age = ['Group' + str(key) for key in age_groups.keys()]
+        filter_age = ['Group' + str(key) for key in age_groups.keys()]
 
-    # TODO: not working for json
     num_days = pm.extract_time_steps(
         files_input[list(files_input.keys())[0]], file_format=file_format)
 
@@ -125,58 +136,15 @@ def create_gif_map_plot(output_dir, filename="simulation", relative=False):
     with progind.Percentage() as indicator:
         with tempfile.TemporaryDirectory() as tmpdirname:
             for day in range(0, num_days):
-                create_plot_map(day, age_groups, relative, filename,
-                                file_format, files_input, tmpdirname)
+                create_plot_map(day, filename, files_input, tmpdirname,
+                                compartments, file_format, relative, age_groups)
+
                 image = imageio.v2.imread(
-                    os.path.join(tmpdirname, "tempplot.png"))
+                    os.path.join(tmpdirname, "filename.png"))
                 frames.append(image)
                 indicator.set_progress((day+1)/num_days)
 
     imageio.mimsave(os.path.join(output_dir, filename + '.gif'),
                     frames,         # array of input frames
                     duration=10,    # duration of each frame in milliseconds
-                    loop=0)         # optional: frames per second
-
-
-if __name__ == '__main__':
-
-    files_input = {'Data set': 'p75/Results'}
-    file_format = 'h5'
-    # Define age groups which will be considered through filtering
-    # Keep keys and values as well as its assignment constant, remove entries
-    # if only part of the population should be plotted or considered, e.g., by
-    # setting:
-    # age_groups = {1: '5-14', 2: '15-34'}
-    age_groups = {0: '0-4', 1: '5-14', 2: '15-34',
-                  3: '35-59', 4: '60-79', 5: '80+'}
-    if len(age_groups) == 6:
-        filter_age = None
-    else:
-        if file_format == 'json':
-            filter_age = [val for val in age_groups.values()]
-        else:
-            filter_age = ['Group' + str(key) for key in age_groups.keys()]
-
-    relative = True
-    num_days = pm.extract_time_steps(
-        files_input[list(files_input.keys())[0]], file_format=file_format)
-
-    # create gif
-    frames = []
-    filename = 'tempplot'
-    output_path = "plot_gif"
-
-    with progind.Percentage() as indicator:
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            for day in range(0, num_days):
-                create_plot_map(day, age_groups, relative, filename,
-                                file_format, files_input, tmpdirname)
-                image = imageio.v2.imread(
-                    os.path.join(tmpdirname, filename + ".png"))
-                frames.append(image)
-                indicator.set_progress((day+1)/num_days)
-
-    imageio.mimsave(os.path.join(output_path, 'sim.gif'),  # output gif
-                    frames,          # array of input frames
-                    duration=10,
                     loop=0)         # optional: frames per second
