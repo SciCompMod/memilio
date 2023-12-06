@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors:
+# Authors: Patrick Lenz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -26,7 +26,6 @@ import pandas as pd
 from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
 
-from memilio.epidata import defaultDict as dd
 from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import progress_indicator
 
