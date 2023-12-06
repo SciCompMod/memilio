@@ -342,6 +342,7 @@ interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population
  * Deserialize population data from a JSON value.
  * Age groups are interpolated to RKI age groups.
  * @param jsvalue JSON value that contains the population data.
+ * @param rki_age_groups Specifies whether population data should be interpolated to rki age groups.
  * @return list of population data.
  */
 inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(const Json::Value& jsvalue,

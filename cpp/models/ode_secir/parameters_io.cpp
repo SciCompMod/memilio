@@ -220,10 +220,10 @@ IOResult<void> read_confirmed_cases_data(
 }
 
 IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
-                                                      std::vector<int> const& region, Date date,
-                                                      const std::vector<double>& scaling_factor_inf)
+                                        std::vector<int> const& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf)
 {
-    size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
+    const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
     assert(scaling_factor_inf.size() == num_age_groups);
 
     std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
@@ -278,7 +278,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         if (std::accumulate(num_InfectedSymptoms[node].begin(), num_InfectedSymptoms[node].end(), 0.0) > 0) {
             size_t num_groups = (size_t)model[node].parameters.get_num_groups();
             for (size_t i = 0; i < num_groups; i++) {
-                //check here for munich example whether num_Exposed[node] has size 1
                 model[node].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[node][i];
                 model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
                     num_InfectedNoSymptoms[node][i];
@@ -286,10 +285,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                 model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
                     num_InfectedSymptoms[node][i];
                 model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
-                    num_InfectedSevere[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] = num_InfectedSevere[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::Dead}]           = num_death[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::Recovered}]      = num_rec[node][i];
             }
         }
         else {
@@ -337,13 +335,11 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
                                                                 const std::vector<int>& vregion, bool one_age_group)
 {
     BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path, !one_age_group));
-    size_t age_group_size;
-    if (one_age_group) {
-        age_group_size = PopulationDataEntry::age_group_names.size();
-    }
-    else {
-        age_group_size = ConfirmedCasesDataEntry::age_group_names.size();
-    }
+    //if we set up the model for one age group, the population data should be read in with the
+    //age groups given in the population data json file and are accumulated later
+    //otherwise the populations are directly saved for the correct model age groups
+    size_t age_group_size =
+        one_age_group ? PopulationDataEntry::age_group_names.size() : ConfirmedCasesDataEntry::age_group_names.size();
     std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_group_size, 0.0));
 
     for (auto&& entry : population_data) {

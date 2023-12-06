@@ -88,18 +88,16 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
                   "35-39 years", "40-44 years", "45-49 years", "50-54 years", "55-59 years", "60-64 years",
                   "65-69 years", "70-74 years", "75-79 years", "80-84 years", "85-89 years", "90+ years"}));
     //read node ids
-    BOOST_OUTCOME_TRY(
-        node_ids,
-        mio::get_node_ids(
-            mio::path_join((data_dir).string(), "population_data.json"), false,
-            false)); //mio::path_join((data_dir).string(), "population_data.json") //"C:/Users/bick_ju/Documents/epidata/20230818/Germany/county_current_population.json"
+    BOOST_OUTCOME_TRY(node_ids,
+                      mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"), false, false));
     std::vector<mio::osecir::Model> nodes(node_ids.size(), mio::osecir::Model(int(size_t(params.get_num_groups()))));
     //set parameters for every node
     for (auto& node : nodes) {
         node.parameters = params;
     }
-    auto read = mio::osecir::read_input_data(nodes, start_date, node_ids, scaling_factor_infected,
-                                                           scaling_factor_icu, data_dir.string(), 90, true);
+    int num_days = 90;
+    auto read = mio::osecir::read_input_data(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,
+                                             data_dir.string(), num_days, true);
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
         params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
@@ -117,9 +115,7 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model, mio::MigrationParam
                       mio::read_mobility_plain(mio::path_join((data_dir).string(), "mobility_matrix.txt")));
     if (mobility_data.rows() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data.cols() != Eigen::Index(params_graph.nodes().size())) {
-        return mio::failure(mio::StatusCode::InvalidValue,
-                            "Mobility matrices do not have the correct size. You may need to run "
-                            "transformMobilitydata.py from pycode memilio epidata package.");
+        return mio::failure(mio::StatusCode::InvalidValue, "Mobility matrices do not have the correct size.");
     }
 
     for (size_t node_i = 0; node_i < params_graph.nodes().size(); ++node_i) {
@@ -154,20 +150,15 @@ mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> get_grap
     mio::osecir::Parameters params(num_age_groups);
     params.get<mio::osecir::StartDay>() = mio::get_day_in_year(start_date);
 
-    //set covid parameters
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
-    //set contact matrices
     double contact_freq                     = 10;
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_freq));
-    //set npis
     contact_matrix.add_damping(0.7, mio::SimulationTime(30));
     contact_matrix.add_damping(0.1, mio::SimulationTime(50));
 
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-    //set nodes
     BOOST_OUTCOME_TRY(set_nodes(params_graph, params, data_dir, start_date));
-    //set_edges
     BOOST_OUTCOME_TRY(set_edges(params_graph, data_dir));
 
     return mio::success(params_graph);
@@ -181,7 +172,6 @@ mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> get_grap
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
- * @param save_single_runs [Default: true] Defines if single run results are written to the disk. 
  * @returns any io error that occurs during reading or writing of files.
 */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
@@ -280,11 +270,16 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    boost::filesystem::path dir(result_dir);
-    bool created = boost::filesystem::create_directories(dir);
+    boost::filesystem::path dir1(result_dir);
+    bool created_result_dir = boost::filesystem::create_directories(dir1);
+    boost::filesystem::path dir2(save_dir);
+    bool created_save_dir = boost::filesystem::create_directories(dir2);
 
-    if (created) {
-        mio::log_info("Directory '{:s}' was created.", dir.string());
+    if (created_result_dir) {
+        mio::log_info("Result directory '{:s}' was created.", dir1.string());
+    }
+    if (created_save_dir) {
+        mio::log_info("Save directory '{:s}' was created.", dir2.string());
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
