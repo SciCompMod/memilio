@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -55,7 +55,6 @@ int main(int argc, char** argv)
 
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 1.; //time step of migration, not integration
 
     double cont_freq = 10; // see Polymod study
 

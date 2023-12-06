@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Daniel Abele, Martin J. Kuehn
 #
@@ -122,7 +122,7 @@ def extract_data(
         df.rename(columns={column: 'Count'}, inplace=True)
         if output == 'sum':
             return df[dffilter].groupby(region_spec).agg(
-                {'Count': sum}).reset_index()
+                {'Count': "sum"}).reset_index()
         elif output == 'matrix':
             if filters != None:
                 return df[dffilter].loc[:, [region_spec] +
@@ -201,7 +201,7 @@ def extract_data(
 
         # Aggregated or matrix output.
         if output == 'sum':
-            return df.groupby('Region').agg({'Count': sum}).reset_index()
+            return df.groupby('Region').agg({'Count': "sum"}).reset_index()
         elif output == 'matrix':
             return df
         else:

@@ -1,7 +1,7 @@
 /*
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: David Kerkmann
+* Authors: David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -30,36 +30,30 @@ namespace abm
 {
 
 /** 
- * Vaccine in ABM.
+ * @brief #ExposureType in ABM.
  * can be used as 0-based index
  */
-enum class Vaccine : std::uint32_t
+enum class ExposureType : std::uint32_t
 {
-    Generic = 0,
-
+    NoProtection     = 0,
+    NaturalInfection = 1,
+    GenericVaccine   = 2,
     Count //last!!
 };
 
 /**
- * A vaccination is a tuple of TimePoint and Vaccine.
- * The TimePoint describes the time of administration of the Vaccine.
+ * @brief A tuple of #TimePoint and #ExposureType (i.e. type of the Vaccine).
+ * The #TimePoint describes the time of administration of the Vaccine.
 */
 struct Vaccination {
-    TimePoint t;
-    Vaccine vaccine;
-};
+    Vaccination(ExposureType exposure, TimePoint t)
+        : exposure_type(exposure)
+        , time(t)
+    {
+    }
 
-// TO BE REMOVED
-/**
- * vaccination state in ABM.
- * can be used as 0-based index.
- */
-enum class VaccinationState : std::uint32_t
-{
-    Unvaccinated = 0,
-    Vaccinated,
-
-    Count //last!!
+    ExposureType exposure_type;
+    TimePoint time;
 };
 
 } // namespace abm

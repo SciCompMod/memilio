@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -123,7 +123,7 @@ public:
      */
     bool apply_constraints()
     {
-        double tol_times = 1e-4;
+        const double tol_times = 1e-1;
 
         int corrected = false;
         if (this->get<TimeExposed>() < tol_times) {
@@ -159,7 +159,7 @@ public:
      */
     bool check_constraints() const
     {
-        double tol_times = 1e-4;
+        const double tol_times = 1e-1;
 
         if (this->get<TimeExposed>() < tol_times) {
             log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "

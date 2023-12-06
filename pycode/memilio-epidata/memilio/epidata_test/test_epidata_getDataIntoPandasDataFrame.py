@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -155,7 +155,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert end_date == dd.defaultDict['end_date']
-        assert start_date == dd.defaultDict['start_date']
+        assert start_date == date(2020, 4, 24)
         assert impute_dates == dd.defaultDict['impute_dates']
         assert moving_average == dd.defaultDict['moving_average']
         assert no_raw == dd.defaultDict['no_raw']
@@ -412,14 +412,21 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         d = {'Date': [d1, d2], 'col2': ["d1", "d2"]}
         df = pd.DataFrame(data=d)
 
-        gd.write_dataframe(df, self.path, "test_json", 'json')
+        gd.write_dataframe(df, self.path, "test_csv", 'csv')
 
-        file = "test_json.json"
+        file0 = "test_csv.csv"
 
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(os.listdir(self.path), [file])
+        self.assertEqual(os.listdir(self.path), [file0])
 
-        file_with_path = os.path.join(self.path, file)
+        gd.write_dataframe(df, self.path, "test_json", 'json')
+
+        file1 = "test_json.json"
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path), [file0, file1])
+
+        file_with_path = os.path.join(self.path, file1)
         f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json)
@@ -436,8 +443,9 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         file2 = "test_json_timeasstring.json"
 
-        self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path).sort(), [file, file2].sort())
+        self.assertEqual(len(os.listdir(self.path)), 3)
+        self.assertEqual(os.listdir(self.path).sort(),
+                         [file0, file1, file2].sort())
 
         file_with_path = os.path.join(self.path, file2)
         f = open(file_with_path)
@@ -466,7 +474,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             gd.write_dataframe(df, self.path, "test_json", 'wrong')
 
         error_message = "Error: The file format: " + 'wrong' + \
-                        " does not exist. Use json, json_timeasstring, hdf5 or txt."
+                        " does not exist. Use json, json_timeasstring, hdf5, csv or txt."
         self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDIVIData.get_divi_data')
@@ -499,6 +507,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         arg_dict_divi = {
             **arg_dict_all, **arg_dict_data_download}
+        # change start-date of divi to 2020-04-24
+        arg_dict_divi["start_date"] = date(2020, 4, 24)
 
         arg_dict_vaccination = {
             **arg_dict_all, **arg_dict_data_download,
@@ -507,6 +517,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         arg_dict_cases_est = {**arg_dict_cases}
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
+        # change start-date of jh to 2020-01-22
+        arg_dict_jh["start_date"] = date(2020, 1, 22)
 
         arg_dict_popul = {**arg_dict_all, "username": None, "password": None}
 

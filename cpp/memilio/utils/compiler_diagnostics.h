@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -62,5 +62,17 @@ void unused(T&&...)
 #define GCC_CLANG_DIAGNOSTIC(...)
 
 #endif //gcc, clang
+
+//MSVC has a long standing bug that breaks empty base optimization (EBO)
+//if the class has more than one empty base class.
+//types that rely on empty base optimization must add this declaration
+//e.g. struct MEMILIO_ENABLE_EBO Foo : EmptyBase1, EmptyBase2, ...
+//see https://en.cppreference.com/w/cpp/language/ebo
+//see https://stackoverflow.com/questions/12701469/why-is-the-empty-base-class-optimization-ebo-is-not-working-in-msvc
+#ifdef _MSC_VER
+#define MEMILIO_ENABLE_EBO __declspec(empty_bases)
+#else
+#define MEMILIO_ENABLE_EBO
+#endif
 
 #endif //EPI_UTILS_UNUSED_H

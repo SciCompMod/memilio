@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn, Kathrin Rack
 #
@@ -25,12 +25,16 @@
 """
 import os
 
+import numpy as np
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries
 from memilio.epidata import progress_indicator
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 # Merging of Counties that are reported differently, either separatedly or
 # summed, in different data sources
@@ -560,12 +564,13 @@ def merge_df_counties(
         merged_id rows.
     """
     # ensure that separated_ids and dataframe ids can be compared
-    if type(separated_ids[0]) != type(df[dd.EngEng['idCounty']][0]):
+    # df column should be an int, as seperated_ids and merged_id are int.
+    if not isinstance(df[dd.EngEng['idCounty']][0], (int, np.integer)):
         df[dd.EngEng['idCounty']] = df[dd.EngEng['idCounty']].astype(
             type(separated_ids[0]))
     # extract rows of IDs that will be merged
     rows_merged = df[dd.EngEng['idCounty']].isin(separated_ids)
-    df_merged = df[rows_merged].copy()
+    df_merged = df[rows_merged]
     if not df_merged.empty:
         # set merged ID and county name
         if dd.EngEng['idCounty'] in columns:

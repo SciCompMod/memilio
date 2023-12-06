@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,31 +17,49 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_AGE_H
-#define EPI_ABM_AGE_H
+
+#ifndef ABM_MOVEMENT_DATA_H
+#define ABM_MOVEMENT_DATA_H
+
+#include "abm/time.h"
 
 namespace mio
 {
 namespace abm
 {
 
-/**
- * age groups like RKI.
- * EXPERIMENTAL; will be merged with new model framework soon.
- */
-enum class AgeGroup
-{
-    Age0to4 = 0,
-    Age5to14,
-    Age15to34,
-    Age35to59,
-    Age60to79,
-    Age80plus,
 
-    Count
+/**
+ * @brief Mode of Transport.
+ */
+enum class TransportMode : uint32_t
+{
+    Bike = 0,
+    CarDriver,
+    CarPassenger,
+    PublicTransport,
+    Walking,
+    Other,
+    Unknown
+};
+
+
+/**
+ * @brief Type of the activity.
+ */
+enum class ActivityType : uint32_t
+{
+    Workplace = 0,
+    Education,
+    Shopping,
+    Leisure,
+    PrivateMatters,
+    OtherActivity,
+    Home,
+    UnknownActivity
 };
 
 } // namespace abm
 } // namespace mio
 
-#endif //EPI_ABM_AGE_H
+#endif //ABM_MOVEMENT_DATA_H

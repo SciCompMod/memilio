@@ -8,6 +8,7 @@ set(TESTSOURCES
     testmain.cpp
     test_populations.cpp
     test_odeseir.cpp
+    test_odesir.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
     test_damping.cpp
@@ -38,6 +39,7 @@ set(TESTSOURCES
     test_contact_matrix.cpp
     test_type_safe.cpp
     test_custom_index_array.cpp
+    test_flows.cpp
     test_parameter_set.cpp
     test_matrix_shape.cpp
     test_damping_sampling.cpp
@@ -52,6 +54,7 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_ide_seir.cpp
     test_history.cpp
+    test_utils.cpp
     abm_helpers.h
     abm_helpers.cpp
     test_ide_secir.cpp
