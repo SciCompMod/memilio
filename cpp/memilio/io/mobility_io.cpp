@@ -183,9 +183,8 @@ IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(const st
         return failure(StatusCode::FileNotFound, filename);
     }
 
-    // std::vector<std::vector<int>> arr(std::sqrt(num_lines), std::vector<int>(std::sqrt(num_lines)));
-    std::vector<std::vector<std::vector<int>>> arr(std::sqrt(num_lines),
-                                                   std::vector<std::vector<int>>(std::sqrt(num_lines)));
+    const int num_nodes = static_cast<int>(std::sqrt(num_lines));
+    std::vector<std::vector<std::vector<int>>> arr(num_nodes, std::vector<std::vector<int>>(num_nodes));
 
     try {
         std::string tp;
