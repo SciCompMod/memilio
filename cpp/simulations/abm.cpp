@@ -23,6 +23,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
+#include "abm/common_abm_loggers.h"
 
 namespace fs = boost::filesystem;
 
@@ -695,10 +696,13 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     while (run_idx <= num_runs) {
         // Make a simulation using a copy from the original world
         auto sim = mio::abm::Simulation(t0, mio::abm::World(world));
+        // Add a time series writer to the simulation
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+            Eigen::Index(mio::abm::InfectionState::Count)};
         // Advance the world to tmax
-        sim.advance(tmax);
+        sim.advance(tmax, historyTimeSeries);
         // Collect the results from the simulation
-        ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()});
+        ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())});
         // Increase the run index
         ++run_idx;
     }
