@@ -29,6 +29,8 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "boost/filesystem.hpp"
 
@@ -69,11 +71,42 @@ struct Node {
     template <class... Args>
     Node(int node_id, Args&&... args)
         : id{node_id}
+        , stay_duration(0.5)
         , property(std::forward<Args>(args)...)
+        , node_pt(std::forward<Args>(args)...)
     {
     }
+
+    template <typename Model>
+    Node(int node_id, double duration, Model property_arg, Model node_pt_arg, double m_t0, double m_dt_integration)
+        : id{node_id}
+        , stay_duration(duration)
+        , property(property_arg, m_t0, m_dt_integration)
+        , node_pt(node_pt_arg, m_t0, m_dt_integration)
+    {
+    }
+
+    template <class... Args>
+    Node(int node_id, double duration, Args&&... args)
+        : id{node_id}
+        , stay_duration(duration)
+        , property(std::forward<Args>(args)...)
+        , node_pt(std::forward<Args>(args)...)
+    {
+    }
+
+    Node(int node_id, double duration, NodePropertyT property_arg, NodePropertyT node_pt_arg)
+        : id{node_id}
+        , stay_duration(duration)
+        , property(property_arg)
+        , node_pt(node_pt_arg)
+    {
+    }
+
     int id;
+    double stay_duration;
     NodePropertyT property;
+    NodePropertyT node_pt;
 };
 
 /**
@@ -81,13 +114,36 @@ struct Node {
  */
 template <class EdgePropertyT>
 struct Edge : public EdgeBase {
+
     template <class... Args>
     Edge(size_t start, size_t end, Args&&... args)
         : EdgeBase{start, end}
+        , traveltime(0.)
+        , path{static_cast<int>(start), static_cast<int>(end)}
         , property(std::forward<Args>(args)...)
     {
     }
 
+    template <class... Args>
+    Edge(size_t start, size_t end, double t_travel, Args&&... args)
+        : EdgeBase{start, end}
+        , traveltime(t_travel)
+        , path{static_cast<int>(start), static_cast<int>(end)}
+        , property(std::forward<Args>(args)...)
+    {
+    }
+
+    template <class... Args>
+    Edge(size_t start, size_t end, double t_travel, std::vector<int> path_mobility, Args&&... args)
+        : EdgeBase{start, end}
+        , traveltime(t_travel)
+        , path(path_mobility)
+        , property(std::forward<Args>(args)...)
+    {
+    }
+
+    double traveltime;
+    std::vector<int> path;
     EdgePropertyT property;
 };
 
@@ -162,6 +218,29 @@ public:
         return m_nodes.back();
     }
 
+    template <class... Args>
+    Node<NodePropertyT>& add_node(int id, double duration_stay, Args&&... args)
+    {
+        m_nodes.emplace_back(id, duration_stay, std::forward<Args>(args)...);
+        return m_nodes.back();
+    }
+
+    // Ändere die Funktionsdeklaration von add_node
+    template <class ModelType>
+    Node<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2)
+    {
+        m_nodes.emplace_back(id, duration_stay, model1, model2);
+        return m_nodes.back();
+    }
+
+    template <class ModelType>
+    Node<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2, double m_t0,
+                                  double m_dt_integration)
+    {
+        m_nodes.emplace_back(id, duration_stay, model1, model2, m_t0, m_dt_integration);
+        return m_nodes.back();
+    }
+
     /**
      * @brief add an edge to the graph. property of the edge is constructed from arguments.
      */
@@ -176,6 +255,37 @@ public:
                                                      ? e1.end_node_idx < e2.end_node_idx
                                                      : e1.start_node_idx < e2.start_node_idx;
                                       });
+    }
+
+    /**
+     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     */
+    template <class... Args>
+    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime, Args&&... args)
+    {
+        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
+        return *insert_sorted_replace(
+            m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, std::forward<Args>(args)...),
+            [](auto&& e1, auto&& e2) {
+                return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                              : e1.start_node_idx < e2.start_node_idx;
+            });
+    }
+
+    /**
+     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     */
+    template <class... Args>
+    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime, std::vector<int> path,
+                                  Args&&... args)
+    {
+        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
+        return *insert_sorted_replace(
+            m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, path, std::forward<Args>(args)...),
+            [](auto&& e1, auto&& e2) {
+                return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                              : e1.start_node_idx < e2.start_node_idx;
+            });
     }
 
     /**

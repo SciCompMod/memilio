@@ -42,6 +42,9 @@ namespace mio
 /**
  * represents the simulation in one node of the graph.
  */
+/**
+ * represents the simulation in one node of the graph.
+ */
 template <class Sim>
 class SimulationNode
 {
@@ -51,6 +54,20 @@ public:
         : m_simulation(std::forward<Args>(args)...)
         , m_last_state(m_simulation.get_result().get_last_value())
         , m_t0(m_simulation.get_result().get_last_time())
+    {
+    }
+
+    SimulationNode(const Sim& property_arg, double t0, double dt_integration)
+        : m_simulation(property_arg, t0, dt_integration)
+        , m_last_state(m_simulation.get_result().get_last_value())
+        , m_t0(m_simulation.get_result().get_last_time())
+    {
+    }
+
+    SimulationNode(const SimulationNode& other)
+        : m_simulation(other.m_simulation)
+        , m_last_state(other.m_last_state)
+        , m_t0(other.m_t0)
     {
     }
 
@@ -292,10 +309,12 @@ public:
     template <class Sim>
     void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
-private:
+protected:
     MigrationParameters m_parameters;
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;
+
+private:
     bool m_return_migrated;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
@@ -389,8 +408,8 @@ auto get_migration_factors(const SimulationNode<Sim>& node, double t, const Eige
  * detect a get_migration_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(test_commuters(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(
+    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when migrating from their source node.
