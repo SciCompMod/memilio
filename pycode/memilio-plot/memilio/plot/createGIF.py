@@ -47,7 +47,6 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
     @param[in] age_groups Dictionary of age groups to be considered.
     """
 
-    i = 0
     if len(age_groups) == 6:
         filter_age = None
     else:
@@ -56,6 +55,9 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
         else:
             filter_age = ['Group' + str(key) for key in age_groups.keys()]
 
+    # In file_input there can be two different files. When we enter two files,
+    # both files are plotted side by side in the same figure.
+    file_index = 0
     for file in files_input.values():
 
         df = pm.extract_data(
@@ -84,11 +86,11 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
             df = pm.scale_dataframe_relative(
                 df, age_group_values, population)
 
-        if i == 0:
+        if file_index == 0:
             dfs_all = pd.DataFrame(df.iloc[:, 0])
 
-        dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
-        i += 1
+        dfs_all[df.columns[-1] + ' ' + str(file_index)] = df[df.columns[-1]]
+        file_index += 1
 
     dfs_all = dfs_all.apply(pd.to_numeric, errors='coerce')
 
@@ -107,7 +109,8 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
         outercolor=[205 / 255, 238 / 255, 251 / 255])
 
 
-def create_gif_map_plot(input_data, output_dir, compartments, filename="simulation", relative=True):
+def create_gif_map_plot(input_data, output_dir, compartments, filename="simulation", relative=True, age_groups={0: '0-4', 1: '5-14', 2: '15-34',
+                                                                                                                3: '35-59', 4: '60-79', 5: '80+'}):
     """! Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then 
     storing the single plots in a temporary directory. Currently only works for the results created by the parameter study.
 
@@ -116,14 +119,12 @@ def create_gif_map_plot(input_data, output_dir, compartments, filename="simulati
     @param[in] output_dir Path where the gif should be stored.
     @param[in] filename Name of the temporary file.
     @param[in] relative Defines if data should be scaled relative to population.
+    @param[in] age_groups Dictionary of age groups to be considered.
     """
 
     files_input = {'Data set':  input_data + '/Results'}
     file_format = 'h5'
 
-    # Define age groups which will be considered through filtering
-    age_groups = {0: '0-4', 1: '5-14', 2: '15-34',
-                  3: '35-59', 4: '60-79', 5: '80+'}
     if len(age_groups) == 6:
         filter_age = None
     else:
