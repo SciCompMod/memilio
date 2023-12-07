@@ -66,15 +66,15 @@ def run_oseir_simulation():
     model.check_constraints()
 
     # Run flow simulation
-    seir = simulate_flows(0, days, dt, model)
+    (result, flows) = simulate_flows(0, days, dt, model)
 
-    print(seir[0].print_table(["S", "E", "I", "R"], 16, 5))
-    print(seir[1].print_table(["S->E", "E->I", "I->R"], 16, 5))
+    print(result.print_table(["S", "E", "I", "R"], 16, 5))
+    print(flows.print_table(["S->E", "E->I", "I->R"], 16, 5))
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         'ode seir model with flow simulation',
-        description='Simple example demonstrating the setup and simulation of the OSEIR model while using the flow simulation.')
+        description='Simple example demonstrating the setup and flow simulation of the OSEIR model.')
     args = arg_parser.parse_args()
     run_oseir_simulation()
