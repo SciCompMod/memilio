@@ -53,6 +53,14 @@ class Test_TimeSeries(unittest.TestCase):
         assert_array_equal(ts.get_last_value(), np.r_[1.1, 1.2])
         assert_array_equal(ts.get_last_time(), 1.0)
 
+    def test_print_table(self):
+        ts = mio.TimeSeries(1)
+        ts.add_time_point(2, np.r_[1])
+        ts.add_time_point(3.5, np.r_[2])
+        output = ts.print_table(["a", "b"], 2, 2)
+        self.assertEqual(
+            output, 'Time a \n2.00 1.00\n3.50 2.00\n')
+
 
 if __name__ == '__main__':
     unittest.main()

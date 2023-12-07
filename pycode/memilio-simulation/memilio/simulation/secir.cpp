@@ -21,6 +21,7 @@
 #include "memilio/config.h"
 #include "pybind_util.h"
 #include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
 #include "utils/custom_index_array.h"
@@ -220,6 +221,14 @@ PYBIND11_MODULE(_simulation_secir, m)
             return mio::simulate(t0, tmax, dt, model);
         },
         "Simulates a Secir Model1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+
+    m.def(
+        "simulate_flows",
+        [](double t0, double tmax, double dt, const mio::osecir::Model& model) {
+            return mio::simulate_flows(t0, tmax, dt, model);
+        },
+        "Simulates a Secir model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        py::arg("model"));
 
     pymio::bind_ModelNode<mio::osecir::Model>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
