@@ -191,16 +191,6 @@ public:
     ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
 
     /** 
-     * @brief A Person interacts with the population at this Location and may become infected.
-     * @param[in, out] rng Person::RandomNumberGenerator for this Person.
-     * @param[in, out] person The Person that interacts with the population.
-     * @param[in] dt Length of the current Simulation time step.
-     * @param[in] params Parameters of the Model.
-     */
-    void interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
-                  const Parameters& params) const;
-
-    /** 
      * @brief Add a Person to the population at this Location.
      * @param[in] person The Person arriving.
      * @param[in] cell_idx [Default: 0] Index of the Cell the Person shall go to.

@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/movement_data.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
@@ -309,9 +310,9 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(home.get_number_persons(), 1);
         EXPECT_EQ(hospital.get_number_persons(), 1);
 
-        p1.migrate_to(home);
-        p2.migrate_to(home);
-        p5.migrate_to(home);
+        mio::abm::World::migrate(p1, home);
+        mio::abm::World::migrate(p2, home);
+        mio::abm::World::migrate(p5, home);
 
         t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
         world.get_trip_list().reset_index();
@@ -712,8 +713,8 @@ TEST(TestWorld, copyWorld)
     ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &world.get_persons()[1].get_cells());
 
     // Evolve the world and check that the copied world has not evolved
-    copied_world.get_persons()[0].migrate_to(work, {0});
-    copied_world.get_persons()[1].migrate_to(home, {0});
+    mio::abm::World::migrate(copied_world.get_persons()[0], work, mio::abm::TransportMode::Unknown, {0});
+    mio::abm::World::migrate(copied_world.get_persons()[1], home, mio::abm::TransportMode::Unknown, {0});
     ASSERT_NE(copied_world.get_persons()[0].get_location().get_type(),
               world.get_persons()[0].get_location().get_type());
     ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(),

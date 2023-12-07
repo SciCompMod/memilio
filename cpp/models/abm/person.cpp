@@ -31,7 +31,7 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t person_id)
+Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, PersonID person_id)
     : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
@@ -57,26 +57,6 @@ Person Person::copy_person(Location& location)
     copied_person.m_location = &location;
     location.add_person(*this);
     return copied_person;
-}
-
-void Person::interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params)
-{
-    if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
-        m_location->interact(rng, *this, t, dt, params);
-    }
-    m_time_at_location += dt;
-}
-
-void Person::migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode, const std::vector<uint32_t>& cells)
-{
-    if (*m_location != loc_new) {
-        m_location->remove_person(*this);
-        m_location = &loc_new;
-        m_cells    = cells;
-        loc_new.add_person(*this, cells);
-        m_time_at_location    = TimeSpan(0);
-        m_last_transport_mode = transport_mode;
-    }
 }
 
 bool Person::is_infected(TimePoint t) const
@@ -218,7 +198,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
     }
 }
 
-uint32_t Person::get_person_id()
+PersonID Person::get_person_id()
 {
     return m_person_id;
 }

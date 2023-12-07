@@ -38,11 +38,13 @@ namespace mio
 namespace abm
 {
 
+using PersonID = uint32_t;
+
 struct LocationId;
 class Location;
 class Infection;
 
-static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
+static constexpr PersonID INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
  * @brief Agents in the simulated World that can carry and spread the Infection.
@@ -73,7 +75,7 @@ public:
         * @param id Id of the Person.
         * @param counter Reference to the Person's RNG Counter. 
         */
-        RandomNumberGenerator(Key<uint64_t> key, uint32_t id, Counter<uint32_t>& counter)
+        RandomNumberGenerator(Key<uint64_t> key, PersonID id, Counter<uint32_t>& counter)
             : m_key(key)
             , m_person_id(id)
             , m_counter(counter)
@@ -117,7 +119,7 @@ public:
 
     private:
         Key<uint64_t> m_key; ///< Global RNG Key
-        uint32_t m_person_id; ///< Id of the Person
+        PersonID m_person_id; ///< Id of the Person
         Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
     };
 
@@ -129,7 +131,7 @@ public:
      * @param[in] person_id Index of the Person.
      */
     explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
-                    uint32_t person_id = INVALID_PERSON_ID);
+                    PersonID person_id = INVALID_PERSON_ID);
 
     /**
      * @brief Create a copy of this #Person object with a new Location.
@@ -144,34 +146,6 @@ public:
     {
         return (m_person_id == other.m_person_id);
     }
-
-    /** 
-     * @brief Time passes and the Person interacts with the population at its current Location.
-     * The Person might become infected.
-     * @param[in] t Current time.
-     * @param[in] dt Length of the current Simulation TimeStep.
-     * @param[in, out] params Infection parameters that are the same in all Location%s.
-     */
-    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params);
-
-    /** 
-     * @brief Migrate to a different Location.
-     * @param[in, out] loc_new The new Location of the Person.
-     * @param[in] cells_new The Cell%s that the Person visits at the new Location.
-     * */
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0})
-    {
-        migrate_to(loc_new, TransportMode::Unknown, cells_new);
-    }
-
-    /** 
-     * @brief Migrate to a different Location.
-     * @param[in] loc_new The new Location of the Person.
-     * @param[in] transport_mode The TransportMode the Person used to get to the new Location.
-     * @param[in] cells_new The Cell%s that the Person visits at the new Location.
-     * */
-    void migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode,
-                    const std::vector<uint32_t>& cells = {0});
 
     /**
      * @brief Get the latest #Infection of the Person.
@@ -231,6 +205,12 @@ public:
 
     const Location& get_location() const;
 
+    void set_location(Location& location)
+    {
+        m_location         = &location;
+        m_time_at_location = TimeSpan(0);
+    }
+
     /**
      * @brief Get the time the Person has been at its current Location.
      * @return TimeSpan the Person has been at the Location.
@@ -238,6 +218,11 @@ public:
     TimeSpan get_time_at_location() const
     {
         return m_time_at_location;
+    }
+
+    void add_time_at_location(const TimeSpan dt)
+    {
+        m_time_at_location += dt;
     }
 
     /**
@@ -355,7 +340,7 @@ public:
      * The PersonID should correspond to the index in m_persons in world.
      * @return The PersonID.
      */
-    uint32_t get_person_id();
+    PersonID get_person_id();
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -463,6 +448,11 @@ public:
         return m_last_transport_mode;
     }
 
+    void set_last_transport_mode(const mio::abm::TransportMode mode)
+    {
+        m_last_transport_mode = mode;
+    }
+
     /**
     * Get this persons RandomNumberGenerator counter.
     * @see mio::abm::Person::RandomNumberGenerator.
@@ -500,7 +490,7 @@ public:
         auto obj = io.expect_object("Person");
         auto loc = obj.expect_element("Location", mio::Tag<Location>{});
         auto age = obj.expect_element("age", Tag<uint32_t>{});
-        auto id  = obj.expect_element("id", Tag<uint32_t>{});
+        auto id  = obj.expect_element("id", Tag<PersonID>{});
         return apply(
             io,
             [](auto&& loc_, auto&& age_, auto&& id_) {
@@ -526,7 +516,7 @@ private:
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
-    uint32_t m_person_id; ///< Id of the Person.
+    PersonID m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator

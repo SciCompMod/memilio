@@ -21,11 +21,13 @@
 #define EPI_ABM_WORLD_H
 
 #include "abm/location_type.h"
+#include "abm/movement_data.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
 #include "abm/trip_list.h"
+#include "abm/random_events.h"
 #include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/random_number_generator.h"
@@ -300,6 +302,66 @@ public:
      * @param[in] scheme TestingScheme to be added.
      */
     void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+
+    // std::unordered_map<LocationId, std::unordered_set<PersonID>> m_cache_local_population;
+
+    static void migrate(Person& person, Location& destination, TransportMode mode = TransportMode::Unknown,
+                        const std::vector<uint32_t>& cells = {0})
+    {
+        if (person.get_location() == destination) {
+            return;
+        }
+        person.get_location().remove_person(person);
+        person.set_location(destination);
+        person.get_cells() = cells;
+        destination.add_person(person, cells);
+        person.set_last_transport_mode(mode);
+    }
+
+    void interact(Person& person, Location& location, TimePoint t, TimeSpan dt)
+    {
+        auto personal_rng = Person::RandomNumberGenerator(m_rng, person);
+        interact(person, location, t, dt, personal_rng, parameters);
+    }
+
+    static void interact(Person& person, Location& location, TimePoint t, TimeSpan dt,
+                         Person::RandomNumberGenerator personal_rng, Parameters global_parameters)
+    {
+        if (person.get_infection_state(t) == InfectionState::Susceptible) {
+            auto& local_parameters = location.get_infection_parameters();
+            // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
+            auto age_receiver          = person.get_age();
+            ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);
+            assert(person.get_cells().size() &&
+                   "Person is in multiple cells. Interact logic is incorrect at the moment.");
+            for (auto cell_index :
+                 person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
+                std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
+                for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
+                    VirusVariant virus = static_cast<VirusVariant>(v);
+                    ScalarType local_indiv_trans_prob_v =
+                        (std::min(local_parameters.get<MaximumContacts>(),
+                                  location.transmission_contacts_per_day(cell_index, virus, age_receiver,
+                                                                         global_parameters.get_num_groups())) +
+                         location.transmission_air_per_day(cell_index, virus, global_parameters)) *
+                        (1 - mask_protection) * dt.days() *
+                        (1 - person.get_protection_factor(t, virus, global_parameters));
+
+                    local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
+                }
+                VirusVariant virus =
+                    random_transition(personal_rng, VirusVariant::Count, dt,
+                                      local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
+                if (virus != VirusVariant::Count) {
+                    person.add_new_infection(Infection(personal_rng, virus, age_receiver, global_parameters, t + dt / 2,
+                                                       mio::abm::InfectionState::Exposed,
+                                                       person.get_latest_protection(),
+                                                       false)); // Starting time in first approximation
+                }
+            }
+        }
+        person.add_time_at_location(dt);
+    }
 
 private:
     /**

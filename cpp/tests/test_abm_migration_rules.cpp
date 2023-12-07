@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/world.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -396,8 +397,8 @@ TEST(TestMigrationRules, shop_return)
     auto p     = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
     home.add_person(p);
-    p.migrate_to(shop);
-    p.interact(rng_p, t, dt, params); //person only returns home after some time passed
+    mio::abm::World::migrate(p, shop);
+    mio::abm::World::interact(p, p.get_location(), t, dt, rng_p, params);
 
     ASSERT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
               mio::abm::LocationType::Home);
@@ -446,8 +447,8 @@ TEST(TestMigrationRules, event_return)
     auto p     = mio::abm::Person(rng, home, AGE_GROUP_15_TO_34);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
     home.add_person(p);
-    p.migrate_to(social_event);
-    p.interact(rng_p, t, dt, params);
+    mio::abm::World::migrate(p, social_event);
+    mio::abm::World::interact(p, p.get_location(), t, dt, rng_p, params);
 
     ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
               mio::abm::LocationType::Home);

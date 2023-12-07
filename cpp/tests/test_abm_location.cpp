@@ -19,7 +19,9 @@
 */
 
 #include "abm/infection.h"
+#include "abm/movement_data.h"
 #include "abm/person.h"
+#include "abm/world.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 #include <memory>
@@ -74,9 +76,9 @@ TEST(TestLocation, addRemovePerson)
     home.add_person(person2, {0});
     home.add_person(person3, {0});
 
-    person1.migrate_to(location, {0, 1});
-    person2.migrate_to(location, {0});
-    person3.migrate_to(location, {0, 1});
+    mio::abm::World::migrate(person1, location, mio::abm::TransportMode::Unknown, {0, 1});
+    mio::abm::World::migrate(person2, location, mio::abm::TransportMode::Unknown, {0});
+    mio::abm::World::migrate(person3, location, mio::abm::TransportMode::Unknown, {0, 1});
 
     auto t = mio::abm::TimePoint(0);
     ASSERT_EQ(home.get_number_persons(), 0u);
@@ -119,12 +121,12 @@ TEST(TestLocation, CacheExposureRate)
     auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
     infected1.add_new_infection(
         mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    infected1.migrate_to(location, {0});
+    mio::abm::World::migrate(infected1, location, mio::abm::TransportMode::Unknown, {0});
     auto infected2     = mio::abm::Person(rng, home, age);
     auto rng_infected2 = mio::abm::Person::RandomNumberGenerator(rng, infected2);
     infected2.add_new_infection(
         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    infected2.migrate_to(location, {0, 1});
+    mio::abm::World::migrate(infected2, location, mio::abm::TransportMode::Unknown, {0, 1});
 
     //cache precomputed results
     location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);
@@ -268,12 +270,12 @@ TEST(TestLocation, interact)
     auto susceptible = make_test_person(location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
     auto person_rng = mio::abm::Person::RandomNumberGenerator(rng, susceptible);
-    location.interact(person_rng, susceptible, t, dt, params);
+    mio::abm::World::interact(susceptible, location, t, dt, person_rng, params);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
-    location.interact(person_rng, susceptible, t, dt, params);
+    mio::abm::World::interact(susceptible, location, t, dt, person_rng, params);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
 }
 

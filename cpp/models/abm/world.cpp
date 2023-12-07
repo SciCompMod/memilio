@@ -67,9 +67,10 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person     = m_persons[i];
-        auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-        person->interact(personal_rng, t, dt, parameters);
+        auto&& person = m_persons[i];
+        // auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
+        // person->interact(personal_rng, t, dt, parameters);
+        interact(*person, person->get_location(), t, dt);
     }
 }
 
@@ -90,7 +91,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
                     bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
-                        person->migrate_to(target_location);
+                        migrate(*person, target_location);
                     }
                     return true;
                 }
@@ -135,7 +136,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location, trip.trip_mode);
+                    migrate(*person, target_location, trip.trip_mode);
                 }
             }
             m_trip_list.increase_index();
