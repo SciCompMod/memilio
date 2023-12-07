@@ -462,7 +462,7 @@ class Simulation:
             save_single_runs, save_percentiles)
         if create_gif:
             # any compartments in the model (see InfectionStates)
-            compartments = [1, 2, 3, 4]
+            compartments = [c for c in range(1,8)]
             mp.create_gif_map_plot(
                 self.results_dir + "/p75", self.results_dir, compartments)
         return 0

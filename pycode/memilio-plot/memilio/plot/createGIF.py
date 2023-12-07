@@ -71,7 +71,7 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
             # pandas>1.5 raise FileNotFoundError instead of ValueError
             except (ValueError, FileNotFoundError):
                 print(
-                    "Population data was not found. Download it from the internet.")
+                    "Population data was not found. Downloading it from the internet.")
                 population = gpd.get_population_data(
                     read_data=False, file_format=file_format,
                     out_folder='data/pydata/Germany/', no_raw=True, merge_eisenach=True)
