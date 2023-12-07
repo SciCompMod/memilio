@@ -71,79 +71,22 @@ struct Node {
     template <class... Args>
     Node(int node_id, Args&&... args)
         : id{node_id}
-        , stay_duration(0.5)
         , property(std::forward<Args>(args)...)
-        , node_pt(std::forward<Args>(args)...)
     {
     }
-
-    template <typename Model>
-    Node(int node_id, double duration, Model property_arg, Model node_pt_arg, double m_t0, double m_dt_integration)
-        : id{node_id}
-        , stay_duration(duration)
-        , property(property_arg, m_t0, m_dt_integration)
-        , node_pt(node_pt_arg, m_t0, m_dt_integration)
-    {
-    }
-
-    template <class... Args>
-    Node(int node_id, double duration, Args&&... args)
-        : id{node_id}
-        , stay_duration(duration)
-        , property(std::forward<Args>(args)...)
-        , node_pt(std::forward<Args>(args)...)
-    {
-    }
-
-    Node(int node_id, double duration, NodePropertyT property_arg, NodePropertyT node_pt_arg)
-        : id{node_id}
-        , stay_duration(duration)
-        , property(property_arg)
-        , node_pt(node_pt_arg)
-    {
-    }
-
     int id;
-    double stay_duration;
     NodePropertyT property;
-    NodePropertyT node_pt;
 };
 
-/**
- * @brief represents an edge of the graph
- */
 template <class EdgePropertyT>
 struct Edge : public EdgeBase {
-
     template <class... Args>
     Edge(size_t start, size_t end, Args&&... args)
         : EdgeBase{start, end}
-        , traveltime(0.)
-        , path{static_cast<int>(start), static_cast<int>(end)}
         , property(std::forward<Args>(args)...)
     {
     }
 
-    template <class... Args>
-    Edge(size_t start, size_t end, double t_travel, Args&&... args)
-        : EdgeBase{start, end}
-        , traveltime(t_travel)
-        , path{static_cast<int>(start), static_cast<int>(end)}
-        , property(std::forward<Args>(args)...)
-    {
-    }
-
-    template <class... Args>
-    Edge(size_t start, size_t end, double t_travel, std::vector<int> path_mobility, Args&&... args)
-        : EdgeBase{start, end}
-        , traveltime(t_travel)
-        , path(path_mobility)
-        , property(std::forward<Args>(args)...)
-    {
-    }
-
-    double traveltime;
-    std::vector<int> path;
     EdgePropertyT property;
 };
 

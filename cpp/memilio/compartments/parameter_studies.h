@@ -344,7 +344,7 @@ private:
 
         auto sampled_graph = sample_graph(m_graph);
         for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.stay_duration, node.property, node.node_pt, m_t0, m_dt_integration);
+            sim_graph.add_node(node.id, node.stay_duration, node.property, node.mobility, m_t0, m_dt_integration);
         }
         for (auto&& edge : sampled_graph.edges()) {
             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.path, edge.property);

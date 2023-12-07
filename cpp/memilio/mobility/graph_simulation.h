@@ -297,7 +297,7 @@ public:
 
         // set population to zero in mobility nodes before starting
         for (auto& n : Base::m_graph.nodes()) {
-            n.node_pt.get_result().get_last_value().setZero();
+            n.mobility.get_result().get_last_value().setZero();
         }
 
         auto min_dt    = 0.01;
@@ -319,7 +319,7 @@ public:
             }
 
             for (auto& node : Base::m_graph.nodes()) {
-                node.node_pt.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
+                node.mobility.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
             }
 
             size_t indx_schedule = 0;
@@ -329,7 +329,7 @@ public:
                     // first mobility activity
                     if (indx_schedule == first_mobility[edge_indx]) {
                         auto& node_from = Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
-                        auto& node_to   = Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt;
+                        auto& node_to   = Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].mobility;
                         m_edge_func(Base::m_t, 0.0, e.property, node_from, node_to, 0);
                     }
                     // next mobility activity
@@ -373,12 +373,12 @@ public:
                              mobility_schedule_edges[edge_indx][indx_schedule - 1])) {
                             auto& node_from =
                                 mobility_schedule_edges[edge_indx][indx_schedule - 1]
-                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].node_pt
+                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].mobility
                                     : Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
 
                             auto& node_to =
                                 mobility_schedule_edges[edge_indx][indx_schedule]
-                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt
+                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].mobility
                                     : Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property;
 
                             if (indx_schedule < mobility_schedule_edges[edge_indx].size() - 1) {
@@ -393,12 +393,12 @@ public:
                         else {
                             auto& node_from =
                                 mobility_schedule_edges[edge_indx][indx_schedule - 1]
-                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].node_pt
+                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].mobility
                                     : Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
 
                             auto& node_to =
                                 mobility_schedule_edges[edge_indx][indx_schedule]
-                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt
+                                    ? Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].mobility
                                     : Base::m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property;
 
                             assert(node_from.get_result().get_last_value() == node_to.get_result().get_last_value());
@@ -440,19 +440,19 @@ public:
 
                     // get all time points from the last integration step
                     auto& last_time_point =
-                        n.node_pt.get_result().get_time(n.node_pt.get_result().get_num_time_points() - 1);
+                        n.mobility.get_result().get_time(n.mobility.get_result().get_num_time_points() - 1);
                     // wenn last_time_point nicht innerhalb eines intervalls von 1-e10 von t liegt, dann setzte den letzten Zeitpunkt auf m_t
                     if (std::fabs(last_time_point - Base::m_t) > 1e-10) {
-                        n.node_pt.get_result().get_last_time() = Base::m_t;
+                        n.mobility.get_result().get_last_time() = Base::m_t;
                     }
-                    m_node_func(Base::m_t, next_dt, n.node_pt);
+                    m_node_func(Base::m_t, next_dt, n.mobility);
                     Eigen::Index indx_min;
-                    while (n.node_pt.get_result().get_last_value().minCoeff(&indx_min) < -1e-7) {
+                    while (n.mobility.get_result().get_last_value().minCoeff(&indx_min) < -1e-7) {
                         Eigen::Index indx_max;
-                        n.node_pt.get_result().get_last_value().maxCoeff(&indx_max);
-                        n.node_pt.get_result().get_last_value()[indx_max] -=
-                            n.node_pt.get_result().get_last_value()[indx_min];
-                        n.node_pt.get_result().get_last_value()[indx_min] = 0;
+                        n.mobility.get_result().get_last_value().maxCoeff(&indx_max);
+                        n.mobility.get_result().get_last_value()[indx_max] -=
+                            n.mobility.get_result().get_last_value()[indx_min];
+                        n.mobility.get_result().get_last_value()[indx_min] = 0;
                     }
                 }
                 indx_schedule++;
@@ -460,7 +460,7 @@ public:
             }
             // set each compartment zero for all mobility nodes since we only model daily mobility
             for (auto& n : Base::m_graph.nodes()) {
-                n.node_pt.get_result().get_last_value().setZero();
+                n.mobility.get_result().get_last_value().setZero();
             }
             // // messe die zeit, wie lange eine iteration bis zu dieser stelle dauert
             // auto end                                      = std::chrono::system_clock::now();

@@ -32,6 +32,7 @@
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/date.h"
+#include "memilio/mobility/graph.h"
 
 #include "boost/filesystem.hpp"
 
@@ -40,7 +41,72 @@
 namespace mio
 {
 
-//  Erbe von MigrationEdge aus metapopulation_mobility_instant.h und überschreibe die apply_migration Funktion indem diese zusätzlich das argument mode bekommt
+template <class NodePropertyT>
+struct NodeDetailed : Node<NodePropertyT> {
+    template <class... Args>
+    NodeDetailed(int node_id, Args&&... args)
+        : Node<NodePropertyT>(node_id, std::forward<Args>(args)...)
+        , stay_duration(0.5)
+        , mobility(std::forward<Args>(args)...)
+    {
+    }
+
+    template <typename Model>
+    NodeDetailed(int node_id, double duration, Model property_arg, Model mobility_arg, double m_t0,
+                 double m_dt_integration)
+        : Node<NodePropertyT>(node_id, property_arg, m_t0, m_dt_integration)
+        , stay_duration(duration)
+        , mobility(mobility_arg, m_t0, m_dt_integration)
+    {
+    }
+
+    template <class... Args>
+    NodeDetailed(int node_id, double duration, Args&&... args)
+        : Node<NodePropertyT>(node_id, std::forward<Args>(args)...)
+        , stay_duration(duration)
+        , mobility(std::forward<Args>(args)...)
+    {
+    }
+
+    NodeDetailed(int node_id, double duration, NodePropertyT property_arg, NodePropertyT mobility_pt_arg)
+        : Node<NodePropertyT>(node_id, property_arg)
+        , stay_duration(duration)
+        , mobility(mobility_pt_arg)
+    {
+    }
+
+    double stay_duration;
+    NodePropertyT mobility;
+};
+
+template <class EdgePropertyT>
+struct EdgeDetailed : Edge<EdgePropertyT> {
+    template <class... Args>
+    EdgeDetailed(size_t start, size_t end, Args&&... args)
+        : Edge<EdgePropertyT>(start, end, std::forward<Args>(args)...)
+        , traveltime(0.)
+        , path{static_cast<int>(start), static_cast<int>(end)}
+    {
+    }
+
+    template <class... Args>
+    EdgeDetailed(size_t start, size_t end, double t_travel, Args&&... args)
+        : Edge<EdgePropertyT>(start, end, std::forward<Args>(args)...)
+        , traveltime(t_travel)
+        , path{static_cast<int>(start), static_cast<int>(end)}
+    {
+    }
+
+    template <class... Args>
+    EdgeDetailed(size_t start, size_t end, double t_travel, std::vector<int> path_mobility, Args&&... args)
+        : Edge<EdgePropertyT>(start, end, std::forward<Args>(args)...)
+        , traveltime(t_travel)
+        , path(path_mobility)
+    {
+    }
+    double traveltime;
+    std::vector<int> path;
+};
 class MigrationEdgeDetailed : public MigrationEdge
 {
 public:
