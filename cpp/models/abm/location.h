@@ -125,7 +125,6 @@ public:
         , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
         , m_parameters(other.m_parameters)
         , m_persons(other.m_persons)
-        , m_subpopulations(other.m_subpopulations)
         , m_cells(other.m_cells)
         , m_required_mask(other.m_required_mask)
         , m_npi_active(other.m_npi_active)
@@ -379,24 +378,6 @@ public:
     size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
     /**
-     * Add a TimePoint to the subpopulations TimeSeries.
-     * @param[in] t The TimePoint to be added.
-     */
-    void store_subpopulations(const TimePoint t);
-
-    /**
-     * @brief Initialize the history of subpopulations.
-     * @param[in] t The TimePoint of initialization.
-     */
-    void initialize_subpopulations(TimePoint t);
-
-    /**
-     * @brief Get the complete history of subpopulations.
-     * @return The TimeSeries of the #InfectionState%s for each TimePoint at the Location.
-     */
-    const TimeSeries<ScalarType>& get_subpopulations() const;
-
-    /**
      * @brief Get the geographical location of the Location.
      * @return The geographical location of the Location.
      */
@@ -421,8 +402,6 @@ private:
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
-    TimeSeries<ScalarType> m_subpopulations{Eigen::Index(
-        InfectionState::Count)}; ///< A TimeSeries of the #InfectionState%s for each TimePoint at the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
