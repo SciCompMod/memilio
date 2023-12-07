@@ -25,7 +25,6 @@
 #include "compartments/simulation.h"
 #include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
-#include "compartments/flow_model.h"
 #include "epidemiology/populations.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
@@ -76,9 +75,6 @@ PYBIND11_MODULE(_simulation_oseir, m)
     py::class_<mio::oseir::Model,
                mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>>(m, "Model")
         .def(py::init<>());
-
-    pymio::bind_FlowModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters, mio::oseir::Flows>(
-        m, "FlowModel");
 
     m.def(
         "simulate",

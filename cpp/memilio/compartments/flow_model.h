@@ -98,7 +98,7 @@ public:
     // Note: use get_flat_flow_index when accessing flows
     // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
     virtual void get_flows(Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const;
+                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const = 0;
 
     /**
      * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.

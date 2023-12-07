@@ -30,7 +30,7 @@ from memilio.simulation.oseir import (Model, interpolate_simulation_result,
 
 def run_oseir_simulation():
     """
-    Runs the c++ oseir model
+    Runs the c++ ode seir model using a flow simulation
     """
 
     # Define population of age groups
@@ -65,19 +65,16 @@ def run_oseir_simulation():
     # Check logical constraints to parameters
     model.check_constraints()
 
-    # Run Simulation
-    result = simulate_flows(0, days, dt, model)
-    compartments = result[0]
-    flows = interpolate_simulation_result(result[1]).as_ndarray()
+    # Run flow simulation
+    seir = simulate_flows(0, days, dt, model)
 
-    transmissions = flows[1, :]
-
-    print(result.get_last_value())
+    print(seir[0].print_table(["S", "E", "I", "R"], 16, 5))
+    print(seir[1].print_table(["S->E", "E->I", "I->R"], 16, 5))
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple',
-        description='Simple example demonstrating the setup and simulation of the OSEIR model.')
+        'ode seir model with flow simulation',
+        description='Simple example demonstrating the setup and simulation of the OSEIR model while using the flow simulation.')
     args = arg_parser.parse_args()
     run_oseir_simulation()
