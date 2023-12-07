@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef HISTORY_OBJ_H
-#define HISTORY_OBJ_H
+#ifndef MIO_IO_HISTORY_H
+#define MIO_IO_HISTORY_H
 
+#include "memilio/utils/metaprogramming.h"
 #include <vector>
 #include <tuple>
 #include <iostream>
@@ -27,65 +28,75 @@
 namespace mio
 {
 
-namespace details
-{
-/*
-* @brief Helper function to get the index of a Type in a pack of Types at compile time.
-* @tparam T The Type that is searched for.
-* @tparam Types All Types  in the pack of Types.
-* This function is used to get the index of a logger in a pack of loggers, e.g. index_templ_pack<Logger, Loggers...> gets the index of Logger in the pack Loggers.
-* Only for use in a Data Writer, not at runtime.
-*/
-template <typename T, typename U = void, typename... Types>
-constexpr size_t index_templ_pack()
-{
-    return std::is_same<T, U>::value ? 0 : 1 + index_templ_pack<T, Types...>();
-}
-} // namespace details
-
-struct LogOnce {
-};
-
-struct LogAlways {
-};
-
-/*
-* @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
-* @tparam Loggers The loggers that are used to log data.
-*/
+/**
+ * @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
+ * @tparam Loggers The loggers that are used to log data.
+ */
 template <class... Loggers>
 struct DataWriterToMemory {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
+    /**
+     * @brief Adds a new record for a given log result t to data.
+     * The parameter Logger is used to determine the type of the record t, as well as the data index at which
+     * the record should be added to.
+     * @param[in] t The result of Logger::log.
+     * @param[in,out] data An instance of Data to add the record to.
+     * @tparam Logger The type of the logger used to record t.
+     */
     template <class Logger>
-    static void write_this(const typename Logger::Type& t, Data& data)
+    static void add_record(const typename Logger::Type& t, Data& data)
     {
-        std::get<details::index_templ_pack<Logger, Loggers...>()>(data).push_back(t);
+        std::get<mio::index_of_type_v<Logger, Loggers...>>(data).push_back(t);
     }
 };
 
-/* 
-* @brief History class that handles writers and Loggers.
-* The class provides a log(T t) function to add the current record.
-* It provides a get_log() function to access the record.
-* It uses Loggers to retrieve data, and Writer to record it.
-* A Logger has a type "Type", a function "static Type log(const T&)" and is derived from either LogOnce or LogAlways.
-* LogOnce is only passed to Writer on the first call to History::log, LogAlways on all calls.
-* The Writer defines the type "Data" of the record, and defines with "static void write_this(const Logger::Type&, Data&)" how log values are added to it.
-* @tparam Writer The writer that is used to handle the data, e.g. store it into an array.
-* @tparam Loggers The loggers that are used to log data.
-*/
-
-template <template <class...> class Writer, class... Loggers>
+/** 
+ * @brief History class that handles writers and loggers.
+ * History provides a function "log" to add a new record and a function "get_log" to access all records.
+ *
+ * The History class uses Loggers to retrieve data from a given input, and a Writer to record this data.
+ * A Logger is a struct with a type `Type` and functions `Type log(const T&)` and `bool should_log(const T&)`.
+ * All Loggers must be unique types and default construcible/destructible. Their member "should_log" indicates whether
+ * to log, while "Type" and "log" determine what is logged. The input for "should_log" and "log" is the same input
+ * of type T that is given to "History::log". (Note: T does not have to be a template for a Logger implementation.)
+ * The Writer defines the type `Data` to store all records (i.e. the return values of Logger::log), and the function
+ * `template <class Logger> static void add_record(const Logger::Type&, Data&)` to add a new record. "add_record" is
+ * used whenever "History::log" was called and "Logger::should_log" is true.
+ *
+ * @tparam Writer The writer that is used to handle the data, e.g. store it into an array.
+ * @tparam Loggers The loggers that are used to log data.
+ */
+template <template <class... /*Loggers*/> class Writer, class... Loggers>
 class History
 {
+    static_assert(!has_duplicates_v<Loggers...>, "The Loggers used for a History must be unique.");
+
 public:
     using WriteWrapper = Writer<Loggers...>;
 
+    History() = default;
+
+    History(typename WriteWrapper::Data data)
+        : m_data(data)
+    {
+    }
+
+    History(typename Loggers::Type... args)
+        : m_data(std::tie(args...))
+    {
+    }
+
+    /**
+     * @brief Logs new records according to the Writer and Loggers.
+     *
+     * Calls the log_impl function for every Logger for Input t to record data.
+     * @tparam T The type of the record.
+     * @param[in] t The input to record.
+     */
     template <class T>
     void log(const T& t)
     {
-        log_impl<T, Loggers...>(t);
-        logged = true;
+        (log_impl(t, std::get<index_of_type_v<Loggers, Loggers...>>(m_loggers)), ...);
     }
 
     /**
@@ -98,41 +109,59 @@ public:
         return m_data;
     }
 
-    template <class Logger>
-    const std::vector<typename Logger::Type>& get_log()
-    {
-        return std::get<details::index_templ_pack<Logger, Loggers...>()>(m_data);
-    }
-
 private:
     typename WriteWrapper::Data m_data;
+    std::tuple<Loggers...> m_loggers;
 
-    bool logged = false;
-
-    template <class T, class logger, class... loggers>
-    std::enable_if_t<std::is_base_of<LogOnce, logger>::value> log_impl(const T& t)
+    /**
+     * @brief Checks if the given logger should log. If so, adds a record of the log to m_data.
+     * @param[in] t The argument given to History::log. Passed to Logger::should_log and Logger::log.
+     * @param[in] logger A Logger instance.
+     * @tparam Logger A logger from the list Loggers.
+     */
+    template <class T, class Logger>
+    void log_impl(const T& t, Logger& logger)
     {
-        if (!logged) {
-            WriteWrapper::template write_this<logger>(logger::log(t), m_data);
+        if (logger.should_log(t)) {
+            WriteWrapper::template add_record<Logger>(logger.log(t), m_data);
         }
-        log_impl<T, loggers...>(t);
-    }
-
-    template <class T, class logger, class... loggers>
-    std::enable_if_t<std::is_base_of<LogAlways, logger>::value> log_impl(const T& t)
-    {
-        log_impl<T, loggers...>(t);
-        WriteWrapper::template write_this<logger>(logger::log(t), m_data);
-    }
-
-    template <class T>
-    void log_impl(const T&)
-    {
     }
 };
 
 template <class... Loggers>
 using HistoryWithMemoryWriter = History<DataWriterToMemory, Loggers...>;
 
+/**
+ * LogOnce and LogAlways can be used as a base class to write a logger for History. They each provide the function
+ * `bool should_log(const T&)`, so that only the type `Type` and the function `Type log(const T&)` have to be
+ * implemented for the derived logger, where T is some input type (the same type that is given to History::log).
+ * LogOnce logs only on the first call to History::log, while LogAlways logs on every call.
+ *
+ * For any other logging behaviour, should_log has to be defined in the logger (no base class required).
+ * @see History for a full list of requirements for a logger.
+ * @{
+ */
+struct LogOnce {
+    bool was_logged = false; ///< Remember if this Logger was logged already.
+
+    /// @brief For any type T, returns true on the first call only, and false thereafter.
+    template <class T>
+    bool should_log(const T&)
+    {
+        return was_logged ? false : (was_logged = true);
+    }
+};
+
+struct LogAlways {
+    /// @brief Always returns true, for any type T.
+    template <class T>
+    constexpr bool should_log(const T&)
+    {
+        return true;
+    }
+};
+/** @} */
+
 } // namespace mio
-#endif //HISTORY_OBJ_H
+
+#endif // MIO_IO_HISTORY_H
