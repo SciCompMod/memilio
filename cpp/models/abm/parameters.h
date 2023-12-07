@@ -540,6 +540,21 @@ struct AgeGroupGotoWork {
     }
 };
 
+/**
+ * @brief The TimeSpan agents look forward to performed tests.  
+ */
+struct LookAheadTime {
+    using Type = TimeSpan;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return TimeSpan(days(1));
+    }
+    static std::string name()
+    {
+        return "LookAheadTime";
+    }
+};
+
 using ParametersBase =
     ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
@@ -741,6 +756,11 @@ public:
 
         if (this->get<LockdownDate>().seconds() < 0.0) {
             log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->get<LookAheadTime>().seconds() < 0.0) {
+            log_error("Constraint check: Parameter LookAheadTime smaller {:d}", 0);
             return true;
         }
 

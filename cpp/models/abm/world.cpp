@@ -78,27 +78,10 @@ void World::migration(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     bool weekend = t.is_weekend();
+
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-
-        // Check and process future trips for the person
-        auto future_trips = m_trip_list.get_trips_after(t, weekend);
-        for (const auto& trip : future_trips) {
-            auto& target_location = find_location(trip->migration_destination.type, *person);
-
-            // Get applicable testing schemes for the person and future trip location
-            auto applicable_schemes = m_testing_strategy.get_applicable_schemes(*person, target_location, trip->time, t);
-
-            // Process each applicable scheme
-            for (const auto* scheme : applicable_schemes) {
-                if (!scheme->run_scheme(personal_rng, *person, t)) {
-                    // Handle the case where the test fails (e.g., person cannot make the trip)
-                }
-                // Optionally, save the test result in the person's record
-                //person->add_test_result(t, scheme.get_type(), true)
-            }
-        }
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
@@ -162,6 +145,62 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
+    }
+
+    // Agents plan for tests
+    for (auto i = size_t(0); i < m_persons.size(); ++i) {
+        auto&& person     = m_persons[i];
+        auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
+
+        // Check and process future trips for the person
+        auto future_trips = m_trip_list.get_trips_between(t, t + parameters.get<mio::abm::LookAheadTime>(), weekend);
+        for (const auto& trip : future_trips) {
+            auto& target_location = find_location(trip->migration_destination.type, *person);
+
+            // Get applicable testing schemes for the person and future trip location
+            auto applicable_schemes =
+                m_testing_strategy.get_applicable_schemes(*person, target_location, trip->time, t);
+
+            // Process each applicable scheme
+            for (const auto* scheme : applicable_schemes) {
+                auto result = scheme->run_scheme(personal_rng, *person, t);
+                if (!result) {
+                    // Handle the case where the test fails (e.g., person cannot make the trip)
+                }
+                // Optionally, save the test result in the person's record
+                person->add_test_result(t + scheme->get_type().get_default().required_time, scheme->get_type(), result);
+            }
+        }
+        auto testing_migration_rule = [&](auto rule) -> bool {
+            //run migration rule and check if migration can actually happen
+            auto target_type =
+                rule(personal_rng, *person, t + parameters.get<mio::abm::LookAheadTime>(), dt, parameters);
+            auto& target_location  = find_location(target_type, *person);
+            auto& current_location = person->get_location();
+            // Get applicable testing schemes for the person and future trip location
+            auto applicable_schemes = m_testing_strategy.get_applicable_schemes(
+                *person, target_location, t + parameters.get<mio::abm::LookAheadTime>(), t);
+
+            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                if (target_location != current_location &&
+                    target_location.get_number_persons() < target_location.get_capacity().persons) {
+
+                    return true;
+                }
+            }
+            return false;
+        };
+        //run migration rules one after the other if the corresponding location type exists
+        //shortcutting of bool operators ensures the rules stop after the first rule is applied
+        if (m_use_migration_rules) {
+            (has_locations({LocationType::School, LocationType::Home}) && testing_migration_rule(&go_to_school)) ||
+                (has_locations({LocationType::Work, LocationType::Home}) && testing_migration_rule(&go_to_work)) ||
+                (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
+                 testing_migration_rule(&go_to_shop)) ||
+                (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
+                 testing_migration_rule(&go_to_event)) ||
+                (has_locations({LocationType::Home}) && testing_migration_rule(&go_to_quarantine));
+        }
     }
 }
 

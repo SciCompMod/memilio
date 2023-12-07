@@ -191,12 +191,13 @@ public:
     }
 
     /**
-     * @brief Get trips after a given time.
-     * @param time The time after which to find the trips.
+     * @brief Get trips between two TimePoints.
+     * @param from_time The time from which to find the trips.
+     * @param to_time The time to which to find the trips.
      * @param weekend Whether to search in weekend trips or weekday trips.
      * @return A vector of pointers to the trips after the given time.
      */
-    std::vector<const Trip*> get_trips_after(TimePoint time, bool weekend) const;
+    std::vector<const Trip*> get_trips_between(TimePoint from_time, TimePoint to_time, bool weekend) const;
 
 private:
     std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.

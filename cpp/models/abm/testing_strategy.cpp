@@ -100,6 +100,11 @@ void TestingScheme::update_activity_status(TimePoint t)
     m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
+bool TestingScheme::is_active_at_time(TimePoint t) const
+{
+    return m_start_date <= t && t <= m_end_date;
+}
+
 bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
@@ -185,7 +190,7 @@ std::vector<const TestingScheme*> TestingStrategy::get_applicable_schemes(const 
 
     for (auto vec_ptr : schemes_vector) {
         for (const auto& scheme : *vec_ptr) {
-            if (scheme.is_active() && scheme.is_applicable(person, trip_time, curr_time)) {
+            if (scheme.is_active_at_time(trip_time) && scheme.is_applicable(person, trip_time, curr_time)) {
                 applicable_schemes.push_back(&scheme);
             }
         }

@@ -128,6 +128,12 @@ public:
     bool is_active() const;
 
     /**
+     * @brief Gets the activity status of the scheme at a given TimePoint.
+     * @return Whether the TestingScheme is active at a given TimePoint.
+     */
+    bool is_active_at_time(TimePoint t) const;
+
+    /**
      * @brief Checks if the scheme is active at a given time and updates activity status.
      * @param[in] t TimePoint to be updated at.
      */
@@ -155,7 +161,9 @@ public:
      * @brief Gets the type of the TestingScheme.
      * @return The type of the TestingScheme.
      */
-    GenericTest get_type();
+    GenericTest get_type() const {
+        return m_test_type;
+    }
 
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
