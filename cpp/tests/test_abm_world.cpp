@@ -219,8 +219,8 @@ TEST(TestWorld, evolveMigration)
 
         world.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), work);
-        EXPECT_EQ(p2.get_location(), school);
+        EXPECT_EQ(p1.get_location(), work.get_id());
+        EXPECT_EQ(p2.get_location(), school.get_id());
         EXPECT_EQ(school.get_number_persons(), 1);
         EXPECT_EQ(work.get_number_persons(), 1);
     }
@@ -300,30 +300,30 @@ TEST(TestWorld, evolveMigration)
         auto& home     = world.get_individualized_location(home_id);
         auto& hospital = world.get_individualized_location(hospital_id);
 
-        EXPECT_EQ(p1.get_location(), work);
-        EXPECT_EQ(p2.get_location(), event);
-        EXPECT_EQ(p3.get_location(), hospital);
-        EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), event);
+        EXPECT_EQ(p1.get_location(), work.get_id());
+        EXPECT_EQ(p2.get_location(), event.get_id());
+        EXPECT_EQ(p3.get_location(), hospital.get_id());
+        EXPECT_EQ(p4.get_location(), home.get_id());
+        EXPECT_EQ(p5.get_location(), event.get_id());
         EXPECT_EQ(event.get_number_persons(), 2);
         EXPECT_EQ(work.get_number_persons(), 1);
         EXPECT_EQ(home.get_number_persons(), 1);
         EXPECT_EQ(hospital.get_number_persons(), 1);
 
-        mio::abm::World::migrate(p1, home);
-        mio::abm::World::migrate(p2, home);
-        mio::abm::World::migrate(p5, home);
+        world.migrate(p1, home);
+        world.migrate(p2, home);
+        world.migrate(p5, home);
 
         t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
         world.get_trip_list().reset_index();
 
         world.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), work);
-        EXPECT_EQ(p2.get_location(), event);
-        EXPECT_EQ(p3.get_location(), home);
-        EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), event);
+        EXPECT_EQ(p1.get_location(), work.get_id());
+        EXPECT_EQ(p2.get_location(), event.get_id());
+        EXPECT_EQ(p3.get_location(), home.get_id());
+        EXPECT_EQ(p4.get_location(), home.get_id());
+        EXPECT_EQ(p5.get_location(), event.get_id());
         EXPECT_EQ(event.get_number_persons(), 2);
         EXPECT_EQ(work.get_number_persons(), 1);
         EXPECT_EQ(home.get_number_persons(), 2);
@@ -343,11 +343,11 @@ TEST(TestWorld, evolveMigration)
 
         world.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), event);
-        EXPECT_EQ(p2.get_location(), home);
-        EXPECT_EQ(p3.get_location(), home);
-        EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), work);
+        EXPECT_EQ(p1.get_location(), event.get_id());
+        EXPECT_EQ(p2.get_location(), home.get_id());
+        EXPECT_EQ(p3.get_location(), home.get_id());
+        EXPECT_EQ(p4.get_location(), home.get_id());
+        EXPECT_EQ(p5.get_location(), work.get_id());
         EXPECT_EQ(event.get_number_persons(), 1);
         EXPECT_EQ(work.get_number_persons(), 1);
         EXPECT_EQ(home.get_number_persons(), 3);
@@ -392,15 +392,15 @@ TEST(TestWorld, evolveMigration)
 
         // Check the dead person got burried and the severely infected person starts in Hospital
         world.evolve(t, dt);
-        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(world.get_location(p_dead).get_type(), mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
-        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Hospital);
+        EXPECT_EQ(world.get_location(p_severe).get_type(), mio::abm::LocationType::Hospital);
 
         // Check the dead person is still in Cemetery and the severely infected person dies and got burried
         world.evolve(t + dt, dt);
-        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(world.get_location(p_dead).get_type(), mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
-        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(world.get_location(p_severe).get_type(), mio::abm::LocationType::Cemetery);
     }
 }
 
@@ -658,14 +658,14 @@ TEST(TestWorld, copyWorld)
               world.get_locations()[2].get_cells()[0].m_persons[0]);
 
     ASSERT_EQ(copied_world.get_persons().size(), world.get_persons().size());
-    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_index(),
-              world.get_persons()[0].get_location().get_index());
-    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_index(),
-              world.get_persons()[1].get_location().get_index());
-    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(),
-              world.get_persons()[0].get_location().get_type());
-    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(),
-              world.get_persons()[1].get_location().get_type());
+    ASSERT_EQ(copied_world.get_location(world.get_persons()[0]).get_index(),
+              world.get_location(world.get_persons()[0]).get_index());
+    ASSERT_EQ(copied_world.get_location(world.get_persons()[1]).get_index(),
+              world.get_location(world.get_persons()[1]).get_index());
+    ASSERT_EQ(copied_world.get_location(world.get_persons()[0]).get_type(),
+              world.get_location(world.get_persons()[0]).get_type());
+    ASSERT_EQ(copied_world.get_location(world.get_persons()[1]).get_type(),
+              world.get_location(world.get_persons()[1]).get_type());
     ASSERT_EQ(copied_world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
               world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)));
     ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home),
@@ -713,10 +713,10 @@ TEST(TestWorld, copyWorld)
     ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &world.get_persons()[1].get_cells());
 
     // Evolve the world and check that the copied world has not evolved
-    mio::abm::World::migrate(copied_world.get_persons()[0], work, mio::abm::TransportMode::Unknown, {0});
-    mio::abm::World::migrate(copied_world.get_persons()[1], home, mio::abm::TransportMode::Unknown, {0});
-    ASSERT_NE(copied_world.get_persons()[0].get_location().get_type(),
-              world.get_persons()[0].get_location().get_type());
-    ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(),
-              world.get_persons()[1].get_location().get_type());
+    copied_world.migrate(copied_world.get_persons()[0], work, mio::abm::TransportMode::Unknown, {0});
+    copied_world.migrate(copied_world.get_persons()[1], home, mio::abm::TransportMode::Unknown, {0});
+    ASSERT_NE(copied_world.get_location(copied_world.get_persons()[0]).get_type(),
+              world.get_location(world.get_persons()[0]).get_type());
+    ASSERT_NE(copied_world.get_location(copied_world.get_persons()[1]).get_type(),
+              world.get_location(world.get_persons()[1]).get_type());
 }

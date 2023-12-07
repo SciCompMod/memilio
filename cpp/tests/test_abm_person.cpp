@@ -20,7 +20,7 @@
 #include "abm/location_type.h"
 #include "abm/movement_data.h"
 #include "abm/person.h"
-
+#include "abm/world.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
@@ -34,7 +34,7 @@ TEST(TestPerson, init)
     auto person = mio::abm::Person(rng, location, AGE_GROUP_60_TO_79);
 
     ASSERT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
-    ASSERT_EQ(person.get_location(), location);
+    ASSERT_EQ(person.get_location(), location.get_id());
     ASSERT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
 
@@ -48,37 +48,40 @@ TEST(TestPerson, copyPerson)
     auto copied_person   = person.copy_person(copied_location);
 
     ASSERT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
-    ASSERT_EQ(copied_person.get_location(), copied_location);
+    ASSERT_EQ(copied_person.get_location(), copied_location.get_id());
     ASSERT_EQ(copied_person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
 
 TEST(TestPerson, migrate)
 {
+    mio::abm::World world(NUM_AGE_GROUPS);
     auto rng = mio::RandomNumberGenerator();
 
     auto t = mio::abm::TimePoint(0);
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
-    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 0, 6, 1);
-    mio::abm::Location loc2(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
-    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 0, 6, 2);
-    auto person = make_test_person(home, AGE_GROUP_0_TO_4, mio::abm::InfectionState::Recovered);
-    mio::abm::World::migrate(person, loc1);
 
-    ASSERT_EQ(person.get_location(), loc1);
+    auto& home = world.get_location(world.add_location(mio::abm::LocationType::Home));
+    auto& loc1 = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 1));
+    auto& loc2 = world.get_location(world.add_location(mio::abm::LocationType::School));
+    auto& loc3 = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 2));
+
+    auto person = make_test_person(home, AGE_GROUP_0_TO_4, mio::abm::InfectionState::Recovered);
+    world.migrate(person, loc1);
+
+    ASSERT_EQ(person.get_location(), loc1.get_id());
     ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
     ASSERT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
     ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
     ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
-    mio::abm::World::migrate(person, loc2, mio::abm::TransportMode::Walking);
+    world.migrate(person, loc2, mio::abm::TransportMode::Walking);
 
-    ASSERT_EQ(person.get_location(), loc2);
+    ASSERT_EQ(person.get_location(), loc2.get_id());
     ASSERT_EQ(loc2.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
     ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
     ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
     ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
-    mio::abm::World::migrate(person, loc3, mio::abm::TransportMode::Bike, {0, 1});
+    world.migrate(person, loc3, mio::abm::TransportMode::Bike, {0, 1});
 
     ASSERT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
     ASSERT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
@@ -192,11 +195,15 @@ TEST(TestPerson, get_tested)
 
 TEST(TestPerson, getCells)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::World world(NUM_AGE_GROUPS);
+
+    auto& home     = world.get_location(world.add_location(mio::abm::LocationType::Home, 1));
+    auto& location = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 2));
+
     auto person = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
     home.add_person(person);
-    mio::abm::World::migrate(person, location, mio::abm::TransportMode::Unknown, {0, 1});
+
+    world.migrate(person, location, mio::abm::TransportMode::Unknown, {0, 1});
     ASSERT_EQ(person.get_cells().size(), 2);
 }
 
@@ -211,7 +218,7 @@ TEST(TestPerson, interact)
     auto person     = mio::abm::Person(rng, loc, AGE_GROUP_15_TO_34);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
-    mio::abm::World::interact(person, person.get_location(), t, dt, rng_person, infection_parameters);
+    mio::abm::World::interact(person, loc, t, dt, rng_person, infection_parameters);
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 

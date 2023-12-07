@@ -201,13 +201,17 @@ public:
      * @brief Get the current Location of the Person.
      * @return Current Location of the Person.
      */
-    Location& get_location();
+    LocationId& get_location();
 
-    const Location& get_location() const;
+    const LocationId& get_location() const;
 
-    void set_location(Location& location)
+    // set new location, e.g. when migrating
+    void set_location(const Location& location);
+
+    // set new location, e.g. when migrating
+    void set_location(LocationId id)
     {
-        m_location         = &location;
+        m_location         = id;
         m_time_at_location = TimeSpan(0);
     }
 
@@ -475,7 +479,7 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Person");
-        obj.add_element("Location", *m_location);
+        obj.add_element("Location", m_location);
         obj.add_element("age", m_age);
         obj.add_element("id", m_person_id);
     }
@@ -488,7 +492,7 @@ public:
     static IOResult<Person> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Person");
-        auto loc = obj.expect_element("Location", mio::Tag<Location>{});
+        auto loc = obj.expect_element("Location", mio::Tag<LocationId>{});
         auto age = obj.expect_element("age", Tag<uint32_t>{});
         auto id  = obj.expect_element("id", Tag<PersonID>{});
         return apply(
@@ -500,7 +504,7 @@ public:
     }
 
 private:
-    observer_ptr<Location> m_location; ///< Current Location of the Person.
+    LocationId m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.

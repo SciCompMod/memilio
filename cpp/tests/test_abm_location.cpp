@@ -65,8 +65,9 @@ TEST(TestLocation, getIndex)
 
 TEST(TestLocation, addRemovePerson)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
+    mio::abm::World world(0); // num_agegroups is not needed in this test
+    auto& home     = world.get_location(world.add_location(mio::abm::LocationType::Home, 1));
+    auto& location = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 3));
 
     auto person1 = make_test_person(home, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
     auto person2 = make_test_person(home, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
@@ -76,9 +77,9 @@ TEST(TestLocation, addRemovePerson)
     home.add_person(person2, {0});
     home.add_person(person3, {0});
 
-    mio::abm::World::migrate(person1, location, mio::abm::TransportMode::Unknown, {0, 1});
-    mio::abm::World::migrate(person2, location, mio::abm::TransportMode::Unknown, {0});
-    mio::abm::World::migrate(person3, location, mio::abm::TransportMode::Unknown, {0, 1});
+    world.migrate(person1, location, mio::abm::TransportMode::Unknown, {0, 1});
+    world.migrate(person2, location, mio::abm::TransportMode::Unknown, {0});
+    world.migrate(person3, location, mio::abm::TransportMode::Unknown, {0, 1});
 
     auto t = mio::abm::TimePoint(0);
     ASSERT_EQ(home.get_number_persons(), 0u);
@@ -113,20 +114,21 @@ TEST(TestLocation, CacheExposureRate)
     auto dt = mio::abm::seconds(10000);
 
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
+    mio::abm::World world(params);
 
     // setup a location with some chance of exposure
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, NUM_AGE_GROUPS, 3);
+    auto& home         = world.get_location(world.add_location(mio::abm::LocationType::Home, 1));
+    auto& location     = world.get_location(world.add_location(mio::abm::LocationType::Home, 3));
     auto infected1     = mio::abm::Person(rng, home, age);
     auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
     infected1.add_new_infection(
         mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    mio::abm::World::migrate(infected1, location, mio::abm::TransportMode::Unknown, {0});
+    world.migrate(infected1, location, mio::abm::TransportMode::Unknown, {0});
     auto infected2     = mio::abm::Person(rng, home, age);
     auto rng_infected2 = mio::abm::Person::RandomNumberGenerator(rng, infected2);
     infected2.add_new_infection(
         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    mio::abm::World::migrate(infected2, location, mio::abm::TransportMode::Unknown, {0, 1});
+    world.migrate(infected2, location, mio::abm::TransportMode::Unknown, {0, 1});
 
     //cache precomputed results
     location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);
@@ -202,8 +204,8 @@ TEST(TestLocation, reachCapacity)
 
     world.evolve(t, dt);
 
-    ASSERT_EQ(p1.get_location(), school);
-    ASSERT_EQ(p2.get_location(), home); // p2 should not be able to enter the school
+    ASSERT_EQ(p1.get_location(), school.get_id());
+    ASSERT_EQ(p2.get_location(), home.get_id()); // p2 should not be able to enter the school
     ASSERT_EQ(school.get_number_persons(), 1);
     ASSERT_EQ(home.get_number_persons(), 1);
 }

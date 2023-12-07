@@ -32,7 +32,7 @@ namespace abm
 {
 
 Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, PersonID person_id)
-    : m_location(&location)
+    : m_location(location.get_id())
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
@@ -54,7 +54,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
 Person Person::copy_person(Location& location)
 {
     Person copied_person     = Person(*this);
-    copied_person.m_location = &location;
+    copied_person.m_location = location.get_id();
     location.add_person(*this);
     return copied_person;
 }
@@ -87,14 +87,19 @@ void Person::add_new_infection(Infection&& inf)
     m_infections.push_back(std::move(inf));
 }
 
-Location& Person::get_location()
+LocationId& Person::get_location()
 {
-    return *m_location;
+    return m_location;
 }
 
-const Location& Person::get_location() const
+const LocationId& Person::get_location() const
 {
-    return *m_location;
+    return m_location;
+}
+
+void Person::set_location(const Location& location)
+{
+    set_location(location.get_id());
 }
 
 const Infection& Person::get_infection() const

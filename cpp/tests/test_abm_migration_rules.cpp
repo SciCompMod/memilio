@@ -391,14 +391,15 @@ TEST(TestMigrationRules, shop_return)
     auto params = mio::abm::Parameters(NUM_AGE_GROUPS);
     auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
     auto dt     = mio::abm::hours(1);
+    mio::abm::World world(params);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
-    mio::abm::Location shop(mio::abm::LocationType::BasicsShop, 0, NUM_AGE_GROUPS);
+    auto& home = world.get_location(world.add_location(mio::abm::LocationType::Home));
+    auto& shop = world.get_location(world.add_location(mio::abm::LocationType::BasicsShop));
     auto p     = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
     home.add_person(p);
-    mio::abm::World::migrate(p, shop);
-    mio::abm::World::interact(p, p.get_location(), t, dt, rng_p, params);
+    world.migrate(p, shop);
+    world.interact(p, world.get_location(p), t, dt, rng_p, params);
 
     ASSERT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
               mio::abm::LocationType::Home);
@@ -441,14 +442,15 @@ TEST(TestMigrationRules, event_return)
     auto params = mio::abm::Parameters(NUM_AGE_GROUPS);
     auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(21);
     auto dt     = mio::abm::hours(3);
+    mio::abm::World world(params);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
-    mio::abm::Location social_event(mio::abm::LocationType::SocialEvent, 0, NUM_AGE_GROUPS);
-    auto p     = mio::abm::Person(rng, home, AGE_GROUP_15_TO_34);
-    auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto& home         = world.get_location(world.add_location(mio::abm::LocationType::Home));
+    auto& social_event = world.get_location(world.add_location(mio::abm::LocationType::SocialEvent));
+    auto p             = mio::abm::Person(rng, home, AGE_GROUP_15_TO_34);
+    auto rng_p         = mio::abm::Person::RandomNumberGenerator(rng, p);
     home.add_person(p);
-    mio::abm::World::migrate(p, social_event);
-    mio::abm::World::interact(p, p.get_location(), t, dt, rng_p, params);
+    world.migrate(p, social_event);
+    world.interact(p, t, dt, rng_p, params);
 
     ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
               mio::abm::LocationType::Home);

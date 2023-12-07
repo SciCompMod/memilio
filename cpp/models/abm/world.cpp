@@ -70,7 +70,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
         auto&& person = m_persons[i];
         // auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
         // person->interact(personal_rng, t, dt, parameters);
-        interact(*person, person->get_location(), t, dt);
+        interact(*person, t, dt);
     }
 }
 

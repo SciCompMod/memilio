@@ -34,6 +34,7 @@
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
+#include <cassert>
 #include <initializer_list>
 #include <vector>
 #include <memory>
@@ -68,6 +69,19 @@ public:
     }
 
     /**
+     * @brief Create a World.
+     * @param[in] params Initial simulation parameters.
+     */
+    World(const Parameters& params)
+        : parameters(params.get_num_groups())
+        , m_trip_list()
+        , m_use_migration_rules(true)
+        , m_cemetery_id(add_location(LocationType::Cemetery))
+    {
+        parameters = params;
+    }
+
+    /**
      * @brief Create a copied World.
      * @param[in] other The World that needs to be copied. 
      */
@@ -86,10 +100,9 @@ public:
             }
             for (auto& person : other.get_persons()) {
                 // If a person is in this location, copy this person and add it to this location.
-                if (person.get_location() == origin_loc) {
-                    LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
+                if (person.get_location() == origin_loc.get_id()) {
                     m_persons.push_back(
-                        std::make_unique<Person>(person.copy_person(get_individualized_location(origin_id))));
+                        std::make_unique<Person>(person.copy_person(get_individualized_location(origin_loc.get_id()))));
                 }
             }
         }
@@ -305,27 +318,39 @@ public:
 
     // std::unordered_map<LocationId, std::unordered_set<PersonID>> m_cache_local_population;
 
-    static void migrate(Person& person, Location& destination, TransportMode mode = TransportMode::Unknown,
-                        const std::vector<uint32_t>& cells = {0})
+    // move a person to another location. this requires that location is part of this world.
+    void migrate(Person& person, Location& destination, TransportMode mode = TransportMode::Unknown,
+                 const std::vector<uint32_t>& cells = {0})
     {
-        if (person.get_location() == destination) {
+        assert(get_location(destination.get_id()) == destination &&
+               "Destination is outside of World."); // always true, but may trigger asserts in get_location
+        if (person.get_location() == destination.get_id()) {
             return;
         }
-        person.get_location().remove_person(person);
+        get_location(person).remove_person(person);
         person.set_location(destination);
         person.get_cells() = cells;
         destination.add_person(person, cells);
         person.set_last_transport_mode(mode);
     }
 
-    void interact(Person& person, Location& location, TimePoint t, TimeSpan dt)
+    // let a person interact with its current location
+    void interact(Person& person, TimePoint t, TimeSpan dt)
     {
         auto personal_rng = Person::RandomNumberGenerator(m_rng, person);
-        interact(person, location, t, dt, personal_rng, parameters);
+        interact(person, t, dt, personal_rng, parameters);
     }
 
+    // let a person interact with its current location
+    void interact(Person& person, TimePoint t, TimeSpan dt, Person::RandomNumberGenerator& personal_rng,
+                  const Parameters& global_parameters)
+    {
+        interact(person, get_location(person), t, dt, personal_rng, global_parameters);
+    }
+
+    // let a person interact with a location for and at some time
     static void interact(Person& person, Location& location, TimePoint t, TimeSpan dt,
-                         Person::RandomNumberGenerator personal_rng, Parameters global_parameters)
+                         Person::RandomNumberGenerator& personal_rng, const Parameters& global_parameters)
     {
         if (person.get_infection_state(t) == InfectionState::Susceptible) {
             auto& local_parameters = location.get_infection_parameters();
@@ -361,6 +386,24 @@ public:
             }
         }
         person.add_time_at_location(dt);
+    }
+
+    // get location by id
+    Location& get_location(LocationId id)
+    {
+        assert(id.index != INVALID_LOCATION_INDEX);
+        for (auto&& location : m_locations) {
+            if (location->get_id() == id) {
+                return *location;
+            }
+        }
+        assert(false && "Location id not found");
+    }
+
+    // get current location of the Person
+    Location& get_location(const Person& p)
+    {
+        return get_location(p.get_location());
     }
 
 private:
