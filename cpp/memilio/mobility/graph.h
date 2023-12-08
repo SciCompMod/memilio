@@ -29,6 +29,7 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
 #include <iostream>
+
 #include "boost/filesystem.hpp"
 
 //is used to provide some paths as function arguments
@@ -75,6 +76,9 @@ struct Node {
     NodePropertyT property;
 };
 
+/**
+ * @brief represents an edge of the graph
+ */
 template <class EdgePropertyT>
 struct Edge : public EdgeBase {
     template <class... Args>
@@ -231,7 +235,7 @@ private:
         }));
     }
 
-private:
+protected:
     std::vector<Node<NodePropertyT>> m_nodes;
     std::vector<Edge<EdgePropertyT>> m_edges;
 }; // namespace mio

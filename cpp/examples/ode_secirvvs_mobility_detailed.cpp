@@ -930,7 +930,7 @@ mio::IOResult<void> run()
     return mio::success();
 }
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
     mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
