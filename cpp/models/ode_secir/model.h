@@ -350,6 +350,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     size_t num_infected_compartments   = 5;
     size_t total_infected_compartments = num_infected_compartments * num_groups;
 
+    std::cout<<"VALUE1: "<<params.template get<TestAndTraceCapacity>()<<std::endl;
+
     Eigen::MatrixXd F(total_infected_compartments, total_infected_compartments);
     Eigen::MatrixXd V(total_infected_compartments, total_infected_compartments);
     F = Eigen::MatrixXd::Zero(total_infected_compartments,
@@ -455,9 +457,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         }
     }
 
-    //Try to invert J
-    Eigen::FullPivLU<Eigen::MatrixXd> lu(J); //Check invertibility via LU Decomposition
-    if (!lu.isInvertible()) {
+    //Check, if J is invertible
+    if(J.determinant()==0){
         return mio::failure(mio::StatusCode::UnknownError, "Matrix V is not invertible");
     }
 

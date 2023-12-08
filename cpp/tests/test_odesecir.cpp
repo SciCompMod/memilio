@@ -864,13 +864,14 @@ TEST(Secir, get_reproduction_number)
 
     // Test special domain for test-and-trace capacity/requirement:
     model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 1;
+    mio::osecir::Simulation<> sim3(model, 0.0);
     mio::TimeSeries<ScalarType> time_series3((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_8((int)mio::osecir::InfectionState::Count * num_groups);
-    result_8 << 10, 0, 4.3956043956043956, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    result_8 << 100, 0, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         100, 0;
     time_series3.add_time_point(0.0, result_8);
-    sim.get_result() = time_series3;
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 0.97371260459013254, 1e-12);
+    sim3.get_result() = time_series3;
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim3).value(), 1.8462669866786356, 1e-12);
 
     //Test handling of zero population in at least one agegroup
     mio::TimeSeries<ScalarType> time_series4((int)mio::osecir::InfectionState::Count * num_groups);
