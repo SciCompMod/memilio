@@ -49,6 +49,7 @@ set(TESTSOURCES
     test_io_framework.cpp
     test_binary_serializer.cpp
     test_compartmentsimulation.cpp
+    test_mobility_detailed.cpp
     test_mobility_io.cpp
     test_transform_iterator.cpp
     test_metaprogramming.cpp
@@ -68,17 +69,17 @@ set(TESTSOURCES
 )
 
 if(MEMILIO_HAS_JSONCPP)
-set(TESTSOURCES ${TESTSOURCES}
-test_json_serializer.cpp
-test_epi_data_io.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_json_serializer.cpp
+        test_epi_data_io.cpp
+    )
 endif()
 
 if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
-set(TESTSOURCES ${TESTSOURCES}
-test_save_parameters.cpp
-test_save_results.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_save_parameters.cpp
+        test_save_results.cpp
+    )
 endif()
 
 add_executable(memilio-test ${TESTSOURCES})

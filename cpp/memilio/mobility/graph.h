@@ -235,7 +235,7 @@ private:
         }));
     }
 
-protected:
+private:
     std::vector<Node<NodePropertyT>> m_nodes;
     std::vector<Edge<EdgePropertyT>> m_edges;
 }; // namespace mio
