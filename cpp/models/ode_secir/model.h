@@ -332,8 +332,8 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 /**
 *@brief Computes the reproduction number at a given index time of the Model output obtained by the Simulation.
 *@param t_idx The index time at which the reproduction number is computed.
-*@param sim The simulation handling the secir model
-*@tparam Base simulation type that uses a secir compartment model. see Simulation.
+*@param sim The simulation holding the SECIR model
+*@tparam Base simulation type that uses a SECIR compartment model. see Simulation.
 *@returns The computed reproduction number at the provided index time.
 */
 
@@ -347,13 +347,16 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
     auto const& params                 = sim.get_model().parameters;
     const size_t num_groups            = (size_t)sim.get_model().parameters.get_num_groups();
-    size_t num_infected_compartments   = 5;
-    size_t total_infected_compartments = num_infected_compartments * num_groups;
+    //The infected compartments in the SECIR Model are: Exposed, Carrier, Infected, Hospitalized, ICU in respective agegroups
+    const size_t num_infected_compartments   = 5;
+    const size_t total_infected_compartments = num_infected_compartments * num_groups;
+    const double pi = std::acos(-1);
 
-    std::cout<<"VALUE1: "<<params.template get<TestAndTraceCapacity>()<<std::endl;
-
-    Eigen::MatrixXd F(total_infected_compartments, total_infected_compartments);
-    Eigen::MatrixXd V(total_infected_compartments, total_infected_compartments);
+    //F encodes new Infections and V encodes transition times in the next-generation matrix calculation of R_t
+    Eigen::MatrixXd F(total_infected_compartments,
+                              total_infected_compartments);
+    Eigen::MatrixXd V(total_infected_compartments,
+                              total_infected_compartments);
     F = Eigen::MatrixXd::Zero(total_infected_compartments,
                               total_infected_compartments); //Initialize matrices F and V with zeroes
     V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
@@ -372,7 +375,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
     double season_val =
         (1 + params.template get<Seasonality>() *
-                 sin(3.141592653589793 * (std::fmod((sim.get_model().parameters.template get<StartDay>() +
+                 sin(pi * (std::fmod((sim.get_model().parameters.template get<StartDay>() +
                                                      sim.get_result().get_time(t_idx)),
                                                     365.0) /
                                               182.5 +
@@ -420,12 +423,12 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
             }
             else {
                 riskFromInfectedSymptomatic_derivatives((size_t)k, (size_t)l) =
-                    -0.5 * 3.14159265358979323846 *
+                    -0.5 * pi *
                     (params.template get<MaxRiskOfInfectionFromSymptomatic>()[k] -
                      params.template get<RiskOfInfectionFromSymptomatic>()[k]) /
                     (4 * params.template get<TestAndTraceCapacity>()) *
                     (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[l]) * rateINS[(size_t)l] *
-                    std::sin(3.14159265358979323846 / (4 * params.template get<TestAndTraceCapacity>()) *
+                    std::sin(pi / (4 * params.template get<TestAndTraceCapacity>()) *
                              (test_and_trace_required - params.template get<TestAndTraceCapacity>()));
             }
         }
@@ -449,9 +452,9 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                 J(i, j) -= sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
                                {(mio::AgeGroup)i, InfectionState::InfectedSevere})] /
                            params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i] * 5 *
-                           params.template get<CriticalPerSevere>()[(mio::AgeGroup)i] * 3.141592653589793 /
+                           params.template get<CriticalPerSevere>()[(mio::AgeGroup)i] * pi /
                            (params.template get<ICUCapacity>()) *
-                           std::sin(3.141592653589793 / (0.1 * params.template get<ICUCapacity>()) *
+                           std::sin(pi / (0.1 * params.template get<ICUCapacity>()) *
                                     (icu_occupancy - 0.9 * params.template get<ICUCapacity>()));
             }
         }
@@ -462,11 +465,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         return mio::failure(mio::StatusCode::UnknownError, "Matrix V is not invertible");
     }
 
-    //Eigen::Array<ScalarType, 3, 3> Jnew = J;
-
     //Initialize the matrix F
     for (size_t i = 0; i < num_groups; i++) {
-
         for (size_t j = 0; j < num_groups; j++) {
 
             double temp = 0;
@@ -525,7 +525,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     V = V.inverse();
 
     //Compute F*V
-    Eigen::MatrixXd NextGenMatrix(5 * num_groups, 5 * num_groups);
+    Eigen::MatrixXd NextGenMatrix(num_infected_compartments * num_groups, 5 * num_groups);
     NextGenMatrix = F * V;
 
     //Compute the largest eigenvalue in absolute value
@@ -545,7 +545,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 /**
 *@brief Computes the reproduction number for all time points of the Model output obtained by the Simulation.
 *@param sim The Model Simulation.
-*@returns vector containing all reproduction numbers
+*@tparam Base simulation type that uses a SECIR compartment model. see Simulation.
+*@returns Eigen::Vector containing all reproduction numbers
 */
 
 template <class Base>
@@ -559,9 +560,10 @@ Eigen::VectorXd get_reproduction_numbers(const Simulation<Base>& sim)
 }
 
 /**
-*@brief Computes the reproduction number at a given time point of the Model output obtained by the Simulation. If the particular time point is not inside the output, a linearly interpolated value is returned.
-*@param t_value The time point at which the reproduction number is computed.
+*@brief @brief Computes the reproduction number at a given time point of the Simulation. If the particular time point is not part of the output, a linearly interpolated value is returned.
+*@param t_value The time point at which the reproduction number should be computed.
 *@param sim The Model Simulation.
+*@tparam Base simulation type that uses a SECIR compartment model. see Simulation.
 *@returns The computed reproduction number at the provided time point, potentially using linear interpolation.
 */
 template <class Base>
@@ -576,7 +578,7 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
         return mio::success(get_reproduction_number((size_t)0, sim).value());
     }
 
-    auto times = std::vector<ScalarType>(sim.get_result().get_times().begin(), sim.get_result().get_times().end());
+    const auto& times = sim.get_result().get_times();
 
     auto time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_value));
 

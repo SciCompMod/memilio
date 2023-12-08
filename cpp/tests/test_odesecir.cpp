@@ -722,7 +722,7 @@ TEST(Secir, getInfectionsRelative)
 
 TEST(Secir, get_reproduction_number)
 {
-    size_t num_groups = 3;
+    const size_t num_groups = 3;
     mio::osecir::Model model((int)num_groups);
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
@@ -735,7 +735,9 @@ TEST(Secir, get_reproduction_number)
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}]        = 3000;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = 400;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]   = 50;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]     = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]   = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
@@ -744,7 +746,9 @@ TEST(Secir, get_reproduction_number)
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Susceptible}]        = 4000;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Exposed}]            = 350;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSevere}]     = 0;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedCritical}]   = 0;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Recovered}]          = 0;
@@ -753,7 +757,9 @@ TEST(Secir, get_reproduction_number)
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Susceptible}]        = 1500;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Exposed}]            = 200;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedNoSymptoms}] = 100;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSevere}]     = 50;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedCritical}]   = 50;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Recovered}]          = 0;
