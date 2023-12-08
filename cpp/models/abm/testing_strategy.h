@@ -221,7 +221,7 @@ public:
     bool run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
 private:
-    std::unordered_map<LocationId, std::vector<TestingScheme>>
+    std::vector<std::pair<LocationId, std::vector<TestingScheme>>>
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 

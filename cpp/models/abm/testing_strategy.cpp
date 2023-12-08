@@ -115,23 +115,45 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
 
 TestingStrategy::TestingStrategy(
     const std::unordered_map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map)
-    : m_location_to_schemes_map(location_to_schemes_map)
+    : m_location_to_schemes_map(location_to_schemes_map.begin(), location_to_schemes_map.end())
 {
 }
 
 void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    auto& schemes_vector = m_location_to_schemes_map[loc_id];
-    if (std::find(schemes_vector.begin(), schemes_vector.end(), scheme) == schemes_vector.end()) {
-        schemes_vector.emplace_back(scheme);
+    auto iter_schemes =
+        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_id](auto& p) {
+            return p.first == loc_id;
+        });
+    if (iter_schemes == m_location_to_schemes_map.end()) {
+        //no schemes for this location yet, add a new list with one scheme
+        m_location_to_schemes_map.emplace_back(loc_id, std::vector<TestingScheme>(1, scheme));
+    }
+    else {
+        //add scheme to existing vector if the scheme doesn't exist yet
+        auto& schemes = iter_schemes->second;
+        if (std::find(schemes.begin(), schemes.end(), scheme) == schemes.end()) {
+            schemes.push_back(scheme);
+        }
     }
 }
 
 void TestingStrategy::remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    auto& schemes_vector = m_location_to_schemes_map[loc_id];
-    auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
-    schemes_vector.erase(last, schemes_vector.end());
+    auto iter_schemes =
+        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_id](auto& p) {
+            return p.first == loc_id;
+        });
+    if (iter_schemes != m_location_to_schemes_map.end()) {
+        //remove the scheme from the list
+        auto& schemes_vector = iter_schemes->second;
+        auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
+        schemes_vector.erase(last, schemes_vector.end());
+        //delete the list of schemes for this location if no schemes left
+        if (schemes_vector.empty()) {
+            m_location_to_schemes_map.erase(iter_schemes);
+        }
+    }
 }
 
 void TestingStrategy::update_activity_status(TimePoint t)
@@ -151,16 +173,22 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
         return true;
     }
 
-    // Combine two vectors of schemes at corresponding location and location stype
-    std::vector<TestingScheme>* schemes_vector[] = {
-        &m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}],
-        &m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}]};
-
-    for (auto vec_ptr : schemes_vector) {
-        if (!std::all_of(vec_ptr->begin(), vec_ptr->end(), [&rng, &person, t](TestingScheme& ts) {
-                return !ts.is_active() || ts.run_scheme(rng, person, t);
-            })) {
-            return false;
+    //lookup schemes for this specific location as well as the location type
+    //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
+    for (auto loc_key : {LocationId{location.get_index(), location.get_type()},
+                         LocationId{INVALID_LOCATION_INDEX, location.get_type()}}) {
+        auto iter_schemes =
+            std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_key](auto& p) {
+                return p.first == loc_key;
+            });
+        if (iter_schemes != m_location_to_schemes_map.end()) {
+            //apply all testing schemes that are found
+            auto& schemes = iter_schemes->second;
+            if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
+                    return !ts.is_active() || ts.run_scheme(rng, person, t);
+                })) {
+                return false;
+            }
         }
     }
     return true;
