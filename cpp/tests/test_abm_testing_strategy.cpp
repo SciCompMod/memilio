@@ -137,10 +137,9 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(3))
+        .Times(testing::Exactly(2)) //only sampled twice, testing criteria don't apply to third person
         .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5))
-        .WillOnce(testing::Return(0.9));
+        .WillOnce(testing::Return(0.5));
 
     mio::abm::TestingStrategy test_strategy =
         mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());

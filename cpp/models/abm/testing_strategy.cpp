@@ -103,9 +103,9 @@ void TestingScheme::update_activity_status(TimePoint t)
 bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
-        double random = UniformDistribution<double>::get_instance()(rng);
-        if (random < m_probability) {
-            if (m_testing_criteria.evaluate(person, t)) {
+        if (m_testing_criteria.evaluate(person, t)) {
+            double random = UniformDistribution<double>::get_instance()(rng);
+            if (random < m_probability) {
                 return !person.get_tested(rng, t, m_test_type.get_default());
             }
         }
