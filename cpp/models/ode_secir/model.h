@@ -345,18 +345,16 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
         return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
     }
 
-    auto const& params                 = sim.get_model().parameters;
-    const size_t num_groups            = (size_t)sim.get_model().parameters.get_num_groups();
+    auto const& params      = sim.get_model().parameters;
+    const size_t num_groups = (size_t)sim.get_model().parameters.get_num_groups();
     //The infected compartments in the SECIR Model are: Exposed, Carrier, Infected, Hospitalized, ICU in respective agegroups
     const size_t num_infected_compartments   = 5;
     const size_t total_infected_compartments = num_infected_compartments * num_groups;
-    const double pi = std::acos(-1);
+    const double pi                          = std::acos(-1);
 
     //F encodes new Infections and V encodes transition times in the next-generation matrix calculation of R_t
-    Eigen::MatrixXd F(total_infected_compartments,
-                              total_infected_compartments);
-    Eigen::MatrixXd V(total_infected_compartments,
-                              total_infected_compartments);
+    Eigen::MatrixXd F(total_infected_compartments, total_infected_compartments);
+    Eigen::MatrixXd V(total_infected_compartments, total_infected_compartments);
     F = Eigen::MatrixXd::Zero(total_infected_compartments,
                               total_infected_compartments); //Initialize matrices F and V with zeroes
     V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
@@ -373,13 +371,12 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
             t_idx)[sim.get_model().populations.get_flat_index({i, InfectionState::InfectedCritical})];
     }
 
-    double season_val =
-        (1 + params.template get<Seasonality>() *
-                 sin(pi * (std::fmod((sim.get_model().parameters.template get<StartDay>() +
-                                                     sim.get_result().get_time(t_idx)),
-                                                    365.0) /
-                                              182.5 +
-                                          0.5)));
+    double season_val                        = (1 + params.template get<Seasonality>() *
+                                 sin(pi * (std::fmod((sim.get_model().parameters.template get<StartDay>() +
+                                                      sim.get_result().get_time(t_idx)),
+                                                     365.0) /
+                                               182.5 +
+                                           0.5)));
     ContactMatrixGroup const& contact_matrix = sim.get_model().parameters.template get<ContactPatterns>();
 
     Eigen::MatrixXd cont_freq_eff(num_groups, num_groups);
@@ -461,7 +458,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     }
 
     //Check, if J is invertible
-    if(J.determinant()==0){
+    if (J.determinant() == 0) {
         return mio::failure(mio::StatusCode::UnknownError, "Matrix V is not invertible");
     }
 
@@ -589,7 +586,6 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
                                        sim.get_result().get_time(time_late), y1, y2);
     return mio::success(static_cast<ScalarType>(result));
 }
-
 
 /**
  * Get migration factors.

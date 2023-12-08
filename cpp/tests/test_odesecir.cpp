@@ -732,38 +732,38 @@ TEST(Secir, get_reproduction_number)
     model.parameters.set<mio::osecir::Seasonality>(0.2);
 
     //total population of 10.000
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}]        = 3000;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = 400;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}]                 = 3000;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = 400;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 50;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]   = 50;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]     = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]   = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 50;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]              = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]            = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = 0;
 
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Susceptible}]        = 4000;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Exposed}]            = 350;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Susceptible}]                 = 4000;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Exposed}]                     = 350;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 50;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSevere}]     = 0;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedCritical}]   = 0;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Recovered}]          = 0;
-    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Dead}]               = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptoms}]            = 100;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSevere}]              = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedCritical}]            = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Recovered}]                   = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Dead}]                        = 0;
 
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Susceptible}]        = 1500;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Exposed}]            = 200;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedNoSymptoms}] = 100;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Susceptible}]                 = 1500;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Exposed}]                     = 200;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 100;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSevere}]     = 50;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedCritical}]   = 50;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Recovered}]          = 0;
-    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Dead}]               = 0;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptoms}]            = 100;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSevere}]              = 50;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedCritical}]            = 50;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Recovered}]                   = 0;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Dead}]                        = 0;
 
     for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_groups; i++) {
         model.parameters.get<mio::osecir::IncubationTime>()[i]       = 5.2;
@@ -873,8 +873,7 @@ TEST(Secir, get_reproduction_number)
     mio::osecir::Simulation<> sim3(model, 0.0);
     mio::TimeSeries<ScalarType> time_series3((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_8((int)mio::osecir::InfectionState::Count * num_groups);
-    result_8 << 100, 0, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        100, 0;
+    result_8 << 100, 0, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0;
     time_series3.add_time_point(0.0, result_8);
     sim3.get_result() = time_series3;
     EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim3).value(), 1.8462669866786356, 1e-12);
