@@ -161,29 +161,6 @@ public:
         return m_nodes.back();
     }
 
-    template <class... Args>
-    Node<NodePropertyT>& add_node(int id, double duration_stay, Args&&... args)
-    {
-        m_nodes.emplace_back(id, duration_stay, std::forward<Args>(args)...);
-        return m_nodes.back();
-    }
-
-    // Ändere die Funktionsdeklaration von add_node
-    template <class ModelType>
-    Node<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2)
-    {
-        m_nodes.emplace_back(id, duration_stay, model1, model2);
-        return m_nodes.back();
-    }
-
-    template <class ModelType>
-    Node<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2, double m_t0,
-                                  double m_dt_integration)
-    {
-        m_nodes.emplace_back(id, duration_stay, model1, model2, m_t0, m_dt_integration);
-        return m_nodes.back();
-    }
-
     /**
      * @brief add an edge to the graph. property of the edge is constructed from arguments.
      */
@@ -198,37 +175,6 @@ public:
                                                      ? e1.end_node_idx < e2.end_node_idx
                                                      : e1.start_node_idx < e2.start_node_idx;
                                       });
-    }
-
-    /**
-     * @brief add an edge to the graph. property of the edge is constructed from arguments.
-     */
-    template <class... Args>
-    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime, Args&&... args)
-    {
-        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(
-            m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, std::forward<Args>(args)...),
-            [](auto&& e1, auto&& e2) {
-                return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
-                                                              : e1.start_node_idx < e2.start_node_idx;
-            });
-    }
-
-    /**
-     * @brief add an edge to the graph. property of the edge is constructed from arguments.
-     */
-    template <class... Args>
-    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime, std::vector<int> path,
-                                  Args&&... args)
-    {
-        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(
-            m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, path, std::forward<Args>(args)...),
-            [](auto&& e1, auto&& e2) {
-                return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
-                                                              : e1.start_node_idx < e2.start_node_idx;
-            });
     }
 
     /**
