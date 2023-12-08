@@ -29,9 +29,6 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
 #include <iostream>
-#include <string>
-#include <vector>
-
 #include "boost/filesystem.hpp"
 
 //is used to provide some paths as function arguments

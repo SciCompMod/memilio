@@ -38,6 +38,22 @@
 namespace mio
 {
 
+template <typename T, typename = void>
+struct has_stay_duration : std::false_type {
+};
+
+template <typename T>
+struct has_stay_duration<T, std::void_t<decltype(std::declval<T>().stay_duration)>> : std::true_type {
+};
+
+template <typename T, typename = void>
+struct has_traveltime : std::false_type {
+};
+
+template <typename T>
+struct has_traveltime<T, std::void_t<decltype(std::declval<T>().traveltime)>> : std::true_type {
+};
+
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
  * Can simulate migration graphs with one simulation in each node or single simulations.
@@ -344,10 +360,20 @@ private:
 
         auto sampled_graph = sample_graph(m_graph);
         for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.stay_duration, node.property, node.mobility, m_t0, m_dt_integration);
+            if constexpr (has_stay_duration<decltype(node)>::value) {
+                sim_graph.add_node(node.id, node.stay_duration, node.property, m_t0, m_dt_integration);
+            }
+            else {
+                sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+            }
         }
         for (auto&& edge : sampled_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.path, edge.property);
+            if constexpr (has_traveltime<decltype(edge)>::value) {
+                sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.property);
+            }
+            else {
+                sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            }
         }
 
         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
