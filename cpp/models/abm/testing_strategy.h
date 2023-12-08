@@ -20,6 +20,7 @@
 #ifndef EPI_ABM_TESTING_SCHEME_H
 #define EPI_ABM_TESTING_SCHEME_H
 
+#include "abm/config.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/location.h"
@@ -91,7 +92,7 @@ public:
     bool evaluate(const Person& p, TimePoint t) const;
 
 private:
-    std::unordered_set<size_t> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
+    std::bitset<MAX_NUM_AGE_GROUPS> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::bitset<(size_t)InfectionState::Count>
         m_infection_states; /**< BitSet of #InfectionState%s that are either allowed or required to
     be tested.*/
