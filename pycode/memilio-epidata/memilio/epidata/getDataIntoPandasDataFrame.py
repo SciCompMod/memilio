@@ -112,7 +112,7 @@ class Conf:
             self.path_to_use = out_folder
 
         # suppress Future & DepricationWarnings
-        if Conf.v_level <= 2:
+        if VerbosityLevel[Conf.v_level].value <= 2:
             warnings.simplefilter(action='ignore', category=FutureWarning)
             warnings.simplefilter(action='ignore', category=DeprecationWarning)
         # deactivate (or activate progress indicator)
