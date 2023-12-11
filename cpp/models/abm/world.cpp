@@ -146,7 +146,7 @@ void World::migration(TimePoint t, TimeSpan dt)
         m_trip_list.reset_index();
     }
 
-    // Agents plan for tests
+    // Agents do tests in advance if applicable
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
@@ -156,50 +156,23 @@ void World::migration(TimePoint t, TimeSpan dt)
             m_trip_list.get_trips_between(t, t + dt + parameters.get<mio::abm::LookAheadTime>(), weekend);
         for (const auto& trip : future_trips) {
             auto& target_location = find_location(trip->migration_destination.type, *person);
-
-            // Get applicable testing schemes for the person and future trip location
-            applicable_schemes = m_testing_strategy.get_applicable_schemes(*person, target_location, trip->time, t);
+            m_testing_strategy.run_strategy(personal_rng, *person, target_location, t + dt);
         }
-        auto testing_migration_rule = [&](auto rule) -> bool {
+        auto testing_migration_rule = [&](auto rule) -> void {
             //run migration rule and check if migration can actually happen
             auto target_type =
                 rule(personal_rng, *person, t + parameters.get<mio::abm::LookAheadTime>(), dt, parameters);
-            auto& target_location  = find_location(target_type, *person);
-            auto& current_location = person->get_location();
+            auto& target_location = find_location(target_type, *person);
             // Get applicable testing schemes for the person and future trip location
-            applicable_schemes = m_testing_strategy.get_applicable_schemes(
-                *person, target_location, t + parameters.get<mio::abm::LookAheadTime>(), t);
-
-            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-
-                    return true;
-                }
-            }
-            return false;
+            m_testing_strategy.run_strategy(personal_rng, *person, target_location, t + dt);
         };
         //run migration rules one after the other if the corresponding location type exists
         //shortcutting of bool operators ensures the rules stop after the first rule is applied
-        if (m_use_migration_rules) {
-            (has_locations({LocationType::School, LocationType::Home}) && testing_migration_rule(&go_to_school)) ||
-                (has_locations({LocationType::Work, LocationType::Home}) && testing_migration_rule(&go_to_work)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
-                 testing_migration_rule(&go_to_shop)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
-                 testing_migration_rule(&go_to_event)) ||
-                (has_locations({LocationType::Home}) && testing_migration_rule(&go_to_quarantine));
-        }
-
-        // Process each applicable scheme
-        for (const auto* scheme : applicable_schemes) {
-            auto result = scheme->run_scheme(personal_rng, *person, t);
-            if (!result) {
-                // Handle the case where the test fails (e.g., person cannot make the trip)
-            }
-            // Optionally, save the test result in the person's record
-            person->add_test_result(t + scheme->get_type().get_default().required_time, scheme->get_type(), result);
-        }
+        testing_migration_rule(&go_to_school);
+        testing_migration_rule(&go_to_work);
+        testing_migration_rule(&go_to_shop);
+        testing_migration_rule(&go_to_event);
+        testing_migration_rule(&go_to_quarantine);
     }
 }
 

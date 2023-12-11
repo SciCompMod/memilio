@@ -243,17 +243,6 @@ public:
      */
     bool run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
-    /**
-    * @brief Get and returns a list of testing schemes that are applicable to a given person at a specific location and time.
-    * @param person The Person for whom the testing schemes are to be evaluated.
-    * @param location The Location where the testing schemes are to be applied.
-    * @param trip_time The TimePoint at which the trip takes place.
-    * @param curr_time The current TimePoint.
-    * @return A vector of pointers to the TestingScheme instances that are applicable.
-    */
-    std::vector<const TestingScheme*> get_applicable_schemes(const Person& person, const Location& location,
-                                                             TimePoint trip_time, TimePoint curr_time);
-
 private:
     std::unordered_map<LocationId, std::vector<TestingScheme>>
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.

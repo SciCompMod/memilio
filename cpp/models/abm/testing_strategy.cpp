@@ -100,11 +100,6 @@ void TestingScheme::update_activity_status(TimePoint t)
     m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
-bool TestingScheme::is_active_at_time(TimePoint t) const
-{
-    return m_start_date <= t && t <= m_end_date;
-}
-
 bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
@@ -116,12 +111,6 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
         }
     }
     return true;
-}
-
-bool TestingScheme::is_applicable(const Person& person, TimePoint trip_time, TimePoint curr_time) const
-{
-    return m_testing_criteria.evaluate(person, curr_time) && (!person.has_valid_test_result(m_test_type, trip_time)) &&
-           (trip_time - curr_time >= m_test_type.get_default().required_time);
 }
 
 TestingStrategy::TestingStrategy(
@@ -169,34 +158,14 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
 
     for (auto vec_ptr : schemes_vector) {
         if (!std::all_of(vec_ptr->begin(), vec_ptr->end(), [&rng, &person, t](TestingScheme& ts) {
-                return !ts.is_active() || ts.run_scheme(rng, person, t);
+                auto result = !ts.is_active() || ts.run_scheme(rng, person, t);
+                person.add_test_result(t + ts.get_type().get_default().required_time, ts.get_type(), result);
+                return result;
             })) {
             return false;
         }
     }
     return true;
-}
-
-std::vector<const TestingScheme*> TestingStrategy::get_applicable_schemes(const Person& person,
-                                                                          const Location& location, TimePoint trip_time,
-                                                                          TimePoint curr_time)
-{
-    std::vector<const TestingScheme*> applicable_schemes;
-
-    // Combine two vectors of schemes at corresponding location and location stype
-    std::vector<TestingScheme>* schemes_vector[] = {
-        &m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}],
-        &m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}]};
-
-    for (auto vec_ptr : schemes_vector) {
-        for (const auto& scheme : *vec_ptr) {
-            if (scheme.is_active_at_time(trip_time) && scheme.is_applicable(person, trip_time, curr_time)) {
-                applicable_schemes.push_back(&scheme);
-            }
-        }
-    }
-
-    return applicable_schemes;
 }
 
 } // namespace abm
