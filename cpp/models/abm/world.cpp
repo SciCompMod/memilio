@@ -167,7 +167,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
             // Get applicable testing schemes for the person and future trip location
-            auto applicable_schemes = m_testing_strategy.get_applicable_schemes(
+            applicable_schemes = m_testing_strategy.get_applicable_schemes(
                 *person, target_location, t + parameters.get<mio::abm::LookAheadTime>(), t);
 
             if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
@@ -292,10 +292,6 @@ TestingStrategy& World::get_testing_strategy()
 const TestingStrategy& World::get_testing_strategy() const
 {
     return m_testing_strategy;
-}
-
-void World::update_trip_list(TimePoint /*t*/, TimeSpan /*dt*/)
-{
 }
 
 } // namespace abm

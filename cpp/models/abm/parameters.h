@@ -331,21 +331,6 @@ struct GenericTest {
 };
 
 /**
- * @brief Parameters of an AntibodyTest.
- */
-struct AntibodyTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.8, 0.88, minutes(30), hours(24)};
-    }
-    static std::string name()
-    {
-        return "AntigenTest";
-    }
-};
-
-/**
  * @brief Parameters of an AntigenTest.
  */
 struct AntigenTest : public GenericTest {
