@@ -117,6 +117,54 @@ class GraphDetailed : public Graph<NodePropertyT, EdgePropertyT>
 public:
     using Graph<NodePropertyT, EdgePropertyT>::Graph;
 
+    /**
+     * @brief range of nodes
+     */
+    auto nodes()
+    {
+        return make_range(begin(m_nodes), end(m_nodes));
+    }
+
+    /**
+     * @brief range of nodes
+     */
+    auto nodes() const
+    {
+        return make_range(begin(m_nodes), end(m_nodes));
+    };
+
+    /**
+     * @brief range of edges
+     */
+    auto edges()
+    {
+        return make_range(begin(m_edges), end(m_edges));
+    }
+
+    /**
+     * @brief range of edges
+     */
+    auto edges() const
+    {
+        return make_range(begin(m_edges), end(m_edges));
+    }
+
+    /**
+     * @brief range of edges going out from a specific node
+     */
+    auto out_edges(size_t node_idx)
+    {
+        return out_edges(begin(m_edges), end(m_edges), node_idx);
+    }
+
+    /**
+     * @brief range of edges going out from a specific node
+     */
+    auto out_edges(size_t node_idx) const
+    {
+        return out_edges(begin(m_edges), end(m_edges), node_idx);
+    }
+
     template <class ModelType>
     NodeDetailed<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2)
     {
@@ -185,12 +233,12 @@ private:
  */
 template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
           class ReadFunction, class NodeIdFunction>
-IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                         const std::string& population_data_path, const std::string& stay_times_data_path,
-                         bool is_node_for_county, Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
-                         NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
-                         double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
-                         bool export_time_series = false)
+IOResult<void> set_nodes_detailed(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                                  const std::string& population_data_path, const std::string& stay_times_data_path,
+                                  bool is_node_for_county, GraphDetailed<Model, MigrationParams>& params_graph,
+                                  ReadFunction&& read_func, NodeIdFunction&& node_func,
+                                  const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                  double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
 {
 
     BOOST_OUTCOME_TRY(duration_stay, mio::read_duration_stay(stay_times_data_path));
@@ -258,11 +306,12 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  */
 template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
           class InfectionState>
-IOResult<void> set_edges(const std::string& travel_times_path, const std::string mobility_data_path,
-                         const std::string& travelpath_path, Graph<Model, MigrationParams>& params_graph,
-                         std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-                         std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{},
-                         ScalarType theshold_edges                 = 4e-5)
+IOResult<void>
+set_edges_detailed(const std::string& travel_times_path, const std::string mobility_data_path,
+                   const std::string& travelpath_path, GraphDetailed<Model, MigrationParams>& params_graph,
+                   std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
+                   std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{},
+                   ScalarType theshold_edges                 = 4e-5)
 {
     BOOST_OUTCOME_TRY(mobility_data_commuter, mio::read_mobility_plain(mobility_data_path));
     BOOST_OUTCOME_TRY(travel_times, mio::read_mobility_plain(travel_times_path));

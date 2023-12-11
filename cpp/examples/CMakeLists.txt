@@ -21,8 +21,9 @@ target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 
-# add_executable(sim_mobility_detailed ode_secirvvs_mobility_detailed.cpp)
-# target_link_libraries(sim_mobility_detailed PRIVATE memilio ode_secirvvs)
+add_executable(sim_mobility_detailed ode_secirvvs_mobility_detailed.cpp)
+target_link_libraries(sim_mobility_detailed PRIVATE memilio ode_secirvvs)
+
 add_executable(seir_flows_example ode_seir_flows.cpp)
 target_link_libraries(seir_flows_example PRIVATE memilio ode_seir)
 
