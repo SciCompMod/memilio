@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -30,7 +30,7 @@ namespace py = pybind11;
 namespace pymio
 {
 
-void bind_damping_sampling(py::module& m, std::string const& name)
+void bind_damping_sampling(py::module_& m, std::string const& name)
 {
     pymio::pybind_pickle_class<mio::DampingSampling>(m, name.c_str())
         .def(py::init([](const mio::UncertainValue& value, int level, int type, double time,

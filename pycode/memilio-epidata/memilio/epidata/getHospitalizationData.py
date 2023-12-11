@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -36,19 +36,8 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
-
-def download_hospitalization_data():
-    # RKI content from github
-    url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv'
-    # try to read csv
-    try:
-        df = pd.read_csv(url)
-    except Exception as err:
-        raise FileNotFoundError(
-            "Error in download of Hospitalization data.") from err
-    hospit_sanity_checks(df)
-
-    return df
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 
 def hospit_sanity_checks(df):
@@ -186,30 +175,25 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     # get raw dataframe
     filename = "RKIHospitFull"
-    if read_data:
-        # read json file for already downloaded data
-        file_in = os.path.join(directory, filename + ".json")
+    url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv"
+    path = os.path.join(directory + filename + ".json")
+    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
-        try:
-            df_raw = pd.read_json(file_in)
-        except ValueError:
-            raise FileNotFoundError("Error: The file: " + file_in +
-                                    " does not exist. Call program without"
-                                    " -r flag to get it.")
-    else:
-        df_raw = download_hospitalization_data()
-        if not no_raw:
-            gd.write_dataframe(df_raw, directory, filename, file_format)
-    df_data = df_raw.copy()
+    hospit_sanity_checks(df_raw)
+
+    if not no_raw:
+        gd.write_dataframe(df_raw, directory, filename, file_format)
+    df_data = df_raw[:]
     # drop unwanted columns and rows, rename and sort dataframe
     df_data.rename(dd.GerEng, axis=1, inplace=True)
     df_data.rename(columns={'Datum': dd.EngEng['date']}, inplace=True)
-    df_data = df_data.drop(columns=['State', '7T_Hospitalisierung_Inzidenz'])
-    df_data = df_data.sort_values(
+    df_data.drop(
+        columns=['State', '7T_Hospitalisierung_Inzidenz'], inplace=True)
+    df_data.sort_values(
         by=[dd.EngEng['date'],
             dd.EngEng['idState'],
-            dd.EngEng['ageRKI']]).reset_index(
-        drop=True)
+            dd.EngEng['ageRKI']], inplace=True)
+    df_data.reset_index(drop=True, inplace=True)
     # impute 6 days before min_date to split up the seven day cases
     df_data = mdfs.impute_and_reduce_df(
         df_old=df_data,
@@ -224,23 +208,23 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     # get data for each day
     # for each state and age group seperately
-    df_daily = pd.DataFrame()
+    # create list of DataFrames, later to be merged
+    df_daily = []
     for age in df_data[dd.EngEng['ageRKI']].unique():
         df_age = df_data[df_data[dd.EngEng['ageRKI']] == age]
         for stateid in df_data[dd.EngEng['idState']].unique():
             df_age_stateid = df_age[df_age[dd.EngEng['idState']]
-                                    == stateid].copy()
+                                    == stateid]
             # get hospitalizations per day from incidence
             seven_days_values = df_age_stateid['7T_Hospitalisierung_Faelle'].values
             daily_values = get_hospitailzations_per_day(seven_days_values)
             # save data in dataframe
             df_age_stateid['hospitalized'] = daily_values
-            df_age_stateid = df_age_stateid.drop(
-                ['7T_Hospitalisierung_Faelle'], axis=1)
-            df_daily = pd.concat(
-                [df_daily.reset_index(drop=True),
-                 df_age_stateid.reset_index(drop=True)],
-                join='outer')
+            df_age_stateid.drop(
+                ['7T_Hospitalisierung_Faelle'], axis=1, inplace=True)
+            df_daily.append(df_age_stateid)
+
+    df_daily = pd.concat(df_daily, join='outer', ignore_index=True)
 
     df_daily = mdfs.extract_subframe_based_on_dates(
         df_daily, start_date, end_date)

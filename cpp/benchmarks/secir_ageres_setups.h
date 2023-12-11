@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -21,7 +21,7 @@
 #define SECIR_AGERES_SETUPS_H_
 
 #include "memilio/compartments/simulation.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "models/ode_secir/model.h"
 #include "models/ode_secir/parameter_space.h"

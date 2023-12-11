@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,22 +23,39 @@
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
-#include "mobility/mobility.h"
+#include "epidemiology/dynamic_npis.h"
+#include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
 #include "utils/uncertain_value.h"
+#include "utils/index.h"
+#include "utils/custom_index_array.h"
 
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
 namespace py = pybind11;
 
+namespace pymio
+{
+
+template <>
+std::string pretty_name<mio::AgeGroup>()
+{
+    return "AgeGroup";
+}
+
+} // namespace pymio
+
 PYBIND11_MODULE(_simulation, m)
 {
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
+    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+
     pymio::bind_date(m, "Date");
 
     auto damping_class = py::class_<mio::SquareDamping>(m, "Damping");
@@ -79,6 +96,8 @@ PYBIND11_MODULE(_simulation, m)
     auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
     pymio::bind_damping_expression_group_members(migration_coeff_group_class);
 
+    pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
+
     pymio::bind_migration_parameters(m, "MigrationParameters");
     pymio::bind_migration_parameter_edge(m, "MigrationParameterEdge");
     pymio::bind_migration(m, "Migration");
@@ -87,19 +106,23 @@ PYBIND11_MODULE(_simulation, m)
     m.def(
         "get_state_id_de",
         [](int county) {
-            return int(mio::regions::de::get_state_id(mio::regions::de::CountyId(county)));
+            return int(mio::regions::get_state_id(int(mio::regions::CountyId(county))));
         },
         py::arg("county_id"));
     m.def(
         "get_holidays_de",
         [](int state, mio::Date start_date, mio::Date end_date) {
-            auto h = mio::regions::de::get_holidays(mio::regions::de::StateId(state), start_date, end_date);
+            auto h = mio::regions::get_holidays(mio::regions::StateId(state), start_date, end_date);
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
         py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
 
     pymio::bind_logging(m, "LogLevel");
+
+    m.def("seed_random_number_generator", [] {
+        mio::thread_local_rng().seed(mio::RandomNumberGenerator::generate_seeds());
+    });
 
     m.attr("__version__") = "dev";
 }

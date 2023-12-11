@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -50,7 +50,7 @@ int main()
     }
 
     // Initialize model.
-    mio::iseir::IdeSeirModel model(std::move(result), dt, N);
+    mio::iseir::Model model(std::move(result), dt, N);
 
     // Set working parameters.
     model.parameters.set<mio::iseir::LatencyTime>(3.3);

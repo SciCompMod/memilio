@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -24,6 +24,7 @@ import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import progress_indicator
 
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
@@ -180,6 +181,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def test_get_state_IDs(self):
         # zfill is false
@@ -546,8 +548,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         # the test dataframe should be unchanged as it is the input of the function
         # avoid error due to comparison of int32 and int64 columns.
         pd.testing.assert_frame_equal(
-            test_df.astype(dtype={'ID_County': "int64"}),
-            pd.DataFrame(self.eisenach_unmerged_data).astype(dtype={'ID_County': "int64"}))
+            test_df, pd.DataFrame(self.eisenach_unmerged_data))
 
 
 if __name__ == '__main__':

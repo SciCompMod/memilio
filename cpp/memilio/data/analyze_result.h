@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, David Kerkmann, Sascha Korf
 *
@@ -21,7 +21,7 @@
 #define MEMILIO_DATA_ANALYZE_RESULT_H
 
 #include "memilio/utils/time_series.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 
 #include <functional>
 #include <vector>

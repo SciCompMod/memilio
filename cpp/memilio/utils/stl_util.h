@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -22,11 +22,14 @@
 
 #include "memilio/utils/metaprogramming.h"
 
+#include <array>
+#include <numeric>
 #include <vector>
 #include <algorithm>
 #include <utility>
 #include <iterator>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <cstring>
 #include <cassert>
@@ -34,6 +37,21 @@
 
 namespace mio
 {
+
+/**
+ * @brief Adds manipulators for width, (fixed) precision and fill character to an ostream.
+ * Note that the formatting is consumed by the first output given to the ostream.
+ * @param out Any std::ostream.
+ * @param width Minimum width of the output.
+ * @param precision The exact number of decimals (used only for numbers).
+ * @param fill [Default: A space ' '] The character used for padding.
+ * @return Returns a reference to out.
+ */
+inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t precision, char fill = ' ')
+{
+    // Note: ostream& operator<< returns a reference to itself
+    return out << std::setw(width) << std::fixed << std::setprecision(precision) << std::setfill(fill);
+}
 
 /**
  * @brief inserts element in a sorted vector, replacing items that are equal
@@ -169,6 +187,14 @@ using eq_op_t = decltype(std::declval<T>() == std::declval<T>());
 template <class T>
 using has_eq_op = is_expression_valid<eq_op_t, T>;
 
+/**
+ * meta function to check type T for beeing an iterator
+ */
+template <class T>
+using is_iterator_expr_t = typename std::iterator_traits<T>::iterator_category;
+template <class T>
+using is_iterator = is_expression_valid<is_iterator_expr_t, T>;
+
 namespace details
 {
 /**
@@ -263,6 +289,30 @@ template <class Iter, class Pred>
 bool contains(Iter b, Iter e, Pred p)
 {
     return find_if(b, e, p) != e;
+}
+
+/**
+ * Get an std::array that contains all members of an enum class.
+ * The enum class must be a valid index, i.e. members must be sequential starting at 0 and there must
+ * be a member `Count` at the end, that will not be included in the array.
+ * Example:
+ * ```
+ * enum class E { A, B, Count };
+ * assert(enum_members<E>() == std::array<2, E>(E::A, E::B));
+ * ``` 
+ * @tparam T An enum class that is a valid index.
+ * @return Array of all members of the enum class not including T::Count.
+ */
+template<class T>
+constexpr std::array<T, size_t(T::Count)> enum_members()
+{
+    auto enum_members = std::array<T, size_t(T::Count)>{};
+    auto indices      = std::array<std::underlying_type_t<T>, size_t(T::Count)>{};
+    std::iota(indices.begin(), indices.end(), std::underlying_type_t<T>(0));
+    std::transform(indices.begin(), indices.end(), enum_members.begin(), [](auto i) {
+        return T(i);
+    });
+    return enum_members;
 }
 
 } // namespace mio

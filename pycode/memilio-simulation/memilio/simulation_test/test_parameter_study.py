@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -30,7 +30,7 @@ class Test_ParameterStudy(unittest.TestCase):
     def _get_model(self):
         model = secir.Model(1)
 
-        A0 = secir.AgeGroup(0)
+        A0 = mio.AgeGroup(0)
 
         model.parameters.IncubationTime[A0] = 5.2
         model.parameters.TimeInfectedSymptoms[A0] = 6
@@ -45,7 +45,11 @@ class Test_ParameterStudy(unittest.TestCase):
 
         model.populations[A0, secir.InfectionState.Exposed] = 100
         model.populations[A0, secir.InfectionState.InfectedNoSymptoms] = 50
+        model.populations[A0,
+                          secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
         model.populations[A0, secir.InfectionState.InfectedSymptoms] = 50
+        model.populations[A0,
+                          secir.InfectionState.InfectedSymptomsConfirmed] = 0
         model.populations[A0, secir.InfectionState.InfectedSevere] = 20
         model.populations[A0, secir.InfectionState.InfectedCritical] = 10
         model.populations[A0, secir.InfectionState.Recovered] = 10
@@ -63,6 +67,19 @@ class Test_ParameterStudy(unittest.TestCase):
         model.apply_constraints()
         return model
 
+    def test_graph(self):
+        model = self._get_model()
+        graph = secir.ModelGraph()
+        graph.add_node(0, model)
+        graph.add_node(1, model)
+        graph.add_edge(0, 1, 0.01 * np.ones(10))
+        graph.add_edge(1, 0, 0.01 * np.ones(10))
+
+        study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
+
+        self.assertEqual(study.secir_model_graph.num_nodes, 2)
+        self.assertEqual(study.secir_model_graph.num_edges, 2)
+
     def test_run(self):
         model = self._get_model()
 
@@ -76,7 +93,8 @@ class Test_ParameterStudy(unittest.TestCase):
         self.assertEqual(study.num_runs, num_runs)
 
         # run as graph
-        def handle_result_func(graph):
+        def handle_result_func(graph, run_idx):
+            self.assertEqual(run_idx, handle_result_func.c)
             handle_result_func.c += 1
             handle_result_func.results.append(graph)
             self.assertAlmostEqual(graph.get_node(
@@ -86,12 +104,14 @@ class Test_ParameterStudy(unittest.TestCase):
 
         handle_result_func.c = 0
         handle_result_func.results = []
+        mio.seed_random_number_generator()  # must be seeded before ParameterStudy.run
         study.run(handle_result_func)
 
         self.assertEqual(handle_result_func.c, num_runs)
 
         # run as single node
-        def handle_single_result_func(sim):
+        def handle_single_result_func(sim, run_idx):
+            self.assertEqual(run_idx, handle_single_result_func.c)
             handle_single_result_func.c += 1
             handle_single_result_func.results.append(sim)
             self.assertAlmostEqual(sim.result.get_time(0), t0)
@@ -99,22 +119,10 @@ class Test_ParameterStudy(unittest.TestCase):
 
         handle_single_result_func.c = 0
         handle_single_result_func.results = []
+        mio.seed_random_number_generator()  # must be seeded before ParameterStudy.run
         study.run_single(handle_single_result_func)
 
         self.assertEqual(handle_single_result_func.c, num_runs)
-
-    def test_graph(self):
-        model = self._get_model()
-        graph = secir.ModelGraph()
-        graph.add_node(0, model)
-        graph.add_node(1, model)
-        graph.add_edge(0, 1, 0.01 * np.ones(8))
-        graph.add_edge(1, 0, 0.01 * np.ones(8))
-
-        study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
-
-        self.assertEqual(study.secir_model_graph.num_nodes, 2)
-        self.assertEqual(study.secir_model_graph.num_edges, 2)
 
 
 if __name__ == '__main__':

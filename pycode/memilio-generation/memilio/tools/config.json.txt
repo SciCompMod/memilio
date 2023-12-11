@@ -1,0 +1,44 @@
+[
+    {
+        "source_file": "${memilio_SOURCE_DIR}/models/ode_seir/model.cpp",
+        "namespace": "mio::oseir::",
+        "python_module_name": "oseir",
+        "python_generation_module_path": "${memilio-python_SOURCE_DIR}/../memilio-generation",
+        "skbuild_path_to_database": "${memilio-python_BINARY_DIR}",
+        "target_folder": "${memilio-python_SOURCE_DIR}/../memilio-generation/memilio/tools",
+        "optional": {
+            "libclang_library_path": "${LIBCLANG_PATH}",
+            "simulation_class": "Simulation",
+            "age_group": false,
+            "parameterset_wrapper": true
+        }
+    },
+    {
+        "source_file": "${memilio_SOURCE_DIR}/models/ode_secir/model.cpp",
+        "namespace": "mio::osecir::",
+        "python_module_name": "osecir",
+        "python_generation_module_path": "${memilio-python_SOURCE_DIR}/../memilio-generation",
+        "skbuild_path_to_database": "${memilio-python_BINARY_DIR}",
+        "target_folder": "${memilio-python_SOURCE_DIR}/../memilio-generation/memilio/tools",
+        "optional": {
+            "libclang_library_path": "${LIBCLANG_PATH}",
+            "simulation_class": "Simulation",
+            "age_group": true,
+            "parameterset_wrapper": true
+        }
+    },
+    {
+        "source_file": "${memilio_SOURCE_DIR}/models/ode_secirvvs/model.cpp",
+        "namespace": "mio::osecirvvs::",
+        "python_module_name": "osecirvvs",
+        "python_generation_module_path": "${memilio-python_SOURCE_DIR}/../memilio-generation",
+        "skbuild_path_to_database": "${memilio-python_BINARY_DIR}",
+        "target_folder": "${memilio-python_SOURCE_DIR}/../memilio-generation/memilio/tools",
+        "optional": {
+            "libclang_library_path": "${LIBCLANG_PATH}",
+            "simulation_class": "Simulation",
+            "age_group": true,
+            "parameterset_wrapper": true
+        }
+    }
+]

@@ -75,12 +75,12 @@ cmake --build .
 
 Run the unittests with:
 ```bash
-./tests/memilio-test
+./bin/memilio-test
 ```
 
 Run an example with:
-```
-./examples/secir-example
+```bash
+./bin/secir-example
 ```
 
 ### Installing

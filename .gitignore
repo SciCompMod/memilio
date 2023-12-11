@@ -189,6 +189,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+_skbuild/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -269,6 +270,9 @@ pycode/epidemiology/**/*.json
 pycode/epidemiology/**/*.h5
 pycode/epi_venv/
 pycode/build_pylint/
+
+# Credentials for data download
+pycode/memilio-epidata/memilio/epidata/CredentialsRegio.ini
 
 # Docs
 docs/html

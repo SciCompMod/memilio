@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,6 +23,9 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/populations.h"
+#include "memilio/io/history.h"
 
 namespace mio
 {
@@ -30,67 +33,73 @@ namespace abm
 {
 
 /**
- * run the simulation in discrete steps, evolve the world and report results.
+ * @brief Run the Simulation in discrete steps, evolve the World and report results.
  */
 class Simulation
 {
-    using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
 
 public:
     /**
-     * Create a simulation.
-     * @param t the starting time of the simulation
-     * @param world the world to simulate
+     * @brief Create a simulation.
+     * @param[in] t0 The starting time of the Simulation.
+     * @param[in] world The World to simulate.
      */
-    Simulation(TimePoint t, World&& world);
+    Simulation(TimePoint t0, World&& world);
 
     /**
-     * Create a simulation with an empty world.
+     * @brief Create a Simulation with an empty World.
      * World needs to be filled later.
      * @see Simulation::get_world
-     * @param t the starting time of the simulation.
+     * @param[in] t0 The starting time of the Simulation.
      */
-    Simulation(TimePoint t)
-        : Simulation(t, World())
-    {}
+    Simulation(TimePoint t0, size_t num_agegroups)
+        : Simulation(t0, World(num_agegroups))
+    {
+    }
 
     /** 
-     * Run the simulation from the current time to tmax.
-     * @param tmax time to stop
+     * @brief Run the Simulation from the current time to tmax.
+     * @param[in] tmax Time to stop.
+     * @param[in] history History object to log data of the Simulation.
      */
-    void advance(TimePoint tmax);
-
-    /**
-     * Get the result of the simulation.
-     * Sum over all locations of the number of persons in an infection state.
-     * @return the result of the simulation.
-     */
-    const TimeSeries<double>& get_result() const
+    template <typename... History>
+    void advance(TimePoint tmax, History&... history)
     {
-        return m_result;
+        //log initial system state
+        (history.log(*this), ...);
+        while (m_t < tmax) {
+            evolve_world(tmax);
+            (history.log(*this), ...);
+        }
     }
 
     /**
-     * Get the World that this simulation evolves.
-     * @{
+     * @brief Get the current time of the Simulation.
+     */
+    TimePoint get_time() const
+    {
+        return m_t;
+    }
+
+    /**
+     * @brief Get the World that this Simulation evolves.
      */
     World& get_world()
     {
         return m_world;
     }
-    const World& get_world() const 
+    const World& get_world() const
     {
         return m_world;
     }
-    /**@}*/
 
 private:
     void store_result_at(TimePoint t);
+    void evolve_world(TimePoint tmax);
 
-    World m_world;
-    TimeSeries<double> m_result;
-    TimePoint m_t;
-    TimeSpan m_dt;
+    World m_world; ///< The World to simulate.
+    TimePoint m_t; ///< The current TimePoint of the Simulation.
+    TimeSpan m_dt; ///< The length of the time steps.
 };
 
 } // namespace abm

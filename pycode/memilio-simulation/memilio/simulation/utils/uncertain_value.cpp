@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -26,7 +26,7 @@ namespace py = pybind11;
 namespace pymio
 {
 
-void bind_uncertain_value(py::module& m, std::string const& name)
+void bind_uncertain_value(py::module_& m, std::string const& name)
 {
     pymio::pybind_pickle_class<mio::UncertainValue>(m, name.c_str())
         .def(py::init<ScalarType>(), py::arg("value") = 0.0)

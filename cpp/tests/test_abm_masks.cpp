@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -17,7 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm/person.h"
+#include "abm_helpers.h"
+#include "memilio/utils/random_number_generator.h"
 
 TEST(TestMasks, init)
 {
@@ -54,38 +56,41 @@ TEST(TestMasks, changeMask)
 
 TEST(TestMasks, maskProtection)
 {
-    mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState::Unvaccinated;
-    mio::abm::GlobalInfectionParameters params;
+    auto rng = mio::RandomNumberGenerator();
+    mio::abm::Parameters params(NUM_AGE_GROUPS);
+
+    // set incubation period to two days so that the newly infected person is still exposed
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_5_TO_14}] = 2.;
 
     //setup location with some chance of exposure
-    auto infection_location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto susc_person1       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
-                                         mio::abm::AgeGroup::Age15to34, params, vaccination_state);
-    auto susc_person2       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
-                                         mio::abm::AgeGroup::Age15to34, params, vaccination_state);
-    auto infected1          = mio::abm::Person(infection_location, mio::abm::InfectionState::Carrier,
-                                      mio::abm::AgeGroup::Age15to34, params, vaccination_state);
-    infection_location.add_person(susc_person1);
-    infection_location.add_person(susc_person2);
+    auto t = mio::abm::TimePoint(0);
+    mio::abm::Location infection_location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
+    auto susc_person1 = mio::abm::Person(rng, infection_location, AGE_GROUP_15_TO_34);
+    auto susc_person2 = mio::abm::Person(rng, infection_location, AGE_GROUP_15_TO_34);
+    auto infected1    = make_test_person(infection_location, AGE_GROUP_15_TO_34,
+                                         mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
+
     infection_location.add_person(infected1);
 
     //cache precomputed results
     auto dt = mio::abm::days(1);
-    infection_location.begin_step(dt, params);
-    // susc_person1 wears a mask defualt protection is 1
+    infection_location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);
+    // susc_person1 wears a mask, default protection is 1
     susc_person1.set_wear_mask(true);
     // susc_person2 does not wear a mask
     susc_person2.set_wear_mask(false);
 
-    //mock so every exponential distr is 1 -> everyone with a strict positiv (not zero) percantage to infect will infect, see random_events.h logic
+    //mock so person 2 will get infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return((dt.days() / 2)));
 
-    auto susc_1_new_infection_state = infection_location.interact(susc_person1, dt, params);
-    auto susc_2_new_infection_state = infection_location.interact(susc_person2, dt, params);
+    auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person1);
+    infection_location.interact(p1_rng, susc_person1, t, dt, params);
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
+    auto p2_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person2);
+    infection_location.interact(p2_rng, susc_person2, t, dt, params);
 
     // The person susc_person1 should have full protection against an infection, susc_person2 not
-    ASSERT_EQ(susc_1_new_infection_state, mio::abm::InfectionState::Susceptible);
-    ASSERT_EQ(susc_2_new_infection_state, mio::abm::InfectionState::Exposed);
+    ASSERT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
+    ASSERT_EQ(susc_person2.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
 }

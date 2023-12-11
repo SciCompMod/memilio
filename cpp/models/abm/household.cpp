@@ -1,7 +1,7 @@
 /*
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Sascha Korf
+* Authors: Daniel Abele, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,7 +19,10 @@
 */
 
 #include "abm/household.h"
+#include "abm/person.h"
+#include "abm/location.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/random_number_generator.h"
 #include <string>
 
 namespace mio
@@ -30,14 +33,15 @@ namespace abm
 namespace
 {
 /**
- * Picks an age from a custom index array with a weight for each age group according to a discrete distribution.
- * @param age_groups A custom index array with the weights.
- * @return The picked age group.
+ * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
+ * @param[in] age_groups A CustomIndexArray with the weights.
+ * @return The picked AgeGroup.
  */
-AgeGroup pick_age_group_from_age_distribution(const CustomIndexArray<int, AgeGroup>& age_groups)
+AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
+                                              const CustomIndexArray<int, AgeGroup>& age_groups)
 {
     auto age_group_weights = age_groups.array().cast<double>().eval();
-    size_t age_group       = DiscreteDistribution<size_t>::get_instance()(age_group_weights);
+    size_t age_group       = DiscreteDistribution<size_t>::get_instance()(rng, age_group_weights);
     return (AgeGroup)age_group;
 }
 } // namespace
@@ -64,11 +68,11 @@ void add_household_to_world(World& world, const Household& household)
 
     for (auto& memberTouple : members) {
         int count;
-        HouseholdMember member;
+        HouseholdMember member  = HouseholdMember(world.parameters.get_num_groups());
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
-            auto age_group = pick_age_group_from_age_distribution(member.get_age_weights());
-            auto& person   = world.add_person(home, InfectionState::Susceptible, age_group);
+            auto age_group = pick_age_group_from_age_distribution(world.get_rng(), member.get_age_weights());
+            auto& person   = world.add_person(home, age_group);
             person.set_assigned_location(home);
         }
     }
