@@ -150,25 +150,15 @@ void World::migration(TimePoint t, TimeSpan dt)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-
+        std::vector<const TestingScheme*> applicable_schemes;
         // Check and process future trips for the person
-        auto future_trips = m_trip_list.get_trips_between(t, t + parameters.get<mio::abm::LookAheadTime>(), weekend);
+        auto future_trips =
+            m_trip_list.get_trips_between(t, t + dt + parameters.get<mio::abm::LookAheadTime>(), weekend);
         for (const auto& trip : future_trips) {
             auto& target_location = find_location(trip->migration_destination.type, *person);
 
             // Get applicable testing schemes for the person and future trip location
-            auto applicable_schemes =
-                m_testing_strategy.get_applicable_schemes(*person, target_location, trip->time, t);
-
-            // Process each applicable scheme
-            for (const auto* scheme : applicable_schemes) {
-                auto result = scheme->run_scheme(personal_rng, *person, t);
-                if (!result) {
-                    // Handle the case where the test fails (e.g., person cannot make the trip)
-                }
-                // Optionally, save the test result in the person's record
-                person->add_test_result(t + scheme->get_type().get_default().required_time, scheme->get_type(), result);
-            }
+            applicable_schemes = m_testing_strategy.get_applicable_schemes(*person, target_location, trip->time, t);
         }
         auto testing_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
@@ -199,6 +189,16 @@ void World::migration(TimePoint t, TimeSpan dt)
                 (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
                  testing_migration_rule(&go_to_event)) ||
                 (has_locations({LocationType::Home}) && testing_migration_rule(&go_to_quarantine));
+        }
+
+        // Process each applicable scheme
+        for (const auto* scheme : applicable_schemes) {
+            auto result = scheme->run_scheme(personal_rng, *person, t);
+            if (!result) {
+                // Handle the case where the test fails (e.g., person cannot make the trip)
+            }
+            // Optionally, save the test result in the person's record
+            person->add_test_result(t + scheme->get_type().get_default().required_time, scheme->get_type(), result);
         }
     }
 }

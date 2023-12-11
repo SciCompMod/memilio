@@ -541,7 +541,7 @@ struct AgeGroupGotoWork {
 };
 
 /**
- * @brief The TimeSpan agents look forward to performed tests.  
+ * @brief The TimeSpan agents look forward to take tests.  
  */
 struct LookAheadTime {
     using Type = TimeSpan;
@@ -562,7 +562,7 @@ using ParametersBase =
                  InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
                  SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
                  GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, LookAheadTime>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
