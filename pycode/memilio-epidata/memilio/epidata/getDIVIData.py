@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Lena Ploetzke, Martin J. Kuehn
 #
@@ -44,6 +44,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
@@ -105,9 +108,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             gd.write_dataframe(df_raw, directory, filename, file_format)
     else:
         raise gd.DataError("Something went wrong, dataframe is empty.")
-    df = df_raw.copy()
     divi_data_sanity_checks(df_raw)
-    df.rename(dd.GerEng, axis=1, inplace=True)
+    df = df_raw.rename(dd.GerEng, axis=1, inplace=False)
 
     try:
         df[dd.EngEng['date']] = pd.to_datetime(
@@ -125,7 +127,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # add missing dates (and compute moving average)
     if (impute_dates == True) or (moving_average > 0):
         df = mdfs.impute_and_reduce_df(
-            df, {dd.EngEng["idCounty"]: geoger.get_county_ids()},
+            df, {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
             [dd.EngEng["ICU"],
              dd.EngEng["ICU_ventilated"]],
             impute='forward', moving_average=moving_average,
@@ -133,7 +135,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     # add names etc for empty frames (counties where no ICU beds are available)
     countyid_to_stateid = geoger.get_countyid_to_stateid_map()
-    for id in df.loc[df.isnull().any(axis=1), dd.EngEng['idCounty']].unique():
+    for id in df.loc[df.isna().any(axis=1), dd.EngEng['idCounty']].unique():
         stateid = countyid_to_stateid[id]
         df.loc[df[dd.EngEng['idCounty']] == id, dd.EngEng['idState']] = stateid
 
@@ -145,7 +147,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                       dd.EngEng["county"],
                       dd.EngEng["ICU"],
                       dd.EngEng["ICU_ventilated"],
-                      dd.EngEng["date"]]].copy()
+                      dd.EngEng["date"]]]
     # merge Eisenach and Wartburgkreis from DIVI data
     df_counties = geoger.merge_df_counties_all(
         df_counties, sorting=[dd.EngEng["idCounty"], dd.EngEng["date"]])
@@ -159,8 +161,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         [dd.EngEng["idState"],
          dd.EngEng["state"],
          dd.EngEng["date"]]).agg(
-        {dd.EngEng["ICU"]: sum, dd.EngEng["ICU_ventilated"]: sum})
-    df_states = df_states.reset_index()
+        {dd.EngEng["ICU"]: "sum", dd.EngEng["ICU_ventilated"]: "sum"})
+    df_states.reset_index(inplace=True)
     df_states.sort_index(axis=1, inplace=True)
 
     filename = "state_divi"
@@ -168,8 +170,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_states, directory, filename, file_format)
 
     # write data for germany to file
-    df_ger = df.groupby(["Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
-    df_ger = df_ger.reset_index()
+    df_ger = df.groupby(["Date"]).agg({"ICU": "sum", "ICU_ventilated": "sum"})
+    df_ger.reset_index(inplace=True)
     df_ger.sort_index(axis=1, inplace=True)
 
     filename = "germany_divi"

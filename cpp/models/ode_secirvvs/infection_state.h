@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -62,7 +62,6 @@ enum class InfectionState
     DeadNaive,
     DeadPartialImmunity,
     DeadImprovedImmunity,
-    TotalInfections, //total number of infections during the simulation, for data tracking only, does not contribute to simulation
 
     Count
 };

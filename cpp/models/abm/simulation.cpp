@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -18,6 +18,9 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/mioomp.h"
+#include <random>
 
 namespace mio
 {
@@ -26,29 +29,9 @@ namespace abm
 
 Simulation::Simulation(TimePoint t, World&& world)
     : m_world(std::move(world))
-    , m_result(Eigen::Index(InfectionState::Count))
     , m_t(t)
     , m_dt(hours(1))
 {
-    initialize_locations(m_t);
-}
-
-void Simulation::initialize_locations(TimePoint t)
-{
-    for (auto& location : m_world.get_locations()) {
-        location.initialize_subpopulations(t);
-    }
-}
-
-void Simulation::advance(TimePoint tmax)
-{
-    //log initial system state
-    initialize_locations(m_t);
-    store_result_at(m_t);
-    while (m_t < tmax) {
-        evolve_world(tmax);
-        store_result_at(m_t);
-    }
 }
 
 void Simulation::evolve_world(TimePoint tmax)
@@ -56,15 +39,6 @@ void Simulation::evolve_world(TimePoint tmax)
     auto dt = std::min(m_dt, tmax - m_t);
     m_world.evolve(m_t, dt);
     m_t += m_dt;
-}
-
-void Simulation::store_result_at(TimePoint t)
-{
-    m_result.add_time_point(t.days());
-    m_result.get_last_value().setZero();
-    for (auto& location : m_world.get_locations()) {
-        m_result.get_last_value() += location.get_subpopulations().get_last_value().cast<ScalarType>();
-    }
 }
 
 } // namespace abm

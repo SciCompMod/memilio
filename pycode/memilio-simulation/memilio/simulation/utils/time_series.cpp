@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -19,6 +19,8 @@
 */
 #include "utils/time_series.h"
 #include "memilio/utils/time_series.h"
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "pybind11/eigen.h"
 
@@ -60,6 +62,13 @@ void bind_time_series(py::module_& m, std::string const& name)
                 }
             },
             py::is_operator(), py::arg("index"), py::arg("v"))
+        .def("print_table",
+             [](const mio::TimeSeries<double>& self, const std::vector<std::string>& column_labels, size_t width,
+                size_t precision) {
+                 std::ostringstream oss;
+                 self.print_table(column_labels, width, precision, oss);
+                 return oss.str();
+             })
         .def("add_time_point",
              [](mio::TimeSeries<double>& self) {
                  return self.add_time_point();

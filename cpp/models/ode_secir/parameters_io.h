@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn, Lena Ploetzke
 *
@@ -276,7 +276,15 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
 
     return success();
 }
-
+#else
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&, const std::string&, std::vector<int> const&,
+                                                   Date, const std::vector<double>&, double, int, const std::string&,
+                                                   const std::string&, const std::string&)
+{
+    mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
+    return success();
+}
 #endif // MEMILIO_HAS_HDF5
 
 /**

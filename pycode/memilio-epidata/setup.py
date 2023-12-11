@@ -4,7 +4,7 @@ import sys
 
 from setuptools import Command, find_packages, setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 
 class PylintCommand(Command):
@@ -45,13 +45,19 @@ class PylintCommand(Command):
                 report_file), do_exit=False)
 
 
+# Python-magic needs DLLs for libmagic. They have to be installed only on windows.
+if sys.platform == 'win32':
+    pymagic = 'python-magic-bin'
+else:
+    pymagic = 'python-magic'
+
 setup(
     name='memilio-epidata',
     version=__version__,
     author='DLR-SC',
     author_email='daniel.abele@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
     entry_points={
         'console_scripts': [
@@ -73,7 +79,7 @@ setup(
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
-        'pandas>=1.2.2',
+        'pandas>=2.0.0',
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
@@ -84,8 +90,8 @@ setup(
         'requests',
         'pyxlsb',
         'wget',
-        'twill',
-        'python-magic==0.4.13'  # fails for other versions
+        'twill==3.1',
+        pymagic
     ],
     extras_require={
         'dev': [

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -548,8 +548,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         # the test dataframe should be unchanged as it is the input of the function
         # avoid error due to comparison of int32 and int64 columns.
         pd.testing.assert_frame_equal(
-            test_df.astype(dtype={'ID_County': "int64"}),
-            pd.DataFrame(self.eisenach_unmerged_data).astype(dtype={'ID_County': "int64"}))
+            test_df, pd.DataFrame(self.eisenach_unmerged_data))
 
 
 if __name__ == '__main__':
