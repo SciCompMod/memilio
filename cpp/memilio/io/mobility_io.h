@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef READ_TWITTER_H
-#define READ_TWITTER_H
+#ifndef MIO_MOBILITY_IO_H
+#define MIO_MOBILITY_IO_H
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
@@ -209,4 +209,4 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
 
 } // namespace mio
 
-#endif // READ_TWITTER_H
+#endif // MIO_MOBILITY_IO_H

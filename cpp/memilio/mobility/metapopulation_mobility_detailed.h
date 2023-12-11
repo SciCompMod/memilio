@@ -37,7 +37,6 @@
 #include "memilio/io/mobility_io.h"
 
 #include "boost/filesystem.hpp"
-#include "models/ode_secirvvs/model.h"
 
 #include <cassert>
 #include <string>
@@ -262,10 +261,9 @@ template <class ContactLocation, class Model, class MigrationParams, class Migra
 IOResult<void> set_edges(const std::string& travel_times_path, const std::string mobility_data_path,
                          const std::string& travelpath_path, Graph<Model, MigrationParams>& params_graph,
                          std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-                         std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{})
+                         std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{},
+                         ScalarType theshold_edges                 = 4e-5)
 {
-    ScalarType theshold_edges = 4e-5;
-
     BOOST_OUTCOME_TRY(mobility_data_commuter, mio::read_mobility_plain(mobility_data_path));
     BOOST_OUTCOME_TRY(travel_times, mio::read_mobility_plain(travel_times_path));
     BOOST_OUTCOME_TRY(path_mobility, mio::read_path_mobility(travelpath_path));
@@ -443,6 +441,31 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, Simulati
 {
     migrationEdge.apply_migration(t, dt, node_from, node_to, mode);
 }
+
+/**
+ * create a migration simulation.
+ * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
+ * moves from one node to the other. In the next timestep, the migrated population return to their "home" node. 
+ * Returns are adjusted based on the development in the target node. 
+ * @param t0 start time of the simulation
+ * @param dt time step between migrations
+ * @param graph set up for migration simulation
+ * @{
+ */
+template <class Sim>
+GraphSimulationDetailed<Graph<SimulationNode<Sim>, MigrationEdge>>
+make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
+{
+    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
+}
+
+template <class Sim>
+GraphSimulationDetailed<Graph<SimulationNode<Sim>, MigrationEdge>>
+make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+{
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+}
+
 } // namespace mio
 
 #endif //METAPOPULATION_MOBILITY_DETAILED_H
