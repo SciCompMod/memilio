@@ -24,7 +24,7 @@ import numpy as np
 from memilio.simulation import Damping
 from memilio.simulation.oseir import Index_InfectionState
 from memilio.simulation.oseir import InfectionState as State
-from memilio.simulation.oseir import Model, simulate
+from memilio.simulation.oseir import Model, simulate, simulate_flows
 
 
 class Test_oseir_integration(unittest.TestCase):
@@ -56,6 +56,19 @@ class Test_oseir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_time(0), 0.)
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
+
+    def test_flow_simulation_simple(self):
+        flow_sim_results = simulate_flows(
+            t0=0., tmax=100., dt=0.1, model=self.model)
+        flows = flow_sim_results[1]
+        self.assertEqual(flows.get_time(0), 0.)
+        self.assertEqual(flows.get_last_time(), 100.)
+        self.assertEqual(len(flows.get_last_value()), 3)
+
+        compartments = flow_sim_results[0]
+        self.assertEqual(compartments.get_time(0), 0.)
+        self.assertEqual(compartments.get_last_time(), 100.)
+        self.assertEqual(len(compartments.get_last_value()), 4)
 
     def test_check_constraints_parameters(self):
 

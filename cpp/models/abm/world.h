@@ -154,13 +154,6 @@ public:
     void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
-     * @brief Follow up on the World after the Simulation step.
-     * @param[in] t Current time.
-     * @param[in] dt Length of the time step.
-     */
-    void end_step(TimePoint t, TimeSpan dt);
-
-    /** 
      * @brief Evolve the world one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
@@ -215,12 +208,19 @@ public:
     Location& find_location(LocationType type, const Person& person);
 
     /** 
+     * @brief Get the number of Persons in one #InfectionState at all Location%s.
+     * @param[in] t Specified #TimePoint.
+     * @param[in] s Specified #InfectionState.
+     */
+    size_t get_subpopulation_combined(TimePoint t, InfectionState s) const;
+
+    /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
      * @param[in] t Specified #TimePoint.
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
+    size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const;
 
     /**
      * @brief Get the migration data.

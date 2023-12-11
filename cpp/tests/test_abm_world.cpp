@@ -80,17 +80,21 @@ TEST(TestWorld, getSubpopulationCombined)
     auto school1 = world.add_location(mio::abm::LocationType::School);
     auto school2 = world.add_location(mio::abm::LocationType::School);
     auto school3 = world.add_location(mio::abm::LocationType::School);
+    auto home1   = world.add_location(mio::abm::LocationType::Home);
     add_test_person(world, school1, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
     add_test_person(world, school1, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Susceptible);
     add_test_person(world, school2, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Susceptible);
     add_test_person(world, school2, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Susceptible);
     add_test_person(world, school3, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    add_test_person(world, home1, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
-    ASSERT_EQ(
-        world.get_subpopulation_combined(t, mio::abm::InfectionState::Susceptible, mio::abm::LocationType::School), 3);
-    ASSERT_EQ(world.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms,
-                                               mio::abm::LocationType::School),
+    ASSERT_EQ(world.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
+                                                                 mio::abm::LocationType::School),
+              3);
+    ASSERT_EQ(world.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
+                                                                 mio::abm::LocationType::School),
               2);
+    ASSERT_EQ(world.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 }
 
 TEST(TestWorld, findLocation)
@@ -324,12 +328,12 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(home.get_number_persons(), 2);
 
         bool weekend = true;
-        mio::abm::Trip tripweekend1(
-            p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id, work_id);
-        mio::abm::Trip tripweekend2(
-            p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id, event_id);
-        mio::abm::Trip tripweekend3(
-            p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id, event_id);
+        mio::abm::Trip tripweekend1(p1.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id);
+        mio::abm::Trip tripweekend2(p2.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id);
+        mio::abm::Trip tripweekend3(p5.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id);
         data.add_trip(tripweekend1, weekend);
         data.add_trip(tripweekend2, weekend);
         data.add_trip(tripweekend3, weekend);
@@ -684,10 +688,6 @@ TEST(TestWorld, copyWorld)
     ASSERT_NE(&copied_world.get_locations()[2].get_cells(), &world.get_locations()[2].get_cells());
     ASSERT_NE(&copied_world.get_locations()[3].get_cells(), &world.get_locations()[3].get_cells());
     ASSERT_NE(&copied_world.get_locations()[4].get_cells(), &world.get_locations()[4].get_cells());
-    ASSERT_NE(&copied_world.get_locations()[1].get_subpopulations(), &world.get_locations()[1].get_subpopulations());
-    ASSERT_NE(&copied_world.get_locations()[2].get_subpopulations(), &world.get_locations()[2].get_subpopulations());
-    ASSERT_NE(&copied_world.get_locations()[3].get_subpopulations(), &world.get_locations()[3].get_subpopulations());
-    ASSERT_NE(&copied_world.get_locations()[4].get_subpopulations(), &world.get_locations()[4].get_subpopulations());
     ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0]), &(world.get_locations()[1].get_cells()[0]));
     ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0]), &(world.get_locations()[2].get_cells()[0]));
     ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0].m_persons[0]),

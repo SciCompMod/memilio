@@ -251,10 +251,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             np.zeros(len(gov_county_table[gov_region])))
 
                     # merge eisenach and wartburgkreis
-                    commuter_migration_file.iloc[:, 2].replace(
-                        '16056', '16063', inplace=True)
-                    commuter_migration_file.iloc[:, 0].replace(
-                        '16056', '16063', inplace=True)
+                    commuter_migration_file.replace({commuter_migration_file.columns[2]:
+                                                     {'16056': '16063'}}, inplace=True)
+                    commuter_migration_file.replace({commuter_migration_file.columns[0]:
+                                                     {'16056': '16063'}}, inplace=True)
 
                     current_col = countykey2numlist[commuter_migration_file.iloc[i, 0]]
                     curr_county_migratedto = commuter_migration_file.iloc[i, 1]
@@ -379,13 +379,13 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         elif ((str(commuter_migration_file.iloc[i, 3]) == 'Übrige Regierungsbezirke (Bundesland)' and str(
                                 commuter_migration_file.iloc[i, 4]).isdigit())
                               or ((commuter_migration_file.iloc[i, 2]).isdigit() and str(
-                                commuter_migration_file.iloc[i - 1][2]).startswith('nan'))
+                                commuter_migration_file.iloc[i - 1, 2]).startswith('nan'))
                               or (len(str(commuter_migration_file.iloc[i, 2])) == 2 and
                                   abs(float(commuter_migration_file.iloc[i, 2]) - float(
-                                      commuter_migration_file.iloc[i - 1][2])) == 1)
+                                      commuter_migration_file.iloc[i - 1, 2])) == 1)
                               or (len(str(commuter_migration_file.iloc[i, 2])) == 2 and
                                   abs(float(commuter_migration_file.iloc[i, 2]) - float(
-                                      commuter_migration_file.iloc[i - 1][2])) == 2)):
+                                      commuter_migration_file.iloc[i - 1, 2])) == 2)):
 
                             # auxiliary key of Bundesland (key translated to int starting at zero)
                             dummy_key = int(

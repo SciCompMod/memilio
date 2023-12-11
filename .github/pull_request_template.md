@@ -16,6 +16,7 @@ Please check our [git workflow](https://github.com/SciCompMod/memilio/wiki/git-w
 - [ ] Tests are added for new functionality and a local test run was successful
 - [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and Markdown files if necessary)
 - [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
+- [ ] (For ABM development) Checked [benchmark results](https://github.com/SciCompMod/memilio/wiki/Agent-Based-Model-Development)
 
 ### Checks by code reviewer(s)
 
