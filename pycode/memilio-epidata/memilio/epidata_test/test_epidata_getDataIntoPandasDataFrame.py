@@ -593,7 +593,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         # test with user input 'N'; get_file should raise filenotfounderror
         mock_json.side_effect = FileNotFoundError
-        mock_in.return_value = 'N'
+        mock_in.return_value = False
 
         with self.assertRaises(FileNotFoundError) as error:
             gd.get_file(filepath, url, read_data, param_dict, interactive=True)

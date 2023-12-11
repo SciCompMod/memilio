@@ -98,7 +98,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         "Intensivkapazitaeten_und_COVID-19-Intensivbettenbelegung_in_Deutschland/"\
         "main/Intensivregister_Landkreise_Kapazitaeten.csv"
     path = os.path.join(directory + filename + ".json")
-    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
+    df_raw = gd.get_file(path, url, read_data, param_dict={},
+                         interactive=conf.interactive)
 
     if not df_raw.empty:
         if not no_raw:

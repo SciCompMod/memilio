@@ -266,7 +266,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         no_raw=dd.defaultDict['no_raw'],
                         merge_eisenach=True,
                         username='',
-                        password=''):
+                        password='',
+                        **kwargs):
     """! Download age-stratified population data for the German counties.
 
     The data we use is:
@@ -294,8 +295,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is written or
-        not. Default defined in defaultDict. Currently not used.
     @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
@@ -303,6 +302,9 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
 
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)

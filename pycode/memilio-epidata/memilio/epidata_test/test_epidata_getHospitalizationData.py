@@ -33,6 +33,7 @@ from memilio.epidata import getHospitalizationData as ghd
 class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
 
     maxDiff = None
+    gd.Conf.v_level = 'Debug'
 
     path = '/home/HospitalizationData'
 
@@ -112,12 +113,12 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
         error_message = "Error: Data categories have changed."
         self.assertEqual(str(error.exception), error_message)
 
-    @patch('builtins.input', return_value='Y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     @patch('memilio.epidata.getHospitalizationData.pd.read_csv',
            return_value=df_test)
     def test_get_hospitalization_data(self, mock_file, mock_in):
         # this should not raise any errors
-        ghd.get_hospitalization_data(out_folder=self.path)
+        ghd.get_hospitalization_data(out_folder=self.path, interactive=True)
 
         # check if all files are written
         self.assertEqual(

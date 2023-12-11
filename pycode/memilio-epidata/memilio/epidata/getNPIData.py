@@ -476,7 +476,8 @@ def get_npi_data(fine_resolution=2,
                  end_date=dd.defaultDict['end_date'],
                  counties_considered=geoger.get_county_ids(),
                  npi_activation_days_threshold=3,
-                 npi_lifting_days_threshold=5
+                 npi_lifting_days_threshold=5,
+                 **kwargs
                  ):
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
@@ -521,6 +522,8 @@ def get_npi_data(fine_resolution=2,
     @param npi_alifting_days_threshold [Default: 5]. Defines necessary number
          of days below case incidence threshold threshold to lift NPIs.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
 
     # Depending on the federal state and time period, there are
     # huge differences for number of days before the lifting and activation.
@@ -1248,7 +1251,7 @@ def get_npi_data(fine_resolution=2,
     plot_interaction_matrix('joint_codes_active', directory)
 
     # print sub counters
-    print('Debug', 'Sub task counters are: '+str(counters))
+    gd.default_print('Debug', 'Sub task counters are: '+str(counters))
 
     # reset index and drop old index column
     df_npis.reset_index(inplace=True)
@@ -1275,8 +1278,8 @@ def get_npi_data(fine_resolution=2,
                     start_date_new, end_date_new,
                     fine_resolution)
                 if (a != b):
-                    print('Error', 'Error in NPI activation computation' +
-                          str(a) + str(b) + str(a - b))
+                    gd.default_print('Error', 'Error in NPI activation computation' +
+                                     str(a) + str(b) + str(a - b))
 
     #### end validation ####
 

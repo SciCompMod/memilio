@@ -33,6 +33,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
     path = '/home/CaseEstimationData'
+    gd.Conf.v_level = 'Debug'
 
     # Notice data is not realistic
     str_whole_country_Germany_jh = \

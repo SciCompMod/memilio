@@ -118,7 +118,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         mock_print.assert_called_with(Errorcall)
 
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_commuter_data(self, mock_input, mock_popul):
         """! Tests migration data by some randomly chosen tests.
         """
@@ -151,7 +151,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.assertEqual(df_commuter_migration.loc[city_from, city_to], 29)
 
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     @patch('builtins.print')
     def test_get_neighbors_mobility(self, mock_print, mock_input, mock_popul):
 

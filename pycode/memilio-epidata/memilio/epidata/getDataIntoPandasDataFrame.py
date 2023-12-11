@@ -61,41 +61,62 @@ class Conf:
     """Configures all relevant dwonload outputs etc."""
 
     v_level = 'Critical'
+    show_progr = False
 
     def __init__(self, out_folder, **kwargs):
+
         path = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'download_config.conf')
-        parser = configparser.ConfigParser()
-        parser.read(path)
-        # all values will be read in as string
 
         # activate CoW for more predictable behaviour of pandas DataFrames
         pd.options.mode.copy_on_write = True
 
-        if parser['SETTINGS']['path_to_use'] == 'default':
-            self.path_to_use = out_folder
+        # read in config file
+        # if no config file is given, use default values
+        if os.path.exists(path):
+            parser = configparser.ConfigParser()
+            parser.read(path)
+            # all values will be read in as string
+
+            if parser['SETTINGS']['path_to_use'] == 'default':
+                self.path_to_use = out_folder
+            else:
+                self.path_to_use = parser['SETTINGS']['path_to_use']
+
+            # merge kwargs with config data
+            # Do not overwrite kwargs, just add from parser
+            for key in parser['SETTINGS']:
+                if key not in kwargs:
+                    kwargs.update({key: parser['SETTINGS'][key]})
+
+            Conf.show_progr = bool(kwargs['show_progress'])
+            Conf.v_level = str(kwargs['verbosity_level'])
+            self.checks = bool(kwargs['run_checks'])
+            self.interactive = bool(kwargs['interactive'])
+            self.plot = bool(kwargs['make_plot'])
+            self.no_raw = bool(kwargs['no_raw'])
         else:
-            self.path_to_use = parser['SETTINGS']['path_to_use']
-
-        # merge kwargs with config data
-        # Do not overwrite kwargs, just add from parser
-        for key in parser['SETTINGS']:
-            if key not in kwargs:
-                kwargs.update({key: parser['SETTINGS'][key]})
-
-        show_progr = bool(kwargs['show_progress'])
-        v_level = str(kwargs['verbosity_level'])
-        self.checks = bool(kwargs['run_checks'])
-        self.interactive = bool(kwargs['interactive'])
-        self.plot = bool(kwargs['make_plot'])
-        self.no_raw = bool(kwargs['no_raw'])
+            # default values:
+            Conf.show_progr = kwargs['show_progress'] if 'show_progress' in kwargs.keys(
+            ) else Conf.show_progr
+            Conf.v_level = kwargs['verbosity_level'] if 'verbosity_level' in kwargs.keys(
+            ) else Conf.v_level
+            self.checks = kwargs['run_checks'] if 'run_checks' in kwargs.keys(
+            ) else True
+            self.interactive = kwargs['interactive'] if 'interactive' in kwargs.keys(
+            ) else False
+            self.plot = kwargs['make_plot'] if 'make_plot' in kwargs.keys(
+            ) else dd.defaultDict['make_plot']
+            self.no_raw = kwargs['no_raw'] if 'no_raw' in kwargs.keys(
+            ) else dd.defaultDict['no_raw']
+            self.path_to_use = out_folder
 
         # suppress Future & DepricationWarnings
-        if v_level != 2:
+        if Conf.v_level <= 2:
             warnings.simplefilter(action='ignore', category=FutureWarning)
             warnings.simplefilter(action='ignore', category=DeprecationWarning)
         # deactivate (or activate progress indicator)
-        if show_progr == True:
+        if Conf.show_progr == True:
             progress_indicator.ProgressIndicator.disable_indicators(False)
         else:
             progress_indicator.ProgressIndicator.disable_indicators(True)
@@ -103,7 +124,7 @@ class Conf:
 
 def default_print(verbosity_level, message):
     if VerbosityLevel[verbosity_level].value <= VerbosityLevel[Conf.v_level].value:
-        print(verbosity_level, ": ", message)
+        print(verbosity_level + ": " + message)
 
 
 def user_choice(message, default=False):

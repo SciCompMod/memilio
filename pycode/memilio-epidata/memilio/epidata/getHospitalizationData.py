@@ -168,7 +168,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
         to smooth out weekend effects.  Default defined in defaultDict.
     """
     impute_dates = True
-    conf = gd.conf(out_folder, **kwargs)
+    conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
     directory = os.path.join(out_folder, 'Germany/')

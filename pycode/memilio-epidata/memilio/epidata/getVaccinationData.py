@@ -465,13 +465,12 @@ def extrapolate_age_groups_vaccinations(
 def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
                          out_folder=dd.defaultDict['out_folder'],
-                         no_raw=dd.defaultDict['no_raw'],
                          start_date=dd.defaultDict['start_date'],
                          end_date=dd.defaultDict['end_date'],
                          impute_dates=True,
                          moving_average=dd.defaultDict['moving_average'],
-                         make_plot=dd.defaultDict['make_plot'],
-                         sanitize_data=dd.defaultDict['sanitize_data']
+                         sanitize_data=dd.defaultDict['sanitize_data'],
+                         **kwargs
                          ):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
 
@@ -499,14 +498,12 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         Here Data is always downloaded from the internet.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. 
         Here Dates are always imputed so False changes nothing.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict. 
     @param sanitize_data Value in {0,1,2,3}; Default: 1. For many counties, 
         vaccination data is not correctly attributed to home locations of 
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is
@@ -522,6 +519,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         average on the corresponding vaccination ratios on county and federal
         state level.  
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+
     # data for all dates is automatically added
     if impute_dates == False:
         gd.default_print(
@@ -852,7 +853,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             spinner.stop()
             gd.default_print('Info', 'Sanitizing deactivated.')
 
-    if make_plot:
+    if conf.plot:
         # have a look extrapolated vaccination ratios (TODO: create plotting for production)
         # aggregate total number of vaccinations per county and age group
         latest_date = df_data_agevacc_county_cs[dd.EngEng["date"]][len(
@@ -884,7 +885,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                        directory, filename, file_format)
 
     # make plot of absolute numbers original age resolution
-    if make_plot:
+    if conf.plot:
         # extract (dummy) date column to plt
         date_vals = df_data_agevacc_county_cs.loc[
             (df_data_agevacc_county_cs[dd.EngEng['ageRKI']] ==
@@ -975,7 +976,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                        directory, filename, file_format)
 
     # make plot of relative numbers of original and extrapolated age resolution
-    if make_plot:
+    if conf.plot:
         # merge Eisenach...
         population_new_ages = geoger.merge_df_counties_all(
             population_new_ages, sorting=[dd.EngEng["idCounty"]],

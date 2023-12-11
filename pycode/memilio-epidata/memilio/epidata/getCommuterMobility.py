@@ -132,10 +132,9 @@ def assign_geographical_entities(countykey_list, govkey_list):
 def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       file_format=dd.defaultDict['file_format'],
                       out_folder=dd.defaultDict['out_folder'],
-                      no_raw=dd.defaultDict['no_raw'],
-                      make_plot=dd.defaultDict['make_plot'],
                       setup_dict='',
-                      ref_year=2022):
+                      ref_year=2022,
+                      **kwargs):
     """! Computes DataFrame of commuter migration patterns based on the Federal
     Agency of Work data.
 
@@ -144,8 +143,6 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         Only for population data. Commuter data is always downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw [Currently not used] True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
-    @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     @param setup_dict dictionary with necessary values:
         'path': String with datapath where migration files can be found
         'abs_tol': tolerated undetected people
@@ -158,6 +155,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     The printed errors are refering to the absolute and relative errors from included numbers per county in DataFrame and
     this cumulative values.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+
     if setup_dict == '':
         abs_tol = 100  # maximum absolute error allowed per county migration
         rel_tol = 0.01  # maximum relative error allowed per county migration

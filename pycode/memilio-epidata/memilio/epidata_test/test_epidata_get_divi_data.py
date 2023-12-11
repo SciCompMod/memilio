@@ -32,6 +32,7 @@ from memilio.epidata import getDIVIData as gdd
 class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     maxDiff = None
+    gd.Conf.v_level = 'Debug'
 
     path = '/home/DiviData'
 
@@ -52,15 +53,15 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def gdd_calls(self, text=''):
         directory = os.path.join(self.path, 'Germany/')
         gdd_calls = [
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'FullData_DIVI.json')),
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'county_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'state_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
 
