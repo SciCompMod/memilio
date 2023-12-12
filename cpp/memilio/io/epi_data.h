@@ -286,7 +286,7 @@ inline void get_rki_age_interpolation_coefficients(const std::vector<double>& ag
             interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
         }
 
-        if (counter < param_ranges.size() - 1) {
+        if (counter < num_rki_age_groups - 1) {
             res += age_ranges[i];
             if (std::abs(res) < age_ranges[i]) {
                 counter++;
