@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Khoa Nguyen
+* Authors: Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,29 +17,49 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/simulation.h"
-#include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
-#include <random>
+
+#ifndef ABM_MOVEMENT_DATA_H
+#define ABM_MOVEMENT_DATA_H
+
+#include "abm/time.h"
 
 namespace mio
 {
 namespace abm
 {
 
-Simulation::Simulation(TimePoint t, World&& world)
-    : m_world(std::move(world))
-    , m_t(t)
-    , m_dt(hours(1))
-{
-}
 
-void Simulation::evolve_world(TimePoint tmax)
+/**
+ * @brief Mode of Transport.
+ */
+enum class TransportMode : uint32_t
 {
-    auto dt = std::min(m_dt, tmax - m_t);
-    m_world.evolve(m_t, dt);
-    m_t += m_dt;
-}
+    Bike = 0,
+    CarDriver,
+    CarPassenger,
+    PublicTransport,
+    Walking,
+    Other,
+    Unknown
+};
+
+
+/**
+ * @brief Type of the activity.
+ */
+enum class ActivityType : uint32_t
+{
+    Workplace = 0,
+    Education,
+    Shopping,
+    Leisure,
+    PrivateMatters,
+    OtherActivity,
+    Home,
+    UnknownActivity
+};
 
 } // namespace abm
 } // namespace mio
+
+#endif //ABM_MOVEMENT_DATA_H

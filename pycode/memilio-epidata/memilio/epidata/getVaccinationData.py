@@ -611,7 +611,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     try:
         population = pd.read_json(
-            directory + "counsty_current_population.json")
+            directory + "county_current_population.json")
     # pandas>1.5 raise FileNotFoundError instead of ValueError
     except (ValueError, FileNotFoundError):
         print("Population data was not found. Download it from the internet.")
