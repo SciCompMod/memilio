@@ -67,21 +67,24 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
     ASSERT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
     ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
+    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
-    person.migrate_to(loc2);
+    person.migrate_to(loc2, mio::abm::TransportMode::Walking);
 
     ASSERT_EQ(person.get_location(), loc2);
     ASSERT_EQ(loc2.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
     ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
     ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
+    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
-    person.migrate_to(loc3, {0, 1});
+    person.migrate_to(loc3, mio::abm::TransportMode::Bike, {0, 1});
 
     ASSERT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
     ASSERT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
     ASSERT_EQ(person.get_cells().size(), 2);
     ASSERT_EQ(person.get_cells()[0], 0u);
     ASSERT_EQ(person.get_cells()[1], 1u);
+    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
 }
 
 TEST(TestPerson, setGetAssignedLocation)
