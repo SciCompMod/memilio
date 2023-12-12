@@ -20,6 +20,7 @@
 #ifndef METAPOPULATION_MOBILITY_DETAILED_H
 #define METAPOPULATION_MOBILITY_DETAILED_H
 
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/epidemiology/simulation_day.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -180,16 +181,17 @@ public:
         return m_nodes.back();
     }
 
-    template <class... Args>
-    EdgeDetailed<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime, Args&&... args)
+    EdgeDetailed<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime,
+                                          mio::MigrationParameters& args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(
-            m_edges, EdgeDetailed<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, std::forward<Args>(args)...),
-            [](auto&& e1, auto&& e2) {
-                return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
-                                                              : e1.start_node_idx < e2.start_node_idx;
-            });
+        return *insert_sorted_replace(m_edges,
+                                      EdgeDetailed<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, args),
+                                      [](auto&& e1, auto&& e2) {
+                                          return e1.start_node_idx == e2.start_node_idx
+                                                     ? e1.end_node_idx < e2.end_node_idx
+                                                     : e1.start_node_idx < e2.start_node_idx;
+                                      });
     }
 
     template <class... Args>
@@ -360,11 +362,188 @@ set_edges_detailed(const std::string& travel_times_path, const std::string mobil
     return success();
 }
 
-class MigrationEdgeDetailed : public MigrationEdge
+// class MigrationEdgeDetailed : public MigrationEdge
+// {
+// public:
+//     template <class Sim>
+//     void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to, int mode);
+// };
+
+// /**
+//  * edge functor for migration simulation.
+//  * @see MigrationEdge::apply_migration
+//  */
+// template <class Sim, class MigrationEdgeDetailed>
+// void apply_migration(double t, double dt, MigrationEdgeDetailed& migrationEdgeDetailed, SimulationNode<Sim>& node_from,
+//                      SimulationNode<Sim>& node_to, int mode)
+// {
+//     migrationEdgeDetailed.apply_migration(t, dt, node_from, node_to, mode);
+// }
+
+template <class S>
+class ParameterStudyDetailed : public ParameterStudy<S>
 {
 public:
-    template <class Sim>
-    void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to, int mode);
+    /**
+    * The type of simulation of a single node of the graph.
+    */
+    using Simulation = S;
+    /**
+    * The Graph type that stores the parametes of the simulation.
+    * This is the input of ParameterStudies.
+    */
+    using ParametersGraphDetailed = mio::GraphDetailed<typename Simulation::Model, mio::MigrationParameters>;
+    /**
+    * The Graph type that stores simulations and their results of each run.
+    * This is the output of ParameterStudies for each run.
+    */
+    using SimulationGraphDetailed = mio::GraphDetailed<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+
+    /**
+     * create study for graph of compartment models.
+     * @param graph graph of parameters
+     * @param t0 start time of simulations
+     * @param tmax end time of simulations
+     * @param graph_sim_dt time step of graph simulation
+     * @param num_runs number of runs
+     */
+    ParameterStudyDetailed(const ParametersGraphDetailed& graph, double t0, double tmax, double graph_sim_dt,
+                           size_t num_runs)
+        : ParameterStudy<S>(graph, t0, tmax, graph_sim_dt, num_runs)
+        , m_graph(graph)
+        , m_num_runs(num_runs)
+        , m_t0{t0}
+        , m_tmax{tmax}
+        , m_dt_graph_sim(graph_sim_dt)
+    {
+    }
+
+    /*
+     * @brief Carry out all simulations in the parameter study.
+     * Save memory and enable more runs by immediately processing and/or discarding the result.
+     * The result processing function is called when a run is finished. It receives the result of the run 
+     * (a SimulationGraphDetailed object) and an ordered index. The values returned by the result processing function 
+     * are gathered and returned as a list.
+     * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
+     * The MPI processes each contribute a share of the runs. The sample function and result processing function 
+     * are called in the same process that performs the run. The results returned by the result processing function are 
+     * gathered at the root process and returned as a list by the root in the same order as if the programm 
+     * were running sequentially. Processes other than the root return an empty list.
+     * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
+     * @param result_processing_function Processing function for simulation results, e.g., output function.
+     * @returns At the root process, a list of values per run that have been returned from the result processing function.
+     *          At all other processes, an empty list.
+     * @tparam SampleGraphFunction Callable type, accepts instance of ParametersGraph.
+     * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraphDetailed and an index of type size_t.
+     */
+    template <class SampleGraphFunction, class HandleSimulationResultFunction>
+    std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraphDetailed, size_t>>
+    run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
+    {
+        int num_procs, rank;
+#ifdef MEMILIO_ENABLE_MPI
+        MPI_Comm_size(mpi::get_world(), &num_procs);
+        MPI_Comm_rank(mpi::get_world(), &rank);
+#else
+        num_procs = 1;
+        rank      = 0;
+#endif
+
+        //The ParameterDistributions used for sampling parameters use thread_local_rng()
+        //So we set our own RNG to be used.
+        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
+        this->m_rng.synchronize();
+        thread_local_rng() = this->m_rng;
+
+        auto run_distribution = this->distribute_runs(m_num_runs, num_procs);
+        auto start_run_idx =
+            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+        auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
+
+        std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraphDetailed, size_t>>
+            ensemble_result;
+        ensemble_result.reserve(m_num_runs);
+
+        for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
+            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
+
+            //prepare rng for this run by setting the counter to the right offset
+            //Add the old counter so that this call of run() produces different results
+            //from the previous call
+            auto run_rng_counter =
+                this->m_rng.get_counter() +
+                rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
+            thread_local_rng().set_counter(run_rng_counter);
+
+            //sample
+            auto sim = create_sampled_sim(sample_graph);
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
+                (thread_local_rng().get_counter() - run_rng_counter).get());
+
+            //perform run
+            sim.advance(m_tmax);
+
+            //handle result and store
+            ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
+        }
+
+        //Set the counter of our RNG so that future calls of run() produce different parameters.
+        this->m_rng.set_counter(this->m_rng.get_counter() +
+                                rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
+
+#ifdef MEMILIO_ENABLE_MPI
+        //gather results
+        if (rank == 0) {
+            for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
+                int bytes_size;
+                MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+                ByteStream bytes(bytes_size);
+                MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+
+                auto src_ensemble_results = deserialize_binary(bytes, Tag<decltype(ensemble_result)>{});
+                if (!src_ensemble_results) {
+                    log_error("Error receiving ensemble results from rank {}.", src_rank);
+                }
+                std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
+                          std::back_inserter(ensemble_result));
+            }
+        }
+        else {
+            auto bytes      = serialize_binary(ensemble_result);
+            auto bytes_size = int(bytes.data_size());
+            MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
+            MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
+            ensemble_result.clear(); //only return root process
+        }
+#endif
+
+        return ensemble_result;
+    }
+
+private:
+    //sample parameters and create simulation
+    template <class SampleGraphFunction>
+    mio::GraphSimulationDetailed<SimulationGraphDetailed> create_sampled_sim(SampleGraphFunction sample_graph)
+    {
+        SimulationGraphDetailed sim_graph;
+
+        auto sampled_graph = sample_graph(m_graph);
+        for (auto&& node : sampled_graph.nodes()) {
+            sim_graph.add_node(node.id, node.stay_duration, node.property, node.mobility, m_t0, this->m_dt_integration);
+        }
+        for (auto&& edge : sampled_graph.edges()) {
+            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.property);
+        }
+        return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+    }
+
+private:
+    // Stores Graph with the names and ranges of all parameters
+    ParametersGraphDetailed m_graph;
+    size_t m_num_runs;
+    double m_t0;
+    double m_tmax;
+    double m_dt_graph_sim;
 };
 
 /**
@@ -423,73 +602,62 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
     }
 }
 
-template <class Sim>
-void MigrationEdgeDetailed::apply_migration(double t, double dt, SimulationNode<Sim>& node_from,
-                                            SimulationNode<Sim>& node_to, int mode)
-{
+// template <class Sim>
+// void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to,
+//                                     int mode) //
+// {
 
-    if (mode == 0) {
-        //normal daily migration
-        m_migrated.add_time_point(
-            t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array() *
-                get_migration_factors(node_from, t, node_from.get_last_state()).array())
-                   .matrix());
-        m_return_times.add_time_point(t + dt);
-        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                      node_to.get_result().get_last_value());
-    }
-    // change county of migrated
-    else if (mode == 1) {
-        // update status of migrated before moving to next county
-        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
-        update_status_migrated(m_migrated.get_last_value(), node_from.get_simulation(), integrator_node,
-                               node_from.get_result().get_last_value(), t, dt);
-        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                      node_to.get_result().get_last_value());
-    }
-    // option for last time point to remove time points
-    else if (mode == 2) {
-        Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
-        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
-        update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
-                               node_from.get_result().get_last_value(), t, dt);
+//     if (mode == 0) {
+//         //normal daily migration
+//         m_migrated.add_time_point(
+//             t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array() *
+//                 get_migration_factors(node_from, t, node_from.get_last_state()).array())
+//                    .matrix());
+//         m_return_times.add_time_point(t + dt);
+//         move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+//                       node_to.get_result().get_last_value());
+//     }
+//     // change county of migrated
+//     else if (mode == 1) {
+//         // update status of migrated before moving to next county
+//         IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+//         update_status_migrated(m_migrated.get_last_value(), node_from.get_simulation(), integrator_node,
+//                                node_from.get_result().get_last_value(), t, dt);
+//         move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+//                       node_to.get_result().get_last_value());
+//     }
+//     // option for last time point to remove time points
+//     else if (mode == 2) {
+//         Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
+//         IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+//         update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
+//                                node_from.get_result().get_last_value(), t, dt);
 
-        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                      node_to.get_result().get_last_value());
+//         move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+//                       node_to.get_result().get_last_value());
 
-        for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
-            if (m_return_times.get_time(i) <= t) {
-                m_migrated.remove_time_point(i);
-                m_return_times.remove_time_point(i);
-            }
-        }
-    }
-    // just update status of migrated
-    else if (mode == 3) {
-        Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
-        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
-        update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
-                               node_from.get_result().get_last_value(), t, dt);
+//         for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
+//             if (m_return_times.get_time(i) <= t) {
+//                 m_migrated.remove_time_point(i);
+//                 m_return_times.remove_time_point(i);
+//             }
+//         }
+//     }
+//     // just update status of migrated
+//     else if (mode == 3) {
+//         Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
+//         IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+//         update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
+//                                node_from.get_result().get_last_value(), t, dt);
 
-        move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                      node_from.get_result().get_last_value());
-    }
-    else {
-        std::cout << "Invalid input mode. Should be 0 or 1."
-                  << "\n";
-    }
-}
-
-/**
- * edge functor for migration simulation.
- * @see MigrationEdge::apply_migration
- */
-template <class Sim>
-void apply_migration(double t, double dt, MigrationEdge& migrationEdge, SimulationNode<Sim>& node_from,
-                     SimulationNode<Sim>& node_to, int mode)
-{
-    migrationEdge.apply_migration(t, dt, node_from, node_to, mode);
-}
+//         move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
+//                       node_from.get_result().get_last_value());
+//     }
+//     else {
+//         std::cout << "Invalid input mode. Should be 0 or 1."
+//                   << "\n";
+//     }
+// }
 
 /**
  * create a migration simulation.
@@ -502,17 +670,17 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, Simulati
  * @{
  */
 template <class Sim>
-GraphSimulationDetailed<Graph<SimulationNode<Sim>, MigrationEdge>>
-make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
+GraphSimulationDetailed<GraphDetailed<SimulationNode<Sim>, MigrationEdge>>
+make_migration_sim(double t0, double dt, const GraphDetailed<SimulationNode<Sim>, MigrationEdge>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim_detailed(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim, MigrationEdge>);
 }
 
 template <class Sim>
-GraphSimulationDetailed<Graph<SimulationNode<Sim>, MigrationEdge>>
-make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+GraphSimulationDetailed<GraphDetailed<SimulationNode<Sim>, MigrationEdge>>
+make_migration_sim(double t0, double dt, GraphDetailed<SimulationNode<Sim>, MigrationEdge>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim_detailed(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
 }
 
 } // namespace mio

@@ -370,7 +370,7 @@ void init_pop_cologne_szenario(mio::Graph<mio::osecirvvs::Model, mio::MigrationP
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>
+mio::IOResult<mio::GraphDetailed<mio::osecirvvs::Model, mio::MigrationParameters>>
 get_graph(const std::string data_dir, const int num_days, bool masks, bool ffp2, bool szenario_cologne, bool edges)
 {
     auto mobility_data_commuter =
@@ -552,7 +552,6 @@ mio::IOResult<void> run()
 
     bool szenario_cologne = false;
 
-    // auto params_graph = get_graph(num_days, masks);
     BOOST_OUTCOME_TRY(created, get_graph(data_dir, num_days, masks, ffp2, szenario_cologne, edges));
     auto params_graph = created;
 
@@ -581,8 +580,8 @@ mio::IOResult<void> run()
     });
 
     // parameter study
-    auto parameter_study =
-        mio::ParameterStudy<mio::FlowSimulation<mio::osecirvvs::Model>>(params_graph, 0.0, num_days, 0.01, num_runs);
+    auto parameter_study = mio::ParameterStudyDetailed<mio::FlowSimulation<mio::osecirvvs::Model>>(
+        params_graph, 0.0, num_days, 0.01, num_runs);
     if (mio::mpi::is_root()) {
         printf("Seeds: ");
         for (auto s : parameter_study.get_rng().get_seeds()) {
@@ -593,7 +592,7 @@ mio::IOResult<void> run()
     auto save_single_run_result = mio::IOResult<void>(mio::success());
     auto ensemble               = parameter_study.run(
         [&](auto&& graph) {
-            return draw_sample(graph, false);
+            return draw_sample(graph);
         },
         [&](auto results_graph, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);

@@ -351,6 +351,26 @@ public:
         return m_rng;
     }
 
+protected:
+    // adaptive time step of the integrator (will be corrected if too large/small)
+    double m_dt_integration = 0.1;
+    //
+    RandomNumberGenerator m_rng;
+
+    std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
+    {
+        //evenly distribute runs
+        //lower processes do one more run if runs are not evenly distributable
+        auto num_runs_local = num_runs / num_procs; //integer division!
+        auto remainder      = num_runs % num_procs;
+
+        std::vector<size_t> run_distribution(num_procs);
+        std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);
+        std::fill(run_distribution.begin() + remainder, run_distribution.end(), num_runs_local);
+
+        return run_distribution;
+    }
+
 private:
     //sample parameters and create simulation
     template <class SampleGraphFunction>
@@ -379,20 +399,6 @@ private:
         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
     }
 
-    std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
-    {
-        //evenly distribute runs
-        //lower processes do one more run if runs are not evenly distributable
-        auto num_runs_local = num_runs / num_procs; //integer division!
-        auto remainder      = num_runs % num_procs;
-
-        std::vector<size_t> run_distribution(num_procs);
-        std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);
-        std::fill(run_distribution.begin() + remainder, run_distribution.end(), num_runs_local);
-
-        return run_distribution;
-    }
-
 private:
     // Stores Graph with the names and ranges of all parameters
     ParametersGraph m_graph;
@@ -405,10 +411,6 @@ private:
     double m_tmax;
     // time step of the graph
     double m_dt_graph_sim;
-    // adaptive time step of the integrator (will be corrected if too large/small)
-    double m_dt_integration = 0.1;
-    //
-    RandomNumberGenerator m_rng;
 };
 
 } // namespace mio
