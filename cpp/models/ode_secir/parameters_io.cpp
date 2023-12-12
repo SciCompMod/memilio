@@ -85,7 +85,7 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
     const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
-    const std::vector<double>& scaling_factor_inf)
+    const std::vector<double>& scaling_factor_inf, const std::vector<const char*>& age_group_names)
 {
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -190,18 +190,18 @@ IOResult<void> read_confirmed_cases_data(
         auto& num_death              = vnum_death[region_idx];
         auto& num_icu                = vnum_icu[region_idx];
 
-        for (size_t i = 0; i < ConfirmedCasesDataEntry::age_group_names.size(); i++) {
-            auto try_fix_constraints = [region, i](double& value, double error, auto str) {
+        for (size_t i = 0; i < age_group_names.size(); i++) {
+            auto try_fix_constraints = [region, i, age_group_names](double& value, double error, auto str) {
                 if (value < error) {
                     //this should probably return a failure
                     //but the algorithm is not robust enough to avoid large negative values and there are tests that rely on it
                     log_error("{:s} for age group {:s} is {:.4f} for region {:d}, exceeds expected negative value.",
-                              str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                              str, age_group_names[i], value, region);
                     value = 0.0;
                 }
                 else if (value < 0) {
                     log_info("{:s} for age group {:s} is {:.4f} for region {:d}, automatically corrected", str,
-                             ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                             age_group_names[i], value, region);
                     value = 0.0;
                 }
             };
@@ -221,9 +221,10 @@ IOResult<void> read_confirmed_cases_data(
 
 IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
                                         std::vector<int> const& region, Date date,
-                                        const std::vector<double>& scaling_factor_inf)
+                                        const std::vector<double>& scaling_factor_inf,
+                                        const std::vector<const char*>& age_group_names)
 {
-    const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
+    const size_t num_age_groups = age_group_names.size();
     assert(scaling_factor_inf.size() == num_age_groups);
 
     std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
@@ -237,7 +238,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<double>> mu_H_U{model.size()};
     std::vector<std::vector<double>> mu_U_D{model.size()};
 
-    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(path, age_group_names));
 
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
@@ -269,10 +270,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(num_age_groups, 0.0));
     std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(num_age_groups, 0.0));
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data(path, case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
-                                                num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
-                                                t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
-                                                t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(
+        path, case_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
+        num_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+        t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf, age_group_names));
 
     for (size_t node = 0; node < model.size(); node++) {
         if (std::accumulate(num_InfectedSymptoms[node].begin(), num_InfectedSymptoms[node].end(), 0.0) > 0) {
@@ -332,14 +333,15 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 }
 
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion, bool one_age_group)
+                                                                const std::vector<int>& vregion, bool one_age_group,
+                                                                size_t num_confirmed_cases_age_groups)
 {
     BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path, !one_age_group));
     //if we set up the model for one age group, the population data should be read in with the
     //age groups given in the population data json file and are accumulated later
     //otherwise the populations are directly saved for the correct model age groups
     size_t age_group_size =
-        one_age_group ? PopulationDataEntry::age_group_names.size() : ConfirmedCasesDataEntry::age_group_names.size();
+        one_age_group ? PopulationDataEntry::age_group_names.size() : num_confirmed_cases_age_groups;
     std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_group_size, 0.0));
 
     for (auto&& entry : population_data) {

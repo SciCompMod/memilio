@@ -565,11 +565,12 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
                        mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
-    BOOST_OUTCOME_TRY(set_node_function(
-        params, start_date, end_date, data_dir,
-        mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"), true,
-        params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
-        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false, true));
+    BOOST_OUTCOME_TRY(
+        set_node_function(params, start_date, end_date, data_dir,
+                          mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
+                          true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+                          scaling_factor_icu, tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false,
+                          true, {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"}));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 

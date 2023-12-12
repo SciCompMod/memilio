@@ -576,12 +576,14 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
-    auto r1 = mio::set_confirmed_cases_age_group_names({"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
-    auto r2 = mio::set_population_data_age_group_names({"<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
-    "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"});
+    auto r2 = mio::set_population_data_age_group_names({"<3 years", "3-5 years", "6-14 years", "15-17 years",
+                                                        "18-24 years", "25-29 years", "30-39 years", "40-49 years",
+                                                        "50-64 years", "65-74 years", ">74 years"});
     auto r3 = mio::set_vaccination_data_age_group_names({"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"});
-    
-    auto read_result = mio::osecir::read_input_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
+
+    auto read_result =
+        mio::osecir::read_input_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path,
+                                             {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     std::vector<double> sus   = {3443857.42, 7665093.95, 18792870.93, 29503629.76, 16307262.45, 6049150.54};
@@ -628,13 +630,14 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
-    auto r1 = mio::set_confirmed_cases_age_group_names({"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
-    auto r2 = mio::set_population_data_age_group_names({"<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
-    "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"});
+    auto r2 = mio::set_population_data_age_group_names({"<3 years", "3-5 years", "6-14 years", "15-17 years",
+                                                        "18-24 years", "25-29 years", "30-39 years", "40-49 years",
+                                                        "50-64 years", "65-74 years", ">74 years"});
     auto r3 = mio::set_vaccination_data_age_group_names({"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"});
 
     auto read_result =
-        mio::osecir::read_input_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
+        mio::osecir::read_input_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path,
+                                           {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     std::vector<double> sus   = {116692.2, 283912.8, 622795.86, 1042178.3, 606450.7, 212836.9};
@@ -692,9 +695,9 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model3[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model3[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
-    auto r1 = mio::set_confirmed_cases_age_group_names({"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
-    auto r2 = mio::set_population_data_age_group_names({"<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
-    "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"});
+    auto r2 = mio::set_population_data_age_group_names({"<3 years", "3-5 years", "6-14 years", "15-17 years",
+                                                        "18-24 years", "25-29 years", "30-39 years", "40-49 years",
+                                                        "50-64 years", "65-74 years", ">74 years"});
     auto r3 = mio::set_vaccination_data_age_group_names({"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"});
 
     auto read_result1 =
@@ -783,15 +786,16 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     TempFileRegister file_register;
     auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
     boost::filesystem::create_directory(results_dir);
-    auto r1 = mio::set_confirmed_cases_age_group_names({"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
-    auto r2 = mio::set_population_data_age_group_names({"<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
-    "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"});
+    auto r2 = mio::set_population_data_age_group_names({"<3 years", "3-5 years", "6-14 years", "15-17 years",
+                                                        "18-24 years", "25-29 years", "30-39 years", "40-49 years",
+                                                        "50-64 years", "65-74 years", ">74 years"});
     auto r3 = mio::set_vaccination_data_age_group_names({"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"});
     auto extrapolate_result = mio::osecir::export_input_data_county_timeseries(
         model, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1,
         mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
         mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
-        mio::path_join(TEST_DATA_DIR, "county_current_population.json"));
+        mio::path_join(TEST_DATA_DIR, "county_current_population.json"),
+        {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
     auto read_result = mio::read_result(mio::path_join(results_dir, "Results_rki.h5"));

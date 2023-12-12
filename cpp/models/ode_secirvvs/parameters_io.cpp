@@ -21,6 +21,7 @@
 #include "ode_secirvvs/parameters_io.h"
 #include "memilio/geography/regions.h"
 #include "memilio/io/io.h"
+#include <cstddef>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -70,13 +71,13 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
     const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
-    const std::vector<double>& scaling_factor_inf)
+    const std::vector<double>& scaling_factor_inf, const std::vector<const char*>& age_group_names)
 {
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
-    return read_confirmed_cases_data(rki_data, vregion, date, vnum_Exposed, vnum_InfectedNoSymptoms,
-                                     vnum_InfectedSymptoms, vnum_InfectedSevere, vnum_icu, vnum_death, vnum_rec,
-                                     vt_Exposed, vt_InfectedNoSymptoms, vt_InfectedSymptoms, vt_InfectedSevere,
-                                     vt_InfectedCritical, vmu_C_R, vmu_I_H, vmu_H_U, scaling_factor_inf);
+    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path, age_group_names));
+    return read_confirmed_cases_data(
+        rki_data, vregion, date, vnum_Exposed, vnum_InfectedNoSymptoms, vnum_InfectedSymptoms, vnum_InfectedSevere,
+        vnum_icu, vnum_death, vnum_rec, vt_Exposed, vt_InfectedNoSymptoms, vt_InfectedSymptoms, vt_InfectedSevere,
+        vt_InfectedCritical, vmu_C_R, vmu_I_H, vmu_H_U, scaling_factor_inf, age_group_names);
 }
 
 IOResult<void> read_confirmed_cases_data(
@@ -89,7 +90,7 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
     const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
-    const std::vector<double>& scaling_factor_inf)
+    const std::vector<double>& scaling_factor_inf, const std::vector<const char*>& age_group_names)
 {
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -185,7 +186,7 @@ IOResult<void> read_confirmed_cases_data(
         auto& num_death              = vnum_death[region_idx];
         auto& num_icu                = vnum_icu[region_idx];
 
-        size_t num_groups = ConfirmedCasesDataEntry::age_group_names.size();
+        size_t num_groups = age_group_names.size();
         for (size_t i = 0; i < num_groups; i++) {
             // subtract infected confirmed cases which are not yet recovered
             // and remove dark figure scaling factor
@@ -195,20 +196,20 @@ IOResult<void> read_confirmed_cases_data(
                 num_icu[i] /
                 scaling_factor_inf[i]; // TODO: this has to be adapted for scaling_factor_inf != 1 or != ***_icu
             num_rec[i] -= num_death[i] / scaling_factor_inf[i];
-            auto try_fix_constraints = [region, i](double& value, double error, auto str) {
+            auto try_fix_constraints = [region, i, age_group_names](double& value, double error, auto str) {
                 if (value < error) {
                     // this should probably return a failure
                     // but the algorithm is not robust enough to avoid large negative
                     // values and there are tests that rely on it
                     log_error("{:s} for age group {:s} is {:.4f} for region {:d}, "
                               "exceeds expected negative value.",
-                              str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                              str, age_group_names[i], value, region);
                     value = 0.0;
                 }
                 else if (value < 0) {
                     log_info("{:s} for age group {:s} is {:.4f} for region {:d}, "
                              "automatically corrected",
-                             str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                             str, age_group_names[i], value, region);
                     value = 0.0;
                 }
             };
@@ -228,15 +229,16 @@ IOResult<void> read_confirmed_cases_data(
 
 IOResult<void> read_confirmed_cases_data_fix_recovered(std::string const& path, std::vector<int> const& vregion,
                                                        Date date, std::vector<std::vector<double>>& vnum_rec,
-                                                       double delay)
+                                                       const std::vector<const char*>& age_group_names, double delay)
 {
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
-    return read_confirmed_cases_data_fix_recovered(rki_data, vregion, date, vnum_rec, delay);
+    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path, age_group_names));
+    return read_confirmed_cases_data_fix_recovered(rki_data, vregion, date, vnum_rec, age_group_names, delay);
 }
 
 IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
                                                        std::vector<int> const& vregion, Date date,
-                                                       std::vector<std::vector<double>>& vnum_rec, double delay)
+                                                       std::vector<std::vector<double>>& vnum_rec,
+                                                       const std::vector<const char*>& age_group_names, double delay)
 {
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -275,22 +277,22 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<Confirm
         auto region   = vregion[region_idx];
         auto& num_rec = vnum_rec[region_idx];
 
-        size_t num_groups = ConfirmedCasesDataEntry::age_group_names.size();
+        size_t num_groups = age_group_names.size();
         for (size_t i = 0; i < num_groups; i++) {
-            auto try_fix_constraints = [region, i](double& value, double error, auto str) {
+            auto try_fix_constraints = [region, i, age_group_names](double& value, double error, auto str) {
                 if (value < error) {
                     // this should probably return a failure
                     // but the algorithm is not robust enough to avoid large negative
                     // values and there are tests that rely on it
                     log_error("{:s} for age group {:s} is {:.4f} for region {:d}, "
                               "exceeds expected negative value.",
-                              str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                              str, age_group_names[i], value, region);
                     value = 0.0;
                 }
                 else if (value < 0) {
                     log_info("{:s} for age group {:s} is {:.4f} for region {:d}, "
                              "automatically corrected",
-                             str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                             str, age_group_names[i], value, region);
                     value = 0.0;
                 }
             };
@@ -338,18 +340,19 @@ IOResult<void> read_divi_data(const std::vector<DiviEntry>& divi_data, const std
     return success();
 }
 
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion)
+IOResult<std::vector<std::vector<double>>>
+read_population_data(const std::string& path, const std::vector<int>& vregion, size_t num_confirmed_cases_age_groups)
 {
     BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
-    return read_population_data(population_data, vregion);
+    return read_population_data(population_data, vregion, num_confirmed_cases_age_groups);
 }
 
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>& vregion)
+                                                                const std::vector<int>& vregion,
+                                                                size_t num_confirmed_cases_age_groups)
 {
-    std::vector<std::vector<double>> vnum_population(
-        vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<double>> vnum_population(vregion.size(),
+                                                     std::vector<double>(num_confirmed_cases_age_groups, 0.0));
 
     for (auto&& county_entry : population_data) {
         //accumulate population of states or country from population of counties

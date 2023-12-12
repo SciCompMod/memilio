@@ -71,7 +71,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
 mio::IOResult<void> set_age_group_names(std::vector<const char*> confirmed_cases_names,
                                         std::vector<const char*> population_data_names)
 {
-    BOOST_OUTCOME_TRY(mio::set_confirmed_cases_age_group_names(confirmed_cases_names));
+    mio::unused(confirmed_cases_names);
     BOOST_OUTCOME_TRY(mio::set_population_data_age_group_names(population_data_names));
 
     return mio::success();
@@ -97,7 +97,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     }
     int num_days = 90;
     auto read = mio::osecir::read_input_data(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,
-                                             data_dir.string(), num_days, true);
+                                             data_dir.string(), num_days, true, {"All"});
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
         params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
@@ -111,6 +111,7 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model, mio::MigrationParam
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
+    //mobility matrix has to be provided by the user as input and should have shape num_nodes x num_nodes
     BOOST_OUTCOME_TRY(mobility_data,
                       mio::read_mobility_plain(mio::path_join((data_dir).string(), "mobility_matrix.txt")));
     if (mobility_data.rows() != Eigen::Index(params_graph.nodes().size()) ||
