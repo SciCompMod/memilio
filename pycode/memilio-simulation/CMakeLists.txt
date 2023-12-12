@@ -69,12 +69,12 @@ target_link_libraries(_simulation_oseir PRIVATE memilio ode_seir)
 target_include_directories(_simulation_oseir PRIVATE memilio/simulation)
 install(TARGETS _simulation_oseir LIBRARY DESTINATION memilio)
 
-pybind11_add_module(_simulation_osecir MODULE
+pybind11_add_module(_simulation_secir MODULE
     memilio/simulation/secir.cpp
 )
-target_link_libraries(_simulation_osecir PRIVATE memilio ode_secir)
-target_include_directories(_simulation_osecir PRIVATE memilio/simulation)
-install(TARGETS _simulation_osecir LIBRARY DESTINATION memilio)
+target_link_libraries(_simulation_secir PRIVATE memilio ode_secir)
+target_include_directories(_simulation_secir PRIVATE memilio/simulation)
+install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation_osecirvvs MODULE
     memilio/simulation/osecirvvs.cpp

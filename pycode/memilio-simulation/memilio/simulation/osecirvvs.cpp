@@ -90,8 +90,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .value("SusceptibleImprovedImmunity", mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity)
         .value("DeadNaive", mio::osecirvvs::InfectionState::DeadNaive)
         .value("DeadPartialImmunity", mio::osecirvvs::InfectionState::DeadPartialImmunity)
-        .value("DeadImprovedImmunity", mio::osecirvvs::InfectionState::DeadImprovedImmunity)
-        .value("TotalInfections", mio::osecirvvs::InfectionState::TotalInfections);
+        .value("DeadImprovedImmunity", mio::osecirvvs::InfectionState::DeadImprovedImmunity);
 
     pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase>(m, "ParametersBase");
 

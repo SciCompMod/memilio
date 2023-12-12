@@ -36,6 +36,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/epidemiology/simulation_day.h"
 
 namespace py = pybind11;
 
@@ -48,12 +49,21 @@ std::string pretty_name<mio::AgeGroup>()
     return "AgeGroup";
 }
 
+template <>
+std::string pretty_name<mio::SimulationDay>()
+{
+    return "SimulationDay";
+}
+
 } // namespace pymio
 
 PYBIND11_MODULE(_simulation, m)
 {
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
     py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+
+    pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
+    py::class_<mio::SimulationDay, mio::Index<mio::SimulationDay>>(m, "SimulationDay").def(py::init<size_t>());
 
     pymio::bind_date(m, "Date");
 
