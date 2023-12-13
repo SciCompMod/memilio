@@ -495,8 +495,8 @@ TEST(TestOdeSECIRVVS, checkPopulationConservation)
 
 TEST(TestOdeSECIRVVS, read_confirmed_cases)
 {
-    size_t num_age_groups = 6; //reading data requires RKI data age groups
-    auto model            = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
+    auto num_age_groups = 6; //reading data requires RKI data age groups
+    auto model          = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
     std::vector<int> region{1002};
     auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
     std::vector<std::vector<int>> t_Exposed(1);
@@ -524,7 +524,7 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     num_InfectedNoSymptoms[0] = std::vector<double>(num_age_groups, 0.0);
     num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
     num_icu[0]                = std::vector<double>(num_age_groups, 0.0);
-    for (size_t group = 0; group < num_age_groups; group++) {
+    for (size_t group = 0; group < static_cast<size_t>(num_age_groups); group++) {
 
         t_InfectedNoSymptoms[0].push_back(static_cast<int>(std::round(
             2 * (model[0].parameters.template get<mio::osecirvvs::IncubationTime>()[(mio::AgeGroup)group] -
