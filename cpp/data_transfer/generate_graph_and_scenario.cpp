@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Wadim Koslow, Martin Kühn, David Kerkmann
+* Authors:
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -322,21 +322,94 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
     return mio::success(params_graph);
 }
 
+mio::IOResult<void> run(RunMode mode, mio::Date start_date, const std::string& data_dir,
+                        const std::string& save_graph_dir, const std::string& result_dir, bool save_single_runs)
+{
+    const auto num_days_sim = 90;
+    const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
+    const auto num_runs     = 5;
+
+    //create or load graph
+    mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
+    if (mode == RunMode::Save) {
+        BOOST_OUTCOME_TRY(created, get_graph(start_date, num_days_sim, data_dir));
+        BOOST_OUTCOME_TRY(write_graph(created, save_graph_dir));
+        params_graph = created;
+    }
+    else {
+        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model>(save_graph_dir));
+        params_graph = loaded;
+        std::vector<int> county_ids(params_graph.nodes().size());
+        std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+            return n.id;
+        });
+
+        //run parameter study
+        auto parameter_study =
+            mio::ParameterStudy<mio::osecirvvs::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
+
+        if (mio::mpi::is_root()) {
+            printf("Seeds: ");
+            for (auto s : parameter_study.get_rng().get_seeds()) {
+                printf("%u, ", s);
+            }
+            printf("\n");
+        }
+
+        auto save_single_run_result = mio::IOResult<void>(mio::success());
+        auto ensemble               = parameter_study.run(
+            [&](auto&& graph) {
+                return draw_sample(graph, false);
+            },
+            [&](auto results_graph, auto&& run_idx) {
+                auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+                auto params              = std::vector<mio::osecirvvs::Model>();
+                params.reserve(results_graph.nodes().size());
+                std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                               [](auto&& node) {
+                                   return node.property.get_simulation().get_model();
+                               });
+
+                if (save_single_run_result && save_single_runs) {
+                    save_single_run_result =
+                        save_result_with_params(interpolated_result, params, county_ids, result_dir, run_idx);
+                }
+                std::cout << "run " << run_idx << " complete." << std::endl;
+                return std::make_pair(interpolated_result, params);
+            });
+
+        if (ensemble.size() > 0) {
+            auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+            ensemble_results.reserve(ensemble.size());
+            auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
+            ensemble_params.reserve(ensemble.size());
+            for (auto&& run : ensemble) {
+                ensemble_results.emplace_back(std::move(run.first));
+                ensemble_params.emplace_back(std::move(run.second));
+            }
+
+            BOOST_OUTCOME_TRY(save_single_run_result);
+            BOOST_OUTCOME_TRY(
+                save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
+        }
+    }
+    return mio::success();
+}
+
 int main(int argc, char** argv)
 {
 
     mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
 
-    RunMode mode;
+    auto mode = RunMode::Save;
     std::string data_dir;
     std::string save_graph_dir = "../../graph";
 
     mio::Date start_date = mio::Date(2023, 6, 1);
-    double num_days_sim  = 90.0;
+    int num_days_sim     = 90;
 
     if (argc == 1) {
-        mode     = RunMode::Save;
         data_dir = "../../data";
     }
     else if (argc == 2) {
@@ -370,27 +443,31 @@ int main(int argc, char** argv)
         printf("\n");
     }
 
-    // check if save_graph_dir exists
-    fs::path save_dir(save_graph_dir);
+    std::string result_dir = "";
+
     if (mode == RunMode::Save) {
-        if (!fs::exists(save_dir)) {
-            fs::create_directory(save_dir);
+        boost::filesystem::path dir_graph(save_graph_dir);
+        bool created_graph = boost::filesystem::create_directories(dir_graph);
+        if (created_graph) {
+            mio::log_info("Directory '{:s}' was created.", dir_graph.string());
         }
-    }
-
-    //create or load graph
-    // if (mode == RunMode::Save) {
-    //     auto create_extrapolated_data = get_graph(start_date, num_days_sim, data_dir);
-    // }
-
-    if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, get_graph(start_date, num_days_sim, data_dir));
-        BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
-        params_graph = created;
+        printf("Saving graph to \"%s\".\n", save_graph_dir.c_str());
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
-        params_graph = loaded;
+        result_dir = "../../results";
+        boost::filesystem::path res_dir(result_dir);
+        bool created_results = boost::filesystem::create_directories(res_dir);
+        if (created_results) {
+            mio::log_info("Directory '{:s}' was created.", res_dir.string());
+        }
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
+    }
+
+    auto result = run(mode, start_date, data_dir, save_graph_dir, result_dir, false);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        mio::mpi::finalize();
+        return -1;
     }
     mio::mpi::finalize();
     return 0;
