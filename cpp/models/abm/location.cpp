@@ -191,31 +191,5 @@ size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
     });
 }
 
-void Location::store_subpopulations(const TimePoint t)
-{
-    m_subpopulations.add_time_point(t.days());
-    Eigen::VectorXd subpopulations(Eigen::VectorXd::Zero((size_t)InfectionState::Count));
-    for (auto p : m_persons)
-        ++subpopulations[(size_t)p->get_infection_state(t)];
-    m_subpopulations.get_last_value() = subpopulations;
-}
-
-void Location::initialize_subpopulations(const TimePoint t)
-{
-    if (m_subpopulations.get_num_time_points() == 0) {
-        store_subpopulations(t);
-    }
-    else {
-        if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
-            store_subpopulations(t);
-        }
-    }
-}
-
-const TimeSeries<ScalarType>& Location::get_subpopulations() const
-{
-    return m_subpopulations;
-}
-
 } // namespace abm
 } // namespace mio

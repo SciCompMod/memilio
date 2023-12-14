@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Daniel Abele, Khoa Nguyen
 #
@@ -36,7 +36,6 @@ class TestAbm(unittest.TestCase):
         world = sim.world
         self.assertEqual(len(world.persons), 0)
         self.assertEqual(len(world.locations), 1)
-        self.assertEqual(len(sim.result), 0)
 
     def test_locations(self):
         t0 = abm.TimePoint(0)
@@ -128,7 +127,6 @@ class TestAbm(unittest.TestCase):
         # run
         t1 = t0 + abm.days(1)
         sim.advance(t1)
-        self.assertEqual(sim.result.get_num_time_points(), 25)
 
 
 if __name__ == '__main__':

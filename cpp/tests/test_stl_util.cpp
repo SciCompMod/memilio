@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -241,6 +241,17 @@ TEST(TestContains, empty)
     ASSERT_FALSE(mio::contains(v.begin(), v.end(), [](auto&&) {
         return true;
     }));
+}
+
+TEST(EnumMembers, works)
+{
+    enum class E
+    {
+        A,
+        B,
+        Count
+    };
+    ASSERT_THAT(mio::enum_members<E>(), testing::ElementsAre(E::A, E::B));
 }
 
 TEST(TestContains, set_ostream_format)

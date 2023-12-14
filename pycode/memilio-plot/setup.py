@@ -4,7 +4,7 @@ import sys
 
 from setuptools import Command, find_packages, setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 
 class PylintCommand(Command):
@@ -51,7 +51,7 @@ setup(
     author='DLR-SC',
     author_email='martin.kuehn@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, plots data to maps or visualizes simulation curves.',
     entry_points={
         'console_scripts': [
@@ -76,7 +76,9 @@ setup(
         'matplotlib',
         'mapclassify',
         'geopandas',
-        'h5py'
+        'h5py',
+        'imageio',
+        'datetime'
     ],
     extras_require={
         'dev': [

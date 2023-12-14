@@ -31,9 +31,6 @@ TEST(TestLocation, init)
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
     }
-    location.initialize_subpopulations(mio::abm::TimePoint(0));
-    ASSERT_EQ(print_wrap(location.get_subpopulations().get_last_value()),
-              print_wrap(mio::TimeSeries<double>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
     EXPECT_EQ(location.get_number_persons(), 0);
 }
 
@@ -286,92 +283,6 @@ TEST(TestLocation, setCapacity)
     location.set_capacity(4, 200);
     ASSERT_EQ(location.get_capacity().persons, (uint32_t)4);
     ASSERT_EQ(location.get_capacity().volume, (uint32_t)200);
-}
-
-TEST(TestLocation, storeSubpopulations)
-{
-    auto t      = mio::abm::TimePoint(0);
-    auto dt     = mio::abm::days(7);
-    auto params = mio::abm::Parameters(NUM_AGE_GROUPS);
-
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
-
-    //setup: p1 goes from Infected to Recovered, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to Recovered
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_5_TO_14}] =
-        1.5 * dt.days();
-
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34}] =
-        5 * dt.days();
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34}] =
-        5 * dt.days();
-
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_35_TO_59}] = 0.4 * dt.days();
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_35_TO_59}] =
-        1.8 * dt.days();
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-
-    // mock person 1
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(8))
-        .WillOnce(testing::Return(0.8)) // draw random work group
-        .WillOnce(testing::Return(0.8)) // draw random school group
-        .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to Recovered
-        .WillRepeatedly(testing::Return(1.0));
-
-    auto person1 = make_test_person(location, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms, t, params);
-    location.add_person(person1, {0});
-
-    // mock person 2 not needed due to high setup of transition times
-    auto person2 =
-        make_test_person(location, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms, t, params);
-    location.add_person(person2, {0});
-
-    // mock person 3
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(8))
-        .WillOnce(testing::Return(0.8)) // draw random work group
-        .WillOnce(testing::Return(0.8)) // draw random school group
-        .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to Recovered
-        .WillRepeatedly(testing::Return(1.0));
-    auto person3 = make_test_person(location, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Exposed, t, params);
-    location.add_person(person3, {0});
-
-    location.initialize_subpopulations(t);
-    auto t1 = t + dt;
-    location.store_subpopulations(t1);
-    auto v1 = location.get_subpopulations().get_value(1);
-    // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::InfectedSymptoms)], 2);
-    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::InfectedNoSymptoms)], 1);
-
-    auto t2 = t1 + dt;
-    location.store_subpopulations(t2);
-    auto v2 = location.get_subpopulations().get_value(2);
-    // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::InfectedSymptoms)], 1);
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Recovered)], 1);
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::InfectedNoSymptoms)], 1);
-
-    auto t3 = t2 + mio::abm::days(10);
-    location.store_subpopulations(t3);
-    auto v3 = location.get_subpopulations().get_value(3);
-    // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::InfectedSymptoms)], 1);
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Recovered)], 2);
-
-    // Check total number of subpopulation is correct.
-    ASSERT_EQ(location.get_subpopulations().get_num_time_points(), 4);
-    for (auto&& v_iter : location.get_subpopulations()) {
-        ASSERT_EQ(v_iter.sum(), 3);
-    }
-    ASSERT_EQ(location.get_subpopulations().get_time(1), 7);
-    ASSERT_EQ(location.get_subpopulations().get_time(2), 14);
-    ASSERT_EQ(location.get_subpopulations().get_time(3), 24);
 }
 
 TEST(TestLocation, setRequiredMask)

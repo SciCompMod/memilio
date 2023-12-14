@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -245,6 +245,38 @@ struct index_of_type {
  */
 template <class Type, class... Types>
 constexpr std::size_t index_of_type_v = index_of_type<Type, Types...>::value;
+
+/**
+ * Tests whether the list Types contains any type multiple times.
+ * @tparam Types A list of types.
+ */
+template <class... Types>
+struct has_duplicates {
+private:
+    /**
+     * @brief Checks if Types has a duplicate entry using an index sequence.
+     * @tparam Indices Exactly the list '0, ... , sizeof...(Types) - 1'. Use std::make_index_sequence.
+     * @return True if Types contains a duplicate type, false otherwise.
+     */
+    template <std::size_t... Indices>
+    static constexpr bool has_duplicates_impl(std::index_sequence<Indices...>)
+    {
+        // index_of_type_v will always be equal to the index of the first occurance of a type,
+        // while Indices contains its actual index. Hence, if there is any mismatch, then there is a duplicate.
+        return ((index_of_type_v<Types, Types...> != Indices) || ...);
+    }
+
+public:
+    static constexpr bool value = has_duplicates_impl(std::make_index_sequence<sizeof...(Types)>{});
+};
+
+/**
+ * @brief Checks whether Type has any duplicates.
+ * Equivalent to has_duplicates<Types...>::value.
+ * @see is_type_in_list.
+ */
+template <class... Types>
+constexpr bool has_duplicates_v = has_duplicates<Types...>::value;
 
 } // namespace mio
 

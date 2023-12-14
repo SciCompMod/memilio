@@ -262,7 +262,7 @@ struct AerosolTransmissionRates {
     using Type = CustomIndexArray<ScalarType, VirusVariant>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day
+        return Type({VirusVariant::Count}, 1.0);
     }
     static std::string name()
     {

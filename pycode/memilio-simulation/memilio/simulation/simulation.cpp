@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
@@ -23,6 +23,7 @@
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
+#include "epidemiology/dynamic_npis.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
@@ -94,6 +95,8 @@ PYBIND11_MODULE(_simulation, m)
 
     auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
     pymio::bind_damping_expression_group_members(migration_coeff_group_class);
+
+    pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
 
     pymio::bind_migration_parameters(m, "MigrationParameters");
     pymio::bind_migration_parameter_edge(m, "MigrationParameterEdge");

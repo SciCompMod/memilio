@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
@@ -18,8 +18,10 @@
 * limitations under the License.
 */
 
+#include "memilio/config.h"
 #include "pybind_util.h"
 #include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
 #include "utils/custom_index_array.h"
@@ -27,12 +29,19 @@
 #include "utils/index.h"
 #include "mobility/graph_simulation.h"
 #include "mobility/metapopulation_mobility_instant.h"
+#include "io/mobility_io.h"
+#include "io/result_io.h"
 #include "ode_secir/model.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
+#include "ode_secir/parameters_io.h"
 #include "memilio/compartments/parameter_studies.h"
+#include "memilio/mobility/graph.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/io/epi_data.h"
 #include "Eigen/Core"
 #include "pybind11/stl_bind.h"
+
 #include <vector>
 
 namespace py = pybind11;
@@ -124,6 +133,15 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
         });
 }
 
+enum class ContactLocation
+{
+    Home = 0,
+    School,
+    Work,
+    Other,
+    Count,
+};
+
 using Simulation     = mio::osecir::Simulation<>;
 using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
@@ -204,6 +222,14 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         "Simulates a Secir Model1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
+    m.def(
+        "simulate_flows",
+        [](double t0, double tmax, double dt, const mio::osecir::Model& model) {
+            return mio::simulate_flows(t0, tmax, dt, model);
+        },
+        "Simulates a Secir model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        py::arg("model"));
+
     pymio::bind_ModelNode<mio::osecir::Model>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
@@ -225,6 +251,82 @@ PYBIND11_MODULE(_simulation_secir, m)
             return mio::osecir::draw_sample(model);
         },
         py::arg("model"));
+
+    // These functions are in general not secir dependent, only with the current config
+    m.def(
+        "set_nodes",
+        [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const std::string& data_dir,
+           const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
+           int num_days = 0, bool export_time_series = false) {
+            auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns,
+                                         mio::osecir::Model, mio::MigrationParameters, mio::osecir::Parameters,
+                                         decltype(mio::osecir::read_input_data_county<mio::osecir::Model>),
+                                         decltype(mio::get_node_ids)>(
+                params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
+                mio::osecir::read_input_data_county<mio::osecir::Model>, mio::get_node_ids, scaling_factor_inf,
+                scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    pymio::iterable_enum<ContactLocation>(m, "ContactLocation")
+        .value("Home", ContactLocation::Home)
+        .value("School", ContactLocation::School)
+        .value("Work", ContactLocation::Work)
+        .value("Other", ContactLocation::Other);
+
+    m.def(
+        "set_edges",
+        [](const std::string& data_dir, mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+           size_t contact_locations_size) {
+            auto migrating_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                   mio::osecir::InfectionState::InfectedNoSymptoms,
+                                   mio::osecir::InfectionState::InfectedSymptoms,
+                                   mio::osecir::InfectionState::Recovered};
+            auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
+            auto result         = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
+                                         mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
+                                         decltype(mio::read_mobility_plain)>(
+                data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain, weights);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+#ifdef MEMILIO_HAS_HDF5
+    pymio::bind_save_results<mio::osecir::Model>(m);
+#endif // MEMILIO_HAS_HDF5
+
+#ifdef MEMILIO_HAS_JSONCPP
+    pymio::bind_write_graph<mio::osecir::Model>(m);
+    m.def(
+        "read_input_data_county",
+        [](std::vector<mio::osecir::Model>& model, mio::Date date, const std::vector<int>& county,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
+           int num_days = 0, bool export_time_series = false) {
+            auto result = mio::osecir::read_input_data_county<mio::osecir::Model>(
+                model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "get_node_ids",
+        [](const std::string& path, bool is_node_for_county) {
+            auto result = mio::get_node_ids(path, is_node_for_county);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+#endif // MEMILIO_HAS_JSONCPP
+
+    m.def(
+        "read_mobility_plain",
+        [](const std::string& filename) {
+            auto result = mio::read_mobility_plain(filename);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
 
     m.def("interpolate_simulation_result",
           py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
