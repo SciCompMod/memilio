@@ -522,7 +522,7 @@ public:
 
     void add_test_result(TimePoint t, GenericTest type, bool result);
 
-    bool has_valid_test_result(GenericTest type, TimePoint t) const;
+    const Person::TestResult* get_test_result(GenericTest type, TimePoint t) const;
 
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.

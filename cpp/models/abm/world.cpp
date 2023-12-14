@@ -168,11 +168,13 @@ void World::migration(TimePoint t, TimeSpan dt)
         };
         //run migration rules one after the other if the corresponding location type exists
         //shortcutting of bool operators ensures the rules stop after the first rule is applied
-        testing_migration_rule(&go_to_school);
-        testing_migration_rule(&go_to_work);
-        testing_migration_rule(&go_to_shop);
-        testing_migration_rule(&go_to_event);
-        testing_migration_rule(&go_to_quarantine);
+        if (m_use_migration_rules) {
+            testing_migration_rule(&go_to_school);
+            testing_migration_rule(&go_to_work);
+            testing_migration_rule(&go_to_shop);
+            testing_migration_rule(&go_to_event);
+            testing_migration_rule(&go_to_quarantine);
+        }
     }
 }
 

@@ -325,3 +325,19 @@ TEST(Person, rng)
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
     ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }
+
+TEST(Person, getTestResult)
+{
+    mio::abm::Location location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
+    auto person = make_test_person(location);
+    auto t      = mio::abm::TimePoint(0);
+    auto dt     = mio::abm::seconds(8640); //0.1 days
+
+    mio::abm::GenericTest test;
+    person.add_test_result(t, test, true);
+    ASSERT_TRUE(person.get_test_result(test, t));
+    ASSERT_TRUE(person.get_test_result(test, t + dt));
+
+    dt = mio::abm::days(2);
+    ASSERT_FALSE(person.get_test_result(test, t + dt));
+}

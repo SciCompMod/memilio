@@ -320,15 +320,14 @@ void Person::add_test_result(TimePoint t, GenericTest type, bool result)
     m_test_results.push_back(test_result);
 }
 
-bool Person::has_valid_test_result(GenericTest type, TimePoint t) const
+const Person::TestResult* Person::get_test_result(GenericTest type, TimePoint t) const
 {
     for (const auto& result : m_test_results) {
-        if (result.type.name == type.name && result.result == true &&
-            (result.time_of_testing + result.type.get_default().validity_period) > t) {
-            return true;
+        if (result.type.name == type.name && (result.time_of_testing + result.type.get_default().validity_period) > t) {
+            return &result;
         }
     }
-    return false;
+    return nullptr;
 }
 
 } // namespace abm

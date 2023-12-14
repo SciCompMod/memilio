@@ -158,6 +158,12 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
 
     for (auto vec_ptr : schemes_vector) {
         if (!std::all_of(vec_ptr->begin(), vec_ptr->end(), [&rng, &person, t](TestingScheme& ts) {
+                auto test_result = person.get_test_result(ts.get_type(), t);
+                // If the agent has a test result valid until now, use the result directly
+                if (test_result != nullptr) {
+                    return test_result->result;
+                }
+                // If not, perform the test and save result
                 auto result = !ts.is_active() || ts.run_scheme(rng, person, t);
                 person.add_test_result(t + ts.get_type().get_default().required_time, ts.get_type(), result);
                 return result;
