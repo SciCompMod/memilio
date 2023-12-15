@@ -147,7 +147,7 @@ jobs:
       - uses: ./.github/actions/linux-test
         with:
           build-artifact: build-cpp-linux-gcc-latest-Release-full
-          num-repeat: 5
+          num-repeat: 100
 
   test-cpp-msvc:
     if: github.event.pull_request.draft == false
