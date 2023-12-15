@@ -1,5 +1,5 @@
 name: "Linux Build"
-description: "Build the C++ library on Linux."
+description: "Build the C++ library on Linux. Produces artifact build-cpp-linux-$compiler-$version-$config."
 inputs:
   config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
@@ -14,19 +14,19 @@ inputs:
     required: true
     default: "latest"
   optional-dependencies:
-    description: "Build the library with optional dependencies (ON or OFF)"
+    description: "Build the library with optional dependencies (ON or OFF, default ON). If OFF, adds `-nodep` to the artifact name"
     required: false
     default: "ON"
   coverage:
-    description: "Turn coverage on (ON or OFF)"
+    description: "Turn coverage on (ON or OFF, default OFF)"
     required: false
     default: "OFF"
   sanitize-ub:
-    description: "Turn on UB sanitzer (ON or OFF)"
+    description: "Turn on UB sanitzer (ON or OFF, default OFF)"
     required: false
     default: "OFF"
   sanitize-addr:
-    description: "Turn on address sanitzer (ON or OFF)"
+    description: "Turn on address sanitzer (ON or OFF, default OFF)"
     required: false
     default: "OFF"
   build-tests:
@@ -38,7 +38,7 @@ inputs:
     required: false
     default: "OFF"
   openmp:
-    description: "Enable Multithreading with OpenMP"
+    description: "Enable Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
     required: false
     default: "OFF"
 runs:
@@ -99,6 +99,7 @@ runs:
     - name: Upload built directory
       uses: actions/upload-artifact@v3
       with:
-        name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
+        #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
+        name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build.tar.gz
         retention-days: 1
