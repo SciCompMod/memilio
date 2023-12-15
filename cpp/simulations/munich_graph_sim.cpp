@@ -40,13 +40,6 @@ enum class RunMode
     Save,
 };
 
-std::vector<const char*> mio::ConfirmedCasesDataEntry::age_group_names = {"All"};
-
-std::vector<const char*> mio::PopulationDataEntry::age_group_names = {
-    "0-4 years",   "5-9 years",   "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years",
-    "35-39 years", "40-44 years", "45-49 years", "50-54 years", "55-59 years", "60-64 years", "65-69 years",
-    "70-74 years", "75-79 years", "80-84 years", "85-89 years", "90+ years"};
-
 /**
  * Set epidemiological parameters of Sars-CoV-2.
  * @param params Object that the parameters will be added to.
@@ -80,6 +73,13 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
 {
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
+
+    mio::ConfirmedCasesDataEntry::age_group_names = {"All"};
+
+    mio::PopulationDataEntry::age_group_names = {
+        "0-4 years",   "5-9 years",   "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years",
+        "35-39 years", "40-44 years", "45-49 years", "50-54 years", "55-59 years", "60-64 years", "65-69 years",
+        "70-74 years", "75-79 years", "80-84 years", "85-89 years", "90+ years"};
 
     //read node ids
     BOOST_OUTCOME_TRY(node_ids,
