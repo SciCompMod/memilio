@@ -37,6 +37,10 @@ inputs:
     description: "Build benchmarks"
     required: false
     default: "OFF"
+  enable-openmp:
+    description: "Enable Multithreading with OpenMP"
+    required: false
+    default: "OFF"
 runs:
   using: "composite"
   steps:
@@ -85,7 +89,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.enable-openmp }} ..
         make -j4
     - name: create build dir archive
       shell: bash
