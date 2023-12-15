@@ -550,8 +550,7 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     auto read = mio::osecirvvs::details::read_confirmed_cases_data(
         path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
         num_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
-        t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, std::vector<double>(size_t(num_age_groups), 1.0),
-        {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
+        t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, std::vector<double>(size_t(num_age_groups), 1.0));
 
     ASSERT_THAT(read, IsSuccess());
 }
@@ -729,8 +728,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
-                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json"),
-                    {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"}),
+                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));

@@ -74,16 +74,16 @@ public:
 class ConfirmedCasesDataEntry
 {
 public:
+    static std::vector<const char*> age_group_names;
+
     double num_confirmed;
     double num_recovered;
     double num_deaths;
     Date date;
-    std::string age_group_string;
+    AgeGroup age_group;
     boost::optional<regions::StateId> state_id;
     boost::optional<regions::CountyId> county_id;
     boost::optional<regions::DistrictId> district_id;
-    size_t num_age_groups;
-    AgeGroup age_group;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesDataEntry> deserialize(IOContext& io)
@@ -99,45 +99,36 @@ public:
         auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid, auto&& did) {
-                return ConfirmedCasesDataEntry{nc, nr, nd, d, a_str, sid, cid, did, 1, AgeGroup(0)};
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid,
+               auto&& did) -> IOResult<ConfirmedCasesDataEntry> {
+                auto a  = AgeGroup(0);
+                auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
+                if (it != age_group_names.end()) {
+                    a = AgeGroup(size_t(it - age_group_names.begin()));
+                }
+                else if (a_str == "unknown") {
+                    a = AgeGroup(age_group_names.size());
+                }
+                else {
+                    return failure(StatusCode::InvalidValue, "Invalid confirmed cases data age group.");
+                }
+                return success(ConfirmedCasesDataEntry{nc, nr, nd, d, a, sid, cid, did});
             },
             num_confirmed, num_recovered, num_deaths, date, age_group_str, state_id, county_id, district_id);
-    }
-
-    IOResult<void> fill_age_groups(std::vector<const char*> age_group_names)
-    {
-        num_age_groups = age_group_names.size();
-        auto it        = std::find(age_group_names.begin(), age_group_names.end(), age_group_string);
-        if (it != age_group_names.end()) {
-            age_group = AgeGroup(size_t(it - age_group_names.begin()));
-        }
-        else if (age_group_string == "unknown") {
-            age_group = AgeGroup(age_group_names.size());
-        }
-        else {
-            return failure(StatusCode::InvalidValue, "Invalid confirmed cases data age group.");
-        }
-        return success();
     }
 };
 
 /**
  * Read list of ConfirmedCasesDataEntry from json.
  * @param jsvalue json value, must be an array of objects, objects must match ConfirmedCasesDataEntry.
- * @param age_group_names string values specifying the age group names in the json file
  * @return list of entries; entries of unknown age group are omitted.
  */
-inline IOResult<std::vector<ConfirmedCasesDataEntry>>
-deserialize_confirmed_cases_data(const Json::Value& jsvalue, const std::vector<const char*>& age_group_names)
+inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_confirmed_cases_data(const Json::Value& jsvalue)
 {
     BOOST_OUTCOME_TRY(cases_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
-    for (auto& entry : cases_data) {
-        BOOST_OUTCOME_TRY(entry.fill_age_groups(age_group_names));
-    }
     //filter entries with unknown age group
-    auto it = std::remove_if(cases_data.begin(), cases_data.end(), [&age_group_names](auto&& rki_entry) {
-        return rki_entry.age_group >= AgeGroup(age_group_names.size());
+    auto it = std::remove_if(cases_data.begin(), cases_data.end(), [](auto&& rki_entry) {
+        return rki_entry.age_group >= AgeGroup(ConfirmedCasesDataEntry::age_group_names.size());
     });
     cases_data.erase(it, cases_data.end());
     return success(std::move(cases_data));
@@ -146,14 +137,12 @@ deserialize_confirmed_cases_data(const Json::Value& jsvalue, const std::vector<c
 /**
  * Read list of ConfirmedCasesDataEntry from a json file.
  * @param filename name of the json file. File content must be an array of objects, objects must match ConfirmedCasesDataEntry.
- * @param age_group_names string values specifying the age group names in the json file
  * @return list of entries; entries of unknown age group are omitted.
  */
-inline IOResult<std::vector<ConfirmedCasesDataEntry>>
-read_confirmed_cases_data(const std::string& filename, const std::vector<const char*>& age_group_names)
+inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(const std::string& filename)
 {
     BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
-    return deserialize_confirmed_cases_data(jsvalue, age_group_names);
+    return deserialize_confirmed_cases_data(jsvalue);
 }
 
 /**
@@ -268,10 +257,10 @@ namespace details
 {
 inline void get_rki_age_interpolation_coefficients(const std::vector<double>& age_ranges,
                                                    std::vector<std::vector<double>>& interpolation,
-                                                   std::vector<bool>& carry_over, size_t num_rki_age_groups)
+                                                   std::vector<bool>& carry_over)
 {
     std::array<double, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
-    assert(param_ranges.size() == num_rki_age_groups &&
+    assert(param_ranges.size() == ConfirmedCasesDataEntry::age_group_names.size() &&
            "Number of RKI age groups does not match number of age ranges.");
 
     //counter for parameter age groups
@@ -286,7 +275,7 @@ inline void get_rki_age_interpolation_coefficients(const std::vector<double>& ag
             interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
         }
 
-        if (counter < num_rki_age_groups - 1) {
+        if (counter < param_ranges.size() - 1) {
             res += age_ranges[i];
             if (std::abs(res) < age_ranges[i]) {
                 counter++;
@@ -320,19 +309,18 @@ inline void get_rki_age_interpolation_coefficients(const std::vector<double>& ag
     }
 }
 
-inline std::vector<PopulationDataEntry> interpolate_to_rki_age_groups(
-    const std::vector<PopulationDataEntry>& population_data,
-    const std::vector<const char*>& age_group_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"})
+inline std::vector<PopulationDataEntry>
+interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population_data)
 {
     std::vector<double> age_ranges = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
     std::vector<std::vector<double>> coefficients{age_ranges.size()};
     std::vector<bool> carry_over{};
-    get_rki_age_interpolation_coefficients(age_ranges, coefficients, carry_over, age_group_names.size());
+    get_rki_age_interpolation_coefficients(age_ranges, coefficients, carry_over);
 
     std::vector<PopulationDataEntry> interpolated{population_data};
     for (auto region_entry_idx = size_t(0); region_entry_idx < population_data.size(); ++region_entry_idx) {
         interpolated[region_entry_idx].population =
-            CustomIndexArray<double, AgeGroup>(AgeGroup(age_group_names.size()), 0.0);
+            CustomIndexArray<double, AgeGroup>(AgeGroup(ConfirmedCasesDataEntry::age_group_names.size()), 0.0);
 
         size_t interpolated_age_idx = 0;
         for (size_t age_idx = 0; age_idx < coefficients.size(); age_idx++) {

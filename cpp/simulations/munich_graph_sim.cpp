@@ -40,6 +40,13 @@ enum class RunMode
     Save,
 };
 
+std::vector<const char*> mio::ConfirmedCasesDataEntry::age_group_names = {"All"};
+
+std::vector<const char*> mio::PopulationDataEntry::age_group_names = {
+    "0-4 years",   "5-9 years",   "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years",
+    "35-39 years", "40-44 years", "45-49 years", "50-54 years", "55-59 years", "60-64 years", "65-69 years",
+    "70-74 years", "75-79 years", "80-84 years", "85-89 years", "90+ years"};
+
 /**
  * Set epidemiological parameters of Sars-CoV-2.
  * @param params Object that the parameters will be added to.
@@ -68,25 +75,12 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     return mio::success();
 }
 
-mio::IOResult<void> set_age_group_names(std::vector<const char*> confirmed_cases_names,
-                                        std::vector<const char*> population_data_names)
-{
-    mio::unused(confirmed_cases_names);
-    BOOST_OUTCOME_TRY(mio::set_population_data_age_group_names(population_data_names));
-
-    return mio::success();
-}
-
 mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
                               const mio::osecir::Parameters& params, const fs::path& data_dir, mio::Date start_date)
 {
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
 
-    BOOST_OUTCOME_TRY(set_age_group_names(
-        {"All"}, {"0-4 years", "5-9 years", "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years",
-                  "35-39 years", "40-44 years", "45-49 years", "50-54 years", "55-59 years", "60-64 years",
-                  "65-69 years", "70-74 years", "75-79 years", "80-84 years", "85-89 years", "90+ years"}));
     //read node ids
     BOOST_OUTCOME_TRY(node_ids,
                       mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"), false, false));
@@ -97,7 +91,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     }
     int num_days = 90;
     auto read = mio::osecir::read_input_data(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,
-                                             data_dir.string(), num_days, true, {"All"});
+                                             data_dir.string(), num_days, true);
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
         params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }

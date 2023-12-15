@@ -58,8 +58,7 @@ TEST(TestEpiDataIo, read_rki)
     js[2]["Recovered"] = 5;
     js[2]["Age_RKI"]   = "unknown";
 
-    auto result =
-        mio::deserialize_confirmed_cases_data(js, {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
+    auto result = mio::deserialize_confirmed_cases_data(js);
     ASSERT_THAT(print_wrap(result), IsSuccess());
     auto rki_data = result.value();
     ASSERT_EQ(rki_data.size(), 2);
@@ -91,8 +90,7 @@ TEST(TestEpiDataIo, read_rki_error_age)
     js[0]["Recovered"] = 3;
     js[0]["Age_RKI"]   = "A01-A05"; //error
 
-    auto result =
-        mio::deserialize_confirmed_cases_data(js, {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"});
+    auto result = mio::deserialize_confirmed_cases_data(js);
     ASSERT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidValue));
 }
 
@@ -271,9 +269,7 @@ TEST(TestEpiDataIo, read_divi_data)
 
 TEST(TestEpiDataIo, read_confirmed_cases_data)
 {
-    auto case_data = mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "test_cases_all_age.json"),
-                                                    {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"})
-                         .value();
+    auto case_data = mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "test_cases_all_age.json")).value();
 
     ASSERT_EQ(case_data.size(), 3);
 
@@ -397,18 +393,4 @@ TEST(TestEpiData, vaccination_data_error_age)
 
     auto r = mio::deserialize_vaccination_data(js);
     ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::InvalidValue));
-}
-
-TEST(TestEpiData, set_age_groups)
-{
-    std::vector<const char*> name = {"All"};
-    //auto r1                       = mio::set_confirmed_cases_age_group_names(name);
-    auto r2 = mio::set_population_data_age_group_names(name);
-    auto r3 = mio::set_vaccination_data_age_group_names(name);
-    // ASSERT_EQ(mio::ConfirmedCasesDataEntry::age_group_names.size(), 1);
-    // ASSERT_EQ(mio::ConfirmedCasesDataEntry::age_group_names[0], name[0]);
-    ASSERT_EQ(mio::PopulationDataEntry::age_group_names.size(), 1);
-    ASSERT_EQ(mio::PopulationDataEntry::age_group_names[0], name[0]);
-    ASSERT_EQ(mio::VaccinationDataEntry::age_group_names.size(), 1);
-    ASSERT_EQ(mio::VaccinationDataEntry::age_group_names[0], name[0]);
 }

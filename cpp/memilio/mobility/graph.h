@@ -267,9 +267,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
                          Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
                          NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
                          double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
-                         bool export_time_series = false, bool rki_age_groups = true,
-                         const std::vector<const char*>& age_group_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59",
-                                                                            "A60-A79", "A80+"})
+                         bool export_time_series = false, bool rki_age_groups = true)
 {
     BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
@@ -278,7 +276,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
     }
 
     BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
-                                num_days, export_time_series, age_group_names));
+                                num_days, export_time_series));
 
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
 

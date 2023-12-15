@@ -60,8 +60,7 @@ mio::IOResult<std::vector<int>> mock_node_function(const std::string& path, int 
 template <class Model>
 mio::IOResult<void> mock_read_function(std::vector<Model>& model, mio::Date date, const std::vector<int>& node_ids,
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                       const std::string& dir, int num_days, bool export_time_series,
-                                       const std::vector<const char*>& age_group_names)
+                                       const std::string& dir, int num_days, bool export_time_series)
 {
     mio::unused(model);
     mio::unused(date);
@@ -71,7 +70,6 @@ mio::IOResult<void> mock_read_function(std::vector<Model>& model, mio::Date date
     mio::unused(dir);
     mio::unused(num_days);
     mio::unused(export_time_series);
-    mio::unused(age_group_names);
 
     return mio::success();
 }

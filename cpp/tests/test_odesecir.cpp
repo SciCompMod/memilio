@@ -925,21 +925,19 @@ TEST(Secir, apply_constraints_parameters)
 
 #if defined(MEMILIO_HAS_JSONCPP)
 
-TEST(Secir, read_population_data_one_age_group){
-     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
-     const std::vector<int> region{1001};
-     std::vector<const char*> name = {"<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
-    "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"};
-     auto r2 = mio::set_population_data_age_group_names(name);
-     auto result_one_age_group = mio::osecir::details::read_population_data(path, region, true).value();
-     auto result_multiple_age_groups = mio::osecir::details::read_population_data(path, region, false).value();
-     EXPECT_EQ(result_one_age_group.size(), 1);
-     EXPECT_EQ(result_one_age_group[0].size(), 1);
-     EXPECT_EQ(result_one_age_group[0][0], 90163.0);
+TEST(Secir, read_population_data_one_age_group)
+{
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{1001};
+    auto result_one_age_group       = mio::osecir::details::read_population_data(path, region, true).value();
+    auto result_multiple_age_groups = mio::osecir::details::read_population_data(path, region, false).value();
+    EXPECT_EQ(result_one_age_group.size(), 1);
+    EXPECT_EQ(result_one_age_group[0].size(), 1);
+    EXPECT_EQ(result_one_age_group[0][0], 90163.0);
 
-     EXPECT_EQ(result_multiple_age_groups.size(), 1);
-     EXPECT_EQ(result_multiple_age_groups[0].size(), 6);
-     EXPECT_EQ(result_multiple_age_groups[0][0], 3433.0);     
+    EXPECT_EQ(result_multiple_age_groups.size(), 1);
+    EXPECT_EQ(result_multiple_age_groups[0].size(), 6);
+    EXPECT_EQ(result_multiple_age_groups[0][0], 3433.0);
 }
 
 #endif
