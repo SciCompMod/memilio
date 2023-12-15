@@ -78,13 +78,13 @@ IOResult<void> read_confirmed_cases_data(
 
 /**
      * @brief sets populations data from json file with multiple age groups into a Model with one age group
-     * @param model vector of objects in which the data is set
-     * @param path Path to confirmed cases file
-     * @param region vector of keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
-     * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+     * @param[in, out] model vector of objects in which the data is set
+     * @param[in] path Path to confirmed cases file
+     * @param[in] region vector of keys of the region of interest
+     * @param[in] year Specifies year at which the data is read
+     * @param[in] month Specifies month at which the data is read
+     * @param[in] day Specifies day at which the data is read
+     * @param[in] scaling_factor_inf factors by which to scale the confirmed cases of rki data
      */
 IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
                                         std::vector<int> const& region, Date date,
@@ -119,20 +119,20 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
      * @brief Reads population data from census data
      * @param[in] path Path to RKI file
      * @param[in] vregion Vector of keys of the regions of interest
-     * @param[in] one_age_group Specifies whether population data sould be accumulated to one age group
+     * @param[in] accumulate_age_groups Specifies whether population data sould be accumulated to one age group
      */
 IOResult<std::vector<std::vector<double>>>
-read_population_data(const std::string& path, const std::vector<int>& vregion, bool one_age_group = false);
+read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups = false);
 
 /**
      * @brief sets population data from census data
      * @param[in, out] model vector of objects in which the data is set
      * @param[in] path Path to RKI file
      * @param[in] vregion vector of keys of the regions of interest
-     * @param[in] one_age_group specifies whether population data sould be accumulated to one age group
+     * @param[in] accumulate_age_groups specifies whether population data sould be accumulated to one age group
      */
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                                   bool one_age_group = false);
+                                   bool accumulate_age_groups = false);
 } //namespace details
 
 #ifdef MEMILIO_HAS_HDF5
@@ -418,9 +418,9 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     }
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
                                                         date, scaling_factor_inf));
-    bool one_age_groups = scaling_factor_inf.size() == 1 ? true : false;
+    bool one_age_group = scaling_factor_inf.size() == 1 ? true : false;
     BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids, one_age_groups));
+        details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids, one_age_group));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
