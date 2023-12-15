@@ -169,7 +169,7 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
     std::vector<double> sum_mu_I_U(region.size(), 0);
     std::vector<std::vector<double>> mu_I_U{model.size()};
 
-    size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
+    const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
 
     BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
 
