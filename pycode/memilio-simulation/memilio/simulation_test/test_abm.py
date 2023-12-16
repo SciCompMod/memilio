@@ -25,21 +25,21 @@ import numpy as np
 import memilio.simulation as mio
 import memilio.simulation.abm as abm
 
-global NUM_AGE_GROUPS
-NUM_AGE_GROUPS = 6
+global num_age_groups
+num_age_groups = 6
 
 
 class TestAbm(unittest.TestCase):
     def test_world(self):
         t0 = abm.TimePoint(0)
-        sim = abm.Simulation(t0, NUM_AGE_GROUPS)
+        sim = abm.Simulation(t0, num_age_groups)
         world = sim.world
         self.assertEqual(len(world.persons), 0)
         self.assertEqual(len(world.locations), 1)
 
     def test_locations(self):
         t0 = abm.TimePoint(0)
-        sim = abm.Simulation(t0, NUM_AGE_GROUPS)
+        sim = abm.Simulation(t0, num_age_groups)
         world = sim.world
 
         home_id = world.add_location(abm.LocationType.Home)
@@ -84,7 +84,7 @@ class TestAbm(unittest.TestCase):
 
     def test_simulation(self):
         t0 = abm.TimePoint(0)
-        sim = abm.Simulation(t0, NUM_AGE_GROUPS)
+        sim = abm.Simulation(t0, num_age_groups)
         world = sim.world
 
         # add some locations and persons
