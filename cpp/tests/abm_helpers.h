@@ -100,7 +100,7 @@ struct ScopedMockDistribution {
 mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
-                                  mio::abm::Parameters params              = mio::abm::Parameters(num_age_group));
+                                  mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups));
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.

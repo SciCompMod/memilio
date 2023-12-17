@@ -27,7 +27,7 @@ TEST(TestHouseholds, test_add_household_to_world)
     auto member1 = mio::abm::HouseholdMember(num_age_groups);
     member1.set_age_weight(age_group_0_to_4, 1);
 
-    auto member2 = mio::abm::HouseholdMember(num_age_group);
+    auto member2 = mio::abm::HouseholdMember(num_age_groups);
     member2.set_age_weight(age_group_5_to_14, 1);
 
     auto household = mio::abm::Household();

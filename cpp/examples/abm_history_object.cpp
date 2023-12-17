@@ -83,7 +83,7 @@ int main()
 
     auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(age_groups_15_to_34, 1);
-    parent.set_age_weight(age_groupsP_35_to_59, 1);
+    parent.set_age_weight(age_groups_35_to_59, 1);
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
