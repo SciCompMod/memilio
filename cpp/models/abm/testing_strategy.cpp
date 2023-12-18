@@ -43,6 +43,7 @@ bool TestingCriteria::operator==(const TestingCriteria& other) const
 
 void TestingCriteria::add_age_group(const AgeGroup age_group)
 {
+    
     m_ages.insert(static_cast<size_t>(age_group));
 }
 
