@@ -61,11 +61,11 @@ int main()
 {
     // This is a minimal example with children and adults < 60y.
     // We divided them into 4 different age groups, which are defined as follows:
-    const size_t num_age_groups    = 4;
-    const auto age_groups_0_to_4   = mio::AgeGroup(num_age_groups - 4);
-    const auto age_groups_5_to_14  = mio::AgeGroup(num_age_groups - 3);
-    const auto age_groups_15_to_34 = mio::AgeGroup(num_age_groups - 2);
-    const auto age_groups_35_to_59 = mio::AgeGroup(num_age_groups - 1);
+    size_t num_age_groups         = 4;
+    const auto age_group_0_to_4   = mio::AgeGroup(0);
+    const auto age_group_5_to_14  = mio::AgeGroup(1);
+    const auto age_group_15_to_34 = mio::AgeGroup(2);
+    const auto age_group_35_to_59 = mio::AgeGroup(3);
 
     // Create the world with 4 age groups.
     auto world = mio::abm::World(num_age_groups);
@@ -78,12 +78,12 @@ int main()
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(age_groups_0_to_4, 1);
-    child.set_age_weight(age_groups_5_to_14, 1);
+    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_5_to_14, 1);
 
     auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(age_groups_15_to_34, 1);
-    parent.set_age_weight(age_groups_35_to_59, 1);
+    parent.set_age_weight(age_group_15_to_34, 1);
+    parent.set_age_weight(age_group_35_to_59, 1);
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -152,10 +152,10 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == age_groups_5_to_14) {
+        if (person.get_age() == age_group_5_to_14) {
             person.set_assigned_location(school);
         }
-        if (person.get_age() == age_groups_15_to_34 || person.get_age() == age_groups_35_to_59) {
+        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
             person.set_assigned_location(work);
         }
     }

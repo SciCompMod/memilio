@@ -29,12 +29,12 @@ namespace fs = boost::filesystem;
 
 // Assign the name to general age group.
 size_t num_age_groups         = 6;
-const auto age_group_0_to_4   = mio::AgeGroup(num_age_groups - 6);
-const auto age_group_5_to_14  = mio::AgeGroup(num_age_groups - 5);
-const auto age_group_15_to_34 = mio::AgeGroup(num_age_groups - 4);
-const auto age_group_35_to_59 = mio::AgeGroup(num_age_groups - 3);
-const auto age_group_60_to_79 = mio::AgeGroup(num_age_groups - 2);
-const auto age_group_80_plus  = mio::AgeGroup(num_age_groups - 1);
+const auto age_group_0_to_4   = mio::AgeGroup(0);
+const auto age_group_5_to_14  = mio::AgeGroup(1);
+const auto age_group_15_to_34 = mio::AgeGroup(2);
+const auto age_group_35_to_59 = mio::AgeGroup(3);
+const auto age_group_60_to_79 = mio::AgeGroup(4);
+const auto age_group_80_plus  = mio::AgeGroup(5);
 
 /**
  * Set a value and distribution of an UncertainValue.
