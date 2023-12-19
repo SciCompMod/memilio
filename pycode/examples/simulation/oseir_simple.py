@@ -74,7 +74,7 @@ def run_oseir_simulation():
     populations = [83000]
 
     days = 100  # number of days to simulate
-    dt = 1.5
+    dt =   4
 
     # Initialize Parameters
     model = Model()
@@ -96,8 +96,8 @@ def run_oseir_simulation():
     # model.parameters.ContactPatterns = ContactMatrix(np.r_[0.5])
     model.parameters.ContactPatterns.baseline = np.ones((1, 1))
     model.parameters.ContactPatterns.minimum = np.zeros((1, 1))
-    model.parameters.ContactPatterns.add_damping(
-        Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
+    # model.parameters.ContactPatterns.add_damping(
+    #     Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
     # Check logical constraints to parameters
     model.check_constraints()
