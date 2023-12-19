@@ -28,7 +28,7 @@ from memilio.simulation import Damping
 from memilio.simulation.oseir import Index_InfectionState
 from memilio.simulation.oseir import InfectionState as State
 from memilio.simulation.oseir import (Model, interpolate_simulation_result,
-                                      simulate)
+                                      simulate, simulate_euler)
 
 
 def stiffness(params, pop_total, t_idx, y):
@@ -74,7 +74,7 @@ def run_oseir_simulation():
     populations = [83000]
 
     days = 100  # number of days to simulate
-    dt = 0.1
+    dt = 1.5
 
     # Initialize Parameters
     model = Model()
@@ -103,7 +103,7 @@ def run_oseir_simulation():
     model.check_constraints()
 
     # Run Simulation
-    result = simulate(0, days, dt, model)
+    result = simulate_euler(0, days, dt, model)
     # interpolate results
     result = interpolate_simulation_result(result)
 

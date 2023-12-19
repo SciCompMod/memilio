@@ -84,6 +84,14 @@ PYBIND11_MODULE(_simulation_oseir, m)
         "Simulates a oseir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.def(
+    "simulate_euler",
+    [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
+        std::shared_ptr<mio::EulerIntegratorCore> euler_core = std::make_shared<mio::EulerIntegratorCore>();
+        return mio::simulate(t0, tmax, dt, model, euler_core);
+    },
+    "Simulates a oseir from t0 to tmax using explicit Euler Scheme.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+
+    m.def(
         "simulate_flows",
         [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
             return mio::simulate_flows(t0, tmax, dt, model);
