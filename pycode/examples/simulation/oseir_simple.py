@@ -20,12 +20,49 @@
 import argparse
 
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy.linalg import eigvals
+from scipy.sparse.linalg import eigs
 
 from memilio.simulation import Damping
 from memilio.simulation.oseir import Index_InfectionState
 from memilio.simulation.oseir import InfectionState as State
 from memilio.simulation.oseir import (Model, interpolate_simulation_result,
                                       simulate)
+
+
+def stiffness(params, pop_total, t_idx, y):
+    if not (t_idx < y.get_num_time_points()):
+        raise ValueError("t_idx is not a valid index for the TimeSeries")
+
+    coeffStoE = params.ContactPatterns.get_matrix_at(
+        y.get_time(t_idx))[0, 0] * params.TransmissionProbabilityOnContact.value / pop_total
+    Jacobian = np.zeros((4,4))
+
+    S = y.get_value(t_idx)[0]
+    I = y.get_value(t_idx)[2]
+
+    Jacobian[0,0] = - coeffStoE * I
+    Jacobian[0,2] = - coeffStoE * S
+    Jacobian[1,0] = coeffStoE * I
+    Jacobian[1,1] = - (1.0 / params.TimeExposed.value)
+    Jacobian[1,2] = coeffStoE * S
+    Jacobian[2,1] = (1.0 / params.TimeExposed.value)
+    Jacobian[2,2] = -(1.0 / params.TimeInfected.value)
+    Jacobian[3,2] = (1.0 / params.TimeInfected.value)
+
+    eigen_vals = eigvals(Jacobian)
+    eigen_vals_abs = np.abs(eigen_vals)
+
+    eigen_vals_abs2 = [val for val in eigen_vals_abs if val >= 1e-12]
+
+    max_val = max(eigen_vals_abs2)
+    min_val = min(eigen_vals_abs2)
+
+    xi = max_val / min_val
+    # print("Max eigenvalue: ", max_val)
+    # print("Min eigenvalue: ", min_val)
+    return xi
 
 
 def run_oseir_simulation():
@@ -71,6 +108,23 @@ def run_oseir_simulation():
     result = interpolate_simulation_result(result)
 
     print(result.get_last_value())
+
+    time = []
+    stiff_val = []
+    for time_idx in range(result.get_num_time_points()):
+        time.append(result.get_time(time_idx))
+        stiff_val.append(stiffness(model.parameters, model.populations.get_total(), time_idx, result))
+
+    # print time and stiffness values
+    plt.plot(time, stiff_val)
+    plt.xlabel("Time")
+    plt.ylabel("\u03BE") # xi
+    plt.grid()
+    plt.yscale("log")
+    plt.show()
+
+    print("Min value of xi: ", min(stiff_val))
+    
 
 
 if __name__ == "__main__":
