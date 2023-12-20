@@ -61,7 +61,7 @@ int main()
 {
     // This is a minimal example with children and adults < 60y.
     // We divided them into 4 different age groups, which are defined as follows:
-    const size_t num_age_groups         = 4;
+    const size_t num_age_groups   = 4;
     const auto age_group_0_to_4   = mio::AgeGroup(0);
     const auto age_group_5_to_14  = mio::AgeGroup(1);
     const auto age_group_15_to_34 = mio::AgeGroup(2);
