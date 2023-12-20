@@ -23,9 +23,9 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
-    auto person = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
     auto testing_criteria = mio::abm::TestingCriteria();
@@ -33,10 +33,10 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
 
-    testing_criteria.add_age_group(AGE_GROUP_35_TO_59);
+    testing_criteria.add_age_group(age_group_35_to_59);
     ASSERT_EQ(testing_criteria.evaluate(person, t),
               false); // now it isn't empty and get's evaluated against age group
-    testing_criteria.remove_age_group(AGE_GROUP_35_TO_59);
+    testing_criteria.remove_age_group(age_group_35_to_59);
     ASSERT_EQ(testing_criteria.evaluate(person, t), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
@@ -44,11 +44,11 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
 
     auto testing_criteria_manual = mio::abm::TestingCriteria(
-        std::vector<mio::AgeGroup>({AGE_GROUP_15_TO_34}),
+        std::vector<mio::AgeGroup>({age_group_15_to_34}),
         std::vector<mio::abm::InfectionState>({mio::abm::InfectionState::InfectedNoSymptoms}));
     ASSERT_EQ(testing_criteria == testing_criteria_manual, false);
     testing_criteria_manual.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    testing_criteria_manual.remove_age_group(AGE_GROUP_15_TO_34);
+    testing_criteria_manual.remove_age_group(age_group_15_to_34);
     ASSERT_EQ(testing_criteria == testing_criteria_manual, true);
 }
 
@@ -88,11 +88,11 @@ TEST(TestTestingScheme, runScheme)
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
-    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
-    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
-    auto person1     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
+    auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
-    auto person2     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Recovered);
+    auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
     auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -130,9 +130,9 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
-    auto person1     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
-    auto person2     = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Recovered);
+    auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
     auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;

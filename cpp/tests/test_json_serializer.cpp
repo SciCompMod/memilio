@@ -475,7 +475,7 @@ TEST(TestJsonSerializer, container_of_objects)
 
 TEST(TestJsonSerializer, abmLocation)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, num_age_groups);
     auto js       = mio::serialize_json(location);
     Json::Value expected_json;
     expected_json["index"] = Json::UInt64(0);
@@ -506,7 +506,7 @@ TEST(TestJsonSerializer, abmPerson)
 
 TEST(TestJsonSerializer, abmTrip)
 {
-    auto world   = mio::abm::World(NUM_AGE_GROUPS);
+    auto world   = mio::abm::World(num_age_groups);
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto& home   = world.get_individualized_location(home_id);
@@ -529,17 +529,17 @@ TEST(TestJsonSerializer, abmTrip)
 
 TEST(TestJsonSerializer, abmWorld)
 {
-    auto world   = mio::abm::World(NUM_AGE_GROUPS);
+    auto world   = mio::abm::World(num_age_groups);
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto person  = world.add_person(home_id, AGE_GROUP_15_TO_34);
+    auto person  = world.add_person(home_id, age_group_15_to_34);
     mio::abm::Trip trip1(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
     mio::abm::Trip trip2(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(11), work_id, home_id);
     world.get_trip_list().add_trip(trip1, false);
     world.get_trip_list().add_trip(trip2, true);
     auto js = mio::serialize_json(world);
     Json::Value expected_json;
-    expected_json["num_agegroups"]                   = Json::UInt(NUM_AGE_GROUPS);
+    expected_json["num_agegroups"]                   = Json::UInt(num_age_groups);
     expected_json["trips"][0]["person_id"]           = Json::UInt(person.get_person_id());
     expected_json["trips"][0]["time"]                = Json::Int(mio::abm::hours(8).seconds());
     expected_json["trips"][0]["destination_index"]   = Json::UInt(work_id.index);
