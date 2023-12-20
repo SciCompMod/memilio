@@ -118,17 +118,22 @@ TEST(TestInfection, drawInfectionCourseBackward)
     auto dt                     = mio::abm::days(1);
     mio::abm::Parameters params = mio::abm::Parameters(NUM_AGE_GROUPS);
 
-    // Time to go from all infected states to recover is 1 day (dt).
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]             = 1;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]           = 1;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]   = 1;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}] = 1;
+    // Time in all infected states 1 day (dt).
+    params.get<mio::abm::TimeInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}] = {1., 1.};
+    params.get<mio::abm::TimeInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]   = {1., 1.};
+    params.get<mio::abm::TimeInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]     = {1., 1.};
+    params.get<mio::abm::TimeInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]   = {1., 1.};
+
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}] = .5;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]     = .5;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]     = .5;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}]     = .5;
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(14))
         .WillOnce(testing::Return(0.1)) // Transition to InfectedNoSymptoms
-        .WillOnce(testing::Return(0.1))
+        .WillOnce(testing::Return(0.1)) // Time rollout
         .WillOnce(testing::Return(0.1))
         .WillOnce(testing::Return(0.1))
         .WillOnce(testing::Return(0.1))

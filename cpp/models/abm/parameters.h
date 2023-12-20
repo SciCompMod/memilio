@@ -134,7 +134,7 @@ struct SymptomsPerInfectedNoSymptoms {
 };
 
 /**
-* @brief the percentage of hospitalized patients per infected patients
+* @brief the percentage of hospitalized cases per infected cases
 */
 struct SeverePerInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
@@ -149,7 +149,7 @@ struct SeverePerInfectedSymptoms {
 };
 
 /**
-* @brief the percentage of ICU patients per hospitalized patients
+* @brief the percentage of ICU cases per hospitalized cases
 */
 struct CriticalPerInfectedSevere {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
@@ -164,7 +164,7 @@ struct CriticalPerInfectedSevere {
 };
 
 /**
-* @brief the percentage of dead patients per ICU patients
+* @brief the percentage of dead cases per ICU cases
 */
 struct DeathsPerInfectedCritical {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
@@ -619,7 +619,7 @@ public:
                     log_error("Constraint check: Lower end of parameter range IncubationPeriod of virus variant {} and "
                               "age group {:.0f} smaller "
                               "than {:.4f}",
-                              v, (size_t)i, 0);
+                              (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
@@ -627,7 +627,7 @@ public:
                     log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptoms of virus variant "
                               "{} and age group {:.0f} smaller "
                               "than {:d}",
-                              v, (size_t)i, 0);
+                              (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
@@ -635,7 +635,7 @@ public:
                     log_error("Constraint check: Lower end of parameter range TimeInfectedSymptoms of virus variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
-                              v, (size_t)i, 0);
+                              (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
@@ -643,7 +643,7 @@ public:
                     log_error("Constraint check: Lower end of parameter range TimeInfectedSevere of virus variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
-                              v, (size_t)i, 0);
+                              (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
@@ -651,7 +651,7 @@ public:
                     log_error("Constraint check: Lower end of parameter range TimeInfectedCritical of virus variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
-                              v, (size_t)i, 0);
+                              (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
@@ -659,7 +659,7 @@ public:
                     this->get<SymptomsPerInfectedNoSymptoms>()[{v, i}] > 1.0) {
                     log_error("Constraint check: Parameter SymptomsPerInfectedNoSymptoms of virus variant {} and age "
                               "group {:.0f} smaller than {:d} or larger than {:d}",
-                              v, (size_t)i, 0, 1);
+                              (uint32_t)v, (size_t)i, 0, 1);
                     return true;
                 }
 
@@ -667,7 +667,7 @@ public:
                     this->get<SeverePerInfectedSymptoms>()[{v, i}] > 1.0) {
                     log_error("Constraint check: Parameter SeverePerInfectedSymptoms of virus variant {} and age group "
                               "{:.0f} smaller than {:d} or larger than {:d}",
-                              v, (size_t)i, 0, 1);
+                              (uint32_t)v, (size_t)i, 0, 1);
                     return true;
                 }
 
@@ -675,7 +675,7 @@ public:
                     this->get<CriticalPerInfectedSevere>()[{v, i}] > 1.0) {
                     log_error("Constraint check: Parameter CriticalPerInfectedSevere of virus variant {} and age group "
                               "{:.0f} smaller than {:d} or larger than {:d}",
-                              v, (size_t)i, 0, 1);
+                              (uint32_t)v, (size_t)i, 0, 1);
                     return true;
                 }
 
@@ -683,7 +683,7 @@ public:
                     this->get<DeathsPerInfectedCritical>()[{v, i}] > 1.0) {
                     log_error("Constraint check: Parameter DeathsPerInfectedCritical of age group {:.0f} smaller than "
                               "{:d} or larger than {:d}",
-                              v, (size_t)i, 0, 1);
+                              (uint32_t)v, (size_t)i, 0, 1);
                     return true;
                 }
 
@@ -691,7 +691,7 @@ public:
                     log_error("Constraint check: Parameter DetectInfection of virus variant {} and age group {:.0f} "
                               "smaller than {:d} or "
                               "larger than {:d}",
-                              v, (size_t)i, 0, 1);
+                              (uint32_t)v, (size_t)i, 0, 1);
                     return true;
                 }
             }
