@@ -20,6 +20,7 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
+#include "abm/config.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
@@ -55,7 +56,7 @@ public:
 
     /**
      * @brief Create a World.
-     * @param[in] num_agegroups The number of AgeGroup%s in the simulated World.
+     * @param[in] num_agegroups The number of AgeGroup%s in the simulated World. Must be less than MAX_NUM_AGE_GROUPS.
      */
     World(size_t num_agegroups)
         : parameters(num_agegroups)
@@ -63,6 +64,7 @@ public:
         , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
     {
+        assert(num_agegroups < MAX_NUM_AGE_GROUPS && "MAX_NUM_AGE_GROUPS exceeded.");
     }
 
     /**

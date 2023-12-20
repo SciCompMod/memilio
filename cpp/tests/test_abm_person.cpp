@@ -328,7 +328,7 @@ TEST(Person, rng)
 
 TEST(Person, getTestResult)
 {
-    mio::abm::Location location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
+    mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
     auto t      = mio::abm::TimePoint(0);
     auto dt     = mio::abm::seconds(8640); //0.1 days
