@@ -229,7 +229,7 @@ public:
         return apply(
             io,
             [](auto&& c_, auto&& d_) {
-                Movementarameters params(c_);
+                MovementParameters params(c_);
                 params.set_dynamic_npis_infected(d_);
                 return params;
             },
