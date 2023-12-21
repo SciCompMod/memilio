@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_PARAMETERS_H
-#define EPI_ABM_PARAMETERS_H
+#ifndef MIO_ABM_PARAMETERS_H
+#define MIO_ABM_PARAMETERS_H
 
 #include "abm/mask_type.h"
 #include "abm/time.h"

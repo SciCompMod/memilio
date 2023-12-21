@@ -9,12 +9,12 @@ The model consists of the following major classes:
 1. Person: represents an agent of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations they visit during the simulation. They can perform tests and wear masks. Every person has lists with past and current infections and vaccinations.
 2. Infection: collection of all information about a persons' infection, i.e. infectiousness, infection course, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model.
 3. Location: represents places in the world where people meet and interact, e.g. home, school, work, social event sites. A location can be split into cells to model parts of a location, like classrooms in a school. Some infection parameters are location-specific and one can activate NPIs like mandatory masks or tests to enter the location.
-4. World: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the migration phase.
+4. World: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the movement phase.
 5. Simulation: runs the simulation and stores results.
 
 ## Simulation
 
-The simulation runs in discrete time steps. Each step has two phases, an interaction phase and a migration phase.
+The simulation runs in discrete time steps. Each step has two phases, an interaction phase and a movement phase.
 
 ### Interaction Phase
 
@@ -22,9 +22,9 @@ In this phase, each person interacts with the other persons at the same location
 
 ### Migration Phase
 
-During the migration phase, each person may change their location. Migration follows complex [rules](../abm/migration_rules.cpp), considering the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot migrate. You can restrict some migration rules by allowing only a proportion of people to enter specific locations.
+During the movement phase, each person may change their location. Migration follows complex [rules](../abm/movement_rules.cpp), considering the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot migrate. You can restrict some movement rules by allowing only a proportion of people to enter specific locations.
 
-Another way of migration we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed and where the person is heading to. At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are in quarantine or in the hospital cannot migrate.
+Another way of movement we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed and where the person is heading to. At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are in quarantine or in the hospital cannot migrate.
 
 ## Get Started
 

@@ -19,8 +19,8 @@
 */
 /** single include header for ABM */
 
-#ifndef EPI_ABM_H
-#define EPI_ABM_H
+#ifndef MIO_ABM_H
+#define MIO_ABM_H
 
 #include "abm/parameters.h"
 #include "abm/simulation.h"
@@ -30,7 +30,7 @@
 #include "abm/location_type.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/utils/random_number_generator.h"
-#include "abm/migration_rules.h"
+#include "abm/movement_rules.h"
 #include "abm/testing_strategy.h"
 #include "abm/infection.h"
 #include "abm/infection_state.h"

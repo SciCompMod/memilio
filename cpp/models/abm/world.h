@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_WORLD_H
-#define EPI_ABM_WORLD_H
+#ifndef MIO_ABM_WORLD_H
+#define MIO_ABM_WORLD_H
 
 #include "abm/config.h"
 #include "abm/location_type.h"
@@ -61,7 +61,7 @@ public:
     World(size_t num_agegroups)
         : parameters(num_agegroups)
         , m_trip_list()
-        , m_use_migration_rules(true)
+        , m_use_movement_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
     {
         assert(num_agegroups < MAX_NUM_AGE_GROUPS && "MAX_NUM_AGE_GROUPS exceeded.");
@@ -93,7 +93,7 @@ public:
                 }
             }
         }
-        use_migration_rules(other.m_use_migration_rules);
+        use_movement_rules(other.m_use_movement_rules);
     }
 
     //type is move-only for stable references of persons/locations
@@ -124,7 +124,7 @@ public:
         obj.add_list("trips", trips.begin(), trips.end());
         obj.add_list("locations", get_locations().begin(), get_locations().end());
         obj.add_list("persons", get_persons().begin(), get_persons().end());
-        obj.add_element("use_migration_rules", m_use_migration_rules);
+        obj.add_element("use_movement_rules", m_use_movement_rules);
     }
 
     /**
@@ -139,13 +139,13 @@ public:
         auto locations           = obj.expect_list("locations", Tag<Location>{});
         auto trip_list           = obj.expect_list("trips", Tag<Trip>{});
         auto persons             = obj.expect_list("persons", Tag<Person>{});
-        auto use_migration_rules = obj.expect_element("use_migration_rules", Tag<bool>{});
+        auto use_movement_rules = obj.expect_element("use_movement_rules", Tag<bool>{});
         return apply(
             io,
-            [](auto&& size_, auto&& locations_, auto&& trip_list_, auto&& persons_, auto&& use_migration_rule_) {
-                return World{size_, locations_, trip_list_, persons_, use_migration_rule_};
+            [](auto&& size_, auto&& locations_, auto&& trip_list_, auto&& persons_, auto&& use_movement_rule_) {
+                return World{size_, locations_, trip_list_, persons_, use_movement_rule_};
             },
-            size, locations, trip_list, persons, use_migration_rules);
+            size, locations, trip_list, persons, use_movement_rules);
     }
 
     /** 
@@ -225,7 +225,7 @@ public:
     size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const;
 
     /**
-     * @brief Get the migration data.
+     * @brief Get the movement data.
      * @return Reference to the list of Trip%s that the Person%s make.
      */
     TripList& get_trip_list();
@@ -233,13 +233,13 @@ public:
     const TripList& get_trip_list() const;
 
     /** 
-     * @brief Decide if migration rules (like go to school/work) are used or not;
-     * The migration rules regarding hospitalization/ICU/quarantine are always used.
-     * @param[in] param If true uses the migration rules for migration to school/work etc., else only the rules 
+     * @brief Decide if movement rules (like go to school/work) are used or not;
+     * The movement rules regarding hospitalization/ICU/quarantine are always used.
+     * @param[in] param If true uses the movement rules for movement to school/work etc., else only the rules 
      * regarding hospitalization/ICU/quarantine.
      */
-    void use_migration_rules(bool param);
-    bool use_migration_rules() const;
+    void use_movement_rules(bool param);
+    bool use_movement_rules() const;
 
     /**
     * @brief Check if at least one Location with a specified LocationType exists.
@@ -315,7 +315,7 @@ private:
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void migration(TimePoint t, TimeSpan dt);
+    void movement(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
@@ -323,11 +323,11 @@ private:
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
-    bool m_use_migration_rules; ///< Whether migration rules are considered.
+    bool m_use_movement_rules; ///< Whether movement rules are considered.
     std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                            const Parameters&),
                           std::vector<LocationType>>>
-        m_migration_rules; ///< Rules that govern the migration between Location%s.
+        m_movement_rules; ///< Rules that govern the movement between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
     RandomNumberGenerator m_rng; ///< Global random number generator
 };
