@@ -22,5 +22,5 @@ Please check our [git workflow](https://github.com/SciCompMod/memilio/wiki/git-w
 
 - [ ] Corresponding issue(s) is/are linked and addressed
 - [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.)
-- [ ] Appropriate **unit tests** have been added, CI passes and code coverage is acceptable (did not decrease)
+- [ ] Appropriate **unit tests** have been added, CI passes, code coverage and performance is acceptable (did not decrease)
 - [ ] No large data files added in the whole history of commits(files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
