@@ -47,7 +47,7 @@ std::vector<std::string> split(const std::string& s, char delimiter);
 IOResult<int> count_lines(const std::string& filename);
 
 /**
- * @brief Reads formatted migration or contact data which is given in columns
+ * @brief Reads formatted movement or contact data which is given in columns
  *          from_str	to_str	from_rs	    to_rs	count_abs
  *        and separated by tabs. Writes it into a NxN Eigen Matrix, 
  *        where N is the number of regions
@@ -56,7 +56,7 @@ IOResult<int> count_lines(const std::string& filename);
 IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
 
 /**
- * @brief Reads txt migration data or contact which is given by values only
+ * @brief Reads txt movement data or contact which is given by values only
  *        and separated by spaces. Writes it into a NxN Eigen 
  *        Matrix, where N is the number of regions
  * @param filename name of file to be read

@@ -720,7 +720,7 @@ TEST(Secir, getInfectionsRelative)
               (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
 }
 
-TEST(Secir, get_migration_factors)
+TEST(Secir, get_movement_factors)
 {
     auto beta                                                                              = 0.25;
     auto max_beta                                                                          = 0.5;
@@ -734,21 +734,21 @@ TEST(Secir, get_migration_factors)
     mio::osecir::Simulation<> sim(model, 0.0);
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity>() = 45.;
-        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = get_movement_factors(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::osecir::InfectionState::Count)).eval();
         cmp[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] = beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity>() = 45. / 5.;
-        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = get_movement_factors(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::osecir::InfectionState::Count)).eval();
         cmp[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] = max_beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity>() = 20.;
-        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = get_movement_factors(sim, 0.0, sim.get_result().get_last_value());
         ASSERT_GT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], beta);
         ASSERT_LT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], max_beta);
     }
@@ -757,14 +757,14 @@ TEST(Secir, get_migration_factors)
 TEST(Secir, test_commuters)
 {
     auto model                                      = mio::osecir::Model(2);
-    auto migration_factor                           = 0.1;
+    auto movement_factor                           = 0.1;
     auto non_detection_factor                       = 0.4;
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecir::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
+    auto migrated                                   = (sim.get_result().get_last_value() * movement_factor).eval();
     auto migrated_tested                            = migrated.eval();
 
     test_commuters(sim, migrated_tested, 0.0);

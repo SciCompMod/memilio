@@ -94,13 +94,13 @@ mio::IOResult<void> mock_read_function_county(std::vector<Model>& model, mio::Da
 mio::IOResult<Eigen::MatrixXd> mock_read_mobility(const std::string& filename)
 {
     mio::unused(filename);
-    Eigen::MatrixXd migration(2, 2);
-    migration(0, 0) = 0;
-    migration(1, 0) = 2;
-    migration(0, 1) = 2;
-    migration(1, 1) = 0;
+    Eigen::MatrixXd movement(2, 2);
+    movement(0, 0) = 0;
+    movement(1, 0) = 2;
+    movement(0, 1) = 2;
+    movement(1, 1) = 0;
 
-    return mio::success(migration);
+    return mio::success(movement);
 }
 
 TEST(TestGraph, creation)

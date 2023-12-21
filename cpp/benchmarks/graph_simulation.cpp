@@ -133,7 +133,7 @@ auto create_simulation()
         }
     }
 
-    return mio::make_migration_sim(cfg.t0, cfg.dt, std::move(g));
+    return mio::make_movement_sim(cfg.t0, cfg.dt, std::move(g));
 }
 
 template <class Integrator>

@@ -42,7 +42,7 @@ std::string setup(int argc, char** argv, const std::string data_dir)
         std::cout << "Usage: read_graph MIGRATION_FILE"
                   << "\n\n";
         std::cout << "This example performs a simulation based on twitter "
-                     "migration data."
+                     "movement data."
                   << std::endl;
         return mio::path_join(data_dir, "mobility", "twitter_scaled_1252.txt");
     }
@@ -113,19 +113,19 @@ int main(int argc, char** argv)
         std::cout << read_mobility_result.error().formatted_message() << '\n';
         return -1;
     }
-    auto& twitter_migration_2018 = read_mobility_result.value();
+    auto& twitter_movement_2018 = read_mobility_result.value();
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> graph;
-    for (int node = 0; node < twitter_migration_2018.rows(); node++) {
+    for (int node = 0; node < twitter_movement_2018.rows(); node++) {
         graph.add_node(node, model);
     }
-    for (int row = 0; row < twitter_migration_2018.rows(); row++) {
-        for (int col = 0; col < twitter_migration_2018.cols(); col++) {
+    for (int row = 0; row < twitter_movement_2018.rows(); row++) {
+        for (int col = 0; col < twitter_movement_2018.cols(); col++) {
             graph.add_edge(row, col,
                            Eigen::VectorXd::Constant(10 * (size_t)nb_groups,
-                                                     twitter_migration_2018(row, col) /
+                                                     twitter_movement_2018(row, col) /
                                                          graph.nodes()[row].property.populations.get_total()));
         }
     }

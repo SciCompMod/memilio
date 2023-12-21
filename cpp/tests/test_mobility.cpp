@@ -51,7 +51,7 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     model2.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 1.;
     model2.populations.set_total(500);
 
-    auto graph_sim = mio::make_migration_sim(
+    auto graph_sim = mio::make_movement_sim(
         t0, dt, mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
@@ -60,7 +60,7 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     g.nodes()[0].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
     g.nodes()[1].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
 
-    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
+    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no movement along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
     auto single_sim1 = mio::Simulation<mio::oseir::Model>(model1, t0);
@@ -136,8 +136,8 @@ TEST(TestMobility, edgeApplyMigration)
     //setup edge
     mio::MigrationEdge edge(Eigen::VectorXd::Constant(10, 0.1));
 
-    //forward migration
-    edge.apply_migration(t, 0.5, node1, node2);
+    //forward movement
+    edge.apply_movement(t, 0.5, node1, node2);
     EXPECT_EQ(print_wrap(node1.get_result().get_last_value()),
               print_wrap((Eigen::VectorXd(10) << 990 - 99, 0, 0, 0, 10 - 1, 0, 0, 0, 0, 0).finished()));
     EXPECT_EQ(print_wrap(node2.get_result().get_last_value()),
@@ -147,7 +147,7 @@ TEST(TestMobility, edgeApplyMigration)
     node1.evolve(t, 0.5);
     node2.evolve(t, 0.5);
     t += 0.5;
-    edge.apply_migration(t, 0.5, node1, node2);
+    edge.apply_movement(t, 0.5, node1, node2);
     auto v = node1.get_result().get_last_value();
     EXPECT_DOUBLE_EQ(v.sum(), 1000);
     EXPECT_LT(v[0], 990);
@@ -165,7 +165,7 @@ TEST(TestMobility, edgeApplyMigration)
     node1.evolve(t, 0.5);
     node2.evolve(t, 0.5);
     t += 0.5;
-    edge.apply_migration(t, 0.5, node1, node2);
+    edge.apply_movement(t, 0.5, node1, node2);
     EXPECT_DOUBLE_EQ(node1.get_result().get_last_value().sum(), 900);
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1100);
 }

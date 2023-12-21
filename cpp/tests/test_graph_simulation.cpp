@@ -147,7 +147,7 @@ TEST(TestGraphSimulation, stopsAtTmaxStochastic)
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
@@ -203,7 +203,7 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<ScalarType>>>>
         mock_exponential_dist;
@@ -262,7 +262,7 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& mode
         }
     }
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 

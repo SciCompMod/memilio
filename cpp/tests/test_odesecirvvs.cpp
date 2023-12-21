@@ -796,33 +796,33 @@ TEST(TestOdeSECIRVVS, get_infections_relative)
     ASSERT_DOUBLE_EQ(relative_infections, 105 / model.populations.get_total());
 }
 
-TEST(TestOdeSECIRVVS, get_migration_factors)
+TEST(TestOdeSECIRVVS, get_movement_factors)
 {
     auto num_age_groups = 2;
     auto model          = make_model(num_age_groups);
     auto sim            = mio::osecirvvs::Simulation<>(model);
     auto y              = sim.get_result()[0];
 
-    auto migration_factors = get_migration_factors(sim, 0.0, y);
+    auto movement_factors = get_movement_factors(sim, 0.0, y);
 
     auto expected_values = (Eigen::VectorXd(Eigen::Index(mio::osecirvvs::InfectionState::Count) * num_age_groups) << 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
                                .finished();
-    ASSERT_THAT(print_wrap(migration_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    ASSERT_THAT(print_wrap(movement_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
 TEST(TestOdeSECIRVVS, test_commuters)
 {
     auto model                                      = make_model(2);
-    auto migration_factor                           = 0.1;
+    auto movement_factor                           = 0.1;
     auto non_detection_factor                       = 0.3;
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecirvvs::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
+    auto migrated                                   = (sim.get_result().get_last_value() * movement_factor).eval();
     auto migrated_tested                            = migrated.eval();
 
     test_commuters(sim, migrated_tested, 0.0);

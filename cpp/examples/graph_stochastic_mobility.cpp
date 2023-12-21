@@ -133,7 +133,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.add_edge(0, 1, std::move(transition_rates));
     graph.add_edge(1, 0, std::move(transition_rates));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(graph));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(graph));
 
     sim.advance(tmax);
 

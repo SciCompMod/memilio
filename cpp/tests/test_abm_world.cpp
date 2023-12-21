@@ -550,7 +550,7 @@ TEST(TestWorld, copyWorld)
     auto rng   = mio::RandomNumberGenerator();
 
     world.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 4.;
-    world.use_migration_rules(false);
+    world.use_movement_rules(false);
 
     auto school_id1 = world.add_location(mio::abm::LocationType::School);
     auto school_id2 = world.add_location(mio::abm::LocationType::School);
@@ -589,20 +589,20 @@ TEST(TestWorld, copyWorld)
 
     // Assert the parameters, trips, locations and persons of copied world are logically equal to that of original world
     ASSERT_EQ(copied_infection_params, infection_params);
-    ASSERT_EQ(copied_world.use_migration_rules(), world.use_migration_rules());
+    ASSERT_EQ(copied_world.use_movement_rules(), world.use_movement_rules());
 
     mio::abm::TripList& copied_trip_data = copied_world.get_trip_list();
     ASSERT_EQ(copied_trip_data.num_trips(), trip_data.num_trips());
     ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
-              trip_data.get_next_trip(false).migration_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_destination,
+              trip_data.get_next_trip(false).movement_destination);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_origin, trip_data.get_next_trip(false).movement_origin);
     copied_trip_data.increase_index();
     trip_data.increase_index();
     ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
-              trip_data.get_next_trip(false).migration_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_destination,
+              trip_data.get_next_trip(false).movement_destination);
+    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_origin, trip_data.get_next_trip(false).movement_origin);
 
     ASSERT_EQ(copied_world.get_locations().size(), world.get_locations().size());
     ASSERT_EQ(copied_world.get_locations()[1].get_index(), world.get_locations()[1].get_index());

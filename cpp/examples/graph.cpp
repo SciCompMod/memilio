@@ -29,7 +29,7 @@ int main()
 {
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 0.5; //time step of migration, daily migration every second step
+    const auto dt   = 0.5; //time step of movement, daily movement every second step
 
     mio::oseir::Model model;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 10000;
@@ -52,7 +52,7 @@ int main()
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));
     g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 

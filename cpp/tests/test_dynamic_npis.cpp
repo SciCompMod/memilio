@@ -256,14 +256,14 @@ double get_infections_relative(const DummySim&, double, const Eigen::Ref<const E
 
 //overload required for because the mock is not a compartment model simulation
 template <class DummySim>
-void calculate_migration_returns(Eigen::Ref<mio::TimeSeries<double>::Vector>, const DummySim&,
+void calculate_movement_returns(Eigen::Ref<mio::TimeSeries<double>::Vector>, const DummySim&,
                                  Eigen::Ref<const mio::TimeSeries<double>::Vector>, double, double)
 {
 }
 
 } // namespace mio_test
 
-TEST(DynamicNPIs, migration)
+TEST(DynamicNPIs, movement)
 {
     mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
     mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
@@ -288,7 +288,7 @@ TEST(DynamicNPIs, migration)
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //initial
 
-    edge.apply_migration(0.5, 0.5, node_from, node_to);
+    edge.apply_movement(0.5, 0.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //not check at the beginning
 
@@ -297,7 +297,7 @@ TEST(DynamicNPIs, migration)
     });
     node_from.evolve(3.0, 2.5);
     node_to.evolve(3.0, 2.5);
-    edge.apply_migration(3.0, 2.5, node_from, node_to);
+    edge.apply_movement(3.0, 2.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
 
@@ -306,7 +306,7 @@ TEST(DynamicNPIs, migration)
     });
     node_from.evolve(4.5, 1.5);
     node_to.evolve(4.5, 1.5);
-    edge.apply_migration(4.5, 1.5, node_from, node_to);
+    edge.apply_movement(4.5, 1.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
               0); //threshold exceeded, but only check every 3 days
@@ -316,7 +316,7 @@ TEST(DynamicNPIs, migration)
     });
     node_from.evolve(6.0, 1.5);
     node_to.evolve(6.0, 1.5);
-    edge.apply_migration(6.0, 1.5, node_from, node_to);
+    edge.apply_movement(6.0, 1.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 2); //NPIs implemented
 }

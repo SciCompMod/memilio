@@ -40,7 +40,7 @@ namespace mio
 
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
- * Can simulate migration graphs with one simulation in each node or single simulations.
+ * Can simulate movement graphs with one simulation in each node or single simulations.
  * @tparam S type of simulation that runs in one node of the graph.
  */
 template <class S>
@@ -347,7 +347,7 @@ private:
             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
         }
 
-        return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+        return make_movement_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
     }
 
     std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
