@@ -418,7 +418,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     }
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
                                                         date, scaling_factor_inf));
-    bool one_age_group = scaling_factor_inf.size() == 1 ? true : false;
+    bool single_age_group = scaling_factor_inf.size() == 1 ? true : false;
     BOOST_OUTCOME_TRY(
         details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids, one_age_group));
 
