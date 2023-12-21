@@ -121,7 +121,7 @@ public:
     static IOResult<MovementParametersStochastic> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("MovementParameters");
-        auto c   = obj.expect_element("Coefficients", Tag<Movementoefficients>{});
+        auto c   = obj.expect_element("Coefficients", Tag<MovementCoefficients>{});
         return apply(
             io,
             [](auto&& c_) {
