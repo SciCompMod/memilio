@@ -27,11 +27,14 @@
 #include "mobility/graph_simulation.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "epidemiology/populations.h"
+#include "io/mobility_io.h"
 
-//Includes from Memilio
+//Includes from MEmilio
 #include "ode_secirvvs/model.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/analyze_result.h"
+#include "ode_secirvvs/parameter_space.h"
+#include "memilio/compartments/flow_simulation.h"
 
 #include "pybind11/stl_bind.h"
 #include <vector>
@@ -117,12 +120,31 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         },
         "Simulates a Model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
+    m.def(
+        "simulate_flows",
+        [](double t0, double tmax, double dt, const mio::osecirvvs::Model& model) {
+            return mio::simulate_flows(t0, tmax, dt, model);
+        },
+        "Simulates a osecirvvs model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        py::arg("model"));
+
     pymio::bind_ModelNode<mio::osecirvvs::Model>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecirvvs::Simulation<>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecirvvs::Model>(m, "ModelGraph");
     pymio::bind_MigrationGraph<mio::osecirvvs::Simulation<>>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge>>(
         m, "MigrationSimulation");
+
+    m.def(
+        "draw_sample",
+        [](mio::osecirvvs::Model& model) {
+            return mio::osecirvvs::draw_sample(model);
+        },
+        py::arg("model"));
+
+#ifdef MEMILIO_HAS_JSONCPP
+    pymio::bind_write_graph<mio::osecirvvs::Model>(m);
+#endif // MEMILIO_HAS_JSONCPP
 
     m.attr("__version__") = "dev";
 }
