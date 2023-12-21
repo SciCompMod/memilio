@@ -56,7 +56,7 @@ LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
-        params.get<mio::abm::AgeGroupGotoSchool>().count(person.get_age()) && person.goes_to_school(t, params) &&
+        params.get<mio::abm::AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
         !person.is_in_quarantine()) {
         return LocationType::School;
     }
@@ -73,7 +73,7 @@ LocationType go_to_work(Person::RandomNumberGenerator& /*rng*/, const Person& pe
     auto current_loc = person.get_location().get_type();
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        params.get<mio::abm::AgeGroupGotoWork>().count(person.get_age()) && t.day_of_week() < 5 &&
+        params.get<mio::abm::AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine()) {
