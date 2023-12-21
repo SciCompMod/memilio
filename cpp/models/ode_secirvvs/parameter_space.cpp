@@ -127,9 +127,9 @@ void draw_sample(Model& model)
     model.apply_constraints();
 }
 
-Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high)
+Graph<Model, MovementParameters> draw_sample(Graph<Model, MovementParameters>& graph, bool variant_high)
 {
-    Graph<Model, MigrationParameters> sampled_graph;
+    Graph<Model, MovementParameters> sampled_graph;
 
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;

@@ -107,25 +107,25 @@ private:
 /**
  * time dependent movement coefficients.
  */
-using MigrationCoefficients = DampingMatrixExpression<VectorDampings>;
+using MovementCoefficients = DampingMatrixExpression<VectorDampings>;
 
 /**
  * sum of time dependent movement coefficients.
  * differentiate between sources of movement.
  */
-using MigrationCoefficientGroup = DampingMatrixExpressionGroup<MigrationCoefficients>;
+using MovementCoefficientGroup = DampingMatrixExpressionGroup<MovementCoefficients>;
 
 /**
  * parameters that influence movement.
  */
-class MigrationParameters
+class MovementParameters
 {
 public:
     /**
      * constructor from movement coefficients.
      * @param coeffs movement coefficients
      */
-    MigrationParameters(const MigrationCoefficientGroup& coeffs)
+    MovementParameters(const MovementCoefficientGroup& coeffs)
         : m_coefficients(coeffs)
     {
     }
@@ -134,8 +134,8 @@ public:
      * constructor from movement coefficients.
      * @param coeffs movement coefficients
      */
-    MigrationParameters(const Eigen::VectorXd& coeffs)
-        : m_coefficients({MigrationCoefficients(coeffs)})
+    MovementParameters(const Eigen::VectorXd& coeffs)
+        : m_coefficients({MovementCoefficients(coeffs)})
     {
     }
 
@@ -143,11 +143,11 @@ public:
      * equality comparison operators
      */
     //@{
-    bool operator==(const MigrationParameters& other) const
+    bool operator==(const MovementParameters& other) const
     {
         return m_coefficients == other.m_coefficients;
     }
-    bool operator!=(const MigrationParameters& other) const
+    bool operator!=(const MovementParameters& other) const
     {
         return m_coefficients != other.m_coefficients;
     }
@@ -162,18 +162,18 @@ public:
     /**
      * @return the movement coefficients.
      */
-    const MigrationCoefficientGroup& get_coefficients() const
+    const MovementCoefficientGroup& get_coefficients() const
     {
         return m_coefficients;
     }
-    MigrationCoefficientGroup& get_coefficients()
+    MovementCoefficientGroup& get_coefficients()
     {
         return m_coefficients;
     }
     /**
      * @param coeffs the movement coefficients.
      */
-    void set_coefficients(const MigrationCoefficientGroup& coeffs)
+    void set_coefficients(const MovementCoefficientGroup& coeffs)
     {
         m_coefficients = coeffs;
     }
@@ -211,7 +211,7 @@ public:
     template <class IOContext>
     void serialize(IOContext& io) const
     {
-        auto obj = io.create_object("MigrationParameters");
+        auto obj = io.create_object("MovementParameters");
         obj.add_element("Coefficients", m_coefficients);
         obj.add_element("DynamicNPIs", m_dynamic_npis);
     }
@@ -221,15 +221,15 @@ public:
      * @see mio::deserialize
      */
     template <class IOContext>
-    static IOResult<MigrationParameters> deserialize(IOContext& io)
+    static IOResult<MovementParameters> deserialize(IOContext& io)
     {
-        auto obj = io.expect_object("MigrationParameters");
-        auto c   = obj.expect_element("Coefficients", Tag<MigrationCoefficientGroup>{});
+        auto obj = io.expect_object("MovementParameters");
+        auto c   = obj.expect_element("Coefficients", Tag<MovementCoefficientGroup>{});
         auto d   = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs>{});
         return apply(
             io,
             [](auto&& c_, auto&& d_) {
-                MigrationParameters params(c_);
+                Movementarameters params(c_);
                 params.set_dynamic_npis_infected(d_);
                 return params;
             },
@@ -237,21 +237,21 @@ public:
     }
 
 private:
-    MigrationCoefficientGroup m_coefficients; //one per group and compartment
+    MovementCoefficientGroup m_coefficients; //one per group and compartment
     DynamicNPIs m_dynamic_npis;
 };
 
 /** 
  * represents the movement between two nodes.
  */
-class MigrationEdge
+class MovementEdge
 {
 public:
     /**
      * create edge with coefficients.
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      */
-    MigrationEdge(const MigrationParameters& params)
+    MovementEdge(const MovementParameters& params)
         : m_parameters(params)
         , m_migrated(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
@@ -263,7 +263,7 @@ public:
      * create edge with coefficients.
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      */
-    MigrationEdge(const Eigen::VectorXd& coeffs)
+    MovementEdge(const Eigen::VectorXd& coeffs)
         : m_parameters(coeffs)
         , m_migrated(coeffs.rows())
         , m_return_times(0)
@@ -274,7 +274,7 @@ public:
     /**
      * get the movement parameters.
      */
-    const MigrationParameters& get_parameters() const
+    const MovementParameters& get_parameters() const
     {
         return m_parameters;
     }
@@ -293,7 +293,7 @@ public:
     void apply_movement(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
 private:
-    MigrationParameters m_parameters;
+    MovementParameters m_parameters;
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;
     bool m_return_migrated;
@@ -365,7 +365,7 @@ using get_movement_factors_expr_t = decltype(get_movement_factors(
 /**
  * Get an additional movement factor.
  * The absolute movement for each compartment is computed by c_i * y_i * f_i, wher c_i is the coefficient set in 
- * MigrationParameters, y_i is the current compartment population, f_i is the factor returned by this function.
+ * MovementParameters, y_i is the current compartment population, f_i is the factor returned by this function.
  * This factor is optional, default 1.0. If you need to adjust movement in that way, overload get_movement_factors(model, t, y) 
  * for your Model type so that can be found with argument-dependent lookup.
  * @param node a node of a movement graph.
@@ -413,7 +413,7 @@ void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migra
 }
 
 template <class Sim>
-void MigrationEdge::apply_movement(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
+void MovementEdge::apply_movement(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -500,10 +500,10 @@ void evolve_model(double t, double dt, SimulationNode<Sim>& node)
 
 /**
  * edge functor for movement simulation.
- * @see MigrationEdge::apply_movement
+ * @see MovementEdge::apply_movement
  */
 template <class Sim>
-void apply_movement(double t, double dt, MigrationEdge& movementEdge, SimulationNode<Sim>& node_from,
+void apply_movement(double t, double dt, MovementEdge& movementEdge, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)
 {
     movementEdge.apply_movement(t, dt, node_from, node_to);
@@ -520,15 +520,15 @@ void apply_movement(double t, double dt, MigrationEdge& movementEdge, Simulation
  * @{
  */
 template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>>
-make_movement_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
+GraphSimulation<Graph<SimulationNode<Sim>, MovementEdge>>
+make_movement_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MovementEdge>& graph)
 {
     return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_movement<Sim>);
 }
 
 template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>>
-make_movement_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+GraphSimulation<Graph<SimulationNode<Sim>, MovementEdge>>
+make_movement_sim(double t0, double dt, Graph<SimulationNode<Sim>, MovementEdge>&& graph)
 {
     return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_movement<Sim>);
 }

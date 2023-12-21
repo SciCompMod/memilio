@@ -162,10 +162,10 @@ TEST(TestSaveResult, save_result_with_params)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.);
 
-    auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
+    auto graph = mio::Graph<mio::osecir::Model, mio::MovementParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+    graph.add_edge(0, 1, mio::MovementParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
@@ -276,10 +276,10 @@ TEST(TestSaveResult, save_percentiles_and_sums)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
+    auto graph = mio::Graph<mio::osecir::Model, mio::MovementParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+    graph.add_edge(0, 1, mio::MovementParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);

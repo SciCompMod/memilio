@@ -424,7 +424,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> graph;
+    mio::Graph<mio::osecirvvs::Model, mio::MovementParameters> graph;
 
     auto num_age_groups = 6;
     //create model with invalid initials so the test fails if no sampling is done
@@ -741,11 +741,11 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
 
     //build small graph
     auto model = make_model(5);
-    auto graph = mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>();
+    auto graph = mio::Graph<mio::osecirvvs::Model, mio::MovementParameters>();
     graph.add_node(0, model);
 
     //sample a few times
-    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>();
+    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model, mio::MovementParameters>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
         return mio::osecirvvs::draw_sample(graph, true);
     });

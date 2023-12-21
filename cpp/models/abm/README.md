@@ -20,9 +20,9 @@ The simulation runs in discrete time steps. Each step has two phases, an interac
 
 In this phase, each person interacts with the other persons at the same location. This interaction determines the transmission of the disease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infected and the immunity level of the susceptible person.
 
-### Migration Phase
+### Movement Phase
 
-During the movement phase, each person may change their location. Migration follows complex [rules](../abm/movement_rules.cpp), considering the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot migrate. You can restrict some movement rules by allowing only a proportion of people to enter specific locations.
+During the movement phase, each person may change their location. Movement follows complex [rules](../abm/movement_rules.cpp), considering the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot migrate. You can restrict some movement rules by allowing only a proportion of people to enter specific locations.
 
 Another way of movement we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed and where the person is heading to. At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are in quarantine or in the hospital cannot migrate.
 

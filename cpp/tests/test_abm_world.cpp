@@ -165,7 +165,7 @@ TEST(TestWorld, evolveStateTransition)
     EXPECT_EQ(p3.get_infection_state(t + dt), mio::abm::InfectionState::InfectedSymptoms);
 }
 
-TEST(TestWorld, evolveMigration)
+TEST(TestWorld, evolveMovement)
 {
     using testing::Return;
 

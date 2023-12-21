@@ -116,7 +116,7 @@ auto create_simulation()
 
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecirvvs::Model>>, mio::MigrationEdge> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecirvvs::Model>>, mio::MovementEdge> g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
         g.nodes()[county_id].property.get_simulation().set_integrator(std::make_shared<Integrator>());

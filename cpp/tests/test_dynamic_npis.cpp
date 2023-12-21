@@ -280,11 +280,11 @@ TEST(DynamicNPIs, movement)
     npis.set_base_value(100'000);
     npis.set_interval(mio::SimulationTime(3.0));
 
-    mio::MigrationCoefficientGroup coeffs(1, 2);
-    mio::MigrationParameters parameters(coeffs);
+    mio::MovementCoefficientGroup coeffs(1, 2);
+    mio::MovementParameters parameters(coeffs);
     parameters.set_dynamic_npis_infected(npis);
 
-    mio::MigrationEdge edge(parameters);
+    mio::MovementEdge edge(parameters);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //initial
 

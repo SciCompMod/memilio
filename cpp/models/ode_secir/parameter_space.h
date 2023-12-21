@@ -63,7 +63,7 @@ void draw_sample_infection(Model& model);
 */
 void draw_sample(Model& model);
 
-Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph);
+Graph<Model, MovementParameters> draw_sample(Graph<Model, MovementParameters>& graph);
 
 } // namespace osecir
 } // namespace mio

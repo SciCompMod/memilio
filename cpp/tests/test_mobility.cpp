@@ -32,7 +32,7 @@
 
 #include <cmath>
 
-TEST(TestMobility, compareNoMigrationWithSingleIntegration)
+TEST(TestMobility, compareNoMovementWithSingleIntegration)
 {
     auto t0   = 0;
     auto tmax = 5;
@@ -52,7 +52,7 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     model2.populations.set_total(500);
 
     auto graph_sim = mio::make_movement_sim(
-        t0, dt, mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>());
+        t0, dt, mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MovementEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
@@ -108,7 +108,7 @@ TEST(TestMobility, nodeEvolve)
     ASSERT_EQ(print_wrap(node.get_result().get_last_value()), print_wrap(node.get_last_state()));
 }
 
-TEST(TestMobility, edgeApplyMigration)
+TEST(TestMobility, edgeApplyMovement)
 {
     using Model = mio::osecir::Model;
 
@@ -134,7 +134,7 @@ TEST(TestMobility, edgeApplyMigration)
     mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
 
     //setup edge
-    mio::MigrationEdge edge(Eigen::VectorXd::Constant(10, 0.1));
+    mio::MovementEdge edge(Eigen::VectorXd::Constant(10, 0.1));
 
     //forward movement
     edge.apply_movement(t, 0.5, node1, node2);

@@ -39,7 +39,7 @@ std::string setup(int argc, char** argv, const std::string data_dir)
             mio::log_warning("No arguments given.");
         }
         std::cout << "Using default file twitter_scaled_1252 in data/mobility." << std::endl;
-        std::cout << "Usage: read_graph MIGRATION_FILE"
+        std::cout << "Usage: read_graph MOVEMENT_FILE"
                   << "\n\n";
         std::cout << "This example performs a simulation based on twitter "
                      "movement data."
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    std::cout << "Reading Migration File..." << std::flush;
+    std::cout << "Reading Movement File..." << std::flush;
     auto read_mobility_result = mio::read_mobility_plain(filename);
     if (!read_mobility_result) {
         std::cout << read_mobility_result.error().formatted_message() << '\n';
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> graph;
+    mio::Graph<mio::osecir::Model, mio::MovementParameters> graph;
     for (int node = 0; node < twitter_movement_2018.rows(); node++) {
         graph.add_node(node, model);
     }

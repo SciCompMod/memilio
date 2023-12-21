@@ -158,10 +158,10 @@ TEST(ParameterStudies, sample_graph)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
+    auto graph = mio::Graph<mio::osecir::Model, mio::MovementParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MovementParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 0.0, 0.5, 1);
     mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
