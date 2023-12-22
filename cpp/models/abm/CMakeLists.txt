@@ -14,8 +14,8 @@ add_library(abm
     location_type.h
     parameters.h
     parameters.cpp
-    migration_rules.cpp
-    migration_rules.h
+    movement_rules.cpp
+    movement_rules.h
     trip_list.cpp
     trip_list.h
     lockdown_rules.cpp

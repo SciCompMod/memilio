@@ -451,7 +451,7 @@ void set_synthetic_population_data(std::vector<mio::osecir::Model>& counties)
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>>
+mio::IOResult<mio::Graph<mio::osecir::Model, mio::MovementParameters>>
 get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
 {
     const auto start_day = mio::get_day_in_year(start_date);
@@ -474,17 +474,17 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
 
     // graph of counties with populations and local parameters
     // and mobility between counties
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecir::Model, mio::MovementParameters> params_graph;
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& node_id_function    = mio::get_node_ids;
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
-                       mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
+                       mio::MovementParameters, mio::osecir::Parameters, decltype(read_function_nodes),
                        decltype(node_id_function)>;
     const auto& set_edge_function =
-        mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
+        mio::set_edges<ContactLocation, mio::osecir::Model, mio::MovementParameters, mio::MovementCoefficientGroup,
                        mio::osecir::InfectionState, decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(
         set_node_function(params, start_date, end_date, data_dir,
@@ -527,7 +527,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto num_runs     = 5;
 
     //create or load graph
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecir::Model, mio::MovementParameters> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created, get_graph(start_date, end_date, data_dir));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));

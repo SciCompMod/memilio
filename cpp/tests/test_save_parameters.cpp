@@ -238,10 +238,10 @@ TEST(TestSaveParameters, read_graph_without_edges)
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
-    auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
+    auto graph = mio::Graph<mio::osecir::Model, mio::MovementParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MovementParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -249,7 +249,7 @@ TEST(TestSaveParameters, read_graph_without_edges)
 
     std::vector<mio::osecir::Model> models = {model, model};
     std::vector<int> ids                   = {0, 1};
-    auto graph_no_edges = mio::create_graph_without_edges<mio::osecir::Model, mio::MigrationParameters>(models, ids);
+    auto graph_no_edges = mio::create_graph_without_edges<mio::osecir::Model, mio::MovementParameters>(models, ids);
     auto write_status   = mio::write_graph(graph_no_edges, tmp_results_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
@@ -413,7 +413,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.15);
 
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> graph;
+    mio::Graph<mio::osecir::Model, mio::MovementParameters> graph;
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));

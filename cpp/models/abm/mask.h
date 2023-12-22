@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef EPI_ABM_MASK_H
-#define EPI_ABM_MASK_H
+#ifndef MIO_ABM_MASK_H
+#define MIO_ABM_MASK_H
 
 #include "abm/mask_type.h"
 #include "abm/time.h"

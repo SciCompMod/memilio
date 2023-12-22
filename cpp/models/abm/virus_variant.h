@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_VIRUS_VARIANT_H
-#define EPI_VIRUS_VARIANT_H
+#ifndef MIO_VIRUS_VARIANT_H
+#define MIO_VIRUS_VARIANT_H
 
 #include <cstdint>
 

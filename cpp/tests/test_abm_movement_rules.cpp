@@ -21,7 +21,7 @@
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 
-TEST(TestMigrationRules, student_goes_to_school)
+TEST(TestMovementRules, student_goes_to_school)
 {
     auto rng = mio::RandomNumberGenerator();
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -56,7 +56,7 @@ TEST(TestMigrationRules, student_goes_to_school)
     ASSERT_EQ(mio::abm::go_to_school(child_rng, p_child, t_weekend, dt, params), mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, students_go_to_school_in_different_times)
+TEST(TestMovementRules, students_go_to_school_in_different_times)
 {
     auto rng = mio::RandomNumberGenerator();
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -113,7 +113,7 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
         mio::abm::LocationType::School);
 }
 
-TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_time_steps)
+TEST(TestMovementRules, students_go_to_school_in_different_times_with_smaller_time_steps)
 {
     auto rng = mio::RandomNumberGenerator();
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -170,7 +170,7 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
               mio::abm::LocationType::School);
 }
 
-TEST(TestMigrationRules, school_return)
+TEST(TestMovementRules, school_return)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
@@ -184,7 +184,7 @@ TEST(TestMigrationRules, school_return)
               mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, worker_goes_to_work)
+TEST(TestMovementRules, worker_goes_to_work)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -224,7 +224,7 @@ TEST(TestMigrationRules, worker_goes_to_work)
     ASSERT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_night, dt, params), mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
+TEST(TestMovementRules, worker_goes_to_work_with_non_dividable_timespan)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -264,7 +264,7 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
     ASSERT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_night, dt, params), mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, workers_go_to_work_in_different_times)
+TEST(TestMovementRules, workers_go_to_work_in_different_times)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -314,7 +314,7 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
               mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, work_return)
+TEST(TestMovementRules, work_return)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
@@ -326,7 +326,7 @@ TEST(TestMigrationRules, work_return)
               mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, quarantine)
+TEST(TestMovementRules, quarantine)
 {
     auto rng = mio::RandomNumberGenerator();
     auto t   = mio::abm::TimePoint(12346);
@@ -354,7 +354,7 @@ TEST(TestMigrationRules, quarantine)
               mio::abm::LocationType::Hospital); //detected infected person does not leave hospital to quarantine
 }
 
-TEST(TestMigrationRules, hospital)
+TEST(TestMovementRules, hospital)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -372,7 +372,7 @@ TEST(TestMigrationRules, hospital)
               mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, go_shopping)
+TEST(TestMovementRules, go_shopping)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
@@ -402,7 +402,7 @@ TEST(TestMigrationRules, go_shopping)
               mio::abm::LocationType::BasicsShop);
 }
 
-TEST(TestMigrationRules, shop_return)
+TEST(TestMovementRules, shop_return)
 {
     auto rng    = mio::RandomNumberGenerator();
     auto params = mio::abm::Parameters(num_age_groups);
@@ -421,7 +421,7 @@ TEST(TestMigrationRules, shop_return)
               mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, go_event)
+TEST(TestMovementRules, go_event)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
@@ -452,7 +452,7 @@ TEST(TestMigrationRules, go_event)
               mio::abm::LocationType::SocialEvent);
 }
 
-TEST(TestMigrationRules, event_return)
+TEST(TestMovementRules, event_return)
 {
     auto rng    = mio::RandomNumberGenerator();
     auto params = mio::abm::Parameters(num_age_groups);
@@ -471,7 +471,7 @@ TEST(TestMigrationRules, event_return)
               mio::abm::LocationType::Home);
 }
 
-TEST(TestMigrationRules, icu)
+TEST(TestMovementRules, icu)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
@@ -490,7 +490,7 @@ TEST(TestMigrationRules, icu)
               mio::abm::LocationType::Work);
 }
 
-TEST(TestMigrationRules, recover)
+TEST(TestMovementRules, recover)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0);
@@ -506,7 +506,7 @@ TEST(TestMigrationRules, recover)
               mio::abm::LocationType::Hospital);
 }
 
-TEST(TestMigrationRules, dead)
+TEST(TestMovementRules, dead)
 {
     auto rng = mio::RandomNumberGenerator();
 

@@ -29,7 +29,7 @@ int main()
 {
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 0.5; //time step of migration, daily migration every second step
+    const auto dt   = 0.5; //time step of movement, daily movement every second step
 
     mio::oseir::Model model;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 10000;
@@ -46,13 +46,13 @@ int main()
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 9990;
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 10;
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MovementEdge> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));
     g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 

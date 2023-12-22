@@ -142,12 +142,12 @@ TEST(TestGraphSimulation, stopsAtTmaxStochastic)
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
     model.populations.set_total(1000);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MovementEdgeStochastic> g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
@@ -198,12 +198,12 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.3;
     model.populations.set_total(1000);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MovementEdgeStochastic> g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<ScalarType>>>>
         mock_exponential_dist;
@@ -262,7 +262,7 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& mode
         }
     }
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_movement_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
@@ -293,10 +293,10 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     model.check_constraints();
 
     auto sim_no_flows = create_simulation(
-        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax, dt);
+        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MovementEdge>(), model, t0, tmax, dt);
 
     auto sim_flows =
-        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::oseir::Model>>, mio::MigrationEdge>(),
+        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::oseir::Model>>, mio::MovementEdge>(),
                           model, t0, tmax, dt);
 
     //test if all results of both simulations are equal for all nodes

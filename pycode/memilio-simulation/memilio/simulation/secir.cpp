@@ -52,7 +52,7 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template <class Sim>
 std::vector<Sim>
-filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge>>&& graph_results)
+filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MovementEdge>>&& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
@@ -71,7 +71,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MovementParameters>&, double, double, double,
                       size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
@@ -91,7 +91,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
         .def(
             "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MovementEdge>, size_t)>
                    handle_result) {
                 self.run(
                     [](auto&& g) {
@@ -143,11 +143,11 @@ enum class ContactLocation
 };
 
 using Simulation     = mio::osecir::Simulation<>;
-using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+using MovementGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MovementEdge>;
 
 } // namespace
 
-PYBIND11_MAKE_OPAQUE(std::vector<MigrationGraph>);
+PYBIND11_MAKE_OPAQUE(std::vector<MovementGraph>);
 
 namespace pymio
 {
@@ -233,13 +233,13 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_ModelNode<mio::osecir::Model>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
-    pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
-    pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
+    pymio::bind_MovementGraph<Simulation>(m, "MovementGraph");
+    pymio::bind_GraphSimulation<MovementGraph>(m, "MovementSimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
-    py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
+    py::bind_vector<std::vector<MovementGraph>>(m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::osecir::Simulation<>>(m, "ParameterStudy");
 
     m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal, py::arg("model"),
@@ -257,11 +257,11 @@ PYBIND11_MODULE(_simulation_secir, m)
         "set_nodes",
         [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const std::string& data_dir,
            const std::string& population_data_path, bool is_node_for_county,
-           mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+           mio::Graph<mio::osecir::Model, mio::MovementParameters>& params_graph,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
            int num_days = 0, bool export_time_series = false) {
             auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns,
-                                         mio::osecir::Model, mio::MigrationParameters, mio::osecir::Parameters,
+                                         mio::osecir::Model, mio::MovementParameters, mio::osecir::Parameters,
                                          decltype(mio::osecir::read_input_data_county<mio::osecir::Model>),
                                          decltype(mio::get_node_ids)>(
                 params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
@@ -279,15 +279,15 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     m.def(
         "set_edges",
-        [](const std::string& data_dir, mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+        [](const std::string& data_dir, mio::Graph<mio::osecir::Model, mio::MovementParameters>& params_graph,
            size_t contact_locations_size) {
             auto migrating_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
             auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
-            auto result         = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
-                                         mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
+            auto result         = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MovementParameters,
+                                         mio::MovementCoefficientGroup, mio::osecir::InfectionState,
                                          decltype(mio::read_mobility_plain)>(
                 data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);
@@ -329,9 +329,9 @@ PYBIND11_MODULE(_simulation_secir, m)
         py::return_value_policy::move);
 
     m.def("interpolate_simulation_result",
-          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
+          py::overload_cast<const MovementGraph&>(&mio::interpolate_simulation_result<Simulation>));
 
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MovementGraph>);
 
     m.attr("__version__") = "dev";
 }

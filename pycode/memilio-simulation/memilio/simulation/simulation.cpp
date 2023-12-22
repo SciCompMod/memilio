@@ -84,24 +84,24 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_contact_matrix(m, "UncertainContactMatrix");
 
-    auto migration_damping_class = py::class_<mio::VectorDamping>(m, "MigrationDamping");
-    pymio::bind_damping_members(migration_damping_class);
+    auto movement_damping_class = py::class_<mio::VectorDamping>(m, "MovementDamping");
+    pymio::bind_damping_members(movement_damping_class);
 
-    auto migration_dampings_class = py::class_<mio::VectorDampings>(m, "MigrationDampings");
-    pymio::bind_dampings_members(migration_dampings_class);
+    auto movement_dampings_class = py::class_<mio::VectorDampings>(m, "MovementDampings");
+    pymio::bind_dampings_members(movement_dampings_class);
 
-    auto migration_coeffs_class = py::class_<mio::MigrationCoefficients>(m, "MigrationCoefficients");
-    pymio::bind_damping_expression_members(migration_coeffs_class);
+    auto movement_coeffs_class = py::class_<mio::MovementCoefficients>(m, "MovementCoefficients");
+    pymio::bind_damping_expression_members(movement_coeffs_class);
 
-    auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
-    pymio::bind_damping_expression_group_members(migration_coeff_group_class);
+    auto movement_coeff_group_class = py::class_<mio::MovementCoefficientGroup>(m, "MovementCoefficientGroup");
+    pymio::bind_damping_expression_group_members(movement_coeff_group_class);
 
     pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
 
-    pymio::bind_migration_parameters(m, "MigrationParameters");
-    pymio::bind_migration_parameter_edge(m, "MigrationParameterEdge");
-    pymio::bind_migration(m, "Migration");
-    pymio::bind_migration_edge(m, "MigrationEdge");
+    pymio::bind_movement_parameters(m, "MovementParameters");
+    pymio::bind_movement_parameter_edge(m, "MovementParameterEdge");
+    pymio::bind_movement(m, "Movement");
+    pymio::bind_movement_edge(m, "MovementEdge");
 
     m.def(
         "get_state_id_de",

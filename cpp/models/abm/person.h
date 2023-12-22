@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_PERSON_H
-#define EPI_ABM_PERSON_H
+#ifndef MIO_ABM_PERSON_H
+#define MIO_ABM_PERSON_H
 
 #include "abm/location_type.h"
 #include "abm/infection_state.h"
@@ -286,7 +286,7 @@ public:
      * Every Person has a random number. Depending on this number and the time, the Person works from home in case of a
      * lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the movement between Location%s.
      * @return True the Person works from home.
      */
     bool goes_to_work(TimePoint t, const Parameters& params) const;
@@ -295,7 +295,7 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to work.
      * Depending on this number Person decides what time has to go to work.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the movement between Location%s.
      * @return The time of going to work.
      */
     TimeSpan get_go_to_work_time(const Parameters& params) const;
@@ -304,7 +304,7 @@ public:
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every Person has a random number that determines if they go to school in case of a lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the movement between Location%s.
      * @return True if the Person goes to school.
      */
     bool goes_to_school(TimePoint t, const Parameters& params) const;
@@ -313,7 +313,7 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to school.
      * Depending on this number Person decides what time has to go to school.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the movement between Location%s.
      * @return The time of going to school.
      */
     TimeSpan get_go_to_school_time(const Parameters& params) const;

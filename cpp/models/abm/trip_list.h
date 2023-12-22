@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_TRIP_LIST_H
-#define EPI_ABM_TRIP_LIST_H
+#ifndef MIO_ABM_TRIP_LIST_H
+#define MIO_ABM_TRIP_LIST_H
 
 #include "abm/parameters.h"
 #include "abm/location.h"
@@ -35,15 +35,15 @@ namespace abm
 {
 
 /**
- * @brief A trip describes a migration from one Location to another Location.
+ * @brief A trip describes a movement from one Location to another Location.
  */
 struct Trip {
     uint32_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     World, where all Person%s are saved.*/
     TimePoint time; ///< Time at which a Person changes the Location.
-    LocationId migration_destination; ///< Location where the Person migrates to.
-    LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    LocationId movement_destination; ///< Location where the Person migrates to.
+    LocationId movement_origin; ///< Location where the Person starts the Trip.
+    std::vector<uint32_t> cells; /**< If movement_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
     TransportMode
         trip_mode; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
@@ -62,8 +62,8 @@ struct Trip {
          ActivityType type_of_activity, const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
         , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
-        , migration_destination(destination)
-        , migration_origin(origin)
+        , movement_destination(destination)
+        , movement_origin(origin)
         , cells(input_cells)
         , trip_mode(mode_of_transport)
         , activity_type(type_of_activity)
@@ -89,7 +89,7 @@ struct Trip {
     bool operator==(const Trip& other) const
     {
         return (person_id == other.person_id) && (time == other.time) &&
-               (migration_destination == other.migration_destination) && (migration_origin == other.migration_origin);
+               (movement_destination == other.movement_destination) && (movement_origin == other.movement_origin);
     }
 
     /**
@@ -102,10 +102,10 @@ struct Trip {
         auto obj = io.create_object("Trip");
         obj.add_element("person_id", person_id);
         obj.add_element("time", time.seconds());
-        obj.add_element("destination_index", migration_destination.index);
-        obj.add_element("destination_type", migration_destination.type);
-        obj.add_element("origin_index", migration_origin.index);
-        obj.add_element("origin_type", migration_origin.type);
+        obj.add_element("destination_index", movement_destination.index);
+        obj.add_element("destination_type", movement_destination.type);
+        obj.add_element("origin_index", movement_origin.index);
+        obj.add_element("origin_type", movement_origin.type);
     }
 
     /**
@@ -158,7 +158,7 @@ public:
     TimePoint get_next_trip_time(bool weekend) const;
 
     /**
-     * @brief Add a Trip to migration data.
+     * @brief Add a Trip to the trip list.
      * @param[in] trip The Trip to be added.
      * @param[in] weekend If the Trip is made on a weekend day.     
      */

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_MIGRATION_RULES_H
-#define EPI_ABM_MIGRATION_RULES_H
+#ifndef MIO_ABM_MOVEMENT_RULES_H
+#define MIO_ABM_MOVEMENT_RULES_H
 
 #include "abm/location_type.h"
 #include "abm/parameters.h"
@@ -31,21 +31,21 @@ namespace abm
 {
 
 /**
- * @name Rules for migration between Location%s.
+ * @name Rules for movement between Location%s.
  * @param[inout] rng Person::RandomNumberGenerator for the person.
  * @param[in] p Person the rule is applied to.
  * @param[in] t Current time.
  * @param[in] dt Length of the time step.
- * @param[in] params Migration parameters.
+ * @param[in] params Movement parameters.
  * @return Location that the Person migrates to if the rule is applied, the current Location of the person 
  * if the rule is not applied because of age, time, etc.
  * 
  * @{
  */
 /**
- * @brief Completely random migration to any other Location.
+ * @brief Completely random movement to any other Location.
  */
-LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+LocationType random_movement(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
                               const Parameters& params);
 
 /**
@@ -106,4 +106,4 @@ LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person
 } // namespace abm
 } // namespace mio
 
-#endif //EPI_ABM_MIGRATION_RULES_H
+#endif //MIO_ABM_MOVEMENT_RULES_H

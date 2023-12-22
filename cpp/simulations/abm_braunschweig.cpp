@@ -890,7 +890,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
 
     // Create the world object from statistical data.
     create_world_from_data(world, input_file, t0, max_num_persons);
-    world.use_migration_rules(false);
+    world.use_movement_rules(false);
 
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
