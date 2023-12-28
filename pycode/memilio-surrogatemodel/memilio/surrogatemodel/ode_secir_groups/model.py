@@ -336,23 +336,23 @@ def get_test_statistic(test_inputs, test_labels, model):
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
 
     # delete the two confirmed compartments from InfectionStates
-    compartment_array = []
-    for compartment in InfectionState.values():
-        compartment_array.append(compartment) 
-    index = [3,5]
-    compartments_cleaned= np.delete(compartment_array, index)
+    #compartment_array = []
+    #for compartment in InfectionState.values():
+    #    compartment_array.append(compartment) 
+    #index = [3,5]
+    #compartments_cleaned= np.delete(compartment_array, index)
+
+    #mean_percentage = pd.DataFrame(
+    #    data=relative_err_means_percentage,
+    #    index=[str(compartment).split('.')[1]
+    #           for compartment in compartments_cleaned],
+    #    columns=['Percentage Error'])
 
     mean_percentage = pd.DataFrame(
-        data=relative_err_means_percentage,
-        index=[str(compartment).split('.')[1]
-               for compartment in compartments_cleaned],
-        columns=['Percentage Error'])
-
-    # mean_percentage = pd.DataFrame(
-    #     data=relative_err_means_percentage,
-    #     index=[str(compartment).split('.')[1]
-    #            for compartment in InfectionState.values()],
-    #     columns=['Percentage Error'])
+         data=relative_err_means_percentage,
+         index=[str(compartment).split('.')[1]
+                for compartment in InfectionState.values()],
+         columns=['Percentage Error'])
 
     return mean_percentage
 
