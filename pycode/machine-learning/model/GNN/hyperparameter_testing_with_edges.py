@@ -102,16 +102,18 @@ layers = [XENetConvBatch, CensNetConv, ECCConv]
 number_of_channels = [32, 64, 128,1024]
 number_of_layers = [1, 2, 3]
 #learning_rates = [0.01, 0.001, 0.0001]
-optimizers = [Adam, Nadam, RMSprop]
+#optimizers = [Adam, Nadam, RMSprop]
 
 parameters = []
 for l in layers:
     for c in number_of_channels:
         for nl in number_of_layers: 
-            for o in optimizers: 
-                parameters.append((l,c,nl,o))
+            #for o in optimizers: 
+                #parameters.append((l,c,nl,o))
+                parameters.append((l,c,nl))
 
            
+
 
 df = pd.DataFrame(
     columns=['layer', 'number_of_layers', 'channels',
@@ -139,7 +141,9 @@ matrix_tuple = [laplacian, edge_laplacian, incidence]
 def train_and_evaluate_model(
         epochs, learning_rate, param, filename):
     
-    layer, channels, number_of_layer, optimizer = param
+    #layer, channels, number_of_layer, optimizer = param
+    layer, channels, number_of_layer = param
+    optimizer = Adam
 
     class MyDataset(spektral.data.dataset.Dataset):
         def read(self):
@@ -164,7 +168,7 @@ def train_and_evaluate_model(
     data = MyDataset(transforms=NormalizeAdj())
     batch_size = 32
     epochs = epochs
-    es_patience = 200  # Patience for early stopping
+    es_patience = 100  # Patience for early stopping
 
     if number_of_layer == 1: 
         class Net(Model):
