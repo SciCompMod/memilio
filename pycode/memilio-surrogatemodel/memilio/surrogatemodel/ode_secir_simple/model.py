@@ -196,7 +196,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
         index=[str(compartment).split('.')[1]
-               for compartment in compartments_cleaned],
+               for compartment in compartment_array],
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -275,7 +275,7 @@ if __name__ == "__main__":
 
 
 
-    model = "CNN"
+    model = "LSTM"
     if model == "Dense_single":
         model = network_architectures.mlp_multi_input_single_output()
     elif model == "Dense":
