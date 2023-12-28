@@ -5,7 +5,7 @@ from matplotlib.lines import Line2D
 import matplotlib as mpl
 import re
 
-df = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/machine-learning/model/GNN/backup_dataframe_hyperparameter_tuning_full.csv')
+df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_hyperparameters/dataframe_frid_search_GNN_noedges_full_concat.csv')
 
 
 # saving the array of losses in the df was a little bit problematic, and I made some mistakes
@@ -77,6 +77,61 @@ def plot_max_min_losses(min_loss_train, min_loss_val, max_loss_train, max_loss_v
 
 
 
+def barplot(df):
+       
+
+    df_1 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GCNConv')][['number_of_layers', 'kfold_test']])
+    df_1 = df_1.groupby('number_of_layers').mean()
+    
+    df_2 = pd.DataFrame(data =  df.loc[(df['layer'] == 'ARMAConv')][['number_of_layers', 'kfold_test']])
+    df_2 = df_2.groupby('number_of_layers').mean()
+    
+    df_3 = pd.DataFrame(data =  df.loc[(df['layer'] == 'APPNPConv')][['number_of_layers',  'kfold_test']])
+    df_3 = df_3.groupby('number_of_layers').mean()
+    
+    df_4 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GATConv')][['number_of_layers', 'kfold_test']])
+    df_4 = df_4.groupby('number_of_layers').mean()
+
+    MAPE = {
+        'GCNConv': np.squeeze(df_1.values).round(2).tolist(), 
+        'ARMAConv':np.squeeze(df_2.values).round(2).tolist(), 
+        'APPNPConv':np.squeeze(df_3.values).round(2).tolist(), 
+        'GATConv': np.squeeze(df_4.values).round(2).tolist(), 
+    }
+
+    layers = df_1.index.values
+    #df_bar=df_opt[['optimizer',  'kfold_test']]
+
+
+    x = np.arange(1,len(layers)+1)  # the label locations
+    width = 0.15  # the width of the bars
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout='constrained')
+
+    for attribute, measurement in MAPE.items():
+        offset = width * multiplier
+        rects = ax.bar(x +offset, measurement, width, label=attribute)
+        ax.bar_label(rects, padding=3, fontsize = 10)
+        multiplier += 1
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+
+    #ax.set_yticks(x+width, layers)
+    ax.legend(loc='upper right', ncols=3)
+
+    ax.set_xticks(x, labels=x, fontsize = 12)
+    
+
+
+    ax.set_ylabel('test MAPE')
+    ax.set_xlabel('Number of layers')
+    ax.set_title('Mean Test MAPE for different number of layers')
+    plt.savefig("bar_GNN1_layer.png")
+
+
+
+
 
 def heatmap():
     df_heatmap1 = pd.DataFrame(data = df.loc[(df['layer'] == 'GCNConv') & (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
@@ -113,34 +168,96 @@ def heatmap():
 
 
 
-def plot_layer():
+# def plot_layer():
+#     plt.figure().clf() 
+#     df_layer_plot = pd.DataFrame(data = df.loc[(df['activation'] == 'elu') & (df['optimizer']=='Adam')][['layer', 'number_of_layers', 'kfold_test']])
+#     df_layer_plot= df_layer_plot.pivot(index='number_of_layers', columns='layer', values='kfold_test')
+#     linestyles = ['--', '-', '.', ':']
+
+#     markers = []
+#     for m in Line2D.markers:
+#         try:
+#             if len(m) == 1 and m != " ":
+#                 markers.append(m)
+#         except TypeError:
+#             pass
+
+#     for i, ls, m in zip(df_layer_plot.columns, linestyles, markers): 
+#         plt.plot(df_layer_plot[i], label = i,  linestyle=ls, marker = m )
+
+
+#     plt.title('Layers and number of layers')
+#     plt.legend()
+#     plt.xlabel('Number of layers')
+#     plt.ylabel('MAPE loss')
+#     plt.savefig("layers.png")
+
+
+
+
+
+
+def heatmaps(df):
+
+
+    df_1 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GCNConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_1= df_1.pivot(index='activation', columns='optimizer', values='kfold_test')
+    
+    df_2 = pd.DataFrame(data =  df.loc[(df['layer'] == 'ARMAConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_2= df_2.pivot(index='activation', columns='optimizer', values='kfold_test')
+    
+    df_3 = pd.DataFrame(data =  df.loc[(df['layer'] == 'APPNPConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_3= df_3.pivot(index='activation', columns='optimizer', values='kfold_test')
+    
+    df_4 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GATConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_4= df_4.pivot(index='activation', columns='optimizer', values='kfold_test')
+
     plt.figure().clf() 
-    df_layer_plot = pd.DataFrame(data = df.loc[(df['activation'] == 'elu') & (df['optimizer']=='Adam')][['layer', 'number_of_layers', 'kfold_test']])
-    df_layer_plot= df_layer_plot.pivot(index='number_of_layers', columns='layer', values='kfold_test')
-    linestyles = ['--', '-', '.', ':']
-
-    markers = []
-    for m in Line2D.markers:
-        try:
-            if len(m) == 1 and m != " ":
-                markers.append(m)
-        except TypeError:
-            pass
-
-    for i, ls, m in zip(df_layer_plot.columns, linestyles, markers): 
-        plt.plot(df_layer_plot[i], label = i,  linestyle=ls, marker = m )
+    layers = df['layer'].unique()
 
 
-    plt.title('Layers and number of layers')
-    plt.legend()
-    plt.xlabel('Number of layers')
-    plt.ylabel('MAPE loss')
-    plt.savefig("layers.png")
+    fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=False, figsize = (20,20), constrained_layout = True)
+
+    for ax, df_heatmap, name  in zip(axs.flat, [df_1 ,df_2, df_3, df_4], layers):
+        
+        im = ax.imshow(df_heatmap.values, cmap ='Blues_r' )
+
+        # Show all ticks and label them with the respective list entries
+        ax.set_xticks(np.arange(len(df_heatmap.columns)), labels=df_heatmap.columns)
+        ax.set_yticks(np.arange(len(df_heatmap.index)), labels=df_heatmap.index)
+
+        ax.set_ylabel('activation')
+        ax.set_xlabel('optimizer')
+
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                rotation_mode="anchor")
+
+        # Loop over data dimensions and create text annotations.
+        for i in range(len(df_heatmap.index)):
+            for j in range(len(df_heatmap.columns)):
+                text = ax.text(j, i, np.around(df_heatmap.values, decimals=2)[i, j],
+                            ha="center", va="center", color="k")
+                
+        ax.set_title('Model = '+name) 
+
+
+
+    fig.colorbar(im, ax = axs, shrink=0.75, label = 'Test MAPE')
+    
+    fig.delaxes(axs[1][1])
+    
+    plt.rcParams.update({'font.size': 25})
+    plt.show()
+    plt.savefig("GNN_heatmap_activ_opt.png")
+
+
+
 
 
 plot_max_min_losses(min_loss_train, min_loss_val, max_loss_train, max_loss_val)
 heatmap()
-plot_layer()
+#plot_layer()
 
 for i in df.columns[1:5]:
     print('Mean Test MAPE by ' + i ,':',  pd.DataFrame(data = df[[i, 'kfold_test']]).groupby([i]).mean())
