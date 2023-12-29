@@ -66,7 +66,7 @@ def posteriori_stiffness(stability_func, y,params):
                 # Return the first index at which an instability occurs:
                 return t_idx
     # If no instability occurs, return the last time index
-    return y.get_num_time_points()
+    return y.get_num_time_points()-1
 
 def stiffness_estimate(params, pop_total, t_idx, y):
     if not (t_idx < y.get_num_time_points()):
