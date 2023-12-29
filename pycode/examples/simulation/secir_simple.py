@@ -23,6 +23,9 @@ from datetime import date, datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import math
+from scipy.linalg import eigvals
+from scipy.sparse.linalg import eigs
 
 from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
 from memilio.simulation.secir import Index_InfectionState
@@ -30,6 +33,42 @@ from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import (Model, Simulation,
                                       interpolate_simulation_result, simulate)
 
+# Checks after a run if stiffness occured and when stiffness occurred first
+# Checking for stiffness after every timestep would be too expensive
+# Simulation can then be run from first occurence of stiffness with different (f.ex. implicit) integrator
+# y: TimeSeries
+# stability_func: Stability function of the integrator used
+def posteriori_stiffness(stability_func, y,params):
+    # Don't check the last timepoint, as we don't step from there
+    interior_timepoints = y.get_num_time_points()-1
+    for t_idx in range(0,interior_timepoints):
+        # Calculate the Jacobian
+        num_agegroups = params.get_num_groups()
+        pi = math.pi
+        test_and_trace_required = 0.0
+        icu_occupancy = 0.0
+        result = y.as_ndarray()
+        group_data = np.transpose(result[1:,:])
+
+        for i in range(0,num_agegroups):
+            Agegroup = AgeGroup(i)
+            rateINS = 0.5/(params.IncubationTime[Agegroup]-params.SerialInterval[Agegroup])
+            test_and_trace_required += (1 - params.RecoveredPerInfectedNoSymptoms[Agegroup])*rateINS*group_data[t_idx,i*10+2]
+            icu_occupancy += group_data[t_idx,i*10+5]
+
+        season_val = (1 + params.Seasonality) *math.sin(pi * (math.fmod((params.StartDay + y.get_time(t_idx)),365.0) /182.5 +0.5))
+
+        Jacobian = np.zeros((num_agegroups*8,num_agegroups*8))
+        # Initialize matrix blocks
+        eigen_vals = eigvals(Jacobian)
+        # Determine the used stepsize: 
+        h = y.get_time(t_idx+1)-y.get_time(t_idx) 
+        for eigen in eigen_vals:
+            if abs(stability_func(eigen*h)) > 1:
+                # Return the first index at which an instability occurs:
+                return t_idx
+    # If no instability occurs, return the last time index
+    return y.get_num_time_points()-1
 
 def run_secir_simulation(show_plot=True):
     """
