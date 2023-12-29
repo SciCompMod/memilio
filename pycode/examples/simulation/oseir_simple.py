@@ -30,8 +30,45 @@ from memilio.simulation.oseir import InfectionState as State
 from memilio.simulation.oseir import (Model, interpolate_simulation_result,
                                       simulate, simulate_euler)
 
+def stability_func_cashkarp45(x):
+    return 1 + x + 0.5*(x**2)+0.1667*(x**3)+0.04167*(x**4)+0.008333*(x**5)
 
-def stiffness(params, pop_total, t_idx, y):
+# Checks after a run if stiffness occured and when stiffness occurred first
+# Checking for stiffness after every timestep would be too expensive
+# Simulation can then be run from first occurence of stiffness with different (f.ex. implicit) integrator
+# y: TimeSeries
+# stability_func: Stability function of the integrator used
+def posteriori_stiffness(stability_func, y,params):
+    # Don't check the last timepoint, as we don't step from there
+    interior_timepoints = y.get_num_time_points()-1
+    for t_idx in range(0,interior_timepoints):
+        coeffStoE = params.ContactPatterns.get_matrix_at(
+        y.get_time(t_idx))[0, 0] * params.TransmissionProbabilityOnContact.value / pop_total
+        Jacobian = np.zeros((4,4))
+
+        S = y.get_value(t_idx)[0]
+        I = y.get_value(t_idx)[2]
+
+        Jacobian[0,0] = - coeffStoE * I
+        Jacobian[0,2] = - coeffStoE * S
+        Jacobian[1,0] = coeffStoE * I
+        Jacobian[1,1] = - (1.0 / params.TimeExposed.value)
+        Jacobian[1,2] = coeffStoE * S
+        Jacobian[2,1] = (1.0 / params.TimeExposed.value)
+        Jacobian[2,2] = -(1.0 / params.TimeInfected.value)
+        Jacobian[3,2] = (1.0 / params.TimeInfected.value)
+
+        eigen_vals = eigvals(Jacobian)
+        # Determine the used stepsize: 
+        h = y.get_time(t_idx+1)-y.get_time(t_idx) 
+        for eigen in eigen_vals:
+            if abs(stability_func(eigen*h)) > 1:
+                # Return the first index at which an instability occurs:
+                return t_idx
+    # If no instability occurs, return the last time index
+    return y.get_num_time_points()
+
+def stiffness_estimate(params, pop_total, t_idx, y):
     if not (t_idx < y.get_num_time_points()):
         raise ValueError("t_idx is not a valid index for the TimeSeries")
 
@@ -113,7 +150,7 @@ def run_oseir_simulation():
     stiff_val = []
     for time_idx in range(result.get_num_time_points()):
         time.append(result.get_time(time_idx))
-        stiff_val.append(stiffness(model.parameters, model.populations.get_total(), time_idx, result))
+        stiff_val.append(stiffness_estimate(model.parameters, model.populations.get_total(), time_idx, result))
 
     # print time and stiffness values
     plt.plot(time, stiff_val)
@@ -123,7 +160,7 @@ def run_oseir_simulation():
     plt.yscale("log")
     plt.show()
 
-    print("Min value of xi: ", min(stiff_val))
+    print("Max value of xi: ", max(stiff_val))
     
 
 
