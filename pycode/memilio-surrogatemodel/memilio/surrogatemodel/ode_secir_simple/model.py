@@ -86,7 +86,7 @@ def plot_compartment_prediction_model(
     plt.savefig('plots/evaluation_secir_simple_' + plot_compartment + '.png')
 
 
-def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100, plot=True):
+def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100, plot=False):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -123,6 +123,19 @@ def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100,
     history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                         validation_data=(valid_inputs, valid_labels),
                         callbacks=[early_stopping])
+    
+
+    
+    # save the model
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_models = os.path.join(
+        os.path.dirname(
+            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        'saved_models_secir_simple')
+    if not os.path.isdir(path_models):
+        os.mkdir(path_models)
+
+    model.save(path_models, 'model_400pop_30day_bestmodel_secirsimple.h5')
 
     if (plot):
         plot_losses(history)
@@ -141,7 +154,7 @@ def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100,
             'secir_simple_dataframes')
         if not os.path.isdir(file_path):
             os.mkdir(file_path)
-        file_path = file_path+'secir_simple_4layers'+modelname
+        file_path = file_path+'secir_simple_best'+modelname
         df.to_csv(file_path)
 
 
@@ -247,9 +260,9 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-    filename = "data_secir_simple_150days.pickle"
+    filename = "data_secir_simple.pickle"
     max_epochs = 1500
-    label_width = 150 
+    label_width = 30 
 
 
 
