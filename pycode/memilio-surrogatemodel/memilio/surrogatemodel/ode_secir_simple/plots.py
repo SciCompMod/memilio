@@ -59,23 +59,55 @@ def lineplots_pred_label(pred_reversed, labels_reversed):
         #fig, axes = plt.subplots(nrows=2, ncols=4, sharey=False)
         axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
         for ax, c, p, l in zip(axes, index, pred, labels):
-                ax.plot(p)
-                ax.plot(l)
+                ax.plot(p, label='pred')
+                ax.plot(l, label ='label')
                 ax.set_title(c, fontsize = 10)
                 
-                ax.legend(loc='upper right', ncols=3)
+                #ax.legend(loc='upper right', ncols=3)
         
         ax7.set_xlabel('Time')
         ax8.set_xlabel('Time')
 
 
+        lines = [] 
+        line_labels = [] 
+        for ax in fig.axes: 
+                Line, Label = ax.get_legend_handles_labels() 
+                # print(Label) 
+                lines.extend(Line) 
+                line_labels.extend(Label) 
 
-
-
+        fig.legend(lines[:2], line_labels[:2], loc='upper right') 
         fig.suptitle('Predicted values and labels for compartments', fontsize=16)
-        fig.legend(loc='upper right', ncols=3)
+        #fig.legend(loc='upper right', ncols=3)
+        
                 
         plt.savefig("secir_simple_compartment_lines.png")
+
+
+def closeup_susceptible(pred_reversed, labels_reversed):
+        pred = pred_reversed
+        labels = labels_reversed
+
+        compartment_array = []
+        for compartment in InfectionState.values():
+                compartment_array.append(compartment) 
+        index=[str(compartment).split('.')[1]
+               for compartment in compartment_array]
+        index_s = [0]
+        pred_s = pred[0][:20] #only 20 first days of susceptible
+
+        days = np.arange(1,21)
+        plt.figure().clf()
+        fig, ax = plt.subplots()
+        ax.plot(days, pred_s, label = 'pred')
+        ax.plot(days, labels[0][:20], label = 'labels')
+        ax.set_xticks(days)
+        ax.set_xlabel('Number of days')
+        ax.set_ylabel('MAPE loss')
+        ax.legend(loc='upper right')
+        ax.set_title('Closeup of first 20 days of Susceptible compartment')
+        plt.savefig("susceptible_closeup_secir_simle.png")
 
         
 def lineplot_number_of_days():
@@ -111,20 +143,15 @@ def lineplot_number_of_days():
                 mape = get_test_statistic(test_inputs, test_labels, model)
                 mean_mape = mape.mean()
                 MAPE.append(mean_mape)
-
-
-                
-      
-
                 
         plt.figure().clf()
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize = (8,15))
         ax.plot(days, MAPE,  marker = 'o' )
         ax.set_xticks(days)
         ax.set_xlabel('Number of days')
         ax.set_ylabel('MAPE loss')
         ax.set_title('MAPE loss for number of days to be predicted')
-        plt.savefig("plot_days_secirsimple.png")
+        plt.savefig("plot_days_secirsimple_long.png")
 
 
 def heatmap(df_gridsearch):
