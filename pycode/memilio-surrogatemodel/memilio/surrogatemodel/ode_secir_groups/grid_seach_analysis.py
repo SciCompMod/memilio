@@ -7,7 +7,7 @@ import matplotlib.colors as colors
 
 df = pd.read_csv("/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_grid_search/dataframes_concatenated_groups")
 
-
+df_hyper = pd.read_csv("/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_LSTM_hyperparamter/dataframe_0_512_LSTM_opt")
 
 def heatmap(df):
 
@@ -33,14 +33,14 @@ def heatmap(df):
 
 
     plt.figure().clf() 
-    df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
-    df_heatmap2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap2= df_heatmap2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    df_heatmap2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_heatmap2= df_heatmap2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
-    df_heatmap3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap3= df_heatmap3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    df_heatmap3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_heatmap3= df_heatmap3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
     fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=False, figsize = (20,20), constrained_layout = True)
 
@@ -84,7 +84,7 @@ def heatmap(df):
     #plt.subplots_adjust(wspace=0.1, hspace=0.1)
     
     plt.show()
-    plt.savefig("heatmap_layers_neurons_all_secir_groups.png")
+    plt.savefig("heatmap_layers_neurons_all_secir_groups_test.png")
 
 
 
@@ -93,16 +93,17 @@ def heatmap(df):
 
 
 def barplot(df):
+    plt.figure().clf() 
    
 
-    df_1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_1= df_1.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='mean_test_MAPE')
+    df_1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_1= df_1.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='kfold_test')
     
-    df_2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_2= df_2.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='mean_test_MAPE')
+    df_2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_2= df_2.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='kfold_test')
     
-    df_3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_3= df_3.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='mean_test_MAPE')
+    df_3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_3= df_3.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='kfold_test')
     
 
     MAPE = {
@@ -135,7 +136,7 @@ def barplot(df):
     ax.set_ylabel('test MAPE')
     ax.set_xlabel('Number of layers')
     ax.set_title('Mean Test MAPE for different number of layers')
-    plt.savefig("bar_groups_layer.png")
+    plt.savefig("bar_groups_layer_correctTestValues.png")
 
 
 
@@ -143,15 +144,15 @@ def barplot(df):
 # mean MAPE for number of neurons per layer
 def lineplot(df):
        
-
-    df_1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_1= df_1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    plt.figure().clf() 
+    df_1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_1= df_1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
     
-    df_2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_2= df_2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    df_2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_2= df_2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
     
-    df_3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_3= df_3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
+    df_3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_3= df_3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
     
 
     MAPE = {
@@ -160,7 +161,7 @@ def lineplot(df):
         'LSTM':df_3.mean().values.round(2).tolist(), 
     }
 
-    fig, ax = plt.subplots(figsize=(10, 5), layout='constrained')
+    fig, ax = plt.subplots(figsize=(8, 5), layout='constrained')
     x = df_1.mean().index.values
     
     ax.plot(x,df_1.mean().values.round(2).tolist(), label='MLP') 
@@ -180,7 +181,53 @@ def lineplot(df):
     ax.set_ylabel('test MAPE')
     ax.set_xlabel('Number of Neurons')
     ax.set_title('Mean Test MAPE for different number of neurons')
-    plt.savefig("line_groups_neurons.png")
+    plt.savefig("line_groups_neurons_correctTestValues.png")
+
+
+
+
+
+def simple_barplot(df):
+    plt.figure().clf() 
+    df_bar=df[['optimizer',  'kfold_test']]
+    df_bar.sort_values(by='kfold_test', inplace = True, ascending=False)
+    
+
+    #df_bar=df_opt[['optimizer',  'kfold_test']]
+
+    fig, ax = plt.subplots()
+
+    rects = ax.barh(df_bar['optimizer'], df_bar['kfold_test'].round(4))
+
+    ax.set_ylabel('Test MAPE')
+    ax.set_xlabel('Opitmizer')
+    ax.set_title('Optimizer for LSTM ')
+
+
+    large_bars = [p if p > 2 else '' for p in df_bar['kfold_test'].round(4)]
+    small_bars = [p if p <= 2 else '' for p in df_bar['kfold_test'].round(4)]
+
+
+    ax.bar_label(rects, small_bars,
+                  padding=5, color='black')
+    ax.bar_label(rects, large_bars,
+                  padding=-40, color='white')
+
+    #ax.bar_label(rects[:4], ax.containers[:4], label_type='edge')
+    #ax.bar_label(rects, ax.containers[4:], label_type='edge', padding=-32, color='white', fontweight='bold')
+    # pad the spacing between the number and the edge of the figure
+    ax.margins(y=0.1)
+
+    plt.show()
+    plt.savefig("barh_optimizer_LSTM.png")
+    ax.set_ylabel('Optimizer')
+    ax.set_xlabel('Test MAPe')
+    ax.set_title('Test MAPE for different optimizer')
+    plt.savefig("secirgroups_optimizer_LSTM_barplot.png")
+
+
+
+
 
 
 
@@ -189,3 +236,4 @@ def lineplot(df):
 
 heatmap(df)
 barplot(df)
+simple_barplot(df_hyper)
