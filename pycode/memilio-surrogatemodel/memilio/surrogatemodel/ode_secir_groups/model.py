@@ -126,7 +126,7 @@ def plot_compartment_prediction_model(
 
 
 def network_fit(
-        path, filename, model, modeltype, max_epochs=30, early_stop=100, plot=True):
+        path, filename, model, modeltype, df_save,  max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -137,7 +137,7 @@ def network_fit(
 
     """
 
-    if not os.path.isfile(os.path.join(path, 'data_secir_groups.pickle')):
+    if not os.path.isfile(os.path.join(path, filename)):
         ValueError("no dataset found in path: " + path)
 
     file = open(os.path.join(path, filename), 'rb')
@@ -295,6 +295,22 @@ def network_fit(
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
         print('mean: ',  df.mean())
+        
+        
+        filename_df = 'datarame_secirgroups_onedamp_noinfo'
+        df_save.loc[len(df_save.index)] = [df.mean()[0]]
+        
+        path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(
+            os.path.dirname(
+                os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+            'secir_groups_onedamp_noinfo')
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+        file_path = os.path.join(file_path,filename_df)
+        df_save.to_csv(file_path)
+
+
     return history
 
 
@@ -472,13 +488,13 @@ def split_damping_days(damping_days, split_train=0.7,
     return data
 
 
-def get_input_dim_lstm(path):
+def get_input_dim_lstm(path, filename):
     """! Extract the dimensiond of the input data
 
    @param path path to the data 
 
    """
-    file = open(os.path.join(path, 'data_secir_groups.pickle'), 'rb')
+    file = open(os.path.join(path, filename), 'rb')
 
     data = pickle.load(file)
     input_dim = data['inputs'].shape[2] + np.asarray(
@@ -492,17 +508,16 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-    filename = 'data_secir_groups_30days_onevardamp.pickle'
+    filename = 'data_secir_groups_30days_onevardamp_baseline.pickle'
+    df_save = pd.DataFrame(columns = ['MAPE'])
 
 
-
-
-    max_epochs = 1000
+    max_epochs = 1
     label_width = 30
 
-    input_dim = get_input_dim_lstm(path_data)
+    input_dim = get_input_dim_lstm(path_data, filename)
 
-    model = "CNN"
+    model = "LSTM"
     if model == "Dense_Single":
         model = network_architectures.mlp_multi_input_single_output()
         modeltype = 'classic'
@@ -520,6 +535,8 @@ if __name__ == "__main__":
         model = network_architectures.cnn_multi_input_multi_output(label_width)
         modeltype = 'timeseries'
 
-    model_output = network_fit(
-        path_data, filename, model=model, modeltype=modeltype, 
-        max_epochs=max_epochs)
+    for i in range(5):
+
+        model_output = network_fit(
+            path_data, filename, model=model, modeltype=modeltype, df_save = df_save,
+            max_epochs=max_epochs)
