@@ -7,7 +7,6 @@ from memilio.simulation.secir import InfectionState
 import matplotlib.pyplot as plt
 import pandas as pd 
 #load data 
-
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
@@ -69,9 +68,6 @@ def lineplots_pred_label(pred_reversed, labels_reversed):
         ax8.set_xlabel('Time')
 
 
-
-
-
         fig.suptitle('Predicted values and labels for compartments', fontsize=16)
         fig.legend(loc='upper right', ncols=3)
                 
@@ -79,16 +75,17 @@ def lineplots_pred_label(pred_reversed, labels_reversed):
 
         
 def lineplot_number_of_days():
-        model30 = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
-        model60 = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_60days')
-        model90 = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_90days')
-        model120 = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_120')
-        model150 = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_150days')
+       #model30 = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
+        model60 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_60days')
+        model90 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_90days')
+        model120 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_120days')
+        model150 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_150days')
 
-        models = [model30, model60, model90, model120, model150]
-        filenames =["data_secir_simple.pickle", "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle","data_secir_simple_150days.pickle"]
+        models = [model60, model90, model120, model150]
+        filenames =[ "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle","data_secir_simple_150days.pickle"]
         days = [30,60,90,120,150]
         MAPE = []
+        MAPE.append(0.1162)
         for model, file in zip(models, filenames): 
                 model = model 
                 path = os.path.dirname(os.path.realpath(__file__))
@@ -109,22 +106,18 @@ def lineplot_number_of_days():
                 test_labels = data_splitted['test_labels']
 
                 mape = get_test_statistic(test_inputs, test_labels, model)
-                mean_mape = mape.mean()
+                mean_mape = mape.mean()[0]
                 MAPE.append(mean_mape)
-
-
-                
-      
-
+     
                 
         plt.figure().clf()
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize =(12,7))
         ax.plot(days, MAPE,  marker = 'o' )
         ax.set_xticks(days)
         ax.set_xlabel('Number of days')
-        ax.set_ylabel('MAPE loss')
-        ax.set_title('MAPE loss for number of days to be predicted')
-        plt.savefig("plot_days_secirsimple.png")
+        ax.set_ylabel('MAPE')
+        ax.set_title('MAPE for number of days to be predicted')
+        plt.savefig("plot_days_secirsimple_long.png")
 
 
 def heatmap(df_gridsearch):
