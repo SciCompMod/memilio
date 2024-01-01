@@ -125,6 +125,8 @@ def plot_compartment_prediction_model(
     plt.savefig('plots/evaluation_secir_groups_' + plot_compartment + '.png')
 
 
+#def network_fit(
+#        path, filename,  model, modeltype, df_save, max_epochs=30, early_stop=100, plot=True):
 def network_fit(
         path, filename,  model, modeltype, max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
@@ -200,12 +202,27 @@ def network_fit(
 
     if (plot):
         plot_losses(history)
-        plot_compartment_prediction_model(
-            test_inputs, test_labels, modeltype, model=model,
-            plot_compartment='InfectedSymptoms', max_subplots=3)
+        #plot_compartment_prediction_model(
+        #    test_inputs, test_labels, modeltype, model=model,
+        #    plot_compartment='InfectedSymptoms', max_subplots=3)
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
         print('mean: ',  df.mean())
+
+                
+        #filename_df = 'datfarame_secirgroups_onedamp_noinfo'
+        #df_save.loc[len(df_save.index)] = [df.mean()[0]]
+        
+        # path = os.path.dirname(os.path.realpath(__file__))
+        # file_path = os.path.join(
+        #     os.path.dirname(
+        #         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        #     'secir_groups_onedamp_noinfo')
+        # if not os.path.isdir(file_path):
+        #     os.mkdir(file_path)
+        # file_path = os.path.join(file_path,filename_df)
+        # df_save.to_csv(file_path)
+
     return history
 
 
@@ -257,7 +274,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
         index=[str(compartment).split('.')[1]
-               for compartment in compartments_cleaned],
+               for compartment in compartment_array],
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -334,32 +351,62 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    filename = 'data_secir_groups_30days_onevardamp.pickle'
-    max_epochs = 1000
+    filename = 'data_secir_groups_30days_nodamp.pickle'
+    max_epochs = 1500
     label_width = 30
 
     input_dim = get_input_dim_lstm(path_data, filename)
+    #df_save = pd.DataFrame(columns = ['MAPE'])
 
 
-    model = "Dense"
+
+
+
+    model = "CNN"
     if model == "Dense_Single":
-        model = network_architectures.mlp_multi_input_single_output()
-        modeltype = 'classic'
+            model = network_architectures.mlp_multi_input_single_output()
+            modeltype = 'classic'
 
     elif model == "Dense":
-        model = network_architectures.mlp_multi_input_multi_output(label_width)
-        modeltype = 'classic'
+            model = network_architectures.mlp_multi_input_multi_output(label_width)
+            modeltype = 'classic'
 
     elif model == "LSTM":
-        model = network_architectures.lstm_multi_input_multi_output(
-            label_width)
-        modeltype = 'timeseries'
+            model = network_architectures.lstm_multi_input_multi_output(
+                label_width)
+            modeltype = 'timeseries'
 
     elif model == "CNN":
-        model = network_architectures.cnn_multi_input_multi_output(label_width)
-        modeltype = 'timeseries'
-
-    model_output = network_fit(
-        path_data, filename,  model=model, modeltype=modeltype,
-        max_epochs=max_epochs,  plot=True)
+            model = network_architectures.cnn_multi_input_multi_output_simple(label_width)
+            modeltype = 'timeseries'
     
+    model_output = network_fit(
+            path_data, filename, model=model, modeltype=modeltype,
+            max_epochs=max_epochs)
+
+
+
+    # for i in range(5):
+    #     tf.keras.backend.clear_session()
+
+    #     model = "LSTM"
+    #     if model == "Dense_Single":
+    #         model = network_architectures.mlp_multi_input_single_output()
+    #         modeltype = 'classic'
+
+    #     elif model == "Dense":
+    #         model = network_architectures.mlp_multi_input_multi_output(label_width)
+    #         modeltype = 'classic'
+
+    #     elif model == "LSTM":
+    #         model = network_architectures.lstm_multi_input_multi_output(
+    #             label_width)
+    #         modeltype = 'timeseries'
+
+    #     elif model == "CNN":
+    #         model = network_architectures.cnn_multi_input_multi_output(label_width)
+    #         modeltype = 'timeseries'
+    
+    #     model_output = network_fit(
+    #         path_data, filename, model=model, modeltype=modeltype, df_save = df_save,
+    #         max_epochs=max_epochs)
