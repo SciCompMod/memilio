@@ -7,7 +7,118 @@ from matplotlib.lines import Line2D
 
 
 
+def plot_dist(all_dampings, name):
+    value_count = pd.Series(np.asarray(all_dampings).flatten()).value_counts().sort_index()
+    days_list= [*range(0,len(value_count)+1, 1)] 
+    plt.clf()
+    plt.stairs(value_count, days_list, fill = True)
+    #plt.hist(value_count)
+    plt.show()
+    plt.title('Distribution Random Sampling')
+    plt.xlabel('Days')
+    plt.ylabel('Count')
+    plt.savefig("random"+name+".png")
 
+
+###########################################
+# neuer Ansatz mit Martin Schattendampings 
+# best method --> not perfektly uniform but when we perform a limited number of runs ( e.g 10k) the results are acceptable 
+# this method rather punishes the first and last few days
+# in our case this is better than having more dampings towards the end of the prediction horizon (as it is slighly the case for the circle method)
+
+def generate_dampings_withshadowdamp():
+
+    number_of_dampings = 5
+    days = 90
+    min_distance = 7 
+    min_damping_day = 0
+    number_of_runs= 10000
+
+    all_dampings = []
+    count_runs = 0 
+    count_shadow = 0
+    while len(all_dampings)<number_of_runs:
+
+        days_list = list(range((min_damping_day),days))
+        dampings = []
+        if count_shadow <2:
+            for i in range(number_of_dampings):
+                damp = random.choice(days_list)
+                days_before = list(range(damp-(min_distance), damp))
+                days_after = list(range(damp, damp+(min_distance+1)))
+                dampings.append(damp)
+                days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
+        else: 
+            # chose a forbidden damping 
+            damp = random.choice(list(range((0-min_distance),0))+ list(range(days+1, (days+min_distance+1))))
+                
+            days_before = list(range(damp-(min_distance), damp))
+            days_after = list(range(damp, damp+(min_distance+1)))
+            days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
+            dampings.append(damp)
+            for i in range(number_of_dampings):
+                
+                
+                damp = random.choice(days_list)
+                days_before = list(range(damp-(min_distance), damp))
+                days_after = list(range(damp, damp+(min_distance+1)))
+                dampings.append(damp)
+                days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
+                count_shadow = 0
+        
+            
+        forbidden_damping_values = list(range((0-min_distance),0))+ list(range(days+1, (days+min_distance+1)))
+        dampings = [ele for ele in dampings if ele not in forbidden_damping_values]
+        count_runs+=1
+        count_shadow +=1
+        # select first or last five dampings
+        if len(dampings) >= number_of_dampings:
+            #dampings = random.sample(dampings, 5)
+            all_dampings.append(sorted(dampings))
+        #     if count_runs % 2 == 0:
+        
+        return all_dampings
+
+
+
+#### for comparison: without shadow damps
+
+def normal_drawing():
+    number_of_dampings = 2
+    days = 100
+    min_distance = 7 
+    min_damping_day = 5
+    number_of_runs= 500000
+
+    all_dampings = []
+    while len(all_dampings)<number_of_runs:
+        count_runs = 0 
+        days_list = list(range((min_damping_day-min_distance),days+(min_distance+1)))
+        dampings = []
+        for i in range(number_of_dampings):
+            damp = random.choice(days_list)
+            days_before = list(range(damp-(min_distance+1), damp))
+            days_after = list(range(damp, damp+(min_distance+1)))
+            dampings.append(damp)
+            days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
+            
+        forbidden_damping_values = list(range((min_damping_day-min_distance),min_damping_day))+ list(range(days+1, (days+min_distance+1)))
+        dampings = [ele for ele in dampings if ele not in forbidden_damping_values]
+        count_runs+=1
+        
+        # select first or last five dampings
+        if len(dampings) >= number_of_dampings:
+            all_dampings.append(sorted(dampings))
+        #     if count_runs % 2 == 0:
+                #all_dampings.append(sorted(dampings[:number_of_dampings]))
+        #     else: 
+        #         all_dampings.append(sorted(dampings[-number_of_dampings:]))
+
+
+
+
+
+##### circle method
 
 replace_dict = {-7:84, -6:85, -5:86, -4:87, -3:88, -2:89, -1:90, 91:0, 92:1, 93:2, 94:3, 95:4, 96:5, 97:6}
 
@@ -49,76 +160,10 @@ while len(all_dampings)<number_of_runs:
 
 
 
-###########################################
-# neuer Ansatz mit Martin Schattendampings 
-
-
-number_of_dampings = 5
-days = 90
-min_distance = 7 
-min_damping_day = 0
-number_of_runs= 10
-
-all_dampings = []
-count_runs = 0 
-count_shadow = 0
-while len(all_dampings)<number_of_runs:
-
-    days_list = list(range((0),days))
-    dampings = []
-    if count_shadow <2:
-        for i in range(number_of_dampings):
-            damp = random.choice(days_list)
-            days_before = list(range(damp-(min_distance), damp))
-            days_after = list(range(damp, damp+(min_distance+1)))
-            dampings.append(damp)
-            days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
-    else: 
-        # chose a forbidden damping 
-        damp = random.choice(list(range((0-min_distance),0))+ list(range(days+1, (days+min_distance+1))))
-            
-        days_before = list(range(damp-(min_distance), damp))
-        days_after = list(range(damp, damp+(min_distance+1)))
-        days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
-        dampings.append(damp)
-        for i in range(number_of_dampings):
-            
-            
-            damp = random.choice(days_list)
-            days_before = list(range(damp-(min_distance), damp))
-            days_after = list(range(damp, damp+(min_distance+1)))
-            dampings.append(damp)
-            days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
-            count_shadow = 0
-    
-        
-    forbidden_damping_values = list(range((0-min_distance),0))+ list(range(days+1, (days+min_distance+1)))
-    dampings = [ele for ele in dampings if ele not in forbidden_damping_values]
-    count_runs+=1
-    count_shadow +=1
-    # select first or last five dampings
-    if len(dampings) >= 5:
-        #dampings = random.sample(dampings, 5)
-        all_dampings.append(sorted(dampings))
-    #     if count_runs % 2 == 0:
 
 
 
-
-
-
-def plot_dist(all_dampings,days, name):
-    value_count = pd.Series(np.asarray(all_dampings).flatten()).value_counts().sort_index()
-    days_list= [*range(0,len(value_count)+1, 1)] 
-    plt.clf()
-    plt.stairs(value_count, days_list, fill = True)
-    #plt.hist(value_count)
-    plt.show()
-    plt.title('Distribution Random Sampling')
-    plt.xlabel('Days')
-    plt.ylabel('Count')
-    plt.savefig("random"+name+".png")
-
+##########################  plots  ##########################################################
 # plot average number of days between dampings 
 def plot_differences(all_dampings, name):
     differences = []
@@ -259,26 +304,6 @@ plot_dist(all_dampings, days, name )
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ######################################### alte Ansätze ####################################
 all_dampings = []
 number_of_dampings = 5
@@ -323,7 +348,7 @@ for i in cleaned_all_dampings :
 
 
 
-
+###########################################################################
 
 days = 90
 number_of_runs = runs/10
@@ -339,15 +364,11 @@ while len(normal_damp)<number_of_runs:
         dampings.append(damp)
         days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
         
-    
-    
     count_runs+=1
     
     # select first or last five dampings
     if len(dampings) >= 5:
         normal_damp.append(sorted(dampings))
-
-
 
 
 final = []
@@ -357,88 +378,10 @@ for i in cleaned_all_dampings_withoutforbidden:
             final.append(sorted(dampings))
 
 
-
 final = final + normal_damp
 
 
-
-
-
-
-
-
-# # example: 90 days, 5 dampings , 100
-
-def plot_dist(all_dampings,days, name):
-    value_count = pd.Series(np.asarray(all_dampings).flatten()).value_counts().sort_index()
-    days_list= [*range(0,len(value_count)+1, 1)] 
-    plt.clf()
-    #plt.stairs(value_count, days_list, fill = True)
-    plt.stairs(value_count, value_count.index.values, fill = True)
-    #plt.hist(value_count)
-    plt.show()
-    plt.title('Distribution Random Sampling')
-    plt.xlabel('Days')
-    plt.ylabel('Count')
-    plt.savefig("random"+name+".png")
-
-
-
-
-
-
-
-# example: 90 days, 5 dampings , 100.000 runs
-number_of_dampings = 5
-days = 90
-min_distance = 7 
-min_damping_day = 0
-number_of_runs= 500000
-
-all_dampings = []
-while len(all_dampings)<number_of_runs:
-    count_runs = 0 
-    days_list = list(range((0-min_distance),days+(min_distance+1)))
-    dampings = []
-    for i in range(number_of_dampings):
-        damp = random.choice(days_list)
-        days_before = list(range(damp-(min_distance+1), damp))
-        days_after = list(range(damp, damp+(min_distance+1)))
-        dampings.append(damp)
-        days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
-        
-    forbidden_damping_values = list(range((0-min_distance),0))+ list(range(days+1, (days+min_distance+1)))
-    dampings = [ele for ele in dampings if ele not in forbidden_damping_values]
-    count_runs+=1
-    
-    # select first or last five dampings
-    if len(dampings) >= 5:
-        all_dampings.append(sorted(dampings))
-    #     if count_runs % 2 == 0:
-             #all_dampings.append(sorted(dampings[:number_of_dampings]))
-    #     else: 
-    #         all_dampings.append(sorted(dampings[-number_of_dampings:]))
-
-
-#plots for random sampling 
-name = '_new_method_alex'
-plot_dist(all_dampings,days, name)
-plot_differences(all_dampings, name)
-plot_boxplot(all_dampings, name)
-plot_maxminmean(all_dampings, name)
-
-
-
-
-
-
-
-
-
-
-
-
-# completely random, only preventing duplicates 
+################ completely random, only preventing duplicates #################
 all_dampings = []
 for i in range (10):
     damping_days=(random.sample(range(0,days), number_of_dampings))
@@ -447,14 +390,7 @@ for i in range (10):
 
 
 
-## plot distribution 
-
-# Create a list in a range of 10-20 
-
-
-
-
-
+########### generate randomly and keep what fulfills condition ########
 
 # generate more than enough data, since we know, that only about 20% of the random generator is suitable to our conditions 
 all_dampings_2 = []
@@ -462,10 +398,6 @@ runs = 8000000
 for i in range (runs):
     damping_days=(random.sample(range(min_damping_day,days), number_of_dampings))
     all_dampings_2.append(sorted(damping_days))
-
-
-
-
 
 # delete all samples where at least one damping is less than 7 days apart from the other one 
 
