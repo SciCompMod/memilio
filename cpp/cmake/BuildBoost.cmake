@@ -14,7 +14,7 @@ endif()
 # boost
 add_library(boost INTERFACE)
 add_library(Boost::boost ALIAS boost)
-target_include_directories(boost SYSTEM INTERFACE
+target_include_directories(boost INTERFACE
     $<BUILD_INTERFACE:${BOOST_DIR}>
 )
 

@@ -7,7 +7,7 @@ SCOREP_FILE_NAMES_END
 
 SCOREP_REGION_NAMES_BEGIN
     EXCLUDE *
-    INCLUDE *mio::abm*
+    INCLUDE mio::abm*
     # initialization
     EXCLUDE *determine_infection_state* *pick_age_group_from_age_distribution* *add_household_to_world*
     EXCLUDE *add_household_group_to_world* *make_uniform_households* *make_homes_with_families* *assign_infection_state*
