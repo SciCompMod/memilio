@@ -576,6 +576,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result = mio::osecir::read_input_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
@@ -623,6 +624,7 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result =
         mio::osecir::read_input_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -682,6 +684,7 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model3[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model3[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result1 =
         mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf, scaling_factor_icu, path);
     auto read_result2 =

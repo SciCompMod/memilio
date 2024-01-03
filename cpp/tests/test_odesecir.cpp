@@ -24,6 +24,8 @@
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameters.h"
+#include "ode_secir/parameters_io.h"
+#include "memilio/io/epi_data.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
@@ -920,3 +922,22 @@ TEST(Secir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerCritical>()[indx_agegroup], 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
+
+#if defined(MEMILIO_HAS_JSONCPP)
+
+TEST(Secir, read_population_data_one_age_group)
+{
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{1001};
+    auto result_one_age_group       = mio::osecir::details::read_population_data(path, region, true).value();
+    auto result_multiple_age_groups = mio::osecir::details::read_population_data(path, region, false).value();
+    EXPECT_EQ(result_one_age_group.size(), 1);
+    EXPECT_EQ(result_one_age_group[0].size(), 1);
+    EXPECT_EQ(result_one_age_group[0][0], 90163.0);
+
+    EXPECT_EQ(result_multiple_age_groups.size(), 1);
+    EXPECT_EQ(result_multiple_age_groups[0].size(), 6);
+    EXPECT_EQ(result_multiple_age_groups[0][0], 3433.0);
+}
+
+#endif
