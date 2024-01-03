@@ -21,7 +21,6 @@
 #include "ode_secirvvs/parameters_io.h"
 #include "memilio/geography/regions.h"
 #include "memilio/io/io.h"
-#include <cstddef>
 
 #ifdef MEMILIO_HAS_JSONCPP
 

@@ -420,7 +420,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
                                                         date, scaling_factor_inf));
     bool single_age_group = scaling_factor_inf.size() == 1 ? true : false;
     BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids, one_age_group));
+        details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids, single_age_group));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !

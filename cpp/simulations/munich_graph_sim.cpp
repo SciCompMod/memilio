@@ -74,6 +74,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
 
+    //As we have only one age group in the json file the age group name is set to 'All'
     mio::ConfirmedCasesDataEntry::age_group_names = {"All"};
 
     mio::PopulationDataEntry::age_group_names = {
@@ -82,8 +83,10 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
         "70-74 years", "75-79 years", "80-84 years", "85-89 years", "90+ years"};
 
     //read node ids
-    BOOST_OUTCOME_TRY(node_ids,
-                      mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"), false, false));
+    bool is_node_for_county         = false;
+    bool interpolate_rki_age_groups = false;
+    BOOST_OUTCOME_TRY(node_ids, mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"),
+                                                  is_node_for_county, interpolate_rki_age_groups));
     std::vector<mio::osecir::Model> nodes(node_ids.size(), mio::osecir::Model(int(size_t(params.get_num_groups()))));
     //set parameters for every node
     for (auto& node : nodes) {

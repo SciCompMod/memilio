@@ -21,7 +21,6 @@
 #define ODESECIRVVS_PARAMETERS_IO_H
 
 #include "memilio/config.h"
-#include <cstddef>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
