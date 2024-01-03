@@ -117,19 +117,14 @@ public:
     }
 
     /**
-     * @brief Return a copy of the current Location object.
-     * @param[in] other The original #Location.
+     * @brief Construct a copy of a Location with a new ID.
+     * @param[in] other A Location.
+     * @param[in] id The ID for the new Location.
      */
-    Location(const Location& other)
-        : m_id(other.m_id)
-        , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
-        , m_parameters(other.m_parameters)
-        , m_persons(other.m_persons)
-        , m_cells(other.m_cells)
-        , m_required_mask(other.m_required_mask)
-        , m_npi_active(other.m_npi_active)
-        , m_geographical_location(other.m_geographical_location)
+    explicit Location(const Location& other, LocationId id)
+        : Location(other)
     {
+        m_id = id;
     }
 
     /**
@@ -191,19 +186,6 @@ public:
     ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
 
     /** 
-     * @brief Add a Person to the population at this Location.
-     * @param[in] person The Person arriving.
-     * @param[in] cell_idx [Default: 0] Index of the Cell the Person shall go to.
-    */
-    void add_person(Person& person, std::vector<uint32_t> cells = {0});
-
-    /** 
-     * @brief Remove a Person from the population of this Location.
-     * @param[in] person The Person leaving.
-     */
-    void remove_person(Person& person);
-
-    /** 
      * @brief Prepare the Location for the next Simulation step.
      * @param[in] t Current TimePoint of the Simulation.
      * @param[in] dt The duration of the Simulation step.
@@ -230,6 +212,12 @@ public:
      * @return The vector of all Cell%s of the Location.
      */
     const std::vector<Cell>& get_cells() const
+    {
+        return m_cells;
+    }
+
+    // TODO: remove and/or refactor
+    std::vector<Cell>& get_cells()
     {
         return m_cells;
     }
@@ -354,20 +342,6 @@ public:
     }
 
     /**
-     * @brief Get the total number of Person%s at the Location.
-     * @return Number of Person%s.
-     */
-    size_t get_number_persons() const;
-
-    /**
-     * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
-     * @param[in] t TimePoint of querry.
-     * @param[in] state #InfectionState of interest.
-     * @return Amount of Person%s of the #InfectionState in all Cell%s.
-     */
-    size_t get_subpopulation(TimePoint t, InfectionState state) const;
-
-    /**
      * @brief Get the geographical location of the Location.
      * @return The geographical location of the Location.
      */
@@ -392,12 +366,10 @@ public:
     }
 
 private:
-    std::mutex m_mut; ///< Mutex to protect the list of persons from concurrent modification.
     LocationId m_id; ///< Id of the Location including type and index.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
-    std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.

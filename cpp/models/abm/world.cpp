@@ -50,7 +50,10 @@ Person& World::add_person(const LocationId id, AgeGroup age)
     m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
     person.set_assigned_location(m_cemetery_id);
-    get_individualized_location(id).add_person(person);
+
+    // TODO: remove and/or refactor
+    get_location(id).get_cells()[0].m_persons.push_back(&person);
+
     return person;
 }
 
@@ -88,7 +91,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& current_location = person->get_location();
             if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                 if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
+                    get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
                     bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
                         migrate(*person, target_location);
@@ -194,16 +197,16 @@ Location& World::find_location(LocationType type, const Person& person)
 size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                           [t, s](size_t running_sum, const std::unique_ptr<Location>& loc) {
-                               return running_sum + loc->get_subpopulation(t, s);
+                           [t, s, this](size_t running_sum, const std::unique_ptr<Location>& loc) {
+                               return running_sum + get_subpopulation(loc->get_id(), t, s);
                            });
 }
 
 size_t World::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                           [t, s, type](size_t running_sum, const std::unique_ptr<Location>& loc) {
-                               return loc->get_type() == type ? running_sum + loc->get_subpopulation(t, s)
+                           [t, s, type, this](size_t running_sum, const std::unique_ptr<Location>& loc) {
+                               return loc->get_type() == type ? running_sum + get_subpopulation(loc->get_id(), t, s)
                                                               : running_sum;
                            });
 }

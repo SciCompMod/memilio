@@ -52,6 +52,7 @@ TEST(TestPerson, copyPerson)
     ASSERT_EQ(copied_person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
 
+// TODO: move migration testing to world
 TEST(TestPerson, migrate)
 {
     mio::abm::World world(NUM_AGE_GROUPS);
@@ -64,31 +65,40 @@ TEST(TestPerson, migrate)
     auto& loc2 = world.get_location(world.add_location(mio::abm::LocationType::School));
     auto& loc3 = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 2));
 
-    auto person = make_test_person(home, AGE_GROUP_0_TO_4, mio::abm::InfectionState::Recovered);
+    auto& person = world.add_person(make_test_person(home, AGE_GROUP_0_TO_4, mio::abm::InfectionState::Recovered));
     world.migrate(person, loc1);
+    // TODO: cells
+    loc1.get_cells()[0].m_persons.emplace_back(&person);
 
-    ASSERT_EQ(person.get_location(), loc1.get_id());
-    ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
-    ASSERT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
-    ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
-    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
+    EXPECT_EQ(person.get_location(), loc1.get_id());
+    EXPECT_EQ(world.get_subpopulation(loc1, t, mio::abm::InfectionState::Recovered), 1);
+    EXPECT_EQ(world.get_subpopulation(home, t, mio::abm::InfectionState::Recovered), 0);
+    EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
+    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
     world.migrate(person, loc2, mio::abm::TransportMode::Walking);
+    // TODO: cells
+    loc1.get_cells()[0].m_persons.clear();
+    loc2.get_cells()[0].m_persons.emplace_back(&person);
 
-    ASSERT_EQ(person.get_location(), loc2.get_id());
-    ASSERT_EQ(loc2.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
-    ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
-    ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
-    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
+    EXPECT_EQ(person.get_location(), loc2.get_id());
+    EXPECT_EQ(world.get_subpopulation(loc2, t, mio::abm::InfectionState::Recovered), 1);
+    EXPECT_EQ(world.get_subpopulation(loc1, t, mio::abm::InfectionState::Recovered), 0);
+    EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
+    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
     world.migrate(person, loc3, mio::abm::TransportMode::Bike, {0, 1});
+    // TODO: cells
+    loc3.get_cells()[0].m_persons.clear();
+    loc3.get_cells()[0].m_persons.emplace_back(&person);
+    loc3.get_cells()[1].m_persons.emplace_back(&person);
 
-    ASSERT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
-    ASSERT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
-    ASSERT_EQ(person.get_cells().size(), 2);
-    ASSERT_EQ(person.get_cells()[0], 0u);
-    ASSERT_EQ(person.get_cells()[1], 1u);
-    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
+    EXPECT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
+    EXPECT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
+    EXPECT_EQ(person.get_cells().size(), 2);
+    EXPECT_EQ(person.get_cells()[0], 0u);
+    EXPECT_EQ(person.get_cells()[1], 1u);
+    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
 }
 
 TEST(TestPerson, setGetAssignedLocation)
@@ -201,7 +211,7 @@ TEST(TestPerson, getCells)
     auto& location = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 2));
 
     auto person = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    home.add_person(person);
+    world.add_person(person);
 
     world.migrate(person, location, mio::abm::TransportMode::Unknown, {0, 1});
     ASSERT_EQ(person.get_cells().size(), 2);

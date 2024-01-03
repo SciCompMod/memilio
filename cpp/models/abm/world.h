@@ -35,6 +35,7 @@
 
 #include <bitset>
 #include <cassert>
+#include <cstddef>
 #include <initializer_list>
 #include <vector>
 #include <memory>
@@ -191,6 +192,19 @@ public:
      */
     Person& add_person(const LocationId id, AgeGroup age);
 
+    // adds a copy of person to the world
+    Person& add_person(const Person& person)
+    {
+        uint32_t new_id = static_cast<uint32_t>(m_persons.size());
+        m_persons.push_back(std::make_unique<Person>(person, new_id));
+        auto& new_person = m_persons.back();
+
+        // TODO: remove and/or refactor
+        get_location(new_person->get_location()).get_cells()[0].m_persons.push_back(&*new_person);
+
+        return *new_person;
+    }
+
     /**
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
@@ -316,34 +330,71 @@ public:
      */
     void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
-    // std::unordered_map<LocationId, std::unordered_set<PersonID>> m_cache_local_population;
+    Person& get_person(PersonID id)
+    {
+        assert(id == m_persons[id]->get_person_id());
+        return *m_persons[id];
+    }
+
+    const Person& get_person(PersonID id) const
+    {
+        assert(id == m_persons[id]->get_person_id());
+        return *m_persons[id];
+    }
+
+    size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
+    {
+        // return std::count_if(get_local_population_cache_at(location).begin(),
+        //                      get_local_population_cache_at(location).end(), [&](const PersonID& pid) {
+        //                          return get_person(pid).get_infection_state(t) == state;
+        //                      });
+        return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+            return p->get_location() == location && p->get_infection_state(t) == state;
+        });
+    }
+
+    inline size_t get_subpopulation(Location location, TimePoint t, InfectionState state) const
+    {
+        return get_subpopulation(location.get_id(), t, state);
+    }
+
+    size_t get_number_persons(LocationId location) const
+    {
+        // return get_local_population_cache_at(location).size();
+        return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+            return p->get_location() == location;
+        });
+    }
+
+    inline size_t get_number_persons(Location location) const
+    {
+        return get_number_persons(location.get_id());
+    }
 
     // move a person to another location. this requires that location is part of this world.
     void migrate(Person& person, Location& destination, TransportMode mode = TransportMode::Unknown,
                  const std::vector<uint32_t>& cells = {0})
     {
         assert(get_location(destination.get_id()) == destination &&
-               "Destination is outside of World."); // always true, but may trigger asserts in get_location
+               "Destination is outside of World."); // always true; used to trigger asserts in get_location()
         if (person.get_location() == destination.get_id()) {
             return;
         }
-        get_location(person).remove_person(person);
         person.set_location(destination);
         person.get_cells() = cells;
-        destination.add_person(person, cells);
         person.set_last_transport_mode(mode);
     }
 
     // let a person interact with its current location
-    void interact(Person& person, TimePoint t, TimeSpan dt)
+    inline void interact(Person& person, TimePoint t, TimeSpan dt)
     {
         auto personal_rng = Person::RandomNumberGenerator(m_rng, person);
         interact(person, t, dt, personal_rng, parameters);
     }
 
     // let a person interact with its current location
-    void interact(Person& person, TimePoint t, TimeSpan dt, Person::RandomNumberGenerator& personal_rng,
-                  const Parameters& global_parameters)
+    inline void interact(Person& person, TimePoint t, TimeSpan dt, Person::RandomNumberGenerator& personal_rng,
+                         const Parameters& global_parameters)
     {
         interact(person, get_location(person), t, dt, personal_rng, global_parameters);
     }
@@ -391,17 +442,13 @@ public:
     // get location by id
     Location& get_location(LocationId id)
     {
+        // TODO: make sure this is correct
         assert(id.index != INVALID_LOCATION_INDEX);
-        for (auto&& location : m_locations) {
-            if (location->get_id() == id) {
-                return *location;
-            }
-        }
-        assert(false && "Location id not found");
+        return *m_locations[id.index];
     }
 
     // get current location of the Person
-    Location& get_location(const Person& p)
+    inline Location& get_location(const Person& p)
     {
         return get_location(p.get_location());
     }

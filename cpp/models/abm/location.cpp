@@ -44,9 +44,8 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
 
 Location Location::copy_location_without_persons(size_t num_agegroups)
 {
-    Location copy_loc  = Location(*this);
-    copy_loc.m_persons = std::vector<observer_ptr<Person>>();
-    copy_loc.m_cells   = std::vector<Cell>{num_agegroups};
+    Location copy_loc = Location(*this);
+    copy_loc.m_cells  = std::vector<Cell>{num_agegroups};
     for (uint32_t idx = 0; idx < m_cells.size(); idx++) {
         copy_loc.set_capacity(get_capacity(idx).persons, get_capacity(idx).volume, idx);
         copy_loc.get_cached_exposure_rate_contacts(idx) = get_cached_exposure_rate_contacts(idx);
@@ -98,28 +97,6 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
     }
 }
 
-void Location::add_person(Person& p, std::vector<uint32_t> cells)
-{
-    std::lock_guard<std::mutex> lk(m_mut);
-    m_persons.push_back(&p);
-    for (uint32_t cell_idx : cells)
-        m_cells[cell_idx].m_persons.push_back(&p);
-}
-
-void Location::remove_person(Person& p)
-{
-    std::lock_guard<std::mutex> lk(m_mut);
-    m_persons.erase(std::remove(m_persons.begin(), m_persons.end(), &p), m_persons.end());
-    for (auto&& cell : m_cells) {
-        cell.m_persons.erase(std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p), cell.m_persons.end());
-    }
-}
-
-size_t Location::get_number_persons() const
-{
-    return m_persons.size();
-}
-
 /*
 For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
 the location "Home", which is 66. We multiply this rate with the individual size of each cell to obtain a "space per person" factor.
@@ -135,13 +112,6 @@ ScalarType Cell::compute_space_per_person_relative()
 }
 
 size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
-{
-    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
-        return p->get_infection_state(t) == state;
-    });
-}
-
-size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
         return p->get_infection_state(t) == state;

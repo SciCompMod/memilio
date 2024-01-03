@@ -26,29 +26,30 @@
 #include "memilio/utils/random_number_generator.h"
 #include <memory>
 
-TEST(TestLocation, init)
-{
-    mio::abm::Location location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
-    for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
-         i                          = mio::abm::InfectionState(size_t(i) + 1)) {
-        ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
-    }
-    EXPECT_EQ(location.get_number_persons(), 0);
-}
+// TODO; this test no longer makes sense here, consider changing it and/or moving its contents to world
+// TEST(TestLocation, init)
+// {
+//     mio::abm::Location location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
+//     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
+//          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
+//         ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
+//     }
+//     EXPECT_EQ(location.get_number_persons(), 0);
+// }
 
 TEST(TestLocation, copyLocation)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, NUM_AGE_GROUPS);
-    auto person   = make_test_person(location, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
-    EXPECT_EQ(location.get_number_persons(), 0);
-    location.add_person(person);
-    EXPECT_EQ(location.get_number_persons(), 1);
+    // auto person   = make_test_person(location, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
+    // EXPECT_EQ(location.get_number_persons(), 0);
+    // location.add_person(person);
+    // EXPECT_EQ(location.get_number_persons(), 1);
 
-    auto copied_location = location.copy_location_without_persons(NUM_AGE_GROUPS);
+    auto copied_location = location; //.copy_location_without_persons(NUM_AGE_GROUPS);
     ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
     ASSERT_EQ(copied_location.get_index(), location.get_index());
     ASSERT_EQ(copied_location.get_cells().size(), location.get_cells().size());
-    EXPECT_EQ(copied_location.get_number_persons(), 0);
+    // EXPECT_EQ(copied_location.get_number_persons(), 0);
 }
 
 TEST(TestLocation, initCell)
@@ -63,41 +64,42 @@ TEST(TestLocation, getIndex)
     ASSERT_EQ((int)location.get_index(), 0);
 }
 
-TEST(TestLocation, addRemovePerson)
-{
-    mio::abm::World world(0); // num_agegroups is not needed in this test
-    auto& home     = world.get_location(world.add_location(mio::abm::LocationType::Home, 1));
-    auto& location = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 3));
+// TODO: Make sure removing this is correct, move if appropriate. reason: location no longer stores person
+// TEST(TestLocation, addRemovePerson)
+// {
+//     mio::abm::World world(0); // num_agegroups is not needed in this test
+//     auto& home     = world.get_location(world.add_location(mio::abm::LocationType::Home, 1));
+//     auto& location = world.get_location(world.add_location(mio::abm::LocationType::PublicTransport, 3));
 
-    auto person1 = make_test_person(home, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
-    auto person2 = make_test_person(home, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
-    auto person3 = make_test_person(home, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Exposed);
+//     auto person1 = make_test_person(home, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
+//     auto person2 = make_test_person(home, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
+//     auto person3 = make_test_person(home, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Exposed);
 
-    home.add_person(person1, {0});
-    home.add_person(person2, {0});
-    home.add_person(person3, {0});
+//     home.add_person(person1, {0});
+//     home.add_person(person2, {0});
+//     home.add_person(person3, {0});
 
-    world.migrate(person1, location, mio::abm::TransportMode::Unknown, {0, 1});
-    world.migrate(person2, location, mio::abm::TransportMode::Unknown, {0});
-    world.migrate(person3, location, mio::abm::TransportMode::Unknown, {0, 1});
+//     world.migrate(person1, location, mio::abm::TransportMode::Unknown, {0, 1});
+//     world.migrate(person2, location, mio::abm::TransportMode::Unknown, {0});
+//     world.migrate(person3, location, mio::abm::TransportMode::Unknown, {0, 1});
 
-    auto t = mio::abm::TimePoint(0);
-    ASSERT_EQ(home.get_number_persons(), 0u);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 2);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
-    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 3u);
-    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
+//     auto t = mio::abm::TimePoint(0);
+//     ASSERT_EQ(home.get_number_persons(), 0u);
+//     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 2);
+//     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
+//     ASSERT_EQ(location.get_cells()[0].m_persons.size(), 3u);
+//     ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
+//     ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 
-    location.remove_person(person2);
+//     location.remove_person(person2);
 
-    EXPECT_EQ(location.get_number_persons(), 2u);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 1);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
-    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
-}
+//     EXPECT_EQ(location.get_number_persons(), 2u);
+//     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 1);
+//     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
+//     ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);
+//     ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
+//     ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
+// }
 
 TEST(TestLocation, CacheExposureRate)
 {
@@ -129,6 +131,11 @@ TEST(TestLocation, CacheExposureRate)
     infected2.add_new_infection(
         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
     world.migrate(infected2, location, mio::abm::TransportMode::Unknown, {0, 1});
+
+    // TODO: cells
+    location.get_cells()[0].m_persons.emplace_back(&infected1);
+    location.get_cells()[0].m_persons.emplace_back(&infected2);
+    location.get_cells()[1].m_persons.emplace_back(&infected2);
 
     //cache precomputed results
     location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);
@@ -206,8 +213,8 @@ TEST(TestLocation, reachCapacity)
 
     ASSERT_EQ(p1.get_location(), school.get_id());
     ASSERT_EQ(p2.get_location(), home.get_id()); // p2 should not be able to enter the school
-    ASSERT_EQ(school.get_number_persons(), 1);
-    ASSERT_EQ(home.get_number_persons(), 1);
+    ASSERT_EQ(world.get_number_persons(school.get_id()), 1);
+    ASSERT_EQ(world.get_number_persons(home.get_id()), 1);
 }
 
 TEST(TestLocation, computeSpacePerPersonRelative)
@@ -258,9 +265,12 @@ TEST(TestLocation, interact)
     auto infected3 =
         make_test_person(location, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms, t, params);
 
-    location.add_person(infected1, {0});
-    location.add_person(infected2, {0});
-    location.add_person(infected3, {0});
+    // TODO: is this really superseeded?
+    // location.add_person(infected1, {0});
+    // location.add_person(infected2, {0});
+    // location.add_person(infected3, {0});
+    // TODO: no, not yet
+    location.get_cells()[0].m_persons = {&infected1, &infected2, &infected3};
 
     //cache precomputed results
     location.cache_exposure_rates(t, dt, NUM_AGE_GROUPS);

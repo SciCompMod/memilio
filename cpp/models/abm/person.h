@@ -133,6 +133,8 @@ public:
     explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
                     PersonID person_id = INVALID_PERSON_ID);
 
+    explicit Person(const Person& other, PersonID id);
+
     /**
      * @brief Create a copy of this #Person object with a new Location.
      * @param[in, out] location The new #Location of the Person.
@@ -344,7 +346,7 @@ public:
      * The PersonID should correspond to the index in m_persons in world.
      * @return The PersonID.
      */
-    PersonID get_person_id();
+    PersonID get_person_id() const;
 
     /**
      * @brief Get index of Cell%s of the Person.

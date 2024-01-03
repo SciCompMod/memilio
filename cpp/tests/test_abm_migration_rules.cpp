@@ -397,9 +397,10 @@ TEST(TestMigrationRules, shop_return)
     auto& shop = world.get_location(world.add_location(mio::abm::LocationType::BasicsShop));
     auto p     = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
-    home.add_person(p);
-    world.migrate(p, shop);
-    world.interact(p, world.get_location(p), t, dt, rng_p, params);
+
+    auto& person = world.add_person(p);
+    world.migrate(person, shop);
+    world.interact(person, world.get_location(p), t, dt, rng_p, params);
 
     ASSERT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
               mio::abm::LocationType::Home);
@@ -448,9 +449,11 @@ TEST(TestMigrationRules, event_return)
     auto& social_event = world.get_location(world.add_location(mio::abm::LocationType::SocialEvent));
     auto p             = mio::abm::Person(rng, home, AGE_GROUP_15_TO_34);
     auto rng_p         = mio::abm::Person::RandomNumberGenerator(rng, p);
-    home.add_person(p);
-    world.migrate(p, social_event);
-    world.interact(p, t, dt, rng_p, params);
+
+    // TODO: do we need a different add_person? e.g. something that behaves like emplace?
+    auto& person = world.add_person(p);
+    world.migrate(person, social_event);
+    world.interact(person, t, dt, rng_p, params);
 
     ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
               mio::abm::LocationType::Home);

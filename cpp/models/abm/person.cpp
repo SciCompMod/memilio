@@ -51,11 +51,16 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
+Person::Person(const Person& other, PersonID id)
+    : Person(other)
+{
+    m_person_id = id;
+}
+
 Person Person::copy_person(Location& location)
 {
     Person copied_person     = Person(*this);
     copied_person.m_location = location.get_id();
-    location.add_person(*this);
     return copied_person;
 }
 
@@ -203,7 +208,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
     }
 }
 
-PersonID Person::get_person_id()
+PersonID Person::get_person_id() const
 {
     return m_person_id;
 }

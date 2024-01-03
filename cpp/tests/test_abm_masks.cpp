@@ -70,7 +70,9 @@ TEST(TestMasks, maskProtection)
     auto infected1    = make_test_person(infection_location, AGE_GROUP_15_TO_34,
                                          mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
-    infection_location.add_person(infected1);
+    // infection_location.add_person(infected1);
+    // TODO: Change this with cells
+    infection_location.get_cells()[0].m_persons.push_back(&infected1);
 
     //cache precomputed results
     auto dt = mio::abm::days(1);
