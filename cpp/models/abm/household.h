@@ -68,6 +68,7 @@ public:
      */
     void set_age_weight(mio::AgeGroup age_group, int weight)
     {
+        assert(age_group < m_age_weights.size<mio::AgeGroup>());
         m_age_weights[age_group] = weight;
     }
 
