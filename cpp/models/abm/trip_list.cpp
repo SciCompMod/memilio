@@ -73,8 +73,8 @@ std::vector<const Trip*> TripList::get_trips_between(TimePoint from_time, TimePo
     const auto& trips = weekend ? m_trips_weekend : m_trips_weekday;
 
     for (const auto& trip : trips) {
-        if (trip.time.seconds() > from_time.time_since_midnight().seconds() &&
-            trip.time.seconds() < to_time.time_since_midnight().seconds()) {
+        if (trip.time.seconds() >= from_time.time_since_midnight().seconds() &&
+            trip.time.seconds() <= to_time.time_since_midnight().seconds()) {
             futureTrips.push_back(&trip);
         }
     }

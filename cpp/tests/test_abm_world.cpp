@@ -432,7 +432,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto start_date        = mio::abm::TimePoint(20);
     const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
     const auto probability       = 1.0;
-    const auto test_type         = mio::abm::PCRTest();
+    const auto test_type         = mio::abm::AntigenTest();
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
@@ -447,6 +447,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
+    current_time = mio::abm::TimePoint(60 * 60 * 24 * 2);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
 
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
@@ -718,4 +719,133 @@ TEST(TestWorld, copyWorld)
               world.get_persons()[0].get_location().get_type());
     ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(),
               world.get_persons()[1].get_location().get_type());
+}
+
+TEST(TestWorld, runTestStrategyForFutureTrips)
+{
+    using testing::Return;
+    auto t     = mio::abm::TimePoint(0);
+    auto world = mio::abm::World(num_age_groups);
+    auto rng   = mio::RandomNumberGenerator();
+    world.use_migration_rules(false);
+
+    //setup so the person does not do transition
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 2;
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 2;
+    world.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]  = 2;
+    world.parameters.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 2;
+
+    auto home_id  = world.add_location(mio::abm::LocationType::Home);
+    auto event_id = world.add_location(mio::abm::LocationType::SocialEvent);
+    auto work_id  = world.add_location(mio::abm::LocationType::Work);
+    auto& event   = world.get_individualized_location(event_id);
+    auto& work    = world.get_individualized_location(work_id);
+    auto& home    = world.get_individualized_location(home_id);
+
+    auto testing_criteria = mio::abm::TestingCriteria();
+    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
+    const auto testing_frequency = mio::abm::days(0);
+    const auto start_date        = mio::abm::TimePoint(0);
+    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability       = 1.0;
+    const auto test_type         = mio::abm::AntigenTest();
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no infections
+
+    auto& person = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    person.set_assigned_location(event_id);
+    person.set_assigned_location(work_id);
+    person.set_assigned_location(home_id);
+    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    person.add_test_result(mio::abm::TimePoint(0), test_type, true);
+    mio::abm::TripList& data = world.get_trip_list();
+    mio::abm::Trip trip1(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
+    mio::abm::Trip trip2(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(18), event_id, work_id);
+    mio::abm::Trip trip3(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(20), home_id, event_id);
+    data.add_trip(trip1);
+    data.add_trip(trip2);
+    data.add_trip(trip3);
+
+    data.use_weekday_trips_on_weekend();
+
+    // Test if the person advance with the scheduled trips
+    // as the person already has test result, which is valid for the day.
+    EXPECT_EQ(person.get_location(), home);
+    world.evolve(mio::abm::TimePoint(0), mio::abm::hours(10));
+    EXPECT_EQ(person.get_location(), work);
+    person.migrate_to(home);
+    world.evolve(mio::abm::TimePoint(0), mio::abm::hours(20));
+    EXPECT_EQ(person.get_location(), event);
+    person.migrate_to(home);
+    world.evolve(mio::abm::TimePoint(0), mio::abm::hours(22));
+    EXPECT_EQ(person.get_location(), home);
+
+    // Test if the trip on the next day could not be performed due to a new test result.
+    person.migrate_to(home);
+    world.evolve(mio::abm::TimePoint(60 * 60 * 24), mio::abm::hours(10));
+    EXPECT_EQ(person.get_location(), home);
+}
+
+TEST(TestWorld, runTestStrategyForFutureMigrationRule)
+{
+    using testing::Return;
+    auto t     = mio::abm::TimePoint(0);
+    auto world = mio::abm::World(num_age_groups);
+    auto rng   = mio::RandomNumberGenerator();
+
+    //setup so the person does not do transition
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 2;
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 2;
+    world.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]  = 2;
+    world.parameters.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 2;
+
+    auto home_id  = world.add_location(mio::abm::LocationType::Home);
+    auto event_id = world.add_location(mio::abm::LocationType::SocialEvent);
+    auto work_id  = world.add_location(mio::abm::LocationType::Work);
+    auto& work    = world.get_individualized_location(work_id);
+    auto& home    = world.get_individualized_location(home_id);
+
+    auto& person = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    person.set_assigned_location(event_id);
+    person.set_assigned_location(work_id);
+    person.set_assigned_location(home_id);
+    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+
+    auto testing_criteria = mio::abm::TestingCriteria();
+    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
+    const auto testing_frequency = mio::abm::days(0);
+    const auto start_date        = mio::abm::TimePoint(0);
+    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability       = 1.0;
+    const auto test_type         = mio::abm::AntigenTest();
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
+    person.add_test_result(mio::abm::TimePoint(0), test_type, true);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no infections
+
+    // Test if the person advance with the scheduled trips
+    // as the person already has test result, which is valid for the day.
+    EXPECT_EQ(person.get_location(), home);
+    world.evolve(mio::abm::TimePoint(0), mio::abm::hours(10));
+    EXPECT_EQ(person.get_location(), work);
+    // Test if the trip on the next day could not be performed due to a new test result.
+    world.evolve(mio::abm::TimePoint(60 * 60 * 24), mio::abm::hours(10));
+    EXPECT_EQ(person.get_location(), home);
 }
