@@ -13,7 +13,7 @@ import math
 # 1: gender
 # 2: age_group
 # 3: home_locations_count
-path = r"C:\Users\korf_sa\Documents\rep\pycode\memilio-epidata\memilio\epidata\Datenlieferung_20231214\Datenlieferung_20231214\home-location\tapas"
+path = r"C:\Users\korf_sa\Documents\rep\pycode\memilio-epidata\memilio\epidata\Datenlieferung_20231214\Datenlieferung_20231214\home-location\demo"
 dir = os.listdir( path )
 
 
@@ -35,14 +35,14 @@ count_unique_id_tapas = ['1', '10', '11', '12', '13', '14', '15', '16', '17', '1
 
 
 
-len_unique_id_1 = len(count_unique_id_tapas)
+len_unique_id_1 = len(count_unique_id_demo)
 #count unique IDs
 for file in dir:
     file = pd.read_csv(path + '\\' + file)
     file = file[~file['area_id'].str.startswith('DE')]
     count_unique_id = file['area_id'].unique()
     #check if unique IDs are the same in all files
-    if not np.array_equal(count_unique_id, count_unique_id_tapas):
+    if not np.array_equal(count_unique_id, count_unique_id_demo):
         print('not equal')
 
 ## check number of rows with NaN values per unique ID
@@ -60,22 +60,22 @@ for file in dir:
     # for unique in count_unique_id:
     abc = []
     for unique in count_unique_id:
-        if unique == '24':
-            # file with just rows that have the unique ID
-            file_id = file[file['area_id']==unique]
-            #count how many rows have two NaN values
-            count_two_nan = file_id[['gender', 'age_group']].isnull().all(axis=1).sum()
-            #count how many rows have any NaN values
-            count_any_nan = file_id[['gender', 'age_group']].isnull().any(axis=1).sum()
-            #count how many rows have no NaN values
-            count_no_nan = len(file_id)-count_any_nan
-            #count how many rows have just one NaN values
-            count_one_nan = count_any_nan-count_two_nan
-            #count which percent of 14 rows have no NaN values
-            perc_no_nan_from_14 = count_no_nan/max_number_of_rows_with_no_nan
-            print('count_no_nan: ', count_no_nan, 'count_one_nan: ', count_one_nan, 'count_two_nan: ', count_two_nan, 'count_any_nan: ', count_any_nan, 'perc_no_nan_from_14: ', perc_no_nan_from_14)
-            #append to vector
-            abc.append([count_no_nan, count_one_nan, count_two_nan, count_any_nan, perc_no_nan_from_14])
+        # if unique == '9250':
+        # file with just rows that have the unique ID
+        file_id = file[file['area_id']==unique]
+        #count how many rows have two NaN values
+        count_two_nan = file_id[['gender', 'age_group']].isnull().all(axis=1).sum()
+        #count how many rows have any NaN values
+        count_any_nan = file_id[['gender', 'age_group']].isnull().any(axis=1).sum()
+        #count how many rows have no NaN values
+        count_no_nan = len(file_id)-count_any_nan
+        #count how many rows have just one NaN values
+        count_one_nan = count_any_nan-count_two_nan
+        #count which percent of 14 rows have no NaN values
+        perc_no_nan_from_14 = count_no_nan/max_number_of_rows_with_no_nan
+        print('count_no_nan: ', count_no_nan, 'count_one_nan: ', count_one_nan, 'count_two_nan: ', count_two_nan, 'count_any_nan: ', count_any_nan, 'perc_no_nan_from_14: ', perc_no_nan_from_14)
+        #append to vector
+        abc.append([count_no_nan, count_one_nan, count_two_nan, count_any_nan, perc_no_nan_from_14])
     
     # for every unique ID, add the abc vector to the old vector
     abc_total.append(abc)
