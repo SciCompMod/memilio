@@ -42,7 +42,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data/data_GNN_nodamp_400pop_1k_30days')
+    'data/data_GNN_nodamp_400pop_1k_30days_1_24')
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
 data_secir = pickle.load(file)
@@ -409,7 +409,7 @@ def train_and_evaluate_model(
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'dataframe_hyperparameters_')
+        'dataframe_gridsearch_2024')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = file_path+filename
@@ -417,8 +417,8 @@ def train_and_evaluate_model(
 
 
 start_hyper = time.perf_counter()
-epochs = 1000
-filename = '/dataframe_hyperparameter_tuning_part6.csv'
+epochs = 1500
+filename = '/dataframe_grid_search_networkarchitecture_GNN_type1.csv'
 for param in parameters:
     train_and_evaluate_model(epochs, 0.001, param)
 
