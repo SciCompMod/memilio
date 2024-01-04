@@ -170,7 +170,7 @@ def generate_data(
     population = get_population(path_population)
 
     # show progess in terminal for longer runs
-    # Due to the random structure, theres currently no need to shuffle the data
+    # Due to the random structure, there's currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
 
