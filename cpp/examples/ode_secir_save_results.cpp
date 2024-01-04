@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-int main(int argc, char** argv)
+int main()
 {
 
     const auto t0   = 0.;
@@ -51,13 +51,15 @@ int main(int argc, char** argv)
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * nb_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * nb_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * nb_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * nb_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * nb_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * nb_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * nb_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * nb_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * nb_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * nb_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
@@ -71,7 +73,6 @@ int main(int argc, char** argv)
     }
 
     params.apply_constraints();
-    auto num_groups = (int)(size_t)params.get_num_groups();
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =

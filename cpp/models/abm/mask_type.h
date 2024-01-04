@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Carlotta Gerstein, Martin J. Kuehn
 *
@@ -29,7 +29,7 @@ namespace abm
 {
 
 /**
- * type of a mask
+ * @brief Type of a Mask.
  */
 enum class MaskType : std::uint32_t
 {

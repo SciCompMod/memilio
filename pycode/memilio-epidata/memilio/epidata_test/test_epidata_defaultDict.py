@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -50,7 +50,7 @@ class Test_defaultDict(unittest.TestCase):
     }
     test_dict_dd = {
         date.today(): 'end_date',
-        date(2020, 4, 24): 'start_date',
+        date(2020, 1, 1): 'start_date',
         'json_timeasstring': 'file_format'
     }
     test_values_notin_dd = ('no_raw', 'impute_dates', 'split_berlin',

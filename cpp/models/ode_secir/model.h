@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -20,7 +20,7 @@
 #ifndef ODESECIR_MODEL_H
 #define ODESECIR_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secir/infection_state.h"
@@ -35,10 +35,27 @@ namespace osecir
 
 // Create template specializations for the age resolved
 // SECIHURD model
+// clang-format off
+using Flows = TypeList<Flow<InfectionState::Susceptible,                 InfectionState::Exposed>,
+                       Flow<InfectionState::Exposed,                     InfectionState::InfectedNoSymptoms>,
+                       Flow<InfectionState::InfectedNoSymptoms,          InfectionState::InfectedSymptoms>,
+                       Flow<InfectionState::InfectedNoSymptoms,          InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::InfectedSymptomsConfirmed>,
+                       Flow<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSymptoms,            InfectionState::InfectedSevere>,
+                       Flow<InfectionState::InfectedSymptoms,            InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSymptomsConfirmed,   InfectionState::InfectedSevere>,
+                       Flow<InfectionState::InfectedSymptomsConfirmed,   InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSevere,              InfectionState::InfectedCritical>,
+                       Flow<InfectionState::InfectedSevere,              InfectionState::Recovered>,
+                       Flow<InfectionState::InfectedSevere,              InfectionState::Dead>,
+                       Flow<InfectionState::InfectedCritical,            InfectionState::Dead>,
+                       Flow<InfectionState::InfectedCritical,            InfectionState::Recovered>>;
+// clang-format on
 
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
+class Model : public FlowModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
+    using Base = FlowModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters, Flows>;
 
 public:
     Model(const Populations& pop, const ParameterSet& params)
@@ -51,17 +68,9 @@ public:
     {
     }
 
-#if USE_DERIV_FUNC
-
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                   Eigen::Ref<Eigen::VectorXd> flows) const override
     {
-        // alpha  // percentage of asymptomatic cases
-        // beta // risk of infection from the infected symptomatic patients
-        // rho   // hospitalized per infectious
-        // theta // icu per hospitalized
-        // delta  // deaths per ICUs
-        // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
 
@@ -81,19 +90,14 @@ public:
             size_t Si    = this->populations.get_flat_index({i, InfectionState::Susceptible});
             size_t Ei    = this->populations.get_flat_index({i, InfectionState::Exposed});
             size_t INSi  = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
+            size_t INSCi = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsConfirmed});
             size_t ISyi  = this->populations.get_flat_index({i, InfectionState::InfectedSymptoms});
+            size_t ISyCi = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsConfirmed});
             size_t ISevi = this->populations.get_flat_index({i, InfectionState::InfectedSevere});
             size_t ICri  = this->populations.get_flat_index({i, InfectionState::InfectedCritical});
-            size_t Ri    = this->populations.get_flat_index({i, InfectionState::Recovered});
-            size_t Di    = this->populations.get_flat_index({i, InfectionState::Dead});
 
-            dydt[Si] = 0;
-            dydt[Ei] = 0;
-
-            double rateE =
-                1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]); // R2 = 1/(2SI-TINC)
-            double rateINS =
-                0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
+            double rateE   = 1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]);
+            double rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t Sj    = this->populations.get_flat_index({j, InfectionState::Susceptible});
@@ -124,8 +128,8 @@ public:
                                  (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] +
                                   riskFromInfectedSymptomatic * pop[ISyj]);
 
-                dydt[Si] -= dummy_S;
-                dydt[Ei] += dummy_S;
+                // Susceptible -> Exposed
+                flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] += dummy_S;
             }
 
             // ICU capacity shortage is close
@@ -135,29 +139,50 @@ public:
 
             double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
-            dydt[Ei] -= rateE * y[Ei]; // only exchange of E and INS done here
-            dydt[INSi] = rateE * y[Ei] - rateINS * y[INSi];
-            dydt[ISyi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi] -
-                         (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyi];
-            dydt[ISevi] = params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] -
-                          (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevi];
-            dydt[ICri] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICri];
-            // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[ICri] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
+            // Exposed -> InfectedNoSymptoms
+            flows[get_flat_flow_index<InfectionState::Exposed, InfectionState::InfectedNoSymptoms>({i})] =
+                rateE * y[Ei];
 
-            dydt[Ri] =
-                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSi] +
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] +
-                (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevi] +
+            // InfectedNoSymptoms -> InfectedSymptoms / Recovered
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::InfectedSymptoms>({i})] =
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi];
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::Recovered>({i})] =
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSi];
+
+            // InfectedNoSymptomsConfirmed -> InfectedSymptomsConfirmed / Recovered
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed,
+                                      InfectionState::InfectedSymptomsConfirmed>({i})] =
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSCi];
+            flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>({i})] =
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSCi];
+
+            // InfectedSymptoms -> InfectedSevere / Recovered
+            flows[get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::InfectedSevere>({i})] =
+                params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi];
+            flows[get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::Recovered>({i})] =
+                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyi];
+
+            // InfectedSymptomsConfirmed -> InfectedSevere / Recovered
+            flows[get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::InfectedSevere>({i})] =
+                params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyCi];
+            flows[get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::Recovered>({i})] =
+                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyCi];
+
+            // InfectedSevere -> InfectedCritical / Recovered / Dead
+            flows[get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::InfectedCritical>({i})] =
+                criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
+            flows[get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})] =
+                (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevi];
+            flows[get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>({i})] =
+                deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
+
+            // InfectedCritical -> Dead / Recovered
+            flows[get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Dead>({i})] =
+                params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICri];
+            flows[get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Recovered>({i})] =
                 (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICri];
-
-            dydt[Di] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICri];
-            // add potential, additional deaths due to ICU overflow
-            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
         }
     }
-
-#endif // USE_DERIV_FUNC
 
     /**
      * serialize this. 
@@ -340,6 +365,33 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
                     Eigen::Index(InfectionState::Count)})
         .array() = riskFromInfectedSymptomatic;
     return factors;
+}
+
+template <class Base = mio::Simulation<Model>>
+auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated, double time)
+{
+    auto& model       = sim.get_model();
+    auto nondetection = 1.0;
+    if (time >= model.parameters.get_start_commuter_detection() &&
+        time < model.parameters.get_end_commuter_detection()) {
+        nondetection = (double)model.parameters.get_commuter_nondetection();
+    }
+    for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); ++i) {
+        auto INSi  = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
+        auto INSCi = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsConfirmed});
+        auto ISyi  = model.populations.get_flat_index({i, InfectionState::InfectedSymptoms});
+        auto ISyCi = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsConfirmed});
+
+        //put detected commuters in their own compartment so they don't contribute to infections in their home node
+        sim.get_result().get_last_value()[INSi] -= migrated[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSCi] += migrated[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyi] -= migrated[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyCi] += migrated[ISyi] * (1 - nondetection);
+
+        //reduce the number of commuters
+        migrated[ISyi] *= nondetection;
+        migrated[INSi] *= nondetection;
+    }
 }
 
 } // namespace osecir

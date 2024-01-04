@@ -1,7 +1,7 @@
 name: "Linux Build"
 description: "Build the C++ library on Linux."
 inputs:
-  config: 
+  config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
@@ -27,6 +27,14 @@ inputs:
     default: "OFF"
   sanitize-addr:
     description: "Turn on address sanitzer (ON or OFF)"
+    required: false
+    default: "OFF"
+  build-tests:
+    description: "Build tests"
+    required: false
+    default: "ON"
+  build-benchmarks:
+    description: "Build benchmarks"
     required: false
     default: "OFF"
 runs:
@@ -77,14 +85,14 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} ..
         make -j4
     - name: create build dir archive
       shell: bash
       run: |
         cd cpp
         tar -czf build.tar.gz build
-    - name: Upload built test directory
+    - name: Upload built directory
       uses: actions/upload-artifact@v3
       with:
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}

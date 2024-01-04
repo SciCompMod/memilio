@@ -6,7 +6,7 @@ At each time step, the simulation executes two following phases:
 1. Evolve the simulation for each node independently
 2. Exchange people between nodes along the edges. The number of people exchanged depends on coefficients. The coefficient `a_i` of edge `e_xy` represents the percentage of people in compartment `i` moving from node `x` to node `y`. Like the contact matrices used in compartment models, the coefficients may contain dampings that change their value over time. During the next time step, the exchanged population will stay at their destination and participate in the evolution of that simulation. Afterwards, the people return. The total number of people returning is the same as the number that left. But the number of people in each compartment is adjusted according to the epidemiological situation in the destination node, e.g. some susceptible people that went from one node to another will have been exposed, so they return in a different compartment.
 
-See the [mobility header](mobility.h) and the `MigrationEdge` and `SimulationNode` classes for technical details of the two phases.
+See the [mobility header](metapopulation_mobility_instant.h) and the `MigrationEdge` and `SimulationNode` classes for technical details of the two phases.
 
 Utility classes:
 - Graph: Abstract class (template) that stores the simulation instances (nodes) and the connections between them (edges).

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -21,10 +21,10 @@ import unittest
 
 import numpy as np
 
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
-from memilio.simulation.secir import Model, Simulation, simulate
+from memilio.simulation.secir import Model, Simulation, simulate, simulate_flows
 
 
 class Test_secir_integration(unittest.TestCase):
@@ -51,7 +51,9 @@ class Test_secir_integration(unittest.TestCase):
         model.populations[A0, State.Susceptible] = 7600
         model.populations[A0, State.Exposed] = 100
         model.populations[A0, State.InfectedNoSymptoms] = 50
+        model.populations[A0, State.InfectedNoSymptomsConfirmed] = 0
         model.populations[A0, State.InfectedSymptoms] = 50
+        model.populations[A0, State.InfectedSymptomsConfirmed] = 0
         model.populations[A0, State.InfectedSevere] = 20
         model.populations[A0, State.InfectedCritical] = 10
         model.populations[A0, State.Recovered] = 10
@@ -71,6 +73,19 @@ class Test_secir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_time(0), 0.)
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
+
+    def test_flow_simulation_simple(self):
+        flow_sim_results = simulate_flows(
+            t0=0., tmax=100., dt=0.1, model=self.model)
+        flows = flow_sim_results[1]
+        self.assertEqual(flows.get_time(0), 0.)
+        self.assertEqual(flows.get_last_time(), 100.)
+        self.assertEqual(len(flows.get_last_value()), 15)
+
+        compartments = flow_sim_results[0]
+        self.assertEqual(compartments.get_time(0), 0.)
+        self.assertEqual(compartments.get_last_time(), 100.)
+        self.assertEqual(len(compartments.get_last_value()), 10)
 
     def test_simulation_simple(self):
         sim = Simulation(self.model, t0=0., dt=0.1)

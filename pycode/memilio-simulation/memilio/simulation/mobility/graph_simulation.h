@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -20,7 +20,7 @@
 #ifndef PYMIO_GRAPH_SIMULATION_H
 #define PYMIO_GRAPH_SIMULATION_H
 
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/graph_simulation.h"
 
 #include "pybind11/pybind11.h"
@@ -32,7 +32,7 @@ namespace pymio
  * @brief bind GraphSimulation for any node and edge type
  */
 template <class Graph>
-void bind_GraphSimulation(pybind11::module& m, std::string const& name)
+void bind_GraphSimulation(pybind11::module_& m, std::string const& name)
 {
     using GS = mio::GraphSimulation<Graph>;
     pybind11::class_<GS>(m, name.c_str())

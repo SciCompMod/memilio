@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -255,12 +255,14 @@ private:
 template <class DampingExpression, class DampingSamplings, class F>
 void apply_dampings(DampingExpression& damping_expression, const DampingSamplings& dampings, F make_matrix)
 {
+    damping_expression.set_automatic_cache_update(false);
     for (auto& d : dampings) {
         for (auto& i : d.get_matrix_indices()) {
             auto m = make_matrix(double(d.get_value()) * d.get_group_weights());
             damping_expression[i].add_damping(m, d.get_level(), d.get_type(), d.get_time());
         }
     }
+    damping_expression.set_automatic_cache_update(true);
 }
 
 /**

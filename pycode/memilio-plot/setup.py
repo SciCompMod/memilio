@@ -4,7 +4,7 @@ import sys
 
 from setuptools import Command, find_packages, setup
 
-__version__ = '0.1.0'
+__version__ = '1.0.0'
 
 
 class PylintCommand(Command):
@@ -51,7 +51,7 @@ setup(
     author='DLR-SC',
     author_email='martin.kuehn@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, plots data to maps or visualizes simulation curves.',
     entry_points={
         'console_scripts': [
@@ -65,7 +65,8 @@ setup(
         # some excel files (e.g. population or twitter data)
         'pandas>=1.2.2',
         'matplotlib',
-        'numpy>=1.22',  # smaller numpy versions cause a security issue
+        # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+        'numpy>=1.22,<1.25',
         'openpyxl',
         'xlrd',
         'requests',
@@ -75,15 +76,18 @@ setup(
         'matplotlib',
         'mapclassify',
         'geopandas',
-        'h5py'
+        'h5py',
+        'imageio',
+        'datetime'
     ],
     extras_require={
         'dev': [
-            # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
-            'pyfakefs>=4.2.1',
-            'coverage',
-            'pylint<=2.11.1',
-            'pylint_json2html<=0.3.0',
+            # first support of python 3.11
+            'pyfakefs>=4.6',
+            'coverage>=7.0.1',
+            # pylint 2.16 creates problem with wrapt package version
+            'pylint>=2.13.0,<2.16',
+            'pylint_json2html==0.4.0',
         ],
     },
     cmdclass={

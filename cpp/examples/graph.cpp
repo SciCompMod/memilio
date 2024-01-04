@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,12 +20,12 @@
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/compartments/simulation.h"
 
 #include <iostream>
 
-int main(int argc, char** argv)
+int main()
 {
     const auto t0   = 0.;
     const auto tmax = 10.;

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -20,7 +20,7 @@
 #ifndef ODESECIR_PARAMETER_SPACE_H
 #define ODESECIR_PARAMETER_SPACE_H
 
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
