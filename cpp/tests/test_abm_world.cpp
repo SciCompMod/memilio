@@ -723,7 +723,6 @@ TEST(TestWorld, copyWorld)
 
 TEST(TestWorld, runTestStrategyForFutureTrips)
 {
-    using testing::Return;
     auto t     = mio::abm::TimePoint(0);
     auto world = mio::abm::World(num_age_groups);
     world.use_migration_rules(false);
@@ -755,10 +754,6 @@ TEST(TestWorld, runTestStrategyForFutureTrips)
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
-        mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no infections
 
     auto& person = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     person.set_assigned_location(event_id);
