@@ -726,7 +726,6 @@ TEST(TestWorld, runTestStrategyForFutureTrips)
     using testing::Return;
     auto t     = mio::abm::TimePoint(0);
     auto world = mio::abm::World(num_age_groups);
-    auto rng   = mio::RandomNumberGenerator();
     world.use_migration_rules(false);
 
     //setup so the person does not do transition
@@ -765,8 +764,8 @@ TEST(TestWorld, runTestStrategyForFutureTrips)
     person.set_assigned_location(event_id);
     person.set_assigned_location(work_id);
     person.set_assigned_location(home_id);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
     person.add_test_result(mio::abm::TimePoint(0), test_type, true);
+
     mio::abm::TripList& data = world.get_trip_list();
     mio::abm::Trip trip1(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
     mio::abm::Trip trip2(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(18), event_id, work_id);
@@ -797,10 +796,8 @@ TEST(TestWorld, runTestStrategyForFutureTrips)
 
 TEST(TestWorld, runTestStrategyForFutureMigrationRule)
 {
-    using testing::Return;
     auto t     = mio::abm::TimePoint(0);
     auto world = mio::abm::World(num_age_groups);
-    auto rng   = mio::RandomNumberGenerator();
 
     //setup so the person does not do transition
     world.parameters
@@ -820,7 +817,6 @@ TEST(TestWorld, runTestStrategyForFutureMigrationRule)
     person.set_assigned_location(event_id);
     person.set_assigned_location(work_id);
     person.set_assigned_location(home_id);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     auto testing_criteria = mio::abm::TestingCriteria();
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
@@ -835,10 +831,6 @@ TEST(TestWorld, runTestStrategyForFutureMigrationRule)
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
     person.add_test_result(mio::abm::TimePoint(0), test_type, true);
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
-        mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no infections
 
     // Test if the person advance with the scheduled trips
     // as the person already has test result, which is valid for the day.
