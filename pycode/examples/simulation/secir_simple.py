@@ -50,16 +50,48 @@ def posteriori_stiffness(stability_func, y,params):
         result = y.as_ndarray()
         group_data = np.transpose(result[1:,:])
 
-        for i in range(0,num_agegroups):
-            Agegroup = AgeGroup(i)
-            rateINS = 0.5/(params.IncubationTime[Agegroup]-params.SerialInterval[Agegroup])
-            test_and_trace_required += (1 - params.RecoveredPerInfectedNoSymptoms[Agegroup])*rateINS*group_data[t_idx,i*10+2]
-            icu_occupancy += group_data[t_idx,i*10+5]
-
+        Jacobian = np.zeros((num_agegroups*8,num_agegroups*8))
+        
         season_val = (1 + params.Seasonality) *math.sin(pi * (math.fmod((params.StartDay + y.get_time(t_idx)),365.0) /182.5 +0.5))
 
-        Jacobian = np.zeros((num_agegroups*8,num_agegroups*8))
-        # Initialize matrix blocks
+        def smoother_cosine(x,xleft,xright,yleft,yright):
+            if x <= xleft:
+                return yleft
+            
+            if x >= xright:
+                return yright
+            
+            return 0.5 * (yleft - yright) * math.cos(3.14159265358979323846 / (xright - xleft) * (x - xleft)) + 0.5 * (yleft + yright)
+
+
+        for i in range(0,num_agegroups):
+            Ai = AgeGroup(i)
+            rateINS = 0.5/(params.IncubationTime[Ai]-params.SerialInterval[Ai])
+            test_and_trace_required += (1 - params.RecoveredPerInfectedNoSymptoms[Ai])*rateINS*group_data[t_idx,i*10+2]
+            icu_occupancy += group_data[t_idx,i*10+5]
+
+            S_dummy = 0
+            for j in range(0,num_agegroups):
+                Aj = AgeGroup(j)
+                cont_freq_eff = season_val * params.ContactPatterns.cont_freq_mat[t_idx](i,j)
+                Nj = group_data[t_idx,j*10+11] # total population in InfectionState::Count
+                divNj = 1.0/Nj
+                riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, params.TestAndTraceCapacity,params.TestAndTraceCapacity * 5, params.RiskOfInfectionFromSymptomatic[Aj],
+                params.MaxRiskOfInfectionFromSymptomatic[Aj])
+                S_dummy -= cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*(params.RelativeTransmissionNoSymptoms[Aj]*group_data[t_idx,j*10+2] + riskFromInfectedSymptomatic*group_data[t_idx,j*10+4])
+            Jacobian[i,i] = S_dummy
+            Jacobian[i+num_agegroups,i+num_agegroups] = - S_dummy
+
+            for j in range(0,num_agegroups):
+                Aj = AgeGroup(j)
+                Aj = AgeGroup(j)
+                cont_freq_eff = season_val * params.ContactPatterns.cont_freq_mat[t_idx](i,j)
+                Nj = group_data[t_idx,j*10+11] # total population in InfectionState::Count
+                divNj = 1.0/Nj
+                riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, params.TestAndTraceCapacity,params.TestAndTraceCapacity * 5, params.RiskOfInfectionFromSymptomatic[Aj],
+                params.MaxRiskOfInfectionFromSymptomatic[Aj])
+                dummy = 
+
         eigen_vals = eigvals(Jacobian)
         # Determine the used stepsize: 
         h = y.get_time(t_idx+1)-y.get_time(t_idx) 

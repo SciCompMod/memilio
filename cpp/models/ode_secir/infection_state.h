@@ -42,7 +42,6 @@ enum class InfectionState
     InfectedCritical,
     Recovered,
     Dead,
-
     Count
 };
 
