@@ -66,6 +66,7 @@ def posteriori_stiffness(stability_func, y,params):
 
         for i in range(0,num_agegroups):
             Ai = AgeGroup(i)
+            rateE   = 1.0 / (2 * params.SerialInterval[Ai] - params.IncubationTime[Ai])
             rateINS = 0.5/(params.IncubationTime[Ai]-params.SerialInterval[Ai])
             test_and_trace_required += (1 - params.RecoveredPerInfectedNoSymptoms[Ai])*rateINS*group_data[t_idx,i*10+2]
             icu_occupancy += group_data[t_idx,i*10+5]
@@ -84,13 +85,23 @@ def posteriori_stiffness(stability_func, y,params):
 
             for j in range(0,num_agegroups):
                 Aj = AgeGroup(j)
-                Aj = AgeGroup(j)
                 cont_freq_eff = season_val * params.ContactPatterns.cont_freq_mat[t_idx](i,j)
                 Nj = group_data[t_idx,j*10+11] # total population in InfectionState::Count
                 divNj = 1.0/Nj
                 riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, params.TestAndTraceCapacity,params.TestAndTraceCapacity * 5, params.RiskOfInfectionFromSymptomatic[Aj],
                 params.MaxRiskOfInfectionFromSymptomatic[Aj])
-                dummy = 
+                Jacobian[i,j+2*num_agegroups] = - group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*params.RelativeTransmissionNoSymptoms[Aj]
+                Jacobian[i,j+3*num_agegroups] = - group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*riskFromInfectedSymptomatic
+                Jacobian[i+num_agegroups,j+2*num_agegroups] = group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*params.RelativeTransmissionNoSymptoms[Aj]
+                Jacobian[i+num_agegroups,j+3*num_agegroups] = group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*riskFromInfectedSymptomatic
+
+            Jacobian[i+num_agegroups,i+num_agegroups] = -rateE
+            Jacobian[i+2*num_agegroups,i+num_agegroups] = rateE
+            Jacobian[i+2*num_agegroups,i+2*num_agegroups] = -rateINS
+            Jacobian[i+3*num_agegroups,i+2*num_agegroups] = (1-params.RecoveredPerInfectedNoSymptoms[Ai])*rateINS
+            Jacobian[i+3*num_agegroups,i+3*num_agegroups] = - 1.0/(params.TimeInfectedSymptoms[Ai])
+            Jacobian[i+4*num_agegroups,i+3*num_agegroups] = params.SeverePerInfectedSymptoms[Ai]/(params.TimeInfectedSymptoms[Ai])
+            Jacobian[i+4*num_agegroups,i+4*num_agegroups] = - 1.0/(params.TimeInfectedSevere[Ai])
 
         eigen_vals = eigvals(Jacobian)
         # Determine the used stepsize: 
