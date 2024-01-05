@@ -23,13 +23,13 @@
 
 TEST(TestSimulation, advance_random)
 {
-    auto world     = mio::abm::World(NUM_AGE_GROUPS);
+    auto world     = mio::abm::World(num_age_groups);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto& p1       = world.add_person(location1, AGE_GROUP_5_TO_14);
-    auto& p2       = world.add_person(location1, AGE_GROUP_5_TO_14);
-    auto& p3       = world.add_person(location2, AGE_GROUP_5_TO_14);
-    auto& p4       = world.add_person(location2, AGE_GROUP_5_TO_14);
+    auto& p1       = world.add_person(location1, age_group_5_to_14);
+    auto& p2       = world.add_person(location1, age_group_5_to_14);
+    auto& p3       = world.add_person(location2, age_group_5_to_14);
+    auto& p4       = world.add_person(location2, age_group_5_to_14);
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);
@@ -53,7 +53,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
 {
 
     auto t     = mio::abm::TimePoint(0);
-    auto world = mio::abm::World(NUM_AGE_GROUPS);
+    auto world = mio::abm::World(num_age_groups);
     auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
 
     auto t_test = mio::abm::days(7);
@@ -65,7 +65,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
 
 TEST(TestSimulation, advanceWithCommonHistory)
 {
-    auto world       = mio::abm::World(NUM_AGE_GROUPS);
+    auto world       = mio::abm::World(num_age_groups);
     auto home_id     = world.add_location(mio::abm::LocationType::Home);
     auto work_id     = world.add_location(mio::abm::LocationType::Work);
     auto icu_id      = world.add_location(mio::abm::LocationType::ICU);
@@ -75,9 +75,9 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto basics_id   = world.add_location(mio::abm::LocationType::BasicsShop);
     auto public_id   = world.add_location(mio::abm::LocationType::PublicTransport);
 
-    auto& person1 = add_test_person(world, home_id, AGE_GROUP_5_TO_14, mio::abm::InfectionState::Exposed);
-    auto& person2 = add_test_person(world, home_id, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Exposed);
-    auto& person3 = add_test_person(world, home_id, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Dead);
+    auto& person1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
+    auto& person2 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
+    auto& person3 = add_test_person(world, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
     person1.set_assigned_location(home_id);
     person2.set_assigned_location(home_id);
     person3.set_assigned_location(home_id);
