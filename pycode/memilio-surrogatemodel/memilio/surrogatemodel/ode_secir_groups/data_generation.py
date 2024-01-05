@@ -63,7 +63,7 @@ def remove_confirmed_compartments(result_array):
     return np.delete(result_array, delete_indices, axis=1)
 
 
-def transform_data(data, transformer):
+def transform_data(data, transformer, num_runs):
     """! Transforms the data by a logarithmic normalization. 
     Reshaping is necessary, because the transformer needs an array with dimension <= 2.
     @param data Data to be transformed.
@@ -239,8 +239,8 @@ def generate_data(
         transformer = FunctionTransformer(np.log1p, validate=True)
 
         # transform inputs and labels
-        data['inputs'] = transform_data(data['inputs'], transformer)
-        data['labels'] = transform_data(data['labels'], transformer)
+        data['inputs'] = transform_data(data['inputs'], transformer, num_runs)
+        data['labels'] = transform_data(data['labels'], transformer, num_runs)
     else:
         data['inputs'] = tf.convert_to_tensor(data['inputs'])
         data['labels'] = tf.convert_to_tensor(data['labels'])
