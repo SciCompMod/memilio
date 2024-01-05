@@ -42,7 +42,7 @@ def mlp_multi_input_multi_output(label_width, num_age_groups=6):
     """! Simple MLP Network which takes the compartments for multiple time steps as input and
     returns the 8 compartments for all age groups for multiple time steps in the future. 
 
-    Reshaping adds an extra dimension to the output, so the shape of the output is 30x48.
+    Reshaping adds an extra dimension to the output, so the shape of the output is (label_width)x48.
     This makes the shape comparable to that of the multi-output models.
 
     @param label_width Number of time steps in the output.

@@ -147,8 +147,6 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
     def test_structures_networks(self):
 
-        label_width = 30
-
         model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()
         self.assertEqual(len(model_mlp_multi_input_single_output.layers), 5)
         input_zero = np.zeros((1, 5, 8))
@@ -157,8 +155,9 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(output_zeros.shape[1], 1)
         self.assertEqual(output_zeros.shape[2], 48)
 
+        label_width = 30
         model_mlp_multi_input_multi_output = network_architectures.mlp_multi_input_multi_output(
-            30)
+            label_width)
         self.assertEqual(len(model_mlp_multi_input_multi_output.layers), 5)
         input_zero = np.zeros((1, 1, 8))
         output_zeros = model_mlp_multi_input_multi_output(input_zero)

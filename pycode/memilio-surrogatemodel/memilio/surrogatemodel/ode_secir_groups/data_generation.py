@@ -29,16 +29,58 @@ import tensorflow as tf
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.simulation import (Damping, LogLevel, set_log_level)
-from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
+from memilio.simulation import (AgeGroup, Damping, LogLevel, set_log_level)
+from memilio.simulation.secir import (Index_InfectionState,
                                       InfectionState, Model,
                                       interpolate_simulation_result, simulate)
+
+
+def interpolate_age_groups(data_entry):
+    """! Interpolates the age groups from the population data into the age groups used in the simulation. 
+    We assume that the people in the age groups are uniformly distributed.
+    @param data_entry Data entry containing the population data.
+    @return Dictionary containing the interpolated age groups.
+    """
+    age_groups = {
+        "A00-A04": data_entry['<3 years'] + data_entry['3-5 years'] * 2 / 3,
+        "A05-A14": data_entry['3-5 years'] * 1 / 3 + data_entry['6-14 years'],
+        "A15-A34": data_entry['15-17 years'] + data_entry['18-24 years'] + data_entry['25-29 years'] + data_entry['30-39 years'] * 1 / 2,
+        "A35-A59": data_entry['30-39 years'] * 1 / 2 + data_entry['40-49 years'] + data_entry['50-64 years'] * 2 / 3,
+        "A60-A79": data_entry['50-64 years'] * 1 / 3 + data_entry['65-74 years'] * 1 / 5,
+        "A80+": data_entry['>74 years'] * 4 / 5
+    }
+    return [age_groups[key] for key in age_groups]
+
+
+def remove_confirmed_compartments(result_array):
+    """! Removes the confirmed compartments which are not used in the data generation.
+    @param result_array Array containing the simulation results.
+    @return Array containing the simulation results without the confirmed compartments.
+    """
+    num_groups = int(result_array.shape[1] / 10)
+    delete_indices = [index for i in range(
+        num_groups) for index in (3+10*i, 5+10*i)]
+    return np.delete(result_array, delete_indices, axis=1)
+
+
+def transform_data(data, transformer):
+    """! Transforms the data by a logarithmic normalization. 
+    Reshaping is necessary, because the transformer needs an array with dimension <= 2.
+    @param data Data to be transformed.
+    @param transformer Transformer used for the transformation.
+    @return Transformed data.
+    """
+    data = np.asarray(data).transpose(2, 0, 1).reshape(48, -1)
+    scaled_data = transformer.transform(data)
+    return tf.convert_to_tensor(scaled_data.transpose().reshape(num_runs, -1, 48))
 
 
 def run_secir_groups_simulation(days, damping_day, populations):
     """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region. 
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
     @param Days Describes how many days we simulate within a single run.
+    @param damping_day The day when damping is applied.
+    @param populations List containing the population in each age group.
     @return List containing the populations in each compartment used to initialize the run.
    """
     set_log_level(LogLevel.Off)
@@ -72,8 +114,12 @@ def run_secir_groups_simulation(days, damping_day, populations):
             InfectionState.InfectedNoSymptoms)] = random.uniform(
             0.0001, 0.00035) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
+            InfectionState.InfectedNoSymptomsConfirmed)] = 0
+        model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptoms)] = random.uniform(
             0.00007, 0.0001) * populations[i]
+        model.populations[AgeGroup(i), Index_InfectionState(
+            InfectionState.InfectedSymptomsConfirmed)] = 0
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSevere)] = random.uniform(
             0.00003, 0.00006) * populations[i]
@@ -99,6 +145,7 @@ def run_secir_groups_simulation(days, damping_day, populations):
         # twice the value of RiskOfInfectionFromSymptomatic
         model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.5
 
+    # StartDay is the n-th day of the year
     model.parameters.StartDay = (
         date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
 
@@ -128,11 +175,11 @@ def run_secir_groups_simulation(days, damping_day, populations):
     # Interpolate simulation result on days time scale
     result = interpolate_simulation_result(result)
 
-    # Using an array instead of a list to avoid problems with references
-    result_array = result.as_ndarray()
+    result_array = remove_confirmed_compartments(
+        np.transpose(result.as_ndarray()[1:, :]))
 
     # Omit first column, as the time points are not of interest here.
-    dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
+    dataset_entries = copy.deepcopy(result_array)
 
     return dataset_entries.tolist(), damped_contact_matrix
 
@@ -190,19 +237,13 @@ def generate_data(
     if normalize:
         # logarithmic normalization
         transformer = FunctionTransformer(np.log1p, validate=True)
-        inputs = np.asarray(data['inputs']).transpose(2, 0, 1).reshape(48, -1)
-        scaled_inputs = transformer.transform(inputs)
-        scaled_inputs = scaled_inputs.transpose().reshape(num_runs, input_width, 48)
-        scaled_inputs_list = scaled_inputs.tolist()
 
-        labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(48, -1)
-        scaled_labels = transformer.transform(labels)
-        scaled_labels = scaled_labels.transpose().reshape(num_runs, label_width, 48)
-        scaled_labels_list = scaled_labels.tolist()
-
-        # cast dfs to tensors
-        data['inputs'] = tf.stack(scaled_inputs_list)
-        data['labels'] = tf.stack(scaled_labels_list)
+        # transform inputs and labels
+        data['inputs'] = transform_data(data['inputs'], transformer)
+        data['labels'] = transform_data(data['labels'], transformer)
+    else:
+        data['inputs'] = tf.convert_to_tensor(data['inputs'])
+        data['labels'] = tf.convert_to_tensor(data['labels'])
 
     if save_data:
         # check if data directory exists. If necessary, create it.
@@ -266,30 +307,14 @@ def get_population(path):
         data = json.load(f)
     population = []
     for data_entry in data:
-        population_county = []
-        population_county.append(
-            data_entry['<3 years'] + data_entry['3-5 years'] / 2)
-        population_county.append(data_entry['6-14 years'])
-        population_county.append(
-            data_entry['15-17 years'] + data_entry['18-24 years'] +
-            data_entry['25-29 years'] + data_entry['30-39 years'] / 2)
-        population_county.append(
-            data_entry['30-39 years'] / 2 + data_entry['40-49 years'] +
-            data_entry['50-64 years'] * 2 / 3)
-        population_county.append(
-            data_entry['65-74 years'] + data_entry['>74 years'] * 0.2 +
-            data_entry['50-64 years'] * 1 / 3)
-        population_county.append(
-            data_entry['>74 years'] * 0.8)
-
-        population.append(population_county)
+        population.append(interpolate_age_groups(data_entry))
     return population
 
 
 if __name__ == "__main__":
     # Store data relative to current file two levels higher.
     path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(
+    path_output = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
 
     path_population = os.path.abspath(
@@ -298,5 +323,5 @@ if __name__ == "__main__":
     input_width = 5
     label_width = 30
     num_runs = 10000
-    data = generate_data(num_runs, path_data, path_population, input_width,
+    data = generate_data(num_runs, path_output, path_population, input_width,
                          label_width)

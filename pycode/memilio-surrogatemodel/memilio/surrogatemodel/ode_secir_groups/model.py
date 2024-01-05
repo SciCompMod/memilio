@@ -17,6 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+from memilio.surrogatemodel.ode_secir_groups import network_architectures
+from memilio.simulation.secir import InfectionState
 import os
 import pickle
 
@@ -24,9 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
-from memilio.simulation.secir import InfectionState
-from memilio.surrogatemodel.ode_secir_groups import network_architectures
 
 
 def plot_compartment_prediction_model(
@@ -43,13 +42,16 @@ def plot_compartment_prediction_model(
     @param plot_col string name of compartment to be plotted. 
     @param max_subplots Number of the simulation runs to be plotted and compared against. 
     """
+    num_groups = 6
+    num_compartments = 8
     if modeltype == 'classic':
-        input_width = int((inputs.shape[1] - 37) / 48)
-        label_width = int(labels.shape[1])
-
+        # to get the input_width, we first subtract the damping date and the contact matrix entries.
+        # Next, we divide by the number of age groups * the number of compartments
+        input_width = int(
+            (inputs.shape[1] - (1 + num_groups * num_groups)) / (num_groups * num_compartments))
     elif modeltype == 'timeseries':
         input_width = int(inputs.shape[1])
-        label_width = int(labels.shape[1])
+    label_width = int(labels.shape[1])
 
     plt.figure(figsize=(12, 8))
     plot_compartment_index = 0
@@ -69,8 +71,10 @@ def plot_compartment_prediction_model(
         label_array = labels[n].numpy()
 
         if modeltype == 'classic':
-            input_plot = input_array[:(input_width*6*8)]
-            input_plot = input_plot.reshape(5, 48)
+            input_plot = input_array[:(
+                input_width*num_groups*num_compartments)]
+            input_plot = input_plot.reshape(
+                input_width, num_groups*num_compartments)
 
             mean_per_day_input = []
             for i in input_plot:
@@ -333,10 +337,13 @@ def get_test_statistic(test_inputs, test_labels, model):
     # reshape [batch, time, features] -> [features, time * batch]
     relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
+    compartments = [str(compartment).split('.')[1]
+                    for compartment in InfectionState.values()]
+    compartments = [x for x in compartments if x !=
+                    'InfectedNoSymptomsConfirmed' and x != 'InfectedSymptomsConfirmed']
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
-        index=[str(compartment).split('.')[1]
-               for compartment in InfectionState.values()],
+        index=compartments,
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -409,10 +416,7 @@ def split_contact_matrices(contact_matrices, split_train=0.7,
     n = contact_matrices.shape[0]
     n_train = int(n * split_train)
     n_valid = int(n * split_valid)
-    n_test = int(n * split_test)
-
-    if n_train + n_valid + n_test != n:
-        n_test = n - n_train - n_valid
+    n_test = n - n_train - n_valid
 
     contact_matrices_train, contact_matrices_valid, contact_matrices_test = tf.split(
         contact_matrices, [n_train, n_valid, n_test], 0)
@@ -441,10 +445,7 @@ def split_damping_days(damping_days, split_train=0.7,
     n = damping_days.shape[0]
     n_train = int(n * split_train)
     n_valid = int(n * split_valid)
-    n_test = int(n * split_test)
-
-    if n_train + n_valid + n_test != n:
-        n_test = n - n_train - n_valid
+    n_test = n - n_train - n_valid
 
     damping_days_train, damping_days_valid, damping_days_test = tf.split(
         damping_days, [n_train, n_valid, n_test], 0)
