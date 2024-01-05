@@ -497,10 +497,12 @@ struct GotoSchoolTimeMaximum {
  * @brief The set of AgeGroups that can go to school.
  */
 struct AgeGroupGotoSchool {
-    using Type = std::set<AgeGroup>;
-    static Type get_default(AgeGroup /*size*/)
+    using Type = CustomIndexArray<bool, AgeGroup>;
+    static Type get_default(AgeGroup num_agegroups)
     {
-        return std::set<AgeGroup>{AgeGroup(1)};
+        auto a = Type(num_agegroups, false);
+        a[AgeGroup(1)] = true;
+        return a;
     }
     static std::string name()
     {
@@ -512,10 +514,13 @@ struct AgeGroupGotoSchool {
  * @brief The set of AgeGroups that can go to work.
  */
 struct AgeGroupGotoWork {
-    using Type = std::set<AgeGroup>;
-    static Type get_default(AgeGroup /*size*/)
+    using Type = CustomIndexArray<bool, AgeGroup>;
+    static Type get_default(AgeGroup num_agegroups)
     {
-        return std::set<AgeGroup>{AgeGroup(2), AgeGroup(3)};
+        auto a = Type(num_agegroups, false);
+        a[AgeGroup(2)] = true;
+        a[AgeGroup(3)] = true;
+        return a;
     }
     static std::string name()
     {

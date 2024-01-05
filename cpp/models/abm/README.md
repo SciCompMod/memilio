@@ -82,8 +82,8 @@ child.set_age_weight(age_group_0_to_4, 1);
 child.set_age_weight(age_group_0_to_4, 1);
 
 auto parent = mio::abm::HouseholdMember(num_age_groups);
-parent.set_age_weight(AGE_GROUP_15_TO_34, 1);
-parent.set_age_weight(AGE_GROUP_35_TO_59, 1);
+parent.set_age_weight(age_groups_15_to_34, 1);
+parent.set_age_weight(age_groups_35_to_59, 1);
 
 // Two-person household with one parent and one child.
 auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
