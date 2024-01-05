@@ -60,6 +60,13 @@ void World::evolve(TimePoint t, TimeSpan dt)
     log_info("ABM World interaction.");
     interaction(t, dt);
     log_info("ABM World migration.");
+    // Pass though dt time until the LookAheadTime and make planning for the agents
+    auto time_counter = t;
+    while (time_counter.seconds() <= (t + parameters.get<mio::abm::LookAheadTime>()).seconds()) {
+        planning(time_counter, dt);
+        time_counter += dt;
+    }
+    // Execute the plan for the agents
     migration(t, dt);
 }
 
@@ -73,15 +80,14 @@ void World::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::migration(TimePoint t, TimeSpan dt)
+void World::planning(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     bool weekend = t.is_weekend();
 
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person     = m_persons[i];
-        auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-
+        auto&& person           = m_persons[i];
+        auto personal_rng       = Person::RandomNumberGenerator(m_rng, *person);
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
             auto target_type       = rule(personal_rng, *person, t, dt, parameters);
@@ -92,9 +98,9 @@ void World::migration(TimePoint t, TimeSpan dt)
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
                     bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
-                        person->migrate_to(target_location);
+                        person->add_migration_plan(t, target_location);
+                        return true;
                     }
-                    return true;
                 }
             }
             return false;
@@ -129,14 +135,13 @@ void World::migration(TimePoint t, TimeSpan dt)
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip   = m_trip_list.get_next_trip(weekend);
-            auto& person = m_persons[trip.person_id];
+            auto& trip        = m_trip_list.get_next_trip(weekend);
+            auto& person      = m_persons[trip.person_id];
             auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
             if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location, trip.trip_mode);
+                    person->add_migration_plan(t, target_location);
                 }
             }
             m_trip_list.increase_index();
@@ -145,40 +150,19 @@ void World::migration(TimePoint t, TimeSpan dt)
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
     }
+}
 
-    // Agents do tests in advance if applicable
-    // Perform tests for future migration rules of person
+void World::migration(TimePoint t, TimeSpan dt)
+{
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person               = m_persons[i];
-        auto personal_rng           = Person::RandomNumberGenerator(m_rng, *person);
-        auto testing_migration_rule = [&](auto rule) -> bool {
-            //run migration rule and check if migration can actually happen
-            auto target_type =
-                rule(personal_rng, *person, t + parameters.get<mio::abm::LookAheadTime>(), dt, parameters);
-            auto& target_location = find_location(target_type, *person);
-            // Get applicable testing schemes for the person and future trip location
-            return m_testing_strategy.run_strategy(personal_rng, *person, target_location, t + dt);
-        };
-        //run migration rules one after the other if the corresponding location type exists
-        //shortcutting of bool operators ensures the rules stop after the first rule is applied
-        if (m_use_migration_rules) {
-            (has_locations({LocationType::School, LocationType::Home}) && testing_migration_rule(&go_to_school)) ||
-                (has_locations({LocationType::Work, LocationType::Home}) && testing_migration_rule(&go_to_work)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
-                 testing_migration_rule(&go_to_shop)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
-                 testing_migration_rule(&go_to_event)) ||
-                (has_locations({LocationType::Home}) && testing_migration_rule(&go_to_quarantine));
+        auto&& person           = m_persons[i];
+        auto personal_rng       = Person::RandomNumberGenerator(m_rng, *person);
+        auto migration_planning = person->get_migration_plan(t, t + dt);
+        for (auto plan : migration_planning) {
+            person->apply_mask_intervention(personal_rng, plan.second);
+            person->migrate_to(plan.second);
         }
-    }
-    // Perform tests for future trips
-    auto future_trips =
-        m_trip_list.get_trips_between(t + dt, t + dt + parameters.get<mio::abm::LookAheadTime>(), weekend);
-    for (const auto& trip : future_trips) {
-        auto& person          = m_persons[trip->person_id];
-        auto personal_rng     = Person::RandomNumberGenerator(m_rng, *person);
-        auto& target_location = find_location(trip->migration_destination.type, *person);
-        m_testing_strategy.run_strategy(personal_rng, *person, target_location, t + dt);
     }
 }
 

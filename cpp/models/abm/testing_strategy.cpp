@@ -172,7 +172,6 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
     if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
         return true;
     }
-
     //lookup schemes for this specific location as well as the location type
     //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
     for (auto loc_key : {LocationId{location.get_index(), location.get_type()},

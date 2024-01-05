@@ -516,13 +516,39 @@ public:
 
     struct TestResult {
         TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
-        GenericTest type; ///< The type of the test. 
+        GenericTest type; ///< The type of the test.
         bool result; ///< The result of the test.
     };
 
+    /**
+     * @brief Add TestResult to the Person
+     * @param[in] GenericTest The TestType of the result.
+     * @param[in] type The TimePoint of the result.
+     * @param[in] result The result of the test.
+    */
     void add_test_result(TimePoint t, GenericTest type, bool result);
 
+    /**
+     * @brief Get the TestResult performed at a TimePoint of the Person based on the TestType.
+     * @param[in] type The TestType of the result.
+     * @param[in] t The TimePoint of the result.
+    */
     const Person::TestResult* get_test_result(GenericTest type, TimePoint t) const;
+
+    /**
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+     * @param[in] t TimePoint of the migration plan.
+     * @param[in] location Location of the destination of the migration plan.
+    */
+    void add_migration_plan(TimePoint t, Location& location);
+
+    /**
+     * @brief Get all the migration plans between a certain time interval.
+     * @param[in] from_time TimePoint of the migration plan.
+     * @param[in] to_time TimePoint of the migration plan.
+     * @return The vector of all the migration plans between mentioned time period.
+    */
+    std::vector<std::pair<TimePoint, Location&>> get_migration_plan(TimePoint from_time, TimePoint to_time);
 
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
@@ -544,8 +570,10 @@ private:
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
-    std::vector<TestResult> m_test_results;
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    std::vector<TestResult> m_test_results; ///< Vector to store all TestResults.
+    std::vector<std::pair<TimePoint, Location&>>
+        m_migration_planning; ///< Vector to store all migration plans (pairs of TimePoint and Location).
 };
 
 } // namespace abm

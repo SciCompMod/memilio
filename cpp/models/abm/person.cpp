@@ -44,6 +44,8 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
+    , m_test_results()
+    , m_migration_planning()
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -328,6 +330,23 @@ const Person::TestResult* Person::get_test_result(GenericTest type, TimePoint t)
         }
     }
     return nullptr;
+}
+
+void Person::add_migration_plan(TimePoint t, Location& location)
+{
+    std::pair<TimePoint, Location&> new_plan = {t, location};
+    m_migration_planning.push_back(new_plan);
+}
+
+std::vector<std::pair<TimePoint, Location&>> Person::get_migration_plan(TimePoint from_time, TimePoint to_time)
+{
+    std::vector<std::pair<TimePoint, Location&>> result;
+    for (auto plan : m_migration_planning) {
+        if (plan.first >= from_time && plan.first < to_time) {
+            result.push_back(plan);
+        }
+    }
+    return result;
 }
 
 } // namespace abm

@@ -326,7 +326,7 @@ TEST(Person, rng)
     ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }
 
-TEST(Person, getTestResult)
+TEST(Person, addAndGetTestResult)
 {
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
@@ -340,4 +340,21 @@ TEST(Person, getTestResult)
 
     dt = mio::abm::days(2);
     ASSERT_FALSE(person.get_test_result(test, t + dt));
+}
+
+TEST(Person, addAndGetMigrationPlanning)
+{
+    mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person = make_test_person(location);
+    auto t0     = mio::abm::TimePoint(0);
+    auto t1     = mio::abm::TimePoint(60 * 60);
+    auto t2     = mio::abm::TimePoint(60 * 60 * 2);
+
+    person.add_migration_plan(t0, location);
+    person.add_migration_plan(t1, location);
+    person.add_migration_plan(t2, location);
+    auto migration_plan = person.get_migration_plan(t0, t0 + mio::abm::hours(2));
+    ASSERT_EQ(migration_plan.size(), 2);
+    ASSERT_EQ(migration_plan[0].first, t0);
+    ASSERT_EQ(migration_plan[1].first, t1);
 }
