@@ -321,8 +321,9 @@ private:
      * @brief Person%s plan to move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
+     * @param[in] personId_to_loc_map A map used to track Person's location for planning.
      */
-    void planning(TimePoint t, TimeSpan dt);
+    void planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Location*>& personId_to_loc_map);
     /**
      * @brief Person%s move in the World according to planning.
      * @param[in] t The current TimePoint.

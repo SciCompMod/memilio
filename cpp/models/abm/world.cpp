@@ -60,10 +60,11 @@ void World::evolve(TimePoint t, TimeSpan dt)
     log_info("ABM World interaction.");
     interaction(t, dt);
     log_info("ABM World migration.");
-    // Pass though dt time until the LookAheadTime and make planning for the agents
+    // Pass though dt time until the LookAheadTime and make planning for the agents.
     auto time_counter = t;
+    std::unordered_map<uint32_t, Location*> personId_to_loc_map;
     while (time_counter.seconds() <= (t + parameters.get<mio::abm::LookAheadTime>()).seconds()) {
-        planning(time_counter, dt);
+        planning(time_counter, dt, personId_to_loc_map);
         time_counter += dt;
     }
     // Execute the plan for the agents
@@ -80,7 +81,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::planning(TimePoint t, TimeSpan dt)
+void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Location*>& personId_to_loc_map)
 {
     PRAGMA_OMP(parallel for)
     bool weekend = t.is_weekend();
@@ -90,15 +91,19 @@ void World::planning(TimePoint t, TimeSpan dt)
         auto personal_rng       = Person::RandomNumberGenerator(m_rng, *person);
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
-            auto target_type       = rule(personal_rng, *person, t, dt, parameters);
-            auto& target_location  = find_location(target_type, *person);
-            auto& current_location = person->get_location();
+            auto target_type           = rule(personal_rng, *person, t, dt, parameters);
+            auto& target_location      = find_location(target_type, *person);
+            Location* current_location = &(person->get_location());
+            if (personId_to_loc_map.find(person->get_person_id()) != personId_to_loc_map.end()) {
+                current_location = personId_to_loc_map[person->get_person_id()];
+            }
             if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                if (target_location != current_location &&
+                if (target_location != *current_location &&
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
                     bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
                         person->add_migration_plan(t, target_location);
+                        personId_to_loc_map[person->get_person_id()] = &target_location;
                         return true;
                     }
                 }

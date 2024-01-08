@@ -537,7 +537,7 @@ struct LookAheadTime {
     using Type = TimeSpan;
     static Type get_default(AgeGroup /*size*/)
     {
-        return TimeSpan(days(1));
+        return TimeSpan(seconds(0));
     }
     static std::string name()
     {
