@@ -44,7 +44,7 @@ def remove_confirmed_compartments(result_array):
     return np.delete(result_array, [3, 5], axis=1)
 
 
-def run_secir_simulation(days):
+def run_secir_simple_simulation(days):
     """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
