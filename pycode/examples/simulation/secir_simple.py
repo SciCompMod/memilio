@@ -45,13 +45,9 @@ def posteriori_stiffness(stability_func, y,params):
         # Calculate the Jacobian
         num_agegroups = params.get_num_groups()
         pi = math.pi
-        test_and_trace_required = 0.0
-        icu_occupancy = 0.0
         result = y.as_ndarray()
         group_data = np.transpose(result[1:,:])
 
-        Jacobian = np.zeros((num_agegroups*8,num_agegroups*8))
-        
         season_val = (1 + params.Seasonality) *math.sin(pi * (math.fmod((params.StartDay + y.get_time(t_idx)),365.0) /182.5 +0.5))
 
         def smoother_cosine(x,xleft,xright,yleft,yright):
@@ -63,13 +59,35 @@ def posteriori_stiffness(stability_func, y,params):
             
             return 0.5 * (yleft - yright) * math.cos(3.14159265358979323846 / (xright - xleft) * (x - xleft)) + 0.5 * (yleft + yright)
 
+        Jacobian = np.zeros((num_agegroups*8,num_agegroups*8))
+        test_and_trace_required = 0.0
+        icu_occupancy = 0.0
+
+        for i in range(0,num_agegroups):
+            test_and_trace_required += (1 - params.RecoveredPerInfectedNoSymptoms[Ai])*rateINS*group_data[t_idx,i*10+2]
+            icu_occupancy += group_data[t_idx,i*10+5]
+
+        criticalPerSevereAdjusted_derivatives = np.zeros(num_agegroups,num_agegroups)
+        riskFromInfectedSymptomatic_derivatives = np.zeros(num_agegroups,num_agegroups)
+
+        if not (icu_occupancy < 0.9*params.ICUCapacity or icu_occupancy > params.ICUCapacity):
+            for i in range(0,num_agegroups):
+                Ai = AgeGroup(i)
+                for j in range(0,num_agegroups):
+                    Aj = AgeGroup(j)
+                    criticalPerSevereAdjusted_derivatives[i,j] = (5*math.pi*params.CriticalPerSevere[i])/(params.ICUCapacity)*math.sin(math.pi/(0.1*params.ICUCapacity)*(icu_occupancy-0.9*params.ICUCapacity))
+
+        if not (test_and_trace_required < params.TestAndTraceCapacity or test_and_trace_required > 5* params.TestAndTraceCapacity):
+            for i in range(0,num_agegroups):
+                Ai = AgeGroup(i)
+                for j in range(0,num_agegroups):
+                    Aj = AgeGroup(j)
+                    riskFromInfectedSymptomatic_derivatives[i,j] = -0.5*math.pi*(params.MaxRiskOfInfectionFromSymptomatic[Ai]-params.RiskOfInfectionFromSymptomatic[Ai])/(4*params.TestAndTraceCapacity)*(1-params.RecoveredPerInfectedNoSymptoms[Aj])*rateINS[Aj]*math.sin(math.pi/(4*params.TestAndTraceCapacity*(test_and_trace_required-params.TestAndTraceCapacity)))
 
         for i in range(0,num_agegroups):
             Ai = AgeGroup(i)
             rateE   = 1.0 / (2 * params.SerialInterval[Ai] - params.IncubationTime[Ai])
             rateINS = 0.5/(params.IncubationTime[Ai]-params.SerialInterval[Ai])
-            test_and_trace_required += (1 - params.RecoveredPerInfectedNoSymptoms[Ai])*rateINS*group_data[t_idx,i*10+2]
-            icu_occupancy += group_data[t_idx,i*10+5]
 
             S_dummy = 0
             for j in range(0,num_agegroups):
@@ -90,7 +108,12 @@ def posteriori_stiffness(stability_func, y,params):
                 divNj = 1.0/Nj
                 riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, params.TestAndTraceCapacity,params.TestAndTraceCapacity * 5, params.RiskOfInfectionFromSymptomatic[Aj],
                 params.MaxRiskOfInfectionFromSymptomatic[Aj])
-                Jacobian[i,j+2*num_agegroups] = - group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*params.RelativeTransmissionNoSymptoms[Aj]
+                correction = 0
+                for k in range(0,num_agegroups):
+                    Nk = group_data[t_idx,k*10+11]
+                    divNk = 1.0/Nk
+                    correction+=group_data[t_idx,k*10+3]*divNk*riskFromInfectedSymptomatic_derivatives[k,j]
+                Jacobian[i,j+2*num_agegroups] = - group_data[t_idx,i*10]*cont_freq_eff*params.TransmissionProbabilityOnContact[Ai]*(divNj*params.RelativeTransmissionNoSymptoms[Aj]+correction)
                 Jacobian[i,j+3*num_agegroups] = - group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*riskFromInfectedSymptomatic
                 Jacobian[i+num_agegroups,j+2*num_agegroups] = group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*params.RelativeTransmissionNoSymptoms[Aj]
                 Jacobian[i+num_agegroups,j+3*num_agegroups] = group_data[t_idx,i*10]*cont_freq_eff*divNj*params.TransmissionProbabilityOnContact[Ai]*riskFromInfectedSymptomatic
@@ -102,6 +125,20 @@ def posteriori_stiffness(stability_func, y,params):
             Jacobian[i+3*num_agegroups,i+3*num_agegroups] = - 1.0/(params.TimeInfectedSymptoms[Ai])
             Jacobian[i+4*num_agegroups,i+3*num_agegroups] = params.SeverePerInfectedSymptoms[Ai]/(params.TimeInfectedSymptoms[Ai])
             Jacobian[i+4*num_agegroups,i+4*num_agegroups] = - 1.0/(params.TimeInfectedSevere[Ai])
+            Jacobian[i+5*num_agegroups,i+4*num_agegroups] = riskFromInfectedSymptomatic/(params.TimeInfectedSevere[Ai])
+            Jacobian[i+5*num_agegroups,i+5*num_agegroups] = - 1.0/(params.TimeInfectedCritical[Ai])
+            for j in range(0,num_agegroups):
+                    Jacobian[i+5*num_agegroups,j+5*num_agegroups] += criticalPerSevereAdjusted_derivatives[i,j]/(params.TimeInfectedSevere[Ai])*group_data[t_idx,i*10+4]
+            Jacobian[i+6*num_agegroups,i+2*num_agegroups] = params.RecoveredPerInfectedNoSymptoms[Ai]*rateINS
+            Jacobian[i+6*num_agegroups,i+3*num_agegroups] = (1-params.RecoveredPerInfectedSymptoms[Ai])/(params.TimeInfectedSymptoms[Ai])
+            Jacobian[i+6*num_agegroups,i+4*num_agegroups] = (1-params.CriticalPerSevere[Ai])/(params.TimeInfectedSevere[Ai])
+            Jacobian[i+6*num_agegroups,i+5*num_agegroups] = (1-params.DeathsPerCritical[Ai])/(params.TimeInfectedCritical[Ai])
+            criticalPerSevereAdjusted = smoother_cosine(icu_occupancy,0.9*params.ICUCapacity,params.ICUCapacity,params.CriticalPerSevere[Ai],0.0)
+            Jacobian[i+7*num_agegroups,i+4*num_agegroups] = (params.CriticalPerSevere[Ai]-criticalPerSevereAdjusted)/(params.TimeInfectedSevere[Ai])
+            Jacobian[i+7*num_agegroups,i+5*num_agegroups] = params.DeathsPerCritical[Ai]/(params.TimeInfectedCritical[Ai])
+            
+            for j in range(0,num_agegroups):
+                Jacobian[i+7*num_agegroups,j+5*num_agegroups] -= group_data[t_idx,i*10+4]/(params.TimeInfectedSevere[Ai])*criticalPerSevereAdjusted_derivatives[i,j]
 
         eigen_vals = eigvals(Jacobian)
         # Determine the used stepsize: 
