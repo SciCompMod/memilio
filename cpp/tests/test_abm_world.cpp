@@ -482,6 +482,7 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
+    params.get<mio::abm::LookAheadTime>()                                 = mio::abm::hours(1);
     ASSERT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;
@@ -542,6 +543,10 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
+    ASSERT_EQ(params.check_constraints(), true);
+    params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(2);
+
+    params.get<mio::abm::LookAheadTime>() = mio::abm::hours(-1);
     ASSERT_EQ(params.check_constraints(), true);
 }
 
@@ -734,7 +739,7 @@ TEST(TestWorld, personPlanning)
     world.parameters
         .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
-    //setup so the person look 2 hours ahead. 
+    //setup so the person look 2 hours ahead.
     world.parameters.get<mio::abm::LookAheadTime>() = mio::abm::hours(2);
 
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
@@ -766,10 +771,10 @@ TEST(TestWorld, personPlanning)
 
     auto& school = world.get_individualized_location(school_id);
     auto& work   = world.get_individualized_location(work_id);
-    auto& home = world.get_individualized_location(home_id);
+    auto& home   = world.get_individualized_location(home_id);
 
     world.evolve(t, dt);
-    // Check whether the 2 people migrate correctly. 
+    // Check whether the 2 people migrate correctly.
     EXPECT_EQ(p1.get_location(), work);
     EXPECT_EQ(p2.get_location(), school);
     EXPECT_EQ(school.get_number_persons(), 1);

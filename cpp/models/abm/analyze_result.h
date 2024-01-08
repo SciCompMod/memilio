@@ -195,6 +195,10 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             static auto result = model.parameters.template get<LockdownDate>().days();
             return result;
         });
+        param_percentil(node, [](auto&& model) -> auto& {
+            static auto result = model.parameters.template get<LookAheadTime>().days();
+            return result;
+        });
     }
 
     return percentile;
