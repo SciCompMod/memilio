@@ -20,6 +20,7 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
+#include "abm/config.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
@@ -55,7 +56,7 @@ public:
 
     /**
      * @brief Create a World.
-     * @param[in] num_agegroups The number of AgeGroup%s in the simulated World.
+     * @param[in] num_agegroups The number of AgeGroup%s in the simulated World. Must be less than MAX_NUM_AGE_GROUPS.
      */
     World(size_t num_agegroups)
         : parameters(num_agegroups)
@@ -63,6 +64,7 @@ public:
         , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
     {
+        assert(num_agegroups < MAX_NUM_AGE_GROUPS && "MAX_NUM_AGE_GROUPS exceeded.");
     }
 
     /**
@@ -154,13 +156,6 @@ public:
     void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
-     * @brief Follow up on the World after the Simulation step.
-     * @param[in] t Current time.
-     * @param[in] dt Length of the time step.
-     */
-    void end_step(TimePoint t, TimeSpan dt);
-
-    /** 
      * @brief Evolve the world one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
@@ -215,12 +210,19 @@ public:
     Location& find_location(LocationType type, const Person& person);
 
     /** 
+     * @brief Get the number of Persons in one #InfectionState at all Location%s.
+     * @param[in] t Specified #TimePoint.
+     * @param[in] s Specified #InfectionState.
+     */
+    size_t get_subpopulation_combined(TimePoint t, InfectionState s) const;
+
+    /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
      * @param[in] t Specified #TimePoint.
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
+    size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const;
 
     /**
      * @brief Get the migration data.

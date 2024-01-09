@@ -55,9 +55,8 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
             auto state = mio::abm::InfectionState(
                 mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
-            auto infection =
-                mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                    world.parameters, mio::abm::TimePoint(0), state);
+            auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                 world.parameters, mio::abm::TimePoint(0), state);
             person.add_new_infection(std::move(infection));
         }
 
@@ -68,8 +67,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
     }
 
     //masks at locations
-    for (auto& loc : world.get_locations())
-    {
+    for (auto& loc : world.get_locations()) {
         //some % of locations require masks
         //skip homes so persons always have a place to go, simulation might break otherwise
         auto pct_require_mask = 0.2;
@@ -128,7 +126,7 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
         state.ResumeTiming();
 
         //simulated time should be long enough to have full infection runs and migration to every location
-        auto final_time = sim.get_time() + mio::abm::days(10); 
+        auto final_time = sim.get_time() + mio::abm::days(10);
         sim.advance(final_time);
 
         //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
@@ -136,8 +134,12 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
         const bool monitor_infection_activity = false;
         if constexpr (monitor_infection_activity) {
             std::cout << "num_persons = " << num_persons << "\n";
-            std::cout << sim.get_result()[0].transpose() << "\n";
-            std::cout << sim.get_result().get_last_value().transpose() << "\n";
+            for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+                std::cout << "inf_state = " << inf_state << ", sum = "
+                          << sim.get_world().get_subpopulation_combined(sim.get_time(),
+                                                                        mio::abm::InfectionState(inf_state))
+                          << "\n";
+            }
         }
     }
 }
