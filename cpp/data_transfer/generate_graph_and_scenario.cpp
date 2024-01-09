@@ -315,19 +315,17 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
         params, start_date, end_date, data_dir,
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"), true,
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
-        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false));
+        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     return mio::success(params_graph);
 }
 
-mio::IOResult<void> run(RunMode mode, mio::Date start_date, const std::string& data_dir,
+mio::IOResult<void> run(RunMode mode, const int num_days_sim, mio::Date start_date, const std::string& data_dir,
                         const std::string& save_graph_dir, const std::string& result_dir, bool save_single_runs)
 {
-    const auto num_days_sim = 90;
-    const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 5;
+    const auto num_runs = 5;
 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
@@ -345,8 +343,8 @@ mio::IOResult<void> run(RunMode mode, mio::Date start_date, const std::string& d
         });
 
         //run parameter study
-        auto parameter_study =
-            mio::ParameterStudy<mio::osecirvvs::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
+        auto parameter_study = mio::ParameterStudy<mio::osecirvvs::Simulation<>>{
+            params_graph, 0.0, static_cast<double>(num_days_sim), 0.5, num_runs};
 
         if (mio::mpi::is_root()) {
             printf("Seeds: ");
@@ -463,7 +461,7 @@ int main(int argc, char** argv)
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
 
-    auto result = run(mode, start_date, data_dir, save_graph_dir, result_dir, false);
+    auto result = run(mode, num_days_sim, start_date, data_dir, save_graph_dir, result_dir, false);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();
