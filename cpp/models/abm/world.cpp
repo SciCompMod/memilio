@@ -45,7 +45,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
-    assert((size_t)age.size < (size_t)parameters.get_num_groups());
+    assert(age.get() < parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
@@ -61,7 +61,6 @@ void World::evolve(TimePoint t, TimeSpan dt)
     interaction(t, dt);
     log_info("ABM World migration.");
     migration(t, dt);
-    end_step(t, dt);
 }
 
 void World::interaction(TimePoint t, TimeSpan dt)
@@ -136,7 +135,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location);
+                    person->migrate_to(target_location, trip.trip_mode);
                 }
             }
             m_trip_list.increase_index();
@@ -154,15 +153,6 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
         location->cache_exposure_rates(t, dt, parameters.get_num_groups());
-    }
-}
-
-void World::end_step(TimePoint t, TimeSpan dt)
-{
-    PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_locations.size(); ++i) {
-        auto&& location = m_locations[i];
-        location->store_subpopulations(t + dt);
     }
 }
 
@@ -200,7 +190,15 @@ Location& World::find_location(LocationType type, const Person& person)
     return get_individualized_location({index, type});
 }
 
-size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
+size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
+{
+    return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
+                           [t, s](size_t running_sum, const std::unique_ptr<Location>& loc) {
+                               return running_sum + loc->get_subpopulation(t, s);
+                           });
+}
+
+size_t World::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
                            [t, s, type](size_t running_sum, const std::unique_ptr<Location>& loc) {

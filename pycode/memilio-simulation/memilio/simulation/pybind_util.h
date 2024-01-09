@@ -150,6 +150,21 @@ template<class T, EnablePickling F, class... Args>
 constexpr BindClassHelper<T, F, Args...> bind_class;
 /**@}*/
 
+template <typename T>
+T check_and_throw(mio::IOResult<T>& result)
+{
+    if (result.has_error()) {
+        auto status = result.error();
+        if (status.code() == std::errc::no_such_file_or_directory) {
+            throw pybind11::value_error(status.message());
+        } else {
+            throw std::runtime_error(status.message());
+        }
+    } else {
+        return result.value();
+    }
+}
+
 // the following functions help bind class template realizations
 //https://stackoverflow.com/questions/64552878/how-can-i-automatically-bind-templated-member-functions-of-variadic-class-templa
 template <typename T>

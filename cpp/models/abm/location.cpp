@@ -58,6 +58,7 @@ Location Location::copy_location_without_persons(size_t num_agegroups)
 ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
                                                    size_t num_agegroups) const
 {
+    assert(age_receiver.get() < num_agegroups);
     ScalarType prob = 0;
     for (uint32_t age_transmitter = 0; age_transmitter != num_agegroups; ++age_transmitter) {
         prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
@@ -178,32 +179,6 @@ size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
         return p->get_infection_state(t) == state;
     });
-}
-
-void Location::store_subpopulations(const TimePoint t)
-{
-    m_subpopulations.add_time_point(t.days());
-    Eigen::VectorXd subpopulations(Eigen::VectorXd::Zero((size_t)InfectionState::Count));
-    for (auto p : m_persons)
-        ++subpopulations[(size_t)p->get_infection_state(t)];
-    m_subpopulations.get_last_value() = subpopulations;
-}
-
-void Location::initialize_subpopulations(const TimePoint t)
-{
-    if (m_subpopulations.get_num_time_points() == 0) {
-        store_subpopulations(t);
-    }
-    else {
-        if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
-            store_subpopulations(t);
-        }
-    }
-}
-
-const TimeSeries<ScalarType>& Location::get_subpopulations() const
-{
-    return m_subpopulations;
 }
 
 } // namespace abm

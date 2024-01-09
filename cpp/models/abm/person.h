@@ -30,6 +30,7 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/memory.h"
+#include "abm/movement_data.h"
 #include <functional>
 
 namespace mio
@@ -158,7 +159,19 @@ public:
      * @param[in, out] loc_new The new Location of the Person.
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
+    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0})
+    {
+        migrate_to(loc_new, TransportMode::Unknown, cells_new);
+    }
+
+    /** 
+     * @brief Migrate to a different Location.
+     * @param[in] loc_new The new Location of the Person.
+     * @param[in] transport_mode The TransportMode the Person used to get to the new Location.
+     * @param[in] cells_new The Cell%s that the Person visits at the new Location.
+     * */
+    void migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode,
+                    const std::vector<uint32_t>& cells = {0});
 
     /**
      * @brief Get the latest #Infection of the Person.
@@ -442,6 +455,15 @@ public:
     }
 
     /**
+     * @brief Get the transport mode the Person used to get to its current Location.
+     * @return TransportMode the Person used to get to its current Location.
+    */
+    mio::abm::TransportMode get_last_transport_mode() const
+    {
+        return m_last_transport_mode;
+    }
+
+    /**
     * Get this persons RandomNumberGenerator counter.
     * @see mio::abm::Person::RandomNumberGenerator.
     */
@@ -506,6 +528,7 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
+    mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
 };
 

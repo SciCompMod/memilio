@@ -22,6 +22,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include "abm/common_abm_loggers.h"
 
 int main()
 {
@@ -40,9 +41,12 @@ int main()
     world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {age_group_5_to_14};
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = false;
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
-    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {age_group_15_to_34, age_group_35_to_59};
+    world.parameters.get<mio::abm::AgeGroupGotoWork>() = false;
+    world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
+    world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
     // Check if the parameters satisfy their contraints.
     world.parameters.check_constraints();
@@ -149,19 +153,22 @@ int main()
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
+    auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-    // Create and run the simualtion for the scenario defined above.
-    auto sim = mio::abm::Simulation(t0, std::move(world));
-    sim.advance(tmax);
+    // Create a history object to store the time series of the infection states.
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
 
-    std::ofstream outfile("abm_minimal.txt");
+    // Run the simulation until tmax with the history object.
+    sim.advance(tmax, historyTimeSeries);
 
     // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
     // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    sim.get_result().print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-
+    std::ofstream outfile("abm_minimal.txt");
+    std::get<0>(historyTimeSeries.get_log())
+        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 
     return 0;
