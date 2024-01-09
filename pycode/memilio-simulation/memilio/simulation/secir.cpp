@@ -179,7 +179,7 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Recovered", mio::osecir::InfectionState::Recovered)
         .value("Dead", mio::osecir::InfectionState::Dead);
 
-    pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osecir::ParametersBase, pymio::EnablePickling::Required>(m, "ParametersBase");
 
     pymio::bind_class<mio::osecir::Parameters, pymio::EnablePickling::Required, mio::osecir::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
@@ -188,7 +188,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
+    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters, pymio::EnablePickling::Never>(m,
                                                                                                            "ModelBase");
     pymio::bind_class<mio::osecir::Model, pymio::EnablePickling::Required,
                       mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>>(

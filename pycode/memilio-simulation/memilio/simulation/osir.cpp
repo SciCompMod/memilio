@@ -61,7 +61,7 @@ PYBIND11_MODULE(_simulation_osir, m)
         .value("Infected", mio::osir::InfectionState::Infected)
         .value("Recovered", mio::osir::InfectionState::Recovered);
 
-    pymio::bind_ParameterSet<mio::osir::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osir::ParametersBase, pymio::EnablePickling::Required>(m, "ParametersBase");
 
     pymio::bind_class<mio::osir::Parameters, pymio::EnablePickling::Required, mio::osir::ParametersBase>(m, "Parameters")
         .def(py::init<>())
@@ -69,7 +69,7 @@ PYBIND11_MODULE(_simulation_osir, m)
 
     using Populations = mio::Populations<mio::osir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::osir::Model::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters>(m, "ModelBase");
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters, pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<mio::osir::Model, pymio::EnablePickling::Required,
                mio::CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters>>(m, "Model")
         .def(py::init<>());

@@ -136,7 +136,8 @@ public:
 };
 
 /**
- * Interface for binding class with pybind.
+ * Function-like that has two template parameter packs, by hiding one inside the operator of BindClassHelper.
+ * Parameter pack Options uses template deduction. 
  * @tparam T class for binding
  * @tparam F value of enum EnablePickling defining pickling behaviour
  * @tparam Args base class of T.

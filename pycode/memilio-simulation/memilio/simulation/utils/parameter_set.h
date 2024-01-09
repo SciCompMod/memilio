@@ -28,10 +28,10 @@
 namespace pymio
 {
 
-template <class ParameterSet>
+template <class ParameterSet, EnablePickling F>
 auto bind_ParameterSet(pybind11::module_& m, std::string const& name)
 {
-    decltype(auto) c = bind_class<ParameterSet, EnablePickling::Never>(m, name.c_str());
+    decltype(auto) c = bind_class<ParameterSet, F>(m, name.c_str());
     mio::foreach_tag<ParameterSet>([&c](auto t) {
         using Tag = decltype(t);
 
