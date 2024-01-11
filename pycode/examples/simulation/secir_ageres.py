@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix, AgeGroup
+from memilio.simulation.secir import Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import Model, Simulation, simulate
 
@@ -27,7 +27,7 @@ def run_secir_simulation(show_plot=True):
     cont_freq = 10
     nb_total_t0, nb_exp_t0, nb_inf_t0, nb_car_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0 = 10000, 100, 50, 50, 20, 10, 10, 0
 
-    nb_comp = 8
+    nb_comp = 10
     nb_groups = 3
     fact = 1.0/nb_groups
 

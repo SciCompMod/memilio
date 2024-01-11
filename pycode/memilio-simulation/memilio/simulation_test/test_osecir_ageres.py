@@ -24,8 +24,8 @@ import numpy as np
 import pandas as pd
 import pdb
 
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix, AgeGroup
+from memilio.simulation.secir import Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import Model, Simulation, simulate
 
@@ -36,7 +36,6 @@ class Test_osecir_integration(unittest.TestCase):
 
     def setUp(self):
 
-        model = Model(3)
 
         self.t0 = 0
         self.tmax = 50
@@ -45,15 +44,17 @@ class Test_osecir_integration(unittest.TestCase):
         cont_freq = 10
         nb_total_t0, nb_exp_t0, nb_inf_t0, nb_car_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0 = 10000, 100, 50, 50, 20, 10, 10, 0
 
-        self.nb_comp = 8
+        self.nb_comp = 10
         self.nb_groups = 3
         fact = 1.0/self.nb_groups
+
+        model = Model(self.nb_groups)
 
         model.parameters.StartDay = 60
         model.parameters.Seasonality.value = 0.2
         model.parameters.TestAndTraceCapacity.value = 35
 
-        for i in range(0, 3):
+        for i in range(0, self.nb_groups):
             Ai = AgeGroup(i)
 
             model.parameters.IncubationTime[Ai] = 5.2
@@ -64,7 +65,9 @@ class Test_osecir_integration(unittest.TestCase):
 
             model.populations[Ai, State.Exposed] = fact * nb_exp_t0
             model.populations[Ai, State.InfectedNoSymptoms] = fact * nb_car_t0
+            model.populations[Ai, State.InfectedNoSymptomsConfirmed] = 0
             model.populations[Ai, State.InfectedSymptoms] = fact * nb_inf_t0
+            model.populations[Ai, State.InfectedSymptomsConfirmed] = 0
             model.populations[Ai, State.InfectedSevere] = fact * nb_hosp_t0
             model.populations[Ai, State.InfectedCritical] = fact * nb_icu_t0
             model.populations[Ai, State.Recovered] = fact * nb_rec_t0
@@ -109,11 +112,11 @@ class Test_osecir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
-    def test_compare_seir_with_cpp(self):
+    def test_compare_with_cpp(self):
         """
         Tests the correctness of the python bindings. The results of a simulation
         in python get compared to the results of a cpp simulation. Cpp simulation
-        results contained in the file secihurd-compare.csv.
+        results contained in the file ode-secihurd-ageres-compare.csv.
         If cpp model changes this test needs to be adjusted accordingly.
         """
         refData = pd.read_csv(
@@ -124,11 +127,12 @@ class Test_osecir_integration(unittest.TestCase):
 
         result = simulate(t0=self.t0, tmax=self.tmax,
                           dt=self.dt, model=self.model)
-        # pdb.set_trace()
+        
         # compare num elements
         for index_timestep, timestep in refData.iterrows():
             # compare num elements
             t = float(timestep.at['t'])
+            # pdb.set_trace()
             self.assertAlmostEqual(
                 t, result.get_time(index_timestep),
                 delta=1e-10)

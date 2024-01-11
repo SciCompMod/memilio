@@ -42,6 +42,7 @@ class Test_osecir_integration(unittest.TestCase):
         self.dt = 0.1
 
         cont_freq = 10
+        nb_total_t0, nb_exp_t0, nb_inf_t0, nb_car_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0 = 10000, 100, 50, 50, 20, 10, 10, 0
 
         A0 = AgeGroup(0)
 
@@ -54,16 +55,17 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.TimeInfectedSevere[A0] = 9.5
         model.parameters.TimeInfectedCritical[A0] = 7.1
         
-        model.populations[A0, State.Susceptible] = 7600
-        model.populations[A0, State.Exposed] = 100
-        model.populations[A0, State.InfectedNoSymptoms] = 50
+        model.populations[A0, State.Exposed] = nb_exp_t0
+        model.populations[A0, State.InfectedNoSymptoms] = nb_car_t0
         model.populations[A0, State.InfectedNoSymptomsConfirmed] = 0
-        model.populations[A0, State.InfectedSymptoms] = 50
+        model.populations[A0, State.InfectedSymptoms] = nb_inf_t0
         model.populations[A0, State.InfectedSymptomsConfirmed] = 0
-        model.populations[A0, State.InfectedSevere] = 20
-        model.populations[A0, State.InfectedCritical] = 10
-        model.populations[A0, State.Recovered] = 10
-        model.populations[A0, State.Dead] = 0
+        model.populations[A0, State.InfectedSevere] = nb_hosp_t0
+        model.populations[A0, State.InfectedCritical] = nb_icu_t0
+        model.populations[A0, State.Recovered] = nb_rec_t0
+        model.populations[A0, State.Dead] = nb_dead_t0
+        model.populations.set_difference_from_total(
+            (A0, State.Susceptible), nb_total_t0)
 
         model.parameters.TransmissionProbabilityOnContact[A0] = 0.05
         model.parameters.RelativeTransmissionNoSymptoms[A0] = 0.7
@@ -135,7 +137,7 @@ class Test_osecir_integration(unittest.TestCase):
                 t, result.get_time(index_timestep),
                 delta=1e-10)
 
-            for index_compartment in range(0, 4):
+            for index_compartment in range(0, 10):
                 self.assertAlmostEqual(
                     timestep[index_compartment + 1],
                     result[index_timestep][index_compartment], delta=1e-10)
