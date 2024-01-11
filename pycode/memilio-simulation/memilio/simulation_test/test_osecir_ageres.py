@@ -22,7 +22,6 @@ import unittest
 import os
 import numpy as np
 import pandas as pd
-import pdb
 
 from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix, AgeGroup
 from memilio.simulation.secir import Index_InfectionState
@@ -132,7 +131,6 @@ class Test_osecir_integration(unittest.TestCase):
         for index_timestep, timestep in refData.iterrows():
             # compare num elements
             t = float(timestep.at['t'])
-            # pdb.set_trace()
             self.assertAlmostEqual(
                 t, result.get_time(index_timestep),
                 delta=1e-10)
@@ -142,7 +140,7 @@ class Test_osecir_integration(unittest.TestCase):
                 for index_agegroup in range(0, self.nb_groups):
                     dummy += result[index_timestep][
                         index_compartment + self.nb_comp * index_agegroup]
-                # pdb.set_trace()
+                
                 self.assertAlmostEqual(
                     timestep[index_compartment + 1],
                     dummy, delta=1e-10)
