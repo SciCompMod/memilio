@@ -46,10 +46,10 @@ Dependencies
 
 Required python packages:
 
-- pandas<1.2.0
+- pandas>=2.0.0
 - matplotlib
 - tables
-- numpy>=1.22
+- numpy>=1.22,<1.25
 - openpyxl
 - xlrd
 - requests
@@ -101,7 +101,7 @@ To get the coverage report do
 
 Coverage report for actual master:
 
-:Coverage Report: https://dlr-sc.github.io/memilio/coverage/python/
+:Coverage Report: https://scicompmod.github.io/memilio/coverage/python/
 
 Inspection via pylint
 ---------------------

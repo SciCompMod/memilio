@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack
 #
@@ -43,6 +43,9 @@ import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import progress_indicator
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 
 def user_choice(message, default=False):
@@ -173,10 +176,7 @@ def get_file(
 
     if read_data:
         try:
-            if filepath.endswith('xlsx'):
-                df = pd.read_excel(filepath, **param_dict)
-            else:
-                df = pd.read_json(filepath)
+            df = pd.read_json(filepath)
         except FileNotFoundError:
             if interactive and user_choice(
                 "Warning: The file: " + filepath +
@@ -217,9 +217,12 @@ def get_file(
         if df.empty:
             raise DataError("Error: Dataframe is empty.")
     except AttributeError:
-        for i in range(len(df)):
-            if df[i].empty:
-                raise DataError("Error: Dataframe is empty.")
+        if isinstance(df, list) or isinstance(df, dict):
+            for i in df:
+                if df[i].empty:
+                    raise DataError("Error: Dataframe is empty.")
+        else:
+            raise DataError("Could not catch type of df: " + str(type(df)))
     return df
 
 
@@ -263,7 +266,7 @@ def cli(what):
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources'],
+                "population": ['Download population data from official sources', 'username'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
@@ -303,46 +306,52 @@ def cli(what):
         action='store_true')
 
     if 'start_date' in what_list:
+        if what == 'divi':
+            start_date_default = datetime.date(2020, 4, 24)
+        elif what == 'jh':
+            start_date_default = datetime.date(2020, 1, 22)
+        else:
+            start_date_default = dd.defaultDict['start_date']
         parser.add_argument(
-            '-s', '--start-date',
+            '-s', '--start-date', default=start_date_default,
             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is 2020-04-24',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['start_date'])
+            'Default is ' +
+            str(dd.defaultDict['start_date']) +
+            ' (2020-04-24 for divi and 2020-01-22 for jh)',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'end_date' in what_list:
         parser.add_argument(
-            '-e', '--end-date',
+            '-e', '--end-date', default=dd.defaultDict['end_date'],
             help='Defines date after which data download is stopped.'
             'Should have form: YYYY-mm-dd. Default is today',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['end_date'])
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'impute_dates' in what_list:
         parser.add_argument(
-            '-i', '--impute-dates',
+            '-i', '--impute-dates', default=dd.defaultDict['impute_dates'],
             help='the resulting dfs contain all dates instead of'
             ' omitting dates where no data was reported', action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument(
-            '-m', '--moving-average', type=int, default=0,
-            help='Compute a moving average of N days over the time series')
+            '-m', '--moving-average', type=int, default=dd.defaultDict['moving_average'],
+            help='Compute a moving average of N days over the time series. Default is ' + str(dd.defaultDict['moving_average']))
     if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', help='Plots the data.',
+        parser.add_argument('-p', '--make-plot', default=dd.defaultDict['make_plot'], help='Plots the data.',
                             action='store_true')
     if 'split_berlin' in what_list:
         parser.add_argument(
-            '-b', '--split-berlin',
+            '-b', '--split-berlin', default=dd.defaultDict['split_berlin'],
             help='Berlin data is split into different counties,'
             ' instead of having only one county for Berlin.',
             action='store_true')
     if 'rep_date' in what_list:
         parser.add_argument(
-            '--rep-date', default=False,
+            '--rep-date', default=dd.defaultDict['rep_date'],
             help='If reporting date is activated, the reporting date'
             'will be prefered over possibly given dates of disease onset.',
             action='store_true')
     if 'sanitize_data' in what_list:
         parser.add_argument(
-            '-sd', '--sanitize_data', type=int, default=1,
+            '-sd', '--sanitize_data', type=int, default=dd.defaultDict['sanitize_data'],
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
 
@@ -351,6 +360,14 @@ def cli(what):
         help='Disables all progress indicators (used for downloads etc.).',
         action='store_true')
 
+    if 'username' in what_list:
+        parser.add_argument(
+            '--username', type=str
+        )
+
+        parser.add_argument(
+            '--password', type=str
+        )
     args = vars(parser.parse_args())
     # disable progress indicators globally, if the argument --no-progress-indicators was specified
     progress_indicator.ProgressIndicator.disable_indicators(
@@ -404,9 +421,10 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     - json
     - json_timeasstring [Default]
     - hdf5
+    - csv
     - txt
     The file_type defines the file format and thus also the file ending.
-    The file format can be json, hdf5 or txt.
+    The file format can be json, hdf5, csv or txt.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
@@ -420,6 +438,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
                'hdf5': [".h5", {"key": "data"}],
+               'csv': [".csv", {}],
                'txt': [".txt", param_dict]}
 
     try:
@@ -428,7 +447,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring, hdf5 or txt.")
+            " does not exist. Use json, json_timeasstring, hdf5, csv or txt.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -441,6 +460,8 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
+    elif file_type == 'csv':
+        df.to_csv(out_path)
     elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 

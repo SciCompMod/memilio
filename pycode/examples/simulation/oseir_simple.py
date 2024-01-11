@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
 #
@@ -75,7 +75,7 @@ def run_oseir_simulation():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple',
+        'oseir_simple',
         description='Simple example demonstrating the setup and simulation of the OSEIR model.')
     args = arg_parser.parse_args()
     run_oseir_simulation()

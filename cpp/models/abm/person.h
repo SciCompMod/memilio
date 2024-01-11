@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,16 +20,17 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
-#include "abm/age.h"
 #include "abm/location_type.h"
+#include "abm/infection_state.h"
 #include "abm/parameters.h"
 #include "abm/time.h"
-#include "abm/infection.h"
 #include "abm/vaccine.h"
 #include "abm/mask_type.h"
 #include "abm/mask.h"
-
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/memory.h"
+#include "abm/movement_data.h"
 #include <functional>
 
 namespace mio
@@ -39,6 +40,7 @@ namespace abm
 
 struct LocationId;
 class Location;
+class Infection;
 
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
@@ -49,12 +51,91 @@ class Person
 {
 public:
     /**
+    * Random number generator of individual persons.
+    * Increments the random number generator counter of the person when used.
+    * Does not store its own key or counter.
+    * Instead the key needs to be provided from the outside, so that the RNG
+    * for all persons share the same key.
+    * The counter is taken from the person.
+    * Person::RandomNumberGenerator is cheap to construct and transparent
+    * for the compiler to optimize, so we don't store the RNG persistently, only the 
+    * counter, so we don't need to store the key in each person. This increases
+    * consistency (if the key is changed after the person is created) and 
+    * reduces the memory required per person.
+    * @see mio::RandomNumberGeneratorBase
+    */
+    class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
+    {
+    public:
+        /**
+        * Creates a RandomNumberGenerator for a person.
+        * @param key Key to be used by the generator.
+        * @param id Id of the Person.
+        * @param counter Reference to the Person's RNG Counter. 
+        */
+        RandomNumberGenerator(Key<uint64_t> key, uint32_t id, Counter<uint32_t>& counter)
+            : m_key(key)
+            , m_person_id(id)
+            , m_counter(counter)
+        {
+        }
+
+        /**
+        * Creates a RandomNumberGenerator for a person.
+        * Uses the same key as another RandomNumberGenerator.
+        * @param rng RandomNumberGenerator who's key will be used.
+        * @param person Reference to the Person who's counter will be used. 
+        */
+        RandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
+            : RandomNumberGenerator(rng.get_key(), person.get_person_id(), person.get_rng_counter())
+        {
+        }
+
+        /**
+        * @return Get the key.
+        */
+        Key<uint64_t> get_key() const
+        {
+            return m_key;
+        }
+
+        /**
+        * @return Get the current counter.
+        */
+        Counter<uint64_t> get_counter() const
+        {
+            return rng_totalsequence_counter<uint64_t>(m_person_id, m_counter);
+        }
+
+        /**
+        * Increment the counter.
+        */
+        void increment_counter()
+        {
+            ++m_counter;
+        }
+
+    private:
+        Key<uint64_t> m_key; ///< Global RNG Key
+        uint32_t m_person_id; ///< Id of the Person
+        Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
+    };
+
+    /**
      * @brief Create a Person.
-     * @param[in, out] location Initial location of the Person.
+     * @param[in, out] rng RandomNumberGenerator.
+     * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
+                    uint32_t person_id = INVALID_PERSON_ID);
+
+    /**
+     * @brief Create a copy of this #Person object with a new Location.
+     * @param[in, out] location The new #Location of the Person.
+     */
+    Person copy_person(Location& location);
 
     /**
      * @brief Compare two Person%s.
@@ -69,30 +150,35 @@ public:
      * The Person might become infected.
      * @param[in] t Current time.
      * @param[in] dt Length of the current Simulation TimeStep.
-     * @param[in, out] global_infection_parameters Infection parameters that are the same in all Location%s.
+     * @param[in, out] params Infection parameters that are the same in all Location%s.
      */
-    void interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params);
+    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params);
 
     /** 
      * @brief Migrate to a different Location.
      * @param[in, out] loc_new The new Location of the Person.
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
+    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0})
+    {
+        migrate_to(loc_new, TransportMode::Unknown, cells_new);
+    }
+
+    /** 
+     * @brief Migrate to a different Location.
+     * @param[in] loc_new The new Location of the Person.
+     * @param[in] transport_mode The TransportMode the Person used to get to the new Location.
+     * @param[in] cells_new The Cell%s that the Person visits at the new Location.
+     * */
+    void migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode,
+                    const std::vector<uint32_t>& cells = {0});
 
     /**
-     * @brief Get the latest Infection of the Person.
-     * @return The latest Infection of the Person.
+     * @brief Get the latest #Infection of the Person.
+     * @return The latest #Infection of the Person.
      */
-    Infection& get_infection()
-    {
-        return m_infections.back();
-    }
-
-    const Infection& get_infection() const
-    {
-        return m_infections.back();
-    }
+    Infection& get_infection();
+    const Infection& get_infection() const;
 
     /** 
      * @brief Get all Vaccination%s of the Person.
@@ -203,7 +289,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True the Person works from home.
      */
-    bool goes_to_work(TimePoint t, const MigrationParameters& params) const;
+    bool goes_to_work(TimePoint t, const Parameters& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -212,7 +298,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to work.
      */
-    TimeSpan get_go_to_work_time(const MigrationParameters& params) const;
+    TimeSpan get_go_to_work_time(const Parameters& params) const;
 
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
@@ -221,7 +307,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True if the Person goes to school.
      */
-    bool goes_to_school(TimePoint t, const MigrationParameters& params) const;
+    bool goes_to_school(TimePoint t, const Parameters& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -230,7 +316,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to school.
      */
-    TimeSpan get_go_to_school_time(const MigrationParameters& params) const;
+    TimeSpan get_go_to_school_time(const Parameters& params) const;
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
@@ -257,11 +343,12 @@ public:
      * @brief Simulates a viral test and returns the test result of the Person.
      * If the test is positive, the Person has to quarantine.
      * If the test is negative, quarantine ends.
+     * @param[inout] rng RandomNumberGenerator of the Person.
      * @param[in] t TimePoint of the test.
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
      */
-    bool get_tested(TimePoint t, const TestParameters& params);
+    bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
      * @brief Get the PersonID of the Person.
@@ -299,7 +386,7 @@ public:
      * @param[in] params The parameters of the Infection that are the same everywhere within the World.
      * @return The reduction factor of getting an Infection when wearing the Mask.
      */
-    ScalarType get_mask_protective_factor(const GlobalInfectionParameters& params) const;
+    ScalarType get_mask_protective_factor(const Parameters& params) const;
 
     /**
      * @brief For every #LocationType a Person has a compliance value between -1 and 1.
@@ -324,10 +411,11 @@ public:
 
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
+     * @param[inout] rng RandomNumberGenerator of the Person.
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(const Location& target);
+    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -348,25 +436,77 @@ public:
     }
 
     /**
-     * @brief Get the multiplicative factor on how likely an Infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
+     * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
      * @param[in] t TimePoint of check.
-     * @return Protection factor of the immune system to the given VirusVariant at the given TimePoint.
+     * @param[in] virus VirusVariant to check
+     * @param[in] params Parameters in the model.
+     * @returns Protection factor for general #Infection of the immune system to the given VirusVariant at the given TimePoint.
      */
-    ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const;
+
+    /**
+     * @brief Add a new #Vaccination
+     * @param[in] v ExposureType (i. e. vaccine) the person takes.  
+     * @param[in] t TimePoint of the Vaccination.
+    */
+    void add_new_vaccination(ExposureType v, TimePoint t)
     {
-        return 1.; // put implementation in .cpp
+        m_vaccinations.push_back(Vaccination(v, t));
     }
 
     /**
-     * @brief Get the multiplicative factor on how severe a new Infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
-     * @param[in] t TimePoint of check.
-     * @return Severity factor of a new Infection with the given VirusVariant at the given TimePoint.
-     */
-    ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+     * @brief Get the transport mode the Person used to get to its current Location.
+     * @return TransportMode the Person used to get to its current Location.
+    */
+    mio::abm::TransportMode get_last_transport_mode() const
     {
-        return 1.; // put implementation in .cpp
+        return m_last_transport_mode;
+    }
+
+    /**
+    * Get this persons RandomNumberGenerator counter.
+    * @see mio::abm::Person::RandomNumberGenerator.
+    */
+    Counter<uint32_t>& get_rng_counter()
+    {
+        return m_rng_counter;
+    }
+
+    /**
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+    */
+    std::pair<ExposureType, TimePoint> get_latest_protection() const;
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Person");
+        obj.add_element("Location", *m_location);
+        obj.add_element("age", m_age);
+        obj.add_element("id", m_person_id);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Person> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Person");
+        auto loc = obj.expect_element("Location", mio::Tag<Location>{});
+        auto age = obj.expect_element("age", Tag<uint32_t>{});
+        auto id  = obj.expect_element("id", Tag<uint32_t>{});
+        return apply(
+            io,
+            [](auto&& loc_, auto&& age_, auto&& id_) {
+                return Person{mio::RandomNumberGenerator(), loc_, AgeGroup(age_), id_};
+            },
+            loc, age, id);
     }
 
 private:
@@ -388,6 +528,8 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
+    mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
 };
 
 } // namespace abm

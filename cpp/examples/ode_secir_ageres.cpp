@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -61,13 +61,15 @@ int main()
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 9.5;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 7.1;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * nb_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * nb_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * nb_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * nb_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * nb_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * nb_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * nb_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * nb_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * nb_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * nb_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
@@ -93,7 +95,7 @@ int main()
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
-        char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
+        char vars[] = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
         printf("\n # t");
         for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
             printf(" %c", vars[k]);
@@ -127,6 +129,5 @@ int main()
 
             printf("\t %c_otal: %.0f\n", vars[k], dummy);
         }
-
     }
 }

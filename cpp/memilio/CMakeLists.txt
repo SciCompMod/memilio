@@ -21,7 +21,9 @@ add_library(memilio
     epidemiology/simulation_day.h
     geography/holiday_data.ipp
     compartments/compartmentalmodel.h
+    compartments/flow_model.h
     compartments/simulation.h
+    compartments/flow_simulation.h
     compartments/parameter_studies.h
     io/io.h
     io/io.cpp
@@ -64,7 +66,9 @@ add_library(memilio
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp
+    utils/index_range.h
     utils/index.h
+    utils/flow.h
     utils/custom_index_array.h
     utils/memory.h
     utils/parameter_distributions.h
@@ -82,6 +86,8 @@ add_library(memilio
     utils/random_number_generator.cpp
     utils/miompi.h
     utils/miompi.cpp
+    utils/mioomp.h
+    utils/type_list.h
 )
 
 target_include_directories(memilio PUBLIC
@@ -90,8 +96,8 @@ target_include_directories(memilio PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features(memilio PUBLIC cxx_std_14)
-target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking)
+target_compile_features(memilio PUBLIC cxx_std_17)
+target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123)
 target_compile_options(memilio
     PRIVATE
     ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
@@ -110,4 +116,8 @@ endif()
 
 if(MEMILIO_ENABLE_MPI)
     target_link_libraries(memilio PUBLIC MPI::MPI_CXX)
+endif()
+
+if(MEMILIO_ENABLE_OPENMP)
+    target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
 endif()

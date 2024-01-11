@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -29,8 +29,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getHospitalizationData as ghd
 from memilio.epidata import progress_indicator
-
-progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
@@ -76,6 +74,7 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('builtins.print')
     def test_divi_data_hospit_sanity_checks(self, mock_print):

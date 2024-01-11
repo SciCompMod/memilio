@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -23,10 +23,10 @@ import os
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
-from memilio.simulation.secir import Model, Simulation, simulate
+from memilio.simulation.secir import Model, Simulation, simulate, simulate_flows
 
 
 class Test_osecir_integration(unittest.TestCase):
@@ -42,7 +42,6 @@ class Test_osecir_integration(unittest.TestCase):
         self.dt = 0.1
 
         cont_freq = 10
-        nb_total_t0, nb_exp_t0, nb_inf_t0, nb_car_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0 = 10000, 100, 50, 50, 20, 10, 10, 0
 
         A0 = AgeGroup(0)
 
@@ -54,21 +53,17 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.TimeInfectedSymptoms[A0] = 5.8
         model.parameters.TimeInfectedSevere[A0] = 9.5
         model.parameters.TimeInfectedCritical[A0] = 7.1
-
-        contacts = ContactMatrix(np.r_[cont_freq])
-        contacts.add_damping(
-            Damping(coeffs=np.r_[0.7], t=30.0, level=0, type=0))
-        model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
-
-        model.populations[A0, State.Exposed] = nb_exp_t0
-        model.populations[A0, State.InfectedNoSymptoms] = nb_car_t0
-        model.populations[A0, State.InfectedSymptoms] = nb_inf_t0
-        model.populations[A0, State.InfectedSevere] = nb_hosp_t0
-        model.populations[A0, State.InfectedCritical] = nb_icu_t0
-        model.populations[A0, State.Recovered] = nb_rec_t0
-        model.populations[A0, State.Dead] = nb_dead_t0
-        model.populations.set_difference_from_total(
-            (A0, State.Susceptible), nb_total_t0)
+        
+        model.populations[A0, State.Susceptible] = 7600
+        model.populations[A0, State.Exposed] = 100
+        model.populations[A0, State.InfectedNoSymptoms] = 50
+        model.populations[A0, State.InfectedNoSymptomsConfirmed] = 0
+        model.populations[A0, State.InfectedSymptoms] = 50
+        model.populations[A0, State.InfectedSymptomsConfirmed] = 0
+        model.populations[A0, State.InfectedSevere] = 20
+        model.populations[A0, State.InfectedCritical] = 10
+        model.populations[A0, State.Recovered] = 10
+        model.populations[A0, State.Dead] = 0
 
         model.parameters.TransmissionProbabilityOnContact[A0] = 0.05
         model.parameters.RelativeTransmissionNoSymptoms[A0] = 0.7
@@ -80,6 +75,11 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.CriticalPerSevere[A0] = 0.25
         model.parameters.DeathsPerCritical[A0] = 0.3
 
+        contacts = ContactMatrix(np.r_[cont_freq])
+        contacts.add_damping(
+            Damping(coeffs=np.r_[0.7], t=30.0, level=0, type=0))
+        model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
+
         model.apply_constraints()
 
         self.model = model
@@ -90,6 +90,19 @@ class Test_osecir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
+    def test_flow_simulation_simple(self):
+        flow_sim_results = simulate_flows(
+            t0=0., tmax=100., dt=0.1, model=self.model)
+        flows = flow_sim_results[1]
+        self.assertEqual(flows.get_time(0), 0.)
+        self.assertEqual(flows.get_last_time(), 100.)
+        self.assertEqual(len(flows.get_last_value()), 15)
+
+        compartments = flow_sim_results[0]
+        self.assertEqual(compartments.get_time(0), 0.)
+        self.assertEqual(compartments.get_last_time(), 100.)
+        self.assertEqual(len(compartments.get_last_value()), 10)
+
     def test_simulation_simple(self):
         sim = Simulation(self.model, t0=0., dt=0.1)
         sim.advance(tmax=100.)
@@ -98,7 +111,7 @@ class Test_osecir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
-    def test_compare_seir_with_cpp(self):
+    def test_compare_with_cpp(self):
         """
         Tests the correctness of the python bindings. The results of a simulation
         in python get compared to the results of a cpp simulation. Cpp simulation

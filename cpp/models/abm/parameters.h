@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
@@ -20,7 +20,6 @@
 #ifndef EPI_ABM_PARAMETERS_H
 #define EPI_ABM_PARAMETERS_H
 
-#include "abm/age.h"
 #include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
@@ -29,9 +28,11 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include <limits>
+#include <set>
 
 namespace mio
 {
@@ -42,10 +43,10 @@ namespace abm
  * @brief Time that a Person is infected but not yet infectious.
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -54,10 +55,10 @@ struct IncubationPeriod {
 };
 
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -66,10 +67,10 @@ struct InfectedNoSymptomsToSymptoms {
 };
 
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -78,10 +79,10 @@ struct InfectedNoSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -90,10 +91,10 @@ struct InfectedSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -102,10 +103,10 @@ struct InfectedSymptomsToSevere {
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -114,10 +115,10 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -126,10 +127,10 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -138,10 +139,10 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -150,10 +151,10 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -172,10 +173,10 @@ struct ViralLoadDistributionsParameters {
 };
 
 struct ViralLoadDistributions {
-    using Type = CustomIndexArray<ViralLoadDistributionsParameters, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<ViralLoadDistributionsParameters, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
+        Type default_val({VirusVariant::Count, size},
                          ViralLoadDistributionsParameters{{8.1, 8.1}, {2., 2.}, {-0.17, -0.17}});
         return default_val;
     }
@@ -196,10 +197,9 @@ struct InfectivityDistributionsParameters {
 
 struct InfectivityDistributions {
     using Type = CustomIndexArray<InfectivityDistributionsParameters, VirusVariant, AgeGroup>;
-    static Type get_default()
+    static Type get_default(AgeGroup size)
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count},
-                         InfectivityDistributionsParameters{{-7., -7.}, {1., 1.}});
+        Type default_val({VirusVariant::Count, size}, InfectivityDistributionsParameters{{-7., -7.}, {1., 1.}});
         return default_val;
     }
     static std::string name()
@@ -212,10 +212,10 @@ struct InfectivityDistributions {
  * @brief Probability that an Infection is detected.
  */
 struct DetectInfection {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.5);
+        return Type({VirusVariant::Count, size}, 1.);
     }
     static std::string name()
     {
@@ -224,11 +224,11 @@ struct DetectInfection {
 };
 
 /**
- * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
+ * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue, MaskType>;
-    static auto get_default()
+    static Type get_default(AgeGroup /*size*/)
     {
         return Type({MaskType::Count}, 1.);
     }
@@ -239,53 +239,13 @@ struct MaskProtection {
 };
 
 /**
- * @brief Parameters of the Infection that are the same everywhere within the World.
- */
-using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
-                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, MaskProtection>;
-
-/**
- * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
- */
-struct MaximumContacts {
-    using Type = ScalarType;
-    static constexpr Type get_default()
-    {
-        return std::numeric_limits<ScalarType>::max();
-    }
-    static std::string name()
-    {
-        return "MaximumContacts";
-    }
-};
-
-/**
- * contact rates
-*/
-struct ContactRates {
-    using Type = CustomIndexArray<ScalarType, AgeGroup, AgeGroup>;
-    static Type get_default()
-    {
-        return Type({AgeGroup::Count, AgeGroup::Count},
-                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
-    }
-    static std::string name()
-    {
-        return "ContactRates";
-    }
-};
-
-/**
- * aerosol transmission rates
+ * @brief Aerosol transmission rates. 
 */
 struct AerosolTransmissionRates {
     using Type = CustomIndexArray<ScalarType, VirusVariant>;
-    static Type get_default()
+    static Type get_default(AgeGroup /*size*/)
     {
-        return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day
+        return Type({VirusVariant::Count}, 1.0);
     }
     static std::string name()
     {
@@ -293,10 +253,60 @@ struct AerosolTransmissionRates {
     }
 };
 
+using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
+
 /**
- * @brief Parameters of the Infection that depend on the Location.
+ * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on #ExposureType,
+ * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, AerosolTransmissionRates>;
+struct InfectionProtectionFactor {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    static auto get_default(AgeGroup size)
+    {
+        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "InfectionProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against severe symptoms after #Infection and #Vaccination, which depends on #ExposureType,
+ * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
+ */
+struct SeverityProtectionFactor {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    static auto get_default(AgeGroup size)
+    {
+        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "SeverityProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against high viral load. Its value is between 0 and 1.
+ */
+struct HighViralLoadProtectionFactor {
+    using Type = InputFunctionForProtectionLevel;
+    static auto get_default()
+    {
+        return Type([](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "HighViralLoadProtectionFactor";
+    }
+};
 
 /**
  * @brief Parameters that describe the reliability of a test.
@@ -353,7 +363,7 @@ struct PCRTest : public GenericTest {
  */
 struct LockdownDate {
     using Type = TimePoint;
-    static auto get_default()
+    static auto get_default(AgeGroup /*size*/)
     {
         return TimePoint(std::numeric_limits<int>::max());
     }
@@ -368,9 +378,9 @@ struct LockdownDate {
  */
 struct BasicShoppingRate {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static auto get_default()
+    static auto get_default(AgeGroup size)
     {
-        return Type({AgeGroup::Count}, 1.0);
+        return Type({size}, 1.0);
     }
     static std::string name()
     {
@@ -383,7 +393,7 @@ struct BasicShoppingRate {
  */
 struct WorkRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
-    static auto get_default()
+    static auto get_default(AgeGroup /*size*/)
     {
         return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
@@ -398,7 +408,7 @@ struct WorkRatio {
  */
 struct SchoolRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
-    static auto get_default()
+    static auto get_default(AgeGroup /*size*/)
     {
         return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
@@ -413,9 +423,9 @@ struct SchoolRatio {
  */
 struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
-    static auto get_default()
+    static auto get_default(AgeGroup size)
     {
-        return Type(Eigen::VectorXd::Constant((size_t)AgeGroup::Count, 1.0));
+        return Type(Eigen::VectorXd::Constant((size_t)size, 1.0));
     }
     static std::string name()
     {
@@ -428,9 +438,9 @@ struct SocialEventRate {
  */
 struct GotoWorkTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default()
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(6));
     }
     static std::string name()
     {
@@ -443,9 +453,9 @@ struct GotoWorkTimeMinimum {
  */
 struct GotoWorkTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default()
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
     }
     static std::string name()
     {
@@ -458,9 +468,9 @@ struct GotoWorkTimeMaximum {
  */
 struct GotoSchoolTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default()
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(6));
     }
     static std::string name()
     {
@@ -473,9 +483,9 @@ struct GotoSchoolTimeMinimum {
  */
 struct GotoSchoolTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default()
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
     }
     static std::string name()
     {
@@ -484,11 +494,250 @@ struct GotoSchoolTimeMaximum {
 };
 
 /**
- * @brief Parameters that control the migration between Location%s.
+ * @brief The set of AgeGroups that can go to school.
  */
-using MigrationParameters =
-    ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
-                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
+struct AgeGroupGotoSchool {
+    using Type = CustomIndexArray<bool, AgeGroup>;
+    static Type get_default(AgeGroup num_agegroups)
+    {
+        auto a = Type(num_agegroups, false);
+        a[AgeGroup(1)] = true;
+        return a;
+    }
+    static std::string name()
+    {
+        return "AgeGroupGotoSchool";
+    }
+};
+
+/**
+ * @brief The set of AgeGroups that can go to work.
+ */
+struct AgeGroupGotoWork {
+    using Type = CustomIndexArray<bool, AgeGroup>;
+    static Type get_default(AgeGroup num_agegroups)
+    {
+        auto a = Type(num_agegroups, false);
+        a[AgeGroup(2)] = true;
+        a[AgeGroup(3)] = true;
+        return a;
+    }
+    static std::string name()
+    {
+        return "AgeGroupGotoWork";
+    }
+};
+
+using ParametersBase =
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
+                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
+                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+
+/**
+ * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
+ */
+struct MaximumContacts {
+    using Type = ScalarType;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return std::numeric_limits<ScalarType>::max();
+    }
+    static std::string name()
+    {
+        return "MaximumContacts";
+    }
+};
+
+/**
+ * contact rates
+*/
+struct ContactRates {
+    using Type = CustomIndexArray<ScalarType, AgeGroup, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, size},
+                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
+    }
+    static std::string name()
+    {
+        return "ContactRates";
+    }
+};
+
+/**
+ * @brief Parameters of the Infection that depend on the Location.
+ */
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
+
+/**
+ * @brief Parameters of the simulation that are the same everywhere within the World.
+ */
+class Parameters : public ParametersBase
+{
+public:
+    Parameters(size_t num_agegroups)
+        : ParametersBase(AgeGroup(num_agegroups))
+        , m_num_groups(num_agegroups)
+    {
+    }
+
+    /**
+    * @brief Get the number of the age groups.
+    */
+    size_t get_num_groups() const
+    {
+        return m_num_groups;
+    }
+
+    /**
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * if constraints are not satisfied.
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
+     */
+    bool check_constraints() const
+    {
+        for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
+
+            if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}] < 0) {
+                log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
+                          (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error(
+                    "Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller than {:d}",
+                    (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error(
+                    "Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller than {:d}",
+                    (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error(
+                    "Constraint check: Parameter InfectedSymptomsToRecovered of age group {:.0f} smaller than {:d}",
+                    (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter InfectedSymptomsToSevere of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<SevereToCritical>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<CriticalToDead>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller than {:d}", (size_t)i,
+                          0);
+                return true;
+            }
+
+            if (this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return true;
+            }
+
+            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0 ||
+                this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] > 1.0) {
+                log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller than {:d} or "
+                          "larger than {:d}",
+                          (size_t)i, 0, 1);
+                return true;
+            }
+
+            if (this->get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoWorkTimeMinimum>()[i].seconds() > this->get<GotoWorkTimeMaximum>()[i].seconds()) {
+                log_error("Constraint check: Parameter GotoWorkTimeMinimum of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
+                return true;
+            }
+
+            if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds() ||
+                this->get<GotoWorkTimeMaximum>()[i] > days(1)) {
+                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
+                          "than one day time span",
+                          (size_t)i, this->get<GotoWorkTimeMinimum>()[i].seconds());
+                return true;
+            }
+
+            if (this->get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoSchoolTimeMinimum>()[i].seconds() > this->get<GotoSchoolTimeMaximum>()[i].seconds()) {
+                log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
+                return true;
+            }
+
+            if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds() ||
+                this->get<GotoSchoolTimeMaximum>()[i] > days(1)) {
+                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
+                          "than one day time span",
+                          (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
+                return true;
+            }
+        }
+
+        if (this->get<MaskProtection>()[MaskType::Community] < 0.0 ||
+            this->get<MaskProtection>()[MaskType::Community] > 1.0) {
+            log_error(
+                "Constraint check: Parameter MaskProtection for MaskType Community is smaller {:d} or larger {:d}", 0,
+                1);
+            return true;
+        }
+
+        if (this->get<MaskProtection>()[MaskType::FFP2] < 0.0 || this->get<MaskProtection>()[MaskType::FFP2] > 1.0) {
+            log_error("Constraint check: Parameter MaskProtection for MaskType FFP2 is smaller {:d} or larger {:d}", 0,
+                      1);
+            return true;
+        }
+
+        if (this->get<MaskProtection>()[MaskType::Surgical] < 0.0 ||
+            this->get<MaskProtection>()[MaskType::Surgical] > 1.0) {
+            log_error("Constraint check: Parameter MaskProtection for MaskType Surgical smaller {:d} or larger {:d}", 0,
+                      1);
+            return true;
+        }
+
+        if (this->get<LockdownDate>().seconds() < 0.0) {
+            log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
+            return true;
+        }
+
+        return false;
+    }
+
+private:
+    size_t m_num_groups;
+};
 
 } // namespace abm
 } // namespace mio

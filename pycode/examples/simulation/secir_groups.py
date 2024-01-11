@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
-# Authors: Martin J. Kuehn, Wadim Koslow, Annalena Lange
+# Authors: Martin J. Kuehn, Wadim Koslow, Annalena Lange, Khoa Nguyen
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -25,8 +25,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import (Model, Simulation,
                                       interpolate_simulation_result, simulate)
@@ -86,7 +86,9 @@ def run_secir_groups_simulation(show_plot=True):
         # Initial number of peaople in each compartment
         model.populations[AgeGroup(i), State.Exposed] = 100
         model.populations[AgeGroup(i), State.InfectedNoSymptoms] = 50
+        model.populations[AgeGroup(i), State.InfectedNoSymptomsConfirmed] = 0
         model.populations[AgeGroup(i), State.InfectedSymptoms] = 50
+        model.populations[AgeGroup(i), State.InfectedSymptomsConfirmed] = 0
         model.populations[AgeGroup(i), State.InfectedSevere] = 20
         model.populations[AgeGroup(i), State.InfectedCritical] = 10
         model.populations[AgeGroup(i), State.Recovered] = 10
