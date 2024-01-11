@@ -142,7 +142,8 @@ TEST(TestPerson, quarantine)
 TEST(TestPerson, get_tested)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
+    auto rng                    = mio::RandomNumberGenerator();
+    mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     mio::abm::TimePoint t(0);
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -164,14 +165,15 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.6))
         .WillOnce(Return(0.999));
     ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), true);
-    ASSERT_EQ(infected.is_in_quarantine(), true);
+    ASSERT_EQ(infected.is_in_quarantine(t, params), true);
+    infected.remove_quarantine();
     ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), false);
-    ASSERT_EQ(infected.is_in_quarantine(), false);
+    ASSERT_EQ(infected.is_in_quarantine(t, params), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), false);
-    ASSERT_EQ(susceptible.is_in_quarantine(), false);
+    ASSERT_EQ(susceptible.is_in_quarantine(t, params), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), true);
-    ASSERT_EQ(susceptible.is_in_quarantine(), true);
-    ASSERT_EQ(susceptible.get_time_since_negative_test(), mio::abm::days(0));
+    ASSERT_EQ(susceptible.is_in_quarantine(t, params), true);
+    ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 
     // Test antigen test
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
@@ -186,7 +188,7 @@ TEST(TestPerson, get_tested)
     ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), true);
-    ASSERT_EQ(susceptible.get_time_since_negative_test(), mio::abm::days(0));
+    ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 }
 
 TEST(TestPerson, getCells)
