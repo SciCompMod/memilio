@@ -1,52 +1,22 @@
 SCOREP_FILE_NAMES_BEGIN # This is a comment
     EXCLUDE *
-    INCLUDE */models/*
-    INCLUDE */simulations/*
-    INCLUDE */memilio/*
+    INCLUDE */models/abm*
+    INCLUDE */simulations/abm*
 SCOREP_FILE_NAMES_END
 
 SCOREP_REGION_NAMES_BEGIN
-    EXCLUDE *
-    INCLUDE mio::abm*
     # initialization
     EXCLUDE *determine_infection_state* *pick_age_group_from_age_distribution* *add_household_to_world*
     EXCLUDE *add_household_group_to_world* *make_uniform_households* *make_homes_with_families* *assign_infection_state*
-    EXCLUDE *set_parameters* *create_world_from_statistical_data* *create_assign_locations* *create_sampled_simulation*
-    EXLCUDE *set_home_office* *set_school_closure* *close_social_events*
-    EXCLUDE *World::add_person* *World::add_location* *World::prepare* *World::use_migration_rules*
-    EXCLUDE *Simulation::initialize_locations*
+    EXCLUDE *set_parameters* *create_world_from_statistical_data* *create_assign_locations* *create_sampled_world*
+    EXCLUDE *set_home_office* *set_school_closure* *close_social_events* *last_household_gets_the_rest*
+    EXCLUDE *World::add_person* *World::add_location* *World::use_migration_rules*
     EXCLUDE *Household::add_members*
     EXCLUDE *HouseholdGroup::add_households*
 
-    EXCLUDE *mio::rng_totalsequence_counter* *mio::flatten_index*
-    EXCLUDE *operator* *::product* *internal::check_for_aliasing* *internal::smart_copy*
-    EXCLUDE *std::enable_if*
-
-    EXCLUDE *Person::get_location* *Person::get_infection_state*
-
-    # up to here estimated memory requirements: 3831MB
-    # other small functions
-    EXCLUDE *Location::get_type* # 2579MB
-    EXCLUDE *World::get_individualized_location* # 2257MB
-    EXCLUDE *World::find_location* # 1948MB
-    #EXCLUDE *get_buried* # 1944MB instead of find_location
-
-    # EXCLUDE *TestingScheme::is_active*
-    # EXCLUDE *TestingCriteria::evaluate*
-    # *World::find_location* *World::get_persons*
-    # EXCLUDE *World::get_testing_strategy* *World::get_locations*
-    # *Person::get_infection*
-    # *Person::get_assigned_location_index* *Person::get_person_id*
-    # EXCLUDE *Person::get_cells* *Person::is_infected* *Person::get_mask_protective_factor* *Person::migrate_to*
-    # EXCLUDE *Person::get_go_to_school_time* *Person::apply_mask_intervention* *Person::set_assigned_location* *Person::goes_to_work*
-    # EXCLUDE *Person::goes_to_school*
-    # EXCLUDE *Location::get_number_persons* *Location::lock* *Location::unlock*
-    # EXCLUDE *Infection::get_virus_variant*
-    # EXCLUDE *get_buried* *return_home_when_recovered* *go_to_hospital* *go_to_icu* *go_to_school* *go_to_work* *go_to_shop*
-    # EXCLUDE *go_to_event* *go_to_quarantine* *random_transition*
-
-
-
-    
-    # EXCLUDE *TestingStrategy::run_strategy*
+    EXCLUDE *World::get_individualized_location* *World::get_persons* *World::get_locations* *World::get_trip_list* *World::get_testing_strategy*
+    EXCLUDE *Person::get_location* *Person::get_infection_state* *Person::get_person_id* *Person::get_cells* *Person::is_infected*
+    EXCLUDE *Person::set_assigned_location* *Person::get_mask_protective_factor* *Person::get_infection*
+    EXCLUDE *Location::get_subpopulation* *Location::get_number_persons*
+    EXCLUDE *Infection::get_virus_variant*
 SCOREP_REGION_NAMES_END
