@@ -29,7 +29,7 @@
 #include <iomanip>
 #include <vector>
 
-TEST(TestOdeSeirDef, simulateDefault)
+TEST(TestOdeSeir, simulateDefault)
 {
     double t0   = 0;
     double tmax = 1;
@@ -41,7 +41,7 @@ TEST(TestOdeSeirDef, simulateDefault)
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
 
-class TestOdeSeir : public testing::Test
+class ModelTestOdeSeir : public testing::Test
 {
 protected:
     void SetUp() override
@@ -78,7 +78,7 @@ public:
     mio::oseir::Model model;
 };
 
-TEST_F(TestOdeSeir, CompareSeirWithPyBindings)
+TEST_F(ModelTestOdeSeir, compareWithPreviousRun)
 {
     /*
     This test test the cpp model. The same test is implemented in python to compare the results of both simulations.
@@ -114,7 +114,7 @@ TEST_F(TestOdeSeir, CompareSeirWithPyBindings)
     }
 }
 
-TEST_F(TestOdeSeir, checkPopulationConservation)
+TEST_F(ModelTestOdeSeir, checkPopulationConservation)
 {
     auto result        = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
     double num_persons = 0.0;
@@ -124,7 +124,7 @@ TEST_F(TestOdeSeir, checkPopulationConservation)
     EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
 
-TEST_F(TestOdeSeir, check_constraints_parameters)
+TEST_F(ModelTestOdeSeir, check_constraints_parameters)
 {
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
@@ -149,7 +149,7 @@ TEST_F(TestOdeSeir, check_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(TestSeir, apply_constraints_parameters)
+TEST(TestOdeSeir, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
     mio::oseir::Model model;
@@ -175,7 +175,7 @@ TEST(TestSeir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(TestSeir, get_reproduction_numbers)
+TEST(TestOdeSeir, get_reproduction_numbers)
 {
     mio::oseir::Model model;
 
@@ -258,7 +258,7 @@ TEST(TestSeir, get_reproduction_numbers)
                                                result)); //Test for an index that is out of range
 }
 
-TEST(TestSeir, get_reproduction_number)
+TEST(TestOdeSeir, get_reproduction_number)
 {
     mio::oseir::Model model;
 

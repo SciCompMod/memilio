@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
-# Authors:
+# Authors: Maximilian Betz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
