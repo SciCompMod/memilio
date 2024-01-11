@@ -24,7 +24,7 @@
 #include "memilio/math/stepper_wrapper.h"
 #include <gtest/gtest.h>
 
-TEST(TestSecir, compareAgeResWithSingleRun)
+TEST(TestOdeSecir, compareAgeResWithSingleRun)
 {
     double t0   = 0;
     double tmax = 50;
@@ -79,9 +79,14 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
-    mio::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model);
+    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    integrator->set_dt_min(0.3);
+    integrator->set_dt_max(1.0);
+    integrator->set_rel_tolerance(1e-4);
+    integrator->set_abs_tolerance(1e-1);
+    mio::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model, integrator);
 
-    auto compare = load_test_data_csv<double>("ode-secihurd-ageres-compare.csv");
+    auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
     ASSERT_EQ(compare.size(), static_cast<size_t>(secihurd.get_num_time_points()));
     for (size_t i = 0; i < compare.size(); i++) {
@@ -97,7 +102,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     }
 }
 
-TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
+TEST(TestOdeSecir, compareAgeResWithSingleRunCashKarp)
 {
     double t0   = 0;
     double tmax = 50;

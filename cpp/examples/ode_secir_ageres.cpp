@@ -95,15 +95,16 @@ int main()
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
-        char vars[] = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
+
+        std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
         printf("\n # t");
         for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
-            printf(" %c", vars[k]);
+            printf(" %s", vars[k].c_str());
         }
         auto num_points = static_cast<size_t>(secir.get_num_time_points());
-        for (size_t i = 0; i < num_points; i++) {
-            printf("\n%.14f ", secir.get_time(i));
-            Eigen::VectorXd res_j = secir.get_value(i);
+        for (size_t t = 0; t < num_points; t++) {
+            printf("\n%.14f ", secir.get_time(t));
+            Eigen::VectorXd res_j = secir.get_value(t);
             for (size_t j = 0; j < (size_t)mio::osecir::InfectionState::Count; j++) {
                 double dummy = 0;
 
@@ -122,12 +123,12 @@ int main()
             double dummy = 0;
 
             for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
-                printf("\t %c[%d]: %.0f", vars[k], (int)i,
+                printf("\t %s[%d]: %.0f", vars[k].c_str(), (int)i,
                     secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i]);
                 dummy += secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i];
             }
 
-            printf("\t %c_otal: %.0f\n", vars[k], dummy);
+            printf("\t %s_otal: %.0f\n", vars[k].c_str(), dummy);
         }
     }
 }
