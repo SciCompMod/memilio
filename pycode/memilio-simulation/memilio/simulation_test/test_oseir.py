@@ -105,7 +105,7 @@ class Test_oseir_integration(unittest.TestCase):
 
                 tol = rel_tol * ref
                 self.assertAlmostEqual(ref, actual, delta=tol)
-                
+
     def test_flow_simulation_simple(self):
         flow_sim_results = simulate_flows(
             t0=0., tmax=100., dt=0.1, model=self.model)

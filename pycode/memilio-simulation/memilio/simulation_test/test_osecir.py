@@ -54,7 +54,7 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.TimeInfectedSymptoms[A0] = 5.8
         model.parameters.TimeInfectedSevere[A0] = 9.5
         model.parameters.TimeInfectedCritical[A0] = 7.1
-        
+
         model.populations[A0, State.Exposed] = nb_exp_t0
         model.populations[A0, State.InfectedNoSymptoms] = nb_car_t0
         model.populations[A0, State.InfectedNoSymptomsConfirmed] = 0

@@ -35,7 +35,6 @@ class Test_osecir_integration(unittest.TestCase):
 
     def setUp(self):
 
-
         self.t0 = 0
         self.tmax = 50
         self.dt = 0.1
@@ -126,7 +125,7 @@ class Test_osecir_integration(unittest.TestCase):
 
         result = simulate(t0=self.t0, tmax=self.tmax,
                           dt=self.dt, model=self.model)
-        
+
         # compare num elements
         for index_timestep, timestep in refData.iterrows():
             # compare num elements
@@ -140,7 +139,7 @@ class Test_osecir_integration(unittest.TestCase):
                 for index_agegroup in range(0, self.nb_groups):
                     dummy += result[index_timestep][
                         index_compartment + self.nb_comp * index_agegroup]
-                
+
                 self.assertAlmostEqual(
                     timestep[index_compartment + 1],
                     dummy, delta=1e-10)
