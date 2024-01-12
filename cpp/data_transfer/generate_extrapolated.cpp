@@ -291,8 +291,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 
     std::string data_dir;
-    mio::Date start_date = mio::Date(2021, 6, 1);
-    double num_days_sim  = 2.0;
+    mio::Date start_date = mio::Date(2023, 6, 1);
+    double num_days      = 2.0;
 
     if (argc == 1) {
         data_dir = "../../data";
@@ -301,9 +301,9 @@ int main(int argc, char** argv)
         data_dir = argv[1];
     }
     else if (argc == 6) {
-        data_dir     = argv[1];
-        start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
-        num_days_sim = std::atoi(argv[5]);
+        data_dir   = argv[1];
+        start_date = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+        num_days   = std::atoi(argv[5]);
     }
     else {
         mio::mpi::finalize();
@@ -322,7 +322,7 @@ int main(int argc, char** argv)
     }
 
     //create or load graph
-    auto create_extrapolated_data = generate_extrapolated_data(start_date, num_days_sim, data_dir);
+    auto create_extrapolated_data = generate_extrapolated_data(start_date, num_days, data_dir);
 
     mio::mpi::finalize();
     return 0;
