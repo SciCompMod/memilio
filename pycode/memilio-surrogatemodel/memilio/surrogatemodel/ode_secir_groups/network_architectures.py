@@ -87,7 +87,7 @@ def cnn_multi_input_multi_output(label_width, num_age_groups=6):
 
 def lstm_multi_input_multi_output(label_width, num_age_groups=6):
     """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
-    one single time step in the future.
+    multiple time steps in the future.
 
     Input and output have shape [number of expert model simulations, time points in simulation,
     number of individuals in infection states].
