@@ -22,6 +22,7 @@
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/parameters.h"
@@ -691,13 +692,27 @@ private:
  * @param t0 start time.
  * @param tmax end time.
  * @param dt time step.
- * @param model secir model to simulate.
+ * @param model SECIRVVS model to simulate.
  * @param integrator optional integrator, uses rk45 if nullptr.
  */
 inline auto simulate(double t0, double tmax, double dt, const Model& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     return mio::simulate<Model, Simulation<>>(t0, tmax, dt, model, integrator);
+}
+
+/**
+ * Runs a FlowSimulation using a SECIRVVS model.
+ * @param t0 start time.
+ * @param tmax end time.
+ * @param dt time step.
+ * @param model SECIRVVS model to simulate.
+ * @param integrator optional integrator, uses rk45 if nullptr.
+ */
+inline auto simulate_flows(double t0, double tmax, double dt, const Model& model,
+                           std::shared_ptr<IntegratorCore> integrator = nullptr)
+{
+    return mio::simulate_flows<Model, Simulation<mio::FlowSimulation<Model>>>(t0, tmax, dt, model, integrator);
 }
 
 //see declaration above.
