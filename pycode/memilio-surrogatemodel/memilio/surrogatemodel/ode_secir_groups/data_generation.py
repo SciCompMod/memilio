@@ -39,14 +39,14 @@ def interpolate_age_groups(data_entry):
     """! Interpolates the age groups from the population data into the age groups used in the simulation. 
     We assume that the people in the age groups are uniformly distributed.
     @param data_entry Data entry containing the population data.
-    @return Dictionary containing the interpolated age groups.
+    @return List containing the population in each age group used in the simulation.
     """
     age_groups = {
         "A00-A04": data_entry['<3 years'] + data_entry['3-5 years'] * 2 / 3,
         "A05-A14": data_entry['3-5 years'] * 1 / 3 + data_entry['6-14 years'],
         "A15-A34": data_entry['15-17 years'] + data_entry['18-24 years'] + data_entry['25-29 years'] + data_entry['30-39 years'] * 1 / 2,
         "A35-A59": data_entry['30-39 years'] * 1 / 2 + data_entry['40-49 years'] + data_entry['50-64 years'] * 2 / 3,
-        "A60-A79": data_entry['50-64 years'] * 1 / 3 + data_entry['65-74 years'] * 1 / 5,
+        "A60-A79": data_entry['50-64 years'] * 1 / 3 + data_entry['65-74 years'] + data_entry['>74 years'] * 1 / 5,
         "A80+": data_entry['>74 years'] * 4 / 5
     }
     return [age_groups[key] for key in age_groups]

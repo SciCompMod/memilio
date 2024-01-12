@@ -89,7 +89,12 @@ def plot_compartment_prediction_model(
         elif modeltype == 'timeseries':
             mean_per_day_input = []
             for i in input_array:
-                x = i[plot_compartment_index: inputs.shape[1] - 37:8]
+                # Inputs has the dimensions [num_runs, input_width, features].
+                # The features consist of the compartment data, contact matrices and the damping day.
+                # Here, we want to get the mean of the plot_compartment over all age groups. Therefore,
+                # we subtract the damping day and the contact matrix entries.
+                x = i[plot_compartment_index: inputs.shape[2] -
+                      (1 + num_groups * num_groups):8]
                 mean_per_day_input.append(x.mean())
 
             plt.plot(
@@ -124,6 +129,7 @@ def plot_compartment_prediction_model(
                         c='#ff7f0e', s=64)
 
     plt.xlabel('days')
+    plt.legend()
     if os.path.isdir("plots") == False:
         os.mkdir("plots")
     plt.savefig('plots/evaluation_secir_groups_' + plot_compartment + '.png')
