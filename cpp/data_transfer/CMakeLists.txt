@@ -3,6 +3,10 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     target_link_libraries(generate_graph_from_data PRIVATE memilio ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
     target_compile_options(generate_graph_from_data PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+    add_executable(generate_extrapolated generate_extrapolated.cpp)
+    target_link_libraries(generate_extrapolated PRIVATE memilio ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
+    target_compile_options(generate_extrapolated PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
     add_executable(generate_graph_and_scenario generate_graph_and_scenario.cpp)
     target_link_libraries(generate_graph_and_scenario PRIVATE memilio ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
     target_compile_options(generate_graph_and_scenario PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
