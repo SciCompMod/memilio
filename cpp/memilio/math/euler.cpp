@@ -32,4 +32,15 @@ bool EulerIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::V
     return true;
 }
 
+bool EulerMaruyamaIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                               Eigen::Ref<Eigen::VectorXd> ytp1) const
+{
+    // we are misusing the next step y as temporary space to store the derivative
+    f(yt, t, ytp1);
+    ytp1 = yt + dt * ytp1;
+    for (size_t it = 0; it<ytp1.size(); ++it) if(ytp1[it] <= 0)  ytp1[it] = 0;
+    t += dt;
+    return true;
+}
+
 } // namespace mio

@@ -45,6 +45,24 @@ public:
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 };
 
+/**
+ * @brief Simple explicit euler maruyama integration y(t+1) = y(t) + h*f(t,y) for SDE y'(t) = f(t,y)
+ */
+class EulerMaruyamaIntegratorCore : public IntegratorCore
+{
+public:
+    /**
+     * @brief Fixed step width of the integration
+     *
+     * @param[in] yt value of y at t, y(t)
+     * @param[in,out] t current time step h=dt
+     * @param[in,out] dt current time step h=dt
+     * @param[out] ytp1 approximated value y(t+1)
+     */
+    bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+              Eigen::Ref<Eigen::VectorXd> ytp1) const override;
+};
+
 } // namespace mio
 
 #endif // EULER_H

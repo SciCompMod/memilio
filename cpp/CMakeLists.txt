@@ -123,6 +123,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
     add_subdirectory(models/ode_sir)
+    add_subdirectory(models/sde_sir)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)

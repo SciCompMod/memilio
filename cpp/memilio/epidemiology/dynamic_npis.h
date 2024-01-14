@@ -217,7 +217,7 @@ std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, Damping
 {
     std::vector<size_t> indices;
     for (size_t i = 0; i < damping_expr.get_dampings().size(); ++i) {
-        auto& d = damping_expr.get_dampings()[i];
+        auto d = damping_expr.get_dampings()[i];
         if (d.get_level() == lvl && d.get_type() == type && double(d.get_time()) > double(begin) &&
             double(d.get_time()) < double(end)) {
             indices.push_back(i);
