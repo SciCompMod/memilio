@@ -1,6 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
@@ -52,6 +51,7 @@ namespace abm
 /**
  * @brief Completely random migration to any other Location.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType random_migration(typename Person<FP>::RandomNumberGenerator& rng,
                               const Person<FP>& person, TimePoint t, TimeSpan dt,
@@ -69,10 +69,15 @@ LocationType random_migration(typename Person<FP>::RandomNumberGenerator& rng,
     }
     return current_loc;
 }
+=======
+LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+                              const Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief School age children go to school in the morning and return later in the day.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType go_to_school(typename Person<FP>::RandomNumberGenerator& /* rng */,
                           const Person<FP>& person, TimePoint t, TimeSpan dt,
@@ -92,10 +97,15 @@ LocationType go_to_school(typename Person<FP>::RandomNumberGenerator& /* rng */,
     }
     return current_loc;
 }
+=======
+LocationType go_to_school(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+                          const Parameters& params);
+>>>>>>> upstream/main
 
 /** 
  * @brief Adults may go shopping in their free time.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType go_to_shop(typename Person<FP>::RandomNumberGenerator& rng,
                         const Person<FP>& person, TimePoint t, TimeSpan dt,
@@ -116,10 +126,15 @@ LocationType go_to_shop(typename Person<FP>::RandomNumberGenerator& rng,
 
     return current_loc;
 }
+=======
+LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                        const Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief Person%s might go to social events.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType go_to_event(typename Person<FP>::RandomNumberGenerator& rng,
                          const Person<FP>& person, TimePoint t, TimeSpan dt,
@@ -143,10 +158,15 @@ LocationType go_to_event(typename Person<FP>::RandomNumberGenerator& rng,
 
     return current_loc;
 }
+=======
+LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                         const Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief Adults go to work in the morning and return later in the day.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType go_to_work(typename Person<FP>::RandomNumberGenerator& /*rng*/,
                         const Person<FP>& person, TimePoint t, TimeSpan dt,
@@ -167,10 +187,15 @@ LocationType go_to_work(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
+=======
+LocationType go_to_work(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                        const Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief Person%s who are in quarantine should go home.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType go_to_quarantine(typename Person<FP>::RandomNumberGenerator& /*rng*/,
                               const Person<FP>& person, TimePoint /*t*/,
@@ -182,10 +207,15 @@ LocationType go_to_quarantine(typename Person<FP>::RandomNumberGenerator& /*rng*
     }
     return current_loc;
 }
+=======
+LocationType go_to_quarantine(Person::RandomNumberGenerator& rng, const Person& person, TimePoint /*t*/,
+                              TimeSpan /*dt*/, const Parameters& /*params*/);
+>>>>>>> upstream/main
 
 /**
  * @brief Infected Person%s may be hospitalized.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType go_to_hospital(typename Person<FP>::RandomNumberGenerator& /*rng*/,
                             const Person<FP>& person, TimePoint t, TimeSpan /*dt*/,
@@ -197,10 +227,15 @@ LocationType go_to_hospital(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
+=======
+LocationType go_to_hospital(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+                            const Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief Person%s in the hospital may be put in intensive care.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType go_to_icu(typename Person<FP>::RandomNumberGenerator& /*rng*/,
                        const Person<FP>& person, TimePoint t, TimeSpan /*dt*/,
@@ -212,10 +247,15 @@ LocationType go_to_icu(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
+=======
+LocationType go_to_icu(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+                       const Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief Person%s in the hospital/icu return home when they recover.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType return_home_when_recovered(typename Person<FP>::RandomNumberGenerator& /*rng*/,
                                         const Person<FP>& person, TimePoint t,
@@ -228,10 +268,15 @@ LocationType return_home_when_recovered(typename Person<FP>::RandomNumberGenerat
     }
     return current_loc;
 }
+=======
+LocationType return_home_when_recovered(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t,
+                                        TimeSpan dt, const Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief Person%s in the icu go to cemetery when they are dead.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 LocationType get_buried(typename Person<FP>::RandomNumberGenerator& /*rng*/,
                         const Person<FP>& person, TimePoint t, TimeSpan /*dt*/,
@@ -243,6 +288,10 @@ LocationType get_buried(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
+=======
+LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                        const Parameters& params);
+>>>>>>> upstream/main
 /**@}*/
 
 } // namespace abm

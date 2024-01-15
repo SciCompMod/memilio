@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Martin Kühn
 *
@@ -571,7 +571,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
         params, start_date, end_date, data_dir,
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"), true,
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
-        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false));
+        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
@@ -646,16 +646,20 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     }
 
     auto save_single_run_result = mio::IOResult<void>(mio::success());
-    auto ensemble = parameter_study.run(
+    auto ensemble               = parameter_study.run(
         [&](auto&& graph) {
             return draw_sample(graph, high);
         },
         [&](auto results_graph, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+<<<<<<< HEAD
             auto params = std::vector<mio::osecirvvs::Model<double>>();
+=======
+            auto params              = std::vector<mio::osecirvvs::Model>();
+>>>>>>> upstream/main
             params.reserve(results_graph.nodes().size());
-            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                           std::back_inserter(params), [](auto&& node) {
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
@@ -667,13 +671,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             return std::make_pair(interpolated_result, params);
         });
 
-    if (ensemble.size() > 0){
+    if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model<double>>>{};
         ensemble_params.reserve(ensemble.size());
-        for (auto&& run: ensemble)
-        {
+        for (auto&& run : ensemble) {
             ensemble_results.emplace_back(std::move(run.first));
             ensemble_params.emplace_back(std::move(run.second));
         }

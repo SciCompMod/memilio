@@ -38,6 +38,8 @@ add_executable(ad_odeint_example ad_odeint_example.cpp)
 target_link_libraries(ad_odeint_example PRIVATE AD::AD Boost::boost memilio)
 set_target_properties(ad_odeint_example PROPERTIES CXX_STANDARD 14)
 
+add_executable(seir_flows_example ode_seir_flows.cpp)
+target_link_libraries(seir_flows_example PRIVATE memilio ode_seir)
 
 add_executable(ode_secir_example ode_secir.cpp)
 target_link_libraries(ode_secir_example PRIVATE memilio ode_secir)
@@ -78,6 +80,10 @@ target_compile_options(ide_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(history_example history.cpp)
+target_link_libraries(history_example PRIVATE memilio)
+target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)

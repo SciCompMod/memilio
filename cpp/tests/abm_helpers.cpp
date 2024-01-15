@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: David Kerkmann, Khoa Nguyen
 *
@@ -21,10 +21,17 @@
 #include "abm/person.h"
 #include "memilio/utils/random_number_generator.h"
 
+<<<<<<< HEAD
 mio::abm::Person<double> make_test_person(mio::abm::Location<double>& location, mio::abm::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
                                   mio::abm::GlobalInfectionParameters<double> params)
+=======
+mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age,
+                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
+                                  mio::abm::Parameters params)
+>>>>>>> upstream/main
 {
+    assert(age.get() < params.get_num_groups());
     auto rng           = mio::RandomNumberGenerator();
     mio::abm::Person p = mio::abm::Person(rng, location, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
@@ -35,6 +42,7 @@ mio::abm::Person<double> make_test_person(mio::abm::Location<double>& location, 
     return p;
 }
 
+<<<<<<< HEAD
 mio::abm::Person<double>& add_test_person(mio::abm::World<double>& world, mio::abm::LocationId loc_id, mio::abm::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
@@ -43,6 +51,17 @@ mio::abm::Person<double>& add_test_person(mio::abm::World<double>& world, mio::a
         auto rng_p = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), p);
         p.add_new_infection(mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age,
                                                 world.get_global_infection_parameters(), t, infection_state));
+=======
+mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id, mio::AgeGroup age,
+                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
+{
+    assert(age.get() < world.parameters.get_num_groups());
+    mio::abm::Person& p = world.add_person(loc_id, age);
+    if (infection_state != mio::abm::InfectionState::Susceptible) {
+        auto rng_p = mio::abm::Person::RandomNumberGenerator(world.get_rng(), p);
+        p.add_new_infection(mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age, world.parameters, t,
+                                                infection_state));
+>>>>>>> upstream/main
     }
     return p;
 }

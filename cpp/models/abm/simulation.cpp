@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -20,3 +20,22 @@
 
 #include "abm/simulation.h" // IWYU pragma: keep
 
+<<<<<<< HEAD
+=======
+Simulation::Simulation(TimePoint t, World&& world)
+    : m_world(std::move(world))
+    , m_t(t)
+    , m_dt(hours(1))
+{
+}
+
+void Simulation::evolve_world(TimePoint tmax)
+{
+    auto dt = std::min(m_dt, tmax - m_t);
+    m_world.evolve(m_t, dt);
+    m_t += m_dt;
+}
+
+} // namespace abm
+} // namespace mio
+>>>>>>> upstream/main

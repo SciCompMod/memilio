@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -57,6 +57,7 @@ TEST(TestMasks, changeMask)
 TEST(TestMasks, maskProtection)
 {
     auto rng = mio::RandomNumberGenerator();
+<<<<<<< HEAD
     mio::abm::GlobalInfectionParameters<double> params;
 
     // set incubation period to two days so that the newly infected person is still exposed
@@ -68,13 +69,26 @@ TEST(TestMasks, maskProtection)
     auto susc_person1 = mio::abm::Person(rng, infection_location, mio::abm::AgeGroup::Age15to34);
     auto susc_person2 = mio::abm::Person(rng, infection_location, mio::abm::AgeGroup::Age15to34);
     auto infected1    = make_test_person(infection_location, mio::abm::AgeGroup::Age15to34,
+=======
+    mio::abm::Parameters params(num_age_groups);
+
+    // set incubation period to two days so that the newly infected person is still exposed
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 2.;
+
+    //setup location with some chance of exposure
+    auto t = mio::abm::TimePoint(0);
+    mio::abm::Location infection_location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto susc_person1 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
+    auto susc_person2 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
+    auto infected1    = make_test_person(infection_location, age_group_15_to_34,
+>>>>>>> upstream/main
                                          mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
     infection_location.add_person(infected1);
 
     //cache precomputed results
     auto dt = mio::abm::days(1);
-    infection_location.cache_exposure_rates(t, dt);
+    infection_location.cache_exposure_rates(t, dt, num_age_groups);
     // susc_person1 wears a mask, default protection is 1
     susc_person1.set_wear_mask(true);
     // susc_person2 does not wear a mask

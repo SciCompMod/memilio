@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
-# Authors: Kathrin Rack, Wadim Koslow
+# Authors: Kathrin Rack, Wadim Koslow, Patrick Lenz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -23,7 +23,9 @@
 @brief Downloads data about population statistic
 
 """
+import configparser
 import warnings
+import getpass
 import requests
 import os
 import twill
@@ -93,6 +95,48 @@ def read_population_data(username, password, read_data, directory):
                 'Data file '+filename+' was not found in out_folder/Germany')
 
     return df_pop_raw
+
+
+def manage_credentials():
+    '''! Manages credentials for regionalstatistik.de (needed for dowload).
+
+    A connfig file inside the epidata folder is either written (if not existent yet)
+    with input from user or read with following format:
+    [CREDENTIALS]
+    Username = XXXXX
+    Password = XXXXX
+
+    @return Username and password to sign in at regionalstatistik.de. 
+    '''
+    # path where ini file is found
+    path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), 'CredentialsRegio.ini')
+
+    # check if .ini file exists
+    if not os.path.exists(path):
+        print('.ini file not found. Writing CredentialsRegio.ini...')
+        username = input(
+            "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
+        password = getpass.getpass(
+            "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
+        # create file
+        write_ini = gd.user_choice(
+            message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
+            'The next time this function is called, the credentials can be read from that file.')
+        if write_ini:
+            string = '[CREDENTIALS]\nUsername = ' + \
+                username+'\nPassword = '+password
+            with open(path, 'w+') as file:
+                file.write(string)
+
+    else:
+        parser = configparser.ConfigParser()
+        parser.read(path)
+
+        username = parser['CREDENTIALS']['Username']
+        password = parser['CREDENTIALS']['Password']
+
+    return username, password
 
 
 def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
@@ -247,12 +291,17 @@ def test_total_population(df_pop, age_cols):
 
     total_sum_2020 = 83155031
     total_sum_2021 = 83237124
+    total_sum_2022 = 84358845
+    total_sum = df_pop[age_cols].sum().sum()
 
-    if df_pop[age_cols].sum().sum() != total_sum_2021:
-        if df_pop[age_cols].sum().sum() == total_sum_2020:
-            warnings.warn('Using data of 2020. Newer data is available.')
-        else:
-            raise gd.DataError('Total Population does not match expectation.')
+    if total_sum == total_sum_2022:
+        pass
+    elif total_sum == total_sum_2021:
+        warnings.warn('Using data of 2021. Newer data is available.')
+    elif total_sum == total_sum_2020:
+        warnings.warn('Using data of 2020. Newer data is available.')
+    else:
+        raise gd.DataError('Total Population does not match expectation.')
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
@@ -298,7 +347,10 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-
+    # If no username or password is provided, the credentials are either read from an .ini file or,
+    # if the file does not exist they have to be given as user input.
+    if (username is None) or (password is None):
+        username, password = manage_credentials()
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 

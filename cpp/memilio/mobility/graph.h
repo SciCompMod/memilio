@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -258,16 +258,27 @@ private:
  * @param[in] tnt_capacity_factor Factor for test and trace capacity.
  * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ * @param[in] rki_age_groups Specifies whether rki-age_groups should be used.
  */
 template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+<<<<<<< HEAD
           class ReadFunction, class NodeIdFunction, typename FP=double>
 IOResult<void>
 set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
           const std::string& population_data_path, bool is_node_for_county, Graph<Model, MigrationParams>& params_graph,
           ReadFunction&& read_func, NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
           double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+=======
+          class ReadFunction, class NodeIdFunction>
+IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                         const std::string& population_data_path, bool is_node_for_county,
+                         Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
+                         NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
+                         double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
+                         bool export_time_series = false, bool rki_age_groups = true)
+>>>>>>> upstream/main
 {
-    BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, is_node_for_county));
+    BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
     for (auto& node : nodes) {
         node.parameters = params;

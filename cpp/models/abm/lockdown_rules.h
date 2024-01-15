@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -46,8 +46,9 @@ namespace abm
  * @brief Person%s who are in home office are staying at home instead of going to work.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Percentage of Person%s that work in home office.
- * @param[in, out] params Migration parameters that include Damping.
+ * @param[in, out] params Simulation parameters that include Damping.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 void set_home_office(TimePoint t_begin, double p, MigrationParameters<FP>& params)
 {
@@ -55,13 +56,17 @@ void set_home_office(TimePoint t_begin, double p, MigrationParameters<FP>& param
     params.template get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
 
+=======
+void set_home_office(TimePoint t_begin, double p, Parameters& params);
+>>>>>>> upstream/main
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Percentage of Person%s that are homeschooled.
- * @param[in,out] params Migration parameters that include Damping.
+ * @param[in,out] params Simulation parameters.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 void set_school_closure(TimePoint t_begin, double p, MigrationParameters<FP>& params)
 {
@@ -71,6 +76,9 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters<FP>& pa
 }
 
 
+=======
+void set_school_closure(TimePoint t_begin, double p, Parameters& params);
+>>>>>>> upstream/main
 
 /** 
  * @brief During lockdown Person%s join social events less often.
@@ -79,14 +87,18 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters<FP>& pa
  * and a Damping of 1 means that no social events are happening.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
- * @param[in,out] params Migration parameters that include Damping.
+ * @param[in,out] params Simulation parameters that include Damping.
  */
+<<<<<<< HEAD
 template<typename FP=double>
 void close_social_events(TimePoint t_begin, double p, MigrationParameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant((size_t)AgeGroup::Count, p);
     params.template get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
+=======
+void close_social_events(TimePoint t_begin, double p, Parameters& params);
+>>>>>>> upstream/main
 
 } // namespace abm
 } //namespace mio

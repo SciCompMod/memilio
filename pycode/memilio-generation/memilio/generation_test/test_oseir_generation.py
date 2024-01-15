@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -28,7 +28,6 @@ from memilio.generation import Generator, Scanner, ScannerConfig
 
 
 class TestOseirGeneration(unittest.TestCase):
-
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
     project_path = here.split('/pycode')[0]

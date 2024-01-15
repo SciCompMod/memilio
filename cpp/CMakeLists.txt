@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(memilio VERSION 0.7.0)
+project(memilio VERSION 1.0.0)
 
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)

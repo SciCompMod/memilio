@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -71,12 +71,9 @@ class OdeIntegrator
 public:
     /**
      * @brief create an integrator for a specific IVP
-     * @param f rhs of the ODE
-     * @param t0 initial point of independent variable t
-     * @param y0 value of y at t0
-     * @param dt_init initial integration step size
-     * @param core implements the solution method
+     * @param[in] core implements the solution method
      */
+<<<<<<< HEAD
     template <class F, class Vector>
     OdeIntegrator(F&& f, FP t0, Vector&& y0, FP dt_init, std::shared_ptr<IntegratorCore<FP>> core)
         : m_f(std::forward<F>(f))
@@ -84,13 +81,23 @@ public:
         , m_dt(dt_init)
         , m_next_dt(dt_init)
         , m_core(core)
+=======
+    OdeIntegrator(std::shared_ptr<IntegratorCore> core)
+        : m_core(core)
+>>>>>>> upstream/main
     {
     }
 
     /**
-     * @brief advance the integrator.
-     * @param tmax end point. must be greater than get_t().back()
+     * @brief Advance the integrator.
+     * @param[in] f The rhs of the ODE.
+     * @param[in] tmax Time end point. Must be greater than results.get_last_time().
+     * @param[in, out] dt Initial integration step size. May be changed by the IntegratorCore.
+     * @param[in, out] results List of results. Must contain at least one time point. The last entry is used as
+     * intitial time and value. A new entry is added for each integration step.
+     * @return A reference to the last value in the results time series.
      */
+<<<<<<< HEAD
     Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> advance(FP tmax)
 
     {
@@ -159,6 +166,10 @@ public:
     {
         return m_next_dt;
     }
+=======
+    Eigen::Ref<Eigen::VectorXd> advance(const DerivFunction& f, const double tmax, double& dt,
+                                        TimeSeries<double>& results);
+>>>>>>> upstream/main
 
     void set_integrator(std::shared_ptr<IntegratorCore<FP>> integrator)
     {
@@ -166,11 +177,15 @@ public:
     }
 
 private:
+<<<<<<< HEAD
     DerivFunction<FP> m_f;
     TimeSeries<FP> m_result;
     FP m_dt;
     FP m_next_dt;
     std::shared_ptr<IntegratorCore<FP>> m_core;
+=======
+    std::shared_ptr<IntegratorCore> m_core;
+>>>>>>> upstream/main
 };
 
 } // namespace mio

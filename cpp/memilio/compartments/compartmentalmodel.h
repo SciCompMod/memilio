@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -17,16 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef COMPARTMENTALMODEL_H
-#define COMPARTMENTALMODEL_H
+#ifndef MIO_COMPARTMENTALMODEL_H
+#define MIO_COMPARTMENTALMODEL_H
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/metaprogramming.h"
+#include <cstddef>
+#include <type_traits>
 #include <vector>
 #include <functional>
-
-#define USE_DERIV_FUNC 1
 
 namespace mio
 {
@@ -40,6 +41,7 @@ using check_constraints_expr_t = decltype(std::declval<T>().check_constraints())
 //helpers for apply_constraints
 template <class T>
 using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints());
+
 } //namespace details
 
 /**
@@ -77,6 +79,7 @@ public:
     using Populations  = Pop;
     using ParameterSet = Params;
 
+<<<<<<< HEAD
     // The flow function takes a set of parameters, the current time t and the
     // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
     // that represents a flow going from one compartment to another.
@@ -90,6 +93,8 @@ public:
     // corresponding to the to-compartment.
     using Flow = std::tuple<typename Populations::Index, typename Populations::Index, FlowFunction>;
 
+=======
+>>>>>>> upstream/main
     /**
      * @brief CompartmentalModel default constructor
      */
@@ -105,25 +110,17 @@ public:
     CompartmentalModel& operator=(CompartmentalModel&&)      = default;
     virtual ~CompartmentalModel()                            = default;
 
-    /**
-     * @brief add_flow defines a flow from compartment A to another compartment B
-     * @param from is the index of the departure compartment A
-     * @param to is the index of the receiving compartment B
-     * @param f is a function defining the flow given a set of parameters, the current time t and the
-     * snapshot y of all population sizes at time t, represented as a flat array
-     */
-    void add_flow(typename Populations::Index from, typename Populations::Index to, FlowFunction f)
-    {
-        flows.push_back(Flow(from, to, f));
-    }
-
-#if USE_DERIV_FUNC
     //REMARK: Not pure virtual for easier java/python bindings
+<<<<<<< HEAD
     virtual void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>>,
                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> /*y*/,
                                  FP /*t*/, Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> /*dydt*/) const {};
 #endif // USE_DERIV_FUNC
 
+=======
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
+                                 double /*t*/, Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
+>>>>>>> upstream/main
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
      *
@@ -149,16 +146,7 @@ public:
                               Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> dydt) const
     {
         dydt.setZero();
-
-#if USE_DERIV_FUNC
         this->get_derivatives(pop, y, t, dydt);
-#else // USE_DERIV_FUNC
-        for (auto& flow : flows) {
-            ScalarType f = std::get<2>(flow)(parameters, pop, y, t);
-            dydt[call(Populations::get_flat_index, std::get<0>(flow))] -= f;
-            dydt[call(Populations::get_flat_index, std::get<1>(flow))] += f;
-        }
-#endif // USE_DERIV_FUNC
     }
 
     /**
@@ -171,38 +159,24 @@ public:
         return populations.get_compartments().template cast<FP>();
     }
 
-    // TODO: if constexpr as soon as we open for C++17
-    template <typename T = ParameterSet>
-    std::enable_if_t<has_apply_constraints_member_function<T>::value> apply_constraints()
+    void apply_constraints()
     {
         populations.apply_constraints();
-        parameters.apply_constraints();
+        if constexpr (has_apply_constraints_member_function<ParameterSet>::value) {
+            parameters.apply_constraints();
+        }
     }
 
-    template <typename T = ParameterSet>
-    std::enable_if_t<!has_apply_constraints_member_function<T>::value> apply_constraints()
-    {
-        populations.apply_constraints();
-    }
-
-    template <typename T = ParameterSet>
-    std::enable_if_t<has_check_constraints_member_function<T>::value> check_constraints() const
+    void check_constraints() const
     {
         populations.check_constraints();
-        parameters.check_constraints();
-    }
-
-    template <typename T = ParameterSet>
-    std::enable_if_t<!has_check_constraints_member_function<T>::value> check_constraints() const
-    {
-        populations.check_constraints();
+        if constexpr (has_check_constraints_member_function<ParameterSet>::value) {
+            parameters.check_constraints();
+        }
     }
 
     Populations populations{};
     ParameterSet parameters{};
-
-private:
-    std::vector<Flow> flows{};
 };
 
 /**
@@ -247,4 +221,4 @@ template <class M, typename FP=double>
 
 } // namespace mio
 
-#endif // COMPARTMENTALMODEL_H
+#endif // MIO_COMPARTMENTALMODEL_H

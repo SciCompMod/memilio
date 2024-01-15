@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen, David Kerkmann
 *
@@ -18,13 +18,23 @@
 * limitations under the License.
 */
 #include "abm/abm.h"
-#include "abm/person.h"
+#include "abm/analyze_result.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
+#include "abm/common_abm_loggers.h"
 
 namespace fs = boost::filesystem;
+
+// Assign the name to general age group.
+size_t num_age_groups         = 6;
+const auto age_group_0_to_4   = mio::AgeGroup(0);
+const auto age_group_5_to_14  = mio::AgeGroup(1);
+const auto age_group_15_to_34 = mio::AgeGroup(2);
+const auto age_group_35_to_59 = mio::AgeGroup(3);
+const auto age_group_60_to_79 = mio::AgeGroup(4);
+const auto age_group_80_plus  = mio::AgeGroup(5);
 
 /**
  * Set a value and distribution of an UncertainValue.
@@ -174,13 +184,13 @@ void create_world_from_statistical_data(mio::abm::World<double>& world)
     */
 
     // Refugee
-    auto refugee = mio::abm::HouseholdMember();
-    refugee.set_age_weight(mio::abm::AgeGroup::Age0to4, 25);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age5to14, 12);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age15to34, 25);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age35to59, 9);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age60to79, 1);
-    refugee.set_age_weight(mio::abm::AgeGroup::Age80plus, 1);
+    auto refugee = mio::abm::HouseholdMember(num_age_groups);
+    refugee.set_age_weight(age_group_0_to_4, 25);
+    refugee.set_age_weight(age_group_5_to_14, 12);
+    refugee.set_age_weight(age_group_15_to_34, 25);
+    refugee.set_age_weight(age_group_35_to_59, 9);
+    refugee.set_age_weight(age_group_60_to_79, 1);
+    refugee.set_age_weight(age_group_80_plus, 1);
     int refugee_number_of_people     = 74;
     int refugee_number_of_households = 12;
     auto refugeeGroup = make_uniform_households(refugee, refugee_number_of_people, refugee_number_of_households);
@@ -188,13 +198,13 @@ void create_world_from_statistical_data(mio::abm::World<double>& world)
     add_household_group_to_world(world, refugeeGroup);
 
     // Disabled
-    auto disabled = mio::abm::HouseholdMember();
-    disabled.set_age_weight(mio::abm::AgeGroup::Age0to4, 2);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age5to14, 6);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age15to34, 13);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age35to59, 42);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age60to79, 97);
-    disabled.set_age_weight(mio::abm::AgeGroup::Age80plus, 32);
+    auto disabled = mio::abm::HouseholdMember(num_age_groups);
+    disabled.set_age_weight(age_group_0_to_4, 2);
+    disabled.set_age_weight(age_group_5_to_14, 6);
+    disabled.set_age_weight(age_group_15_to_34, 13);
+    disabled.set_age_weight(age_group_35_to_59, 42);
+    disabled.set_age_weight(age_group_60_to_79, 97);
+    disabled.set_age_weight(age_group_80_plus, 32);
     int disabled_number_of_people     = 194;
     int disabled_number_of_households = 8;
 
@@ -203,11 +213,11 @@ void create_world_from_statistical_data(mio::abm::World<double>& world)
     add_household_group_to_world(world, disabledGroup);
 
     // Retirement
-    auto retired = mio::abm::HouseholdMember();
-    retired.set_age_weight(mio::abm::AgeGroup::Age15to34, 1);
-    retired.set_age_weight(mio::abm::AgeGroup::Age35to59, 30);
-    retired.set_age_weight(mio::abm::AgeGroup::Age60to79, 185);
-    retired.set_age_weight(mio::abm::AgeGroup::Age80plus, 530);
+    auto retired = mio::abm::HouseholdMember(num_age_groups);
+    retired.set_age_weight(age_group_15_to_34, 1);
+    retired.set_age_weight(age_group_35_to_59, 30);
+    retired.set_age_weight(age_group_60_to_79, 185);
+    retired.set_age_weight(age_group_80_plus, 530);
     int retirement_number_of_people     = 744;
     int retirement_number_of_households = 16;
 
@@ -217,13 +227,13 @@ void create_world_from_statistical_data(mio::abm::World<double>& world)
     add_household_group_to_world(world, retirementGroup);
 
     // Others
-    auto other = mio::abm::HouseholdMember();
-    other.set_age_weight(mio::abm::AgeGroup::Age0to4, 30);
-    other.set_age_weight(mio::abm::AgeGroup::Age5to14, 40);
-    other.set_age_weight(mio::abm::AgeGroup::Age15to34, 72);
-    other.set_age_weight(mio::abm::AgeGroup::Age35to59, 40);
-    other.set_age_weight(mio::abm::AgeGroup::Age60to79, 30);
-    other.set_age_weight(mio::abm::AgeGroup::Age80plus, 10);
+    auto other = mio::abm::HouseholdMember(num_age_groups);
+    other.set_age_weight(age_group_0_to_4, 30);
+    other.set_age_weight(age_group_5_to_14, 40);
+    other.set_age_weight(age_group_15_to_34, 72);
+    other.set_age_weight(age_group_35_to_59, 40);
+    other.set_age_weight(age_group_60_to_79, 30);
+    other.set_age_weight(age_group_80_plus, 10);
     int others_number_of_people     = 222;
     int others_number_of_households = 20;
 
@@ -232,11 +242,11 @@ void create_world_from_statistical_data(mio::abm::World<double>& world)
     add_household_group_to_world(world, otherGroup);
 
     // One Person Household (we have exact age data about this)
-    auto one_person_household_member = mio::abm::HouseholdMember();
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age15to34, 4364);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age35to59, 7283);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age60to79, 4100);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age80plus, 1800);
+    auto one_person_household_member = mio::abm::HouseholdMember(num_age_groups);
+    one_person_household_member.set_age_weight(age_group_15_to_34, 4364);
+    one_person_household_member.set_age_weight(age_group_35_to_59, 7283);
+    one_person_household_member.set_age_weight(age_group_60_to_79, 4100);
+    one_person_household_member.set_age_weight(age_group_80_plus, 1800);
     int one_person_number_of_people     = 15387;
     int one_person_number_of_households = 15387;
 
@@ -246,22 +256,23 @@ void create_world_from_statistical_data(mio::abm::World<double>& world)
     add_household_group_to_world(world, onePersonGroup);
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
-    child.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
+    auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
+    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_5_to_14, 1);
 
-    auto parent = mio::abm::HouseholdMember(); // A child is 40/40/20% 15-34, 35-59 or 60-79.
-    parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 2);
-    parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 2);
-    parent.set_age_weight(mio::abm::AgeGroup::Age60to79, 1);
+    auto parent = mio::abm::HouseholdMember(num_age_groups); // A child is 40/40/20% 15-34, 35-59 or 60-79.
+    parent.set_age_weight(age_group_15_to_34, 2);
+    parent.set_age_weight(age_group_35_to_59, 2);
+    parent.set_age_weight(age_group_60_to_79, 1);
 
-    auto random = mio::abm::HouseholdMember(); // Randoms are distributed according to the left over persons.
-    random.set_age_weight(mio::abm::AgeGroup::Age0to4, 5000);
-    random.set_age_weight(mio::abm::AgeGroup::Age5to14, 6000);
-    random.set_age_weight(mio::abm::AgeGroup::Age15to34, 14943);
-    random.set_age_weight(mio::abm::AgeGroup::Age35to59, 22259);
-    random.set_age_weight(mio::abm::AgeGroup::Age60to79, 11998);
-    random.set_age_weight(mio::abm::AgeGroup::Age80plus, 5038);
+    auto random =
+        mio::abm::HouseholdMember(num_age_groups); // Randoms are distributed according to the left over persons.
+    random.set_age_weight(age_group_0_to_4, 5000);
+    random.set_age_weight(age_group_5_to_14, 6000);
+    random.set_age_weight(age_group_15_to_34, 14943);
+    random.set_age_weight(age_group_35_to_59, 22259);
+    random.set_age_weight(age_group_60_to_79, 11998);
+    random.set_age_weight(age_group_80_plus, 5038);
 
     // Two person households
     int two_person_full_families  = 11850;
@@ -311,9 +322,7 @@ void create_assign_locations(mio::abm::World<double>& world)
     world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
     world.get_individualized_location(event).set_capacity(100, 375);
 
-    std::vector<mio::abm::LocationType> test_at_social_event = {mio::abm::LocationType::SocialEvent};
-    auto testing_criteria =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_social_event, {})};
+    auto testing_criteria = mio::abm::TestingCriteria();
     auto testing_min_time = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
@@ -325,7 +334,7 @@ void create_assign_locations(mio::abm::World<double>& world)
     auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type,
                                                   probability.draw_sample());
 
-    world.get_testing_strategy().add_testing_scheme(testing_scheme);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
 
     // Add hospital and ICU with 5 maximum contacs.
     // For the number of agents in this example we assume a capacity of 584 persons (80 beds per 10000 residents in
@@ -378,11 +387,11 @@ void create_assign_locations(mio::abm::World<double>& world)
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+        if (person.get_age() == age_group_5_to_14) {
             person.set_assigned_location(school);
             counter_school++;
         }
-        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
+        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
             person.set_assigned_location(work);
             counter_work++;
         }
@@ -414,24 +423,21 @@ void create_assign_locations(mio::abm::World<double>& world)
     }
 
     // add the testing schemes for school and work
-    auto test_at_school = std::vector<mio::abm::LocationType>{mio::abm::LocationType::School};
-    auto testing_criteria_school =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
+    auto testing_criteria_school = mio::abm::TestingCriteria();
 
     testing_min_time           = mio::abm::days(7);
     auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
                                                          end_date, test_type, probability.draw_sample());
-    world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
 
-    auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
+    auto test_at_work          = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
+    auto testing_criteria_work = mio::abm::TestingCriteria();
 
     assign_uniform_distribution(probability, 0.1, 0.5);
     testing_min_time         = mio::abm::days(1);
     auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
                                                        test_type, probability.draw_sample());
-    world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 }
 
 /**
@@ -447,23 +453,30 @@ void assign_infection_state(mio::abm::World<double>& world, mio::abm::TimePoint 
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), t, infection_state,
+                                                         world.parameters, t, infection_state,
                                                          person.get_latest_protection(), false));
         }
     }
 }
 
+<<<<<<< HEAD
 void set_parameters(mio::abm::GlobalInfectionParameters<double> infection_params)
 {
     infection_params.set<mio::abm::IncubationPeriod<double>>({{mio::abm::VirusVariant::Count, mio::abm::AgeGroup::Count}, 4.});
+=======
+void set_parameters(mio::abm::Parameters params)
+{
+    params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
+>>>>>>> upstream/main
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
-    infection_params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
     };
 
     //0-4
+<<<<<<< HEAD
     infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype,
                                                                     mio::abm::AgeGroup::Age0to4}]  = 0.276;
     infection_params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
@@ -591,11 +604,84 @@ void set_parameters(mio::abm::GlobalInfectionParameters<double> infection_params
     infection_params
         .get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus}] =
         0.;
+=======
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.276;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.092;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.142;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]             = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]              = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]           = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]                = 0.001;
+
+    //5-14
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.276;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.092;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.142;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]    = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]           = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]            = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]         = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]              = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 0.;
+
+    //15-34
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.315;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.079;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.139;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]    = 0.003;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]           = 0.157;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]            = 0.013;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]         = 0.126;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]              = 0.021;
+
+    //35-59
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.315;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.079;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.136;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]    = 0.009;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]           = 0.113;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]            = 0.02;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]         = 0.05;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]              = 0.008;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]      = 0.;
+
+    //60-79
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.315;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.079;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.123;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]    = 0.024;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]           = 0.083;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]            = 0.035;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]         = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]              = 0.023;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]      = 0.;
+
+    //80+
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.315;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.079;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.115;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]    = 0.033;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]           = 0.055;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]            = 0.036;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]         = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]              = 0.052;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.;
+>>>>>>> upstream/main
 
     // Set each parameter for vaccinated people including personal infection and vaccine protection levels.
     // Summary: https://doi.org/10.1038/s41577-021-00550-x,
 
     //0-4
+<<<<<<< HEAD
     infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype,
                                                                     mio::abm::AgeGroup::Age0to4}]  = 0.161;
     infection_params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
@@ -1054,13 +1140,91 @@ void set_parameters(mio::abm::GlobalInfectionParameters<double> infection_params
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.84}, {60, 0.88}, {90, 0.89}, {120, 0.86}, {150, 0.85}, {180, 0.83}, {450, 0.5}}, days);
     };
+=======
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.161;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.132;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.143;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]             = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]              = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]           = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]                = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]        = 0.0;
+
+    //5-14
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.161;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.132;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.143;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]    = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]           = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]            = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]         = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]              = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 0.0;
+
+    //15-34
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.179;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.126;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.142;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]    = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]           = 0.157;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]            = 0.013;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]         = 0.126;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]              = 0.021;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]      = 0.0;
+
+    //35-59
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.179;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.126;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.141;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]    = 0.003;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]           = 0.113;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]            = 0.02;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]         = 0.05;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]              = 0.008;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]      = 0.0;
+
+    //60-79
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.179;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.126;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.136;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]    = 0.009;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]           = 0.083;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]            = 0.035;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]         = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]              = 0.023;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]      = 0.0;
+
+    //80+
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.179;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.126;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.133;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]    = 0.012;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]           = 0.055;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]            = 0.036;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]         = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]              = 0.052;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.0;
+>>>>>>> upstream/main
 }
 
 /**
- * Create a sampled simulation with start time t0.
+ * Create a sampled world with start time t0.
  * @param t0 the start time of the simulation
 */
+<<<<<<< HEAD
 mio::abm::Simulation<double> create_sampled_simulation(const mio::abm::TimePoint& t0)
+=======
+mio::abm::World create_sampled_world(const mio::abm::TimePoint& t0)
+>>>>>>> upstream/main
 {
     // mio::thread_local_rng().seed(
     //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
@@ -1069,15 +1233,21 @@ mio::abm::Simulation<double> create_sampled_simulation(const mio::abm::TimePoint
         printf("%u, ", s);
     }
     printf("\n");
-    
+
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
+<<<<<<< HEAD
     mio::abm::GlobalInfectionParameters<double> infection_params;
     set_parameters(infection_params);
     auto world = mio::abm::World(infection_params);
+=======
+    auto world = mio::abm::World(num_age_groups);
+
+    set_parameters(world.parameters);
+>>>>>>> upstream/main
 
     // world.get_rng().seed(
     //    {23144124, 1835345345, 9343763, 9123}); //set seeds, e.g., for debugging
@@ -1100,12 +1270,11 @@ mio::abm::Simulation<double> create_sampled_simulation(const mio::abm::TimePoint
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
-    mio::abm::set_home_office(t_lockdown, 0.25, world.get_migration_parameters());
-    mio::abm::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
-    mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
+    mio::abm::set_home_office(t_lockdown, 0.25, world.parameters);
+    mio::abm::set_school_closure(t_lockdown, 0.9, world.parameters);
+    mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
 
-    auto sim = mio::abm::Simulation(t0, std::move(world));
-    return sim;
+    return world;
 }
 
 /**
@@ -1122,33 +1291,30 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
-    auto run_idx            = size_t(1); // The run index
-    auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+    auto ensemble_params = std::vector<std::vector<mio::abm::World>>{};
+    ensemble_params.reserve(size_t(num_runs));
+    auto run_idx = size_t(1); // The run index
+
+    // Create the sampled simulation with start time t0
+    auto world = create_sampled_world(t0);
+    ensemble_params.push_back(std::vector<mio::abm::World>{world});
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
-
-        // Create the sampled simulation with start time t0.
-        auto sim = create_sampled_simulation(t0);
-        // Collect the id of location in world.
-        std::vector<int> loc_ids;
-        for (auto& location : sim.get_world().get_locations()) {
-            loc_ids.push_back(location.get_index());
-        }
+        // Make a simulation using a copy from the original world
+        auto sim = mio::abm::Simulation(t0, mio::abm::World(world));
+        // Add a time series writer to the simulation
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+            Eigen::Index(mio::abm::InfectionState::Count)};
         // Advance the world to tmax
-        sim.advance(tmax);
-        // TODO: update result of the simulation to be a vector of location result.
-        auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
-        // Push result of the simulation back to the result vector
-        ensemble_results.push_back(temp_sim_result);
-        // Option to save the current run result to file
-        if (save_result_result && save_single_runs) {
-            auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
-        }
+        sim.advance(tmax, historyTimeSeries);
+        // Collect the results from the simulation
+        ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())});
+        // Increase the run index
         ++run_idx;
     }
-    BOOST_OUTCOME_TRY(save_result_result);
+    // Save all results to files
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, {0}, result_dir, save_single_runs));
     return mio::success();
 }
 

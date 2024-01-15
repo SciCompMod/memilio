@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -62,6 +62,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
+<<<<<<< HEAD
         params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
         params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
         params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.09;
@@ -70,6 +71,16 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
         params.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.25;
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
+=======
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i]  = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]    = 0.7;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
+        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.3;
+        params.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+>>>>>>> upstream/main
     }
 
     params.apply_constraints();

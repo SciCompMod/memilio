@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -222,7 +222,7 @@ TEST(TestEpiDataIo, read_county_ids)
         16077};
 
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
-    auto read_ids    = mio::get_node_ids(path, true);
+    auto read_ids    = mio::get_node_ids(path, true, true);
     ASSERT_THAT(print_wrap(read_ids), IsSuccess());
 
     EXPECT_THAT(read_ids.value(), testing::ElementsAreArray(true_ids));
@@ -235,8 +235,8 @@ TEST(TestEpiDataIo, get_node_ids)
     std::vector<int> true_ids_county = {1001};
 
     std::string path       = mio::path_join(TEST_DATA_DIR, "test_current_population.json");
-    auto read_ids_district = mio::get_node_ids(path, false);
-    auto read_ids_county   = mio::get_node_ids(path, true);
+    auto read_ids_district = mio::get_node_ids(path, false, true);
+    auto read_ids_county   = mio::get_node_ids(path, true, true);
     ASSERT_THAT(print_wrap(read_ids_district), IsSuccess());
     ASSERT_THAT(print_wrap(read_ids_county), IsSuccess());
 
