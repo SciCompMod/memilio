@@ -218,7 +218,7 @@ public:
 };
 
 //forward declaration, see below.
-template <class Base = mio::Simulation<Model>>
+template <class T = mio::Simulation<Model>>
 class Simulation;
 
 /**
@@ -235,10 +235,11 @@ double get_infections_relative(const Simulation<Base>& model, double t, const Ei
  * specialization of compartment model simulation for secir models.
  * @tparam Base simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
  */
-template <class Base>
-class Simulation : public Base
+template <class T>
+class Simulation : public T
 {
 public:
+
     /**
      * construct a simulation.
      * @param model the model to simulate.
@@ -246,7 +247,7 @@ public:
      * @param dt time steps
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : Base(model, t0, dt)
+        : T(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
     }
@@ -263,13 +264,13 @@ public:
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
         if (dyn_npis.get_thresholds().size() > 0) {
-            auto t        = Base::get_result().get_last_time();
+            auto t        = T::get_result().get_last_time();
             const auto dt = dyn_npis.get_interval().get();
 
             while (t < tmax) {
                 auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
 
-                Base::advance(t + dt_eff);
+                T::advance(t + dt_eff);
                 t = t + dt_eff;
 
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
@@ -294,7 +295,7 @@ public:
             return this->get_result().get_last_value();
         }
         else {
-            return Base::advance(tmax);
+            return T::advance(tmax);
         }
     }
 

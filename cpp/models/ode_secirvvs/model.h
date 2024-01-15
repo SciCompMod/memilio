@@ -510,7 +510,7 @@ public:
 };
 
 //forward declaration, see below.
-template <class Base = mio::Simulation<Model>>
+template <class T = mio::Simulation<Model>>
 class Simulation;
 
 /**
@@ -527,8 +527,8 @@ double get_infections_relative(const Simulation<Base>& model, double t, const Ei
  * specialization of compartment model simulation for the SECIRVVS model.
  * @tparam Base simulation type, default mio::Simulation. For testing purposes only!
  */
-template <class Base>
-class Simulation : public Base
+template <class T>
+class Simulation : public T
 {
 public:
     /**
@@ -538,7 +538,7 @@ public:
      * @param dt time steps
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : Base(model, t0, dt)
+        : T(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
     }
@@ -624,7 +624,7 @@ public:
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
 
         double delay_lockdown;
-        auto t        = Base::get_result().get_last_time();
+        auto t        = T::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
         while (t < tmax) {
 
@@ -637,7 +637,7 @@ public:
                 //this->apply_vaccination(t); // done in init now?
                 this->apply_b161(t);
             }
-            Base::advance(t + dt_eff);
+            T::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
                 this->apply_b161(t);
