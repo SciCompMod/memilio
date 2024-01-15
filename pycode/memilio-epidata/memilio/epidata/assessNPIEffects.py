@@ -25,8 +25,13 @@ import pandas as pd
 from memilio.epidata import customPlot
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getNPIData as gnpi
 from scipy.cluster import hierarchy
+from scipy.spatial import distance
 from sklearn.metrics import silhouette_samples
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 
 def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
@@ -90,9 +95,6 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
     else:
         return clusters, idx_to_cluster_idx.max()+1
 
-# TODO: Used name 'methods' instead of 'metrics'. This is conform with documentation of hierarchy.linkage
-    # and does not lead to confusion with metric used in pdist. To discuss!
-
 
 def compute_hierarch_clustering(corr_pairwdist,
                                 methods=['single', 'complete', 'average',
@@ -102,8 +104,6 @@ def compute_hierarch_clustering(corr_pairwdist,
     provides the maximum cophenetic distance(s) as well as a score for the
     clustering (see @method evaluate_clustering(...)).
 
-    @param corr_mat correlation matrix between the features / data set items
-        to be clustered hierarchically.
     @param corr_pairwdist Computed pairwise distance between the features / data
         set items.
     @param method method or list of methods to compute the hierarchical
@@ -128,9 +128,6 @@ def compute_hierarch_clustering(corr_pairwdist,
     for method in methods:
         cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=method)
         # compute cophenetic correlation distance and cophenetic distance matrix
-        # TODO: Why was pdist(corr_mat) used as input for hierarchy.cophenet?
-        # Shouldn't we use the same distance matrix as input both for linkage and cophenet?
-        # To discuss!
         # TODO: < or > max_coph_corr_dist?
         coph_corr_dist, coph_dist_mat = hierarchy.cophenet(
             cluster_hierarch, corr_pairwdist)
@@ -180,15 +177,15 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
             cluster_hierarch, weight, criterion='distance')
 
         # evaluate clustering
-        #clusters, total_eval_number[n] = evaluate_clustering(
+        # clusters, total_eval_number[n] = evaluate_clustering(
         #    corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
 
         # append new npi_idx to cluster_idx assignment to list of assignments
-        #npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
+        # npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
         #n += 1
         # get around 55 clusters
-        if npi_idx_to_cluster_idx.max()>45:
-            if npi_idx_to_cluster_idx.max()<65:
+        if npi_idx_to_cluster_idx.max() > 45:
+            if npi_idx_to_cluster_idx.max() < 65:
                 print(npi_idx_to_cluster_idx.max())
                 return npi_idx_to_cluster_idx
 
@@ -258,14 +255,13 @@ def analyze_npi_data(
         npi_codes_considered):
 
     if not read_data:
-        raise FileNotFoundError('')
-        # transform_npi_data(fine_resolution=2,
-        #                file_format=dd.defaultDict['file_format'],
-        #                out_folder=dd.defaultDict['out_folder'],
-        #                start_date=dd.defaultDict['start_date'],
-        #                end_date=dd.defaultDict['end_date'],
-        #                make_plot=dd.defaultDict['make_plot'],
-        #                )
+        gnpi.get_npi_data(fine_resolution=2,
+                          file_format=dd.defaultDict['file_format'],
+                          out_folder=dd.defaultDict['out_folder'],
+                          start_date=dd.defaultDict['start_date'],
+                          end_date=dd.defaultDict['end_date'],
+                          make_plot=dd.defaultDict['make_plot'],
+                          )
 
     else:  # read formatted file
         npis = pd.read_excel(
@@ -287,24 +283,26 @@ def analyze_npi_data(
     # df_npis = mdfs.extract_subframe_based_on_dates(df_npis, date(2021,1,1), date(2021,6,1))
     npis = pd.read_json(os.path.join(directory, 'npis.json'))
     # get code levels (main/subcodes) and position of main codes
-    # code_level = [i.count('_') for i in npi_codes]
-    # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
 
     # check if any other integer than 0: not implemented or 1: implemented is
     # used (maybe to specify the kind of implementation)
 
-    all_subcodes = [x for x in npis.NPI_code if len(x) <=8]
+    if not npi_codes_considered:
+        npi_codes_considered = [
+            x for x in npis[dd.EngEng['npiCode']] if len(x.split('_')) == 2]
     df_merged = df_npis.iloc[:, :2]
-    for subcode in all_subcodes:
+    for subcode in npi_codes_considered:
         # extract columns which have the subcode as part of the column
         # name and sum over all these subcodes
         df_merged[subcode] = df_npis.filter(
             regex=subcode).sum(axis=1)
-    #npi_codes_considered = npis.NPI_code.values.tolist()
-    npi_codes_considered = all_subcodes
-    df_npis = df_merged.copy()
 
-    if len(np.where(df_npis[npi_codes_considered] > 1)[0]) > 0:
+    # make sure that only considered subcodes are in npis dataframe
+    npis = npis[npis[dd.EngEng['npiCode']].isin(npi_codes_considered)]
+
+    df_npis = df_merged[:]
+
+    if ~df_npis[npi_codes_considered].isin([0, 1]).any().any():
 
         print("Info: Please ensure that NPI information is only boolean.")
 
@@ -399,8 +397,7 @@ def analyze_npi_data(
         # to the others as one node in the #NPIs-used-dimensional space.
         # We compute the pairwise distances of these nodes. Then, nodes with
         # similar correlations towards all other nodes exhibit small distances
-        # TODO: difference between scipy.cluster.hierarchy.distance.pdist and scipy.spatial.distance.pdist?
-        corr_pairwdist = hierarchy.distance.pdist(
+        corr_pairwdist = distance.pdist(
             npis_corr, metric='euclidean')
 
         npi_codes_used = np.asarray(df_npis_used.iloc[:, 2:].columns)
@@ -476,23 +473,23 @@ def analyze_npi_data(
         plt.show()
         max_coph_dist = coph_dist_mat.max()
         npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                abs(npis_corr), cluster_hierarch,
-                [wg * max_coph_dist
-                 for wg in np.linspace(0.01, 1, 100)])
-        
+            abs(npis_corr), cluster_hierarch,
+            [wg * max_coph_dist
+             for wg in np.linspace(0.01, 1, 100)])
+
         silhouette(npis_corr, npi_idx_to_cluster_idx.max(
-            )+1, npi_idx_to_cluster_idx, label=method)
+        )+1, npi_idx_to_cluster_idx, label=method)
 
         cluster_dict = dict()
         cluster_codes = [[] for i in range(npi_idx_to_cluster_idx.max())]
         cluster_desc = [[] for i in range(npi_idx_to_cluster_idx.max())]
         for i in range(len(npi_idx_to_cluster_idx)):
             cluster_dict[npi_codes_used[i]
-                            ] = "CM_" + str(npi_idx_to_cluster_idx[i]-1).zfill(3)
+                         ] = "CM_" + str(npi_idx_to_cluster_idx[i]-1).zfill(3)
             cluster_codes[npi_idx_to_cluster_idx
-                            [i]-1].append(npi_codes_used[i])
+                          [i]-1].append(npi_codes_used[i])
             cluster_desc[npi_idx_to_cluster_idx
-                            [i]-1].append(str(npis_used[i]))
+                         [i]-1].append(str(npis_used[i]))
 
         # create clustered dataframe
         df_npis_clustered = df_npis[[
@@ -502,7 +499,7 @@ def analyze_npi_data(
             df_npis_clustered["CM_" + str(i).zfill(3)
                               ] = df_npis[cluster_codes[i]].max(axis=1).copy()
 
-        npis_corr_cluster = df_npis_clustered.iloc[:,2:].corr()
+        npis_corr_cluster = df_npis_clustered.iloc[:, 2:].corr()
         # npis_corr_cluster[abs(npis_corr_cluster)<0.25] = 0
         plt.imshow(abs(npis_corr_cluster), cmap='gray_r')
         plt.title('Absolute correlation>0.25 of clustered NPIs')
