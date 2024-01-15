@@ -20,14 +20,14 @@
 #ifndef MIO_COMPARTMENTALMODEL_H
 #define MIO_COMPARTMENTALMODEL_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
-#include "memilio/utils/custom_index_array.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/utils/custom_index_array.h" // IWYU pragma: keep
 #include "memilio/utils/metaprogramming.h"
-#include <cstddef>
+#include <cstddef> // IWYU pragma: keep
 #include <type_traits>
-#include <vector>
-#include <functional>
+#include <vector> // IWYU pragma: keep
+#include <functional> // IWYU pragma: keep
 
 namespace mio
 {
@@ -78,23 +78,6 @@ public:
     using Compartments = Comp;
     using Populations  = Pop;
     using ParameterSet = Params;
-
-<<<<<<< HEAD
-    // The flow function takes a set of parameters, the current time t and the
-    // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
-    // that represents a flow going from one compartment to another.
-    using FlowFunction = std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop,
-                                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, FP t)>;
-
-    // A flow is a tuple of a from-index corresponding to the departing compartment, a to-index
-    // corresponding to the receiving compartment and a FlowFunction. The value returned by the flow
-    // function will be subtracted from the time derivative of the populations at the flat index corresponding
-    // to the from-compartment, and added to the time derivative of the populations at the flat index
-    // corresponding to the to-compartment.
-    using Flow = std::tuple<typename Populations::Index, typename Populations::Index, FlowFunction>;
-
-=======
->>>>>>> upstream/main
     /**
      * @brief CompartmentalModel default constructor
      */
@@ -111,16 +94,11 @@ public:
     virtual ~CompartmentalModel()                            = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
-<<<<<<< HEAD
     virtual void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>>,
                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> /*y*/,
                                  FP /*t*/, Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> /*dydt*/) const {};
-#endif // USE_DERIV_FUNC
 
-=======
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                                 double /*t*/, Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
->>>>>>> upstream/main
+
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
      *
