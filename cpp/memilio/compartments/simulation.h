@@ -20,17 +20,18 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // IWYU pragma: keep
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/euler.h"
+#include "memilio/math/euler.h" // IWYU pragma: keep
 
 namespace mio
 {
 
-using DefaultIntegratorCore = mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>;
+template<typename FP=double>
+using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP,boost::numeric::odeint::runge_kutta_cash_karp54>;
 
 /**
  * @brief A class for the simulation of a compartment model.
@@ -51,15 +52,8 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-<<<<<<< HEAD
     Simulation(Model const& model, FP t0 = 0., FP dt = 0.1)
-        : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<FP,
-                   boost::numeric::odeint::runge_kutta_cash_karp54>>())
-=======
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(std::make_shared<DefaultIntegratorCore>())
->>>>>>> upstream/main
+        : m_integratorCore(std::make_shared<DefaultIntegratorCore<FP>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(m_integratorCore)
         , m_result(t0, m_model->get_initial_values())
@@ -87,15 +81,11 @@ public:
         return *m_integratorCore;
     }
 
-<<<<<<< HEAD
     /**
      * @brief get_integrator
      * @return reference to the core integrator used in the simulation
      */
     IntegratorCore<FP> const& get_integrator() const
-=======
-    IntegratorCore const& get_integrator() const
->>>>>>> upstream/main
     {
         return *m_integratorCore;
     }
@@ -130,15 +120,11 @@ public:
         return m_result;
     }
 
-<<<<<<< HEAD
     /**
      * @brief get_result returns the final simulation result
      * @return a TimeSeries to represent the final simulation result
      */
     const TimeSeries<FP>& get_result() const
-=======
-    const TimeSeries<ScalarType>& get_result() const
->>>>>>> upstream/main
     {
         return m_result;
     }
@@ -166,12 +152,12 @@ public:
      * next step size in this value.
      * @{
      */
-    double& get_dt()
+    FP& get_dt()
     {
         return m_dt;
     }
 
-    const double& get_dt() const
+    const FP& get_dt() const
     {
         return m_dt;
     }
@@ -179,25 +165,20 @@ public:
 
 protected:
     /// @brief Get a reference to the integrater. Can be used to overwrite advance.
-    OdeIntegrator& get_ode_integrator()
+    OdeIntegrator<FP>& get_ode_integrator()
     {
         return m_integrator;
     }
 
 private:
-<<<<<<< HEAD
-    std::shared_ptr<IntegratorCore<FP>> m_integratorCore;
-    std::unique_ptr<Model> m_model;
-    OdeIntegrator<FP> m_integrator;
-}; // namespace mio
-=======
-    std::shared_ptr<IntegratorCore> m_integratorCore; ///< Defines the integration scheme via its step function.
+
+    std::shared_ptr<IntegratorCore<FP>> m_integratorCore; ///< Defines the integration scheme via its step function.
     std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
-    OdeIntegrator m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
-    TimeSeries<ScalarType> m_result; ///< The simulation results.
-    ScalarType m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
+    OdeIntegrator<FP> m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
+    TimeSeries<FP> m_result; ///< The simulation results.
+    FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
 };
->>>>>>> upstream/main
+
 
 /**
  * Defines the return type of the `advance` member function of a type.
