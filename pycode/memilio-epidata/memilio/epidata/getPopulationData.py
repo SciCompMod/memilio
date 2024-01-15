@@ -114,7 +114,7 @@ def manage_credentials():
 
     # check if .ini file exists
     if not os.path.exists(path):
-        print('.ini file not found. Writing CredentialsRegio.ini...')
+        gd.default_print('Info','.ini file not found. Writing CredentialsRegio.ini...')
         username = input(
             "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
         password = getpass.getpass(

@@ -124,7 +124,7 @@ def print_manual_download(filename, url):
                      '. Then move it to a folder named raw_data in this directory.')
 
 
-def read_files(directory, fine_resolution):
+def read_files(directory, fine_resolution, run_checks):
     """! Reads files from local directory and returns data in dataframes
 
     @param directory Directory where data is loaded from.
@@ -260,7 +260,10 @@ def read_files(directory, fine_resolution):
     except FileNotFoundError:
         raise FileNotFoundError('File ' + fname + ' not found.')
 
-    npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
+    if run_checks:
+        npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
+    else:
+        gd.default_print('Warning', "Sanity checks for NPI data have not been executed.")
 
     return df_npis_old, df_npis_desc, df_npis_combinations_pre
 
@@ -547,7 +550,7 @@ def get_npi_data(fine_resolution=2,
 
     # read manual downloaded files from directory
     df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(
-        directory, fine_resolution)
+        directory, fine_resolution, conf.checks)
 
     gd.default_print('Debug', 'Download completed.')
 

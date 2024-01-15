@@ -183,6 +183,8 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     if conf.checks == True:
         hospit_sanity_checks(df_raw)
+    else:
+        gd.default_print('Warning', "Sanity checks for hospitalization data have not been executed.")
 
     if not no_raw:
         gd.write_dataframe(df_raw, directory, filename, file_format)

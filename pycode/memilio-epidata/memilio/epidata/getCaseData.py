@@ -46,7 +46,7 @@ from memilio.epidata import progress_indicator
 pd.options.mode.copy_on_write = True
 
 
-def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
+def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=True):
     """! Checks if all counties are mentioned in the case data set
 
    This check had to be added due to incomplete data downloads
@@ -57,13 +57,18 @@ def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
    @param df pandas dataframe to check
    @return Boolean to say if data is complete or not
    """
-
-    if not df.empty:
-        return geoger.check_for_all_counties(
-            df["IdLandkreis"].unique(),
-            merge_berlin, merge_eisenach)
-    # if it is empty
-    return False
+    if run_checks:
+        if not df.empty:
+            return geoger.check_for_all_counties(
+                df["IdLandkreis"].unique(),
+                merge_berlin, merge_eisenach)
+        # if it is empty
+        return False
+    else:
+        # skip checks, return True
+        # only done if default value in download_config.conf is changed
+        gd.default_print("Warning", "DataFrame has not been checked for completeness.")
+        return True
 
 
 def get_case_data(read_data=dd.defaultDict['read_data'],
@@ -128,6 +133,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
+    run_checks = conf.checks
 
     if files == 'All':
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
@@ -151,7 +157,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
             "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
         df = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
-        complete = check_for_completeness(df, merge_eisenach=True)
+        complete = check_for_completeness(df, run_checks, merge_eisenach=True)
     except:
         pass
     if complete:
@@ -170,7 +176,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             # utf_8_sig can identify those bytes as one sign and display it correctly
             df = gd.get_file(path, url, False, param_dict={
                              "encoding": 'utf_8_sig'}, interactive=True)
-            complete = check_for_completeness(df, merge_eisenach=True)
+            complete = check_for_completeness(df, run_checks, merge_eisenach=True)
         except:
             pass
         if not complete:
@@ -183,7 +189,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 df = gd.get_file(path, url, False, param_dict={
                                  "encoding": 'utf_8_sig'}, interactive=True)
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
-                complete = check_for_completeness(df, merge_eisenach=True)
+                complete = check_for_completeness(df, run_checks, merge_eisenach=True)
             except:
                 pass
         if not complete:

@@ -108,6 +108,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         raise gd.DataError("Something went wrong, dataframe is empty.")
     if conf.checks == True:
         divi_data_sanity_checks(df_raw)
+    else:
+        gd.default_print("Warning", "Sanity checks for DIVI data have not been executed.")
     df = df_raw.rename(dd.GerEng, axis=1, inplace=False)
 
     try:

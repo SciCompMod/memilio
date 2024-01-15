@@ -99,25 +99,25 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     try:
         getCaseData.get_case_data(**arg_dict_cases)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('case')
 
     try:
         getPopulationData.get_population_data(**arg_dict_all)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('population')
 
     try:
         getDIVIData.get_divi_data(**arg_dict_divi)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('DIVI')
 
     try:
         getVaccinationData.get_vaccination_data(**arg_dict_vacc)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
 
 

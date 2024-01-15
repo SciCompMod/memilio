@@ -50,7 +50,7 @@ def verify_sorted(countykey_list):
         return False
 
 
-def assign_geographical_entities(countykey_list, govkey_list):
+def assign_geographical_entities(countykey_list, govkey_list, run_checks):
     """! Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
 
     Only works with sorted key lists.
@@ -65,9 +65,11 @@ def assign_geographical_entities(countykey_list, govkey_list):
     @return gov_county_table Table of county regional keys per governing region.
     @return state_gov_table Table of governing region regional keys per federal state.
     """
-
-    if verify_sorted(countykey_list) == False:
-        raise gd.DataError("Error. Input list not sorted.")
+    if run_checks:
+        if verify_sorted(countykey_list) == False:
+            raise gd.DataError("Error. Input list not sorted.")
+    else:
+        gd.default_print('Warning', 'List of county regional keys has not been verified to be sorted.')
 
     # Create list of government regions with lists of counties that belong to them and list of states with government regions that belong to them; only works with sorted lists of keys.
     gov_county_table = []
@@ -220,7 +222,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         zip(govkey_list, list(range(len(govkey_list)))))
 
     (countykey2govkey, countykey2localnumlist, gov_county_table,
-     state_gov_table) = assign_geographical_entities(countykey_list, govkey_list)
+     state_gov_table) = assign_geographical_entities(countykey_list, govkey_list, conf.checks)
 
     mat_commuter_migration = np.zeros(
         [len(countykey_list), len(countykey_list)])
