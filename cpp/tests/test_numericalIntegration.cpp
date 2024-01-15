@@ -57,36 +57,46 @@ public:
     double err;
 };
 
-using TestVerifyNumericalIntegratorEuler = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore>>;
-TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
-{
-    n   = 1000;
-    dt  = (tmax - t0) / n;
-    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
-    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+using ExplicitSteppersTestTypes =
+    ::testing::Types<mio::EulerIntegratorCore,
+                     mio::ExplicitStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
+                     mio::ExplicitStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>,
+                     mio::ExplicitStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
 
-    sol[0][0]     = std::sin(0);
-    sol[n - 1][0] = std::sin((n - 1) * dt);
+template <class T>
+using TestVerifyExplicitNumericalIntegrator = TestVerifyNumericalIntegrator<::testing::Types<T>>;
+
+TYPED_TEST_SUITE(TestVerifyExplicitNumericalIntegrator, ExplicitSteppersTestTypes);
+
+TYPED_TEST(TestVerifyExplicitNumericalIntegrator, sine)
+{
+    this->n   = 1000;
+    this->dt  = (this->tmax - this->t0) / this->n;
+    this->y   = std::vector<Eigen::VectorXd>(this->n, Eigen::VectorXd::Constant(1, 0));
+    this->sol = std::vector<Eigen::VectorXd>(this->n, Eigen::VectorXd::Constant(1, 0));
+
+    this->sol[0][0]           = std::sin(0);
+    this->sol[this->n - 1][0] = std::sin((this->n - 1) * this->dt);
 
     auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
-    mio::EulerIntegratorCore euler;
+    TypeParam stepper;
 
-    auto t = t0;
-    for (size_t i = 0; i < n - 1; i++) {
-        sol[i + 1][0] = std::sin((i + 1) * dt);
+    auto t = this->t0;
+    for (size_t i = 0; i < this->n - 1; i++) {
+        this->sol[i + 1][0] = std::sin((i + 1) * this->dt);
 
-        euler.step(f, y[i], t, dt, y[i + 1]);
+        stepper.step(f, this->y[i], t, this->dt, this->y[i + 1]);
 
         // printf("\n %.8f\t %.8f ", y[i + 1][0], sol[i + 1][0]);
 
-        err += std::pow(std::abs(y[i + 1][0] - sol[i + 1][0]), 2.0);
+        this->err += std::pow(std::abs(this->y[i + 1][0] - this->sol[i + 1][0]), 2.0);
     }
 
-    err = std::sqrt(err) / n;
+    this->err = std::sqrt(this->err) / this->n;
 
-    EXPECT_NEAR(err, 0.0, 1e-3);
+    EXPECT_NEAR(this->err, 0.0, 1e-3);
 }
 
 using TestTypes = ::testing::Types<mio::RKIntegratorCore,
