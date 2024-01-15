@@ -143,6 +143,42 @@ private:
     mutable boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>> m_stepper;
 };
 
+template <template <class State = Eigen::VectorXd, class Value = double, class Deriv = State, class Time = double,
+                    class Algebra    = boost::numeric::odeint::vector_space_algebra,
+                    class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
+                    class Resizer    = boost::numeric::odeint::never_resizer>
+          class ExplicitStepper>
+class ExplicitStepperWrapper : public mio::IntegratorCore
+{
+public:
+    /**
+    * @brief Make a single integration step of a system of ODEs and adapt step width
+    * @param[in] yt value of y at t, y(t)
+    * @param[in,out] t current time step h=dt
+    * @param[in,out] dt current time step h=dt
+    * @param[out] ytp1 approximated value y(t+1)
+    */
+    bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
+              Eigen::Ref<Eigen::VectorXd> ytp1) const override
+    {
+        // copy y(t) to dxdt, since we use the scheme do_step(sys, inout, t, dt) with sys=f, inout=y(t) for
+        // in-place computation - also, this form is shared by several (all?) steppers in boost
+        ytp1 = yt.eval();
+        m_stepper.do_step(
+            // reorder arguments of the DerivFunction f for the stepper
+            [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxds, double s) {
+                dxds.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
+                f(x, s, dxds);
+            },
+            ytp1, t, dt);
+        t += dt;
+        return true; // no step size adaption
+    }
+
+private:
+    mutable ExplicitStepper<> m_stepper;
+};
+
 } // namespace mio
 
 #endif
