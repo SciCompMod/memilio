@@ -310,7 +310,6 @@ def test_total_population(df_pop, age_cols):
 def get_population_data(read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
-                        no_raw=dd.defaultDict['no_raw'],
                         merge_eisenach=True,
                         username='',
                         password='',
@@ -351,7 +350,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
-    no_raw = conf.no_raw
 
     # If no username or password is provided, the credentials are either read from an .ini file or,
     # if the file does not exist they have to be given as user input.

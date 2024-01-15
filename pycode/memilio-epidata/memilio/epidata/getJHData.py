@@ -39,7 +39,6 @@ pd.options.mode.copy_on_write = True
 def get_jh_data(read_data=dd.defaultDict['read_data'],
                 file_format=dd.defaultDict['file_format'],
                 out_folder=dd.defaultDict['out_folder'],
-                no_raw=dd.defaultDict['no_raw'],
                 start_date=date(2020, 1, 22),
                 end_date=dd.defaultDict['end_date'],
                 impute_dates=dd.defaultDict['impute_dates'],

@@ -72,23 +72,22 @@ WARNING: This file is experimental and has not been tested.
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
+    make_plot = conf.make_plot
 
     data_path = os.path.join(out_folder, 'Germany/')
 
     if not read_data:
-        make_plot_cases = False
-        make_plot_jh = False
 
         # get case data
         gcd.get_case_data(
             read_data, file_format, out_folder, no_raw, start_date, end_date,
-            impute_dates, moving_average, make_plot_cases, split_berlin,
+            impute_dates, moving_average, make_plot, split_berlin,
             rep_date)
 
         # get data from John Hopkins University
         gjd.get_jh_data(
             read_data, file_format, out_folder, no_raw, start_date, end_date,
-            impute_dates, moving_average, make_plot_jh)
+            impute_dates, moving_average, make_plot)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -186,7 +185,7 @@ WARNING: This file is experimental and has not been tested.
 
         if file_to_change == "cases_all_germany":
             compare_estimated_and_rki_deathsnumbers(
-                df_jh, df_cases, data_path, read_data, conf.plot)
+                df_jh, df_cases, data_path, read_data, make_plot)
             get_weekly_deaths_data_age_gender_resolved(
                 data_path, read_data=True)
             # df_cases[week] = df_cases[date].dt.isocalendar().week

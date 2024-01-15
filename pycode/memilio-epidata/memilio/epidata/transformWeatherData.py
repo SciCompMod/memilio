@@ -38,10 +38,10 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                          out_folder=dd.defaultDict['out_folder'],
                          start_date=dd.defaultDict['start_date'],
                          end_date=dd.defaultDict['end_date'],
-                         make_plot=dd.defaultDict['make_plot'],
                          moving_average=dd.defaultDict['moving_average'],
                          merge_berlin=True,
-                         merge_eisenach=False
+                         merge_eisenach=False,
+                         **kwargs
                          ):
     """! ...
     @param file_format File format which is used for writing the data. 
@@ -52,11 +52,11 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
         of stored data frames.
     @param end_date [Default = '', taken from read data] End date of
         stored data frames.
-    @param make_plot False [Default] or True. Defines if plots are
-        generated with matplotlib.
     @param moving_average 0 [Default] or Number > 0. Defines the number of
         days for which a centered moving average is computed.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
 
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
@@ -198,7 +198,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transformWeatherData(read_data=False, make_plot=True, moving_average=30)
+    transformWeatherData(read_data=False, moving_average=30)
 
 
 if __name__ == "__main__":

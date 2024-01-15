@@ -225,8 +225,8 @@ def cli():
     - choose file format: json or hdf5
     - define path to files
     """
-
-    out_path_default = dd.defaultDict['out_folder']
+    conf = gd.Conf(dd.defaultDict['out_folder'])
+    out_path_default = conf.path_to_use
 
     parser = argparse.ArgumentParser()
 
