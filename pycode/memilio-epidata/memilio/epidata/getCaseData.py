@@ -67,7 +67,8 @@ def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=Tr
     else:
         # skip checks, return True
         # only done if default value in download_config.conf is changed
-        gd.default_print("Warning", "DataFrame has not been checked for completeness.")
+        gd.default_print(
+            "Warning", "DataFrame has not been checked for completeness.")
         return True
 
 
@@ -156,7 +157,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
             "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
-        df = gd.get_file(path, url, read_data, param_dict={}, interactive=conf.interactive)
+        df = gd.get_file(path, url, read_data, param_dict={},
+                         interactive=conf.interactive)
         complete = check_for_completeness(df, run_checks, merge_eisenach=True)
     except:
         pass
@@ -176,7 +178,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             # utf_8_sig can identify those bytes as one sign and display it correctly
             df = gd.get_file(path, url, False, param_dict={
                              "encoding": 'utf_8_sig'}, interactive=conf.interactive)
-            complete = check_for_completeness(df, run_checks, merge_eisenach=True)
+            complete = check_for_completeness(
+                df, run_checks, merge_eisenach=True)
         except:
             pass
         if not complete:
@@ -189,7 +192,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 df = gd.get_file(path, url, False, param_dict={
                                  "encoding": 'utf_8_sig'}, interactive=conf.interactive)
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
-                complete = check_for_completeness(df, run_checks, merge_eisenach=True)
+                complete = check_for_completeness(
+                    df, run_checks, merge_eisenach=True)
             except:
                 pass
         if not complete:
@@ -283,12 +287,14 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]
+                          : geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]
+                           : df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(
@@ -307,7 +313,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                               ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                    [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]
+                        : df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
                           {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [

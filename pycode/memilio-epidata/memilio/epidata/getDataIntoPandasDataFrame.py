@@ -83,7 +83,7 @@ class Conf:
                 self.path_to_use = out_folder
             else:
                 self.path_to_use = parser['SETTINGS']['path_to_use']
-            
+
             matplotlib.use(str(parser['SETTINGS']['mpl_backend']))
 
             # merge kwargs with config data

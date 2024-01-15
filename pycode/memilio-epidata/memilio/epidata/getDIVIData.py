@@ -109,7 +109,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     if conf.checks == True:
         divi_data_sanity_checks(df_raw)
     else:
-        gd.default_print("Warning", "Sanity checks for DIVI data have not been executed.")
+        gd.default_print(
+            "Warning", "Sanity checks for DIVI data have not been executed.")
     df = df_raw.rename(dd.GerEng, axis=1, inplace=False)
 
     try:

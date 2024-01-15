@@ -534,7 +534,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     filename = "RKIVaccFull"
 
-    df_data = download_vaccination_data(read_data, filename, directory, conf.interactive)
+    df_data = download_vaccination_data(
+        read_data, filename, directory, conf.interactive)
     sanity_checks(df_data, conf.checks)
 
     if not no_raw:

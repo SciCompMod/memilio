@@ -263,7 +263,8 @@ def read_files(directory, fine_resolution, run_checks):
     if run_checks:
         npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
     else:
-        gd.default_print('Warning', "Sanity checks for NPI data have not been executed.")
+        gd.default_print(
+            'Warning', "Sanity checks for NPI data have not been executed.")
 
     return df_npis_old, df_npis_desc, df_npis_combinations_pre
 

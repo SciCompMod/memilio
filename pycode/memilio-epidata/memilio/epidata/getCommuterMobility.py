@@ -69,7 +69,8 @@ def assign_geographical_entities(countykey_list, govkey_list, run_checks):
         if verify_sorted(countykey_list) == False:
             raise gd.DataError("Error. Input list not sorted.")
     else:
-        gd.default_print('Warning', 'List of county regional keys has not been verified to be sorted.')
+        gd.default_print(
+            'Warning', 'List of county regional keys has not been verified to be sorted.')
 
     # Create list of government regions with lists of counties that belong to them and list of states with government regions that belong to them; only works with sorted lists of keys.
     gov_county_table = []
