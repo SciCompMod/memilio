@@ -71,10 +71,10 @@ public:
 
     /**
     * @brief Make a single integration step of a system of ODEs and adapt step width
-    * @param[in] yt value of y at t, y(t)
-    * @param[in,out] t current time step h=dt
-    * @param[in,out] dt current time step h=dt
-    * @param[out] ytp1 approximated value y(t+1)
+    * @param[in] yt Value of y at t, y(t).
+    * @param[in,out] t Current time.
+    * @param[in] dt Current time step size.
+    * @param[out] ytp1 Approximated value y(t+dt).
     */
     bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override
@@ -152,16 +152,16 @@ class ExplicitStepperWrapper : public mio::IntegratorCore
 {
 public:
     /**
-    * @brief Make a single integration step of a system of ODEs and adapt step width
-    * @param[in] yt value of y at t, y(t)
-    * @param[in,out] t current time step h=dt
-    * @param[in,out] dt current time step h=dt
-    * @param[out] ytp1 approximated value y(t+1)
+    * @brief Make a single integration step of a system of ODEs.
+    * @param[in] yt Value of y at t, y(t).
+    * @param[in,out] t Current time.
+    * @param[in] dt Current time step size.
+    * @param[out] ytp1 approximated value y(t+dt).
     */
     bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override
     {
-        // copy y(t) to dxdt, since we use the scheme do_step(sys, inout, t, dt) with sys=f, inout=y(t) for
+        // use eval to copy the values from y(t) to ytp1, since we use the scheme do_step(sys, inout, t, dt) with sys=f, inout=y(t) for
         // in-place computation - also, this form is shared by several (all?) steppers in boost
         ytp1 = yt.eval();
         m_stepper.do_step(
