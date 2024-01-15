@@ -262,7 +262,7 @@ def read_files(directory, fine_resolution):
         if fine_resolution > 0:
             df_npis_combinations_pre = pd.read_excel(
                 os.path.join(
-                    directory, 'combination_npis_incl_ranking.xlsx'), engine='openpyxl')
+                    directory, 'combination_npis_incl_ranking_v3.xlsx'), engine='openpyxl')
             if run_check == True:
                 npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
             return df_npis_old, df_npis_desc, df_npis_combinations_pre
@@ -921,9 +921,12 @@ def get_npi_data(fine_resolution=2,
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
     counter_cases_start = 0
 
+    # create dataframe to count multiple codes after incidence dependent (de-)activation
+    df_incid_depend = pd.DataFrame()
+
     # setup dataframe for each maingroup, same format as df_npi_combinations
     # used to count codes that occur simultaneously now (before any (de-)activation)
-    if fine_resolution > 0:
+    if fine_resolution == 2:
         df_count_joint_codes = df_npis_combinations[:]
         for maincode in df_count_joint_codes.keys():
             df_count_joint_codes[maincode][1] *= 0
@@ -932,8 +935,6 @@ def get_npi_data(fine_resolution=2,
         save_interaction_matrix(df_counted_joint_codes, 'joint_codes', directory)
         plot_interaction_matrix('joint_codes', directory)
 
-        # create dataframe to count multiple codes after incidence dependent (de-)activation
-        df_incid_depend = pd.DataFrame()
         df_count_incid_depend = copy.deepcopy(df_npis_combinations)
         for maincode in df_count_incid_depend.keys():
             df_count_incid_depend[maincode][1] *= 0
@@ -948,6 +949,8 @@ def get_npi_data(fine_resolution=2,
         df_count_deactivation = copy.deepcopy(df_npis_combinations)
         for maincode in df_count_deactivation.keys():
             df_count_deactivation[maincode][1] *= 0
+
+    if fine_resolution > 0:
 
         all_subcodes = []
         for maincode in df_npis_combinations.keys():
@@ -1237,7 +1240,7 @@ def get_npi_data(fine_resolution=2,
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
 
-    if fine_resolution > 0:
+    if fine_resolution > 2:
         save_interaction_matrix(df_count_deactivation,
                                 'count_deactivation', directory)
         plot_interaction_matrix('count_deactivation', directory)
@@ -1498,7 +1501,7 @@ def main():
 
     # arg_dict = gd.cli("testing")
     df = get_npi_data(start_date=date(2020, 1, 1),
-                      fine_resolution=0, file_format='csv')
+                      fine_resolution=2, file_format='csv')
 
 
 if __name__ == "__main__":
