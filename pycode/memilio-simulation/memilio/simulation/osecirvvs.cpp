@@ -116,7 +116,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     m.def(
         "simulate",
         [](double t0, double tmax, double dt, const mio::osecirvvs::Model& model) {
-            return mio::simulate(t0, tmax, dt, model);
+            return mio::osecirvvs::simulate(t0, tmax, dt, model);
         },
         "Simulates a Model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
