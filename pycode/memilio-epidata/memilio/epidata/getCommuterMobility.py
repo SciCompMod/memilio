@@ -198,7 +198,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
             states[state_id_file] + '_' + str(ref_year)
         filepath = os.path.join(mobility_dir) + filename + '.json'
         commuter_migration_files[state_id_file] = gd.get_file(
-            filepath, url, read_data, param_dict, interactive=True)
+            filepath, url, read_data, param_dict, interactive=conf.interactive)
         if not no_raw:
             gd.write_dataframe(
                 commuter_migration_files[state_id_file], mobility_dir, filename, 'json')

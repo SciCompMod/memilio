@@ -97,7 +97,7 @@ def read_population_data(username, password, read_data, directory):
     return df_pop_raw
 
 
-def manage_credentials():
+def manage_credentials(interactive):
     '''! Manages credentials for regionalstatistik.de (needed for dowload).
 
     A connfig file inside the epidata folder is either written (if not existent yet)
@@ -120,9 +120,12 @@ def manage_credentials():
         password = getpass.getpass(
             "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
         # create file
-        write_ini = gd.user_choice(
-            message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
-            'The next time this function is called, the credentials can be read from that file.')
+        if interactive:
+            write_ini = gd.user_choice(
+                message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
+                'The next time this function is called, the credentials can be read from that file.')
+        else:
+            write_ini = False
         if write_ini:
             string = '[CREDENTIALS]\nUsername = ' + \
                 username+'\nPassword = '+password
@@ -353,7 +356,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     # If no username or password is provided, the credentials are either read from an .ini file or,
     # if the file does not exist they have to be given as user input.
     if (username is None) or (password is None):
-        username, password = manage_credentials()
+        username, password = manage_credentials(conf.interactive)
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
