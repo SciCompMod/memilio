@@ -361,8 +361,9 @@ struct AntigenTest : public GenericTest<FP> {
 /**
  * @brief Reliability of a PCRTest.
  */
-struct PCRTest : public GenericTest {
-    using Type = TestParameters;
+template<typename FP=double>
+struct PCRTest : public GenericTest<FP> {
+    using Type = TestParameters<FP>;
     static Type get_default()
     {
         return Type{0.9, 0.99};
@@ -715,7 +716,7 @@ public:
                 return true;
             }
 
-            if (this->template get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds() ||
+            if (this->template get<GotoSchoolTimeMaximum>()[i].seconds() < this->template get<GotoSchoolTimeMinimum>()[i].seconds() ||
                 this->template get<GotoSchoolTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
@@ -738,14 +739,14 @@ public:
             return true;
         }
 
-        if (this->get<MaskProtection>()[MaskType::Surgical] < 0.0 ||
-            this->get<MaskProtection>()[MaskType::Surgical] > 1.0) {
+        if (this->template get<MaskProtection<FP>>()[MaskType::Surgical] < 0.0 ||
+            this->template get<MaskProtection<FP>>()[MaskType::Surgical] > 1.0) {
             log_error("Constraint check: Parameter MaskProtection for MaskType Surgical smaller {:d} or larger {:d}", 0,
                       1);
             return true;
         }
 
-        if (this->get<LockdownDate>().seconds() < 0.0) {
+        if (this->template get<LockdownDate>().seconds() < 0.0) {
             log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
             return true;
         }
