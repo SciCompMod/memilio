@@ -304,12 +304,15 @@ private:
 };
 
 /**
- * Specialization of simulate for SECIR models using Simulation.
- * @param t0 start time.
- * @param tmax end time.
- * @param dt time step.
- * @param model SECIR model to simulate.
- * @param integrator optional integrator, uses rk45 if nullptr.
+ * @brief Specialization of simulate for SECIR models using Simulation.
+ * 
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIR model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the simulation.
  */
 inline auto simulate(double t0, double tmax, double dt, const Model& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
@@ -318,12 +321,15 @@ inline auto simulate(double t0, double tmax, double dt, const Model& model,
 }
 
 /**
- * Specialization of FlowSimulation for SECIR models using Simulation.
- * @param t0 start time.
- * @param tmax end time.
- * @param dt time step.
- * @param model SECIR model to simulate.
- * @param integrator optional integrator, uses rk45 if nullptr.
+ * @brief Specialization of simulate for SECIR models using the FlowSimulation.
+ * 
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIR model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the Flowsimulation.
  */
 inline auto simulate_flows(double t0, double tmax, double dt, const Model& model,
                            std::shared_ptr<IntegratorCore> integrator = nullptr)
