@@ -329,13 +329,7 @@ public:
     {
         return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
     }
-
-    /**
-     * @brief Sets the current Infection to detected and moves the Person into quarantine.
-     * @param[in] t TimePoint of the detection.
-     */
-    void detect_infection(TimePoint t);
-
+    
     /**
      * @brief Removes the quarantine status of the Person.
      */

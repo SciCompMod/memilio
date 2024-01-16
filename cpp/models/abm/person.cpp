@@ -175,14 +175,6 @@ bool Person::goes_to_school(TimePoint t, const Parameters& params) const
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
 
-void Person::detect_infection(TimePoint t)
-{
-    if (is_infected(t)) {
-        m_infections.back().set_detected();
-        m_quarantine_start = t;
-    }
-}
-
 void Person::remove_quarantine()
 {
     m_quarantine_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
@@ -196,11 +188,11 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         // true positive
         if (random < params.sensitivity) {
             m_quarantine_start = t;
+            m_infections.back().set_detected();
             return true;
         }
         // false negative
         else {
-
             return false;
         }
     }

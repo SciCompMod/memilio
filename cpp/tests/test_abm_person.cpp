@@ -103,6 +103,7 @@ TEST(TestPerson, quarantine)
 {
     using testing::Return;
     auto rng = mio::RandomNumberGenerator();
+    auto test_params = mio::abm::TestParameters{1.01,1.01}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -127,8 +128,8 @@ TEST(TestPerson, quarantine)
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
                                        infection_parameters);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
-
-    person.detect_infection(t_morning);
+    
+    person.get_tested(rng_person, t_morning, test_params);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
     ASSERT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, mio::abm::Parameters(num_age_groups)),
