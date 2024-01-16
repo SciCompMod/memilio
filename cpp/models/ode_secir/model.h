@@ -21,6 +21,7 @@
 #define ODESECIR_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secir/infection_state.h"
@@ -217,7 +218,7 @@ public:
 };
 
 //forward declaration, see below.
-template <class Base = mio::Simulation<Model>>
+template <class BaseT = mio::Simulation<Model>>
 class Simulation;
 
 /**
@@ -232,10 +233,10 @@ double get_infections_relative(const Simulation<Base>& model, double t, const Ei
 
 /**
  * specialization of compartment model simulation for secir models.
- * @tparam Base simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
+ * @tparam BaseT simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
  */
-template <class Base>
-class Simulation : public Base
+template <class BaseT>
+class Simulation : public BaseT
 {
 public:
     /**
@@ -245,7 +246,7 @@ public:
      * @param dt time steps
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : Base(model, t0, dt)
+        : BaseT(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
     }
@@ -262,13 +263,13 @@ public:
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
         if (dyn_npis.get_thresholds().size() > 0) {
-            auto t        = Base::get_result().get_last_time();
+            auto t        = BaseT::get_result().get_last_time();
             const auto dt = dyn_npis.get_interval().get();
 
             while (t < tmax) {
                 auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
 
-                Base::advance(t + dt_eff);
+                BaseT::advance(t + dt_eff);
                 t = t + dt_eff;
 
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
@@ -293,7 +294,7 @@ public:
             return this->get_result().get_last_value();
         }
         else {
-            return Base::advance(tmax);
+            return BaseT::advance(tmax);
         }
     }
 
@@ -303,17 +304,37 @@ private:
 };
 
 /**
- * specialization of simulate for secir models using Simulation.
- * @param t0 start time.
- * @param tmax end time.
- * @param dt time step.
- * @param model secir model to simulate.
- * @param integrator optional integrator, uses rk45 if nullptr.
+ * @brief Specialization of simulate for SECIR models using Simulation.
+ * 
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIR model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the simulation.
  */
 inline auto simulate(double t0, double tmax, double dt, const Model& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     return mio::simulate<Model, Simulation<>>(t0, tmax, dt, model, integrator);
+}
+
+/**
+ * @brief Specialization of simulate for SECIR models using the FlowSimulation.
+ * 
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIR model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the Flowsimulation.
+ */
+inline auto simulate_flows(double t0, double tmax, double dt, const Model& model,
+                           std::shared_ptr<IntegratorCore> integrator = nullptr)
+{
+    return mio::simulate_flows<Model, Simulation<mio::FlowSimulation<Model>>>(t0, tmax, dt, model, integrator);
 }
 
 //see declaration above.
