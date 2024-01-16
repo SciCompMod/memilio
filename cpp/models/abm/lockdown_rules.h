@@ -48,17 +48,13 @@ namespace abm
  * @param[in] p Percentage of Person%s that work in home office.
  * @param[in, out] params Simulation parameters that include Damping.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-void set_home_office(TimePoint t_begin, double p, MigrationParameters<FP>& params)
+void set_home_office(TimePoint t_begin, double p, Parameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.template get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
 
-=======
-void set_home_office(TimePoint t_begin, double p, Parameters& params);
->>>>>>> upstream/main
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
@@ -66,19 +62,12 @@ void set_home_office(TimePoint t_begin, double p, Parameters& params);
  * @param[in] p Percentage of Person%s that are homeschooled.
  * @param[in,out] params Simulation parameters.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-void set_school_closure(TimePoint t_begin, double p, MigrationParameters<FP>& params)
+void set_school_closure(TimePoint t_begin, double p, Parameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.template get<SchoolRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
-
 }
-
-
-=======
-void set_school_closure(TimePoint t_begin, double p, Parameters& params);
->>>>>>> upstream/main
 
 /** 
  * @brief During lockdown Person%s join social events less often.
@@ -89,16 +78,13 @@ void set_school_closure(TimePoint t_begin, double p, Parameters& params);
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
  * @param[in,out] params Simulation parameters that include Damping.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-void close_social_events(TimePoint t_begin, double p, MigrationParameters<FP>& params)
+void close_social_events(TimePoint t_begin, double p, Parameters<FP>& params)
 {
-    auto damping1 = Eigen::VectorXd::Constant((size_t)AgeGroup::Count, p);
+    auto damping1 = Eigen::VectorXd::Constant(params.get_num_groups(), p);
     params.template get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
-=======
-void close_social_events(TimePoint t_begin, double p, Parameters& params);
->>>>>>> upstream/main
+
 
 } // namespace abm
 } //namespace mio
