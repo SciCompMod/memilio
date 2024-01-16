@@ -513,32 +513,17 @@ struct ReducTimeInfectedMild {
 };
 
 /**
- * @brief Infectiousness of variant B117.
- */
-struct BaseInfectiousnessB117 {
-    using Type = CustomIndexArray<double, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "BaseInfectiousnessB117";
-    }
-};
-
-/**
  * @brief Infectiousness of variant B161.
  */
-struct BaseInfectiousnessB161 {
+struct InfectiousnessNewVariant {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.0);
+        return Type(size, 1.0);
     }
     static std::string name()
     {
-        return "BaseInfectiousnessB161";
+        return "InfectiousnessNewVariant";
     }
 };
 
@@ -551,8 +536,7 @@ using ParametersBase =
                  DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
                  ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
                  ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
-                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, BaseInfectiousnessB117,
-                 BaseInfectiousnessB161>;
+                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, InfectiousnessNewVariant>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
@@ -821,17 +805,11 @@ public:
                 this->get<ReducTimeInfectedMild>()[i] = 1.0;
                 corrected                             = true;
             }
-            if (this->get<BaseInfectiousnessB117>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter BaseInfectiousnessB117 changed from {:0.4f} to {:d}",
-                            this->get<BaseInfectiousnessB117>()[i], 0);
-                this->get<BaseInfectiousnessB117>()[i] = 0;
-                corrected                              = true;
-            }
-            if (this->get<BaseInfectiousnessB161>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter BaseInfectiousnessB161 changed from {:0.4f} to {:d}",
-                            this->get<BaseInfectiousnessB161>()[i], 0);
-                this->get<BaseInfectiousnessB161>()[i] = 0;
-                corrected                              = true;
+            if (this->get<InfectiousnessNewVariant>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter InfectiousnessNewVariant changed from {:0.4f} to {:d}",
+                            this->get<InfectiousnessNewVariant>()[i], 1.0);
+                this->get<InfectiousnessNewVariant>()[i] = 1.0;
+                corrected                                = true;
             }
             if (this->get<VaccinationGap>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter VaccinationGap changed from {:0.4f} to {:d}",
@@ -1001,12 +979,8 @@ public:
                 log_error("Constraint check: Parameter ReducTimeInfectedMild smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }
-            if (this->get<BaseInfectiousnessB117>()[i] < 0.0) {
-                log_error("Constraint check: Parameter BaseInfectiousnessB117 smaller {:d}", 0);
-                return true;
-            }
-            if (this->get<BaseInfectiousnessB161>()[i] < 0.0) {
-                log_error("Constraint check: Parameter BaseInfectiousnessB161 smaller {:d}", 0);
+            if (this->get<InfectiousnessNewVariant>()[i] < 0.0) {
+                log_error("Constraint check: Parameter InfectiousnessNewVariant smaller {:d}", 0);
                 return true;
             }
         }

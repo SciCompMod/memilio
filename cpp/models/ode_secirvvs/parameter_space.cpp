@@ -149,10 +149,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
 
     //infectiousness of virus variants is not sampled independently but depend on base infectiousness
     for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-        shared_params_model.parameters.template get<BaseInfectiousnessB117>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i];
-        shared_params_model.parameters.template get<BaseInfectiousnessB161>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i] * delta_fac;
+        shared_params_model.parameters.template get<InfectiousnessNewVariant>()[i] = delta_fac;
     }
 
     for (auto& params_node : graph.nodes()) {

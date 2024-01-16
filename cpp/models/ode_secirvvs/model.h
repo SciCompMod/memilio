@@ -543,7 +543,7 @@ public:
     {
     }
 
-    void apply_b161(double t)
+    void apply_variant(double t)
     {
 
         auto start_day   = this->get_model().parameters.template get<StartDay>();
@@ -554,8 +554,10 @@ public:
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
                 (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
+                    this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] +
+                share_new_variant *
+                    this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] *
+                    this->get_model().parameters.template get<InfectiousnessNewVariant>()[(AgeGroup)i];
             this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
                 new_transmission;
         }
@@ -635,12 +637,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_b161(t);
+                this->apply_variant(t);
             }
             BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_b161(t);
+                this->apply_variant(t);
             }
 
             if (t > 0) {
