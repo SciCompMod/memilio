@@ -31,7 +31,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/memory.h"
 #include "abm/movement_data.h"
-#include <functional>
+#include <functional> // IWYU pragma: keep
 
 namespace mio
 {
@@ -146,6 +146,7 @@ public:
         , m_mask_compliance((uint32_t)LocationType::Count, 0.)
         , m_person_id(person_id)
         , m_cells{0}
+        , m_last_transport_mode(TransportMode::Unknown)
     {
         m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
         m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -157,7 +158,14 @@ public:
      * @brief Create a copy of this #Person object with a new Location.
      * @param[in, out] location The new #Location of the Person.
      */
-    Person copy_person(Location& location);
+    Person copy_person(Location<FP>& location)
+    {
+        Person copied_person     = Person(*this);
+        copied_person.m_location = &location;
+        location.add_person(*this);
+        return copied_person;
+    }
+
 
     /**
      * @brief Compare two Person%s.
@@ -174,36 +182,20 @@ public:
      * @param[in] dt Length of the current Simulation TimeStep.
      * @param[in, out] params Infection parameters that are the same in all Location%s.
      */
-<<<<<<< HEAD
-    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const GlobalInfectionParameters<FP>& params)
+    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters<FP>& params)
     {
         if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
             m_location->interact(rng, *this, t, dt, params);
         }
         m_time_at_location += dt;
     }
-=======
-    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params);
->>>>>>> upstream/main
 
     /** 
      * @brief Migrate to a different Location.
      * @param[in, out] loc_new The new Location of the Person.
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
-<<<<<<< HEAD
     void migrate_to(Location<FP>& loc_new, const std::vector<uint32_t>& cells_new = {0})
-    {
-        if (*m_location != loc_new) {
-            m_location->remove_person(*this);
-            m_location = &loc_new;
-            m_cells    = cells_new;
-            loc_new.add_person(*this, cells_new);
-            m_time_at_location = TimeSpan(0);
-        }
-    }
-=======
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0})
     {
         migrate_to(loc_new, TransportMode::Unknown, cells_new);
     }
@@ -214,9 +206,19 @@ public:
      * @param[in] transport_mode The TransportMode the Person used to get to the new Location.
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
-    void migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode,
-                    const std::vector<uint32_t>& cells = {0});
->>>>>>> upstream/main
+    void migrate_to(Location<FP>& loc_new, mio::abm::TransportMode transport_mode,
+                    const std::vector<uint32_t>& cells = {0})
+    {
+        if (*m_location != loc_new) {
+            m_location->remove_person(*this);
+            m_location = &loc_new;
+            m_cells    = cells;
+            loc_new.add_person(*this, cells);
+            m_time_at_location    = TimeSpan(0);
+            m_last_transport_mode = transport_mode;
+        }
+    }
+
 
     /**
      * @brief Get the latest #Infection of the Person.
@@ -344,6 +346,7 @@ public:
         m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
     }
 
+
     /**
      * @brief Set an assigned Location of the Person. 
      * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
@@ -383,14 +386,11 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True the Person works from home.
      */
-<<<<<<< HEAD
-    bool goes_to_work(TimePoint t, const MigrationParameters<FP>& params) const
+    bool goes_to_work(TimePoint t, const Parameters<FP>& params) const
     {
         return m_random_workgroup < params.template get<WorkRatio>().get_matrix_at(t.days())[0];
     }
-=======
-    bool goes_to_work(TimePoint t, const Parameters& params) const;
->>>>>>> upstream/main
+
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -399,8 +399,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to work.
      */
-<<<<<<< HEAD
-    TimeSpan get_go_to_work_time(const MigrationParameters<FP>& params) const
+    TimeSpan get_go_to_work_time(const Parameters<FP>& params) const
     {
         TimeSpan minimum_goto_work_time = params.template get<GotoWorkTimeMinimum>()[m_age];
         TimeSpan maximum_goto_work_time = params.template get<GotoWorkTimeMaximum>()[m_age];
@@ -408,9 +407,7 @@ public:
         int seconds_after_minimum       = int(timeSlots * m_random_goto_work_hour);
         return minimum_goto_work_time + seconds(seconds_after_minimum);
     }
-=======
-    TimeSpan get_go_to_work_time(const Parameters& params) const;
->>>>>>> upstream/main
+
 
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
@@ -419,14 +416,11 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True if the Person goes to school.
      */
-<<<<<<< HEAD
-    bool goes_to_school(TimePoint t, const MigrationParameters<FP>& params) const
+    bool goes_to_school(TimePoint t, const Parameters<FP>& params) const
     {
         return m_random_schoolgroup < params.template get<SchoolRatio>().get_matrix_at(t.days())[0];
     }
-=======
-    bool goes_to_school(TimePoint t, const Parameters& params) const;
->>>>>>> upstream/main
+
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -435,8 +429,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to school.
      */
-<<<<<<< HEAD
-    TimeSpan get_go_to_school_time(const MigrationParameters<FP>& params) const
+    TimeSpan get_go_to_school_time(const Parameters<FP>& params) const
     {
         TimeSpan minimum_goto_school_time = params.template get<GotoSchoolTimeMinimum>()[m_age];
         TimeSpan maximum_goto_school_time = params.template get<GotoSchoolTimeMaximum>()[m_age];
@@ -444,9 +437,6 @@ public:
         int seconds_after_minimum         = int(timeSlots * m_random_goto_school_hour);
         return minimum_goto_school_time + seconds(seconds_after_minimum);
     }
-=======
-    TimeSpan get_go_to_school_time(const Parameters& params) const;
->>>>>>> upstream/main
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
@@ -563,8 +553,7 @@ public:
      * @param[in] params The parameters of the Infection that are the same everywhere within the World.
      * @return The reduction factor of getting an Infection when wearing the Mask.
      */
-<<<<<<< HEAD
-    ScalarType get_mask_protective_factor(const GlobalInfectionParameters<FP>& params) const
+    ScalarType get_mask_protective_factor(const Parameters<FP>& params) const
     {
         if (m_wears_mask == false) {
             return 0.;
@@ -573,9 +562,7 @@ public:
             return params.template get<MaskProtection<FP>>()[m_mask.get_type()];
         }
     }
-=======
-    ScalarType get_mask_protective_factor(const Parameters& params) const;
->>>>>>> upstream/main
+
 
     /**
      * @brief For every #LocationType a Person has a compliance value between -1 and 1.
@@ -661,8 +648,7 @@ public:
      * @param[in] params Parameters in the model.
      * @returns Protection factor for general #Infection of the immune system to the given VirusVariant at the given TimePoint.
      */
-<<<<<<< HEAD
-    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters<FP>& params) const
+    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters<FP>& params) const
     {
         auto latest_protection = get_latest_protection();
         // If there is no previous protection or vaccination, return 0.
@@ -672,9 +658,6 @@ public:
         return params.template get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
             t.days() - latest_protection.second.days());
     }
-=======
-    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const;
->>>>>>> upstream/main
 
     /**
      * @brief Add a new #Vaccination
@@ -743,7 +726,7 @@ public:
     static IOResult<Person> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Person");
-        auto loc = obj.expect_element("Location", mio::Tag<Location>{});
+        auto loc = obj.expect_element("Location", mio::Tag<Location<FP>>{});
         auto age = obj.expect_element("age", Tag<uint32_t>{});
         auto id  = obj.expect_element("id", Tag<uint32_t>{});
         return apply(
