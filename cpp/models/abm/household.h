@@ -24,7 +24,6 @@
 #include "abm/world.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
-#include <numeric>
 #include <vector>
 
 namespace mio
@@ -194,8 +193,6 @@ private:
     times it is in the group.*/
 };
 
-
-
 /**
  * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
  * @param[in] age_groups A CustomIndexArray with the weights.
@@ -203,7 +200,6 @@ private:
  */
 AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
                                               const CustomIndexArray<int, AgeGroup>& age_groups);
-
 
 /**
  * @brief Adds a specific Household to the World.
@@ -222,7 +218,7 @@ void add_household_to_world(World<FP>& world, const Household& household)
 
     for (auto& memberTouple : members) {
         int count;
-        HouseholdMember member;
+        HouseholdMember member  = HouseholdMember(world.parameters.get_num_groups());
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(world.get_rng(), member.get_age_weights());
@@ -231,6 +227,7 @@ void add_household_to_world(World<FP>& world, const Household& household)
         }
     }
 }
+
 
 
 /**
