@@ -268,11 +268,11 @@ using get_initial_flows_expr_t =
  * Otherwise, `value` will be equal to false.
  * @tparam Model A type that may or may not be a flow model.
  */
-template <class Model>
-using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, Model>::value &&
-                                                    is_expression_valid<get_flows_expr_t, Model>::value &&
-                                                    is_expression_valid<get_initial_flows_expr_t, Model>::value &&
-                                                    is_compartment_model<Model>::value)>;
+template <class Model, class FP=double>
+using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, Model, FP>::value &&
+                                                    is_expression_valid<get_flows_expr_t, Model, FP>::value &&
+                                                    is_expression_valid<get_initial_flows_expr_t, Model, FP>::value &&
+                                                    is_compartment_model<Model, FP>::value)>;
 
 } // namespace mio
 
