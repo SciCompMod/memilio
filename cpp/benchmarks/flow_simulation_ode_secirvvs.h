@@ -424,10 +424,10 @@ public:
     void apply_variant(double t)
     {
 
-        auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
+        auto start_day               = this->get_model().parameters.template get<osecirvvs::StartDay>();
+        auto new_variant_growth_rate = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
         // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
+        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + new_variant_growth_rate) * 0.01);
         size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
