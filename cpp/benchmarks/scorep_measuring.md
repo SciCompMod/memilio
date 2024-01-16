@@ -23,6 +23,8 @@ export OMP_NUM_THREADS=8 #or whatever
 ```
 
 There will be a directory named scorep_... with a .cubex file. That can be opened in the Cube visualization tool. This can give a first indication for bottlenecks, then you don't need Scalasca.
+When changing the ABM one should check using ```scorep-score -r scorep-folder/profile.cubex``` how much memory is used by scorep and that it does not exceed 4 GB which is the maximum value for SCOREP_TOTAL_MEMORY. Also when tracing SCOREP_TOTAL_MEMORY should be adjusted to the value proposed by scorep-score. 
+If the estimated memory requirements exceed 4 GB and you added small functions like getters you should add them to the excluded functions in the filter. With ```scorep-score -f filter -r scorep-folder/profile.cubex``` you can see the effect of the adjusted filter on the profile.
 
 ## Tracing
 

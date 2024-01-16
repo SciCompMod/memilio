@@ -16,7 +16,12 @@ SCOREP_REGION_NAMES_BEGIN
 
     EXCLUDE *World::get_individualized_location* *World::get_persons* *World::get_locations* *World::get_trip_list* *World::get_testing_strategy*
     EXCLUDE *Person::get_location* *Person::get_infection_state* *Person::get_person_id* *Person::get_cells* *Person::is_infected*
-    EXCLUDE *Person::set_assigned_location* *Person::get_mask_protective_factor* *Person::get_infection*
+    EXCLUDE *Person::set_assigned_location* *Person::get_assigned_location_index* *Person::get_mask_protective_factor* *Person::get_infection* 
     EXCLUDE *Location::get_subpopulation* *Location::get_number_persons*
     EXCLUDE *Infection::get_virus_variant*
+
+    # 20240116_1017    3306MB
+
+    EXCLUDE *get_buried* # 2995MB
+    EXCLUDE *World::find_location* # 2684MB
 SCOREP_REGION_NAMES_END
