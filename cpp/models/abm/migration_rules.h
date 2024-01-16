@@ -27,9 +27,8 @@
 #include "abm/location.h"
 #include "abm/random_events.h"
 #include "abm/location.h"
-#include "memilio/utils/random_number_generator.h"
-
-#include <random>
+#include "memilio/utils/random_number_generator.h" // IWYU pragma: keep
+#include <random>  // IWYU pragma: keep
 
 namespace mio
 {
@@ -51,11 +50,9 @@ namespace abm
 /**
  * @brief Completely random migration to any other Location.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType random_migration(typename Person<FP>::RandomNumberGenerator& rng,
-                              const Person<FP>& person, TimePoint t, TimeSpan dt,
-                              const MigrationParameters<FP>& params)
+LocationType random_migration(typename Person<FP>::RandomNumberGenerator& rng, const Person<FP>& person, TimePoint t, TimeSpan dt,
+                              const Parameters<FP>& params)
 {
     auto current_loc     = person.get_location().get_type();
     auto make_transition = [current_loc](auto l) {
@@ -69,26 +66,22 @@ LocationType random_migration(typename Person<FP>::RandomNumberGenerator& rng,
     }
     return current_loc;
 }
-=======
-LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                              const Parameters& params);
->>>>>>> upstream/main
+
 
 /**
  * @brief School age children go to school in the morning and return later in the day.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType go_to_school(typename Person<FP>::RandomNumberGenerator& /* rng */,
-                          const Person<FP>& person, TimePoint t, TimeSpan dt,
-                          const MigrationParameters<FP>& params)
+LocationType go_to_school(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, TimePoint t, TimeSpan dt,
+                          const Parameters<FP>& params)
 {
     auto current_loc = person.get_location().get_type();
 
     if (current_loc == LocationType::Home && t < params.template get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
-        person.get_go_to_school_time(params) < t.time_since_midnight() + dt && person.get_age() == AgeGroup::Age5to14 &&
-        person.goes_to_school(t, params) && !person.is_in_quarantine()) {
+        person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
+        params.template get<mio::abm::AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
+        !person.is_in_quarantine()) {
         return LocationType::School;
     }
     //return home
@@ -97,19 +90,14 @@ LocationType go_to_school(typename Person<FP>::RandomNumberGenerator& /* rng */,
     }
     return current_loc;
 }
-=======
-LocationType go_to_school(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                          const Parameters& params);
->>>>>>> upstream/main
+
 
 /** 
  * @brief Adults may go shopping in their free time.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType go_to_shop(typename Person<FP>::RandomNumberGenerator& rng,
-                        const Person<FP>& person, TimePoint t, TimeSpan dt,
-                        const MigrationParameters<FP>& params)
+LocationType go_to_shop(typename Person<FP>::RandomNumberGenerator& rng, const Person<FP>& person, TimePoint t, TimeSpan dt,
+                        const Parameters<FP>& params)
 {
     auto current_loc = person.get_location().get_type();
     //leave
@@ -126,19 +114,13 @@ LocationType go_to_shop(typename Person<FP>::RandomNumberGenerator& rng,
 
     return current_loc;
 }
-=======
-LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                        const Parameters& params);
->>>>>>> upstream/main
 
 /**
  * @brief Person%s might go to social events.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType go_to_event(typename Person<FP>::RandomNumberGenerator& rng,
-                         const Person<FP>& person, TimePoint t, TimeSpan dt,
-                         const MigrationParameters<FP>& params)
+LocationType go_to_event(typename Person<FP>::RandomNumberGenerator& rng, const Person<FP>& person, TimePoint t, TimeSpan dt,
+                         const Parameters<FP>& params)
 {
     auto current_loc = person.get_location().get_type();
     //leave
@@ -158,24 +140,18 @@ LocationType go_to_event(typename Person<FP>::RandomNumberGenerator& rng,
 
     return current_loc;
 }
-=======
-LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                         const Parameters& params);
->>>>>>> upstream/main
 
 /**
  * @brief Adults go to work in the morning and return later in the day.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType go_to_work(typename Person<FP>::RandomNumberGenerator& /*rng*/,
-                        const Person<FP>& person, TimePoint t, TimeSpan dt,
-                        const MigrationParameters<FP>& params)
+LocationType go_to_work(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, TimePoint t, TimeSpan dt,
+                        const Parameters<FP>& params)
 {
     auto current_loc = person.get_location().get_type();
 
     if (current_loc == LocationType::Home && t < params.template get<LockdownDate>() &&
-        (person.get_age() == AgeGroup::Age15to34 || person.get_age() == AgeGroup::Age35to59) && t.day_of_week() < 5 &&
+        params.template get<mio::abm::AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine()) {
@@ -187,19 +163,13 @@ LocationType go_to_work(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
-=======
-LocationType go_to_work(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                        const Parameters& params);
->>>>>>> upstream/main
 
 /**
  * @brief Person%s who are in quarantine should go home.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType go_to_quarantine(typename Person<FP>::RandomNumberGenerator& /*rng*/,
-                              const Person<FP>& person, TimePoint /*t*/,
-                              TimeSpan /*dt*/, const MigrationParameters<FP>& /*params*/)
+LocationType go_to_quarantine(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, TimePoint /*t*/,
+                              TimeSpan /*dt*/, const Parameters<FP>& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if (person.is_in_quarantine() && current_loc != LocationType::Hospital && current_loc != LocationType::ICU) {
@@ -207,19 +177,13 @@ LocationType go_to_quarantine(typename Person<FP>::RandomNumberGenerator& /*rng*
     }
     return current_loc;
 }
-=======
-LocationType go_to_quarantine(Person::RandomNumberGenerator& rng, const Person& person, TimePoint /*t*/,
-                              TimeSpan /*dt*/, const Parameters& /*params*/);
->>>>>>> upstream/main
 
 /**
  * @brief Infected Person%s may be hospitalized.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType go_to_hospital(typename Person<FP>::RandomNumberGenerator& /*rng*/,
-                            const Person<FP>& person, TimePoint t, TimeSpan /*dt*/,
-                            const MigrationParameters<FP>& /*params*/)
+LocationType go_to_hospital(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, const TimePoint t,
+                            TimeSpan /*dt*/, const Parameters<FP>& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if (person.get_infection_state(t) == InfectionState::InfectedSevere) {
@@ -227,19 +191,14 @@ LocationType go_to_hospital(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
-=======
-LocationType go_to_hospital(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                            const Parameters& params);
->>>>>>> upstream/main
+
 
 /**
  * @brief Person%s in the hospital may be put in intensive care.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType go_to_icu(typename Person<FP>::RandomNumberGenerator& /*rng*/,
-                       const Person<FP>& person, TimePoint t, TimeSpan /*dt*/,
-                       const MigrationParameters<FP>& /*params*/)
+LocationType go_to_icu(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, const TimePoint t, TimeSpan /*dt*/,
+                       const Parameters<FP>& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if (person.get_infection_state(t) == InfectionState::InfectedCritical) {
@@ -247,19 +206,13 @@ LocationType go_to_icu(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
-=======
-LocationType go_to_icu(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                       const Parameters& params);
->>>>>>> upstream/main
 
 /**
  * @brief Person%s in the hospital/icu return home when they recover.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType return_home_when_recovered(typename Person<FP>::RandomNumberGenerator& /*rng*/,
-                                        const Person<FP>& person, TimePoint t,
-                                        TimeSpan /*dt*/, const MigrationParameters<FP>& /*params*/)
+LocationType return_home_when_recovered(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, const TimePoint t,
+                                        TimeSpan /*dt*/, const Parameters<FP>& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
@@ -268,19 +221,13 @@ LocationType return_home_when_recovered(typename Person<FP>::RandomNumberGenerat
     }
     return current_loc;
 }
-=======
-LocationType return_home_when_recovered(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t,
-                                        TimeSpan dt, const Parameters& params);
->>>>>>> upstream/main
 
 /**
  * @brief Person%s in the icu go to cemetery when they are dead.
  */
-<<<<<<< HEAD
 template<typename FP=double>
-LocationType get_buried(typename Person<FP>::RandomNumberGenerator& /*rng*/,
-                        const Person<FP>& person, TimePoint t, TimeSpan /*dt*/,
-                        const MigrationParameters<FP>& /*params*/)
+LocationType get_buried(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, const TimePoint t,
+                        TimeSpan /*dt*/, const Parameters<FP>& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if (person.get_infection_state(t) == InfectionState::Dead) {
@@ -288,10 +235,7 @@ LocationType get_buried(typename Person<FP>::RandomNumberGenerator& /*rng*/,
     }
     return current_loc;
 }
-=======
-LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                        const Parameters& params);
->>>>>>> upstream/main
+
 /**@}*/
 
 } // namespace abm
