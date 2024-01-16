@@ -22,13 +22,7 @@
 
 #include "abm/world.h"
 #include "abm/time.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/epidemiology/populations.h"
-#include "memilio/io/history.h"
-#include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
-#include <random>
+
 
 namespace mio
 {
