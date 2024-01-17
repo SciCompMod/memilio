@@ -543,14 +543,26 @@ public:
     {
     }
 
+    /**
+    * @brief Applies the effect of a new variant of a disease to the transmission probability of the model.
+    * 
+    * This function adjusts the transmission probability of the disease for each age group based on the share of the new variant.
+    * The share of the new variant is calculated based on the time `t` and the start day of the new variant.
+    * The transmission probability is then updated for each age group in the model.
+    * 
+    * Based on Equation (35) and (36) in doi.org/10.1371/journal.pcbi.1010054
+    * 
+    * @param [in] t The current time.
+    */
+
     void apply_variant(double t)
     {
+        auto start_day             = this->get_model().parameters.template get<StartDay>();
+        auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
-        auto start_day               = this->get_model().parameters.template get<StartDay>();
-        auto new_variant_growth_rate = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-        // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + new_variant_growth_rate) * 0.01);
-        size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
+        auto new_variant_growth_rate = (start_day - start_day_new_variant) * 1. / 7;
+        double share_new_variant     = std::min(1.0, pow(2, t * 1. / 7 + new_variant_growth_rate) * 0.01);
+        size_t num_groups            = (size_t)this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
                 (1 - share_new_variant) *

@@ -38,7 +38,7 @@ namespace osecirvvs
 {
 
 /**
-* @brief the start day in the SECIR model
+* @brief the start day in the SECIRVVS model
 * The start day defines in which season the simulation can be started
 * If the start day is 180 and simulation takes place from t0=0 to
 * tmax=100 the days 180 to 280 of the year are simulated
@@ -52,6 +52,24 @@ struct StartDay {
     static std::string name()
     {
         return "StartDay";
+    }
+};
+
+/**
+* @brief the start day of a new variant in the SECIRVVS model
+* The start day of the new variant defines in which day of the simulation the new variant is introduced.
+* Starting on this day, the new variant will impact the transmission probability depending on the
+* infectiousness of the new variant in the parameter InfectiousnessNewVariant.
+*/
+struct StartDayNewVariant {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "StartDayNewVariant";
     }
 };
 
@@ -513,7 +531,7 @@ struct ReducTimeInfectedMild {
 };
 
 /**
- * @brief Infectiousness of variant B161.
+ * @brief Represents the relative infectiousness of a new variant.
  */
 struct InfectiousnessNewVariant {
     using Type = CustomIndexArray<double, AgeGroup>;
@@ -536,7 +554,8 @@ using ParametersBase =
                  DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
                  ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
                  ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
-                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, InfectiousnessNewVariant>;
+                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, InfectiousnessNewVariant,
+                 StartDayNewVariant>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
