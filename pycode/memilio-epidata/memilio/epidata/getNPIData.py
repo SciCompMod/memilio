@@ -439,10 +439,11 @@ def drop_codes_and_categories(
     codes_dropped = list(
         np.sort(codes_dropped + dummy_categories + missing_codes))
     if len(codes_dropped) > 0:
+        # no subcodes for fine_resolution = 0
         df_npis_old = df_npis_old[~df_npis_old[dd.EngEng['npiCode']].isin(
             codes_dropped)].reset_index(drop=True)
-        if fine_resolution > 0:
-            # no subcodes for fine_resolution = 0
+        if fine_resolution == 2:
+            # incidence subcodes only for fine_resolution = 2
             # for every main code removed, all 5 subcodes have to be removed;
             # if this is not the case, the naming of them is wrong/not consistent
             if (len(codes_dropped) % 6) != 0:

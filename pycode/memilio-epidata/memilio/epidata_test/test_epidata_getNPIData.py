@@ -242,8 +242,8 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         fine_resolution = 1
         codes_dropped, npi_codes_prior, df_npis_old = gnd.drop_codes_and_categories(
             npi_codes_prior_test_mc.copy(), npi_codes_prior_desc_test_mc.copy(), df_npis_old_test.copy(), fine_resolution)
-        # no codes should be dropped
-        self.assertEqual(codes_dropped, [])
+        # only drop missing codes
+        self.assertEqual(codes_dropped, self.missing_codes)
         # codes should now be corrected
         self.assertEqual(
             npi_codes_prior.to_list(),
