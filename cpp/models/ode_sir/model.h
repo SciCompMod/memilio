@@ -22,6 +22,7 @@
 #define ODESIR_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "ode_sir/infection_state.h"
@@ -36,20 +37,27 @@ namespace osir
     * define the model *
     ********************/
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup,InfectionState>, Parameters>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
 
 public:
-    Model()
-        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
+    Model(const Populations& pop, const ParameterSet& params)
+        : Base(pop,params)
+    {
+    }
+
+    Model(int num_agegroups)
+        : Model(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
     {
     }
 
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
     {
-        auto& params     = this->parameters;
+        auto const& params   = this->parameters;
+        AgeGroup n_agegroups = params.get_num_groups();
+
         double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
