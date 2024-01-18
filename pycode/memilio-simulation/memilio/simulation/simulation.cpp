@@ -38,6 +38,8 @@
 #include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/simulation_day.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/io/epi_data.h"
 
 namespace py = pybind11;
 
@@ -127,6 +129,24 @@ PYBIND11_MODULE(_simulation, m)
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
         py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
+
+    m.def(
+        "read_mobility_plain",
+        [](const std::string& filename) {
+            auto result = mio::read_mobility_plain(filename);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+#ifdef MEMILIO_HAS_JSONCPP
+    m.def(
+        "get_node_ids",
+        [](const std::string& path, bool is_node_for_county) {
+            auto result = mio::get_node_ids(path, is_node_for_county);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+#endif // MEMILIO_HAS_JSONCPP
 
     pymio::bind_logging(m, "LogLevel");
 
