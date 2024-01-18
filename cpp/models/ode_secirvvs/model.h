@@ -22,6 +22,7 @@
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/parameters.h"
@@ -509,7 +510,7 @@ public:
 };
 
 //forward declaration, see below.
-template <class Base = mio::Simulation<Model>>
+template <class BaseT = mio::Simulation<Model>>
 class Simulation;
 
 /**
@@ -524,10 +525,10 @@ double get_infections_relative(const Simulation<Base>& model, double t, const Ei
 
 /**
  * specialization of compartment model simulation for the SECIRVVS model.
- * @tparam Base simulation type, default mio::Simulation. For testing purposes only!
+ * @tparam BaseT simulation type, default mio::Simulation. For testing purposes only!
  */
-template <class Base>
-class Simulation : public Base
+template <class BaseT>
+class Simulation : public BaseT
 {
 public:
     /**
@@ -537,7 +538,7 @@ public:
      * @param dt time steps
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : Base(model, t0, dt)
+        : BaseT(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
     }
@@ -623,7 +624,7 @@ public:
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
 
         double delay_lockdown;
-        auto t        = Base::get_result().get_last_time();
+        auto t        = BaseT::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
         while (t < tmax) {
 
@@ -636,7 +637,7 @@ public:
                 //this->apply_vaccination(t); // done in init now?
                 this->apply_b161(t);
             }
-            Base::advance(t + dt_eff);
+            BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
                 this->apply_b161(t);
@@ -687,17 +688,37 @@ private:
 };
 
 /**
- * Run simulation using a SECIRVVS model.
- * @param t0 start time.
- * @param tmax end time.
- * @param dt time step.
- * @param model secir model to simulate.
- * @param integrator optional integrator, uses rk45 if nullptr.
+ * @brief Specialization of simulate for SECIRVVS models using Simulation.
+ * 
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIRVVS model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the simulation.
  */
 inline auto simulate(double t0, double tmax, double dt, const Model& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     return mio::simulate<Model, Simulation<>>(t0, tmax, dt, model, integrator);
+}
+
+/**
+ * @brief Specialization of simulate for SECIRVVS models using the FlowSimulation.
+ * 
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIRVVS model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the Flowsimulation.
+  */
+inline auto simulate_flows(double t0, double tmax, double dt, const Model& model,
+                           std::shared_ptr<IntegratorCore> integrator = nullptr)
+{
+    return mio::simulate_flows<Model, Simulation<mio::FlowSimulation<Model>>>(t0, tmax, dt, model, integrator);
 }
 
 //see declaration above.
