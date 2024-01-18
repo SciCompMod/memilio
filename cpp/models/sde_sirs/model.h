@@ -24,13 +24,13 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "sde_sir/infection_state.h"
-#include "sde_sir/parameters.h"
+#include "sde_sirs/infection_state.h"
+#include "sde_sirs/parameters.h"
 #include "memilio/utils/random_number_generator.h"
 #include <iostream>
 namespace mio
 {
-namespace ssir
+namespace ssirs
 {
 
 /********************
@@ -54,19 +54,16 @@ public:
         double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
         
-
         RandomNumberGenerator rng = mio::RandomNumberGenerator();
         double si = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
         double ir = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
-        //double w3 = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);                
-        //printf("\n%f\n%f\n%f\n",x, x1, x2);
-
+        double rs = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);                
+        
         dydt[(size_t)InfectionState::Susceptible] =
             -coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]
-            - sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) / sqrt(dt) * si;
-        //std::cout << dydt[(size_t)InfectionState::Susceptible];
-
-        //getchar();
+            + (1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered] 
+            - sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) / sqrt(dt) * si
+            + sqrt((1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered]) / sqrt(dt) * rs;
         dydt[(size_t)InfectionState::Infected] =
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]
             - (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected] 
@@ -74,14 +71,16 @@ public:
             - sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(dt) * ir; 
         dydt[(size_t)InfectionState::Recovered] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]
-            + sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(dt) * ir; 
+            - (1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered]
+            + sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(dt) * ir
+            - sqrt((1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered]) / sqrt(dt) * rs;
     }
 
 private:
     
 };
 
-} // namespace ssir
+} // namespace ssirs
 } // namespace mio
 
-#endif // ODESIR_MODEL_H
+#endif // SDESIRS_MODEL_H

@@ -37,6 +37,7 @@ namespace mio
 using DerivFunction =
     std::function<void(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)>;
 
+
 class IntegratorCore
 {
 public:

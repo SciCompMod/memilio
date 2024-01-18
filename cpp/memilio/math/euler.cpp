@@ -18,9 +18,9 @@
 * limitations under the License.
 */
 #include "memilio/math/euler.h"
-
+#include <iostream>
 namespace mio
-{
+{   
 
 bool EulerIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                                Eigen::Ref<Eigen::VectorXd> ytp1) const
@@ -38,7 +38,14 @@ bool EulerMaruyamaIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const 
     // we are misusing the next step y as temporary space to store the derivative
     f(yt, t, ytp1);
     ytp1 = yt + dt * ytp1;
-    for (size_t it = 0; it<ytp1.size(); ++it) if(ytp1[it] <= 0)  ytp1[it] = 0;
+
+    // Ref (InnerStride = 1) implies a contiguous storage along the inner dimension  so this should be fine
+    for (auto it = 0; it < ytp1.size(); ++it) {
+        if(ytp1[it] <= 0) ytp1[it] = 0; //this still leads to sum(ytp1) to differ from pop after some time
+        if(ytp1[it] >= pop) ytp1[it] = pop;
+    }
+    double N = std::accumulate(ytp1.data(), ytp1.data() + ytp1.size(), 0.); //for now resize to pop again
+    ytp1 *= pop / N;
     t += dt;
     return true;
 }

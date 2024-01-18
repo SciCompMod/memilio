@@ -18,9 +18,9 @@
 * limitations under the License.
 */
 
-#include "sde_sir/model.h"
-#include "sde_sir/infection_state.h"
-#include "sde_sir/parameters.h"
+#include "sde_sirs/model.h"
+#include "sde_sirs/infection_state.h"
+#include "sde_sirs/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
@@ -37,18 +37,19 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::ssir::Model model;
+    mio::ssirs::Model model;
 
-    model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Recovered)}];
-    model.parameters.set<mio::ssir::TimeInfected>(10);
-    model.parameters.set<mio::ssir::TransmissionProbabilityOnContact>(1);
-    model.parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::ssir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+        model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}];
+    model.parameters.set<mio::ssirs::TimeInfected>(10);
+    model.parameters.set<mio::ssirs::TimeImmune>(100);    
+    model.parameters.set<mio::ssirs::TransmissionProbabilityOnContact>(1);
+    model.parameters.get<mio::ssirs::ContactPatterns>().get_baseline()(0, 0) = 20.7;
+    model.parameters.get<mio::ssirs::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
     mio::EulerMaruyamaIntegratorCore dummy(total_population);
     auto integrator = std::make_shared<mio::EulerMaruyamaIntegratorCore>(dummy);
@@ -64,13 +65,12 @@ int main()
     //mio::Simulation<model> sim(model, t0, dt, integrator);
     //sim.advance(tmax); 
     auto sir = simulate_stoch(t0, tmax, dt, model, integrator);
-    getchar();
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
         std::vector<std::string> vars = {"S", "I", "R"};
         printf("\n # t");
-        for (size_t k = 0; k < (size_t)mio::ssir::InfectionState::Count; k++) {
+        for (size_t k = 0; k < (size_t)mio::ssirs::InfectionState::Count; k++) {
             printf(" %s", vars[k].c_str());
         }
 
@@ -78,7 +78,7 @@ int main()
         for (size_t i = 0; i < num_points; i++) {
             printf("\n%.14f ", sir.get_time(i));
             Eigen::VectorXd res_j = sir.get_value(i);
-            for (size_t j = 0; j < (size_t)mio::ssir::InfectionState::Count; j++) {
+            for (size_t j = 0; j < (size_t)mio::ssirs::InfectionState::Count; j++) {
                 printf(" %.14f", res_j[j]);
             }
         }

@@ -24,6 +24,9 @@ target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 add_executable(sde_sir_example sde_sir.cpp)
 target_link_libraries(sde_sir_example PRIVATE memilio sde_sir)
 
+add_executable(sde_sirs_example sde_sirs.cpp)
+target_link_libraries(sde_sirs_example PRIVATE memilio sde_sirs)
+
 add_executable(seir_flows_example ode_seir_flows.cpp)
 target_link_libraries(seir_flows_example PRIVATE memilio ode_seir)
 
