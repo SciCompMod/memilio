@@ -163,7 +163,6 @@ def posteriori_stiffness(stability_func, y,params,num_groups=6):
     return y.get_num_time_points()-1
 
 
-
 def run_secir_simulation(show_plot=True):
     """
     Runs the c++ secir model using one age group 
