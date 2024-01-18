@@ -225,7 +225,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     m.def(
         "simulate_flows",
         [](double t0, double tmax, double dt, const mio::osecir::Model& model) {
-            return mio::simulate_flows(t0, tmax, dt, model);
+            return mio::osecir::simulate_flows(t0, tmax, dt, model);
         },
         "Simulates a Secir model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
