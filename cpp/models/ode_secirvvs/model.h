@@ -561,17 +561,25 @@ public:
         auto start_day             = this->get_model().parameters.template get<StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
-        auto new_variant_growth_rate = (start_day - start_day_new_variant) * 1. / 7;
-        double share_new_variant     = std::min(1.0, pow(2, t * 1. / 7 + new_variant_growth_rate) * 0.01);
-        size_t num_groups            = (size_t)this->get_model().parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; ++i) {
-            double new_transmission =
-                (1 - share_new_variant) * base_infectiousness[i] +
-                share_new_variant *
-                    this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] *
-                    this->get_model().parameters.template get<InfectiousnessNewVariant>()[(AgeGroup)i];
-            this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
-                new_transmission;
+        if (start_day + t + 1e-10 >= start_day_new_variant) {
+            double share_start_day = (start_day_new_variant - start_day) * 1. / 7;
+            double days_variant    = t;
+
+            // if the start day of the new variant is in the future, we need to adjust the share of the new variant
+            if (start_day < start_day_new_variant) {
+                share_start_day = 0;
+                days_variant    = t - (start_day_new_variant - start_day);
+            }
+            double share_new_variant = std::min(1.0, pow(2, days_variant * 1. / 7 + share_start_day) * 0.01);
+            size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
+            for (size_t i = 0; i < num_groups; ++i) {
+                double new_transmission =
+                    (1 - share_new_variant) * base_infectiousness[i] +
+                    share_new_variant * base_infectiousness[i] *
+                        this->get_model().parameters.template get<InfectiousnessNewVariant>()[(AgeGroup)i];
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                    new_transmission;
+            }
         }
     }
 

@@ -421,25 +421,29 @@ public:
     {
     }
 
-    void apply_variant(double t)
+    void apply_variant(const double t, const Eigen::VectorXd base_infectiousness)
     {
-        auto start_day             = this->get_model().parameters.template get<osecirvvs::StartDay>();
-        auto start_day_new_variant = this->get_model().parameters.template get<osecirvvs::StartDayNewVariant>();
+        auto start_day             = this->get_model().parameters.template get<StartDay>();
+        auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
-        auto new_variant_growth_rate = (start_day - start_day_new_variant) * 1. / 7;
-        double share_new_variant     = std::min(1.0, pow(2, t * 1. / 7 + new_variant_growth_rate) * 0.01);
-        size_t num_groups            = (size_t)this->get_model().parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; ++i) {
-            double new_transmission =
-                (1 - share_new_variant) *
-                    this->get_model()
-                        .parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] +
-                share_new_variant *
-                    this->get_model()
-                        .parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] *
-                    this->get_model().parameters.template get<osecirvvs::InfectiousnessNewVariant>()[(AgeGroup)i];
-            this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] =
-                new_transmission;
+        if (start_day + t + 1e-10 >= start_day_new_variant) {
+            double share_start_day = (start_day_new_variant - start_day) * 1. / 7;
+            double days_variant    = t;
+
+            if (start_day < start_day_new_variant) {
+                share_start_day = 0;
+                days_variant    = t - (start_day_new_variant - start_day);
+            }
+            double share_new_variant = std::min(1.0, pow(2, days_variant * 1. / 7 + share_start_day) * 0.01);
+            size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
+            for (size_t i = 0; i < num_groups; ++i) {
+                double new_transmission =
+                    (1 - share_new_variant) * base_infectiousness[i] +
+                    share_new_variant * base_infectiousness[i] *
+                        this->get_model().parameters.template get<InfectiousnessNewVariant>()[(AgeGroup)i];
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                    new_transmission;
+            }
         }
     }
 
@@ -507,6 +511,12 @@ public:
         auto& dyn_npis         = this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<osecirvvs::ContactPatterns>();
 
+        Eigen::VectorXd base_infectiousness(6);
+        for (size_t i = 0; i < 6; ++i) {
+            base_infectiousness[i] =
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i];
+        }
+
         double delay_lockdown;
         auto t        = Base::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
@@ -519,12 +529,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_variant(t);
+                this->apply_variant(t, base_infectiousness);
             }
             Base::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_variant(t);
+                this->apply_variant(t, base_infectiousness);
             }
 
             if (t > 0) {
@@ -563,6 +573,12 @@ public:
                 m_t_last_npi_check = t;
             }
         }
+
+        for (size_t i = 0; i < 6; ++i) {
+            this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                base_infectiousness[i];
+        }
+
         return this->get_result().get_last_value();
     }
 
