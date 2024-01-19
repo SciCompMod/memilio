@@ -644,11 +644,12 @@ public:
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
+        const auto num_groups  = this->get_model().parameters.get_num_groups();
 
         // in the apply_variant function, we adjust the TransmissionProbabilityOnContact parameter. We need to store
         // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
-        Eigen::VectorXd base_infectiousness(6);
-        for (size_t i = 0; i < 6; ++i) {
+        Eigen::VectorXd base_infectiousness(num_groups);
+        for (size_t i = 0; i < num_groups; ++i) {
             base_infectiousness[i] =
                 this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i];
         }
@@ -711,7 +712,7 @@ public:
         }
         // reset TransmissionProbabilityOnContact. This is important for the graph simulation where the advance
         // function is called multiple times for the same model.
-        for (size_t i = 0; i < 6; ++i) {
+        for (size_t i = 0; i < num_groups; ++i) {
             this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
                 base_infectiousness[i];
         }
