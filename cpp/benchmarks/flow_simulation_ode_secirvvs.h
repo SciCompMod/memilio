@@ -423,8 +423,8 @@ public:
 
     void apply_variant(const double t, const Eigen::VectorXd base_infectiousness)
     {
-        auto start_day             = this->get_model().parameters.template get<StartDay>();
-        auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
+        auto start_day             = this->get_model().parameters.template get<osecirvvs::StartDay>();
+        auto start_day_new_variant = this->get_model().parameters.template get<osecirvvs::StartDayNewVariant>();
 
         if (start_day + t + 1e-10 >= start_day_new_variant) {
             double share_start_day = (start_day_new_variant - start_day) * 1. / 7;
@@ -440,8 +440,8 @@ public:
                 double new_transmission =
                     (1 - share_new_variant) * base_infectiousness[i] +
                     share_new_variant * base_infectiousness[i] *
-                        this->get_model().parameters.template get<InfectiousnessNewVariant>()[(AgeGroup)i];
-                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                        this->get_model().parameters.template get<osecirvvs::InfectiousnessNewVariant>()[(AgeGroup)i];
+                this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] =
                     new_transmission;
             }
         }
@@ -514,7 +514,7 @@ public:
         Eigen::VectorXd base_infectiousness(6);
         for (size_t i = 0; i < 6; ++i) {
             base_infectiousness[i] =
-                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i];
+                this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i];
         }
 
         double delay_lockdown;
@@ -575,7 +575,7 @@ public:
         }
 
         for (size_t i = 0; i < 6; ++i) {
-            this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+            this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] =
                 base_infectiousness[i];
         }
 
