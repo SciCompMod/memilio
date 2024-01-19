@@ -493,6 +493,68 @@ TEST(TestOdeSECIRVVS, checkPopulationConservation)
 
 #if defined(MEMILIO_HAS_HDF5) && defined(MEMILIO_HAS_JSONCPP)
 
+TEST(TestOdeSECIRVVS, read_confirmed_cases)
+{
+    auto num_age_groups = 6; //reading data requires RKI data age groups
+    auto model          = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
+    std::vector<int> region{1002};
+    auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
+    std::vector<std::vector<int>> t_Exposed(1);
+    std::vector<std::vector<int>> t_InfectedNoSymptoms(1);
+    std::vector<std::vector<int>> t_InfectedSymptoms(1);
+    std::vector<std::vector<int>> t_InfectedSevere(1);
+    std::vector<std::vector<int>> t_InfectedCritical(1);
+
+    std::vector<std::vector<double>> mu_C_R(1);
+    std::vector<std::vector<double>> mu_I_H(1);
+    std::vector<std::vector<double>> mu_H_U(1);
+
+    std::vector<std::vector<double>> num_InfectedSymptoms(1);
+    std::vector<std::vector<double>> num_death(1);
+    std::vector<std::vector<double>> num_rec(1);
+    std::vector<std::vector<double>> num_Exposed(1);
+    std::vector<std::vector<double>> num_InfectedNoSymptoms(1);
+    std::vector<std::vector<double>> num_InfectedSevere(1);
+    std::vector<std::vector<double>> num_icu(1);
+
+    num_InfectedSymptoms[0]   = std::vector<double>(num_age_groups, 0.0);
+    num_death[0]              = std::vector<double>(num_age_groups, 0.0);
+    num_rec[0]                = std::vector<double>(num_age_groups, 0.0);
+    num_Exposed[0]            = std::vector<double>(num_age_groups, 0.0);
+    num_InfectedNoSymptoms[0] = std::vector<double>(num_age_groups, 0.0);
+    num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
+    num_icu[0]                = std::vector<double>(num_age_groups, 0.0);
+    for (size_t group = 0; group < static_cast<size_t>(num_age_groups); group++) {
+
+        t_InfectedNoSymptoms[0].push_back(static_cast<int>(std::round(
+            2 * (model[0].parameters.template get<mio::osecirvvs::IncubationTime>()[(mio::AgeGroup)group] -
+                 model[0].parameters.template get<mio::osecirvvs::SerialInterval>()[(mio::AgeGroup)group]))));
+        t_Exposed[0].push_back(static_cast<int>(
+            std::round(2 * model[0].parameters.template get<mio::osecirvvs::SerialInterval>()[(mio::AgeGroup)group] -
+                       model[0].parameters.template get<mio::osecirvvs::IncubationTime>()[(mio::AgeGroup)group])));
+        t_InfectedSymptoms[0].push_back(static_cast<int>(std::round(
+            model[0].parameters.template get<mio::osecirvvs::TimeInfectedSymptoms>()[(mio::AgeGroup)group])));
+        t_InfectedSevere[0].push_back(static_cast<int>(
+            std::round(model[0].parameters.template get<mio::osecirvvs::TimeInfectedSevere>()[(mio::AgeGroup)group])));
+        t_InfectedCritical[0].push_back(static_cast<int>(std::round(
+            model[0].parameters.template get<mio::osecirvvs::TimeInfectedCritical>()[(mio::AgeGroup)group])));
+
+        mu_C_R[0].push_back(
+            model[0].parameters.template get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)group]);
+        mu_I_H[0].push_back(
+            model[0].parameters.template get<mio::osecirvvs::SeverePerInfectedSymptoms>()[(mio::AgeGroup)group]);
+        mu_H_U[0].push_back(
+            model[0].parameters.template get<mio::osecirvvs::CriticalPerSevere>()[(mio::AgeGroup)group]);
+    }
+
+    auto read = mio::osecirvvs::details::read_confirmed_cases_data(
+        path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
+        num_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+        t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, std::vector<double>(size_t(num_age_groups), 1.0));
+
+    ASSERT_THAT(read, IsSuccess());
+}
+
 TEST(TestOdeSECIRVVS, read_data)
 {
     auto num_age_groups = 6; //reading data requires RKI data age groups

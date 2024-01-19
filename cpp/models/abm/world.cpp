@@ -143,7 +143,7 @@ void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Loca
             auto& trip        = m_trip_list.get_next_trip(weekend);
             auto& person      = m_persons[trip.person_id];
             auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
+            if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     person->add_migration_plan(t, target_location);

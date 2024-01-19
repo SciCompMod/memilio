@@ -1,7 +1,15 @@
 # Changes and Information
 
-Please **briefly list the changes** made, additional Information and what the Reviewer should look out for:
+Please **briefly list the changes** (main added features, changed items, or corrected bugs) made:
 
+-
+-
+-
+
+
+If need be, add additional information and what the reviewer should look out for in particular:
+
+-
 -
 
 ## Merge Request - Guideline Checklist
@@ -24,3 +32,4 @@ Please check our [git workflow](https://github.com/SciCompMod/memilio/wiki/git-w
 - [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.)
 - [ ] Appropriate **unit tests** have been added, CI passes, code coverage and performance is acceptable (did not decrease)
 - [ ] No large data files added in the whole history of commits(files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
+- [ ] On merge, add 2-5 lines with the changes (main added features, changed items, or corrected bugs) to the merge-commit-message. This can be taken from the **briefly-list-the-changes** above (best case) or the separate commit messages (worst case).

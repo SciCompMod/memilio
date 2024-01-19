@@ -97,12 +97,11 @@ TEST(TestTestingScheme, runScheme)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(5))
+        .Times(testing::Exactly(4))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5))
-        .WillOnce(testing::Return(0.9));
+        .WillOnce(testing::Return(0.5));
     ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
     ASSERT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
     ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
@@ -129,10 +128,10 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
-    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
-    auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
+    auto person1     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
-    auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
+    auto person2     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered);
     auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -143,11 +142,11 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
     mio::abm::TestingStrategy test_strategy =
         mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
-    test_strategy.add_testing_scheme(mio::abm::LocationType::Home, testing_scheme1);
-    test_strategy.add_testing_scheme(mio::abm::LocationType::Home, testing_scheme2);
-    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_home, start_date),
+    test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
+    test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
+    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
               false); // Person tests and tests positive
-    ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_home, start_date),
+    ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
-    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_home, start_date), true); // Person doesn't test
+    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
 }

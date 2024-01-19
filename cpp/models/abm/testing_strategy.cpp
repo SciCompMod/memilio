@@ -102,7 +102,7 @@ void TestingScheme::update_activity_status(TimePoint t)
 
 bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
-    if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
+    if (t - person.get_time_of_last_test() > m_minimal_time_since_last_test) {
         if (m_testing_criteria.evaluate(person, t)) {
             double random = UniformDistribution<double>::get_instance()(rng);
             if (random < m_probability) {
@@ -168,8 +168,8 @@ void TestingStrategy::update_activity_status(TimePoint t)
 bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location,
                                    TimePoint t)
 {
-    // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
-    if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
+    // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.
+    if (location.get_type() == mio::abm::LocationType::Home) {
         return true;
     }
     //lookup schemes for this specific location as well as the location type
