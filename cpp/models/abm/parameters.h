@@ -308,6 +308,18 @@ struct HighViralLoadProtectionFactor {
     }
 };
 
+/** 
+ * @brief The index for all the testing types.
+ * Can be used as 0-based index.
+ */
+enum class TestingTypeIndex : std::uint32_t
+{
+    GenericTest = 0,
+    AntigenTest = 1,
+    PCRTest     = 2,
+    Count //last!!
+};
+
 /**
  * @brief Parameters that describe the reliability of a test.
  */
@@ -316,13 +328,14 @@ struct TestParameters {
     UncertainValue specificity;
     TimeSpan required_time;
     TimeSpan validity_period;
+    TestingTypeIndex test_type;
 };
 
 struct GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.9, 0.99, hours(24), hours(24)};
+        return Type{0.9, 0.99, hours(24), hours(24), TestingTypeIndex::GenericTest};
     }
     static std::string name()
     {
@@ -337,7 +350,7 @@ struct AntigenTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.8, 0.88, minutes(30), hours(24)};
+        return Type{0.8, 0.88, minutes(30), hours(24), TestingTypeIndex::AntigenTest};
     }
     static std::string name()
     {
@@ -352,7 +365,7 @@ struct PCRTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.9, 0.99, days(1), days(3)};
+        return Type{0.9, 0.99, days(1), days(3), TestingTypeIndex::PCRTest};
     }
     static std::string name()
     {
@@ -502,7 +515,7 @@ struct AgeGroupGotoSchool {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a = Type(num_agegroups, false);
+        auto a         = Type(num_agegroups, false);
         a[AgeGroup(1)] = true;
         return a;
     }
@@ -519,7 +532,7 @@ struct AgeGroupGotoWork {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a = Type(num_agegroups, false);
+        auto a         = Type(num_agegroups, false);
         a[AgeGroup(2)] = true;
         a[AgeGroup(3)] = true;
         return a;

@@ -145,6 +145,15 @@ public:
         return (m_person_id == other.m_person_id);
     }
 
+    /**
+     * @brief The TestResult of a Person.
+     */
+    struct TestResult {
+        TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
+        TestingTypeIndex type = TestingTypeIndex::GenericTest; ///< The TestingTypeIndex of the test.
+        bool result; ///< The result of the test.
+    };
+
     /** 
      * @brief Time passes and the Person interacts with the population at its current Location.
      * The Person might become infected.
@@ -514,26 +523,19 @@ public:
             loc, age, id);
     }
 
-    struct TestResult {
-        TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
-        GenericTest type; ///< The type of the test.
-        bool result; ///< The result of the test.
-    };
-
     /**
      * @brief Add TestResult to the Person
-     * @param[in] GenericTest The TestType of the result.
-     * @param[in] type The TimePoint of the result.
+     * @param[in] t The TimePoint of the result.
+     * @param[in] type The TestingTypeIndex of the result.
      * @param[in] result The result of the test.
     */
-    void add_test_result(TimePoint t, GenericTest type, bool result);
+    void add_test_result(TimePoint t, TestingTypeIndex type, bool result);
 
     /**
-     * @brief Get the TestResult performed at a TimePoint of the Person based on the TestType.
-     * @param[in] type The TestType of the result.
-     * @param[in] t The TimePoint of the result.
+     * @brief Get the most recent TestResult performed from the Person based on the TestType.
+     * @param[in] type The TestingTypeIndex of the result.
     */
-    const Person::TestResult* get_test_result(GenericTest type, TimePoint t) const;
+    const TestResult get_test_result(TestingTypeIndex type) const;
 
     /**
      * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
@@ -571,7 +573,7 @@ private:
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
-    std::vector<TestResult> m_test_results; ///< Vector to store all TestResults.
+    CustomIndexArray<TestResult, TestingTypeIndex> m_test_results; ///< CustomIndexArray for TestResults.
     std::vector<std::pair<TimePoint, Location&>>
         m_migration_planning; ///< Vector to store all migration plans (pairs of TimePoint and Location).
 };

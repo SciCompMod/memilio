@@ -44,7 +44,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
-    , m_test_results()
+    , m_test_results({TestingTypeIndex::Count}, TestResult())
     , m_migration_planning()
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
@@ -303,33 +303,19 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
         t.days() - latest_protection.second.days());
 }
 
-void Person::add_test_result(TimePoint t, GenericTest type, bool result)
+void Person::add_test_result(TimePoint t, TestingTypeIndex type_index, bool result)
 {
     TestResult test_result;
     test_result.time_of_testing = t;
-    test_result.type            = type;
+    test_result.type            = type_index;
     test_result.result          = result;
     // Remove outdated test results or replace the old result of the same type
-    m_test_results.erase(std::remove_if(m_test_results.begin(), m_test_results.end(),
-                                        [test_result](const TestResult& old_result) {
-                                            return old_result.type.name == test_result.type.name ||
-                                                   (old_result.time_of_testing +
-                                                    old_result.type.get_default().validity_period) <
-                                                       test_result.time_of_testing;
-                                        }),
-                         m_test_results.end());
-
-    m_test_results.push_back(test_result);
+    m_test_results[{type_index}] = test_result;
 }
 
-const Person::TestResult* Person::get_test_result(GenericTest type, TimePoint t) const
+const Person::TestResult Person::get_test_result(TestingTypeIndex type_index) const
 {
-    for (const auto& result : m_test_results) {
-        if (result.type.name == type.name && (result.time_of_testing + result.type.get_default().validity_period) > t) {
-            return &result;
-        }
-    }
-    return nullptr;
+    return m_test_results[{type_index}];
 }
 
 void Person::add_migration_plan(TimePoint t, Location& location)

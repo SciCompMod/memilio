@@ -331,15 +331,9 @@ TEST(Person, addAndGetTestResult)
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
     auto t      = mio::abm::TimePoint(0);
-    auto dt     = mio::abm::seconds(8640); //0.1 days
 
-    mio::abm::GenericTest test;
-    person.add_test_result(t, test, true);
-    ASSERT_TRUE(person.get_test_result(test, t));
-    ASSERT_TRUE(person.get_test_result(test, t + dt));
-
-    dt = mio::abm::days(2);
-    ASSERT_FALSE(person.get_test_result(test, t + dt));
+    person.add_test_result(t, mio::abm::TestingTypeIndex::GenericTest, true);
+    ASSERT_TRUE(person.get_test_result(mio::abm::TestingTypeIndex::GenericTest).result);
 }
 
 TEST(Person, addAndGetMigrationPlanning)

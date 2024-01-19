@@ -162,7 +162,8 @@ public:
      * @brief Gets the type of the TestingScheme.
      * @return The type of the TestingScheme.
      */
-    GenericTest get_type() const {
+    GenericTest get_type() const
+    {
         return m_test_type;
     }
 
