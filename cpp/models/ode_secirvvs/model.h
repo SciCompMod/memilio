@@ -641,10 +641,10 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
-        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
-        auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
-        const auto num_groups  = this->get_model().parameters.get_num_groups();
+        auto& t_end_dyn_npis    = this->get_model().parameters.get_end_dynamic_npis();
+        auto& dyn_npis          = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
+        auto& contact_patterns  = this->get_model().parameters.template get<ContactPatterns>();
+        const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
 
         // in the apply_variant function, we adjust the TransmissionProbabilityOnContact parameter. We need to store
         // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.

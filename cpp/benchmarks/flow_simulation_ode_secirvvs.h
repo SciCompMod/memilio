@@ -507,12 +507,13 @@ public:
     */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
-        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
-        auto& dyn_npis         = this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms>();
-        auto& contact_patterns = this->get_model().parameters.template get<osecirvvs::ContactPatterns>();
+        auto& t_end_dyn_npis    = this->get_model().parameters.get_end_dynamic_npis();
+        auto& dyn_npis          = this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms>();
+        auto& contact_patterns  = this->get_model().parameters.template get<osecirvvs::ContactPatterns>();
+        const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
 
-        Eigen::VectorXd base_infectiousness(6);
-        for (size_t i = 0; i < 6; ++i) {
+        Eigen::VectorXd base_infectiousness(num_groups);
+        for (size_t i = 0; i < num_groups; ++i) {
             base_infectiousness[i] =
                 this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i];
         }
@@ -574,7 +575,7 @@ public:
             }
         }
 
-        for (size_t i = 0; i < 6; ++i) {
+        for (size_t i = 0; i < num_groups; ++i) {
             this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] =
                 base_infectiousness[i];
         }
