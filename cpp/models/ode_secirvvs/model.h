@@ -553,9 +553,10 @@ public:
     * Based on Equation (35) and (36) in doi.org/10.1371/journal.pcbi.1010054
     * 
     * @param [in] t The current time.
+    * @param [in] base_infectiousness The base infectiousness of the disease.
     */
 
-    void apply_variant(double t)
+    void apply_variant(const double t, const Eigen::VectorXd base_infectiousness)
     {
         auto start_day             = this->get_model().parameters.template get<StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
@@ -565,8 +566,7 @@ public:
         size_t num_groups            = (size_t)this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
-                (1 - share_new_variant) *
-                    this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] +
+                (1 - share_new_variant) * base_infectiousness[i] +
                 share_new_variant *
                     this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] *
                     this->get_model().parameters.template get<InfectiousnessNewVariant>()[(AgeGroup)i];
@@ -637,6 +637,14 @@ public:
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
 
+        // in the apply_variant function, we adjust the TransmissionProbabilityOnContact parameter. We need to store
+        // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
+        Eigen::VectorXd base_infectiousness(6);
+        for (size_t i = 0; i < 6; ++i) {
+            base_infectiousness[i] =
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i];
+        }
+
         double delay_lockdown;
         auto t        = BaseT::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
@@ -649,12 +657,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_variant(t);
+                this->apply_variant(t, base_infectiousness);
             }
             BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_variant(t);
+                this->apply_variant(t, base_infectiousness);
             }
 
             if (t > 0) {
@@ -692,6 +700,12 @@ public:
             else {
                 m_t_last_npi_check = t;
             }
+        }
+        // reset TransmissionProbabilityOnContact. This is important for the graph simulation where the advance
+        // function is called multiple times for the same model.
+        for (size_t i = 0; i < 6; ++i) {
+            this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                base_infectiousness[i];
         }
         return this->get_result().get_last_value();
     }
