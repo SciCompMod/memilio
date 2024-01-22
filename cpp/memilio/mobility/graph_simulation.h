@@ -21,6 +21,7 @@
 #define MIO_MOBILITY_GRAPH_SIMULATION_H
 
 #include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/config.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/compiler_diagnostics.h"
@@ -30,10 +31,28 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
+#include <string>
 #include <vector>
 
 namespace mio
 {
+
+template <class Model>
+using set_contact_mobility_expr_t = decltype(
+    set_contact_mobility(std::declval<Model&>(), std::declval<Eigen::Ref<Eigen::MatrixXd>&>(), std::declval<double>()));
+
+template <class Model,
+          std::enable_if_t<!is_expression_valid<set_contact_mobility_expr_t, Model>::value, void*> = nullptr>
+void set_contact_mobility(Model& /*model*/, Eigen::Ref<Eigen::MatrixXd> /*contacts*/)
+{
+}
+template <class Model,
+          std::enable_if_t<is_expression_valid<set_contact_mobility_expr_t, Model>::value, void*> = nullptr>
+void set_contact_mobility(Model& m, Eigen::Ref<Eigen::MatrixXd> contacts)
+{
+    return set_contact_mobility(m, contacts, 0.);
+}
 
 /**
  * @brief abstract simulation on a graph with alternating node and edge actions
@@ -68,6 +87,130 @@ public:
     {
     }
 
+    double calc_total_population(Graph graph)
+    {
+        double sum_pop = 0.0;
+        for (auto& node : graph.nodes()) {
+            auto& results_local_node = node.property.get_simulation().get_result();
+            auto& results_pt         = node.node_pt.get_simulation().get_result();
+            sum_pop += results_local_node.get_last_value().sum() + results_pt.get_last_value().sum();
+        }
+        return sum_pop;
+    }
+
+    void compare_pop(Graph graph, double total_pop_t0, std::string msg = "")
+    {
+        if (std::abs(calc_total_population(m_graph) - total_pop_t0) > 1e-5) {
+            std::cout << "t = " << m_t << "\n";
+            std::cout.precision(15);
+            std::cout << std::fixed;
+            std::cout << "total population = " << calc_total_population(m_graph) << "\n";
+            std::cout << "diff to t0 = " << calc_total_population(m_graph) - total_pop_t0 << "\n";
+            std::cout << msg << "\n";
+        }
+    }
+
+    // void check_for_negative_value(Eigen::Ref<Eigen::Matrix<double, -1, 1>> y)
+    // {
+    //     const double epsilon = 1e-10;
+    //     auto const num_age_groups =
+    //         m_graph.nodes()[0].property.get_simulation().get_model().parameters.get_num_groups();
+    //     auto const num_comparts = y.size() / static_cast<int>(static_cast<size_t>(num_age_groups));
+    //     if (y.minCoeff() < -epsilon) {
+    //         while (y.minCoeff() < -epsilon) {
+    //             Eigen::Index min_index;
+    //             y.minCoeff(&min_index);
+    //             auto curr_age_group = int(min_index / num_comparts);
+    //             auto indx_begin     = curr_age_group * num_comparts;
+    //             auto indx_end       = (curr_age_group + 1) * num_comparts;
+
+    //             // calculate max index in indx boundaries. Creates no copy of y
+    //             Eigen::VectorBlock<Eigen::Ref<Eigen::Matrix<double, -1, 1>>> y_block =
+    //                 y.segment(indx_begin, indx_end - indx_begin);
+    //             Eigen::Index max_index;
+    //             y_block.maxCoeff(&max_index);
+
+    //             if (y(max_index) <= epsilon) {
+    //                 std::cout << "Fixing negative Value not possible."
+    //                           << "\n";
+    //                 break;
+    //             }
+    //             double transfer = std::min(-y(min_index), y(max_index));
+    //             y(min_index) += transfer;
+    //             y(max_index) -= transfer;
+    //         }
+    //     }
+    // }
+
+    void check_for_negative_value(Eigen::Ref<Eigen::Matrix<double, -1, 1>> y, const long unsigned int& index)
+    {
+        auto sum_y = y.sum();
+        if (sum_y > 1e-9) {
+            auto const tol = 1e-10;
+
+            auto const num_age_groups = 6;
+            auto const num_comparts   = y.size() / num_age_groups;
+            auto y_as_vector          = std::vector<double>(y.data(), y.data() + y.size());
+            if (y.minCoeff() < -tol) {
+                Eigen::Index minim;
+                y.minCoeff(&minim);
+                // std::cout << "negative value in index " << minim << "with value " << y.minCoeff() << "\n";
+                for (Eigen::Index j = 0; j < y.size(); ++j) {
+                    if (y(j) < -tol) {
+                        auto curr_age_group = int(j / num_comparts);
+                        auto indx_begin     = curr_age_group * num_comparts;
+                        auto indx_end       = (curr_age_group + 1) * num_comparts;
+                        // calculate max index in indx boundaries
+                        Eigen::Index max_index = indx_begin;
+                        // y.segment(num_age_groups * num_comparts, num_comparts).maxCoeff(&max_index);
+                        for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
+                            if (y(i) > y(max_index)) {
+                                max_index = i;
+                            }
+                        }
+
+                        // its possible that the max value in the boundaries is not enough to fill the negative value.
+                        // Therefore we have to find multiple max values
+                        if (y(max_index) + y(j) < -tol) {
+                            y(j)         = y(j) + y(max_index);
+                            y(max_index) = 0;
+                            max_index    = indx_begin;
+                            for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
+                                if (y(i) > y(max_index)) {
+                                    max_index = i;
+                                }
+                            }
+                        }
+
+                        if (y(max_index) + y(j) < -tol) {
+                            std::cout << "problem!!"
+                                      << "\n";
+                        }
+                        y(max_index) = y(max_index) + y(j);
+                        y(j)         = 0;
+                        auto diff    = y.sum() - sum_y;
+                        y(max_index) = y(max_index) - diff;
+                    }
+                }
+            }
+            auto sum_new = y.sum();
+            if (std::fabs(sum_y - sum_new) > 1e-9) {
+                auto y_new_as_vector = std::vector<double>(y.data(), y.data() + y.size());
+
+                auto diff_vec = std::vector<double>(y.size());
+                std::transform(y_as_vector.begin(), y_as_vector.end(), y_new_as_vector.begin(), diff_vec.begin(),
+                               std::minus<double>());
+
+                auto vector_diff = std::vector<double>(y.size());
+                std::transform(y_as_vector.begin(), y_as_vector.end(), y_new_as_vector.begin(), vector_diff.begin(),
+                               std::minus<double>());
+                std::cout << "sum_y = " << sum_y << " und sum_new = " << sum_new << "\n";
+                std::cout << "diff = " << sum_y - sum_new << "\n";
+                std::cout << "Error in check_for_negative_value in edge " << index << "\n";
+            }
+        }
+    }
+
     inline double round_second_decimal(double x)
     {
         return std::round(x * 100.0) / 100.0;
@@ -95,13 +238,26 @@ public:
             n.node_pt.get_result().get_last_value().setZero();
         }
 
+        double total_pop_t0 = calc_total_population(m_graph);
+
         auto min_dt    = 0.01;
         double t_begin = m_t - 1.;
 
-        // calc schedule for each edge
+        double avg_commuter_share = 0.232487;
+        double avg_travel_time    = 0.0679489;
+        Eigen::MatrixXd cmatrix_init(6, 6);
+        cmatrix_init << 0.0337, 0.0337, 0.0674, 0.0534, 0.0140, 0.0000, 0.0209, 0.0652, 0.0468, 0.0757, 0.0138, 0.0000,
+            0.0095, 0.1818, 0.1002, 0.0904, 0.0174, 0.0000, 0.0178, 0.0849, 0.3118, 0.2155, 0.0103, 0.0000, 0.0039,
+            0.0160, 0.2554, 0.0461, 0.0095, 0.0171, 0.0137, 0.0134, 0.1296, 0.0863, 0.0140, 0.0000;
+
+        cmatrix_init = cmatrix_init / (avg_commuter_share * 2 * avg_travel_time);
+
+        // calc schedule for each edges
         precompute_schedule();
+
         const double epsilon = std::numeric_limits<double>::epsilon();
         while (m_t - epsilon < t_max) {
+
             // auto start = std::chrono::system_clock::now();
 
             t_begin += 1;
@@ -118,7 +274,8 @@ public:
             }
 
             size_t indx_schedule = 0;
-            while (t_begin + 1 > m_t + 1e-10) {
+            while (indx_schedule <= 100) {
+                // compare_pop(m_graph, total_pop_t0, "vor edges");
                 for (const auto& edge_indx : edges_mobility[indx_schedule]) {
                     auto& e = m_graph.edges()[edge_indx];
                     // first mobility activity
@@ -126,6 +283,11 @@ public:
                         auto& node_from = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
                         auto& node_to   = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt;
                         m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
+                    }
+                    else if (indx_schedule == 100) {
+                        auto& node_from = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].node_pt;
+                        auto& node_to   = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
+                        m_edge_func(m_t, 0.0, e.property, node_from, node_to, 2);
                     }
                     // next mobility activity
                     else if (indx_schedule > first_mobility[edge_indx]) {
@@ -175,26 +337,24 @@ public:
                                                 ? m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt
                                                 : m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property;
 
-                            if (indx_schedule < mobility_schedule_edges[edge_indx].size() - 1) {
-                                m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
+                            // set contact matrix in node_from. But only if we are located in a mobility node.
+                            // In the local node we just have the non mobility contacts
+                            if (mobility_schedule_edges[edge_indx][indx_schedule - 1]) {
+                                set_contact_mobility(node_from.get_simulation().get_model(), e.contact_matrix);
                             }
-                            else
-                                // the last time step is handled differently since we have to close the timeseries
-                                m_edge_func(m_t, dt_mobility, e.property, node_from,
-                                            m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property, 2);
+                            m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
                         }
                         else {
+
                             auto& node_from =
                                 mobility_schedule_edges[edge_indx][indx_schedule - 1]
                                     ? m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].node_pt
                                     : m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
 
-                            auto& node_to = mobility_schedule_edges[edge_indx][indx_schedule]
-                                                ? m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt
-                                                : m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property;
-
-                            assert(node_from.get_result().get_last_value() == node_to.get_result().get_last_value());
-                            m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 3);
+                            if (mobility_schedule_edges[edge_indx][indx_schedule - 1]) {
+                                set_contact_mobility(node_from.get_simulation().get_model(), e.contact_matrix);
+                            }
+                            m_edge_func(m_t, dt_mobility, e.property, node_from, node_from, 3);
                         }
                     }
                 }
@@ -202,87 +362,86 @@ public:
                 // first we integrate the nodes in time. Afterwards the update on the edges is done.
                 // We start with the edges since the values for t0 are given.
                 // iterate over all local nodes and integrate them to the syncronization point
-                for (const auto& n_indx : nodes_mobility[indx_schedule]) {
-                    auto& n = m_graph.nodes()[n_indx];
-                    const size_t indx_current =
-                        std::distance(ln_int_schedule[n_indx].begin(),
-                                      std::lower_bound(ln_int_schedule[n_indx].begin(), ln_int_schedule[n_indx].end(),
-                                                       indx_schedule));
 
-                    const size_t val_next = (indx_current == ln_int_schedule[n_indx].size() - 1)
-                                                ? 100
-                                                : ln_int_schedule[n_indx][indx_current + 1];
-                    const ScalarType next_dt =
-                        round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
-                    m_node_func(m_t, next_dt, n.property);
-                }
+                if (indx_schedule < 100) {
+                    for (const auto& n_indx : nodes_mobility[indx_schedule]) {
+                        auto& n = m_graph.nodes()[n_indx];
+                        if (indx_schedule == 100) {
+                            m_node_func(m_t, 0.01, n.property);
+                        }
+                        else {
+                            const size_t indx_current =
+                                std::distance(ln_int_schedule[n_indx].begin(),
+                                              std::lower_bound(ln_int_schedule[n_indx].begin(),
+                                                               ln_int_schedule[n_indx].end(), indx_schedule));
 
-                // iterate over all mobility nodes and integrate them to the syncronization point
-                for (const size_t& n_indx : nodes_mobility_m[indx_schedule]) {
-                    auto& n = m_graph.nodes()[n_indx];
-                    const size_t indx_current =
-                        std::distance(mb_int_schedule[n_indx].begin(),
-                                      std::lower_bound(mb_int_schedule[n_indx].begin(), mb_int_schedule[n_indx].end(),
-                                                       indx_schedule));
-                    const size_t val_next = (indx_current == mb_int_schedule[n_indx].size() - 1)
-                                                ? 100
-                                                : mb_int_schedule[n_indx][indx_current + 1];
-                    const ScalarType next_dt =
-                        round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
-
-                    // get all time points from the last integration step
-                    auto& last_time_point =
-                        n.node_pt.get_result().get_time(n.node_pt.get_result().get_num_time_points() - 1);
-                    // wenn last_time_point nicht innerhalb eines intervalls von 1-e10 von t liegt, dann setzte den letzten Zeitpunkt auf m_t
-                    if (std::fabs(last_time_point - m_t) > 1e-10) {
-                        n.node_pt.get_result().get_last_time() = m_t;
+                            const size_t val_next = (indx_current == ln_int_schedule[n_indx].size() - 1)
+                                                        ? 100
+                                                        : ln_int_schedule[n_indx][indx_current + 1];
+                            const ScalarType next_dt =
+                                round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
+                            m_node_func(m_t, next_dt, n.property);
+                            check_for_negative_value(n.property.get_result().get_last_value(), n_indx);
+                        }
                     }
-                    std::cout << "population in mobility node with id " << n.id << " at time " << m_t << " is "
-                              << n.node_pt.get_result().get_last_value().sum() << "\n";
-                    Eigen::Index indx_min;
-                    if (n.node_pt.get_result().get_last_value().minCoeff(&indx_min) < 0) {
-                        std::cout << "value schon vorher negativ " << n.node_pt.get_result().get_last_value()[indx_min]
-                                  << "\n";
-                    }
-                    if (n.id == 7233 && m_t == 0.16) {
-                        std::cout << "ja"
-                                  << "\n";
-                    }
-                    std::cout << "Before num time points " << n.node_pt.get_result().get_num_time_points() << "\n";
-                    m_node_func(m_t, next_dt, n.node_pt);
-                    while (n.node_pt.get_result().get_last_value().minCoeff() < 0) {
-                        std::cout << "id = " << n.id << "\n";
-                        Eigen::Index indx_max;
-                        n.node_pt.get_result().get_last_value().maxCoeff(&indx_max);
-                        n.node_pt.get_result().get_last_value()[indx_max] -=
-                            n.node_pt.get_result().get_last_value()[indx_min];
-                        n.node_pt.get_result().get_last_value()[indx_min] = 0;
-                        std::cout << "After num time points " << n.node_pt.get_result().get_num_time_points() << "\n";
 
-                        std::cout << "second last results  = "
-                                  << n.node_pt.get_result().get_value(n.node_pt.get_result().get_num_time_points() - 2)
-                                  << "\n";
-                        std::cout << "last results  = " << n.node_pt.get_result().get_last_value() << "\n";
-                        std::cout
-                            << "sum second last results  = "
-                            << n.node_pt.get_result().get_value(n.node_pt.get_result().get_num_time_points() - 2).sum()
-                            << "\n";
-                        std::cout << "sum last results  = " << n.node_pt.get_result().get_last_value().sum() << "\n";
-                        std::exit(1);
+                    for (const size_t& n_indx : nodes_mobility_m[indx_schedule]) {
+                        auto& n = m_graph.nodes()[n_indx];
+                        set_contact_mobility(n.node_pt.get_simulation().get_model(), cmatrix_init);
+
+                        check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
+
+                        const size_t indx_current =
+                            std::distance(mb_int_schedule[n_indx].begin(),
+                                          std::lower_bound(mb_int_schedule[n_indx].begin(),
+                                                           mb_int_schedule[n_indx].end(), indx_schedule));
+                        const size_t val_next = (indx_current == mb_int_schedule[n_indx].size() - 1)
+                                                    ? 100
+                                                    : mb_int_schedule[n_indx][indx_current + 1];
+                        const ScalarType next_dt =
+                            round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
+
+                        // get all time points from the last integration step
+                        auto last_time_point =
+                            n.node_pt.get_result().get_time(n.node_pt.get_result().get_num_time_points() - 1);
+                        if (std::fabs(last_time_point - m_t) > 1e-10) {
+                            n.node_pt.get_result().get_last_time()                 = m_t;
+                            n.node_pt.get_simulation().get_flows().get_last_time() = m_t;
+                        }
+
+                        if (n.node_pt.get_result().get_last_value().sum() < 5) {
+                            n.node_pt.get_result().get_last_time()                 = m_t + next_dt;
+                            n.node_pt.get_simulation().get_flows().get_last_time() = m_t + next_dt;
+                        }
+                        else {
+                            m_node_func(m_t, next_dt, n.node_pt);
+                        }
+
+                        // check for negative values and set them to zero
+                        check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
                     }
                 }
+
+                if (indx_schedule == 100) {
+                    for (auto& n : m_graph.nodes()) {
+                        n.property.get_result().get_last_value() += n.node_pt.get_result().get_last_value();
+                        n.node_pt.get_result().get_last_value().setZero();
+                    }
+                }
+                else {
+                    m_t += min_dt;
+                }
+
+                // std::cout << "t = " << m_t << "\n";
+
                 indx_schedule++;
-                m_t += min_dt;
             }
-            // set each compartment zero for all mobility nodes since we only model daily mobility
+            // compare_pop(m_graph, total_pop_t0, "nach t");
+            // std::cout << "t = " << m_t << "\n";
+
             for (auto& n : m_graph.nodes()) {
                 n.node_pt.get_result().get_last_value().setZero();
             }
-            // std::cout << "aktuell bei t = " << m_t << "\n";
-            // // messe die zeit, wie lange eine iteration bis zu dieser stelle dauert
-            // auto end                                      = std::chrono::system_clock::now();
-            // std::chrono::duration<double> elapsed_seconds = end - start;
-            // std::cout << "Time (min) needed per Iteration is " << elapsed_seconds.count() / 60 << "min\n";
         }
     }
 
@@ -337,6 +496,7 @@ private:
 
     void precompute_schedule()
     {
+        // print transi
         const size_t timesteps = 100;
         schedule_edges.reserve(m_graph.edges().size());
         mobility_schedule_edges.reserve(m_graph.edges().size());
@@ -467,8 +627,11 @@ private:
             indx_edge++;
         }
 
-        edges_mobility.reserve(timesteps);
-        nodes_mobility.reserve(timesteps);
+        // edges_mobility and nodes_mobility have a additional time step, because
+        //  we have to move the people back in the last step und have to integrate them again.
+        // Once all people are moved back, the mobility node is empty.
+        edges_mobility.reserve(timesteps + 1);
+        nodes_mobility.reserve(timesteps + 1);
         nodes_mobility_m.reserve(timesteps);
 
         // we handle indx_current = 0 separately since we want have added them always in the
@@ -538,29 +701,16 @@ private:
             nodes_mobility_m.push_back(temp_nodes_mobility_m);
         }
 
-        // Finally, we want to count the number of interactions, when there a at least two edges within the same mobility node
-        // Count the number of intersections for each time points
-        // std::vector<size_t> intersections_mobility(timesteps);
-        // for (size_t indx_current = 0; indx_current < timesteps; ++indx_current) {
-        //     std::vector<size_t> num_groups_in_mobility_node(m_graph.nodes().size());
-        //     size_t inndx_edge = 0;
-        //     for (auto& e : m_graph.nodes()) {
-        //         if (mobility_schedule_edges[inndx_edge][indx_current]) {
-        //             auto curr_node = schedule_edges[inndx_edge][indx_current];
-        //             num_groups_in_mobility_node[curr_node]++;
-        //         }
-        //     }
-        //     // zähle die anzahl an einträgen größer 2 in num_groups_in_mobility_node
-        //     intersections_mobility[indx_current] =
-        //         std::count_if(num_groups_in_mobility_node.begin(), num_groups_in_mobility_node.end(), [](size_t i) {
-        //             return i > 1;
-        //         });
-        //     num_groups_in_mobility_node.clear();
+        // add the last time step for nodes_mobility and edges_mobility
+        std::vector<size_t> temp_edge_mobility(m_graph.edges().size());
+        std::iota(temp_edge_mobility.begin(), temp_edge_mobility.end(), 0);
+        edges_mobility.push_back(std::move(temp_edge_mobility));
 
-        //     // TODO: SPEICHERE das in eine TXT datei im schönen Format
-        // }
+        std::vector<size_t> tmp_nodes_mobility(m_graph.nodes().size());
+        std::iota(tmp_nodes_mobility.begin(), tmp_nodes_mobility.end(), 0);
+        nodes_mobility.push_back(std::move(tmp_nodes_mobility));
     }
-}; // namespace mio
+};
 
 template <class Graph>
 class GraphSimulation : public GraphSimulationBase<Graph>
