@@ -126,7 +126,7 @@ def plot_compartment_prediction_model(
 
 
 def network_fit(
-        path, filename, model, modeltype, df_save,  max_epochs=30, early_stop=100, plot=True):
+        path, filename, model, model_name, modeltype, df_save,  max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -297,8 +297,8 @@ def network_fit(
         print('mean: ',  df.mean())
         
         
-        filename_df = 'datarame_secirgroups_onedamp_noinfo'
-        df_save.loc[len(df_save.index)] = [df.mean()[0]]
+        filename_df = 'datarame_secirgroups_onedamp_noinfo_sametestset'
+        df_save.loc[len(df_save.index)] = [df.mean()[0], model_name]
         
         path = os.path.dirname(os.path.realpath(__file__))
         file_path = os.path.join(
@@ -413,6 +413,11 @@ def split_data(inputs, labels, split_train=0.7,
     return data
 
 
+
+
+
+
+
 def flat_input(input):
     """! Flatten input dimension
 
@@ -509,34 +514,38 @@ if __name__ == "__main__":
         os.path.dirname(os.path.realpath(path)))), 'data')
     
     filename = 'data_secir_groups_30days_onevardamp_baseline.pickle'
-    df_save = pd.DataFrame(columns = ['MAPE'])
+    df_save = pd.DataFrame(columns = ['MAPE', 'Model'])
 
 
-    max_epochs = 1
+    max_epochs = 1500
     label_width = 30
 
     input_dim = get_input_dim_lstm(path_data, filename)
 
-    model = "LSTM"
-    if model == "Dense_Single":
-        model = network_architectures.mlp_multi_input_single_output()
-        modeltype = 'classic'
+    models = ['Dense','LSTM', 'CNN']
 
-    elif model == "Dense":
-        model = network_architectures.mlp_multi_input_multi_output(label_width)
-        modeltype = 'classic'
+    #model = "LSTM"
+    for model_name in models:
+        model = model_name
+        if model == "Dense_Single":
+            model = network_architectures.mlp_multi_input_single_output()
+            modeltype = 'classic'
 
-    elif model == "LSTM":
-        model = network_architectures.lstm_multi_input_multi_output(
+        elif model == "Dense":
+            model = network_architectures.mlp_multi_input_multi_output(label_width)
+            modeltype = 'classic'
+
+        elif model == "LSTM":
+            model = network_architectures.lstm_multi_input_multi_output(
             label_width)
-        modeltype = 'timeseries'
+            modeltype = 'timeseries'
 
-    elif model == "CNN":
-        model = network_architectures.cnn_multi_input_multi_output(label_width)
-        modeltype = 'timeseries'
+        elif model == "CNN":
+            model = network_architectures.cnn_multi_input_multi_output(label_width)
+            modeltype = 'timeseries'
 
-    for i in range(5):
+        #for i in range(5):
 
         model_output = network_fit(
-            path_data, filename, model=model, modeltype=modeltype, df_save = df_save,
+            path_data, filename, model=model,model_name = model_name,  modeltype=modeltype, df_save = df_save,
             max_epochs=max_epochs)
