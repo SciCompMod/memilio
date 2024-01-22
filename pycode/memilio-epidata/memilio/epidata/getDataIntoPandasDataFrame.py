@@ -59,9 +59,9 @@ class VerbosityLevel(Enum):
 
 
 class Conf:
-    """Configures all relevant dwonload outputs etc."""
+    """Configures all relevant download outputs etc."""
 
-    v_level = 'Critical'
+    v_level = 'Info'
     show_progr = False
 
     def __init__(self, out_folder, **kwargs):

@@ -75,7 +75,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     def test_verify_sorted(self, mock_print):
         self.assertEqual(True, gcm.verify_sorted(self.test_countykey_list))
         self.assertEqual(False, gcm.verify_sorted(self.test_countykey_list2))
-        Errorcall = ('Error. Input list not sorted.')
+        Errorcall = ('Error: Input list not sorted.')
         mock_print.assert_called_with(Errorcall)
 
     @patch('builtins.print')
@@ -83,7 +83,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         (
             countykey2govkey, countykey2localnumlist, gov_county_table,
             state_gov_table) = gcm.assign_geographical_entities(
-            self.countykey_list, self.govkey_list)
+            self.countykey_list, self.govkey_list, True)
         for item in self.test_countykey2govkey.keys():
             self.assertEqual(
                 self.test_countykey2govkey.get(item),
@@ -104,7 +104,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # test case with not matching countykey and govkey lists
         (countykey2govkey, countykey2localnumlist, gov_county_table,
          state_gov_table) = gcm.assign_geographical_entities(
-            self.test_countykey_list, self.test_govkey_list)
+            self.test_countykey_list, self.test_govkey_list, True)
         self.assertEqual(countykey2govkey, collections.OrderedDict())
         self.assertEqual(countykey2localnumlist, collections.OrderedDict())
         self.assertEqual(gov_county_table, [
@@ -113,8 +113,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
         # test case with different number of data
         gcm.assign_geographical_entities(
-            self.test_countykey_list, self.govkey_list)
-        Errorcall = ('Error. Number of government regions wrong.')
+            self.test_countykey_list, self.govkey_list, True)
+        Errorcall = ('Error: Number of government regions wrong.')
         mock_print.assert_called_with(Errorcall)
 
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
@@ -124,7 +124,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         """
 
         df_commuter_migration = gcm.get_commuter_data(
-            out_folder=self.path, ref_year=2022)
+            out_folder=self.path, ref_year=2022, interactive=True)
 
         # just do some tests on randomly chosen migrations
 
@@ -159,7 +159,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='both', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path)
+            tol_comb='or', out_folder=self.path, interactive = True)
         self.assertEqual(len(countykey_list), 398)
         self.assertEqual(271, commuter_all[0])
         self.assertEqual(2234, commuter_all[9])
@@ -169,7 +169,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = in
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='in', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path)
+            tol_comb='or', out_folder=self.path, interactive = True)
         self.assertEqual(len(countykey_list), 393)
         self.assertEqual(70, commuter_all[0])
         self.assertEqual(892, commuter_all[9])
@@ -178,7 +178,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = out
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='out', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path)
+            tol_comb='or', out_folder=self.path, interactive = True)
         self.assertEqual(len(countykey_list), 378)
         self.assertEqual(201, commuter_all[0])
         self.assertEqual(1342, commuter_all[9])

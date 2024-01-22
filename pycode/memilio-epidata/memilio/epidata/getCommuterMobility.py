@@ -508,7 +508,7 @@ def commuter_sanity_checks(df):
 
 def get_neighbors_mobility(
         countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        out_folder=dd.defaultDict['out_folder'], ref_year=2022):
+        out_folder=dd.defaultDict['out_folder'], ref_year=2022, **kwargs):
     '''! Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -546,7 +546,7 @@ def get_neighbors_mobility(
     except FileNotFoundError:
         gd.default_print(
             "Info", "Commuter data was not found. Download and process it from the internet.")
-        commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year)
+        commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year, **kwargs)
 
     countykey_list = commuter.columns
     commuter.index = countykey_list

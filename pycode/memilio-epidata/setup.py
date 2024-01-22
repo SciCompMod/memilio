@@ -79,7 +79,8 @@ setup(
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
-        'pandas>=2.0.0',
+        # Has to use less than 2.2.0, see Issue #910
+        'pandas>=2.0.0,<2.2.0',
         # FutureWarning of pandas that pyarrow will be required in a future release
         'pyarrow',
         'matplotlib',
