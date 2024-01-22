@@ -137,9 +137,9 @@ TEST(TestGraphSimulation, stopsAtTmaxStochastic)
     const auto tmax = 5.;
     const auto dt   = 0.076;
 
-    mio::oseir::Model model;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
+    mio::oseir::Model model(1);
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
     model.populations.set_total(1000);
 
     mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
@@ -193,9 +193,9 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     const auto tmax = 10.;
     const auto dt   = 0.076;
 
-    mio::oseir::Model model;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.7;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.3;
+    mio::oseir::Model model(1);
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.7;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.3;
     model.populations.set_total(1000);
 
     mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
@@ -275,20 +275,20 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     double tmax = 1;
     double dt   = 0.001;
 
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
     double total_population                                                                            = 10000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
 
     model.check_constraints();
 

@@ -35,7 +35,7 @@ TEST(TestSeir, simulateDefault)
     double tmax = 1;
     double dt   = 0.1;
 
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
@@ -50,22 +50,22 @@ TEST(TestSeir, CompareSeirWithJS)
 
     double total_population = 1061000;
 
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
 
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(2);
 
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6, mio::SimulationTime(12.5));
 
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("seir-js-compare.csv");
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
@@ -107,22 +107,22 @@ TEST(TestSeir, checkPopulationConservation)
 
     double total_population = 1061000;
 
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
 
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(2);
 
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6, mio::SimulationTime(12.5));
     auto result        = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {
@@ -133,11 +133,11 @@ TEST(TestSeir, checkPopulationConservation)
 
 TEST(TestSeir, check_constraints_parameters)
 {
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
 
     // model.check_constraints() combines the functions from population and parameters.
     // We only want to test the functions for the parameters defined in parameters.h
@@ -160,46 +160,46 @@ TEST(TestSeir, check_constraints_parameters)
 TEST(TestSeir, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::oseir::TimeExposed>(-5.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseir::TimeExposed>(), tol_times);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeExposed>()[(mio::AgeGroup)0], tol_times);
 
     model.parameters.set<mio::oseir::TimeInfected>(1e-5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseir::TimeInfected>(), tol_times);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeInfected>()[(mio::AgeGroup)0], tol_times);
 
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>(), 0.0, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0], 0.0, 1e-14);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestSeir, get_reproduction_numbers)
 {
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
 
     double total_population                                                                            = 10000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
 
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
 
     model.apply_constraints();
 
@@ -246,7 +246,7 @@ TEST(TestSeir, get_reproduction_numbers)
         EXPECT_NEAR(reproduction_numbers[i], checkReproductionNumbers[i], 1e-12);
     }
 
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 9;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(9);
 
     auto reproduction_numbers2 = model.get_reproduction_numbers(result);
 
@@ -254,7 +254,7 @@ TEST(TestSeir, get_reproduction_numbers)
         EXPECT_NEAR(reproduction_numbers2[i], checkReproductionNumbers2[i], 1e-12);
     }
 
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 8;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(8);
 
     auto reproduction_numbers3 = model.get_reproduction_numbers(result);
 
@@ -268,21 +268,21 @@ TEST(TestSeir, get_reproduction_numbers)
 
 TEST(TestSeir, get_reproduction_number)
 {
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
 
     double total_population = 10000; //Initialize compartments to get total population of 10000
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
 
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
 
     model.apply_constraints();
 
@@ -325,11 +325,13 @@ TEST(TestSeir, get_reproduction_number)
     EXPECT_NEAR(model.get_reproduction_number(0.7, result).value(), 2.3242860858116172196, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number(0.0, result).value(), 2.3280000000000002913, 1e-12);
 
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 9;
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(9);
+    
     EXPECT_NEAR(model.get_reproduction_number(0.1, result).value(), 2.0946073086586665113, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number(0.3, result).value(), 2.0936545545126947765, 1e-12);
+    
+    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(8);
 
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 8;
     EXPECT_NEAR(model.get_reproduction_number(0.2, result).value(), 1.8614409729718137676, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number(0.9, result).value(), 1.858670429549998504, 1e-12);
 }
