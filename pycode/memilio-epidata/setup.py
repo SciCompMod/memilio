@@ -80,6 +80,8 @@ setup(
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
         'pandas>=2.0.0',
+        # FutureWarning of pandas that pyarrow will be required in a future release
+        'pyarrow'
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs

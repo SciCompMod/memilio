@@ -28,7 +28,7 @@ This tool contains
 - check if directory exists and if not creates it
 - writes pandas dataframe to file of three different formats
 """
-
+import sys
 import os
 import argparse
 import configparser
@@ -65,6 +65,12 @@ class Conf:
     show_progr = False
 
     def __init__(self, out_folder, **kwargs):
+
+        # change v_level from int to str
+        if 'verbosity_level' in kwargs.keys():
+            if isinstance(kwargs['verbosity_level'], int):
+                kwargs['verbosity_level'] = VerbosityLevel(
+                    kwargs['verbosity_level']).name
 
         path = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'download_config.conf')
@@ -319,11 +325,9 @@ def cli(what):
     If the key is not part of the dictionary the program is stopped.
 
     The following default arguments are added to the parser:
-    - read-from-disk
+    - read-file
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
-    - no_raw
-    - no_progress_indicators (excluded from dict)
     The default values are defined in default dict.
 
     Depending on what following parser can be added:
@@ -335,6 +339,13 @@ def cli(what):
     - split_berlin
     - rep_date
     - sanitize_data
+    - no_progress_indicator
+    - interactive
+    - verboose
+    - skip_checks
+    - no_raw
+    - username
+    - password
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -345,16 +356,16 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
+                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
                 "population": ['Download population data from official sources', 'username'],
-                "commuter_official": ['Download commuter data from official sources', 'make_plot'],
-                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
-                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "hospitalization": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date', 'sanitize_data']}
+                "commuter_official": ['Download commuter data from official sources'],
+                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],
+                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "hospitalization": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'sanitize_data']}
 
     try:
         what_list = cli_dict[what]
@@ -382,10 +393,6 @@ def cli(what):
     parser.add_argument('-o', '--out-folder', type=str,
                         default=out_path_default,
                         help='Defines folder for output.')
-    parser.add_argument(
-        '-n', '--no-raw', default=dd.defaultDict['no_raw'],
-        help='Defines if raw data will be stored for further use.',
-        action='store_true')
 
     if 'start_date' in what_list:
         if what == 'divi':
@@ -416,9 +423,6 @@ def cli(what):
         parser.add_argument(
             '-m', '--moving-average', type=int, default=dd.defaultDict['moving_average'],
             help='Compute a moving average of N days over the time series. Default is ' + str(dd.defaultDict['moving_average']))
-    if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', default=dd.defaultDict['make_plot'], help='Plots the data.',
-                            action='store_true')
     if 'split_berlin' in what_list:
         parser.add_argument(
             '-b', '--split-berlin', default=dd.defaultDict['split_berlin'],
@@ -433,14 +437,42 @@ def cli(what):
             action='store_true')
     if 'sanitize_data' in what_list:
         parser.add_argument(
-            '-sd', '--sanitize_data', type=int, default=dd.defaultDict['sanitize_data'],
+            '-sd', '--sanitize-data', type=int, default=dd.defaultDict['sanitize_data'], dest='sanitize_data',
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
 
-    parser.add_argument(
-        '--no-progress-indicators',
-        help='Disables all progress indicators (used for downloads etc.).',
-        action='store_true')
+    # add optional download options
+    if '--no-progress-indicators' in sys.argv:
+        parser.add_argument(
+            '--no-progress-indicators', dest='show_progress',
+            help='Disables all progress indicators (used for downloads etc.).',
+            action='store_false')
+
+    if not {'--no-raw', '-n'}.isdisjoint(sys.argv):
+        parser.add_argument(
+            '-n', '--no-raw',
+            help='Defines if raw data will be stored for further use.',
+            action='store_true')
+
+    if not {'--make_plot', '-p'}.isdisjoint(sys.argv):
+        parser.add_argument('-p', '--make-plot',
+                            help='Plots the data.', action='store_true')
+
+    if '--interactive' in sys.argv:
+        parser.add_argument(
+            '--interactive',
+            help='Interactive download (Handle warnings, passwords etc.).', action='store_true')
+
+    if not {'--verboose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(sys.argv):
+        parser.add_argument(
+            '-v', '--verboose', dest='verbosity_level',
+            help='Increases verbosity level (Trace, Debug, Info, Warning, Error, Critical, Off).',
+            action='count', default=0)
+
+    if '--skip-checks' in sys.argv:
+        parser.add_argument(
+            '--skip-checks', dest='run_checks', action='store_false',
+            help='Skips sanity checks etc.')
 
     if 'username' in what_list:
         parser.add_argument(
@@ -451,12 +483,6 @@ def cli(what):
             '--password', type=str
         )
     args = vars(parser.parse_args())
-    # disable progress indicators globally, if the argument --no-progress-indicators was specified
-    progress_indicator.ProgressIndicator.disable_indicators(
-        args["no_progress_indicators"])
-    # remove the no_progress_indicators entry from the dict
-    # (after disabling indicators, its value is no longer usefull)
-    args.pop("no_progress_indicators")
 
     return args
 
