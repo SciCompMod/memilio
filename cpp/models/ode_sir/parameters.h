@@ -26,6 +26,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
+#include "memilio/utils/custom_index_array.h"
 
 #include <vector>
 
@@ -126,14 +127,14 @@ public:
                 log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
                             "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                             "and reset parameters.",
-                            this->get<TimeInfected>(), tol_times);
-                this->get<TimeInfected>() = tol_times;
+                            this->get<TimeInfected>()[i], tol_times);
+                this->get<TimeInfected>()[i] = tol_times;
                 corrected                 = true;
             }
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                            this->get<TransmissionProbabilityOnContact>(), 0.0);
+                            this->get<TransmissionProbabilityOnContact>()[i], 0.0);
                 this->get<TransmissionProbabilityOnContact>() = 0.0;
                 corrected                                     = true;
             }
@@ -156,18 +157,18 @@ public:
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
-                      this->get<TimeInfected>(), 0.0);
+                      this->get<TimeInfected>()[i], 0.0);
             return true;
         }
         if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
             this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
+                this->get<TransmissionProbabilityOnContact>()[i], 0.0, 1.0);
             return true;
         }
-        return false;
         }
+        return false;
     }
 
 private:

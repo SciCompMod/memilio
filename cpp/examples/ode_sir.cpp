@@ -36,18 +36,18 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::osir::Model model;
+    mio::osir::Model model(1);
 
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
     model.parameters.set<mio::osir::TimeInfected>(2);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
-    model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
+    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6, mio::SimulationTime(12.5));
 
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
 
