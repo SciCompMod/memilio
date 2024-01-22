@@ -601,10 +601,12 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
  * @param t current simulation time.
  * @param y current value of compartments.
  * @return vector expression, same size as y, with migration factors per compartment.
+ * @tparam FP floating point type, e.g., double.
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <typename FP=double, class Base = mio::Simulation<Model<FP>,FP>>
-auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
+auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/,
+                           const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
@@ -633,7 +635,7 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
 }
 
 template <typename FP=double, class Base = mio::Simulation<Model<FP>,FP>>
-auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated, double time)
+auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> migrated, FP time)
 {
     auto& model       = sim.get_model();
     auto nondetection = 1.0;
