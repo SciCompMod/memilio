@@ -72,7 +72,7 @@ WARNING: This file is experimental and has not been tested.
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
-    make_plot = conf.make_plot
+    make_plot = conf.plot
 
     data_path = os.path.join(out_folder, 'Germany/')
 

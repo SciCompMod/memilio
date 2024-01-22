@@ -133,7 +133,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             ' of the source material. Please report this as an issue. ' +
             'vaccination' + ' data could not be stored correctly.')
 
-        exceptionprint = call('Exception: ')
+        exceptionprint = call('Error: Exception: ')
         expected_calls = [
             exceptionprint, casesprint, exceptionprint, populprint,
             exceptionprint, diviprint, exceptionprint, vaccprint]

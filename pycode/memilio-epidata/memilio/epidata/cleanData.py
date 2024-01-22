@@ -88,7 +88,7 @@ def clean_data(
 
             for item in files:
                 if item.endswith(".json") or item.endswith(".h5"):
-                    gd.default_print("Info", "Deleting file ",
+                    gd.default_print("Info", "Deleting file " +
                                      os.path.join(directory, item))
                     os.remove(os.path.join(directory, item))
 
@@ -97,7 +97,7 @@ def clean_data(
                 os.rmdir(directory)
             except OSError:
                 continue
-            gd.default_print("Info", "Deleting directory ", directory)
+            gd.default_print("Info", "Deleting directory " + directory)
 
         # delete further jh files
         files = []
@@ -108,7 +108,7 @@ def clean_data(
 
         for item in files:
             if item.endswith(".json") or item.endswith(".h5"):
-                gd.default_print("Info", "Deleting file ",
+                gd.default_print("Info", "Deleting file " +
                                  os.path.join(out_path, item))
                 os.remove(os.path.join(out_path, item))
 
@@ -131,7 +131,7 @@ def clean_data(
 
                     for item in files:
                         if item.endswith(ending) and "_jh" in item:
-                            gd.default_print("Info", "Deleting file ",
+                            gd.default_print("Info", "Deleting file " +
                                              os.path.join(directory, item))
                             os.remove(os.path.join(directory, item))
 
@@ -141,7 +141,7 @@ def clean_data(
                     except OSError:
                         continue
 
-                    gd.default_print("Info", "Deleting directory ", directory)
+                    gd.default_print("Info", "Deleting directory " + directory)
 
                 # delete further jh files
                 files = []
@@ -154,7 +154,7 @@ def clean_data(
                     if item.endswith(ending):
                         if "_jh" in item or "JohnHopkins" in item:
                             gd.default_print(
-                                "Info", "Deleting file ", os.path.join(out_path, item))
+                                "Info", "Deleting file " + os.path.join(out_path, item))
                             os.remove(os.path.join(out_path, item))
 
             # other data is stored in the same folder
@@ -198,14 +198,14 @@ def clean_data(
                     for file in filenames:
                         if file in item:
                             gd.default_print("Info",
-                                             "Deleting file ", os.path.join(
+                                             "Deleting file " + os.path.join(
                                                  directory, item))
                             os.remove(os.path.join(directory, item))
 
                 # delete directory if empty
                 try:
                     os.rmdir(directory)
-                    gd.default_print("Info", "Deleting directory ", directory)
+                    gd.default_print("Info", "Deleting directory " + directory)
                 except OSError:
                     pass
 

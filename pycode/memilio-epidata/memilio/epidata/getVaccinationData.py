@@ -536,7 +536,9 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     df_data = download_vaccination_data(
         read_data, filename, directory, conf.interactive)
-    sanity_checks(df_data, conf.checks)
+
+    if conf.checks:
+        sanity_checks(df_data)
 
     if not no_raw:
         gd.write_dataframe(df_data, directory, filename, "json")

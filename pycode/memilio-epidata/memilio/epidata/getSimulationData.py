@@ -79,7 +79,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
-    make_plot = conf.make_plot
+    make_plot = conf.plot
 
     arg_dict_all = {
         "read_data": read_data, "file_format": file_format,

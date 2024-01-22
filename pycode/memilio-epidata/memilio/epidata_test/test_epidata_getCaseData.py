@@ -711,7 +711,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def test_check_for_completeness(self):
         empty_df = pd.DataFrame()
-        self.assertEqual(gcd.check_for_completeness(empty_df), False)
+        self.assertEqual(gcd.check_for_completeness(empty_df, True), False)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_rep_date(self, mock_file):
