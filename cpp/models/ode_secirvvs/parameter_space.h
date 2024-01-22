@@ -21,6 +21,8 @@
 #define ODESECIRVVS_PARAMETER_SPACE_H
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_detailed.h"
+
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
@@ -62,6 +64,8 @@ void draw_sample(Model& model);
     * @return Graph with nodes and edges from the input graph sampled.
     */
 Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high);
+
+GraphDetailed<Model, MigrationParameters> draw_sample(GraphDetailed<Model, MigrationParameters>& graph);
 
 } // namespace osecirvvs
 } // namespace mio

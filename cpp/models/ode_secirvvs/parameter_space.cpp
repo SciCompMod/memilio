@@ -23,6 +23,8 @@
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/model.h"
 
+#include "memilio/mobility/metapopulation_mobility_detailed.h"
+
 namespace mio
 {
 namespace osecirvvs
@@ -186,6 +188,54 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         //no dynamic NPIs
         //TODO: add switch to optionally enable dynamic NPIs to edges
         sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
+    }
+
+    return sampled_graph;
+}
+
+GraphDetailed<Model, MigrationParameters> draw_sample(GraphDetailed<Model, MigrationParameters>& graph)
+{
+    GraphDetailed<Model, MigrationParameters> sampled_graph;
+
+    //sample global parameters
+    auto& shared_params_model = graph.nodes()[0].property;
+    draw_sample_infection(shared_params_model);
+    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns>();
+    shared_contacts.draw_sample_dampings();
+    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
+    shared_dynamic_npis.draw_sample();
+
+    for (auto& params_node : graph.nodes()) {
+        auto& node_model = params_node.property;
+
+        //sample local parameters
+        draw_sample_demographics(params_node.property);
+
+        //copy global parameters
+        //save demographic parameters so they aren't overwritten
+        auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
+        auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
+        auto local_holidays     = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
+        auto local_daily_v1     = node_model.parameters.template get<DailyFirstVaccination>();
+        auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccination>();
+        node_model.parameters   = shared_params_model.parameters;
+        node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
+        node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
+        node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
+        node_model.parameters.template get<DailyFirstVaccination>()                 = local_daily_v1;
+        node_model.parameters.template get<DailyFullVaccination>()                  = local_daily_v2;
+
+        node_model.parameters.template get<ContactPatterns>().make_matrix();
+        node_model.apply_constraints();
+
+        sampled_graph.add_node(params_node.id, params_node.stay_duration, node_model, params_node.mobility);
+    }
+
+    for (auto& edge : graph.edges()) {
+        auto edge_params = edge.property;
+        //no dynamic NPIs
+        //TODO: add switch to optionally enable dynamic NPIs to edges
+        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.path, edge_params);
     }
 
     return sampled_graph;

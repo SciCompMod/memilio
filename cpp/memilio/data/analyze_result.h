@@ -22,6 +22,7 @@
 
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_detailed.h"
 
 #include <functional>
 #include <vector>
@@ -120,6 +121,18 @@ interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MigrationE
     return interpolated;
 }
 
+template <class Simulation>
+std::vector<TimeSeries<double>>
+interpolate_simulation_result(const GraphDetailed<SimulationNode<Simulation>, MigrationEdge>& graph_result)
+{
+    std::vector<TimeSeries<double>> interpolated;
+    interpolated.reserve(graph_result.nodes().size());
+    std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
+                   [](auto& n) {
+                       return interpolate_simulation_result(n.property.get_result());
+                   });
+    return interpolated;
+}
 /**
  * Compute the distance between two SECIR simulation results.
  * The distance is the 2-norm of the element-wise difference of the two results.

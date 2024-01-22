@@ -38,6 +38,22 @@
 namespace mio
 {
 
+template <typename T, typename = void>
+struct has_stay_duration : std::false_type {
+};
+
+template <typename T>
+struct has_stay_duration<T, std::void_t<decltype(std::declval<T>().stay_duration)>> : std::true_type {
+};
+
+template <typename T, typename = void>
+struct has_traveltime : std::false_type {
+};
+
+template <typename T>
+struct has_traveltime<T, std::void_t<decltype(std::declval<T>().traveltime)>> : std::true_type {
+};
+
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
  * Can simulate migration graphs with one simulation in each node or single simulations.
@@ -140,8 +156,8 @@ public:
 #else
         num_procs = 1;
         rank      = 0;
-#endif  
-        
+#endif
+
         //The ParameterDistributions used for sampling parameters use thread_local_rng()
         //So we set our own RNG to be used.
         //Assume that sampling uses the thread_local_rng() and isn't multithreaded
@@ -149,7 +165,8 @@ public:
         thread_local_rng() = m_rng;
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+        auto start_run_idx =
+            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
         std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>> ensemble_result;
@@ -167,7 +184,8 @@ public:
 
             //sample
             auto sim = create_sampled_simulation(sample_graph);
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (thread_local_rng().get_counter() - run_rng_counter).get());
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
+                (thread_local_rng().get_counter() - run_rng_counter).get());
 
             //perform run
             sim.advance(m_tmax);
@@ -328,8 +346,29 @@ public:
     }
     /** @} */
 
-    RandomNumberGenerator& get_rng() {
+    RandomNumberGenerator& get_rng()
+    {
         return m_rng;
+    }
+
+protected:
+    // adaptive time step of the integrator (will be corrected if too large/small)
+    double m_dt_integration = 0.1;
+    //
+    RandomNumberGenerator m_rng;
+
+    std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
+    {
+        //evenly distribute runs
+        //lower processes do one more run if runs are not evenly distributable
+        auto num_runs_local = num_runs / num_procs; //integer division!
+        auto remainder      = num_runs % num_procs;
+
+        std::vector<size_t> run_distribution(num_procs);
+        std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);
+        std::fill(run_distribution.begin() + remainder, run_distribution.end(), num_runs_local);
+
+        return run_distribution;
     }
 
 private:
@@ -341,27 +380,23 @@ private:
 
         auto sampled_graph = sample_graph(m_graph);
         for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+            if constexpr (has_stay_duration<decltype(node)>::value) {
+                sim_graph.add_node(node.id, node.stay_duration, node.property, m_t0, m_dt_integration);
+            }
+            else {
+                sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+            }
         }
         for (auto&& edge : sampled_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            if constexpr (has_traveltime<decltype(edge)>::value) {
+                sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.property);
+            }
+            else {
+                sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            }
         }
 
         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
-    }
-
-    std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
-    {
-        //evenly distribute runs
-        //lower processes do one more run if runs are not evenly distributable
-        auto num_runs_local = num_runs / num_procs; //integer division!
-        auto remainder = num_runs % num_procs;
-
-        std::vector<size_t> run_distribution(num_procs);
-        std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);
-        std::fill(run_distribution.begin() + remainder, run_distribution.end(), num_runs_local);
-
-        return run_distribution;
     }
 
 private:
@@ -376,10 +411,6 @@ private:
     double m_tmax;
     // time step of the graph
     double m_dt_graph_sim;
-    // adaptive time step of the integrator (will be corrected if too large/small)
-    double m_dt_integration = 0.1;
-    //
-    RandomNumberGenerator m_rng;
 };
 
 } // namespace mio
