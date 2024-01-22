@@ -308,6 +308,7 @@ private:
 
 /**
  * specialization of simulate for secir models using Simulation.
+ * @tparam FP floating point type, e.g., double
  * @param t0 start time.
  * @param tmax end time.
  * @param dt time step.
