@@ -150,7 +150,7 @@ public:
      */
     struct TestResult {
         TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
-        TestingTypeIndex type = TestingTypeIndex::GenericTest; ///< The TestingTypeIndex of the test.
+        TestingTypeIndex type = TestingTypeIndex::Count; ///< The TestingTypeIndex of the test.
         bool result; ///< The result of the test.
     };
 
