@@ -159,7 +159,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='both', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path, interactive = True)
+            tol_comb='or', out_folder=self.path, interactive=True)
         self.assertEqual(len(countykey_list), 398)
         self.assertEqual(271, commuter_all[0])
         self.assertEqual(2234, commuter_all[9])
@@ -169,7 +169,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = in
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='in', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path, interactive = True)
+            tol_comb='or', out_folder=self.path, interactive=True)
         self.assertEqual(len(countykey_list), 393)
         self.assertEqual(70, commuter_all[0])
         self.assertEqual(892, commuter_all[9])
@@ -178,7 +178,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = out
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='out', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path, interactive = True)
+            tol_comb='or', out_folder=self.path, interactive=True)
         self.assertEqual(len(countykey_list), 378)
         self.assertEqual(201, commuter_all[0])
         self.assertEqual(1342, commuter_all[9])

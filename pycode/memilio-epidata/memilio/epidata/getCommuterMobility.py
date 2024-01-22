@@ -546,7 +546,8 @@ def get_neighbors_mobility(
     except FileNotFoundError:
         gd.default_print(
             "Info", "Commuter data was not found. Download and process it from the internet.")
-        commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year, **kwargs)
+        commuter = get_commuter_data(
+            out_folder=out_folder, ref_year=ref_year, **kwargs)
 
     countykey_list = commuter.columns
     commuter.index = countykey_list

@@ -94,7 +94,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     def test_config_write(self, mock_test, mock_export, mock_raw, mock_path, mock_choice, mock_pw, mock_un):
         # username and password should be written into the config file.
         # The download and assigning to counties of the population data is mocked.
-        gpd.get_population_data(username=None, password=None, interactive = True)
+        gpd.get_population_data(username=None, password=None, interactive=True)
         # Check if the file is written.
         self.assertTrue(self.config_file_name in os.listdir(os.getcwd()))
         # Check content of the file.
@@ -122,7 +122,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.assertTrue(self.config_file_name in os.listdir(os.getcwd()))
         # The download and assigning to counties of the population data is mocked.
         gpd.get_population_data(
-            username=None, password=None, read_data=False, out_folder=self.path, interactive = False)
+            username=None, password=None, read_data=False, out_folder=self.path, interactive=False)
         # The file exist in the directory (mocked) and the credentials should be read.
         mock_read.assert_called_with(
             self.test_username, self.test_password, False, os.path.join(self.path, 'Germany'))

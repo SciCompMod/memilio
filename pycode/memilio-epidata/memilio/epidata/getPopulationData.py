@@ -98,6 +98,8 @@ def read_population_data(username, password, read_data, directory):
 
 # This function is needed for unittests
 # Fakefilesystem has problems with os.path
+
+
 def path_to_credential_file():
     '''Returns path to .ini file where credentials are stored.
     The Path can be changed if neccessary.
@@ -118,8 +120,9 @@ def manage_credentials(interactive):
     '''
     # path where ini file is found
     path = path_to_credential_file()
-    
-    gd.default_print('Info', 'No passwaord and/or username for regionalstatistik.de provided. Try to read from .ini file.')
+
+    gd.default_print(
+        'Info', 'No passwaord and/or username for regionalstatistik.de provided. Try to read from .ini file.')
 
     # check if .ini file exists
     if not os.path.exists(path):
@@ -140,7 +143,8 @@ def manage_credentials(interactive):
                 with open(path, 'w+') as file:
                     file.write(string)
         else:
-            raise gd.DataError('No .ini file found. Cannot access regionalstatistik.de for downloading population data.')
+            raise gd.DataError(
+                'No .ini file found. Cannot access regionalstatistik.de for downloading population data.')
 
     else:
         parser = configparser.ConfigParser()
