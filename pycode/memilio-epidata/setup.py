@@ -98,8 +98,9 @@ setup(
     ],
     extras_require={
         'dev': [
-            # first support of python 3.11
-            'pyfakefs>=4.6',
+            # first support of python 3.11 4.6
+            # 5.3.3 has conflicts with openpyxl 
+            'pyfakefs>=4.6,<5.3.3',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
             # pylint 2.16 creates problem with wrapt package version
