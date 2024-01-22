@@ -21,6 +21,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/data/analyze_result.h"
 
 int main()
 {
@@ -44,7 +45,8 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    mio::osecir::Model model(3);
+    const int num_groups = 3;
+    mio::osecir::Model model(num_groups);
     auto nb_groups = model.parameters.get_num_groups();
     double fact    = 1.0 / (double)(size_t)nb_groups;
 
@@ -54,7 +56,7 @@ int main()
     params.set<mio::osecir::StartDay>(0);
     params.set<mio::osecir::Seasonality>(0);
 
-    for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
+    for (auto i = mio::AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
         params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
@@ -83,14 +85,15 @@ int main()
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(30.));
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7), mio::SimulationTime(30.));
 
     model.apply_constraints();
 
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+
+    auto ts_total = mio::aggregate_selected_age_groups(secir, num_groups, {0, 1, 2});
+    ts_total.print_table({"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"}, 3, 3);
 
     std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
     printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
@@ -107,4 +110,14 @@ int main()
 
         printf("\t %s_otal: %.0f\n", vars[k].c_str(), dummy);
     }
+
+    // summed
+
+    std::cout << "-----------------------" << std::endl;
+    double dummy = 0;
+    for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
+        printf("\t %s[0]: %.0f", vars[k].c_str(), ts_total.get_last_value()[k]);
+        dummy += ts_total.get_last_value()[k];
+    }
+    printf("\t t_otal: %.0f\n", dummy);
 }

@@ -101,6 +101,31 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
     return interpolated;
 }
 
+TimeSeries<double> aggregate_selected_age_groups(const TimeSeries<double>& result, int num_groups,
+                                                 const std::vector<int>& age_groups)
+{
+    const int num_timepoints      = static_cast<int>(result.get_num_time_points());
+    const int num_infectionstates = (int)result.get_num_elements() / num_groups;
+    auto total = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
+                                                                                              num_infectionstates)
+                     .eval();
+    for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
+        for (const auto& agegroup_idx : age_groups) {
+            auto v = result[t_idx].transpose().eval();
+            mio::slice(total, {t_idx, 1}, {0, num_infectionstates}) +=
+                mio::slice(v, {agegroup_idx * num_infectionstates, num_infectionstates});
+        }
+    }
+    auto results_total = TimeSeries<double>(num_infectionstates);
+    results_total.reserve(num_timepoints);
+    for (auto t_idx = 0; t_idx < num_timepoints; ++t_idx) {
+        results_total.add_time_point(result.get_time(t_idx),
+                                     slice(total, {t_idx, 1}, {0, num_infectionstates}).transpose());
+    }
+
+    return results_total;
+}
+
 std::vector<std::vector<TimeSeries<double>>>
 sum_nodes(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result)
 {

@@ -53,6 +53,17 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
                                                  const std::vector<double>& interpolation_times);
 
 /**
+ * @brief Aggegates the results of a simulation over all age groups given as a vector of integers.
+ * 
+ * @param result time series holding the results including all age groups
+ * @param num_groups total number of age groups in the model
+ * @param age_groups vector of age groups to aggregate over
+ * @return TimeSeries<double> time series only including the aggregated age groups.
+ */
+TimeSeries<double> aggregate_selected_age_groups(const TimeSeries<double>& result, int num_groups,
+                                                 const std::vector<int>& age_groups = {0, 1, 2, 3, 4, 5});
+
+/**
  * helper template, type returned by overload interpolate_simulation_result(T t)
  */
 template <class T>
