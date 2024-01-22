@@ -6,7 +6,7 @@ import matplotlib as mpl
 import re
 
 df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_hyperparameters/dataframe_frid_search_GNN_noedges_full_concat.csv')
-
+df_GSC = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_gridsearch_2024/baseline_GSCConv.csv')
 
 # saving the array of losses in the df was a little bit problematic, and I made some mistakes
 # this is why I have to go through some preparation steps in order to get the values in form of an array
@@ -254,6 +254,53 @@ def heatmaps(df):
 
 
 
+
+
+
+def barplot_baseline(df, df_GSC):
+ 
+    # get performance for basic one layer model with relu and Adam 
+    df_baseline = df.loc[(df['number_of_layers']=='1' )& (df['activation']=='relu') & (df['optimizer']=='Adam') ][['layer', 'kfold_test', 'kfold_train']]
+    df_GSC = df_GSC[['layer', 'kfold_test', 'kfold_train']]
+    df_baseline = pd.concat([df_baseline, df_GSC])
+    df_baseline[['kfold_train', 'kfold_test']]=df_baseline[['kfold_train', 'kfold_test']].astype('float').round(2)
+       
+
+    MAPE = {'train MAPE': df_baseline['kfold_train'], 
+            'test MAPE':df_baseline['kfold_test']}
+
+
+
+
+    layers = df_baseline['layer'].values
+    #df_bar=df_opt[['optimizer',  'kfold_test']]
+
+
+    x = np.arange(1,len(layers)+1)  # the label locations
+    width = 0.25  # the width of the bars
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout='constrained')
+
+    for attribute, measurement in MAPE.items():
+        offset = width * multiplier
+        rects = ax.bar(x +offset, measurement, width, label=attribute)
+        ax.bar_label(rects, padding=3, fontsize = 10)
+        multiplier += 1
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+
+    #ax.set_yticks(x+width, layers)
+    ax.legend(loc='upper right', ncols=3)
+    ax.set_xticks(x + width, layers)
+    #ax.set_xticks(x, labels=x, fontsize = 12)
+    
+
+
+    ax.set_ylabel('test MAPE')
+    ax.set_xlabel('Layers')
+    ax.set_title('Mean Test MAPE for types of layers')
+    plt.savefig("bar_GNN1_baselineLayers.png")
 
 plot_max_min_losses(min_loss_train, min_loss_val, max_loss_train, max_loss_val)
 heatmap()
