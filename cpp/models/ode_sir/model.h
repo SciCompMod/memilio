@@ -42,32 +42,46 @@ class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup,Inf
     using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
 
 public:
-    Model(const Populations& pop, const ParameterSet& params)
-        : Base(pop,params)
-    {
-    }
 
     Model(int num_agegroups)
-        : Model(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
+        : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
     {
     }
 
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
     {
-        auto const& params   = this->parameters;
+        auto params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
+        ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
 
-        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Infected] =
-            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            double Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            double Ii = this->populations.get_flat_index({i, InfectionState::Infected});
+            double Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
+
+            for (auto j = AgeGroup(0); j < n_agegroups; j++){
+
+                double Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                double Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                double Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+
+                double Nj = pop[Sj] + pop[Ij] + pop[Rj];
+
+                double coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                 static_cast<Eigen::Index>((size_t)j))*
+                                                                 params.get<TransmissionProbabilityOnContact>()[i] / Nj;
+
+                dydt[Si] +=
+                    -coeffStoI * y[Si] * pop[Ij];
+                dydt[Ii] +=
+                    coeffStoI * y[Si] * pop[Ij];
+            }
+                dydt[Ii]-=(1.0 / params.get<TimeInfected>()[i]) * y[Ii];
+                dydt[Ri] =
+                    (1.0 / params.get<TimeInfected>()[i]) * y[Ii];
+        }
     }
 };
 
