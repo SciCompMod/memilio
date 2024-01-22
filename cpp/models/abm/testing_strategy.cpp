@@ -185,9 +185,6 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
             auto& schemes = iter_schemes->second;
             if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
                     auto test_result = person.get_test_result(ts.get_type().get_default().test_type);
-                    std::cout << "type: " << (test_result.type != TestingTypeIndex::Count) << "\n";
-                    std::cout << "test time: " << test_result.time_of_testing.hours() << "\n";
-                    std::cout << "valid time: " << ts.get_type().get_default().validity_period.hours() << "\n";
                     // If the agent has a test result valid until now, use the result directly
                     if ((test_result.type != TestingTypeIndex::Count) &&
                         (test_result.time_of_testing + ts.get_type().get_default().validity_period >= t)) {
