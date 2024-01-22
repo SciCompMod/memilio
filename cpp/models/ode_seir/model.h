@@ -22,11 +22,8 @@
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/type_list.h"
-#include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/contact_matrix.h" // IWYU pragma: keep
 #include "memilio/io/io.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/utils/time_series.h"
@@ -41,14 +38,6 @@ namespace oseir
 {
 
 /********************
-<<<<<<< HEAD
-    * define the model *
-    ********************/
-template<typename FP=double>
-class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP,InfectionState>, Parameters<FP>,FP>
-{
-    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP,InfectionState>, Parameters<FP>,FP>;
-=======
  * define the model *
  ********************/
 
@@ -57,44 +46,30 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Exposed,     InfectionState::Infected>,
                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
-
-class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
+template<typename FP=double>
+class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters<FP>, Flows, FP>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
->>>>>>> upstream/main
+    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters<FP>, Flows, FP>;
 
 public:
     Model()
-        : Base(mio::Populations<FP,InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
+        : Base(typename Base::Populations({InfectionState::Count}, 0.),typename Base::ParameterSet())
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                   Eigen::Ref<Eigen::VectorXd> flows) const override
+    void get_flows(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop, Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, FP t,
+                   Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> flows) const override
     {
         auto& params     = this->parameters;
         double coeffStoE = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.template get<TransmissionProbabilityOnContact<FP>>() / this->populations.get_total();
 
-<<<<<<< HEAD
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Exposed] =
-            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.template get<TimeExposed<FP>>()) * y[(size_t)InfectionState::Exposed];
-        dydt[(size_t)InfectionState::Infected] =
-            (1.0 / params.template get<TimeExposed<FP>>()) * y[(size_t)InfectionState::Exposed] -
-            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
-=======
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>()] =
+        flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>()] =
             coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        flows[get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>()] =
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
-        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
->>>>>>> upstream/main
+        flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>()] =
+            (1.0 / params.template get<TimeExposed<FP>>()) * y[(size_t)InfectionState::Exposed];
+        flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
+            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
     }
 
     /**
@@ -109,11 +84,11 @@ public:
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
         }
 
-        ScalarType TimeInfected = this->parameters.template get<mio::oseir::TimeInfected<FP>>();
+        ScalarType TimeInfected = this->parameters.template get<mio::oseir::TimeInfected>();
 
         ScalarType coeffStoE = this->parameters.template get<mio::oseir::ContactPatterns>().get_matrix_at(
                                    y.get_time(static_cast<Eigen::Index>(t_idx)))(0, 0) *
-                               this->parameters.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>() /
+                               this->parameters.template get<mio::oseir::TransmissionProbabilityOnContact>() /
                                this->populations.get_total();
 
         ScalarType result =
