@@ -21,16 +21,12 @@
 #define ODESECIRVVS_PARAMETER_SPACE_H
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/utils/memory.h" // IWYU pragma: keep
 #include "memilio/utils/logging.h"
-#include "memilio/utils/parameter_distributions.h"
 #include "ode_secirvvs/model.h"
+#include "ode_secirvvs/infection_state.h"
+
 
 #include <assert.h>
-#include <string>
-#include <vector>
-#include <random>
-#include <memory>
 
 namespace mio
 {
@@ -38,6 +34,7 @@ namespace osecirvvs
 {
 /**
      * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
+     * @tparam FP floating point type, e.g., double
      * @param[inout] model Model including contact patterns for alle age groups
      */
 template<typename FP=double>
@@ -46,7 +43,7 @@ void draw_sample_demographics(Model<FP>& model)
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
     model.parameters.template get<TestAndTraceCapacity<FP>>().draw_sample();
 
-    for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
+    for (auto i = AgeGroup(0); i < model.parameters.template get_num_groups(); i++) {
         double group_total = model.populations.get_group_total(i);
 
         //sample initial compartments (with exceptions)
@@ -54,8 +51,7 @@ void draw_sample_demographics(Model<FP>& model)
             if (inf_state != InfectionState::SusceptibleNaive && //not sampled, fixed after sampling everything else
                 inf_state != InfectionState::DeadNaive && //not sampled, fixed from data
                 inf_state != InfectionState::DeadPartialImmunity && //not sampled, fixed from data
-                inf_state != InfectionState::DeadImprovedImmunity && //not sampled, fixed from data
-                inf_state != InfectionState::TotalInfections) { //not sampled, only for record keeping
+                inf_state != InfectionState::DeadImprovedImmunity) { //not sampled, fixed from data
                 model.populations[{i, inf_state}].draw_sample();
             }
         }
@@ -75,10 +71,9 @@ void draw_sample_demographics(Model<FP>& model)
         model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive}, group_total);
     }
 }
-
-
 /**
      * draws a sample from the specified distributions for all parameters related to the infection.
+     * @tparam FP floating point type, e.g., double
      * @param[inout] model Model including contact patterns for alle age groups
      */
 template<typename FP=double>
@@ -101,7 +96,7 @@ void draw_sample_infection(Model<FP>& model)
     model.parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[AgeGroup(0)].draw_sample();
     model.parameters.template get<ReducTimeInfectedMild<FP>>()[AgeGroup(0)].draw_sample();
 
-    for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
+    for (auto i = AgeGroup(0); i < model.parameters.template get_num_groups(); i++) {
         //not age dependent
         model.parameters.template get<IncubationTime<FP>>()[i] = model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
         model.parameters.template get<SerialInterval<FP>>()[i] = model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
@@ -141,6 +136,7 @@ void draw_sample_infection(Model<FP>& model)
 
 /** Draws a sample from Model parameter distributions and stores sample values
     * as Parameters parameter values (cf. UncertainValue and Parameters classes)
+    * @tparam FP floating point type, e.g., double
     * @param[inout] model Model including contact patterns for alle age groups
     */
 template<typename FP=double>
@@ -152,9 +148,11 @@ void draw_sample(Model<FP>& model)
     model.apply_constraints();
 }
 
+
 /**
     * Draws samples for each model node in a graph.
     * Some parameters are shared between nodes and only sampled once.
+    * @tparam FP floating point type, e.g., double
     * @param graph Graph to be sampled.
     * @param variant_high If true, use high value for infectiousness of variant.
     * @return Graph with nodes and edges from the input graph sampled.
@@ -167,12 +165,12 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
     draw_sample_infection(shared_params_model);
-    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns<FP>>();
+    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns>();
     shared_contacts.draw_sample_dampings();
-    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
 
-    double delta_fac;
+    FP delta_fac;
     if (variant_high) {
         delta_fac = 1.6;
     }
