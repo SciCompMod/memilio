@@ -96,6 +96,14 @@ def read_population_data(username, password, read_data, directory):
 
     return df_pop_raw
 
+# This function is needed for unittests
+# Fakefilesystem has problems with os.path
+def path_to_credential_file():
+    '''Returns path to .ini file where credentials are stored.
+    The Path can be changed if neccessary.
+    '''
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'CredentialsRegio.ini')
+
 
 def manage_credentials(interactive):
     '''! Manages credentials for regionalstatistik.de (needed for dowload).
@@ -109,29 +117,30 @@ def manage_credentials(interactive):
     @return Username and password to sign in at regionalstatistik.de. 
     '''
     # path where ini file is found
-    path = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), 'CredentialsRegio.ini')
+    path = path_to_credential_file()
+    
+    gd.default_print('Info', 'No passwaord and/or username for regionalstatistik.de provided. Try to read from .ini file.')
 
     # check if .ini file exists
     if not os.path.exists(path):
-        gd.default_print(
-            'Info', '.ini file not found. Writing CredentialsRegio.ini...')
-        username = input(
-            "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
-        password = getpass.getpass(
-            "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
-        # create file
         if interactive:
+            gd.default_print(
+                'Info', '.ini file not found. Writing CredentialsRegio.ini...')
+            username = input(
+                "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
+            password = getpass.getpass(
+                "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
+            # create file
             write_ini = gd.user_choice(
                 message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
                 'The next time this function is called, the credentials can be read from that file.')
+            if write_ini:
+                string = '[CREDENTIALS]\nUsername = ' + \
+                    username+'\nPassword = '+password
+                with open(path, 'w+') as file:
+                    file.write(string)
         else:
-            write_ini = False
-        if write_ini:
-            string = '[CREDENTIALS]\nUsername = ' + \
-                username+'\nPassword = '+password
-            with open(path, 'w+') as file:
-                file.write(string)
+            raise gd.DataError('No .ini file found. Cannot access regionalstatistik.de for downloading population data.')
 
     else:
         parser = configparser.ConfigParser()
