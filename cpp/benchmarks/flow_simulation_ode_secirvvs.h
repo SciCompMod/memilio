@@ -30,6 +30,9 @@ using FlowModel = osecirvvs::Model;
 // For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
 // For more details see the original implementation in:
 // https://github.com/SciCompMod/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_secirvvs/model.h
+// Updates from Issue/PR 888:
+// - Apply_variant function has been adjusted to be more generic
+// - Fixed a bug where the transmission probability was always set to zero.
 
 class FlowlessModel : public CompartmentalModel<osecirvvs::InfectionState,
                                                 Populations<AgeGroup, osecirvvs::InfectionState>, osecirvvs::Parameters>
