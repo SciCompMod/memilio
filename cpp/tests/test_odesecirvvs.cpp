@@ -1198,8 +1198,7 @@ TEST(TestOdeSECIRVVS, apply_variant_function)
 
     // test if the transmission probability is set to the correct value after applying the variant.
     // The referece values are calculated using equation (36) in doi.org/10.1371/journal.pcbi.1010054
-    Eigen::VectorXd base_infectiousness(1);
-    base_infectiousness << 0.2;
+    auto base_infectiousness = sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>();
 
     // however, the parameter should stay unchanged if the new variant is not present in the population.
     sim.apply_variant(0, base_infectiousness);
@@ -1212,15 +1211,15 @@ TEST(TestOdeSECIRVVS, apply_variant_function)
 
     sim.apply_variant(10, base_infectiousness);
     EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
-                0.99 * base_infectiousness[0] +
-                    0.01 * base_infectiousness[0] *
+                0.99 * base_infectiousness[mio::AgeGroup(0)] +
+                    0.01 * base_infectiousness[mio::AgeGroup(0)] *
                         sim.get_model().parameters.get<mio::osecirvvs::InfectiousnessNewVariant>()[mio::AgeGroup(0)],
                 1e-10);
 
     sim.apply_variant(45, base_infectiousness);
     EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
-                0.68 * base_infectiousness[0] +
-                    0.32 * base_infectiousness[0] *
+                0.68 * base_infectiousness[mio::AgeGroup(0)] +
+                    0.32 * base_infectiousness[mio::AgeGroup(0)] *
                         sim.get_model().parameters.get<mio::osecirvvs::InfectiousnessNewVariant>()[mio::AgeGroup(0)],
                 1e-10);
 
