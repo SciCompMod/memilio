@@ -553,7 +553,7 @@ public:
     * Based on Equation (35) and (36) in doi.org/10.1371/journal.pcbi.1010054
     * 
     * @param [in] t The current time.
-    * @param [in] base_infectiousness The base infectiousness of the disease.
+    * @param [in] base_infectiousness The base infectiousness of the old variant for each age group.
     */
 
     void apply_variant(const double t, const Eigen::VectorXd base_infectiousness)
@@ -561,8 +561,8 @@ public:
         auto start_day             = this->get_model().parameters.template get<StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
-        if (start_day + t + 1e-10 >= start_day_new_variant) {
-            double share_start_day = (start_day_new_variant - start_day) * 1. / 7;
+        if (start_day + t >= start_day_new_variant) {
+            double share_start_day = (start_day - start_day_new_variant) * 1. / 7;
             double days_variant    = t;
 
             // if the start day of the new variant is in the future, we need to adjust the share of the new variant
