@@ -424,29 +424,21 @@ public:
     {
     }
 
-    using ParamT = CustomIndexArray<UncertainValue, AgeGroup>;
-
-    void apply_variant(const double t, const ParamT base_infectiousness)
+    void apply_variant(const double t, const CustomIndexArray<UncertainValue, AgeGroup> base_infectiousness)
     {
         auto start_day             = this->get_model().parameters.template get<osecirvvs::StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<osecirvvs::StartDayNewVariant>();
 
-        if (start_day + t + 1e-10 >= start_day_new_variant) {
-            double share_start_day = (start_day_new_variant - start_day) * 1. / 7;
-            double days_variant    = t;
-
-            if (start_day < start_day_new_variant) {
-                share_start_day = 0;
-                days_variant    = t - (start_day_new_variant - start_day);
-            }
-            double share_new_variant = std::min(1.0, pow(2, days_variant * 1. / 7 + share_start_day) * 0.01);
-            size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
-            for (size_t i = 0; i < num_groups; ++i) {
+        if (start_day + t >= start_day_new_variant - 1e-10) {
+            const double days_variant      = t - (start_day_new_variant - start_day);
+            const double share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
+            const auto num_groups          = this->get_model().parameters.get_num_groups();
+            for (auto i = AgeGroup(0); i < num_groups; ++i) {
                 double new_transmission =
-                    (1 - share_new_variant) * base_infectiousness[(AgeGroup)i] +
-                    share_new_variant * base_infectiousness[(AgeGroup)i] *
-                        this->get_model().parameters.template get<osecirvvs::InfectiousnessNewVariant>()[(AgeGroup)i];
-                this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                    (1 - share_new_variant) * base_infectiousness[i] +
+                    share_new_variant * base_infectiousness[i] *
+                        this->get_model().parameters.template get<osecirvvs::InfectiousnessNewVariant>()[i];
+                this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[i] =
                     new_transmission;
             }
         }
@@ -517,7 +509,7 @@ public:
         auto& contact_patterns  = this->get_model().parameters.template get<osecirvvs::ContactPatterns>();
         const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
 
-        ParamT base_infectiousness =
+        auto base_infectiousness =
             this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>();
 
         double delay_lockdown;

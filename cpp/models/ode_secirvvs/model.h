@@ -543,8 +543,6 @@ public:
     {
     }
 
-    using ParamT = CustomIndexArray<UncertainValue, AgeGroup>;
-
     /**
     * @brief Applies the effect of a new variant of a disease to the transmission probability of the model.
     * 
@@ -558,22 +556,20 @@ public:
     * @param [in] base_infectiousness The base infectiousness of the old variant for each age group.
     */
 
-    void apply_variant(const double t, const ParamT base_infectiousness)
+    void apply_variant(const double t, const CustomIndexArray<UncertainValue, AgeGroup> base_infectiousness)
     {
         auto start_day             = this->get_model().parameters.template get<StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
-        if (start_day + t >= start_day_new_variant) {
-            const double days_variant = t - (start_day_new_variant - start_day);
+        if (start_day + t >= start_day_new_variant - 1e-10) {
+            const double days_variant      = t - (start_day_new_variant - start_day);
             const double share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
-            const auto num_groups        = this->get_model().parameters.get_num_groups();
+            const auto num_groups          = this->get_model().parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; ++i) {
-                double new_transmission =
-                    (1 - share_new_variant) * base_infectiousness[i] +
-                    share_new_variant * base_infectiousness[i] *
-                        this->get_model().parameters.template get<InfectiousnessNewVariant>()[i];
-                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[i] =
-                    new_transmission;
+                double new_transmission = (1 - share_new_variant) * base_infectiousness[i] +
+                                          share_new_variant * base_infectiousness[i] *
+                                              this->get_model().parameters.template get<InfectiousnessNewVariant>()[i];
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[i] = new_transmission;
             }
         }
     }
@@ -643,7 +639,7 @@ public:
 
         // in the apply_variant function, we adjust the TransmissionProbabilityOnContact parameter. We need to store
         // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
-        ParamT base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact>();
+        auto base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact>();
 
         double delay_lockdown;
         auto t        = BaseT::get_result().get_last_time();
