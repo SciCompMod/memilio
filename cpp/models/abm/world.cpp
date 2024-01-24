@@ -19,15 +19,11 @@
 */
 #include "abm/world.h"
 #include "abm/location_type.h"
-#include "abm/mask_type.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/migration_rules.h"
-#include "abm/infection.h"
-#include "abm/vaccine.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
-#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
 namespace mio
@@ -40,21 +36,16 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
     m_locations.emplace_back(std::make_unique<Location>(id, parameters.get_num_groups(), num_cells));
     m_has_locations[size_t(type)] = true;
+
+    if (m_local_populations_cache.is_valid()) {
+        m_local_populations_cache.data[id];
+    }
     return id;
 }
 
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
-    assert(age.get() < parameters.get_num_groups());
-    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
-    auto& person = *m_persons.back();
-    person.set_assigned_location(m_cemetery_id);
-
-    // TODO: remove and/or refactor
-    get_location(id).get_cells()[0].m_persons.push_back(&person);
-
-    return person;
+    return add_person(Person(m_rng, get_location(id), age));
 }
 
 void World::evolve(TimePoint t, TimeSpan dt)
@@ -86,9 +77,9 @@ void World::migration(TimePoint t, TimeSpan dt)
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
-            auto target_type       = rule(personal_rng, *person, t, dt, parameters);
-            auto& target_location  = find_location(target_type, *person);
-            auto& current_location = person->get_location();
+            auto target_type      = rule(personal_rng, *person, t, dt, parameters);
+            auto& target_location = find_location(target_type, *person);
+            auto current_location = person->get_location();
             if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                 if (target_location != current_location &&
                     get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
@@ -153,6 +144,13 @@ void World::migration(TimePoint t, TimeSpan dt)
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
+
+    if (!m_local_populations_cache.is_valid()) {
+        rebuild();
+        m_local_populations_cache.validate();
+    }
+    // PRAGMA_OMP(parallel for)
+
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];

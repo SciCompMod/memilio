@@ -24,7 +24,6 @@
 #include "abm/world.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
-#include <memory>
 
 // TODO; this test no longer makes sense here, consider changing it and/or moving its contents to world
 // TEST(TestLocation, init)
@@ -119,45 +118,51 @@ TEST(TestLocation, CacheExposureRate)
     mio::abm::World world(params);
 
     // setup a location with some chance of exposure
-    auto& home         = world.get_location(world.add_location(mio::abm::LocationType::Home, 1));
-    auto& location     = world.get_location(world.add_location(mio::abm::LocationType::Home, 3));
-    auto infected1     = mio::abm::Person(rng, home, age);
+    auto home          = world.add_location(mio::abm::LocationType::Home, 1);
+    auto location      = world.add_location(mio::abm::LocationType::Home, 3);
+    auto infected1     = mio::abm::Person(rng, world.get_location(home), age);
     auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
     infected1.add_new_infection(
         mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    world.migrate(infected1, location, mio::abm::TransportMode::Unknown, {0});
-    auto infected2     = mio::abm::Person(rng, home, age);
+    world.migrate(infected1, world.get_location(location), mio::abm::TransportMode::Unknown, {0});
+    auto infected2     = mio::abm::Person(rng, world.get_location(home), age);
     auto rng_infected2 = mio::abm::Person::RandomNumberGenerator(rng, infected2);
     infected2.add_new_infection(
         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    world.migrate(infected2, location, mio::abm::TransportMode::Unknown, {0, 1});
+    world.migrate(infected2, world.get_location(location), mio::abm::TransportMode::Unknown, {0, 1});
 
     // TODO: cells
-    location.get_cells()[0].m_persons.emplace_back(&infected1);
-    location.get_cells()[0].m_persons.emplace_back(&infected2);
-    location.get_cells()[1].m_persons.emplace_back(&infected2);
+    world.get_location(location).get_cells()[0].m_persons.emplace_back(&infected1);
+    world.get_location(location).get_cells()[0].m_persons.emplace_back(&infected2);
+    world.get_location(location).get_cells()[1].m_persons.emplace_back(&infected2);
 
     //cache precomputed results
-    location.cache_exposure_rates(t, dt, num_age_groups);
+    world.get_location(location).cache_exposure_rates(t, dt, num_age_groups);
 
-    EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.015015859523894731, 1e-14);
-    EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.015015859523894731, 1e-14);
-    EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0075079297619473654,
+    EXPECT_NEAR((world.get_location(location).get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]),
+                0.015015859523894731, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[0].m_cached_exposure_rate_air[{variant}]),
+                0.015015859523894731, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]),
+                0.0075079297619473654, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[1].m_cached_exposure_rate_air[{variant}]),
+                0.0075079297619473654, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0,
                 1e-14);
-    EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0075079297619473654, 1e-14);
-    EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-14);
-    EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
 
     // should also work with capacities
-    location.set_capacity_adapted_transmission_risk_flag(true);
-    location.set_capacity(2, 22, 0); // Capacity for Cell 1
-    location.set_capacity(2, 22, 1); // Capacity for Cell 2
-    location.set_capacity(2, 22, 2); // Capacity for Cell 3
-    location.cache_exposure_rates(t, dt, num_age_groups);
+    world.get_location(location).set_capacity_adapted_transmission_risk_flag(true);
+    world.get_location(location).set_capacity(2, 22, 0); // Capacity for Cell 1
+    world.get_location(location).set_capacity(2, 22, 1); // Capacity for Cell 2
+    world.get_location(location).set_capacity(2, 22, 2); // Capacity for Cell 3
+    world.get_location(location).cache_exposure_rates(t, dt, num_age_groups);
 
-    EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.045047578571684191, 1e-14);
-    EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.022523789285842095, 1e-14);
-    EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[0].m_cached_exposure_rate_air[{variant}]),
+                0.045047578571684191, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[1].m_cached_exposure_rate_air[{variant}]),
+                0.022523789285842095, 1e-14);
+    EXPECT_NEAR((world.get_location(location).get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
 }
 
 TEST(TestLocation, reachCapacity)

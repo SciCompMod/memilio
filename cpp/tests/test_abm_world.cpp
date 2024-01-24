@@ -707,8 +707,8 @@ TEST(TestWorld, copyWorld)
 
     ASSERT_NE(&copied_world.get_persons()[0], &world.get_persons()[0]);
     ASSERT_NE(&copied_world.get_persons()[1], &world.get_persons()[1]);
-    ASSERT_NE(&(copied_world.get_persons()[0].get_location()), &world.get_persons()[0].get_location());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_location()), &world.get_persons()[1].get_location());
+    ASSERT_NE(&copied_world.get_location((copied_world.get_persons()[0])), &world.get_location(world.get_persons()[0]));
+    ASSERT_NE(&copied_world.get_location((copied_world.get_persons()[1])), &world.get_location(world.get_persons()[1]));
     ASSERT_NE(&(copied_world.get_locations()[1]), &(world.get_locations()[1]));
     ASSERT_NE(&(copied_world.get_locations()[2]), &(world.get_locations()[2]));
     ASSERT_NE(&(copied_world.get_persons()[0].get_assigned_locations()),

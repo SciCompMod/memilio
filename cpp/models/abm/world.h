@@ -26,7 +26,6 @@
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
-#include "abm/lockdown_rules.h"
 #include "abm/trip_list.h"
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
@@ -36,7 +35,6 @@
 
 #include <bitset>
 #include <cassert>
-#include <cstddef>
 #include <initializer_list>
 #include <vector>
 #include <memory>
@@ -197,13 +195,20 @@ public:
     // adds a copy of person to the world
     Person& add_person(const Person& person)
     {
-        uint32_t new_id = static_cast<uint32_t>(m_persons.size());
+        assert(person.get_age().get() < parameters.get_num_groups());
+        assert(get_location(person).get_id() == person.get_location()); // asserts that location is on world
+
+        uint32_t new_id = static_cast<uint32_t>(m_persons.size()); // TODO: this breaks when removing a person
         m_persons.push_back(std::make_unique<Person>(person, new_id));
         auto& new_person = m_persons.back();
+        new_person->set_assigned_location(m_cemetery_id);
 
         // TODO: remove and/or refactor
         get_location(new_person->get_location()).get_cells()[0].m_persons.push_back(&*new_person);
 
+        if (m_local_populations_cache.is_valid()) {
+            m_local_populations_cache.data.at(new_person->get_location()).emplace(new_id);
+        }
         return *new_person;
     }
 
@@ -218,6 +223,11 @@ public:
      * @return A range of all Person%s.
      */
     Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
+
+    auto get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
+    {
+        return std::make_pair(PersonIterator(m_persons.begin()), PersonIterator(m_persons.end()));
+    }
 
     /**
      * @brief Get an individualized Location.
@@ -334,6 +344,7 @@ public:
 
     Person& get_person(PersonID id)
     {
+        assert(id < m_persons.size());
         assert(id == m_persons[id]->get_person_id());
         return *m_persons[id];
     }
@@ -346,10 +357,13 @@ public:
 
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
-        // return std::count_if(get_local_population_cache_at(location).begin(),
-        //                      get_local_population_cache_at(location).end(), [&](const PersonID& pid) {
-        //                          return get_person(pid).get_infection_state(t) == state;
-        //                      });
+        if (m_local_populations_cache.is_valid()) {
+            return std::count_if(m_local_populations_cache.data.at(location).begin(),
+                                 m_local_populations_cache.data.at(location).end(), [&](PersonID p) {
+                                     return get_person(p).get_infection_state(t) == state;
+                                 });
+        }
+
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p->get_location() == location && p->get_infection_state(t) == state;
         });
@@ -362,7 +376,9 @@ public:
 
     size_t get_number_persons(LocationId location) const
     {
-        // return get_local_population_cache_at(location).size();
+        if (m_local_populations_cache.is_valid()) {
+            return m_local_populations_cache.data.at(location).size();
+        }
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p->get_location() == location;
         });
@@ -374,17 +390,25 @@ public:
     }
 
     // move a person to another location. this requires that location is part of this world.
+    inline void migrate(PersonID person, LocationId destination, TransportMode mode = TransportMode::Unknown,
+                        const std::vector<uint32_t>& cells = {0})
+    {
+        migrate(get_person(person), get_location(destination), mode, cells);
+    }
+
     void migrate(Person& person, Location& destination, TransportMode mode = TransportMode::Unknown,
                  const std::vector<uint32_t>& cells = {0})
     {
-        assert(get_location(destination.get_id()) == destination &&
-               "Destination is outside of World."); // always true; used to trigger asserts in get_location()
-        if (person.get_location() == destination.get_id()) {
-            return;
+        // TODO: this could be static without caching
+        if (person.get_location() != destination.get_id()) {
+            if (m_local_populations_cache.is_valid()) {
+                m_local_populations_cache.data.at(person.get_location()).erase(person.get_person_id());
+                m_local_populations_cache.data.at(destination.get_id()).emplace(person.get_person_id());
+            }
+            person.set_location(destination);
+            person.get_cells() = cells;
+            person.set_last_transport_mode(mode);
         }
-        person.set_location(destination);
-        person.get_cells() = cells;
-        person.set_last_transport_mode(mode);
     }
 
     // let a person interact with its current location
@@ -468,6 +492,55 @@ private:
      * @param[in] dt The length of the time step of the Simulation.
      */
     void migration(TimePoint t, TimeSpan dt);
+
+    template <class T>
+    struct Cache {
+        T data;
+        bool m_is_valid         = false;
+        mutable size_t m_hits   = 0;
+        mutable size_t m_misses = 0;
+
+        bool is_valid() const
+        {
+            if (m_is_valid) {
+                m_hits++;
+            }
+            else {
+                m_misses++;
+            }
+            return m_is_valid;
+        }
+
+        void invalidate()
+        {
+            m_is_valid = false;
+        }
+
+        void validate()
+        {
+            m_is_valid = true;
+        }
+
+        // ~Cache()
+        // {
+        //     std::cout << "hits: " << m_hits << " misses: " << m_misses << "\n";
+        // }
+    };
+
+    void rebuild()
+    {
+        m_local_populations_cache.data.clear();
+        for (size_t i = 0; i < m_locations.size(); i++) {
+            m_local_populations_cache.data[m_locations[i]->get_id()].clear();
+        }
+        for (Person& person : get_persons()) {
+            m_local_populations_cache.data.at(person.get_location()).emplace(person.get_person_id());
+        }
+    }
+
+    Cache<std::unordered_map<LocationId, std::unordered_set<PersonID>>> m_local_populations_cache;
+    // Cache<std::unordered_map<LocationId, std::vector<double>>> m_air_exposure_rates_cache;
+    // Cache<std::unordered_map<LocationId, std::vector<double>>> m_contact_exposure_rates_cache;
 
     std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.

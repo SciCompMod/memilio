@@ -411,16 +411,17 @@ TEST(TestMigrationRules, shop_return)
     auto dt     = mio::abm::hours(1);
     mio::abm::World world(params);
 
-    auto& home = world.get_location(world.add_location(mio::abm::LocationType::Home));
-    auto& shop = world.get_location(world.add_location(mio::abm::LocationType::BasicsShop));
-    auto p     = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto home = world.add_location(mio::abm::LocationType::Home);
+    auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
+    auto p =
+        make_test_person(world.get_location(home), age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
 
-    auto& person = world.add_person(p);
+    auto person = world.add_person(p).get_person_id();
     world.migrate(person, shop);
-    world.interact(person, world.get_location(p), t, dt, rng_p, params);
+    world.interact(world.get_person(person), t, dt, rng_p, params);
 
-    ASSERT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
+    ASSERT_EQ(mio::abm::go_to_shop(rng_p, world.get_person(person), t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);
 }
 
@@ -463,17 +464,18 @@ TEST(TestMigrationRules, event_return)
     auto dt     = mio::abm::hours(3);
     mio::abm::World world(params);
 
-    auto& home         = world.get_location(world.add_location(mio::abm::LocationType::Home));
-    auto& social_event = world.get_location(world.add_location(mio::abm::LocationType::SocialEvent));
-    auto p             = mio::abm::Person(rng, home, age_group_15_to_34);
-    auto rng_p         = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto home         = world.add_location(mio::abm::LocationType::Home);
+    auto social_event = world.add_location(mio::abm::LocationType::SocialEvent);
+    auto p =
+        mio::abm::Person(rng, world.get_location(home), age_group_15_to_34); // TODO: change Person ctor to LocationID
+    auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
 
     // TODO: do we need a different add_person? e.g. something that behaves like emplace?
-    auto& person = world.add_person(p);
+    auto person = world.add_person(p).get_person_id();
     world.migrate(person, social_event);
-    world.interact(person, t, dt, rng_p, params);
+    world.interact(world.get_person(person), t, dt, rng_p, params);
 
-    ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
+    ASSERT_EQ(mio::abm::go_to_event(rng_p, world.get_person(person), t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);
 }
 
