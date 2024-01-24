@@ -25,13 +25,10 @@
 #include "abm/parameters.h"
 #include "abm/time.h"
 #include "abm/vaccine.h"
-#include "abm/mask_type.h"
 #include "abm/mask.h"
+#include "abm/movement_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/memory.h"
-#include "abm/movement_data.h"
-#include <functional>
 
 namespace mio
 {
@@ -203,9 +200,7 @@ public:
      * @brief Get the current Location of the Person.
      * @return Current Location of the Person.
      */
-    LocationId& get_location();
-
-    const LocationId& get_location() const;
+    LocationId get_location() const;
 
     // set new location, e.g. when migrating
     void set_location(const Location& location);
