@@ -131,7 +131,7 @@ public:
                                   riskFromInfectedSymptomatic * pop[ISyj]);
 
                 // Susceptible -> Exposed
-                flows[Base::get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(Base::FlowIndex(i))] += dummy_S;
+                flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] += dummy_S;
             }
 
             // ICU capacity shortage is close
@@ -142,46 +142,46 @@ public:
             double deathsPerSevereAdjusted = params.template get<CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
 
             // Exposed -> InfectedNoSymptoms
-            flows[Base::get_flat_flow_index<InfectionState::Exposed, InfectionState::InfectedNoSymptoms>(Base::FlowIndex(i))] =
+            flows[this->template get_flat_flow_index<InfectionState::Exposed, InfectionState::InfectedNoSymptoms>({i})] =
                 rateE * y[Ei];
 
             // InfectedNoSymptoms -> InfectedSymptoms / Recovered
-            flows[Base::get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::InfectedSymptoms>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::InfectedSymptoms>({i})]=
                 (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) * rateINS * y[INSi];
-            flows[Base::get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::Recovered>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::Recovered>({i})]=
                 params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] * rateINS * y[INSi];
 
             // InfectedNoSymptomsConfirmed -> InfectedSymptomsConfirmed / Recovered
-            flows[Base::get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed,
-                                      InfectionState::InfectedSymptomsConfirmed>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed,
+                                      InfectionState::InfectedSymptomsConfirmed>({i})]=
                 (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) * rateINS * y[INSCi];
-            flows[Base::get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsConfirmed, InfectionState::Recovered>({i})]=
                 params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] * rateINS * y[INSCi];
 
             // InfectedSymptoms -> InfectedSevere / Recovered
-            flows[Base::get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::InfectedSevere>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::InfectedSevere>({i})]=
                 params.template get<SeverePerInfectedSymptoms<FP>>()[i] / params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyi];
-            flows[Base::get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::Recovered>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::Recovered>({i})]=
                 (1 - params.template get<SeverePerInfectedSymptoms<FP>>()[i]) / params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyi];
 
             // InfectedSymptomsConfirmed -> InfectedSevere / Recovered
-            flows[Base::get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::InfectedSevere>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::InfectedSevere>({i})]=
                 params.template get<SeverePerInfectedSymptoms<FP>>()[i] / params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyCi];
-            flows[Base::get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::Recovered>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsConfirmed, InfectionState::Recovered>({i})]=
                 (1 - params.template get<SeverePerInfectedSymptoms<FP>>()[i]) / params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyCi];
 
             // InfectedSevere -> InfectedCritical / Recovered / Dead
-            flows[Base::get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::InfectedCritical>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::InfectedCritical>({i})]=
                 criticalPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevi];
-            flows[Base::get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})]=
                 (1 - params.template get<CriticalPerSevere<FP>>()[i]) / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevi];
-            flows[Base::get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>({i})]=
                 deathsPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevi];
 
             // InfectedCritical -> Dead / Recovered
-            flows[Base::get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Dead>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Dead>({i})]=
                 params.template get<DeathsPerCritical<FP>>()[i] / params.template get<TimeInfectedCritical<FP>>()[i] * y[ICri];
-            flows[Base::get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Recovered>(Base::FlowIndex(i))]=
+            flows[this->template get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Recovered>({i})]=
                 (1 - params.template get<DeathsPerCritical<FP>>()[i]) / params.template get<TimeInfectedCritical<FP>>()[i] * y[ICri];
         }
     }
