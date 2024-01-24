@@ -227,12 +227,12 @@ public:
     }
 
     /**
-     * @brief Get the time since the Person has been tested.
-     * @return TimeSpan since the last test.
+     * @brief Get the TimePoint of the last negative test.
+     * @return TimePoint since the last test.
      */
-    TimeSpan get_time_since_negative_test() const
+    TimePoint get_time_of_last_test() const
     {
-        return m_time_since_negative_test;
+        return m_time_of_last_test;
     }
     /**
      * @brief Set an assigned Location of the Person. 
@@ -307,19 +307,15 @@ public:
     /**
      * @brief Answers the question if a Person is currently in quarantine.
      * If a Person is in quarantine this Person cannot migrate to Location%s other than Home or the Hospital.
+     * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
+     * @param[in] params Parameter that includes the length of a quarantine.
      * @return True if the Person is in quarantine.
      */
-    bool is_in_quarantine() const
+    bool is_in_quarantine(TimePoint t, const Parameters& params) const
     {
-        return m_quarantine;
+        return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
     }
-
-    /**
-     * @brief Sets the current Infection to detected and moves the Person into quarantine.
-     * @param[in] t TimePoint of the detection.
-     */
-    void detect_infection(TimePoint t);
-
+    
     /**
      * @brief Removes the quarantine status of the Person.
      */
@@ -506,14 +502,14 @@ private:
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
-    bool m_quarantine = false; ///< Whether the Person is currently in quarantine.
+    TimePoint m_quarantine_start; ///< TimePoint when the Person started quarantine.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
     double m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
     double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
-    TimeSpan m_time_since_negative_test; ///< Time since the last negative test.
+    TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.

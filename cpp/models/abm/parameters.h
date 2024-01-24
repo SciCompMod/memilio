@@ -374,6 +374,21 @@ struct LockdownDate {
 };
 
 /**
+ * @brief Duration of quarantine.
+ */
+struct QuarantineDuration {
+    using Type = TimeSpan;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return days(10);
+    }
+    static std::string name()
+    {
+        return "QuarantineDuration";
+    }
+};
+
+/**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 struct BasicShoppingRate {
@@ -500,7 +515,7 @@ struct AgeGroupGotoSchool {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a = Type(num_agegroups, false);
+        auto a         = Type(num_agegroups, false);
         a[AgeGroup(1)] = true;
         return a;
     }
@@ -517,7 +532,7 @@ struct AgeGroupGotoWork {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a = Type(num_agegroups, false);
+        auto a         = Type(num_agegroups, false);
         a[AgeGroup(2)] = true;
         a[AgeGroup(3)] = true;
         return a;
@@ -533,9 +548,9 @@ using ParametersBase =
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
                  InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
-                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -609,16 +624,16 @@ public:
             }
 
             if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller than {:d}",
-                    (size_t)i, 0);
+                log_error("Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller "
+                          "than {:d}",
+                          (size_t)i, 0);
                 return true;
             }
 
             if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller than {:d}",
-                    (size_t)i, 0);
+                log_error("Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller "
+                          "than {:d}",
+                          (size_t)i, 0);
                 return true;
             }
 
