@@ -2,7 +2,11 @@ from memilio.surrogatemodel.ode_secir_simple.data_generation import generate_dat
 import os 
 import time 
 import numpy as np
+import pickle
 import tensorflow as tf
+from memilio.surrogatemodel.ode_secir_simple.model import split_data
+
+
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')  # eigentlich unnötig 
@@ -25,4 +29,25 @@ print(np.asarray(times).mean())
 
 
 # LSTM performance
-secirsimple_model = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_150days')
+secirsimple_model = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_bestLSTM_2024')
+
+path = os.path.dirname(os.path.realpath(__file__))
+path_data = os.path.join(os.path.dirname(os.path.realpath(
+        os.path.dirname(os.path.realpath(path)))), 'data')
+    
+filename = "data_secir_simple.pickle"
+
+file = open(os.path.join(path_data,filename), 'rb')
+
+data = pickle.load(file)
+data_splitted = split_data(data['inputs'], data['labels'])
+
+test_inputs = data_splitted['test_inputs']
+test_labels = data_splitted['test_labels']
+
+times = []
+start = time.time()
+pred = secirsimple_model.predict(test_inputs)
+end = time.time()
+times.append(end - start)
+print(np.asarray(times)/1000)
