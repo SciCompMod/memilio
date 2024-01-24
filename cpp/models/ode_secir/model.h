@@ -55,9 +55,9 @@ using Flows = TypeList<Flow<InfectionState::Susceptible,                 Infecti
 // clang-format on
 
 template<typename FP=double>
-class Model : public FlowModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>
+class Model : public FlowModel<InfectionState, Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>;
+    using Base = FlowModel<InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>;
 
 public:
     Model(const typename Base::Populations& pop, const typename Base::ParameterSet& params)
@@ -66,7 +66,7 @@ public:
     }
 
     Model(int num_agegroups)
-        : Model(typename Base::Populations({AgeGroup(num_agegroups), InfectionState::Count}), typename Base::ParameterSet(AgeGroup(num_agegroups)))
+        : Model(typename Base::Populations({mio::AgeGroup(num_agegroups), InfectionState::Count}), typename Base::ParameterSet(mio::AgeGroup(num_agegroups)))
     {
     }
 
