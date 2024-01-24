@@ -107,7 +107,7 @@ public:
 
         auto t = t0;
         size_t i = results.get_num_time_points() - 1;
-        while (std::abs((tmax - t) / (tmax - t0)) > 1e-10) {
+        while (fabs((tmax - t) / (tmax - t0)) > 1e-10) {
             //we don't make timesteps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
             //but also unlikely to happen. may need to be reevaluated
