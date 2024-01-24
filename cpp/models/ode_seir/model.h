@@ -47,9 +47,9 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
 template<typename FP=double>
-class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters<FP>, Flows, FP>
+class Model : public FlowModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows, FP>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters<FP>, Flows, FP>;
+    using Base = FlowModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows, FP>;
 
 public:
     Model()
