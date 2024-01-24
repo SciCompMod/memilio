@@ -89,7 +89,7 @@ public:
      */
 
 
-    Eigen::Ref<Eigen::VectorXd> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
+    Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1> > advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
                                                        TimeSeries<FP>& results)
     {
         using std::fabs;
