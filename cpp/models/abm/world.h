@@ -191,7 +191,7 @@ public:
     LocationId add_location(LocationType type, uint32_t num_cells = 1)
     {
         LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
-        m_locations.emplace_back(std::make_unique<Location>(id, parameters.get_num_groups(), num_cells));
+        m_locations.emplace_back(std::make_unique<Location<FP>>(id, parameters.get_num_groups(), num_cells));
         m_has_locations[size_t(type)] = true;
         return id;
     }
@@ -206,7 +206,7 @@ public:
     {
         assert(age.get() < parameters.get_num_groups());
         uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-        m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
+        m_persons.push_back(std::make_unique<Person<FP>>(m_rng, get_individualized_location(id), age, person_id));
         auto& person = *m_persons.back();
         person.set_assigned_location(m_cemetery_id);
         get_individualized_location(id).add_person(person);

@@ -22,44 +22,6 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-<<<<<<< HEAD
-
-template<typename FP=double>
-void write_results_to_file(const mio::abm::Simulation<FP>& sim)
-{
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream myfile("abm_minimal.txt", std::ios::out);
-    myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        myfile << sim.get_result().get_time(i);
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            myfile << v[j];
-            if (j < v.size() - 1) {
-                myfile << " ";
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            myfile << "\n";
-        }
-    }
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
-}
-
-int main()
-{
-    // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::GlobalInfectionParameters<double> infection_params;
-
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    infection_params.get<mio::abm::IncubationPeriod<double>>() = 4.;
-
-    // Create the world with infection parameters.
-    auto world = mio::abm::World<double>(infection_params);
-=======
 #include "abm/common_abm_loggers.h"
 
 int main()
@@ -73,10 +35,10 @@ int main()
     const auto age_group_35_to_59 = mio::AgeGroup(3);
 
     // Create the world with 4 age groups.
-    auto world = mio::abm::World(num_age_groups);
+    auto world = mio::abm::World<double>(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
+    world.parameters.get<mio::abm::IncubationPeriod<double>>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     world.parameters.get<mio::abm::AgeGroupGotoSchool>() = false;
@@ -85,7 +47,6 @@ int main()
     world.parameters.get<mio::abm::AgeGroupGotoWork>() = false;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
->>>>>>> upstream/main
 
     // Check if the parameters satisfy their contraints.
     world.parameters.check_constraints();
@@ -156,21 +117,12 @@ int main()
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
-<<<<<<< HEAD
-    // The infection states are chosen randomly.
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        mio::abm::InfectionState infection_state =
-            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
-        auto rng = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
-=======
     // The infection states are chosen randomly with the following distribution
     std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
     for (auto& person : world.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
->>>>>>> upstream/main
+        auto rng = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.parameters, start_date, infection_state));

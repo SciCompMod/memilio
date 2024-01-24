@@ -287,7 +287,7 @@ public:
      * @param[in] person The Person arriving.
      * @param[in] cell_idx [Default: 0] Index of the Cell the Person shall go to.
     */
-    void add_person(Person<FP>& p, std::vector<uint32_t> cells)
+    void add_person(Person<FP>& p, std::vector<uint32_t> cells = {0})
     {
         std::lock_guard<std::mutex> lk(m_mut);
         m_persons.push_back(&p);
