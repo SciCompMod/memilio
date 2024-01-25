@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
