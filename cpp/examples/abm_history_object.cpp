@@ -59,16 +59,6 @@ void write_log_to_file(const T& history)
 
 int main()
 {
-<<<<<<< HEAD
-    // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::GlobalInfectionParameters<double> infection_params;
-
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    infection_params.get<mio::abm::IncubationPeriod<double>>() = 4.;
-
-    // Create the world with infection parameters.
-    auto world = mio::abm::World(infection_params);
-=======
     // This is a minimal example with children and adults < 60y.
     // We divided them into 4 different age groups, which are defined as follows:
     const size_t num_age_groups   = 4;
@@ -78,11 +68,10 @@ int main()
     const auto age_group_35_to_59 = mio::AgeGroup(3);
 
     // Create the world with 4 age groups.
-    auto world = mio::abm::World(num_age_groups);
+    auto world = mio::abm::World<double>(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
->>>>>>> upstream/main
+    world.parameters.get<mio::abm::IncubationPeriod<double>>() = 4.;
 
     // There are 3 households for each household group.
     int n_households = 3;
@@ -146,7 +135,7 @@ int main()
     // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng = typename mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
+        auto rng = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -177,7 +166,7 @@ int main()
 
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto sim  = mio::abm::Simulation<double>(t0, std::move(world));
+    auto sim  = mio::abm::Simulation(t0, std::move(world));
 
     struct LogTimePoint : mio::LogAlways {
         using Type = double;
