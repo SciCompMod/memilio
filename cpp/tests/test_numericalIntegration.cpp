@@ -24,10 +24,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <string>
 #include <vector>
-#include <fstream>
-#include <ios>
 #include <cmath>
 
 void sin_deriv(Eigen::Ref<Eigen::VectorXd const> /*y*/, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
