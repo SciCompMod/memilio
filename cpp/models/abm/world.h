@@ -50,14 +50,17 @@ namespace abm
  * @brief The World of the Simulation.
  * It consists of Location%s and Person%s (Agents).
  */
-template<typename FP=double>
+template <typename FP = double>
 class World
 {
 public:
-    using LocationIterator      = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::iterator>;
-    using ConstLocationIterator = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::const_iterator>;
-    using PersonIterator        = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::iterator>;
-    using ConstPersonIterator   = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::const_iterator>;
+    using LocationIterator =
+        PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::iterator>;
+    using ConstLocationIterator =
+        PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::const_iterator>;
+    using PersonIterator = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::iterator>;
+    using ConstPersonIterator =
+        PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::const_iterator>;
 
     /**
      * @brief Create a World.
@@ -159,14 +162,14 @@ public:
      * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt)
-{
-    m_testing_strategy.update_activity_status(t);
+    {
+        m_testing_strategy.update_activity_status(t);
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
         location->cache_exposure_rates(t, dt, parameters.get_num_groups());
     }
-}
+    }
 
     /** 
      * @brief Evolve the world one time step.
@@ -398,21 +401,21 @@ private:
      * @param[in] dt The length of the time step of the Simulation.
      */
     void interaction(TimePoint t, TimeSpan dt)
-{
+    {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = typename Person<FP>::RandomNumberGenerator(m_rng, *person);
         person->interact(personal_rng, t, dt, parameters);
     }
-}
+    }
     /**
      * @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
     void migration(TimePoint t, TimeSpan dt)
-{
+    {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
@@ -439,23 +442,23 @@ private:
         //run migration rules one after the other if the corresponding location type exists
         //shortcutting of bool operators ensures the rules stop after the first rule is applied
         if (m_use_migration_rules) {
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
-                (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_migration_rule(&go_to_shop)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_migration_rule(&go_to_event)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried<FP>)) ||
+                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered<FP>)) ||
+                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital<FP>)) ||
+                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu<FP>)) ||
+                (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school<FP>)) ||
+                (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work<FP>)) ||
+                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_migration_rule(&go_to_shop<FP>)) ||
+                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_migration_rule(&go_to_event<FP>)) ||
+                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine<FP>));
         }
         else {
             //no daily routine migration, just infection related
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried<FP>)) ||
+                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered<FP>)) ||
+                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital<FP>)) ||
+                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu<FP>)) ||
+                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine<FP>));
         }
     }
 
@@ -482,7 +485,7 @@ private:
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
     }
-}
+    }
 
     std::vector<std::unique_ptr<Person<FP>>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location<FP>>> m_locations; ///< Vector with pointers to every Location.
@@ -491,8 +494,8 @@ private:
     TestingStrategy<FP> m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(typename Person<FP>::RandomNumberGenerator&, const Person<FP>&, TimePoint, TimeSpan,
-                                           const Parameters<FP>&),
+    std::vector<std::pair<LocationType (*)(typename Person<FP>::RandomNumberGenerator&, const Person<FP>&, TimePoint,
+                                           TimeSpan, const Parameters<FP>&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
