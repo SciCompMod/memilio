@@ -26,19 +26,15 @@
 
 TEST(TestInfection, init)
 {
-<<<<<<< HEAD
-    auto params             = mio::abm::GlobalInfectionParameters<double>{};
-=======
-    auto params             = mio::abm::Parameters(num_age_groups);
->>>>>>> upstream/main
+    auto params             = mio::abm::Parameters<double>(num_age_groups);
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
     auto age_group_test     = age_group_15_to_34;
 
     //set up a personal RNG for infections
     //uses uniformdistribution but result doesn't matter, so init before the mock
-    mio::abm::Location<double> loc(mio::abm::LocationType::Hospital, 0);
+    mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
     auto counter = mio::Counter<uint32_t>(0);
-    auto rng     = typename mio::abm::Person<double>::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
+    auto rng     = mio::abm::Person<double>::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -103,21 +99,12 @@ TEST(TestInfection, init)
 
 TEST(TestInfection, getInfectionState)
 {
-<<<<<<< HEAD
-    auto counter = mio::Counter<uint32_t>(0);
-    auto rng     = typename mio::abm::Person<double>::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
-    auto t       = mio::abm::TimePoint(0);
-    auto infection =
-        mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                            mio::abm::GlobalInfectionParameters<double>{}, t, mio::abm::InfectionState::Exposed, {}, true);
-=======
     auto counter   = mio::Counter<uint32_t>(0);
-    auto rng       = mio::abm::Person::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
+    auto rng       = mio::abm::Person<double>::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
     auto params    = mio::abm::Parameters(num_age_groups);
     auto t         = mio::abm::TimePoint(0);
     auto infection = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                          mio::abm::InfectionState::Exposed, {}, true);
->>>>>>> upstream/main
     EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
 }
@@ -125,31 +112,17 @@ TEST(TestInfection, getInfectionState)
 TEST(TestInfection, drawInfectionCourseBackward)
 {
     auto counter = mio::Counter<uint32_t>(0);
-    auto rng     = typename mio::abm::Person<double>::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
+    auto rng     = mio::abm::Person<double>::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
 
-<<<<<<< HEAD
-    auto t      = mio::abm::TimePoint(1);
-    auto dt     = mio::abm::days(1);
-    auto params = mio::abm::GlobalInfectionParameters<double>{};
-
-    // Time to go from all infected states to recover is 1 day (dt).
-    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}]   = 1;
-    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}] = 1;
-    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
-                                                         mio::abm::AgeGroup::Age60to79}]                           = 1;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
-                                                           mio::abm::AgeGroup::Age60to79}]                         = 1;
-=======
     auto t                      = mio::abm::TimePoint(1);
     auto dt                     = mio::abm::days(1);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     // Time to go from all infected states to recover is 1 day (dt).
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]             = 1;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]           = 1;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]   = 1;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
->>>>>>> upstream/main
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]             = 1;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]           = 1;
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]   = 1;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -190,15 +163,6 @@ TEST(TestInfection, drawInfectionCourseBackward)
 
 TEST(TestInfection, getPersonalProtectiveFactor)
 {
-<<<<<<< HEAD
-    auto rng      = mio::RandomNumberGenerator();
-    auto location = mio::abm::Location<double>(mio::abm::LocationType::School, 0);
-    auto person   = mio::abm::Person<double>(rng, location, mio::abm::AgeGroup::Age15to34);
-    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0));
-    auto latest_protection = person.get_latest_protection();
-
-    mio::abm::GlobalInfectionParameters<double> params = mio::abm::GlobalInfectionParameters<double>();
-=======
     auto rng = mio::RandomNumberGenerator();
 
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
@@ -214,7 +178,6 @@ TEST(TestInfection, getPersonalProtectiveFactor)
         mio::abm::ExposureType::GenericVaccine, mio::AgeGroup(0), mio::abm::VirusVariant::Wildtype}](0);
     ASSERT_NEAR(defaut_infection_protection, 0, 0.0001);
     ASSERT_NEAR(defaut_severity_protection, 0, 0.0001);
->>>>>>> upstream/main
 
     // Test linear interpolation with one node
     mio::set_log_level(mio::LogLevel::critical); //this throws an error either way
