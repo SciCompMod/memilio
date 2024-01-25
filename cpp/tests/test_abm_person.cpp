@@ -211,7 +211,7 @@ TEST(TestPerson, interact)
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::TimePoint t(0);
     auto person     = mio::abm::Person(rng, loc, age_group_15_to_34);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto rng_person = mio::abm::Person<double>::RandomNumberGenerator(rng, person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
     person.interact(rng_person, t, dt, infection_parameters);
     EXPECT_EQ(person.get_time_at_location(), dt);
@@ -225,7 +225,7 @@ TEST(TestPerson, applyMaskIntervention)
     mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person = make_test_person(home);
     person.get_mask().change_mask(mio::abm::MaskType::Community);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto rng_person = mio::abm::Person<double>::RandomNumberGenerator(rng, person);
 
     target.set_npi_active(false);
     person.apply_mask_intervention(rng_person, target);
@@ -281,9 +281,9 @@ TEST(TestPerson, getMaskProtectiveFactor)
     person_without.set_wear_mask(false);
 
     mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;
+    params.get<mio::abm::MaskProtection<double>>()[{mio::abm::MaskType::Community}] = 0.5;
+    params.get<mio::abm::MaskProtection<double>>()[{mio::abm::MaskType::Surgical}]  = 0.8;
+    params.get<mio::abm::MaskProtection<double>>()[{mio::abm::MaskType::FFP2}]      = 0.9;
 
     ASSERT_EQ(person_community.get_mask_protective_factor(params), 0.5);
     ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
@@ -296,7 +296,7 @@ TEST(TestPerson, getLatestProtection)
     auto rng                    = mio::RandomNumberGenerator();
     auto location               = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person                 = mio::abm::Person(rng, location, age_group_15_to_34);
-    auto prng                   = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto prng                   = mio::abm::Person<double>::RandomNumberGenerator(rng, person);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     auto t = mio::abm::TimePoint(0);
@@ -321,7 +321,7 @@ TEST(Person, rng)
 
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 
-    auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, p);
     ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
 
     p_rng();
