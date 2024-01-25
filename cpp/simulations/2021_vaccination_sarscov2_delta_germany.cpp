@@ -652,11 +652,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         },
         [&](auto results_graph, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-<<<<<<< HEAD
-            auto params = std::vector<mio::osecirvvs::Model<double>>();
-=======
-            auto params              = std::vector<mio::osecirvvs::Model>();
->>>>>>> upstream/main
+            auto params              = std::vector<mio::osecirvvs::Model<double>>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
                                          [](auto&& node) {
