@@ -84,11 +84,11 @@ public:
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
         }
 
-        ScalarType TimeInfected = this->parameters.template get<mio::oseir::TimeInfected>();
+        ScalarType TimeInfected = this->parameters.template get<mio::oseir::TimeInfected<FP>>();
 
         ScalarType coeffStoE = this->parameters.template get<mio::oseir::ContactPatterns>().get_matrix_at(
                                    y.get_time(static_cast<Eigen::Index>(t_idx)))(0, 0) *
-                               this->parameters.template get<mio::oseir::TransmissionProbabilityOnContact>() /
+                               this->parameters.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>() /
                                this->populations.get_total();
 
         ScalarType result =
