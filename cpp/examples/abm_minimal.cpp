@@ -1,3 +1,4 @@
+
 /*
 * Copyright (C) 2020-2024 MEmilio
 *
@@ -52,7 +53,7 @@ int main()
     world.parameters.check_constraints();
 
     // There are 10 households for each household group.
-    int n_households = 10;
+    int n_households = 200;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
@@ -82,21 +83,42 @@ int main()
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto event_loc = world.get_individualized_location(event);
+    event_loc.get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    event_loc.set_required_mask(mio::abm::MaskType::Community);
+    event_loc.set_npi_active(true);
+
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto hospital_loc = world.get_individualized_location(event);
+    hospital_loc.get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    hospital_loc.set_required_mask(mio::abm::MaskType::Community);
+    hospital_loc.set_npi_active(true);
+
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto icu_loc = world.get_individualized_location(icu);
+    icu_loc.get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    icu_loc.set_required_mask(mio::abm::MaskType::Community);
+    icu_loc.set_npi_active(true);
+
     // Add one supermarket, maximum constacts are assumed to be 20.
     auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto shop_loc = world.get_individualized_location(shop);
+    shop_loc.get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    shop_loc.set_required_mask(mio::abm::MaskType::Community);
+    shop_loc.set_npi_active(true);
+
     // At every school, the maximum contacts are 20.
     auto school = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto school_loc = world.get_individualized_location(school);
+    school_loc.get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    school_loc.set_npi_active(true);
+
     // At every workplace, maximum contacts are 20.
     auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto work_loc = world.get_individualized_location(work);
+    work_loc.get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    work_loc.set_npi_active(true);
 
     // Increase aerosol transmission for all locations
     world.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
@@ -152,12 +174,12 @@ int main()
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(10);
+    auto tmax = t0 + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-        Eigen::Index(mio::abm::InfectionState::Count)};
+        Eigen::Index(mio::abm::InfectionState::Count)+1};
 
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries);
@@ -168,7 +190,7 @@ int main()
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
     std::ofstream outfile("abm_minimal.txt");
     std::get<0>(historyTimeSeries.get_log())
-        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D", "Mask"}, 8, 0, outfile);
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 
     return 0;
