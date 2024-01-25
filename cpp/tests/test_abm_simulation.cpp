@@ -21,23 +21,9 @@
 #include "abm/common_abm_loggers.h"
 #include "memilio/io/history.h"
 
-<<<<<<< HEAD
-struct LogTimePoint : mio::LogAlways {
-    using Type = double;
-    static Type log(const mio::abm::Simulation<double>& sim)
-    {
-        return sim.get_time().hours();
-    }
-};
-
-TEST(TestSimulation, advance_random)
-{
-    auto world     = mio::abm::World<double>();
-=======
 TEST(TestSimulation, advance_random)
 {
     auto world     = mio::abm::World(num_age_groups);
->>>>>>> upstream/main
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
     auto& p1       = world.add_person(location1, age_group_5_to_14);
@@ -49,7 +35,7 @@ TEST(TestSimulation, advance_random)
     p3.set_assigned_location(location2);
     p4.set_assigned_location(location2);
 
-    auto sim = mio::abm::Simulation<double>(mio::abm::TimePoint(0), std::move(world));
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
@@ -63,65 +49,17 @@ TEST(TestSimulation, advance_random)
     }
 }
 
-<<<<<<< HEAD
-TEST(TestSimulation, advance_subpopulation)
-{
-    auto world       = mio::abm::World<double>();
-    auto location_id = world.add_location(mio::abm::LocationType::School);
-    auto& school     = world.get_individualized_location(location_id);
-    auto& person1 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms);
-    auto& person2 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
-    auto& person3 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
-    person1.set_assigned_location(location_id);
-    person2.set_assigned_location(location_id);
-    person3.set_assigned_location(location_id);
-
-    auto sim = mio::abm::Simulation<double>(mio::abm::TimePoint(0), std::move(world));
-    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
-
-    for (size_t i = 0; i < 51; i++) {
-        auto v = school.get_subpopulations().get_value(i);
-        // Check whether the number of persons in infected state at the location is consistent
-        ASSERT_LE(v[size_t(mio::abm::InfectionState::InfectedSymptoms)], 3);
-        // Check the time evolution is correct
-        ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
-    }
-}
-
-TEST(TestSimulation, initializeSubpopulation)
-{
-    auto world  = mio::abm::World<double>();
-    auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
-    auto& loc   = world.get_individualized_location(loc_id);
-    ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
-
-    auto t   = mio::abm::TimePoint(0);
-    auto sim = mio::abm::Simulation<double>(t + mio::abm::days(7), std::move(world));
-
-    ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
-}
-
-=======
->>>>>>> upstream/main
 TEST(TestSimulation, getWorldAndTimeConst)
 {
 
     auto t     = mio::abm::TimePoint(0);
-<<<<<<< HEAD
-    auto world = mio::abm::World<double>();
-    auto sim   = mio::abm::Simulation<double>(t + mio::abm::days(7), std::move(world));
-=======
     auto world = mio::abm::World(num_age_groups);
     auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
->>>>>>> upstream/main
 
     auto t_test = mio::abm::days(7);
     ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
 
-    const mio::abm::World<double> world_test{std::move(sim.get_world())};
+    const mio::abm::World world_test{std::move(sim.get_world())};
     EXPECT_EQ(world_test.get_locations().size(), 1);
 }
 
@@ -137,11 +75,6 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto basics_id   = world.add_location(mio::abm::LocationType::BasicsShop);
     auto public_id   = world.add_location(mio::abm::LocationType::PublicTransport);
 
-<<<<<<< HEAD
-    auto world = mio::abm::World<double>();
-    auto sim   = mio::abm::Simulation<double>(mio::abm::TimePoint(0), std::move(world));
-    mio::HistoryWithMemoryWriter<LogTimePoint> history;
-=======
     auto& person1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
     auto& person2 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
     auto& person3 = add_test_person(world, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
@@ -159,7 +92,6 @@ TEST(TestSimulation, advanceWithCommonHistory)
     person2.set_assigned_location(basics_id);
     person3.set_assigned_location(basics_id);
     person2.set_assigned_location(public_id);
->>>>>>> upstream/main
 
     mio::abm::TripList& trip_list = world.get_trip_list();
 
