@@ -261,10 +261,10 @@ public:
      * @param tmax next stopping point of simulation
      * @return value at tmax
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1> > advance(FP tmax)
     {
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
-        auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
+        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+        auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
         if (dyn_npis.get_thresholds().size() > 0) {
             auto t        = Base::get_result().get_last_time();
             const auto dt = dyn_npis.get_interval().get();
@@ -610,11 +610,11 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/,
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
-    auto&& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
-    auto&& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
-    auto&& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
-    auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
-    auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
+    auto&& t_inc     = params.template get<IncubationTime<FP>>().array().template cast<FP>();
+    auto&& t_ser     = params.template get<SerialInterval<FP>>().array().template cast<double>();
+    auto&& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms<FP>>().array().template cast<FP>();
+    auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic<FP>>().array().template cast<FP>();
+    auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>().array().template cast<FP>();
     //slice of InfectedNoSymptoms
     auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptoms),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)});
@@ -622,7 +622,7 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/,
     //compute isolation, same as infection risk from main model
     auto R3                          = 0.5 / (t_inc - t_ser);
     auto test_and_trace_required     = ((1 - p_asymp) * R3 * y_car.array()).sum();
-    auto test_and_trace_capacity     = double(params.template get<TestAndTraceCapacity>());
+    auto test_and_trace_capacity     = FP(params.template get<TestAndTraceCapacity<FP>>());
     auto riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
                                                        test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
 
