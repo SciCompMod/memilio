@@ -79,7 +79,7 @@ int main()
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     contact_matrix.add_damping(0.3, mio::SimulationTime(30.));
 
-    auto result_from_sim                                  = simulate(t0, tmax, dt, model);
+    auto result_from_sim                                  = mio::osecir::simulate<double>(t0, tmax, dt, model);
     std::vector<mio::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
     std::vector<int> ids                                  = {1, 2};
 
