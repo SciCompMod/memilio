@@ -230,7 +230,7 @@ struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type({MaskType::Count}, 1.);
+        return Type({MaskType::Count}, 0.83);
     }
     static std::string name()
     {

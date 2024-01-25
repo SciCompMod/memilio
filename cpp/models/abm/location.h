@@ -395,6 +395,8 @@ public:
         m_geographical_location = location;
     }
 
+    size_t get_num_person_wear_mask() const;
+
 private:
     std::mutex m_mut; ///< Mutex to protect the list of persons from concurrent modification.
     LocationId m_id; ///< Id of the Location including type and index.

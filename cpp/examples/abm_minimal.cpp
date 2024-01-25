@@ -1,4 +1,3 @@
-
 /*
 * Copyright (C) 2020-2024 MEmilio
 *
@@ -48,6 +47,10 @@ int main()
     world.parameters.get<mio::abm::AgeGroupGotoWork>() = false;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
+
+    world.parameters..get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.83;
+    world.parameters..get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.66;
+    world.parameters..get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.83;
 
     // Check if the parameters satisfy their contraints.
     world.parameters.check_constraints();

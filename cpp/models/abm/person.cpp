@@ -257,7 +257,6 @@ bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location&
             return false;
         }
         if (m_wears_mask == true) {
-
             if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
                 m_mask.change_mask(target.get_required_mask());
             }
