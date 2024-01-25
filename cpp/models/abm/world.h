@@ -90,14 +90,14 @@ public:
             if (origin_loc.get_type() != LocationType::Cemetery) {
                 // Copy a location
                 m_locations.emplace_back(
-                    std::make_unique<Location>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
+                    std::make_unique<Location<FP>>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
             }
             for (auto& person : other.get_persons()) {
                 // If a person is in this location, copy this person and add it to this location.
                 if (person.get_location() == origin_loc) {
                     LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
                     m_persons.push_back(
-                        std::make_unique<Person>(person.copy_person(get_individualized_location(origin_id))));
+                        std::make_unique<Person<FP>>(person.copy_person(get_individualized_location(origin_id))));
                 }
             }
         }
