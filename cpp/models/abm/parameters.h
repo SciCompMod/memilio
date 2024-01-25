@@ -390,6 +390,21 @@ struct LockdownDate {
 };
 
 /**
+ * @brief Duration of quarantine.
+ */
+struct QuarantineDuration {
+    using Type = TimeSpan;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return days(10);
+    }
+    static std::string name()
+    {
+        return "QuarantineDuration";
+    }
+};
+
+/**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 template<typename FP=double>
