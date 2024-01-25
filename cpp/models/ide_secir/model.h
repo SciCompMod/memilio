@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
 *
@@ -129,7 +129,8 @@ public:
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      */
-    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
+    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
+                      bool initial_flow = false, Eigen::Index current_time_index = 0);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
