@@ -243,17 +243,24 @@ public:
         auto min_dt    = 0.01;
         double t_begin = m_t - 1.;
 
-        double avg_commuter_share = 0.232487;
-        double avg_travel_time    = 0.0679489;
-        Eigen::MatrixXd cmatrix_init(6, 6);
-        cmatrix_init << 0.0337, 0.0337, 0.0674, 0.0534, 0.0140, 0.0000, 0.0209, 0.0652, 0.0468, 0.0757, 0.0138, 0.0000,
-            0.0095, 0.1818, 0.1002, 0.0904, 0.0174, 0.0000, 0.0178, 0.0849, 0.3118, 0.2155, 0.0103, 0.0000, 0.0039,
-            0.0160, 0.2554, 0.0461, 0.0095, 0.0171, 0.0137, 0.0134, 0.1296, 0.0863, 0.0140, 0.0000;
+        // double avg_commuter_share = 0.232487;
+        // double avg_travel_time    = 0.0679489;
+        // Eigen::MatrixXd cmatrix_init(6, 6);
+        // cmatrix_init << 0.0337, 0.0337, 0.0674, 0.0534, 0.0140, 0.0000, 0.0209, 0.0652, 0.0468, 0.0757, 0.0138, 0.0000,
+        //     0.0095, 0.1818, 0.1002, 0.0904, 0.0174, 0.0000, 0.0178, 0.0849, 0.3118, 0.2155, 0.0103, 0.0000, 0.0039,
+        //     0.0160, 0.2554, 0.0461, 0.0095, 0.0171, 0.0137, 0.0134, 0.1296, 0.0863, 0.0140, 0.0000;
 
-        cmatrix_init = cmatrix_init / (avg_commuter_share * 2 * avg_travel_time);
+        // cmatrix_init = cmatrix_init / (avg_commuter_share * 2 * avg_travel_time);
 
         // calc schedule for each edges
         precompute_schedule();
+
+        for (auto& node : m_graph.nodes()) {
+            node.node_pt.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
+        }
+
+        std::vector<std::vector<double>> infections_mobility_nodes;
+        infections_mobility_nodes.reserve(int(t_max));
 
         const double epsilon = std::numeric_limits<double>::epsilon();
         while (m_t - epsilon < t_max) {
@@ -269,8 +276,11 @@ public:
                 break;
             }
 
-            for (auto& node : m_graph.nodes()) {
-                node.node_pt.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
+            for (auto& n : m_graph.nodes()) {
+                n.node_pt.get_result().add_time_point(m_t + 1);
+                n.node_pt.get_simulation().get_flows().add_time_point(m_t + 1);
+                n.node_pt.get_simulation().get_flows().get_last_value().setZero();
+                n.node_pt.get_result().get_last_value().setZero();
             }
 
             size_t indx_schedule = 0;
@@ -366,60 +376,65 @@ public:
                 if (indx_schedule < 100) {
                     for (const auto& n_indx : nodes_mobility[indx_schedule]) {
                         auto& n = m_graph.nodes()[n_indx];
-                        if (indx_schedule == 100) {
-                            m_node_func(m_t, 0.01, n.property);
-                        }
-                        else {
-                            const size_t indx_current =
-                                std::distance(ln_int_schedule[n_indx].begin(),
-                                              std::lower_bound(ln_int_schedule[n_indx].begin(),
-                                                               ln_int_schedule[n_indx].end(), indx_schedule));
-
-                            const size_t val_next = (indx_current == ln_int_schedule[n_indx].size() - 1)
-                                                        ? 100
-                                                        : ln_int_schedule[n_indx][indx_current + 1];
-                            const ScalarType next_dt =
-                                round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
-                            m_node_func(m_t, next_dt, n.property);
-                            check_for_negative_value(n.property.get_result().get_last_value(), n_indx);
-                        }
-                    }
-
-                    for (const size_t& n_indx : nodes_mobility_m[indx_schedule]) {
-                        auto& n = m_graph.nodes()[n_indx];
-                        set_contact_mobility(n.node_pt.get_simulation().get_model(), cmatrix_init);
-
-                        check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
-
+                        // if (indx_schedule == 100) {
+                        //     auto res_last = n.property.get_result().get_last_value();
+                        //     auto res_last_as_vector =
+                        //         std::vector<double>(res_last.data(), res_last.data() + res_last.size());
+                        //     m_node_func(m_t, 0.01, n.property);
+                        // }
+                        // else {
+                        // if (indx_schedule == 99)
+                        //     std::cout << "t = " << m_t << "\n";
                         const size_t indx_current =
-                            std::distance(mb_int_schedule[n_indx].begin(),
-                                          std::lower_bound(mb_int_schedule[n_indx].begin(),
-                                                           mb_int_schedule[n_indx].end(), indx_schedule));
-                        const size_t val_next = (indx_current == mb_int_schedule[n_indx].size() - 1)
+                            std::distance(ln_int_schedule[n_indx].begin(),
+                                          std::lower_bound(ln_int_schedule[n_indx].begin(),
+                                                           ln_int_schedule[n_indx].end(), indx_schedule));
+
+                        const size_t val_next = (indx_current == ln_int_schedule[n_indx].size() - 1)
                                                     ? 100
-                                                    : mb_int_schedule[n_indx][indx_current + 1];
+                                                    : ln_int_schedule[n_indx][indx_current + 1];
                         const ScalarType next_dt =
                             round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
-
-                        // get all time points from the last integration step
-                        auto last_time_point =
-                            n.node_pt.get_result().get_time(n.node_pt.get_result().get_num_time_points() - 1);
-                        if (std::fabs(last_time_point - m_t) > 1e-10) {
-                            n.node_pt.get_result().get_last_time()                 = m_t;
-                            n.node_pt.get_simulation().get_flows().get_last_time() = m_t;
-                        }
-
-                        if (n.node_pt.get_result().get_last_value().sum() < 5) {
-                            n.node_pt.get_result().get_last_time()                 = m_t + next_dt;
-                            n.node_pt.get_simulation().get_flows().get_last_time() = m_t + next_dt;
-                        }
-                        else {
-                            m_node_func(m_t, next_dt, n.node_pt);
-                        }
-
-                        // check for negative values and set them to zero
-                        check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
+                        m_node_func(m_t, next_dt, n.property);
+                        check_for_negative_value(n.property.get_result().get_last_value(), n_indx);
+                        // }
                     }
+
+                    // for (const size_t& n_indx : nodes_mobility_m[indx_schedule]) {
+                    //     auto& n = m_graph.nodes()[n_indx];
+                    //     set_contact_mobility(n.node_pt.get_simulation().get_model(), cmatrix_init);
+
+                    //     check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
+
+                    //     const size_t indx_current =
+                    //         std::distance(mb_int_schedule[n_indx].begin(),
+                    //                       std::lower_bound(mb_int_schedule[n_indx].begin(),
+                    //                                        mb_int_schedule[n_indx].end(), indx_schedule));
+                    //     const size_t val_next = (indx_current == mb_int_schedule[n_indx].size() - 1)
+                    //                                 ? 100
+                    //                                 : mb_int_schedule[n_indx][indx_current + 1];
+                    //     const ScalarType next_dt =
+                    //         round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
+
+                    //     // get all time points from the last integration step
+                    //     auto last_time_point =
+                    //         n.node_pt.get_result().get_time(n.node_pt.get_result().get_num_time_points() - 1);
+                    //     if (std::fabs(last_time_point - m_t) > 1e-10) {
+                    //         n.node_pt.get_result().get_last_time()                 = m_t;
+                    //         n.node_pt.get_simulation().get_flows().get_last_time() = m_t;
+                    //     }
+
+                    //     if (n.node_pt.get_result().get_last_value().sum() < 5) {
+                    //         n.node_pt.get_result().get_last_time()                 = m_t + next_dt;
+                    //         n.node_pt.get_simulation().get_flows().get_last_time() = m_t + next_dt;
+                    //     }
+                    //     else {
+                    //         m_node_func(m_t, next_dt, n.node_pt);
+                    //     }
+
+                    //     // check for negative values and set them to zero
+                    //     check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
+                    // }
                 }
 
                 if (indx_schedule == 100) {
@@ -432,16 +447,11 @@ public:
                     m_t += min_dt;
                 }
 
-                // std::cout << "t = " << m_t << "\n";
-
                 indx_schedule++;
+                // std::cout << "t = " << m_t << "\n";
             }
             // compare_pop(m_graph, total_pop_t0, "nach t");
             // std::cout << "t = " << m_t << "\n";
-
-            for (auto& n : m_graph.nodes()) {
-                n.node_pt.get_result().get_last_value().setZero();
-            }
         }
     }
 

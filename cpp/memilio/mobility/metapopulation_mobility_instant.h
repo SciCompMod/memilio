@@ -328,33 +328,37 @@ private:
  * @param dt time between migration and return
  */
 template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Sim>::value>>
-void update_status_migrated(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim, IntegratorCore& integrator,
+void update_status_migrated(Eigen::Ref<TimeSeries<double>::Vector> migrated, Sim& sim, IntegratorCore& integrator,
                             Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
 {
-    // mio::ContactMatrixGroup const& contact_matrix3 = sim.get_model().parameters.get<mio::osecirvvs::ContactPatterns>();
-    // std::cout << "Mobility node: contact matrix at t = 0\n";
-    // for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(6); i++) {
-    //     for (auto j = mio::AgeGroup(0); j < mio::AgeGroup(6); j++) {
-    //         std::cout << contact_matrix3.get_matrix_at(0)(static_cast<Eigen::Index>((size_t)i),
-    //                                                       static_cast<Eigen::Index>((size_t)j))
-    //                   << " ";
-    //     }
-    //     std::cout << "\n";
-    // }
-
-    mio::unused(integrator);
-    auto y0 = migrated.eval();
-    auto y1 = migrated;
-    // integrator.step(
-    //     [&](auto&& y, auto&& t_, auto&& dydt) {
-    //         sim.get_model().get_derivatives(total, y, t_, dydt);
-    //     },
-    //     y0, t, dt, y1);
+    // 1) get flows in mobility comp
+    // 2) assure that this does not change the local model before return. (könnte den integrator zur diff nutzen)
+    auto& model = sim.get_model();
+    auto y0     = migrated.eval();
+    auto y1     = migrated;
     EulerIntegratorCore().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },
         y0, t, dt, y1);
+
+    // if integrator type == EulerIntegratorCore
+    if (dynamic_cast<EulerIntegratorCore*>(&integrator) != nullptr) {
+        auto flows_step                  = model.get_flow_values();
+        std::vector<int> indx_infections = {0,   33,  17,  53,  86,  70,  106, 139, 123,
+                                            159, 192, 176, 212, 245, 229, 265, 298, 282};
+        auto sum_infections =
+            std::accumulate(indx_infections.begin(), indx_infections.end(), 0.0, [&flows_step](double sum, int i) {
+                return sum + flows_step(i);
+            });
+        sim.get_flows().get_last_value()(0) += sum_infections;
+
+        std::vector<int> indx_symp = {20, 36, 56, 73, 89, 109, 126, 142, 162, 179, 195, 215, 232, 248, 268, 285, 301};
+        auto sum_symp = std::accumulate(indx_symp.begin(), indx_symp.end(), 0.0, [&flows_step](double sum, int i) {
+            return sum + flows_step(i);
+        });
+        sim.get_flows().get_last_value()(1) += sum_symp;
+    }
 }
 
 template <typename FP>
@@ -415,17 +419,17 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
     const auto group        = 6;
     const auto num_comparts = results_to.size() / group;
 
-    double sum_migrated = migrated.sum();
-    double sum_from     = results_from.sum();
-    double sum_to       = results_to.sum();
+    // double sum_migrated = migrated.sum();
+    // double sum_from     = results_from.sum();
+    // double sum_to       = results_to.sum();
 
-    auto groups_from  = calc_sum_groupss(results_from);
-    auto groups_to    = calc_sum_groupss(results_to);
-    auto groups_moved = calc_sum_groupss(migrated);
+    // auto groups_from  = calc_sum_groupss(results_from);
+    // auto groups_to    = calc_sum_groupss(results_to);
+    // auto groups_moved = calc_sum_groupss(migrated);
 
-    std::vector<double> migrated_as_vector(migrated.data(), migrated.data() + migrated.size());
-    std::vector<double> results_from_as_vector(results_from.data(), results_from.data() + results_from.size());
-    std::vector<double> results_to_as_vector(results_to.data(), results_to.data() + results_to.size());
+    // std::vector<double> migrated_as_vector(migrated.data(), migrated.data() + migrated.size());
+    // std::vector<double> results_from_as_vector(results_from.data(), results_from.data() + results_from.size());
+    // std::vector<double> results_to_as_vector(results_to.data(), results_to.data() + results_to.size());
 
     for (Eigen::Index j = 0; j < migrated.size(); ++j) {
         if (migrated(j) < -1e-10) {
@@ -454,8 +458,8 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
     // }
 
     Eigen::VectorXd remaining_after_return = (results_from - migrated).eval();
-    auto remaining_after_return_as_vector  = std::vector<double>(
-        remaining_after_return.data(), remaining_after_return.data() + remaining_after_return.size());
+    // auto remaining_after_return_as_vector  = std::vector<double>(
+    //     remaining_after_return.data(), remaining_after_return.data() + remaining_after_return.size());
     for (Eigen::Index j = 0; j < results_to.size(); ++j) {
         if (remaining_after_return(j) < -1e-10) {
             auto compart        = j % num_comparts;
@@ -485,7 +489,7 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
                 if (diff < -1e-10) {
                     std::cout << "Sum of results_from is smaller than sum of migrated. Diff is "
                               << result_from_sum_group - result_migration_sum_group << "\n";
-                    std::cout << "diff overall: " << sum_from - sum_migrated << "\n";
+                    // std::cout << "diff overall: " << sum_from - sum_migrated << "\n";
                 }
 
                 results_from(j)         = results_from(j) + remaining_after_return(max_index);
@@ -518,63 +522,63 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
     results_to += migrated;
 
     // again as vectors
-    std::vector<double> migrated_as_vector_new(migrated.data(), migrated.data() + migrated.size());
-    std::vector<double> results_from_as_vector_new(results_from.data(), results_from.data() + results_from.size());
-    std::vector<double> results_to_as_vector_new(results_to.data(), results_to.data() + results_to.size());
+    // std::vector<double> migrated_as_vector_new(migrated.data(), migrated.data() + migrated.size());
+    // std::vector<double> results_from_as_vector_new(results_from.data(), results_from.data() + results_from.size());
+    // std::vector<double> results_to_as_vector_new(results_to.data(), results_to.data() + results_to.size());
 
-    // check if a entry of migrated_as_vector_new is negative
-    for (size_t i = 0; i < migrated_as_vector_new.size(); ++i) {
-        if (migrated_as_vector_new[i] < -1e-8) {
-            std::cout << "Negative entry in migrated_as_vector_new at index " << i << " with value "
-                      << migrated_as_vector_new[i] << "\n";
-        }
-    }
-    // same for results_from_as_vector_new and results_to_as_vector_new
-    for (size_t i = 0; i < results_from_as_vector_new.size(); ++i) {
-        if (results_from_as_vector_new[i] < -1e-8) {
-            std::cout << "Negative entry in results_from_as_vector_new at index " << i << "with value "
-                      << results_from_as_vector_new[i] << "\n";
-        }
-    }
-    for (size_t i = 0; i < results_to_as_vector_new.size(); ++i) {
-        if (results_to_as_vector_new[i] < -1e-8) {
-            std::cout << "Negative entry in results_to_as_vector_new at index " << i << "with value "
-                      << results_to_as_vector_new[i] << "\n";
-        }
-    }
+    // // check if a entry of migrated_as_vector_new is negative
+    // for (size_t i = 0; i < migrated_as_vector_new.size(); ++i) {
+    //     if (migrated_as_vector_new[i] < -1e-8) {
+    //         std::cout << "Negative entry in migrated_as_vector_new at index " << i << " with value "
+    //                   << migrated_as_vector_new[i] << "\n";
+    //     }
+    // }
+    // // same for results_from_as_vector_new and results_to_as_vector_new
+    // for (size_t i = 0; i < results_from_as_vector_new.size(); ++i) {
+    //     if (results_from_as_vector_new[i] < -1e-8) {
+    //         std::cout << "Negative entry in results_from_as_vector_new at index " << i << "with value "
+    //                   << results_from_as_vector_new[i] << "\n";
+    //     }
+    // }
+    // for (size_t i = 0; i < results_to_as_vector_new.size(); ++i) {
+    //     if (results_to_as_vector_new[i] < -1e-8) {
+    //         std::cout << "Negative entry in results_to_as_vector_new at index " << i << "with value "
+    //                   << results_to_as_vector_new[i] << "\n";
+    //     }
+    // }
 
-    // teste if sum_from und sum_to gleich sind
-    if (std::abs(sum_from - sum_to) > 1e-7) {
-        double sum_migrated_new = migrated.sum();
-        double sum_from_new     = results_from.sum();
-        double sum_to_new       = results_to.sum();
-        if (std::abs(sum_migrated - sum_migrated_new) > 1e-7) {
-            std::cout << "Sum of migration is not the same after migration. Difference: "
-                      << sum_migrated - sum_migrated_new << "\n";
-        }
-        if (std::abs(sum_from - sum_migrated - sum_from_new) > 1e-7) {
-            std::cout << "Sum of from is not the same after migration. Difference: " << sum_from - sum_from_new << "\n";
-        }
-        if (std::abs(sum_to + sum_migrated - sum_to_new) > 1e-7) {
-            std::cout << "Sum of to is not the same after migration. Difference: " << sum_to - sum_to_new << "\n";
-        }
-    }
+    // // teste if sum_from und sum_to gleich sind
+    // if (std::abs(sum_from - sum_to) > 1e-7) {
+    //     double sum_migrated_new = migrated.sum();
+    //     double sum_from_new     = results_from.sum();
+    //     double sum_to_new       = results_to.sum();
+    //     if (std::abs(sum_migrated - sum_migrated_new) > 1e-7) {
+    //         std::cout << "Sum of migration is not the same after migration. Difference: "
+    //                   << sum_migrated - sum_migrated_new << "\n";
+    //     }
+    //     if (std::abs(sum_from - sum_migrated - sum_from_new) > 1e-7) {
+    //         std::cout << "Sum of from is not the same after migration. Difference: " << sum_from - sum_from_new << "\n";
+    //     }
+    //     if (std::abs(sum_to + sum_migrated - sum_to_new) > 1e-7) {
+    //         std::cout << "Sum of to is not the same after migration. Difference: " << sum_to - sum_to_new << "\n";
+    //     }
+    // }
 
-    // check if the sum of the groups is the same
-    auto groups_from_new  = calc_sum_groupss(results_from);
-    auto groups_to_new    = calc_sum_groupss(results_to);
-    auto groups_moved_new = calc_sum_groupss(migrated);
+    // // check if the sum of the groups is the same
+    // auto groups_from_new  = calc_sum_groupss(results_from);
+    // auto groups_to_new    = calc_sum_groupss(results_to);
+    // auto groups_moved_new = calc_sum_groupss(migrated);
 
-    for (size_t i = 0; i < groups_from_new.size(); ++i) {
-        if (std::abs(groups_from[i] + groups_to[i] - groups_from_new[i] - groups_to_new[i]) > 1e-7) {
-            std::cout << "Sum of group " << i << " in from is not the same after migration. Difference: "
-                      << groups_from[i] + groups_to[i] - groups_from_new[i] - groups_to_new[i] << "\n";
-        }
-        if (std::abs(groups_moved[i] - groups_moved_new[i]) > 1e-7) {
-            std::cout << "Sum of group " << i << " in moved is not the same after migration. Difference: "
-                      << groups_moved[i] - groups_moved_new[i] << "\n";
-        }
-    }
+    // for (size_t i = 0; i < groups_from_new.size(); ++i) {
+    //     if (std::abs(groups_from[i] + groups_to[i] - groups_from_new[i] - groups_to_new[i]) > 1e-7) {
+    //         std::cout << "Sum of group " << i << " in from is not the same after migration. Difference: "
+    //                   << groups_from[i] + groups_to[i] - groups_from_new[i] - groups_to_new[i] << "\n";
+    //     }
+    //     if (std::abs(groups_moved[i] - groups_moved_new[i]) > 1e-7) {
+    //         std::cout << "Sum of group " << i << " in moved is not the same after migration. Difference: "
+    //                   << groups_moved[i] - groups_moved_new[i] << "\n";
+    //     }
+    // }
 
 } // namespace mio
 
