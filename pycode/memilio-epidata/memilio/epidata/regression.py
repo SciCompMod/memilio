@@ -98,7 +98,8 @@ def compute_R_eff(out_folder=dd.defaultDict['out_folder']):
     # TODO: to dicuss if this is what we want
     df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
     df_r_eff.reset_index(inplace=True, drop=True)
-    df_r_eff = mdfs.extract_subframe_based_on_dates(df_r_eff, date(2020,3,1), date(2022,2,15))
+    df_r_eff = mdfs.extract_subframe_based_on_dates(
+        df_r_eff, date(2020, 3, 1), date(2022, 2, 15))
 
     # get number of days and counties where incidence < 1.0
     # only useful results if we compute R for all counties
@@ -112,24 +113,24 @@ def compute_R_eff(out_folder=dd.defaultDict['out_folder']):
     return df_r_eff
 
 
-def regression_model(out_folder=dd.defaultDict['out_folder']):
-    
+def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
+
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
     filepath = os.path.join(
         directory, 'germany_counties_npi_maincat.csv')
-    
+
     if not os.path.exists(filepath):
         df_npis = gnd.get_npi_data(start_date=date(2020, 1, 1),
                                    fine_resolution=0, file_format='csv')
     else:
         df_npis = pd.read_csv(filepath)
     df_npis = df_npis[df_npis.ID_County == 1001]
-        
+
     filepath = os.path.join(
         directory, "r_eff_county1001.json")
-    
+
     if not os.path.exists(filepath):
         df_r = compute_R_eff()
     else:
@@ -137,32 +138,105 @@ def regression_model(out_folder=dd.defaultDict['out_folder']):
 
     # remove dates from df_npis which are not in df_r
     df_npis = df_npis[df_npis['Date'].astype(str).isin(df_r.Date.astype(str))]
-    
+
     Y = df_r['R_eff']
-    columns = ['M01a', 'M01b', 'M02a', 'M02b',
-       'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
-       'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
     X = np.array([df_npis[column] for column in columns]).T
     X = sm.add_constant(X)
     plt.plot(df_r.Date, df_r.R_eff, marker='o')
 
     model = sm.GLM(Y, X, family=sm.families.Gamma(
         sm.families.links.Log()))
-    
-    results = model.fit()
-    print(results.summary())
-    fig = sm.graphics.plot_partregress_grid(results)
-    plt.show()
 
+    # model = sm.OLS(Y, X)
+
+    results = model.fit()
+    # print(results.summary())
+
+    # plot partial regression plot
+    # fig = sm.graphics.plot_partregress_grid(results)
+    # plt.show()
 
     # run simple regression model where log(R) depends on NPIs only
     # use fine_resolution=0 in NPI df for simplicity for now
 
-    return
+    # use GLMResults class to store results of fitting
+    # see https://www.statsmodels.org/devel/dev/generated/statsmodels.base.model.LikelihoodModelResults.html#statsmodels.base.model.LikelihoodModelResults
+    # and https://www.statsmodels.org/devel/generated/statsmodels.genmod.generalized_linear_model.GLMResults.html#statsmodels.genmod.generalized_linear_model.GLMResults
+
+    # # TODO: understand what these functions do, especially in comparison with the above fitting
+    # model = sm.genmod.generalized_linear_model.GLM(Y, X)
+    # results = sm.genmod.generalized_linear_model.GLM.fit(model)
+
+    # # initialize with dummy parameters, it needs to be checked how we obtain these parameters
+    # sigma_squared = 1
+    # glmres = sm.genmod.generalized_linear_model.GLMResults(
+    #     model, results.params, (np.dot(X.T, X))**-1, sigma_squared)
+
+    # # GLMResults class allows to compute Akaike information criterion directly
+    # aic = glmres.aic
+
+    return results
+
+# compute Akaike informatio criterion based on the results of the fitting
+
+
+def compute_aic(results):
+    # do this by hand for now, should be possible to do directly with statsmodels
+    # https://www.statsmodels.org/stable/generated/statsmodels.regression.linear_model.OLSResults.aic.html
+    aic = -2*results.llf + 2*(results.df_model + 1)
+    return aic
+
+
+# at the moment: remove one NPI from original set of NPIs and check which removed NPI leads to
+# the minimal AIC
+def backward_selection():
+
+    # initial set of NPIs
+    columns_init = ['M01a', 'M01b', 'M02a', 'M02b',
+                    'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
+                    'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
+
+    # list of NPIs which we want to use to exclude one NPI after another
+    columns = columns_init.copy()
+
+    # do regression with all NPIs
+    results = regression_model(columns_init)
+
+    # compute AIC as reference for later
+    aic_min = compute_aic(results)
+    print('AIC init: ', aic_min)
+
+    npi_removed = ''
+
+    for npi in columns_init:
+        # remove one NPI from columns_init
+        print(npi)
+        columns.remove(npi)
+
+        # do regression and compute AIC
+        results = regression_model(columns)
+        aic = compute_aic(results)
+        print('AIC: ', aic)
+
+        # check if we reached a lower AIC than before
+        if aic < aic_min:
+            aic_min = aic
+            npi_removed = npi
+            print('Reached new minimum')
+
+        # append NPI so that we can remove the next NPI from the original set of NPIs
+        columns.append(npi)
+
+    # remove that NPI where its removal led to lowest AIC
+    columns_init.remove(npi_removed)
+    columns = columns_init
+    print('Removed ', npi_removed)
+
+    print(0)
 
 
 def main():
-    regression_model()
+    backward_selection()
 
 
 if __name__ == "__main__":
