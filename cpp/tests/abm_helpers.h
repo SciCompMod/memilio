@@ -97,29 +97,16 @@ struct ScopedMockDistribution {
 /**
  * @brief Create a Person without a World object. Intended for simple use in tests.
 */
-<<<<<<< HEAD
-mio::abm::Person<double> make_test_person(mio::abm::Location<double>& location,
-                                  mio::abm::AgeGroup age_group               = mio::abm::AgeGroup::Age15to34,
-                                  mio::abm::InfectionState infection_state   = mio::abm::InfectionState::Susceptible,
-                                  mio::abm::TimePoint t                      = mio::abm::TimePoint(0),
-                                  mio::abm::GlobalInfectionParameters<double> params = {});
-=======
-mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
+mio::abm::Person<double> make_test_person(mio::abm::Location<double>& location, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
-                                  mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups));
->>>>>>> upstream/main
+                                  mio::abm::Parameters<double> params              = mio::abm::Parameters(num_age_groups));
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.
 */
-<<<<<<< HEAD
 mio::abm::Person<double>& add_test_person(mio::abm::World<double>& world, mio::abm::LocationId loc_id,
-                                  mio::abm::AgeGroup age                   = mio::abm::AgeGroup::Age15to34,
-=======
-mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
                                   mio::AgeGroup age                        = age_group_15_to_34,
->>>>>>> upstream/main
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 
