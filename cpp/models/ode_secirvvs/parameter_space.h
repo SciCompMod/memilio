@@ -43,7 +43,7 @@ void draw_sample_demographics(Model<FP>& model)
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
     model.parameters.template get<TestAndTraceCapacity<FP>>().draw_sample();
 
-    for (auto i = AgeGroup(0); i < model.parameters.template get_num_groups(); i++) {
+    for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         double group_total = model.populations.get_group_total(i);
 
         //sample initial compartments (with exceptions)
@@ -96,7 +96,7 @@ void draw_sample_infection(Model<FP>& model)
     model.parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[AgeGroup(0)].draw_sample();
     model.parameters.template get<ReducTimeInfectedMild<FP>>()[AgeGroup(0)].draw_sample();
 
-    for (auto i = AgeGroup(0); i < model.parameters.template get_num_groups(); i++) {
+    for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
         model.parameters.template get<IncubationTime<FP>>()[i] = model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
         model.parameters.template get<SerialInterval<FP>>()[i] = model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
@@ -165,9 +165,9 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
     draw_sample_infection(shared_params_model);
-    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns>();
+    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns<FP>>();
     shared_contacts.draw_sample_dampings();
-    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
+    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
     shared_dynamic_npis.draw_sample();
 
     FP delta_fac;

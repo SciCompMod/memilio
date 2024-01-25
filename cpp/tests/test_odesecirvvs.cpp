@@ -141,23 +141,13 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
     model.parameters.get<mio::osecirvvs::DeathsPerCritical<double>>()[mio::AgeGroup(0)]                = 0.3;
 
     // TODO: Reduction not possible like this, division by zero!
-<<<<<<< HEAD
-    model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity<double>>()[mio::AgeGroup(0)]                     = 0;
-    model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity<double>>()[mio::AgeGroup(0)]                    = 0;
-    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>()[mio::AgeGroup(0)]            = 0;
+    model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity<double>>()[mio::AgeGroup(0)]                     = 1.0;
+    model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity<double>>()[mio::AgeGroup(0)]                    = 1.0;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>()[mio::AgeGroup(0)]            = 1.0;
     model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>()[mio::AgeGroup(0)]           = 0;
     model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[mio::AgeGroup(0)]  = 0;
     model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[mio::AgeGroup(0)] = 0;
     model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)]                           = 1;
-=======
-    model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity>()[mio::AgeGroup(0)]                     = 1.0;
-    model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity>()[mio::AgeGroup(0)]                    = 1.0;
-    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>()[mio::AgeGroup(0)]            = 1.0;
-    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[mio::AgeGroup(0)]           = 0;
-    model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[mio::AgeGroup(0)]  = 0;
-    model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[mio::AgeGroup(0)] = 0;
-    model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[mio::AgeGroup(0)]                           = 1;
->>>>>>> upstream/main
 
     model.parameters.get<mio::osecirvvs::Seasonality<double>>() = 0.2;
 
@@ -492,7 +482,7 @@ TEST(TestOdeSECIRVVS, checkPopulationConservation)
     auto model          = make_model(num_age_groups);
     auto num_days       = 30;
 
-    auto result = mio::osecirvvs::simulate(0, num_days, 0.1, model);
+    auto result = mio::osecirvvs::simulate<double>(0, num_days, 0.1, model);
 
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {
@@ -507,7 +497,7 @@ TEST(TestOdeSECIRVVS, checkPopulationConservation)
 TEST(TestOdeSECIRVVS, read_confirmed_cases)
 {
     auto num_age_groups = 6; //reading data requires RKI data age groups
-    auto model          = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
+    auto model          = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
     std::vector<int> region{1002};
     auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
     std::vector<std::vector<int>> t_Exposed(1);
@@ -538,24 +528,24 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     for (size_t group = 0; group < static_cast<size_t>(num_age_groups); group++) {
 
         t_InfectedNoSymptoms[0].push_back(static_cast<int>(std::round(
-            2 * (model[0].parameters.template get<mio::osecirvvs::IncubationTime>()[(mio::AgeGroup)group] -
-                 model[0].parameters.template get<mio::osecirvvs::SerialInterval>()[(mio::AgeGroup)group]))));
+            2 * (model[0].parameters.template get<mio::osecirvvs::IncubationTime<double>>()[(mio::AgeGroup)group] -
+                 model[0].parameters.template get<mio::osecirvvs::SerialInterval<double>>()[(mio::AgeGroup)group]))));
         t_Exposed[0].push_back(static_cast<int>(
-            std::round(2 * model[0].parameters.template get<mio::osecirvvs::SerialInterval>()[(mio::AgeGroup)group] -
-                       model[0].parameters.template get<mio::osecirvvs::IncubationTime>()[(mio::AgeGroup)group])));
+            std::round(2 * model[0].parameters.template get<mio::osecirvvs::SerialInterval<double>>()[(mio::AgeGroup)group] -
+                       model[0].parameters.template get<mio::osecirvvs::IncubationTime<double>>()[(mio::AgeGroup)group])));
         t_InfectedSymptoms[0].push_back(static_cast<int>(std::round(
-            model[0].parameters.template get<mio::osecirvvs::TimeInfectedSymptoms>()[(mio::AgeGroup)group])));
+            model[0].parameters.template get<mio::osecirvvs::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)group])));
         t_InfectedSevere[0].push_back(static_cast<int>(
-            std::round(model[0].parameters.template get<mio::osecirvvs::TimeInfectedSevere>()[(mio::AgeGroup)group])));
+            std::round(model[0].parameters.template get<mio::osecirvvs::TimeInfectedSevere<double>>()[(mio::AgeGroup)group])));
         t_InfectedCritical[0].push_back(static_cast<int>(std::round(
-            model[0].parameters.template get<mio::osecirvvs::TimeInfectedCritical>()[(mio::AgeGroup)group])));
+            model[0].parameters.template get<mio::osecirvvs::TimeInfectedCritical<double>>()[(mio::AgeGroup)group])));
 
         mu_C_R[0].push_back(
-            model[0].parameters.template get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)group]);
+            model[0].parameters.template get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>()[(mio::AgeGroup)group]);
         mu_I_H[0].push_back(
-            model[0].parameters.template get<mio::osecirvvs::SeverePerInfectedSymptoms>()[(mio::AgeGroup)group]);
+            model[0].parameters.template get<mio::osecirvvs::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)group]);
         mu_H_U[0].push_back(
-            model[0].parameters.template get<mio::osecirvvs::CriticalPerSevere>()[(mio::AgeGroup)group]);
+            model[0].parameters.template get<mio::osecirvvs::CriticalPerSevere<double>>()[(mio::AgeGroup)group]);
     }
 
     auto read = mio::osecirvvs::details::read_confirmed_cases_data(
@@ -796,7 +786,7 @@ TEST(TestOdeSECIRVVS, run_simulation)
     auto model          = make_model(num_age_groups);
     auto num_days       = 30;
 
-    auto result = mio::osecirvvs::simulate(0, num_days, 0.1, model);
+    auto result = mio::osecirvvs::simulate<double>(0, num_days, 0.1, model);
     result = mio::interpolate_simulation_result(result); // Reduce influence of time steps chosen by the integrator.
 
     // Load result of a previous run; only tests stability, not correctness.
@@ -876,7 +866,7 @@ TEST(TestOdeSECIRVVS, get_migration_factors)
     auto sim            = mio::osecirvvs::Simulation<>(model);
     auto y              = sim.get_result()[0];
 
-    auto migration_factors = get_migration_factors(sim, 0.0, y);
+    auto migration_factors = mio::osecirvvs::get_migration_factors<double>(sim, 0.0, y);
 
     auto expected_values = (Eigen::VectorXd(Eigen::Index(mio::osecirvvs::InfectionState::Count) * num_age_groups) << 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -898,7 +888,7 @@ TEST(TestOdeSECIRVVS, test_commuters)
     auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
     auto migrated_tested                            = migrated.eval();
 
-    test_commuters(sim, migrated_tested, 0.0);
+    mio::osecirvvs::test_commuters<double>(sim, migrated_tested, 0.0);
 
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
                 migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
