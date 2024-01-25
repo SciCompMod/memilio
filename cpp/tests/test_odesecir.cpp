@@ -68,7 +68,7 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 nb_total_t0);
 
-<<<<<<< HEAD
+
     model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[(mio::AgeGroup)0]  = 0.05;
     model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[(mio::AgeGroup)0]    = 0.7;
     model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]    = 0.09;
@@ -76,19 +76,9 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[(mio::AgeGroup)0] = 0.45;
     model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>()                                = 35;
     model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)0]         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]                 = 0.25;
+    model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]                 = 0.3;
     model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[(mio::AgeGroup)0]                 = 0.3;
-=======
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0]  = 0.05;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0] = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>()                                = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                 = 0.3;
-    model.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]                 = 0.3;
->>>>>>> upstream/main
+
 
     model.apply_constraints();
 
@@ -586,23 +576,15 @@ TEST(TestOdeSecir, testModelConstraints)
 
     mio::osecir::Model<double> model(1);
 
-<<<<<<< HEAD
     model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]       = 5.2;
     model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = 5;
-    model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = 4.2;
+    model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = 3.9;
     model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 10.;
     model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 8.;
-=======
-    model.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]       = 5.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = 5;
-    model.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]       = 3.9;
-    model.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]   = 10.;
-    model.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 8.;
->>>>>>> upstream/main
 
-    model.parameters.get<mio::osecir::Seasonality>()          = 0.0;
-    model.parameters.get<mio::osecir::ICUCapacity>()          = 100.0;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 10.0;
+    model.parameters.get<mio::osecir::Seasonality<double>>()          = 0.0;
+    model.parameters.get<mio::osecir::ICUCapacity<double>>()          = 100.0;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 10.0;
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = nb_exp_t0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
@@ -614,24 +596,16 @@ TEST(TestOdeSecir, testModelConstraints)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 nb_total_t0);
 
-<<<<<<< HEAD
+
     model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[(mio::AgeGroup)0] = 0.05;
     model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[(mio::AgeGroup)0]   = 1;
     model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]   = 0.09;
+    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()                  = 0.85;
     model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[(mio::AgeGroup)0]   = 0.25;
     model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)0]        = 0.2;
     model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]                = 0.25;
     model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[(mio::AgeGroup)0]                = 0.3;
-=======
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 0.05;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]   = 0.09;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()                  = 0.85;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 0.25;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]                = 0.3;
->>>>>>> upstream/main
+
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -670,14 +644,10 @@ TEST(TestOdeSecir, testModelConstraints)
     // temporary test for random variables
 
     set_params_distributions_normal(model, t0, tmax, 0.2);
-    model.parameters.set<mio::osecir::Seasonality>(mio::UncertainValue(0.0));
-    model.parameters.set<mio::osecir::ICUCapacity>(mio::UncertainValue(8000));
+    model.parameters.set<mio::osecir::Seasonality<double>>(mio::UncertainValue(0.0));
+    model.parameters.set<mio::osecir::ICUCapacity<double>>(mio::UncertainValue(8000));
     for (size_t j = 0; j < 10; j++) {
         draw_sample(model);
-<<<<<<< HEAD
-        model.parameters.set<mio::osecir::ICUCapacity<double>>(8000);
-=======
->>>>>>> upstream/main
         secihurd = simulate(t0, tmax, dt, model);
         for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
             EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
@@ -761,11 +731,11 @@ TEST(Secir, get_reproduction_number)
     const size_t num_groups = 3;
     mio::osecir::Model model((int)num_groups);
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 10));
 
     model.parameters.set<mio::osecir::StartDay>(60);
-    model.parameters.set<mio::osecir::Seasonality>(0.2);
+    model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
     //total population of 10.000
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}]                 = 3000;
@@ -802,23 +772,23 @@ TEST(Secir, get_reproduction_number)
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Dead}]                        = 0;
 
     for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_groups; i++) {
-        model.parameters.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.8;
-        model.parameters.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]   = 9.5;
-        model.parameters.get<mio::osecir::TimeInfectedCritical>()[i] = 7.1;
+        model.parameters.get<mio::osecir::IncubationTime<double>>()[i]       = 5.2;
+        model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[i] = 5.8;
+        model.parameters.get<mio::osecir::SerialInterval<double>>()[i]       = 4.2;
+        model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[i]   = 9.5;
+        model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[i] = 7.1;
 
-        model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i]  = 0.05;
-        model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]    = 0.7;
-        model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
-        model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
-        model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
-        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
-        model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
-        model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+        model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
+        model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
+        model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.09;
+        model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.25;
+        model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.45;
+        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
+        model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.25;
+        model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
     }
-    model.parameters.get<mio::osecir::ICUCapacity>()          = std::numeric_limits<double>::max();
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<double>::max();
+    model.parameters.get<mio::osecir::ICUCapacity<double>>()          = std::numeric_limits<double>::max();
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = std::numeric_limits<double>::max();
 
     mio::TimeSeries<ScalarType> time_series1((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_0((int)mio::osecir::InfectionState::Count * num_groups);
@@ -881,16 +851,16 @@ TEST(Secir, get_reproduction_number)
 
     //Test handling non-invertibility of V for certain values
     mio::TimeSeries<ScalarType>::Vector result_7((int)mio::osecir::InfectionState::Count * num_groups);
-    double icu_occupancy = 0.95 * model.parameters.get<mio::osecir::ICUCapacity>();
-    double severe1       = model.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0] /
-                     (model.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] * 5 *
-                      model.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)1] * 3.141592653589793 /
-                      (model.parameters.get<mio::osecir::ICUCapacity>()) *
-                      std::sin(3.141592653589793 / (0.1 * model.parameters.get<mio::osecir::ICUCapacity>()) *
-                               (icu_occupancy - 0.9 * model.parameters.get<mio::osecir::ICUCapacity>())));
+    double icu_occupancy = 0.95 * model.parameters.get<mio::osecir::ICUCapacity<double>>();
+    double severe1       = model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0] /
+                     (model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] * 5 *
+                      model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)1] * 3.141592653589793 /
+                      (model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
+                      std::sin(3.141592653589793 / (0.1 * model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
+                               (icu_occupancy - 0.9 * model.parameters.get<mio::osecir::ICUCapacity<double>>())));
 
     mio::TimeSeries<ScalarType> time_series2((int)mio::osecir::InfectionState::Count * num_groups);
-    result_7 << 1000, 0, 0, 0, 0, 0, severe1, 0.95 * model.parameters.get<mio::osecir::ICUCapacity>(), 0, 0, 1000, 0, 0,
+    result_7 << 1000, 0, 0, 0, 0, 0, severe1, 0.95 * model.parameters.get<mio::osecir::ICUCapacity<double>>(), 0, 0, 1000, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0;
     time_series2.add_time_point(0.0, result_7);
     sim.get_result() = time_series2;
@@ -899,13 +869,13 @@ TEST(Secir, get_reproduction_number)
     //Test in the case of limited test-and-trace capacity:
 
     //Test for small test and trace
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 0;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 0;
     mio::osecir::Simulation<> sim2(model, 0.0);
     sim2.get_result() = time_series1;
     EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim2).value(), 5.1941804908632792, 1e-12);
 
     // Test special domain for test-and-trace capacity/requirement:
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>() = 1;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 1;
     mio::osecir::Simulation<> sim3(model, 0.0);
     mio::TimeSeries<ScalarType> time_series3((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_8((int)mio::osecir::InfectionState::Count * num_groups);
@@ -937,21 +907,21 @@ TEST(Secir, get_migration_factors)
     mio::osecir::Simulation<> sim(model, 0.0);
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 45.;
-        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = mio::osecir::get_migration_factors<double>(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::osecir::InfectionState::Count)).eval();
         cmp[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] = beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 45. / 5.;
-        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = mio::osecir::get_migration_factors<double>(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::osecir::InfectionState::Count)).eval();
         cmp[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] = max_beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 20.;
-        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = mio::osecir::get_migration_factors<double>(sim, 0.0, sim.get_result().get_last_value());
         ASSERT_GT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], beta);
         ASSERT_LT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], max_beta);
     }
@@ -970,7 +940,7 @@ TEST(Secir, test_commuters)
     auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
     auto migrated_tested                            = migrated.eval();
 
-    test_commuters(sim, migrated_tested, 0.0);
+    mio::osecir::test_commuters<double>(sim, migrated_tested, 0.0);
 
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)],
                 migrated[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] * non_detection_factor, 1e-5);
@@ -1123,8 +1093,7 @@ TEST(Secir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[indx_agegroup], 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
-<<<<<<< HEAD
-=======
+
 
 #if defined(MEMILIO_HAS_JSONCPP)
 
@@ -1144,4 +1113,3 @@ TEST(Secir, read_population_data_one_age_group)
 }
 
 #endif
->>>>>>> upstream/main
