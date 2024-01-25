@@ -457,8 +457,8 @@ TEST(TestOdeSECIRVVS, draw_sample)
 
     // special cases
     ASSERT_NEAR(populations0.get_total(), 1000 * num_age_groups, 1e-2);
-    ASSERT_TRUE((parameters0.get<mio::osecirvvs::BaseInfectiousnessB161<double>>().array(),
-                 parameters0.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>().array() * 1.6) //using high variant
+    ASSERT_TRUE((parameters0.get<mio::osecirvvs::InfectiousnessNewVariant<double>>().array(),
+                 parameters0.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>().array() * 1.0) //using high variant
                     .all());
 
     // spot check for parameters that should be equal or different between nodes
@@ -1059,11 +1059,7 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild<double>>(1);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117<double>>(-0.5);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117<double>>(0.5);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161<double>>(-4);
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     mio::set_log_level(mio::LogLevel::warn);
@@ -1179,13 +1175,56 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[indx_agegroup], 1);
 
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117<double>>(-0.5);
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(-4);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB117<double>>()[indx_agegroup], 0);
-
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161<double>>(-4);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB161<double>>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::InfectiousnessNewVariant<double>>()[indx_agegroup], 1);
 
     mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRVVS, apply_variant_function)
+{
+    auto model = mio::osecirvvs::Model(1);
+    model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(0.2);
+
+    model.parameters.set<mio::osecirvvs::StartDay>(0);
+    model.parameters.set<mio::osecirvvs::StartDayNewVariant>(10);
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(2.0);
+    auto sim = mio::osecirvvs::Simulation<>(model);
+
+    // test that the transmission probability is not changed due to calling the advance function
+    sim.advance(0.01);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
+                0.2, 1e-10);
+
+    // test if the transmission probability is set to the correct value after applying the variant.
+    // The referece values are calculated using equation (36) in doi.org/10.1371/journal.pcbi.1010054
+    auto base_infectiousness = sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>();
+
+    // however, the parameter should stay unchanged if the new variant is not present in the population.
+    sim.apply_variant(0, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
+                0.2, 1e-10);
+
+    sim.apply_variant(9, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
+                0.2, 1e-10);
+
+    sim.apply_variant(10, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
+                0.99 * base_infectiousness[mio::AgeGroup(0)] +
+                    0.01 * base_infectiousness[mio::AgeGroup(0)] *
+                        sim.get_model().parameters.get<mio::osecirvvs::InfectiousnessNewVariant<double>>()[mio::AgeGroup(0)],
+                1e-10);
+
+    sim.apply_variant(45, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
+                0.68 * base_infectiousness[mio::AgeGroup(0)] +
+                    0.32 * base_infectiousness[mio::AgeGroup(0)] *
+                        sim.get_model().parameters.get<mio::osecirvvs::InfectiousnessNewVariant<double>>()[mio::AgeGroup(0)],
+                1e-10);
+
+    sim.apply_variant(1000, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
+                0.4, 1e-10);
 }

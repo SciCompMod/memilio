@@ -93,10 +93,10 @@ public:
 
             // R0t is the effective reproduction number at time t
             auto R0t1 =
-                parameters.template get<ContactFrequency<FP>>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
+                parameters.template get<ContactFrequency<double>>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
                 parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
             auto R0t2 =
-                parameters.template get<ContactFrequency<FP>>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
+                parameters.template get<ContactFrequency<double>>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
                 parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
 
             m_result.get_last_value() =
@@ -106,7 +106,6 @@ public:
         }
         return m_result;
     }
-
 
     /**
         * @brief Calculate the distribution of the population in E, I and, R based on the calculated values for S.
@@ -131,37 +130,6 @@ public:
         return m_result_SEIR;
     }
 
-    /**
-        * @brief Displays the results of the simulation.
-        *
-        * You can either output only the simulation times with the simulated values for S, or additionally the 
-        * calculated numbers for E, I and R. In any case, the function simulate() should have been called before. 
-        * If the values for E, I and R are to be displayed, the function calculate_EIR() must be executed beforehand.
-        *
-        * @param[in] calculated_SEIR If true, the calculated numbers for E, I and R are displayed 
-        *    in addition to the results for S.
-        */
-    void print_result(bool calculated_SEIR = false) const
-    {
-        if (calculated_SEIR) {
-            std::cout << "# time  |  S  |  E  |  I  |  R" << std::endl;
-            Eigen::Index num_points = m_result_SEIR.get_num_time_points();
-            for (Eigen::Index i = 0; i < num_points; ++i) {
-                printf(" %.9f %.9f %.9f %.9f %.9f\n", m_result_SEIR.get_time(i),
-                       m_result_SEIR[i][Eigen::Index(InfectionState::S)], m_result_SEIR[i][Eigen::Index(InfectionState::E)],
-                       m_result_SEIR[i][Eigen::Index(InfectionState::I)],
-                       m_result_SEIR[i][Eigen::Index(InfectionState::R)]);
-            }
-        }
-        else {
-            std::cout << "# time  |  number of susceptibles" << std::endl;
-            Eigen::Index num_points = m_result.get_num_time_points();
-            for (Eigen::Index i = 0; i < num_points; ++i) {
-                std::cout << m_result.get_time(i) << "  |  " << m_result[i][Eigen::Index(InfectionState::S)] << std::endl;
-            }
-        }
-    }
-
     // Used Parameters for the simulation.
     Pa parameters{};
 
@@ -184,6 +152,7 @@ private:
         }
         return 0.0;
     }
+
 
     /**
         * @brief Numerical differentiation of one compartment using a central difference quotient.
@@ -221,6 +190,7 @@ private:
         }
         return res;
     }
+
 
     // TimeSeries containing points of time and the corresponding number of susceptibles.
     TimeSeries<double> m_result;

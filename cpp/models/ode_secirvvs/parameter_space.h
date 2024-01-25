@@ -170,7 +170,7 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
     shared_dynamic_npis.draw_sample();
 
-    FP delta_fac;
+    double delta_fac;
     if (variant_high) {
         delta_fac = 1.6;
     }
@@ -180,10 +180,7 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
 
     //infectiousness of virus variants is not sampled independently but depend on base infectiousness
     for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-        shared_params_model.parameters.template get<BaseInfectiousnessB117<FP>>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[i];
-        shared_params_model.parameters.template get<BaseInfectiousnessB161<FP>>()[i] =
-            shared_params_model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[i] * delta_fac;
+        shared_params_model.parameters.template get<InfectiousnessNewVariant<FP>>()[i] = delta_fac;
     }
 
     for (auto& params_node : graph.nodes()) {

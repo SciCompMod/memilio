@@ -67,7 +67,6 @@ LocationType random_migration(typename Person<FP>::RandomNumberGenerator& rng, c
     return current_loc;
 }
 
-
 /**
  * @brief School age children go to school in the morning and return later in the day.
  */
@@ -209,6 +208,7 @@ LocationType go_to_icu(typename Person<FP>::RandomNumberGenerator& /*rng*/, cons
     return current_loc;
 }
 
+
 /**
  * @brief Person%s in the hospital/icu return home when they recover.
  */
@@ -237,7 +237,6 @@ LocationType get_buried(typename Person<FP>::RandomNumberGenerator& /*rng*/, con
     }
     return current_loc;
 }
-
 /**@}*/
 
 } // namespace abm

@@ -525,6 +525,7 @@ double get_infections_relative(const Simulation<FP,Base>& model, FP t,
                                const Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1> >& y);
 /**
  * specialization of compartment model simulation for the SECIRVVS model.
+ * @tparam FP floating point type, e.g., double.
  * @tparam BaseT simulation type, default mio::Simulation. For testing purposes only!
  */
 template <typename FP, class BaseT>
@@ -543,21 +544,33 @@ public:
     {
     }
 
-    void apply_b161(double t)
+    /**
+    * @brief Applies the effect of a new variant of a disease to the transmission probability of the model.
+    * 
+    * This function adjusts the transmission probability of the disease for each age group based on the share of the new variant.
+    * The share of the new variant is calculated based on the time `t` and the start day of the new variant.
+    * The transmission probability is then updated for each age group in the model.
+    * 
+    * Based on Equation (35) and (36) in doi.org/10.1371/journal.pcbi.1010054
+    * 
+    * @param [in] t The current time.
+    * @param [in] base_infectiousness The base infectiousness of the old variant for each age group.
+    */
+    void apply_variant(const double t, const CustomIndexArray<UncertainValue<FP>, AgeGroup> base_infectiousness)
     {
+        auto start_day             = this->get_model().parameters.template get<StartDay>();
+        auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
-        auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-        // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-        size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; ++i) {
-            double new_transmission =
-                (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseInfectiousnessB117<FP>>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessB161<FP>>()[(AgeGroup)i];
-            this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] =
-                new_transmission;
+        if (start_day + t >= start_day_new_variant - 1e-10) {
+            const double days_variant      = t - (start_day_new_variant - start_day);
+            const double share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
+            const auto num_groups          = this->get_model().parameters.get_num_groups();
+            for (auto i = AgeGroup(0); i < num_groups; ++i) {
+                double new_transmission = (1 - share_new_variant) * base_infectiousness[i] +
+                                          share_new_variant * base_infectiousness[i] *
+                                              this->get_model().parameters.template get<InfectiousnessNewVariant<FP>>()[i];
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>()[i] = new_transmission;
+            }
         }
     }
 
@@ -622,6 +635,11 @@ public:
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
+        // const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
+
+        // in the apply_variant function, we adjust the TransmissionProbabilityOnContact parameter. We need to store
+        // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
+        auto base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>();
 
         double delay_lockdown;
         auto t        = BaseT::get_result().get_last_time();
@@ -635,12 +653,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_b161(t);
+                this->apply_variant(t, base_infectiousness);
             }
             BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_b161(t);
+                this->apply_variant(t, base_infectiousness);
             }
 
             if (t > 0) {
@@ -679,6 +697,10 @@ public:
                 m_t_last_npi_check = t;
             }
         }
+        // reset TransmissionProbabilityOnContact. This is important for the graph simulation where the advance
+        // function is called multiple times for the same model.
+        this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>() = base_infectiousness;
+
         return this->get_result().get_last_value();
     }
 
@@ -724,6 +746,7 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
 {
     return mio::simulate_flows<Model, FP, Simulation<mio::FlowSimulation<Model<FP>>>>(t0, tmax, dt, model, integrator);
 }
+
 
 //see declaration above.
 template <class Base>

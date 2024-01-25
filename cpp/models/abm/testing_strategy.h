@@ -97,6 +97,7 @@ public:
                (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
     }
 
+
 private:
     std::bitset<MAX_NUM_AGE_GROUPS> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::bitset<(size_t)InfectionState::Count>
@@ -146,7 +147,6 @@ public:
         //To be adjusted and also TestType should be static.
     }
 
-
     /**
      * @brief Get the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
@@ -155,7 +155,6 @@ public:
     {
         return m_is_active;
     }
-
     /**
      * @brief Checks if the scheme is active at a given time and updates activity status.
      * @param[in] t TimePoint to be updated at.
@@ -272,6 +271,7 @@ public:
         }
     }
 
+
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
      * A TestingScheme applies to all Location of the same type is store in 
@@ -289,7 +289,7 @@ public:
      * changes the activity status for each TestingScheme accordingly.
      * @param t TimePoint to check the activity status of each TestingScheme.
      */
-    void update_activity_status(const TimePoint t)
+    void update_activity_status(TimePoint t)
     {
         for (auto& [_, testing_schemes] : m_location_to_schemes_map) {
             for (auto& scheme : testing_schemes) {
@@ -334,7 +334,6 @@ public:
         }
         return true;
     }
-
 private:
     std::vector<std::pair<LocationId, std::vector<TestingScheme<FP> > > >
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.

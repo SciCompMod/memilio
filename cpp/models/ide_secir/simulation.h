@@ -154,45 +154,6 @@ public:
         return m_dt;
     }
 
-    /**
-     * @brief Print the transition part of the simulation result.
-     * 
-     * The TimeSeries m_transitions with initial values used for the simulation and calculated transitions by the 
-     * simulation are printed. 
-     */
-    void print_transitions() const
-    {
-        // print transitions after simulation
-        std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  C -> R  |  I -> H  |  I -> R  |  H -> U  |  H -> R  |  "
-                     "U -> D  |  U -> R  "
-                  << std::endl;
-        for (Eigen::Index i = 0; i < m_model->m_transitions.get_num_time_points(); ++i) {
-            std::cout << m_model->m_transitions.get_time(i);
-            for (Eigen::Index j = 0; j < m_model->m_transitions.get_num_elements(); ++j) {
-                std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_transitions[i][j];
-            }
-            std::cout << "\n" << std::endl;
-        }
-    }
-
-    /**
-     * @brief Print the simulated numbers of individuals in each compartment for each time step.
-     * 
-     * The TimeSeries m_populations with simulated numbers of individuals in each compartment for each time step are printed. 
-     */
-    void print_compartments() const
-    {
-        // print compartments after simulation
-        std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
-        for (Eigen::Index i = 0; i < m_model->m_populations.get_num_time_points(); ++i) {
-            std::cout << m_model->m_populations.get_time(i);
-            for (Eigen::Index j = 0; j < m_model->m_populations.get_num_elements(); ++j) {
-                std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_populations[i][j];
-            }
-            std::cout << "\n" << std::endl;
-        }
-    }
-
 private:
     std::unique_ptr<Model<FP>> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_t0; ///< Start time used for simulation.
@@ -208,10 +169,10 @@ private:
  * @return a TimeSeries to represent the final simulation result
  */
 template<typename FP=double>
-TimeSeries<ScalarType> simulate(FP t0, FP tmax, FP dt, Model<FP> const& model)
+TimeSeries<ScalarType> simulate(FP t0, FP tmax, FP dt, Model<FP> const& m_model)
 {
-    model.check_constraints(dt);
-    Simulation<FP> sim(model, t0, dt);
+    m_model.check_constraints(dt);
+    Simulation sim(m_model, t0, dt);
     sim.advance(tmax);
     return sim.get_result();
 }

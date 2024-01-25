@@ -22,6 +22,7 @@
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h" // IWYU pragma: keep
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/parameters.h"
@@ -218,7 +219,7 @@ public:
 };
 
 //forward declaration, see below.
-template <typename FP=double, class Base = mio::Simulation<Model<FP>>>
+template <typename FP=double, class BaseT = mio::Simulation<Model<FP>>>
 class Simulation;
 
 /**
@@ -236,10 +237,10 @@ double get_infections_relative(const Simulation<FP,Base>& model, FP t,
 /**
  * specialization of compartment model simulation for secir models.
  * @tparam FP floating point type, e.g., double.
- * @tparam Base simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
+ * @tparam BaseT simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
  */
-template <typename FP, class Base>
-class Simulation : public Base
+template <typename FP, class BaseT>
+class Simulation : public BaseT
 {
 public:
     /**
@@ -249,7 +250,7 @@ public:
      * @param dt time steps
      */
     Simulation(Model<FP> const& model, FP t0 = 0., FP dt = 0.1)
-        : Base(model, t0, dt)
+        : BaseT(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
     }
@@ -266,13 +267,13 @@ public:
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
         if (dyn_npis.get_thresholds().size() > 0) {
-            auto t        = Base::get_result().get_last_time();
+            auto t        = BaseT::get_result().get_last_time();
             const auto dt = dyn_npis.get_interval().get();
 
             while (t < tmax) {
                 auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
 
-                Base::advance(t + dt_eff);
+                BaseT::advance(t + dt_eff);
                 t = t + dt_eff;
 
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
@@ -297,7 +298,7 @@ public:
             return this->get_result().get_last_value();
         }
         else {
-            return Base::advance(tmax);
+            return BaseT::advance(tmax);
         }
     }
 
@@ -307,19 +308,41 @@ private:
 };
 
 /**
- * specialization of simulate for secir models using Simulation.
- * @tparam FP floating point type, e.g., double
- * @param t0 start time.
- * @param tmax end time.
- * @param dt time step.
- * @param model secir model to simulate.
- * @param integrator optional integrator, uses rk45 if nullptr.
+ * @brief Specialization of simulate for SECIR models using Simulation.
+ *
+ * @tparam FP floating point type, e.g., double.
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIR model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the simulation.
  */
 template<typename FP=double>
 inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
                      std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     return mio::simulate<Model<FP>, FP, Simulation<>>(t0, tmax, dt, model, integrator);
+}
+
+/**
+ * @brief Specialization of simulate for SECIR models using the FlowSimulation.
+ * 
+ * @tparam FP floating point type, e.g., double.
+ * @param[in] t0 start time.
+ * @param[in] tmax end time.
+ * @param[in] dt time step.
+ * @param[in] model SECIR model to simulate.
+ * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * 
+ * @return Returns the result of the Flowsimulation.
+ */
+template<typename FP=double>
+inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
+                           std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
+{
+    return mio::simulate_flows<Model<FP>, Simulation<FP,mio::FlowSimulation<Model<FP>>>>(t0, tmax, dt, model, integrator);
 }
 
 //see declaration above.

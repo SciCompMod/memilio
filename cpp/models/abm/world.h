@@ -89,8 +89,8 @@ public:
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
                 // Copy a location
-                m_locations.emplace_back(
-                    std::make_unique<Location<FP>>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
+                m_locations.emplace_back(std::make_unique<Location<FP>>(
+                    origin_loc.copy_location_without_persons(parameters.get_num_groups())));
             }
             for (auto& person : other.get_persons()) {
                 // If a person is in this location, copy this person and add it to this location.
@@ -162,14 +162,14 @@ public:
      * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt)
-    {
-        m_testing_strategy.update_activity_status(t);
+{
+    m_testing_strategy.update_activity_status(t);
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
         location->cache_exposure_rates(t, dt, parameters.get_num_groups());
     }
-    }
+}
 
     /** 
      * @brief Evolve the world one time step.
@@ -224,6 +224,8 @@ public:
     {
         return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
     }
+
+
 
     /**
      * @brief Get a range of all Person%s in the World.
@@ -415,7 +417,7 @@ private:
      * @param[in] dt The length of the time step of the Simulation.
      */
     void migration(TimePoint t, TimeSpan dt)
-{
+    {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
@@ -485,7 +487,7 @@ private:
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
     }
-}
+    }
 
     std::vector<std::unique_ptr<Person<FP>>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location<FP>>> m_locations; ///< Vector with pointers to every Location.
