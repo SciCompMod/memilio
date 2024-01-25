@@ -482,7 +482,7 @@ TEST(TestJsonSerializer, abmLocation)
     expected_json["type"]  = Json::UInt64(mio::abm::LocationType::Home);
     ASSERT_EQ(js.value(), expected_json);
 
-    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location>());
+    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location<double>>());
     ASSERT_THAT(print_wrap(r), IsSuccess());
     EXPECT_EQ(r.value(), location);
 }
