@@ -27,106 +27,64 @@ TEST(TestHouseholds, test_add_household_to_world)
     auto member1 = mio::abm::HouseholdMember(num_age_groups);
     member1.set_age_weight(age_group_0_to_4, 1);
 
-<<<<<<< HEAD
-
-    auto member2 = mio::abm::HouseholdMember();
-    member2.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
-=======
     auto member2 = mio::abm::HouseholdMember(num_age_groups);
     member2.set_age_weight(age_group_5_to_14, 1);
->>>>>>> upstream/main
 
     auto household = mio::abm::Household();
     household.add_members(member1, 2);
     household.add_members(member2, 2);
 
-<<<<<<< HEAD
-    auto world = mio::abm::World<double>();
-=======
     auto world = mio::abm::World(num_age_groups);
->>>>>>> upstream/main
 
-//    add_household_to_world(world, household);
-//    auto persons = world.get_persons();
+    add_household_to_world(world, household);
+    auto persons = world.get_persons();
 
-//    // Test size
-//    EXPECT_EQ(persons.size(), 4);
+    // Test size
+    EXPECT_EQ(persons.size(), 4);
 
-<<<<<<< HEAD
-//    // Test age
-//    EXPECT_EQ(persons[0].get_age(), mio::abm::AgeGroup::Age0to4);
-//    EXPECT_EQ(persons[1].get_age(), mio::abm::AgeGroup::Age0to4);
-//    EXPECT_EQ(persons[2].get_age(), mio::abm::AgeGroup::Age5to14);
-//    EXPECT_EQ(persons[3].get_age(), mio::abm::AgeGroup::Age5to14);
-=======
     // Test age
     EXPECT_EQ(persons[0].get_age(), age_group_0_to_4);
     EXPECT_EQ(persons[1].get_age(), age_group_0_to_4);
     EXPECT_EQ(persons[2].get_age(), age_group_5_to_14);
     EXPECT_EQ(persons[3].get_age(), age_group_5_to_14);
->>>>>>> upstream/main
 
-//    // Test location
-//    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
-//    EXPECT_EQ(persons[2].get_location().get_index(), persons[3].get_location().get_index());
+    // Test location
+    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
+    EXPECT_EQ(persons[2].get_location().get_index(), persons[3].get_location().get_index());
 }
 
-//TEST(TestHouseholds, test_add_household_group_to_world)
-//{
+TEST(TestHouseholds, test_add_household_group_to_world)
+{
 
-<<<<<<< HEAD
-//    auto member1 = mio::abm::HouseholdMember();
-//    member1.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
-
-//    auto member2 = mio::abm::HouseholdMember();
-//    member2.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
-=======
     auto member1 = mio::abm::HouseholdMember(num_age_groups);
     member1.set_age_weight(age_group_35_to_59, 1);
 
     auto member2 = mio::abm::HouseholdMember(num_age_groups);
     member2.set_age_weight(age_group_5_to_14, 1);
->>>>>>> upstream/main
 
-//    auto household_group = mio::abm::HouseholdGroup();
+    auto household_group = mio::abm::HouseholdGroup();
 
-//    auto household1 = mio::abm::Household();
-//    household1.add_members(member1, 10);
-//    household1.add_members(member2, 2);
-//    household_group.add_households(household1, 5);
+    auto household1 = mio::abm::Household();
+    household1.add_members(member1, 10);
+    household1.add_members(member2, 2);
+    household_group.add_households(household1, 5);
 
-//    auto household2 = mio::abm::Household();
-//    household2.add_members(member1, 2);
-//    household2.add_members(member2, 2);
-//    household_group.add_households(household2, 10);
+    auto household2 = mio::abm::Household();
+    household2.add_members(member1, 2);
+    household2.add_members(member2, 2);
+    household_group.add_households(household2, 10);
 
-<<<<<<< HEAD
-//    auto world = mio::abm::World<double>();
-=======
     auto world = mio::abm::World(num_age_groups);
->>>>>>> upstream/main
 
-//    add_household_group_to_world(world, household_group);
-//    auto persons = world.get_persons();
+    add_household_group_to_world(world, household_group);
+    auto persons = world.get_persons();
 
-//    // Test size
-//    EXPECT_EQ(persons.size(), 100);
+    // Test size
+    EXPECT_EQ(persons.size(), 100);
 
-//    // Test age
-//    int number_of_age5to14_year_olds = 0, number_of_age35to59_year_olds = 0;
+    // Test age
+    int number_of_age5to14_year_olds = 0, number_of_age35to59_year_olds = 0;
 
-<<<<<<< HEAD
-//    for (auto& person : persons) {
-//        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
-//            number_of_age5to14_year_olds++;
-//        }
-//        if (person.get_age() == mio::abm::AgeGroup::Age35to59) {
-//            number_of_age35to59_year_olds++;
-//        }
-//    }
-//    EXPECT_EQ(number_of_age5to14_year_olds, 30);
-//    EXPECT_EQ(number_of_age35to59_year_olds, 70);
-=======
     for (auto& person : persons) {
         if (person.get_age() == age_group_5_to_14) {
             number_of_age5to14_year_olds++;
@@ -137,14 +95,13 @@ TEST(TestHouseholds, test_add_household_to_world)
     }
     EXPECT_EQ(number_of_age5to14_year_olds, 30);
     EXPECT_EQ(number_of_age35to59_year_olds, 70);
->>>>>>> upstream/main
 
-//    // Test location for some people
-//    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
-//    EXPECT_EQ(persons[1].get_location().get_index(), persons[5].get_location().get_index());
-//    EXPECT_EQ(persons[5].get_location().get_index(), persons[10].get_location().get_index());
+    // Test location for some people
+    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
+    EXPECT_EQ(persons[1].get_location().get_index(), persons[5].get_location().get_index());
+    EXPECT_EQ(persons[5].get_location().get_index(), persons[10].get_location().get_index());
 
-//    EXPECT_EQ(persons[60].get_location().get_index(), persons[61].get_location().get_index());
-//    EXPECT_EQ(persons[61].get_location().get_index(), persons[62].get_location().get_index());
-//    EXPECT_EQ(persons[62].get_location().get_index(), persons[63].get_location().get_index());
-//}
+    EXPECT_EQ(persons[60].get_location().get_index(), persons[61].get_location().get_index());
+    EXPECT_EQ(persons[61].get_location().get_index(), persons[62].get_location().get_index());
+    EXPECT_EQ(persons[62].get_location().get_index(), persons[63].get_location().get_index());
+}
