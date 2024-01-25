@@ -27,7 +27,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/data/analyze_result.h"
-#include "boost/filesystem.hpp"
+
 
 namespace fs = boost::filesystem;
 
@@ -45,31 +45,31 @@ enum class RunMode
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
+mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters<double>& params)
 {
-    params.get<mio::osecir::IncubationTime>()       = 5.2;
-    params.get<mio::osecir::TimeInfectedSymptoms>() = 5.8;
-    params.get<mio::osecir::SerialInterval>()       = 4.2;
-    params.get<mio::osecir::TimeInfectedSevere>()   = 9.5;
-    params.get<mio::osecir::TimeInfectedCritical>() = 7.1;
+    params.get<mio::osecir::IncubationTime<double>>()       = 5.2;
+    params.get<mio::osecir::TimeInfectedSymptoms<double>>() = 5.8;
+    params.get<mio::osecir::SerialInterval<double>>()       = 4.2;
+    params.get<mio::osecir::TimeInfectedSevere<double>>()   = 9.5;
+    params.get<mio::osecir::TimeInfectedCritical<double>>() = 7.1;
 
-    params.get<mio::osecir::TransmissionProbabilityOnContact>()  = 0.05;
-    params.get<mio::osecir::RelativeTransmissionNoSymptoms>()    = 0.7;
-    params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()    = 0.09;
-    params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()    = 0.25;
-    params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>() = 0.45;
-    params.get<mio::osecir::TestAndTraceCapacity>()              = 35;
-    params.get<mio::osecir::SeverePerInfectedSymptoms>()         = 0.2;
-    params.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
-    params.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
+    params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()  = 0.05;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()    = 0.7;
+    params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()    = 0.09;
+    params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()    = 0.25;
+    params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>() = 0.45;
+    params.get<mio::osecir::TestAndTraceCapacity<double>>()              = 35;
+    params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()         = 0.2;
+    params.get<mio::osecir::CriticalPerSevere<double>>()                 = 0.25;
+    params.get<mio::osecir::DeathsPerCritical<double>>()                 = 0.3;
 
-    params.set<mio::osecir::Seasonality>(0.2);
+    params.set<mio::osecir::Seasonality<double>>(0.2);
 
     return mio::success();
 }
 
-mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
-                              const mio::osecir::Parameters& params, const fs::path& data_dir, mio::Date start_date)
+mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
+                              const mio::osecir::Parameters<double>& params, const fs::path& data_dir, mio::Date start_date)
 {
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
@@ -87,7 +87,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     bool interpolate_rki_age_groups = false;
     BOOST_OUTCOME_TRY(node_ids, mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"),
                                                   is_node_for_county, interpolate_rki_age_groups));
-    std::vector<mio::osecir::Model> nodes(node_ids.size(), mio::osecir::Model(int(size_t(params.get_num_groups()))));
+    std::vector<mio::osecir::Model<double>> nodes(node_ids.size(), mio::osecir::Model<double>(int(size_t(params.get_num_groups()))));
     //set parameters for every node
     for (auto& node : nodes) {
         node.parameters = params;
@@ -101,7 +101,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     return mio::success();
 }
 
-mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
                               const fs::path& data_dir)
 {
     auto migrating_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
@@ -141,7 +141,7 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model, mio::MigrationParam
 /**
  *
 */
-mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> get_graph(mio::Date start_date,
+mio::IOResult<mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>> get_graph(mio::Date start_date,
                                                                                   const fs::path& data_dir)
 {
     const int num_age_groups = 1;
@@ -150,12 +150,12 @@ mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> get_grap
 
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     double contact_freq                     = 10;
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_freq));
     contact_matrix.add_damping(0.7, mio::SimulationTime(30));
     contact_matrix.add_damping(0.1, mio::SimulationTime(50));
 
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> params_graph;
     BOOST_OUTCOME_TRY(set_nodes(params_graph, params, data_dir, start_date));
     BOOST_OUTCOME_TRY(set_edges(params_graph, data_dir));
 
@@ -178,7 +178,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto num_days        = 90.0;
 
     //create or load graph
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> params_graph;
 
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created_graph, get_graph(start_date, data_dir));
@@ -186,7 +186,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         params_graph = created_graph;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded_graph, mio::read_graph<mio::osecir::Model>(save_dir.string()));
+        BOOST_OUTCOME_TRY(loaded_graph, mio::read_graph<mio::osecir::Model<double>>(save_dir.string()));
         params_graph = loaded_graph;
     }
 
@@ -196,7 +196,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     });
 
     //create simulation graph
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecir::Model>>, mio::MigrationEdge> sim_graph;
+    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecir::Model<double>>>, mio::MigrationEdge<double>> sim_graph;
 
     for (auto&& node : params_graph.nodes()) {
         sim_graph.add_node(node.id, node.property, 0.0);
@@ -208,7 +208,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     auto sim = mio::make_migration_sim(0.0, 0.5, std::move(sim_graph));
     sim.advance(num_days);
 
-    auto params = std::vector<mio::osecir::Model>{};
+    auto params = std::vector<mio::osecir::Model<double>>{};
     params.reserve(sim.get_graph().nodes().size());
     std::transform(sim.get_graph().nodes().begin(), sim.get_graph().nodes().end(), std::back_inserter(params),
                    [](auto&& node) {
