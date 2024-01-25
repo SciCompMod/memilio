@@ -59,19 +59,7 @@ int main()
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
-        char vars[] = {'S', 'E', 'I', 'R'};
-        printf("\n # t");
-        for (size_t k = 0; k < (size_t)mio::oseir::InfectionState::Count; k++) {
-            printf(" %c", vars[k]);
-        }
-        auto num_points = static_cast<size_t>(seir.get_num_time_points());
-        for (size_t i = 0; i < num_points; i++) {
-            printf("\n%.14f ", seir.get_time(i));
-            Eigen::VectorXd res_j = seir.get_value(i);
-            for (size_t j = 0; j < (size_t)mio::oseir::InfectionState::Count; j++) {
-                printf(" %.14f", res_j[j]);
-            }
-        }
+        seir.print_table({"S", "E", "I", "R"});
 
         Eigen::VectorXd res_j = seir.get_last_value();
         printf("\nnumber total: %f\n", res_j[0] + res_j[1] + res_j[2] + res_j[3]);
