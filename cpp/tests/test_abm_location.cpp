@@ -26,11 +26,7 @@
 
 TEST(TestLocation, init)
 {
-<<<<<<< HEAD
-    mio::abm::Location<double> location(mio::abm::LocationType::School, 0);
-=======
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
->>>>>>> upstream/main
     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
@@ -55,33 +51,20 @@ TEST(TestLocation, copyLocation)
 
 TEST(TestLocation, initCell)
 {
-<<<<<<< HEAD
-    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, 2);
-=======
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
->>>>>>> upstream/main
     ASSERT_EQ(location.get_cells().size(), 2);
 }
 
 TEST(TestLocation, getIndex)
 {
-<<<<<<< HEAD
-    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0);
-=======
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
->>>>>>> upstream/main
     ASSERT_EQ((int)location.get_index(), 0);
 }
 
 TEST(TestLocation, addRemovePerson)
 {
-<<<<<<< HEAD
-    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, 1);
-    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, 3);
-=======
     mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 1);
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
->>>>>>> upstream/main
 
     auto person1 = make_test_person(home, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms);
     auto person2 = make_test_person(home, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms);
@@ -127,28 +110,18 @@ TEST(TestLocation, CacheExposureRate)
     auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::seconds(10000);
 
-<<<<<<< HEAD
-    mio::abm::GlobalInfectionParameters<double> params;
-
-    // setup a location with some chance of exposure
-    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, 1);
-    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, 3);
-    auto infected1     = mio::abm::Person<double>(rng, home, age);
-    auto rng_infected1 = typename mio::abm::Person<double>::RandomNumberGenerator(rng, infected1);
-=======
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     // setup a location with some chance of exposure
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups, 1);
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, num_age_groups, 3);
-    auto infected1     = mio::abm::Person(rng, home, age);
-    auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
->>>>>>> upstream/main
+    auto infected1     = mio::abm::Person<double>(rng, home, age);
+    auto rng_infected1 = mio::abm::Person<double>::RandomNumberGenerator(rng, infected1);
     infected1.add_new_infection(
         mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
     infected1.migrate_to(location, {0});
-    auto infected2     = mio::abm::Person<double>(rng, home, age);
-    auto rng_infected2 = typename mio::abm::Person<double>::RandomNumberGenerator(rng, infected2);
+    auto infected2     = mio::abm::Person(rng, home, age);
+    auto rng_infected2 = mio::abm::Person<double>::RandomNumberGenerator(rng, infected2);
     infected2.add_new_infection(
         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
     infected2.migrate_to(location, {0, 1});
@@ -180,28 +153,17 @@ TEST(TestLocation, reachCapacity)
 {
     using testing::Return;
 
-<<<<<<< HEAD
-    auto t      = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
-    auto dt     = mio::abm::hours(1);
-    auto params = mio::abm::GlobalInfectionParameters<double>{};
-    //setup so p1 doesn't transition
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype,
-                                                          mio::abm::AgeGroup::Age15to34}]  = 2 * dt.days();
-    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
-                                                           mio::abm::AgeGroup::Age15to34}] = 2 * dt.days();
-=======
     auto t     = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
     auto dt    = mio::abm::hours(1);
     auto world = mio::abm::World(num_age_groups);
 
     //setup so p1 doesn't do transition
     world.parameters
-        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
     world.parameters
-        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        .get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
->>>>>>> upstream/main
 
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
@@ -248,11 +210,7 @@ TEST(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
-<<<<<<< HEAD
-    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, 3);
-=======
     mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 3);
->>>>>>> upstream/main
     home.set_capacity(4, 264, 0); // Capacity for Cell 1
     home.set_capacity(2, 132, 1); // Capacity for Cell 2
     home.set_capacity(0, 0, 2); // Capacity for Cell 3
@@ -278,13 +236,8 @@ TEST(TestLocation, interact)
     auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::seconds(8640); //0.1 days
 
-<<<<<<< HEAD
-    mio::abm::GlobalInfectionParameters<double> params;
-    params.set_default<mio::abm::ViralLoadDistributions>();
-=======
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.set_default<mio::abm::ViralLoadDistributions>(num_age_groups);
->>>>>>> upstream/main
     params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {{1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
     params.set_default<mio::abm::InfectivityDistributions>(num_age_groups);
     params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
@@ -293,19 +246,11 @@ TEST(TestLocation, interact)
     params.get<mio::abm::IncubationPeriod<double>>()[{variant, age}] = 2.;
 
     //setup location with some chance of exposure
-<<<<<<< HEAD
-    mio::abm::Location<double> location(mio::abm::LocationType::Work, 0);
-    auto infected1 = make_test_person(location, mio::abm::AgeGroup::Age15to34,
-                                      mio::abm::InfectionState::InfectedNoSymptoms, t, params);
-    auto infected2 = make_test_person(location, mio::abm::AgeGroup::Age80plus,
-                                      mio::abm::InfectionState::InfectedSymptoms, t, params);
-=======
     mio::abm::Location location(mio::abm::LocationType::Work, 0, num_age_groups);
     auto infected1 =
         make_test_person(location, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t, params);
     auto infected2 =
         make_test_person(location, age_group_80_plus, mio::abm::InfectionState::InfectedSymptoms, t, params);
->>>>>>> upstream/main
     auto infected3 =
         make_test_person(location, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms, t, params);
 
@@ -322,7 +267,7 @@ TEST(TestLocation, interact)
 
     auto susceptible = make_test_person(location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
-    auto person_rng = typename mio::abm::Person<double>::RandomNumberGenerator(rng, susceptible);
+    auto person_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, susceptible);
     location.interact(person_rng, susceptible, t, dt, params);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 
@@ -334,115 +279,15 @@ TEST(TestLocation, interact)
 
 TEST(TestLocation, setCapacity)
 {
-<<<<<<< HEAD
-    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0);
-=======
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
->>>>>>> upstream/main
     location.set_capacity(4, 200);
     ASSERT_EQ(location.get_capacity().persons, (uint32_t)4);
     ASSERT_EQ(location.get_capacity().volume, (uint32_t)200);
 }
 
-<<<<<<< HEAD
-TEST(TestLocation, storeSubpopulations)
-{
-    auto t      = mio::abm::TimePoint(0);
-    auto dt     = mio::abm::days(7);
-    auto params = mio::abm::GlobalInfectionParameters<double>{};
-
-    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, 3);
-
-    //setup: p1 goes from Infected to Recovered, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to Recovered
-    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
-                                                         mio::abm::AgeGroup::Age5to14}] = 1.5 * dt.days();
-
-    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
-                                                         mio::abm::AgeGroup::Age15to34}] = 5 * dt.days();
-    params
-        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-        5 * dt.days();
-
-    params.get<mio::abm::IncubationPeriod<double>>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
-        0.4 * dt.days();
-    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
-                                                           mio::abm::AgeGroup::Age35to59}] = 1.8 * dt.days();
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-
-    // mock person 1
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(8))
-        .WillOnce(testing::Return(0.8)) // draw random work group
-        .WillOnce(testing::Return(0.8)) // draw random school group
-        .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to Recovered
-        .WillRepeatedly(testing::Return(1.0));
-
-    auto person1 =
-        make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms, t, params);
-    location.add_person(person1, {0});
-
-    // mock person 2 not needed due to high setup of transition times
-    auto person2 = make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms,
-                                    t, params);
-    location.add_person(person2, {0});
-
-    // mock person 3
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(8))
-        .WillOnce(testing::Return(0.8)) // draw random work group
-        .WillOnce(testing::Return(0.8)) // draw random school group
-        .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to Recovered
-        .WillRepeatedly(testing::Return(1.0));
-    auto person3 =
-        make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
-    location.add_person(person3, {0});
-
-    location.initialize_subpopulations(t);
-    auto t1 = t + dt;
-    location.store_subpopulations(t1);
-    auto v1 = location.get_subpopulations().get_value(1);
-    // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::InfectedSymptoms)], 2);
-    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::InfectedNoSymptoms)], 1);
-
-    auto t2 = t1 + dt;
-    location.store_subpopulations(t2);
-    auto v2 = location.get_subpopulations().get_value(2);
-    // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::InfectedSymptoms)], 1);
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Recovered)], 1);
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::InfectedNoSymptoms)], 1);
-
-    auto t3 = t2 + mio::abm::days(10);
-    location.store_subpopulations(t3);
-    auto v3 = location.get_subpopulations().get_value(3);
-    // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::InfectedSymptoms)], 1);
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Recovered)], 2);
-
-    // Check total number of subpopulation is correct.
-    ASSERT_EQ(location.get_subpopulations().get_num_time_points(), 4);
-    for (auto&& v_iter : location.get_subpopulations()) {
-        ASSERT_EQ(v_iter.sum(), 3);
-    }
-    ASSERT_EQ(location.get_subpopulations().get_time(1), 7);
-    ASSERT_EQ(location.get_subpopulations().get_time(2), 14);
-    ASSERT_EQ(location.get_subpopulations().get_time(3), 24);
-}
-
-TEST(TestLocation, setRequiredMask)
-{
-    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0);
-=======
 TEST(TestLocation, setRequiredMask)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
->>>>>>> upstream/main
     ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
 
     location.set_required_mask(mio::abm::MaskType::FFP2);
@@ -451,11 +296,7 @@ TEST(TestLocation, setRequiredMask)
 
 TEST(TestLocation, setNPIActive)
 {
-<<<<<<< HEAD
-    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0);
-=======
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
->>>>>>> upstream/main
     location.set_npi_active(false);
     ASSERT_FALSE(location.get_npi_active());
 
@@ -465,7 +306,7 @@ TEST(TestLocation, setNPIActive)
 
 TEST(TestLocation, getGeographicalLocation)
 {
-    auto location                                        = mio::abm::Location<double>(mio::abm::LocationType::Home, 0);
+    auto location                                        = mio::abm::Location(mio::abm::LocationType::Home, 0);
     mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
 
