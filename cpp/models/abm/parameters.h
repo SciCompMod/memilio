@@ -565,7 +565,7 @@ using ParametersBase =
     ParameterSet<IncubationPeriod<FP>, InfectedNoSymptomsToSymptoms<FP>, InfectedNoSymptomsToRecovered<FP>,
                  InfectedSymptomsToRecovered<FP>, InfectedSymptomsToSevere<FP>, SevereToCritical<FP>, SevereToRecovered<FP>,
                  CriticalToDead<FP>, CriticalToRecovered<FP>, RecoveredToSusceptible<FP>, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection<FP>, MaskProtection<FP>, AerosolTransmissionRates, LockdownDate,
+                 InfectivityDistributions, DetectInfection<FP>, MaskProtection<FP>, AerosolTransmissionRates, LockdownDate,QuarantineDuration,
                  SocialEventRate, BasicShoppingRate<FP>, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
                  GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
                  InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;

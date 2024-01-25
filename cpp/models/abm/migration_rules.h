@@ -81,7 +81,7 @@ LocationType go_to_school(typename Person<FP>::RandomNumberGenerator& /*rng*/, c
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
         params.template get<mio::abm::AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
-        !person.is_in_quarantine()) {
+        !person.is_in_quarantine(t, params)) {
         return LocationType::School;
     }
     //return home
@@ -102,7 +102,7 @@ LocationType go_to_shop(typename Person<FP>::RandomNumberGenerator& rng, const P
     auto current_loc = person.get_location().get_type();
     //leave
     if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
-        !person.is_in_quarantine()) {
+        !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::BasicsShop, params.template get<BasicShoppingRate<FP>>()[person.get_age()]}});
     }
@@ -126,7 +126,7 @@ LocationType go_to_event(typename Person<FP>::RandomNumberGenerator& rng, const 
     //leave
     if (current_loc == LocationType::Home && t < params.template get<LockdownDate>() &&
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
-        !person.is_in_quarantine()) {
+        !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::SocialEvent,
                                    params.template get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
@@ -154,7 +154,7 @@ LocationType go_to_work(typename Person<FP>::RandomNumberGenerator& /*rng*/, con
         params.template get<mio::abm::AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
-        !person.is_in_quarantine()) {
+        !person.is_in_quarantine(t, params)) {
         return LocationType::Work;
     }
     //return home
@@ -168,15 +168,17 @@ LocationType go_to_work(typename Person<FP>::RandomNumberGenerator& /*rng*/, con
  * @brief Person%s who are in quarantine should go home.
  */
 template<typename FP=double>
-LocationType go_to_quarantine(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, TimePoint /*t*/,
-                              TimeSpan /*dt*/, const Parameters<FP>& /*params*/)
+LocationType go_to_quarantine(typename Person<FP>::RandomNumberGenerator& /*rng*/, const Person<FP>& person, TimePoint t,
+                              TimeSpan /*dt*/, const Parameters<FP>& params)
 {
     auto current_loc = person.get_location().get_type();
-    if (person.is_in_quarantine() && current_loc != LocationType::Hospital && current_loc != LocationType::ICU) {
+    if (person.is_in_quarantine(t, params) && current_loc != LocationType::Hospital &&
+        current_loc != LocationType::ICU) {
         return LocationType::Home;
     }
     return current_loc;
 }
+
 
 /**
  * @brief Infected Person%s may be hospitalized.

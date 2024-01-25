@@ -133,13 +133,39 @@ public:
      * @param[in] person_id Index of the Person.
      */
     explicit Person(mio::RandomNumberGenerator& rng, Location<FP>& location, AgeGroup age,
-                    uint32_t person_id = INVALID_PERSON_ID);
+                    uint32_t person_id = INVALID_PERSON_ID)
+        : m_location(&location)
+        , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
+        , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
+        , m_age(age)
+        , m_time_at_location(0)
+        , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
+        , m_mask(Mask(MaskType::Community))
+        , m_wears_mask(false)
+        , m_mask_compliance((uint32_t)LocationType::Count, 0.)
+        , m_person_id(person_id)
+        , m_cells{0}
+        , m_last_transport_mode(TransportMode::Unknown)
+    {
+        m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
+        m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
+        m_random_goto_work_hour   = UniformDistribution<double>::get_instance()(rng);
+        m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
+    }
+
 
     /**
      * @brief Create a copy of this #Person object with a new Location.
      * @param[in, out] location The new #Location of the Person.
      */
-    Person copy_person(Location<FP>& location);
+    Person copy_person(Location<FP>& location)
+    {
+        Person copied_person     = Person(*this);
+        copied_person.m_location = &location;
+        location.add_person(*this);
+        return copied_person;
+    }
+
 
     /**
      * @brief Compare two Person%s.
@@ -156,7 +182,13 @@ public:
      * @param[in] dt Length of the current Simulation TimeStep.
      * @param[in, out] params Infection parameters that are the same in all Location%s.
      */
-    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters<FP>& params);
+    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters<FP>& params)
+    {
+        if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
+            m_location->interact(rng, *this, t, dt, params);
+        }
+        m_time_at_location += dt;
+    }
 
     /** 
      * @brief Migrate to a different Location.
@@ -175,14 +207,29 @@ public:
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
     void migrate_to(Location<FP>& loc_new, mio::abm::TransportMode transport_mode,
-                    const std::vector<uint32_t>& cells = {0});
+                    const std::vector<uint32_t>& cells = {0})
+    {
+        if (*m_location != loc_new) {
+            m_location->remove_person(*this);
+            m_location = &loc_new;
+            m_cells    = cells;
+            loc_new.add_person(*this, cells);
+            m_time_at_location    = TimeSpan(0);
+            m_last_transport_mode = transport_mode;
+        }
+    }
 
     /**
      * @brief Get the latest #Infection of the Person.
      * @return The latest #Infection of the Person.
      */
-    Infection<FP>& get_infection();
-    const Infection<FP>& get_infection() const;
+    Infection<FP>& get_infection(){
+        return m_infections.back();
+    }
+    const Infection<FP>& get_infection() const
+    {
+        return m_infections.back();
+    }
 
     /** 
      * @brief Get all Vaccination%s of the Person.
@@ -203,20 +250,43 @@ public:
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
      * @return True if the Person is infected at the TimePoint.
      */
-    bool is_infected(TimePoint t) const;
+    bool is_infected(TimePoint t) const
+    {
+        if (m_infections.empty()) {
+            return false;
+        }
+        // subject to change if Recovered is removed
+        if (m_infections.back().get_infection_state(t) == InfectionState::Susceptible ||
+            m_infections.back().get_infection_state(t) == InfectionState::Recovered) {
+            return false;
+        }
+        return true;
+    }
 
     /**
      * @brief Get the InfectionState of the Person at a specific TimePoint.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
      * @return The InfectionState of the latest Infection at time t.
      */
-    InfectionState get_infection_state(TimePoint t) const;
+    InfectionState get_infection_state(TimePoint t) const
+    {
+        if (m_infections.empty()) {
+            return InfectionState::Susceptible;
+        }
+        else {
+            return m_infections.back().get_infection_state(t);
+        }
+    }
 
     /**
      * @brief Adds a new Infection to the list of Infection%s.
      * @param[in] inf The new Infection.
      */
-    void add_new_infection(Infection<FP>&& inf);
+    void add_new_infection(Infection<FP>&& inf)
+    {
+        m_infections.push_back(std::move(inf));
+    }
+
 
     /**
      * @brief Get the AgeGroup of this Person.
@@ -231,9 +301,15 @@ public:
      * @brief Get the current Location of the Person.
      * @return Current Location of the Person.
      */
-    Location<FP>& get_location();
+    Location<FP>& get_location()
+    {
+        return *m_location;
+    }
 
-    const Location<FP>& get_location() const;
+    const Location<FP>& get_location() const
+    {
+        return *m_location;
+    }
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -258,7 +334,14 @@ public:
      * Location per #LocationType.
      * @param[in] location The new assigned Location.
      */
-    void set_assigned_location(Location<FP>& location);
+    void set_assigned_location(Location<FP>& location)
+    {
+        /* TODO: This is not safe if the location is not the same as added in the world, e.g. the index is wrong. We need to check this.
+    * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
+    *                                 person.set_assigned_location(home);
+    */
+        m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
+    }
 
     /**
      * @brief Set an assigned Location of the Person. 
@@ -266,7 +349,12 @@ public:
      * Location of a certain #LocationType.
      * @param[in] id The LocationId of the Location.
      */
-    void set_assigned_location(LocationId id);
+    void set_assigned_location(LocationId id)
+    {
+        m_assigned_locations[(uint32_t)id.type] = id.index;
+    }
+
+
 
     /**
      * @brief Returns the index of an assigned Location of the Person.
@@ -274,7 +362,10 @@ public:
      * @param[in] type #LocationType of the assigned Location.
      * @return The index in the LocationId of the assigned Location.
      */
-    uint32_t get_assigned_location_index(LocationType type) const;
+    uint32_t get_assigned_location_index(LocationType type) const
+    {
+        return m_assigned_locations[(uint32_t)type];
+    }
 
     /**
      * @brief Get the assigned Location%s of the Person.
@@ -293,7 +384,11 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True the Person works from home.
      */
-    bool goes_to_work(TimePoint t, const Parameters<FP>& params) const;
+    bool goes_to_work(TimePoint t, const Parameters<FP>& params) const
+    {
+        return m_random_workgroup < params.template get<WorkRatio>().get_matrix_at(t.days())[0];
+    }
+
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -302,7 +397,14 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to work.
      */
-    TimeSpan get_go_to_work_time(const Parameters<FP>& params) const;
+    TimeSpan get_go_to_work_time(const Parameters<FP>& params) const
+    {
+        TimeSpan minimum_goto_work_time = params.template get<GotoWorkTimeMinimum>()[m_age];
+        TimeSpan maximum_goto_work_time = params.template get<GotoWorkTimeMaximum>()[m_age];
+        int timeSlots                   = (maximum_goto_work_time.seconds() - minimum_goto_work_time.seconds());
+        int seconds_after_minimum       = int(timeSlots * m_random_goto_work_hour);
+        return minimum_goto_work_time + seconds(seconds_after_minimum);
+    }
 
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
@@ -311,7 +413,10 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True if the Person goes to school.
      */
-    bool goes_to_school(TimePoint t, const Parameters<FP>& params) const;
+    bool goes_to_school(TimePoint t, const Parameters<FP>& params) const
+    {
+        return m_random_schoolgroup < params.template get<SchoolRatio>().get_matrix_at(t.days())[0];
+    }
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -320,7 +425,14 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to school.
      */
-    TimeSpan get_go_to_school_time(const Parameters<FP>& params) const;
+    TimeSpan get_go_to_school_time(const Parameters<FP>& params) const
+    {
+        TimeSpan minimum_goto_school_time = params.template get<GotoSchoolTimeMinimum>()[m_age];
+        TimeSpan maximum_goto_school_time = params.template get<GotoSchoolTimeMaximum>()[m_age];
+        int timeSlots                     = (maximum_goto_school_time.seconds() - minimum_goto_school_time.seconds());
+        int seconds_after_minimum         = int(timeSlots * m_random_goto_school_hour);
+        return minimum_goto_school_time + seconds(seconds_after_minimum);
+    }
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
@@ -337,7 +449,10 @@ public:
     /**
      * @brief Removes the quarantine status of the Person.
      */
-    void remove_quarantine();
+    void remove_quarantine()
+    {
+        m_quarantine_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
+    }
 
     /**
      * @brief Simulates a viral test and returns the test result of the Person.
@@ -348,22 +463,58 @@ public:
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
      */
-    bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters<FP>& params);
+    bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters<FP>& params)
+    {
+        ScalarType random   = UniformDistribution<double>::get_instance()(rng);
+        m_time_of_last_test = t;
+        if (is_infected(t)) {
+            // true positive
+            if (random < params.sensitivity) {
+                m_quarantine_start = t;
+                m_infections.back().set_detected();
+                return true;
+            }
+            // false negative
+            else {
+                return false;
+            }
+        }
+        else {
+            // true negative
+            if (random < params.specificity) {
+                return false;
+            }
+            // false positive
+            else {
+                m_quarantine_start = t;
+                return true;
+            }
+        }
+    }
 
     /**
      * @brief Get the PersonID of the Person.
      * The PersonID should correspond to the index in m_persons in world.
      * @return The PersonID.
      */
-    uint32_t get_person_id();
+    uint32_t get_person_id()
+    {
+        return m_person_id;
+    }
 
     /**
      * @brief Get index of Cell%s of the Person.
      * @return A vector of all Cell indices the Person visits at the current Location.
      */
-    std::vector<uint32_t>& get_cells();
+    std::vector<uint32_t>& get_cells()
+    {
+        return m_cells;
+    }
 
-    const std::vector<uint32_t>& get_cells() const;
+    const std::vector<uint32_t>& get_cells() const
+    {
+        return m_cells;
+    }
 
     /**
      * @brief Get the current Mask of the Person.
@@ -386,7 +537,15 @@ public:
      * @param[in] params The parameters of the Infection that are the same everywhere within the World.
      * @return The reduction factor of getting an Infection when wearing the Mask.
      */
-    ScalarType get_mask_protective_factor(const Parameters<FP>& params) const;
+    ScalarType get_mask_protective_factor(const Parameters<FP>& params) const
+    {
+        if (m_wears_mask == false) {
+            return 0.;
+        }
+        else {
+            return params.template get<MaskProtection<FP>>()[m_mask.get_type()];
+        }
+    }
 
     /**
      * @brief For every #LocationType a Person has a compliance value between -1 and 1.
@@ -415,7 +574,38 @@ public:
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location<FP>& target);
+    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location<FP>& target)
+    {
+        if (target.get_npi_active() == false) {
+            m_wears_mask = false;
+            if (get_mask_compliance(target.get_type()) > 0.) {
+                // draw if the person wears a mask even if not required
+                ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
+                if (wear_mask < get_mask_compliance(target.get_type())) {
+                    m_wears_mask = true;
+                }
+            }
+        }
+        else {
+            m_wears_mask = true;
+            if (get_mask_compliance(target.get_type()) < 0.) {
+                // draw if a person refuses to wear the required mask
+                ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng, -1., 0.);
+                if (wear_mask > get_mask_compliance(target.get_type())) {
+                    m_wears_mask = false;
+                }
+                return false;
+            }
+            if (m_wears_mask == true) {
+
+                if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
+                    m_mask.change_mask(target.get_required_mask());
+                }
+            }
+        }
+        return true;
+    }
+
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -442,7 +632,16 @@ public:
      * @param[in] params Parameters in the model.
      * @returns Protection factor for general #Infection of the immune system to the given VirusVariant at the given TimePoint.
      */
-    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters<FP>& params) const;
+    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters<FP>& params) const
+    {
+        auto latest_protection = get_latest_protection();
+        // If there is no previous protection or vaccination, return 0.
+        if (latest_protection.first == ExposureType::NoProtection) {
+            return 0;
+        }
+        return params.template get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
+            t.days() - latest_protection.second.days());
+    }
 
     /**
      * @brief Add a new #Vaccination
@@ -475,7 +674,20 @@ public:
     /**
      * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
     */
-    std::pair<ExposureType, TimePoint> get_latest_protection() const;
+    std::pair<ExposureType, TimePoint> get_latest_protection() const
+    {
+        ExposureType latest_exposure_type = ExposureType::NoProtection;
+        TimePoint infection_time          = TimePoint(0);
+        if (!m_infections.empty()) {
+            latest_exposure_type = ExposureType::NaturalInfection;
+            infection_time       = m_infections.back().get_start_date();
+        }
+        if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
+            latest_exposure_type = m_vaccinations.back().exposure_type;
+            infection_time       = m_vaccinations.back().time;
+        }
+        return std::make_pair(latest_exposure_type, infection_time);
+    }
 
     /**
      * serialize this. 

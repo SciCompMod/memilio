@@ -415,7 +415,7 @@ private:
      * @param[in] dt The length of the time step of the Simulation.
      */
     void migration(TimePoint t, TimeSpan dt)
-    {
+{
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
@@ -472,7 +472,7 @@ private:
             auto& trip        = m_trip_list.get_next_trip(weekend);
             auto& person      = m_persons[trip.person_id];
             auto personal_rng = typename Person<FP>::RandomNumberGenerator(m_rng, *person);
-            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
+            if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     person->apply_mask_intervention(personal_rng, target_location);
@@ -485,7 +485,7 @@ private:
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
     }
-    }
+}
 
     std::vector<std::unique_ptr<Person<FP>>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location<FP>>> m_locations; ///< Vector with pointers to every Location.
