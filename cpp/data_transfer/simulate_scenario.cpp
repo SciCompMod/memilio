@@ -350,7 +350,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
             auto params              = std::vector<mio::osecirvvs::Model>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
@@ -401,11 +401,6 @@ int main(int argc, char** argv)
         start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
         num_days_sim = std::atoi(argv[5]);
     }
-    else if (argc == 7) {
-        data_dir     = argv[1];
-        start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
-        num_days_sim = std::atoi(argv[5]);
-    }
     else {
         mio::mpi::finalize();
         return 0;
@@ -424,7 +419,7 @@ int main(int argc, char** argv)
 
     std::string result_dir = "";
 
-    result_dir = "../../results";
+    result_dir = "../../data";
     boost::filesystem::path res_dir(result_dir);
     bool created_results = boost::filesystem::create_directories(res_dir);
     if (created_results) {
