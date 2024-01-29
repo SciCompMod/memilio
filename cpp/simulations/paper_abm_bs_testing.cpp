@@ -880,7 +880,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
                                                int max_num_persons)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
-    ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
+    ScalarType exposed_prob = 0.5, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
@@ -984,12 +984,38 @@ void write_log_to_file_trip_data(const T& history)
     myfile3.close();
 }
 
+void write_txt_file_for_graphical_compartment_output(std::vector<std::vector<mio::TimeSeries<ScalarType>>> input_file)
+{
+    // mio::unused(input_file);
+    // In the input file is a h5 file there are multiple runs with each having the amount of people in each compartment for each timestep.
+    // The output folder should have the following format:
+    // for each run there is a file with the name "run_1.txt" and so on.
+    // in each file the the rows represent the timesteps and the columns represent the compartments.
+    // The first row is the header with the compartment names.
+    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
+    // I_Crit = InfectedCritical, R = Recovered, D = Dead
+
+    // Output folder name:
+    std::string folderName = "folder_run_bs";
+    // Create folder
+    fs::create_directory(folderName);
+    // Loop over all runs
+    for (int run = 0; run < (int)input_file.size(); run++) {
+        // Create file name
+        std::string fileName = folderName + "/run_" + std::to_string(run) + ".txt";
+        // Create file
+        std::ofstream myfile;
+        myfile.open(fileName);
+        // Write header
+        input_file.at(run).at(0).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, myfile);
+    }
+}
+
 mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
-
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(2); // End time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(1); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
@@ -1027,8 +1053,10 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);
 
+        std::cout << "Run " << run_idx << " of " << num_runs << " finished." << std::endl;
         ++run_idx;
     }
+    write_txt_file_for_graphical_compartment_output(ensemble_results);
     BOOST_OUTCOME_TRY(save_result_result);
     return mio::success();
 }
@@ -1062,7 +1090,7 @@ int main(int argc, char** argv)
         printf("abm_braunschweig <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
-        printf("Running with number of runs = 1.\n");
+        printf("Running with number of runs = 10.\n");
         num_runs = 10;
     }
 
