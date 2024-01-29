@@ -203,7 +203,7 @@ def backward_selection():
     results = regression_model(columns_init)
 
     # compute AIC as reference for later
-    aic_min = compute_aic(results)
+    aic_min = results.aic # compute_aic(results)
     print('AIC init: ', aic_min)
 
     npi_removed = ''
