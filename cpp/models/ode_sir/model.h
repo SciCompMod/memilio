@@ -57,15 +57,15 @@ public:
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
-            double Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
-            double Ii = this->populations.get_flat_index({i, InfectionState::Infected});
-            double Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
+            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
+            size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++){
 
-                double Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                double Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-                double Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 double Nj = pop[Sj] + pop[Ij] + pop[Rj];
 
