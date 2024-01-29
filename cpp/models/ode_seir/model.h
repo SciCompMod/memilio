@@ -68,16 +68,16 @@ public:
         ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
 
         for(auto i = AgeGroup(0); i < n_agegroups; i++){
-            double Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
-            double Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
-            double Ii = this->populations.get_flat_index({i, InfectionState::Infected});
+            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
+            size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
 
             for(auto j = AgeGroup(0); j < n_agegroups; j++){
 
-                double Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                double Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                double Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-                double Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
+                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 double Nj = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
                 double divNj = 1.0/Nj;
@@ -119,13 +119,13 @@ public:
         Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments,total_infected_compartments);
 
         for(auto i = AgeGroup(0); i < AgeGroup(num_groups); i++){
-            double Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             for(auto j = AgeGroup(0); j < AgeGroup(num_groups); j++){
 
-                auto Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                auto Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                auto Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-                auto Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
+                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 double Nj = y.get_value(t_idx)[Sj]+y.get_value(t_idx)[Ej] + y.get_value(t_idx)[Ij] + y.get_value(t_idx)[Rj];
                 double divNj = 1.0/Nj;
