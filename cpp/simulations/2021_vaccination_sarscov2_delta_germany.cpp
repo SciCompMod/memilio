@@ -233,6 +233,9 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
 
     assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality>(), seasonality_min, seasonality_max);
 
+    // Delta specific parameter
+    params.get<mio::osecirvvs::StartDayNewVariant>() = mio::get_day_in_year(mio::Date(2021, 6, 6));
+
     return mio::success();
 }
 
@@ -539,17 +542,17 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 1.43 / 100000.;
     auto migrating_compartments  = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
 
     // graph of counties with populations and local parameters
     // and mobility between counties
@@ -653,7 +656,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             auto params              = std::vector<mio::osecirvvs::Model>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
