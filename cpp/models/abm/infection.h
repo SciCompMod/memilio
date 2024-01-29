@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_INFECTION_H
-#define EPI_ABM_INFECTION_H
+#ifndef MIO_ABM_INFECTION_H
+#define MIO_ABM_INFECTION_H
 
 #include "abm/time.h"
 #include "abm/infection_state.h"

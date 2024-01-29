@@ -21,11 +21,14 @@
 #ifndef ABM_COMMON_LOGGERS_H
 #define ABM_COMMON_LOGGERS_H
 
+#include "abm/infection_state.h"
+#include "abm/simulation.h"
 #include "memilio/io/history.h"
+#include "memilio/utils/time_series.h"
 #include "models/abm/location_type.h"
 #include "abm/movement_data.h"
-#include "abm/abm.h"
 #include "memilio/utils/mioomp.h"
+
 namespace mio
 {
 namespace abm

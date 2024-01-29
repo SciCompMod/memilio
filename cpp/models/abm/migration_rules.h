@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_MIGRATION_RULES_H
-#define EPI_ABM_MIGRATION_RULES_H
+#ifndef MIO_ABM_MIGRATION_RULES_H
+#define MIO_ABM_MIGRATION_RULES_H
 
 #include "abm/location_type.h"
 #include "abm/parameters.h"
@@ -106,4 +106,4 @@ LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person
 } // namespace abm
 } // namespace mio
 
-#endif //EPI_ABM_MIGRATION_RULES_H
+#endif //MIO_ABM_MIGRATION_RULES_H

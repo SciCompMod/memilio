@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_LOCATION_TYPE_H
-#define EPI_ABM_LOCATION_TYPE_H
+#ifndef MIO_ABM_LOCATION_TYPE_H
+#define MIO_ABM_LOCATION_TYPE_H
 
 #include "memilio/io/io.h"
 #include <cstdint>

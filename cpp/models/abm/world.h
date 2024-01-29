@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_WORLD_H
-#define EPI_ABM_WORLD_H
+#ifndef MIO_ABM_WORLD_H
+#define MIO_ABM_WORLD_H
 
 #include "abm/config.h"
 #include "abm/location_type.h"
@@ -30,7 +30,6 @@
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
 #include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -40,7 +39,6 @@
 #include <cassert>
 #include <initializer_list>
 #include <vector>
-#include <memory>
 
 namespace mio
 {

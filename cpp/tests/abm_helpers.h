@@ -22,7 +22,6 @@
 
 #include "abm/abm.h"
 #include "gmock/gmock.h"
-#include <memory>
 
 // Assign the name to general age group.
 const size_t num_age_groups   = 6;

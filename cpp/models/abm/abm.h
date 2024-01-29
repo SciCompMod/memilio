@@ -19,8 +19,8 @@
 */
 /** single include header for ABM */
 
-#ifndef EPI_ABM_H
-#define EPI_ABM_H
+#ifndef MIO_ABM_H
+#define MIO_ABM_H
 
 #include "abm/parameters.h"
 #include "abm/simulation.h"
