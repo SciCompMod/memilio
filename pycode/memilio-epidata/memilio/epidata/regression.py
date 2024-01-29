@@ -215,7 +215,7 @@ def backward_selection():
 
         # do regression and compute AIC
         results = regression_model(columns)
-        aic = compute_aic(results)
+        aic = results.aic  # is equal to compute_aic(results)
         print('AIC: ', aic)
 
         # check if we reached a lower AIC than before
