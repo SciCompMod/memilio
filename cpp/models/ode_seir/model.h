@@ -122,10 +122,10 @@ public:
             double Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             for(auto j = AgeGroup(0); j < AgeGroup(num_groups); j++){
 
-                double Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                double Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                double Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-                double Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+                auto Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                auto Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
+                auto Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                auto Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 double Nj = y.get_value(t_idx)[Sj]+y.get_value(t_idx)[Ej] + y.get_value(t_idx)[Ij] + y.get_value(t_idx)[Rj];
                 double divNj = 1.0/Nj;
