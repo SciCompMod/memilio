@@ -54,8 +54,8 @@ namespace abm
 class World
 {
 public:
-    using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
-    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
+    using LocationIterator      = std::vector<Location>::iterator;
+    using ConstLocationIterator = std::vector<Location>::const_iterator;
     using PersonIterator        = std::vector<Person>::iterator;
     using ConstPersonIterator   = std::vector<Person>::const_iterator;
 
@@ -99,8 +99,7 @@ public:
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
                 // Copy a location
-                m_locations.emplace_back(
-                    std::make_unique<Location>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
+                m_locations.push_back(origin_loc.copy_location_without_persons(parameters.get_num_groups()));
             }
             for (auto& person : other.get_persons()) {
                 // If a person is in this location, copy this person and add it to this location.
@@ -423,7 +422,7 @@ public:
     {
         // TODO: make sure this is correct
         assert(id.index != INVALID_LOCATION_INDEX);
-        return *m_locations[id.index];
+        return m_locations[id.index];
     }
 
     // get current location of the Person
@@ -484,7 +483,7 @@ private:
     {
         m_local_populations_cache.data.clear();
         for (size_t i = 0; i < m_locations.size(); i++) {
-            m_local_populations_cache.data[m_locations[i]->get_id()].clear();
+            m_local_populations_cache.data[m_locations[i].get_id()].clear();
         }
         for (Person& person : get_persons()) {
             m_local_populations_cache.data.at(person.get_location()).emplace(person.get_person_id());
@@ -496,8 +495,8 @@ private:
     // Cache<std::unordered_map<LocationId, std::vector<double>>> m_air_exposure_rates_cache;
     // Cache<std::unordered_map<LocationId, std::vector<double>>> m_contact_exposure_rates_cache;
 
-    std::vector<Person> m_persons; ///< Vector with pointers to every Person.
-    std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
+    std::vector<Person> m_persons; ///< Vector of every Person.
+    std::vector<Location> m_locations; ///< Vector of every Location.
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.

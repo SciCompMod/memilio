@@ -34,7 +34,7 @@ namespace abm
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
     LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
-    m_locations.emplace_back(std::make_unique<Location>(id, parameters.get_num_groups(), num_cells));
+    m_locations.emplace_back(id, parameters.get_num_groups(), num_cells);
     m_has_locations[size_t(type)] = true;
 
     if (m_local_populations_cache.is_valid()) {
@@ -152,7 +152,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
-        location->cache_exposure_rates(t, dt, parameters.get_num_groups());
+        location.cache_exposure_rates(t, dt, parameters.get_num_groups());
     }
 }
 
@@ -168,12 +168,12 @@ auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPer
 
 const Location& World::get_individualized_location(LocationId id) const
 {
-    return *m_locations[id.index];
+    return m_locations[id.index];
 }
 
 Location& World::get_individualized_location(LocationId id)
 {
-    return *m_locations[id.index];
+    return m_locations[id.index];
 }
 
 LocationId World::find_location(LocationType type, const Person& person) const
@@ -186,18 +186,17 @@ LocationId World::find_location(LocationType type, const Person& person) const
 size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                           [t, s, this](size_t running_sum, const std::unique_ptr<Location>& loc) {
-                               return running_sum + get_subpopulation(loc->get_id(), t, s);
+                           [t, s, this](size_t running_sum, const Location& loc) {
+                               return running_sum + get_subpopulation(loc.get_id(), t, s);
                            });
 }
 
 size_t World::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
 {
-    return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                           [t, s, type, this](size_t running_sum, const std::unique_ptr<Location>& loc) {
-                               return loc->get_type() == type ? running_sum + get_subpopulation(loc->get_id(), t, s)
-                                                              : running_sum;
-                           });
+    return std::accumulate(
+        m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {
+            return loc.get_type() == type ? running_sum + get_subpopulation(loc.get_id(), t, s) : running_sum;
+        });
 }
 
 TripList& World::get_trip_list()
