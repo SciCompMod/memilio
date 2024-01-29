@@ -19,6 +19,7 @@
 */
 #include "abm_helpers.h"
 #include "abm/common_abm_loggers.h"
+#include "matchers.h"
 #include "memilio/io/history.h"
 
 TEST(TestSimulation, advance_random)

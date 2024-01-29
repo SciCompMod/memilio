@@ -21,11 +21,6 @@
 #define ABM_HELPERS_H
 
 #include "abm/abm.h"
-#include "abm/virus_variant.h"
-#include "memilio/math/eigen_util.h"
-#include "memilio/epidemiology/age_group.h"
-#include "matchers.h"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <memory>
 

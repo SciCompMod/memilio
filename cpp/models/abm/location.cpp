@@ -18,13 +18,9 @@
 * limitations under the License.
 */
 #include "abm/mask_type.h"
-#include "abm/mask.h"
 #include "abm/location.h"
 #include "abm/random_events.h"
 #include "abm/infection.h"
-#include "memilio/utils/random_number_generator.h"
-#include <mutex>
-#include <numeric>
 
 namespace mio
 {
@@ -42,7 +38,7 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
-Location Location::copy_location_without_persons(size_t num_agegroups)
+Location Location::copy_location_without_persons(size_t num_agegroups) const
 {
     Location copy_loc = Location(*this);
     copy_loc.m_cells  = std::vector<Cell>{num_agegroups};

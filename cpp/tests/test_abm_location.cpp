@@ -20,7 +20,6 @@
 
 #include "abm/functions.h"
 #include "abm/infection.h"
-#include "abm/movement_data.h"
 #include "abm/person.h"
 #include "abm/world.h"
 #include "abm_helpers.h"

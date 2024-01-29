@@ -25,15 +25,9 @@
 #include "abm/parameters.h"
 #include "abm/location_type.h"
 #include "abm/infection_state.h"
-#include "abm/vaccine.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/utils/memory.h"
-#include <array>
-#include <random>
-#include <mutex>
 
 namespace mio
 {
@@ -131,7 +125,7 @@ public:
      * @brief Return a copy of this #Location object with an empty m_persons.
      * @param[in] num_agegroups The number of age groups in the model.
      */
-    Location copy_location_without_persons(size_t num_agegroups);
+    Location copy_location_without_persons(size_t num_agegroups) const;
 
     /**
      * @brief Compare two Location%s.
