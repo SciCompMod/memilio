@@ -75,10 +75,11 @@ public:
             for(auto j = AgeGroup(0); j < n_agegroups; j++){
 
                 double Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                double Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
                 double Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 double Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                double Nj = pop[Sj] + pop[Ij] + pop[Rj];
+                double Nj = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
                 double divNj = 1.0/Nj;
 
                 double coeffStoE = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
@@ -113,39 +114,38 @@ public:
         const size_t total_infected_compartments = num_infected_compartments*num_groups;
 
         ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
-
-        Eigen::MatrixXd F(total_infected_compartments,total_infected_compartments);
-        Eigen::MatrixXd V(total_infected_compartments,total_infected_compartments);
+    
+        Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments,total_infected_compartments);
+        Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments,total_infected_compartments);
 
         for(auto i = AgeGroup(0); i < AgeGroup(num_groups); i++){
             double Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             for(auto j = AgeGroup(0); j < AgeGroup(num_groups); j++){
 
                 double Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                double Ej = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                double Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
                 double Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 double Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                double Nj = y.get_value(t_idx)[Sj]+y.get_value(t_idx)[Ej] + y.get_value(t_idx)[Ej] + y.get_value(t_idx)[Ij] + y.get_value(t_idx)[Rj];
+                double Nj = y.get_value(t_idx)[Sj]+y.get_value(t_idx)[Ej] + y.get_value(t_idx)[Ij] + y.get_value(t_idx)[Rj];
                 double divNj = 1.0/Nj;
 
-                double coeffStoI = contact_matrix.get_matrix_at(y.get_time(t_idx))(static_cast<Eigen::Index>((size_t)i),
+                double coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j))*
                                                                  params.get<TransmissionProbabilityOnContact>()[i]*divNj;
-
-                F((size_t)i,(size_t)j) = coeffStoI*y.get_value(t_idx)[Si]*y.get_value(t_idx)[Ij];
+                F((size_t)i,(size_t)j+num_groups) = coeffStoE*y.get_value(t_idx)[Si];
             }
 
             double T_Ei = params.get<mio::oseir::TimeExposed>()[i];
             double T_Ii = params.get<mio::oseir::TimeInfected>()[i];
-            V((size_t)i,(size_t)i) = 1/T_Ei;
-            V((size_t)i+num_groups,(size_t)i) = - 1/T_Ei;
-            V((size_t)i+num_groups,(size_t)i+num_groups) = 1/T_Ii;
+            V((size_t)i,(size_t)i) = 1.0/T_Ei;
+            V((size_t)i+num_groups,(size_t)i) = - 1.0/T_Ei;
+            V((size_t)i+num_groups,(size_t)i+num_groups) = 1.0/T_Ii;
         }
 
         V = V.inverse();
 
-        Eigen::MatrixXd NextGenMatrix(total_infected_compartments, total_infected_compartments);
+        Eigen::MatrixXd NextGenMatrix = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
         NextGenMatrix = F * V;
 
         //Compute the largest eigenvalue in absolute value
