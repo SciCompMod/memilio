@@ -1,4 +1,6 @@
 add_library(abm
+    functions.cpp
+    functions.h
     location.cpp
     location.h
     household.cpp

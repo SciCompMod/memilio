@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/functions.h"
 #include "abm/person.h"
 #include "abm/world.h"
 #include "abm_helpers.h"
@@ -329,10 +330,10 @@ TEST(TestMigrationRules, work_return)
 
 TEST(TestMigrationRules, quarantine)
 {
-    auto rng = mio::RandomNumberGenerator();
-    auto t   = mio::abm::TimePoint(12346);
-    auto dt  = mio::abm::hours(1);
-    auto test_params = mio::abm::TestParameters{1.0,1.0};
+    auto rng         = mio::RandomNumberGenerator();
+    auto t           = mio::abm::TimePoint(12346);
+    auto dt          = mio::abm::hours(1);
+    auto test_params = mio::abm::TestParameters{1.0, 1.0};
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
@@ -410,19 +411,16 @@ TEST(TestMigrationRules, shop_return)
     auto params = mio::abm::Parameters(num_age_groups);
     auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
     auto dt     = mio::abm::hours(1);
-    mio::abm::World world(params);
 
-    auto home = world.add_location(mio::abm::LocationType::Home);
-    auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    auto p =
-        make_test_person(world.get_location(home), age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location shop(mio::abm::LocationType::BasicsShop, 0, num_age_groups);
+    auto p     = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
 
-    auto person = world.add_person(p).get_person_id();
-    world.migrate(person, shop);
-    world.interact(world.get_person(person), t, dt, rng_p, params);
+    mio::abm::migrate(p, shop);
+    mio::abm::interact(p, shop, t, dt, params, rng_p); //person only returns home after some time passed
 
-    ASSERT_EQ(mio::abm::go_to_shop(rng_p, world.get_person(person), t, dt, mio::abm::Parameters(num_age_groups)),
+    ASSERT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);
 }
 
@@ -463,20 +461,16 @@ TEST(TestMigrationRules, event_return)
     auto params = mio::abm::Parameters(num_age_groups);
     auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(21);
     auto dt     = mio::abm::hours(3);
-    mio::abm::World world(params);
 
-    auto home         = world.add_location(mio::abm::LocationType::Home);
-    auto social_event = world.add_location(mio::abm::LocationType::SocialEvent);
-    auto p =
-        mio::abm::Person(rng, world.get_location(home), age_group_15_to_34); // TODO: change Person ctor to LocationID
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location social_event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
+    auto p     = mio::abm::Person(rng, home, age_group_15_to_34);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
 
-    // TODO: do we need a different add_person? e.g. something that behaves like emplace?
-    auto person = world.add_person(p).get_person_id();
-    world.migrate(person, social_event);
-    world.interact(world.get_person(person), t, dt, rng_p, params);
+    mio::abm::migrate(p, social_event);
+    mio::abm::interact(p, social_event, t, dt, params, rng_p);
 
-    ASSERT_EQ(mio::abm::go_to_event(rng_p, world.get_person(person), t, dt, mio::abm::Parameters(num_age_groups)),
+    ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);
 }
 

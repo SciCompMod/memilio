@@ -364,12 +364,13 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             }
             auto first_location_id = it_first_location_id->second.first;
             auto first_location    = locations.find(first_location_id)->second;
-            auto& person           = world.add_person(first_location, determine_age_group(age));
-            auto home              = locations.find(home_id)->second;
+            auto& person =
+                world.get_person(world.add_person(first_location, determine_age_group(age))); // TODO: is this safe?
+            auto home = locations.find(home_id)->second;
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
-            persons.insert({person_id, person});
+            persons.insert({person_id, person}); // TODO: why? what?
             it_person = persons.find(person_id);
         }
 

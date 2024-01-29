@@ -35,13 +35,13 @@ namespace mio
 namespace abm
 {
 
-using PersonID = uint32_t;
+using PersonId = uint32_t; // TODO: use type safe
 
 struct LocationId;
 class Location;
 class Infection;
 
-static constexpr PersonID INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
+static constexpr PersonId INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
  * @brief Agents in the simulated World that can carry and spread the Infection.
@@ -72,7 +72,7 @@ public:
         * @param id Id of the Person.
         * @param counter Reference to the Person's RNG Counter. 
         */
-        RandomNumberGenerator(Key<uint64_t> key, PersonID id, Counter<uint32_t>& counter)
+        RandomNumberGenerator(Key<uint64_t> key, PersonId id, Counter<uint32_t>& counter)
             : m_key(key)
             , m_person_id(id)
             , m_counter(counter)
@@ -116,7 +116,7 @@ public:
 
     private:
         Key<uint64_t> m_key; ///< Global RNG Key
-        PersonID m_person_id; ///< Id of the Person
+        PersonId m_person_id; ///< Id of the Person
         Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
     };
 
@@ -128,9 +128,11 @@ public:
      * @param[in] person_id Index of the Person.
      */
     explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
-                    PersonID person_id = INVALID_PERSON_ID);
+                    PersonId person_id = INVALID_PERSON_ID);
 
-    explicit Person(const Person& other, PersonID id);
+    explicit Person(const Person& other, PersonId id);
+
+    // TODO: re-add migrate_to, using mio::abm::migrate?
 
     /**
      * @brief Create a copy of this #Person object with a new Location.
@@ -315,7 +317,7 @@ public:
     {
         return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
     }
-    
+
     /**
      * @brief Removes the quarantine status of the Person.
      */
@@ -333,11 +335,11 @@ public:
     bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
-     * @brief Get the PersonID of the Person.
-     * The PersonID should correspond to the index in m_persons in world.
-     * @return The PersonID.
+     * @brief Get the PersonId of the Person.
+     * The PersonId should correspond to the index in m_persons in world.
+     * @return The PersonId.
      */
-    PersonID get_person_id() const;
+    PersonId get_person_id() const;
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -487,7 +489,7 @@ public:
         auto obj = io.expect_object("Person");
         auto loc = obj.expect_element("Location", mio::Tag<LocationId>{});
         auto age = obj.expect_element("age", Tag<uint32_t>{});
-        auto id  = obj.expect_element("id", Tag<PersonID>{});
+        auto id  = obj.expect_element("id", Tag<PersonId>{});
         return apply(
             io,
             [](auto&& loc_, auto&& age_, auto&& id_) {
@@ -513,7 +515,7 @@ private:
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
-    PersonID m_person_id; ///< Id of the Person.
+    PersonId m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator

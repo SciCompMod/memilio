@@ -26,10 +26,16 @@ TEST(TestSimulation, advance_random)
     auto world     = mio::abm::World(num_age_groups);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto& p1       = world.add_person(location1, age_group_5_to_14);
-    auto& p2       = world.add_person(location1, age_group_5_to_14);
-    auto& p3       = world.add_person(location2, age_group_5_to_14);
-    auto& p4       = world.add_person(location2, age_group_5_to_14);
+    auto pid1      = world.add_person(location1, age_group_5_to_14);
+    auto pid2      = world.add_person(location1, age_group_5_to_14);
+    auto pid3      = world.add_person(location2, age_group_5_to_14);
+    auto pid4      = world.add_person(location2, age_group_5_to_14);
+
+    auto& p1 = world.get_person(pid1);
+    auto& p2 = world.get_person(pid2);
+    auto& p3 = world.get_person(pid3);
+    auto& p4 = world.get_person(pid4);
+
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);
@@ -75,9 +81,14 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto basics_id   = world.add_location(mio::abm::LocationType::BasicsShop);
     auto public_id   = world.add_location(mio::abm::LocationType::PublicTransport);
 
-    auto& person1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
-    auto& person2 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
-    auto& person3 = add_test_person(world, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
+    auto pid1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
+    auto pid2 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
+    auto pid3 = add_test_person(world, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
+
+    auto& person1 = world.get_person(pid1);
+    auto& person2 = world.get_person(pid2);
+    auto& person3 = world.get_person(pid3);
+
     person1.set_assigned_location(home_id);
     person2.set_assigned_location(home_id);
     person3.set_assigned_location(home_id);

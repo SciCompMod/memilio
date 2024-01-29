@@ -31,7 +31,7 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, PersonID person_id)
+Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, PersonId person_id)
     : m_location(location.get_id())
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
@@ -51,7 +51,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
-Person::Person(const Person& other, PersonID id)
+Person::Person(const Person& other, PersonId id)
     : Person(other)
 {
     m_person_id = id;
@@ -193,7 +193,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
     }
 }
 
-PersonID Person::get_person_id() const
+PersonId Person::get_person_id() const
 {
     return m_person_id;
 }

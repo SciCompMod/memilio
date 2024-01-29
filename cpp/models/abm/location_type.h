@@ -58,7 +58,7 @@ static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>
  */
 struct LocationId {
     uint32_t index;
-    LocationType type;
+    LocationType type; // TODO: move to location
 
     bool operator==(const LocationId& rhs) const
     {

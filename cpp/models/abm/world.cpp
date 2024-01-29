@@ -43,7 +43,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-Person& World::add_person(const LocationId id, AgeGroup age)
+PersonId World::add_person(const LocationId id, AgeGroup age)
 {
     return add_person(Person(m_rng, get_location(id), age));
 }
@@ -61,10 +61,8 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person = m_persons[i];
-        // auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-        // person->interact(personal_rng, t, dt, parameters);
-        interact(*person, t, dt);
+        // TODO: i == get_person(i).get_person_id(), but this does not have to stay true
+        interact(i, t, dt);
     }
 }
 
@@ -73,19 +71,19 @@ void World::migration(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
-        auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
+        auto personal_rng = Person::RandomNumberGenerator(m_rng, person);
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
-            auto target_type      = rule(personal_rng, *person, t, dt, parameters);
-            auto& target_location = find_location(target_type, *person);
-            auto current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+            auto target_type      = rule(personal_rng, person, t, dt, parameters);
+            auto target_location  = find_location(target_type, person);
+            auto current_location = person.get_location();
+            if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                 if (target_location != current_location &&
-                    get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
+                    get_number_persons(target_location) < get_location(target_location).get_capacity().persons) {
+                    bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
-                        migrate(*person, target_location);
+                        migrate(person.get_person_id(), target_location); // TODO: i == PersonId, use?
                     }
                     return true;
                 }
@@ -125,12 +123,12 @@ void World::migration(TimePoint t, TimeSpan dt)
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
             auto& trip        = m_trip_list.get_next_trip(weekend);
             auto& person      = m_persons[trip.person_id];
-            auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-            if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
+            auto personal_rng = Person::RandomNumberGenerator(m_rng, person);
+            if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    person->apply_mask_intervention(personal_rng, target_location);
-                    migrate(*person, target_location, trip.trip_mode);
+                if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                    person.apply_mask_intervention(personal_rng, target_location);
+                    migrate(person.get_person_id(), target_location.get_id(), trip.trip_mode);
                 }
             }
             m_trip_list.increase_index();
@@ -178,18 +176,11 @@ Location& World::get_individualized_location(LocationId id)
     return *m_locations[id.index];
 }
 
-const Location& World::find_location(LocationType type, const Person& person) const
+LocationId World::find_location(LocationType type, const Person& person) const
 {
     auto index = person.get_assigned_location_index(type);
     assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return get_individualized_location({index, type});
-}
-
-Location& World::find_location(LocationType type, const Person& person)
-{
-    auto index = person.get_assigned_location_index(type);
-    assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return get_individualized_location({index, type});
+    return {index, type};
 }
 
 size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
