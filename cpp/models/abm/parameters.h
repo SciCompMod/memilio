@@ -26,13 +26,11 @@
 #include "abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include <limits>
-#include <set>
 
 namespace mio
 {

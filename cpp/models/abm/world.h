@@ -31,9 +31,7 @@
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
 #include "abm/virus_variant.h"
-#include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/random_number_generator.h"
@@ -42,11 +40,9 @@
 #include "functions.h"
 
 #include <bitset>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <initializer_list>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace mio
 {
@@ -215,7 +211,7 @@ public:
      * @param[in] id LocationId of the Location.
      * @return Reference to the Location.
      */
-    const Location& get_individualized_location(LocationId id) const;
+    const Location& get_individualized_location(LocationId id) const; // TODO: replace by get_location?
 
     Location& get_individualized_location(LocationId id);
 
@@ -402,6 +398,14 @@ public:
     }
 
     // get location by id
+    const Location& get_location(LocationId id) const
+    {
+        assert(id.index != INVALID_LOCATION_INDEX);
+        assert(id.index < m_locations.size());
+        return m_locations[id.index];
+    }
+
+    // get location by id
     Location& get_location(LocationId id)
     {
         assert(id.index != INVALID_LOCATION_INDEX);
@@ -411,6 +415,12 @@ public:
 
     // get current location of the Person
     inline Location& get_location(PersonId id)
+    {
+        return get_location(get_person(id).get_location());
+    }
+
+    // get current location of the Person
+    inline const Location& get_location(PersonId id) const
     {
         return get_location(get_person(id).get_location());
     }

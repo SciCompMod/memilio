@@ -19,7 +19,6 @@
 */
 #include "abm/functions.h"
 #include "abm/person.h"
-#include "abm/world.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 

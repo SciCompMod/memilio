@@ -21,7 +21,6 @@
 #include "abm/location.h"
 #include "abm/parameters.h"
 #include "abm/random_events.h"
-#include "abm/infection.h"
 
 namespace mio
 {

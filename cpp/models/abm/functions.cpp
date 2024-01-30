@@ -4,14 +4,9 @@
 #include "abm/person.h"
 #include "abm/random_events.h"
 #include "abm/infection.h"
-#include "abm/trip_list.h"
 #include "abm/virus_variant.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
 
 namespace mio
 {

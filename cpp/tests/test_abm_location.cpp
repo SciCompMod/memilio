@@ -19,7 +19,6 @@
 */
 
 #include "abm/functions.h"
-#include "abm/infection.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/world.h"

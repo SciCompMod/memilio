@@ -24,10 +24,8 @@
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
 #include "abm/location_type.h"
-#include "abm/infection_state.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/memory.h"
 
 namespace mio
 {
