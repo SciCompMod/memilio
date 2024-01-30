@@ -169,7 +169,7 @@ struct LogInfectionState : mio::LogAlways {
      */
     static Type log(const mio::abm::Simulation& sim)
     {
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count)+1);
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count)+2);
         auto curr_time      = sim.get_time();
         PRAGMA_OMP(for)
         for (auto&& location : sim.get_world().get_locations()) {
@@ -177,6 +177,8 @@ struct LogInfectionState : mio::LogAlways {
                 sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
             }
             sum[Eigen::Index(mio::abm::InfectionState::Count)] += location.get_num_person_wear_mask();
+            if (curr_time > mio::abm::TimePoint(0))
+                sum[Eigen::Index(mio::abm::InfectionState::Count)+1] += location.get_new_infected();
         }
         return std::make_pair(curr_time, sum);
     }

@@ -106,6 +106,7 @@ InfectionState Person::get_infection_state(TimePoint t) const
 void Person::add_new_infection(Infection&& inf)
 {
     m_infections.push_back(std::move(inf));
+    m_location->add_new_infected();
 }
 
 Location& Person::get_location()
@@ -236,6 +237,18 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
 
 bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location& target)
 {
+    // ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
+    // if (wear_mask <= 0.57) {
+    //     m_wears_mask = true;
+    // }
+    // else {
+    //     m_wears_mask = false;
+    // }
+    // //m_wears_mask = true;
+    // if (target.get_type() == LocationType::Home) {
+    //     m_wears_mask = false;
+    // }
+    // return true;
     if (target.get_npi_active() == false) {
         m_wears_mask = false;
         if (get_mask_compliance(target.get_type()) > 0.) {

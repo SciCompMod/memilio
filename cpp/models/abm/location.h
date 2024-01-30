@@ -397,6 +397,21 @@ public:
 
     size_t get_num_person_wear_mask() const;
 
+    void reset_new_infected()
+    {
+        m_num_new_infected = 0;
+    }
+
+    void add_new_infected()
+    {
+        m_num_new_infected++;
+    }
+
+    size_t get_new_infected()
+    {
+        return m_num_new_infected;
+    }
+
 private:
     std::mutex m_mut; ///< Mutex to protect the list of persons from concurrent modification.
     LocationId m_id; ///< Id of the Location including type and index.
@@ -408,6 +423,7 @@ private:
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
+    size_t m_num_new_infected;
 };
 
 } // namespace abm

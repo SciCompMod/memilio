@@ -37,8 +37,11 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     , m_parameters(num_agegroups)
     , m_cells(num_cells, num_agegroups)
     , m_required_mask(MaskType::Community)
-    , m_npi_active(false)
+    , m_npi_active(true)
 {
+    if (loc_id.type == LocationType::Home) {
+        m_npi_active = false;
+    }
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
