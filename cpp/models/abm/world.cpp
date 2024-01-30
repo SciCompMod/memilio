@@ -147,13 +147,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
         rebuild();
         m_local_populations_cache.validate();
     }
-    // PRAGMA_OMP(parallel for)
-
-    PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_locations.size(); ++i) {
-        auto&& location = m_locations[i];
-        location.cache_exposure_rates(t, dt, parameters.get_num_groups());
-    }
+    recompute_exposure_rates(t, dt);
 }
 
 auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>

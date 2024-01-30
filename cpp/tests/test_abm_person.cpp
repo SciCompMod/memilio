@@ -65,19 +65,15 @@ TEST(TestPerson, migrate)
     mio::abm::migrate(person, loc1, {0});
 
     EXPECT_EQ(person.get_location(), loc1.get_id());
-    // EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 1u); // TODO: cells
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
     mio::abm::migrate(person, loc2, {0}, mio::abm::TransportMode::Walking);
 
     EXPECT_EQ(person.get_location(), loc2.get_id());
-    // EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
     mio::abm::migrate(person, loc3, {0, 1}, mio::abm::TransportMode::Bike);
 
-    // EXPECT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
-    // EXPECT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
     EXPECT_EQ(person.get_cells().size(), 2);
     EXPECT_EQ(person.get_cells()[0], 0u);
     EXPECT_EQ(person.get_cells()[1], 1u);
@@ -211,7 +207,7 @@ TEST(TestPerson, interact)
     auto person     = mio::abm::Person(rng, loc, age_group_15_to_34);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
-    mio::abm::interact(person, loc, t, dt, infection_parameters, rng_person);
+    mio::abm::interact(person, loc, {person}, t, dt, infection_parameters, rng_person);
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 

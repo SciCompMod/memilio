@@ -20,6 +20,7 @@
 
 #include "abm/functions.h"
 #include "abm/infection.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/world.h"
 #include "abm_helpers.h"
@@ -100,63 +101,63 @@ TEST(TestLocation, getIndex)
 //     ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 // }
 
-TEST(TestLocation, CacheExposureRate)
-{
-    using testing::Return;
+// TODO: outdated. maybe repurpose for new global functions
+// TEST(TestLocation, CacheExposureRate)
+// {
+//     using testing::Return;
 
-    auto rng = mio::RandomNumberGenerator();
+//     auto rng = mio::RandomNumberGenerator();
 
-    mio::AgeGroup age =
-        mio::AgeGroup(mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(num_age_groups - 1)));
-    mio::abm::VirusVariant variant = mio::abm::VirusVariant(
-        mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(mio::abm::VirusVariant::Count) - 1));
+//     mio::AgeGroup age =
+//         mio::AgeGroup(mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(num_age_groups - 1)));
+//     mio::abm::VirusVariant variant = mio::abm::VirusVariant(
+//         mio::UniformIntDistribution<int>::get_instance()(rng, 0, int(mio::abm::VirusVariant::Count) - 1));
 
-    auto t  = mio::abm::TimePoint(0);
-    auto dt = mio::abm::seconds(10000);
+//     auto t  = mio::abm::TimePoint(0);
+//     auto dt = mio::abm::seconds(10000);
 
-    mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
+//     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
-    // setup a location with some chance of exposure
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, num_age_groups, 3);
-    auto infected1     = mio::abm::Person(rng, home, age);
-    auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
-    infected1.add_new_infection(
-        mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    mio::abm::migrate(infected1, location, {0});
-    auto infected2     = mio::abm::Person(rng, home, age);
-    auto rng_infected2 = mio::abm::Person::RandomNumberGenerator(rng, infected2);
-    infected2.add_new_infection(
-        mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    mio::abm::migrate(infected2, location, {0, 1});
+//     // setup a location with some chance of exposure
+//     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups, 1);
+//     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, num_age_groups, 3);
+//     auto infected1     = mio::abm::Person(rng, home, age);
+//     auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
+//     infected1.add_new_infection(
+//         mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
+//     mio::abm::migrate(infected1, location, {0});
+//     auto infected2     = mio::abm::Person(rng, home, age);
+//     auto rng_infected2 = mio::abm::Person::RandomNumberGenerator(rng, infected2);
+//     infected2.add_new_infection(
+//         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
+//     mio::abm::migrate(infected2, location, {0, 1});
 
-    // TODO: cells
-    location.get_cells()[0].m_persons.emplace_back(&infected1);
-    location.get_cells()[0].m_persons.emplace_back(&infected2);
-    location.get_cells()[1].m_persons.emplace_back(&infected2);
+//     location.get_cells()[0].m_persons.emplace_back(&infected1);
+//     location.get_cells()[0].m_persons.emplace_back(&infected2);
+//     location.get_cells()[1].m_persons.emplace_back(&infected2);
 
-    //cache precomputed results
-    location.cache_exposure_rates(t, dt, num_age_groups);
+//     //cache precomputed results
+//     location.cache_exposure_rates(t, dt, num_age_groups);
 
-    EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.015015859523894731, 1e-14);
-    EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.015015859523894731, 1e-14);
-    EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0075079297619473654,
-                1e-14);
-    EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0075079297619473654, 1e-14);
-    EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-14);
-    EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
+//     EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.015015859523894731, 1e-14);
+//     EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.015015859523894731, 1e-14);
+//     EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0075079297619473654,
+//                 1e-14);
+//     EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0075079297619473654, 1e-14);
+//     EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-14);
+//     EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
 
-    // should also work with capacities
-    location.set_capacity_adapted_transmission_risk_flag(true);
-    location.set_capacity(2, 22, 0); // Capacity for Cell 1
-    location.set_capacity(2, 22, 1); // Capacity for Cell 2
-    location.set_capacity(2, 22, 2); // Capacity for Cell 3
-    location.cache_exposure_rates(t, dt, num_age_groups);
+//     // should also work with capacities
+//     location.get_infection_parameters().set<mio::abm::UseLocationCapacityForTransmissions>(true);
+//     location.set_capacity(2, 22, 0); // Capacity for Cell 1
+//     location.set_capacity(2, 22, 1); // Capacity for Cell 2
+//     location.set_capacity(2, 22, 2); // Capacity for Cell 3
+//     location.cache_exposure_rates(t, dt, num_age_groups);
 
-    EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.045047578571684191, 1e-14);
-    EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.022523789285842095, 1e-14);
-    EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
-}
+//     EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.045047578571684191, 1e-14);
+//     EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.022523789285842095, 1e-14);
+//     EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
+// }
 
 TEST(TestLocation, reachCapacity)
 {
@@ -259,16 +260,7 @@ TEST(TestLocation, interact)
         make_test_person(location, age_group_80_plus, mio::abm::InfectionState::InfectedSymptoms, t, params);
     auto infected3 =
         make_test_person(location, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms, t, params);
-
-    // TODO: is this really superseeded?
-    // location.add_person(infected1, {0});
-    // location.add_person(infected2, {0});
-    // location.add_person(infected3, {0});
-    // TODO: no, not yet : cells
-    location.get_cells()[0].m_persons = {&infected1, &infected2, &infected3};
-
-    //cache precomputed results
-    location.cache_exposure_rates(t, dt, num_age_groups);
+    std::vector<mio::abm::Person> local_population{infected1, infected2, infected3};
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
@@ -277,12 +269,12 @@ TEST(TestLocation, interact)
     auto susceptible = make_test_person(location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
     auto person_rng = mio::abm::Person::RandomNumberGenerator(rng, susceptible);
-    mio::abm::interact(susceptible, location, t, dt, params, person_rng);
+    mio::abm::interact(susceptible, location, local_population, t, dt, params, person_rng);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
-    mio::abm::interact(susceptible, location, t, dt, params, person_rng);
+    mio::abm::interact(susceptible, location, local_population, t, dt, params, person_rng);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
 }
 

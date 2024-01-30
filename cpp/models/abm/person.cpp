@@ -59,9 +59,9 @@ Person::Person(const Person& other, PersonId id)
 
 Person Person::copy_person(Location& location)
 {
-    Person copied_person     = Person(*this);
-    copied_person.m_location = location.get_id();
-    return copied_person;
+    Person copy = *this;
+    copy.set_location(location);
+    return copy;
 }
 
 bool Person::is_infected(TimePoint t) const

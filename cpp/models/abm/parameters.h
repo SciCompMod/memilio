@@ -583,10 +583,23 @@ struct ContactRates {
     }
 };
 
+// If true, consider the capacity of the Cell%s of this Location for the computation of relative transmission risk.
+struct UseLocationCapacityForTransmissions {
+    using Type = bool;
+    static Type get_default(AgeGroup)
+    {
+        return false;
+    }
+    static std::string name()
+    {
+        return "UseLocationCapacityForTransmissions";
+    }
+};
+
 /**
  * @brief Parameters of the Infection that depend on the Location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, UseLocationCapacityForTransmissions>;
 
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.

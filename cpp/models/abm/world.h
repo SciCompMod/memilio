@@ -26,10 +26,16 @@
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
+#include "abm/time.h"
 #include "abm/trip_list.h"
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
+#include "abm/virus_variant.h"
+#include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/index.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -37,6 +43,8 @@
 
 #include <bitset>
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <vector>
 
@@ -83,35 +91,8 @@ public:
         parameters = params;
     }
 
-    /**
-     * @brief Create a copied World.
-     * @param[in] other The World that needs to be copied. 
-     */
-    World(const World& other)
-        : parameters(other.parameters)
-        , m_persons()
-        , m_locations()
-        , m_trip_list(other.m_trip_list)
-        , m_cemetery_id(add_location(LocationType::Cemetery))
-    {
-        for (auto& origin_loc : other.get_locations()) {
-            if (origin_loc.get_type() != LocationType::Cemetery) {
-                // Copy a location
-                m_locations.push_back(origin_loc.copy_location_without_persons(parameters.get_num_groups()));
-            }
-            for (auto& person : other.get_persons()) {
-                // If a person is in this location, copy this person and add it to this location.
-                if (person.get_location() == origin_loc.get_id()) {
-                    const auto id = m_persons.size();
-                    m_persons.emplace_back(person, id);
-                    // std::make_unique<Person>(person.copy_person(get_individualized_location(origin_loc.get_id()))));
-                }
-            }
-        }
-        use_migration_rules(other.m_use_migration_rules);
-    }
-
     //type is move-only for stable references of persons/locations
+    World(const World&)             = default;
     World(World&& other)            = default;
     World& operator=(World&& other) = default;
     World& operator=(const World&)  = delete;
@@ -196,17 +177,16 @@ public:
     // adds a copy of person to the world
     PersonId add_person(const Person& person)
     {
-        mio::unused(get_location(
-            person.get_location())); // assert that location is in world // TODO: check if this acts like an assert
+        assert([&]() {
+            get_location(person.get_location());
+            return true;
+        }()); // assert that location is in world
         assert(person.get_age().get() < parameters.get_num_groups());
 
         uint32_t new_id = static_cast<uint32_t>(m_persons.size()); // TODO: this breaks when removing a person
         m_persons.emplace_back(person, new_id);
         auto& new_person = m_persons.back();
         new_person.set_assigned_location(m_cemetery_id);
-
-        // TODO: remove and/or refactor
-        get_location(new_person.get_location()).get_cells()[0].m_persons.push_back(&new_person);
 
         if (m_local_populations_cache.is_valid()) {
             m_local_populations_cache.data.at(new_person.get_location()).emplace(new_id);
@@ -412,14 +392,20 @@ public:
     inline void interact(PersonId person, TimePoint t, TimeSpan dt, Person::RandomNumberGenerator& personal_rng,
                          const Parameters& global_parameters)
     {
-        mio::abm::interact(get_person(person), get_location(person), t, dt, global_parameters, personal_rng);
+        if (!m_air_exposure_rates_cache.is_valid() || !m_contact_exposure_rates_cache.is_valid()) {
+            recompute_exposure_rates(t, dt);
+        }
+        mio::abm::interact(get_person(person), get_location(person),
+                           m_air_exposure_rates_cache.data.at(get_location(person).get_id()),
+                           m_contact_exposure_rates_cache.data.at(get_location(person).get_id()), t, dt,
+                           global_parameters, personal_rng);
     }
 
     // get location by id
     Location& get_location(LocationId id)
     {
-        // TODO: make sure this is correct
         assert(id.index != INVALID_LOCATION_INDEX);
+        assert(id.index < m_locations.size());
         return m_locations[id.index];
     }
 
@@ -488,10 +474,31 @@ private:
         }
     }
 
+    void recompute_exposure_rates(TimePoint t, TimeSpan dt)
+    {
+        m_air_exposure_rates_cache.data.clear();
+        m_contact_exposure_rates_cache.data.clear();
+        for (Location& location : m_locations) {
+            m_air_exposure_rates_cache.data.emplace(
+                location.get_id(),
+                Location::AirExposureRates({CellIndex(location.get_cells().size()), VirusVariant::Count}, 0.));
+            m_contact_exposure_rates_cache.data.emplace(
+                location.get_id(),
+                Location::ContactExposureRates({CellIndex(location.get_cells().size()), VirusVariant::Count,
+                                                AgeGroup(parameters.get_num_groups())},
+                                               0.));
+        }
+        for (Person& person : get_persons()) {
+            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.data.at(person.get_location()),
+                                                m_contact_exposure_rates_cache.data.at(person.get_location()), person,
+                                                get_location(person.get_person_id()), t, dt);
+        }
+    }
+
     Cache<std::unordered_map<LocationId, std::unordered_set<PersonId>>>
         m_local_populations_cache; // TODO: change this to storing only (sub)population(s) in numbers, using atomic ints
-    // Cache<std::unordered_map<LocationId, std::vector<double>>> m_air_exposure_rates_cache;
-    // Cache<std::unordered_map<LocationId, std::vector<double>>> m_contact_exposure_rates_cache;
+    Cache<std::unordered_map<LocationId, Location::AirExposureRates>> m_air_exposure_rates_cache;
+    Cache<std::unordered_map<LocationId, Location::ContactExposureRates>> m_contact_exposure_rates_cache;
 
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.

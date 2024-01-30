@@ -35,6 +35,13 @@ namespace abm
 {
 class Person;
 
+struct CellIndex : public mio::Index<CellIndex> {
+    CellIndex(size_t i)
+        : mio::Index<CellIndex>(i)
+    {
+    }
+};
+
 /**
  * @brief CellCapacity describes the size of a Cell. 
  * It consists of a volume and a capacity in Person%s which is an upper bound for the number
@@ -55,18 +62,7 @@ struct CellCapacity {
  * This allows a finer division of the people at the Location.
  */
 struct Cell {
-    std::vector<observer_ptr<Person>> m_persons;
-    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
-    CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
-
-    Cell(size_t num_agegroups, std::vector<observer_ptr<Person>> persons = {})
-        : m_persons(std::move(persons))
-        , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup(num_agegroups)}, 0.})
-        , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
-        , m_capacity()
-    {
-    }
 
     /**
     * @brief Computes a relative cell size for the Cell.
@@ -80,7 +76,7 @@ struct Cell {
     * @param[in] state #InfectionState of interest.
     * @return Amount of Person%s of the #InfectionState in the Cell.
     */
-    size_t get_subpopulation(TimePoint t, InfectionState state) const;
+    // size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
 }; // namespace mio
 
@@ -90,6 +86,8 @@ struct Cell {
 class Location
 {
 public:
+    using ContactExposureRates = CustomIndexArray<ScalarType, CellIndex, VirusVariant, AgeGroup>;
+    using AirExposureRates     = CustomIndexArray<ScalarType, CellIndex, VirusVariant>;
     /**
      * @brief Construct a Location of a certain LocationId.
      * @param[in] loc_id The #LocationId.
@@ -167,8 +165,8 @@ public:
      * @param[in] num_agegroups The number of age groups in the model.
      * @return Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
     */
-    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
-                                             size_t num_agegroups) const;
+    // ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
+    //                                          size_t num_agegroups) const;
 
     /**
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
@@ -177,7 +175,7 @@ public:
      * @param[in] global_params The Parameters set of the World. 
      * @return Amount of average Infection%s with the virus per day.
     */
-    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
+    // ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
 
     /** 
      * @brief Prepare the Location for the next Simulation step.
@@ -185,7 +183,7 @@ public:
      * @param[in] dt The duration of the Simulation step.
      * @param[in] num_agegroups The number of age groups in the model.
      */
-    void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups);
+    // void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups);
 
     /**
      * @brief Get the Location specific Infection parameters.
@@ -235,26 +233,6 @@ public:
     }
 
     /**
-     * @brief Get the contact exposure rate in the Cell.
-     * @param[in] cell_idx Cell index of interest.
-     * @return Air exposure rate in the Cell.
-     */
-    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(uint32_t cell_idx) const
-    {
-        return m_cells[cell_idx].m_cached_exposure_rate_contacts;
-    }
-
-    /**
-     * @brief Get the air exposure rate in the Cell.
-     * @param[in] cell_idx Cell index of interest.
-     * @return Contact exposure rate in the cell.
-     */
-    CustomIndexArray<ScalarType, VirusVariant> get_cached_exposure_rate_air(uint32_t cell_idx) const
-    {
-        return m_cells[cell_idx].m_cached_exposure_rate_air;
-    }
-
-    /**
      * @brief Set the CellCapacity of a Cell in the Location in persons and volume.
      * @param[in] persons Maximum number of Person%s that can visit the Cell at the same time.
      * @param[in] volume Volume of the Cell in m^3.
@@ -274,16 +252,6 @@ public:
     CellCapacity get_capacity(uint32_t cell_idx = 0) const
     {
         return m_cells[cell_idx].m_capacity;
-    }
-
-    /**
-     * @brief Set the capacity adapted transmission risk flag.
-     * @param[in] consider_capacity If true considers the capacity of the Cell%s of this Location for the computation of 
-     * relative transmission risk.
-     */
-    void set_capacity_adapted_transmission_risk_flag(bool consider_capacity)
-    {
-        m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
     /**
@@ -361,8 +329,6 @@ public:
 
 private:
     LocationId m_id; ///< Id of the Location including type and index.
-    bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
-    transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.

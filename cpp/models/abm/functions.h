@@ -5,6 +5,7 @@
 
 #include "abm/person.h"
 #include "abm/location.h"
+#include <vector>
 
 namespace mio
 {
@@ -12,13 +13,21 @@ namespace mio
 namespace abm
 {
 
+void add_exposure_contribution(Location::AirExposureRates& local_air_exposure,
+                               Location::ContactExposureRates& local_contact_exposure, const Person& person,
+                               Location& location, TimePoint t, TimeSpan dt);
+
 // let a person interact with a location for and at some time
-void interact(Person& person, Location& location, TimePoint t, TimeSpan dt, const Parameters& global_parameters,
-              Person::RandomNumberGenerator& personal_rng);
+void interact(Person& person, const Location& location, const Location::AirExposureRates& local_air_exposure,
+              const Location::ContactExposureRates& local_contact_exposure, const TimePoint t, const TimeSpan dt,
+              const Parameters& global_parameters, Person::RandomNumberGenerator& personal_rng);
+
+void interact(Person& person, Location& location, const std::vector<Person>& local_population, const TimePoint t,
+              const TimeSpan dt, const Parameters& global_parameters, Person::RandomNumberGenerator& personal_rng);
 
 // move a person to another location. returns false if the person was at the target location already, true otherwise
-bool migrate(Person& person, Location& destination, const std::vector<uint32_t>& cells = {0},
-             TransportMode mode = TransportMode::Unknown);
+bool migrate(Person& person, const Location& destination, const std::vector<uint32_t>& cells = {0},
+             const TransportMode mode = TransportMode::Unknown);
 } // namespace abm
 
 } // namespace mio

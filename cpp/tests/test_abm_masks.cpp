@@ -70,13 +70,8 @@ TEST(TestMasks, maskProtection)
     auto infected1    = make_test_person(infection_location, age_group_15_to_34,
                                          mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
-    // infection_location.add_person(infected1);
-    // TODO: Change this with cells
-    infection_location.get_cells()[0].m_persons.push_back(&infected1);
-
     //cache precomputed results
     auto dt = mio::abm::days(1);
-    infection_location.cache_exposure_rates(t, dt, num_age_groups);
     // susc_person1 wears a mask, default protection is 1
     susc_person1.set_wear_mask(true);
     // susc_person2 does not wear a mask
@@ -87,10 +82,12 @@ TEST(TestMasks, maskProtection)
         mock_exponential_dist;
 
     auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person1);
-    mio::abm::interact(susc_person1, infection_location, t, dt, params, p1_rng);
+    mio::abm::interact(susc_person1, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params,
+                       p1_rng);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
     auto p2_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person2);
-    mio::abm::interact(susc_person2, infection_location, t, dt, params, p2_rng);
+    mio::abm::interact(susc_person2, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params,
+                       p2_rng);
 
     // The person susc_person1 should have full protection against an infection, susc_person2 not
     ASSERT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);

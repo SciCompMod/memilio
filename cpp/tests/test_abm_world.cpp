@@ -104,7 +104,7 @@ TEST(TestWorld, findLocation)
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
-    auto person    = world.get_person(add_test_person(world, home_id));
+    auto& person   = world.get_person(add_test_person(world, home_id));
 
     person.set_assigned_location(home_id);
     person.set_assigned_location(work_id);
@@ -157,9 +157,6 @@ TEST(TestWorld, evolveStateTransition)
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);
-
-    // TODO: CELLS! this includes reworking Location::transmission_X_per_day (especially for mio::abm::interact)
-    world.get_location(location1).get_cells()[0].m_persons.push_back(&p1);
 
     //setup mock so p2 becomes infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -676,19 +673,6 @@ TEST(TestWorld, copyWorld) // TODO: this needs either a rewrite or to be removed
     ASSERT_EQ(copied_world.get_locations()[2].get_cells().size(), world.get_locations()[2].get_cells().size());
     ASSERT_EQ(copied_world.get_locations()[3].get_cells().size(), world.get_locations()[2].get_cells().size());
     ASSERT_EQ(copied_world.get_locations()[4].get_cells().size(), world.get_locations()[2].get_cells().size());
-    // TODO: cells are broken in World copy ctor
-    // ASSERT_EQ(copied_world.get_locations()[1].get_cells()[0].m_persons.size(),
-    //           world.get_locations()[1].get_cells()[0].m_persons.size());
-    // ASSERT_EQ(copied_world.get_locations()[2].get_cells()[0].m_persons.size(),
-    //           world.get_locations()[2].get_cells()[0].m_persons.size());
-    // ASSERT_EQ(copied_world.get_locations()[3].get_cells()[0].m_persons.size(),
-    //           world.get_locations()[3].get_cells()[0].m_persons.size());
-    // ASSERT_EQ(copied_world.get_locations()[4].get_cells()[0].m_persons.size(),
-    //           world.get_locations()[4].get_cells()[0].m_persons.size());
-    // ASSERT_EQ(copied_world.get_locations()[1].get_cells()[0].m_persons[0],
-    //           world.get_locations()[1].get_cells()[0].m_persons[0]);
-    // ASSERT_EQ(copied_world.get_locations()[2].get_cells()[0].m_persons[0],
-    //           world.get_locations()[2].get_cells()[0].m_persons[0]);
 
     ASSERT_EQ(copied_world.get_persons().size(), world.get_persons().size());
     ASSERT_EQ(copied_world.get_location(world.get_persons()[0].get_person_id()).get_index(),
@@ -724,10 +708,10 @@ TEST(TestWorld, copyWorld) // TODO: this needs either a rewrite or to be removed
     ASSERT_NE(&copied_world.get_locations()[4].get_cells(), &world.get_locations()[4].get_cells());
     ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0]), &(world.get_locations()[1].get_cells()[0]));
     ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0]), &(world.get_locations()[2].get_cells()[0]));
-    ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0].m_persons[0]),
-              &(world.get_locations()[1].get_cells()[0].m_persons[0]));
-    ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0].m_persons[0]),
-              &(world.get_locations()[2].get_cells()[0].m_persons[0]));
+    // ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0].m_persons[0]),
+    //           &(world.get_locations()[1].get_cells()[0].m_persons[0]));
+    // ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0].m_persons[0]),
+    //           &(world.get_locations()[2].get_cells()[0].m_persons[0]));
 
     ASSERT_NE(&copied_world.get_persons()[0], &world.get_persons()[0]);
     ASSERT_NE(&copied_world.get_persons()[1], &world.get_persons()[1]);
