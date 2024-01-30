@@ -33,7 +33,7 @@ from memilio.simulation.secir import Model, Simulation, simulate
 
 def run_secir_simulation(show_plot=True):
     """
-    Runs the c++ secir model using one age group
+    Runs the c++ secir model using multiple age group
     and plots the results
     """
 
@@ -110,31 +110,32 @@ def run_secir_simulation(show_plot=True):
     start_day = 1
     start_month = 1
     start_year = 2019
-    # Plot Results
-    datelist = np.array(
-        pd.date_range(
-            datetime(start_year, start_month, start_day),
-            periods=tmax, freq='D').strftime('%m-%d').tolist())
-
-    tick_range = (np.arange(int(tmax / 10) + 1) * 10)
-    tick_range[-1] -= 1
-    fig, ax = plt.subplots()
-    ax.plot(t, data[:, 0], label='#Susceptible')
-    ax.plot(t, data[:, 1], label='#Exposed')
-    ax.plot(t, data[:, 2], label='#Carrying')
-    ax.plot(t, data[:, 3], label='#InfectedSymptoms')
-    ax.plot(t, data[:, 4], label='#Hospitalzed')
-    ax.plot(t, data[:, 5], label='#InfectedCritical')
-    ax.plot(t, data[:, 6], label='#Recovered')
-    ax.plot(t, data[:, 7], label='#Died')
-    ax.set_title("SECIR model simulation")
-    ax.set_xticks(tick_range)
-    ax.set_xticklabels(datelist[tick_range], rotation=45)
-    ax.legend()
-    fig.tight_layout
-    fig.savefig('Secir_simple.pdf')
 
     if (show_plot):
+        # Plot Results
+        datelist = np.array(
+            pd.date_range(
+                datetime(start_year, start_month, start_day),
+                periods=tmax, freq='D').strftime('%m-%d').tolist())
+
+        tick_range = (np.arange(int(tmax / 10) + 1) * 10)
+        tick_range[-1] -= 1
+        fig, ax = plt.subplots()
+        ax.plot(t, data[:, 0], label='#Susceptible')
+        ax.plot(t, data[:, 1], label='#Exposed')
+        ax.plot(t, data[:, 2], label='#Carrying')
+        ax.plot(t, data[:, 3], label='#InfectedSymptoms')
+        ax.plot(t, data[:, 4], label='#Hospitalzed')
+        ax.plot(t, data[:, 5], label='#InfectedCritical')
+        ax.plot(t, data[:, 6], label='#Recovered')
+        ax.plot(t, data[:, 7], label='#Died')
+        ax.set_title("SECIR model simulation")
+        ax.set_xticks(tick_range)
+        ax.set_xticklabels(datelist[tick_range], rotation=45)
+        ax.legend()
+        fig.tight_layout
+        fig.savefig('Secir_simple.pdf')
+
         plt.show()
         plt.close()
 
@@ -144,8 +145,8 @@ def run_secir_simulation(show_plot=True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple',
-        description='Simple example demonstrating the setup and simulation of the SECIR model.')
+        'secir_ageres',
+        description='Example demonstrating the setup and simulation of the SECIR model with multiple age groups.')
     arg_parser.add_argument('-p', '--show_plot',
                             action='store_const', const=True, default=False)
     args = arg_parser.parse_args()

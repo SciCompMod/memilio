@@ -25,7 +25,7 @@ setup(
     setup_requires=['cmake'],
     # need shared libs so there is one shared log level
     cmake_args=['-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON'],
-    install_requires=['pandas>=1.2.2',],
+    install_requires=[],
     extras_require={
         'dev': [
             # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs

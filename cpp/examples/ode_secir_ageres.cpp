@@ -88,7 +88,8 @@ int main()
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime(30.));
 
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
@@ -97,25 +98,6 @@ int main()
     if (print_to_terminal) {
 
         std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
-        printf("\n # t");
-        for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
-            printf(" %s", vars[k].c_str());
-        }
-        auto num_points = static_cast<size_t>(secir.get_num_time_points());
-        for (size_t t = 0; t < num_points; t++) {
-            printf("\n%.14f ", secir.get_time(t));
-            Eigen::VectorXd res_j = secir.get_value(t);
-            for (size_t j = 0; j < (size_t)mio::osecir::InfectionState::Count; j++) {
-                double dummy = 0;
-
-                for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
-                    dummy += res_j[j + (size_t)mio::osecir::InfectionState::Count * (int)i];
-                }                
-                printf(" %.14f", dummy);
-            }
-        }
-        printf("\n");
-
         printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
         printf("People in\n");
 

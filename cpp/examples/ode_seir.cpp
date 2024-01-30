@@ -29,7 +29,7 @@ int main()
 
     double t0   = 0;
     double tmax = 50.;
-    double dt   = 0.1002004008016032;
+    double dt   = 0.1;
 
     mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
@@ -45,7 +45,7 @@ int main()
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
 
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(1.0);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(2);
 
