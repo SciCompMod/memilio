@@ -33,7 +33,6 @@ from memilio.epidata import getHospitalizationData as ghd
 class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
 
     maxDiff = None
-    gd.Conf.v_level = 'Debug'
 
     path = '/home/HospitalizationData'
 
@@ -95,6 +94,7 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
              'a': [1, 2, 3],
              '7T_Hospitalisierung_Inzidenz': [4, 5, 6],
              '7T_Hospitalisierung_Faelle': [100, 1001, 100]})
+        gd.Conf.v_level = 'Warning'
         ghd.hospit_sanity_checks(df)
         expected_print = [call("Warning: Number of data categories changed.")]
         mock_print.assert_has_calls(expected_print)

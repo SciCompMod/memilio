@@ -184,7 +184,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             pass
         if not complete:
             gd.default_print(
-                "Info", "Case data is still incomplete. Trying a thrid source.")
+                "Info", "Case data is still incomplete. Trying a third source.")
             try:
                 # If the data on github is not available we download the case data from rki from covid-19 datahub
                 url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" +\

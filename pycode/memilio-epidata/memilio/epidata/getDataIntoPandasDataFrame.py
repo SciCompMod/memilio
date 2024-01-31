@@ -341,7 +341,7 @@ def cli(what):
     - sanitize_data
     - no_progress_indicator
     - interactive
-    - verboose
+    - verbose
     - skip_checks
     - no_raw
     - username
@@ -463,9 +463,9 @@ def cli(what):
             '--interactive',
             help='Interactive download (Handle warnings, passwords etc.).', action='store_true')
 
-    if not {'--verboose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(sys.argv):
+    if not {'--verbose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(sys.argv):
         parser.add_argument(
-            '-v', '--verboose', dest='verbosity_level',
+            '-v', '--verbose', dest='verbosity_level',
             help='Increases verbosity level (Trace, Debug, Info, Warning, Error, Critical, Off).',
             action='count', default=0)
 
