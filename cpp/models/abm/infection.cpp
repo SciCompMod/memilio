@@ -54,6 +54,9 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
     m_log_norm_alpha =
         inf_params.infectivity_alpha.get_distribution_instance()(rng, inf_params.infectivity_alpha.params);
     m_log_norm_beta = inf_params.infectivity_beta.get_distribution_instance()(rng, inf_params.infectivity_beta.params);
+
+    auto shedfactor_param          = params.get<VirusShedFactor>()[{virus, age}];
+    m_individual_virus_shed_factor = shedfactor_param.get_distribution_instance()(rng, shedfactor_param.params);
 }
 
 ScalarType Infection::get_viral_load(TimePoint t) const
@@ -76,7 +79,7 @@ ScalarType Infection::get_infectivity(TimePoint t) const
 {
     if (m_viral_load.start_date >= t || get_infection_state(t) == InfectionState::Exposed)
         return 0;
-    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
+    return m_individual_virus_shed_factor / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
 
 VirusVariant Infection::get_virus_variant() const
@@ -126,6 +129,8 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
 {
     auto t = init_date;
     TimeSpan time_period{}; // time period for current infection state
+    auto time_in_state = params.get<IncubationPeriod>()[{
+        m_virus_variant, age}]; // time distribution parameters for current infection state
     InfectionState next_state{start_state}; // next state to enter
     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, next_state));
     auto& uniform_dist = UniformDistribution<double>::get_instance();
@@ -134,27 +139,27 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
         switch (next_state) {
         case InfectionState::Exposed: {
             // roll out how long until infected without symptoms
-            auto time_in_state = params.get<IncubationPeriod>()[{m_virus_variant, age}];
+            time_in_state      = params.get<IncubationPeriod>()[{m_virus_variant, age}];
             time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             next_state         = InfectionState::InfectedNoSymptoms;
         } break;
         case InfectionState::InfectedNoSymptoms: {
             // roll out next infection step
-            auto time_in_state = params.get<TimeInfectedNoSymptoms>()[{m_virus_variant, age}];
-            time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
 
             p = uniform_dist(rng);
             if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}]) {
                 next_state = InfectionState::InfectedSymptoms;
+                time_in_state = params.get<TimeInfectedNoSymptomsToSymptoms>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
             else {
                 next_state = InfectionState::Recovered;
+                time_in_state = params.get<TimeInfectedNoSymptomsToRecovered>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
         } break;
         case InfectionState::InfectedSymptoms: {
             // roll out next infection step
-            auto time_in_state = params.get<TimeInfectedSymptoms>()[{m_virus_variant, age}];
-            time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
 
             ScalarType severity_protection_factor = 1.;
             p                                     = uniform_dist(rng);
@@ -166,37 +171,45 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
             if (p <
                 (1 - severity_protection_factor) * params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}]) {
                 next_state = InfectionState::InfectedSevere;
+                time_in_state = params.get<TimeInfectedSymptomsToSevere>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
             else {
                 next_state = InfectionState::Recovered;
+                time_in_state = params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
         } break;
 
         case InfectionState::InfectedSevere: {
             // roll out next infection step
-            auto time_in_state = params.get<TimeInfectedSevere>()[{m_virus_variant, age}];
-            time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
 
             p = uniform_dist(rng);
             if (p < params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}]) {
                 next_state = InfectionState::InfectedCritical;
+                time_in_state = params.get<TimeInfectedSevereToCritical>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
             else {
                 next_state = InfectionState::Recovered;
+                time_in_state = params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
         } break;
 
         case InfectionState::InfectedCritical: {
             // roll out next infection step
-            auto time_in_state = params.get<TimeInfectedCritical>()[{m_virus_variant, age}];
-            time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
 
             p = uniform_dist(rng);
             if (p < params.get<DeathsPerInfectedCritical>()[{m_virus_variant, age}]) {
                 next_state = InfectionState::Dead;
+                time_in_state = params.get<TimeInfectedCriticalToDead>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
             else {
                 next_state = InfectionState::Recovered;
+                time_in_state = params.get<TimeInfectedCriticalToRecovered>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             }
         } break;
 
@@ -214,6 +227,8 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
 {
     auto start_date = init_date;
     TimeSpan time_period{}; // time period for current infection state
+    auto time_in_state = params.get<IncubationPeriod>()[{
+        m_virus_variant, age}]; // time distribution parameters for current infection state
     InfectionState previous_state{init_state}; // previous state to enter
     auto& uniform_dist = UniformDistribution<double>::get_instance();
     ScalarType p; // uniform random draws from [0, 1]
@@ -222,25 +237,25 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
         switch (previous_state) {
 
         case InfectionState::InfectedNoSymptoms: {
-            auto time_in_state = params.get<IncubationPeriod>()[{m_virus_variant, age}];
+            time_in_state      = params.get<IncubationPeriod>()[{m_virus_variant, age}];
             time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             previous_state     = InfectionState::Exposed;
         } break;
 
         case InfectionState::InfectedSymptoms: {
-            auto time_in_state = params.get<TimeInfectedNoSymptoms>()[{m_virus_variant, age}];
+            time_in_state      = params.get<TimeInfectedNoSymptomsToSymptoms>()[{m_virus_variant, age}];
             time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             previous_state     = InfectionState::InfectedNoSymptoms;
         } break;
 
         case InfectionState::InfectedSevere: {
-            auto time_in_state = params.get<TimeInfectedSymptoms>()[{m_virus_variant, age}];
+            time_in_state      = params.get<TimeInfectedSymptomsToSevere>()[{m_virus_variant, age}];
             time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             previous_state     = InfectionState::InfectedSymptoms;
         } break;
 
         case InfectionState::InfectedCritical: {
-            auto time_in_state = params.get<TimeInfectedSevere>()[{m_virus_variant, age}];
+            time_in_state      = params.get<TimeInfectedSevereToCritical>()[{m_virus_variant, age}];
             time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             previous_state     = InfectionState::InfectedSevere;
         } break;
@@ -254,32 +269,32 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
                            params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}] *
                            params.get<DeathsPerInfectedCritical>()[{m_virus_variant, age}];
             if (p < (1 - params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}]) / (1 - p_death)) {
-                auto time_in_state = params.get<TimeInfectedNoSymptoms>()[{m_virus_variant, age}];
+                time_in_state      = params.get<TimeInfectedNoSymptomsToRecovered>()[{m_virus_variant, age}];
                 time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state     = InfectionState::InfectedNoSymptoms;
             }
             else if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
                              (1 - params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}]) / (1 - p_death)) {
-                auto time_in_state = params.get<TimeInfectedSymptoms>()[{m_virus_variant, age}];
+                time_in_state      = params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}];
                 time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state     = InfectionState::InfectedSymptoms;
             }
             else if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
                              params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}] *
                              (1 - params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}]) / (1 - p_death)) {
-                auto time_in_state = params.get<TimeInfectedSevere>()[{m_virus_variant, age}];
+                time_in_state      = params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}];
                 time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state     = InfectionState::InfectedSevere;
             }
             else {
-                auto time_in_state = params.get<TimeInfectedCritical>()[{m_virus_variant, age}];
+                time_in_state      = params.get<TimeInfectedCriticalToRecovered>()[{m_virus_variant, age}];
                 time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state     = InfectionState::InfectedCritical;
             }
         } break;
 
         case InfectionState::Dead: {
-            auto time_in_state = params.get<TimeInfectedCritical>()[{m_virus_variant, age}];
+            time_in_state      = params.get<TimeInfectedCriticalToDead>()[{m_virus_variant, age}];
             time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
             previous_state     = InfectionState::InfectedCritical;
         } break;
