@@ -32,6 +32,7 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
     : m_virus_variant(virus)
     , m_detected(detected)
 {
+    assert(age.get() < params.get_num_groups());
     m_viral_load.start_date = draw_infection_course(rng, age, params, init_date, init_state, latest_exposure);
 
     auto vl_params                    = params.get<ViralLoadDistributions>()[{virus, age}];
@@ -118,6 +119,7 @@ TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, A
                                            TimePoint init_date, InfectionState init_state,
                                            std::pair<ExposureType, TimePoint> latest_protection)
 {
+    assert(age.get() < params.get_num_groups());
     TimePoint start_date = draw_infection_course_backward(rng, age, params, init_date, init_state);
     draw_infection_course_forward(rng, age, params, init_date, init_state, latest_protection);
     return start_date;
@@ -127,6 +129,7 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
                                               const Parameters& params, TimePoint init_date, InfectionState start_state,
                                               std::pair<ExposureType, TimePoint> latest_exposure)
 {
+    assert(age.get() < params.get_num_groups());
     auto t = init_date;
     TimeSpan time_period{}; // time period for current infection state
     auto time_in_state = params.get<IncubationPeriod>()[{
@@ -225,6 +228,7 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
                                                     const Parameters& params, TimePoint init_date,
                                                     InfectionState init_state)
 {
+    assert(age.get() < params.get_num_groups());
     auto start_date = init_date;
     TimeSpan time_period{}; // time period for current infection state
     auto time_in_state = params.get<IncubationPeriod>()[{

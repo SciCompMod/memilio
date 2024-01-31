@@ -627,6 +627,9 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
     * @param scaling_factor_inf Factor for scaling the confirmed cases to account for an estimated number of undetected cases.
     * @param scaling_factor_icu Factor for scaling the reported ICU cases to account for possibly unreported ICU cases.
     * @param num_days Number of days for which the time series is exported.
+    * @param divi_data_path path to divi data file
+    * @param confirmed_cases_path path to confirmed cases file
+    * @param population_data_path path to population data file
     */
 template <class Model>
 IOResult<void> export_input_data_county_timeseries(

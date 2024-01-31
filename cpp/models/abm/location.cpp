@@ -58,6 +58,7 @@ Location Location::copy_location_without_persons(size_t num_agegroups)
 ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
                                                    size_t num_agegroups) const
 {
+    assert(age_receiver.get() < num_agegroups);
     ScalarType transmissions = 0;
     for (uint32_t age_transmitter = 0; age_transmitter != num_agegroups; ++age_transmitter) {
         transmissions +=
