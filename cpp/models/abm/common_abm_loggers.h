@@ -22,6 +22,7 @@
 #define ABM_COMMON_LOGGERS_H
 
 #include "abm/infection_state.h"
+#include "abm/person_id.h"
 #include "abm/simulation.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/time_series.h"
@@ -110,7 +111,7 @@ struct LogLocationInformation : mio::LogOnce {
  * @brief Logger to log the Person%s Information in the simulation.
  */
 struct LogPersonInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::AgeGroup>>;
+    using Type = std::vector<std::tuple<mio::abm::PersonId, uint32_t, mio::AgeGroup>>;
     /** 
      * @brief Log the LocationInformation of the simulation. 
      * @param[in] sim The simulation of the abm.
@@ -135,7 +136,7 @@ struct LogPersonInformation : mio::LogOnce {
  * @brief Logger to log Movement Data of the agents in the simulation.
  */
 struct LogDataForMovement : mio::LogAlways {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
+    using Type = std::vector<std::tuple<mio::abm::PersonId, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
                                         mio::abm::ActivityType, mio::abm::InfectionState>>;
     /** 
      * @brief Log the Movement Data of the agents in the simulation.

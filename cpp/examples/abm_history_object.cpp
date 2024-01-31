@@ -135,7 +135,7 @@ int main()
     // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(world.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)

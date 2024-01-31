@@ -121,12 +121,12 @@ TEST(TestLocation, getIndex)
 //     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups, 1);
 //     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, num_age_groups, 3);
 //     auto infected1     = mio::abm::Person(rng, home, age);
-//     auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
+//     auto rng_infected1 = mio::abm::PersonalRandomNumberGenerator(rng, infected1);
 //     infected1.add_new_infection(
 //         mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
 //     mio::abm::migrate(infected1, location, {0});
 //     auto infected2     = mio::abm::Person(rng, home, age);
-//     auto rng_infected2 = mio::abm::Person::RandomNumberGenerator(rng, infected2);
+//     auto rng_infected2 = mio::abm::PersonalRandomNumberGenerator(rng, infected2);
 //     infected2.add_new_infection(
 //         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
 //     mio::abm::migrate(infected2, location, {0, 1});
@@ -267,7 +267,7 @@ TEST(TestLocation, interact)
 
     auto susceptible = make_test_person(location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
-    auto person_rng = mio::abm::Person::RandomNumberGenerator(rng, susceptible);
+    auto person_rng = mio::abm::PersonalRandomNumberGenerator(rng, susceptible);
     mio::abm::interact(susceptible, location, local_population, t, dt, params, person_rng);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 

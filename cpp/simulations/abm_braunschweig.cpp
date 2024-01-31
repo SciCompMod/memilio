@@ -22,9 +22,9 @@
 #include <vector>
 #include <iostream>
 #include "abm/abm.h"
+#include "abm/person_id.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
-#include "boost/filesystem.hpp"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 #include "abm/vaccine.h"
@@ -59,7 +59,7 @@ void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarT
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
+mio::abm::InfectionState determine_infection_state(mio::abm::PersonalRandomNumberGenerator& rng, ScalarType exposed,
                                                    ScalarType infected_no_symptoms, ScalarType infected_symptoms,
                                                    ScalarType recovered)
 {
@@ -82,7 +82,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng             = mio::abm::PersonalRandomNumberGenerator(world.get_rng(), person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -949,10 +949,10 @@ void write_log_to_file_trip_data(const T& history)
     for (uint32_t movement_data_index = 2; movement_data_index < movement_data.size(); ++movement_data_index) {
         myfile3 << "timestep Nr.: " << movement_data_index - 1 << "\n";
         for (uint32_t trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
-            auto agent_id = (int)std::get<0>(movement_data[movement_data_index][trip_index]);
+            auto agent_id = std::get<0>(movement_data[movement_data_index][trip_index]);
 
             int start_index = movement_data_index - 1;
-            using Type      = std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
+            using Type      = std::tuple<mio::abm::PersonId, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
                                     mio::abm::ActivityType, mio::abm::InfectionState>;
             while (!std::binary_search(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
                                        movement_data[movement_data_index][trip_index],

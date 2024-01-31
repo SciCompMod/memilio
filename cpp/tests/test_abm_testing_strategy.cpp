@@ -91,9 +91,9 @@ TEST(TestTestingScheme, runScheme)
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
-    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -130,9 +130,9 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     auto person1     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered);
-    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)

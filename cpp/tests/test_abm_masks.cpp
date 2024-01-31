@@ -81,11 +81,11 @@ TEST(TestMasks, maskProtection)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
 
-    auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person1);
+    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person1);
     mio::abm::interact(susc_person1, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params,
                        p1_rng);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
-    auto p2_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person2);
+    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person2);
     mio::abm::interact(susc_person2, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params,
                        p2_rng);
 

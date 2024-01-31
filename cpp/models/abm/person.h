@@ -20,9 +20,12 @@
 #ifndef MIO_ABM_PERSON_H
 #define MIO_ABM_PERSON_H
 
-#include "abm/location_type.h"
+#include "abm/infection.h"
 #include "abm/infection_state.h"
+#include "abm/location_type.h"
 #include "abm/parameters.h"
+#include "abm/person_id.h"
+#include "abm/personal_rng.h"
 #include "abm/time.h"
 #include "abm/vaccine.h"
 #include "abm/mask.h"
@@ -35,13 +38,8 @@ namespace mio
 namespace abm
 {
 
-using PersonId = uint32_t; // TODO: use type safe
-
 struct LocationId;
-class Location;
-class Infection;
-
-static constexpr PersonId INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
+class Location; // TODO: try to remove. include directly, or use id only
 
 /**
  * @brief Agents in the simulated World that can carry and spread the Infection.
@@ -50,77 +48,6 @@ class Person
 {
 public:
     /**
-    * Random number generator of individual persons.
-    * Increments the random number generator counter of the person when used.
-    * Does not store its own key or counter.
-    * Instead the key needs to be provided from the outside, so that the RNG
-    * for all persons share the same key.
-    * The counter is taken from the person.
-    * Person::RandomNumberGenerator is cheap to construct and transparent
-    * for the compiler to optimize, so we don't store the RNG persistently, only the 
-    * counter, so we don't need to store the key in each person. This increases
-    * consistency (if the key is changed after the person is created) and 
-    * reduces the memory required per person.
-    * @see mio::RandomNumberGeneratorBase
-    */
-    class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
-    {
-    public:
-        /**
-        * Creates a RandomNumberGenerator for a person.
-        * @param key Key to be used by the generator.
-        * @param id Id of the Person.
-        * @param counter Reference to the Person's RNG Counter. 
-        */
-        RandomNumberGenerator(Key<uint64_t> key, PersonId id, Counter<uint32_t>& counter)
-            : m_key(key)
-            , m_person_id(id)
-            , m_counter(counter)
-        {
-        }
-
-        /**
-        * Creates a RandomNumberGenerator for a person.
-        * Uses the same key as another RandomNumberGenerator.
-        * @param rng RandomNumberGenerator who's key will be used.
-        * @param person Reference to the Person who's counter will be used. 
-        */
-        RandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
-            : RandomNumberGenerator(rng.get_key(), person.get_person_id(), person.get_rng_counter())
-        {
-        }
-
-        /**
-        * @return Get the key.
-        */
-        Key<uint64_t> get_key() const
-        {
-            return m_key;
-        }
-
-        /**
-        * @return Get the current counter.
-        */
-        Counter<uint64_t> get_counter() const
-        {
-            return rng_totalsequence_counter<uint64_t>(m_person_id, m_counter);
-        }
-
-        /**
-        * Increment the counter.
-        */
-        void increment_counter()
-        {
-            ++m_counter;
-        }
-
-    private:
-        Key<uint64_t> m_key; ///< Global RNG Key
-        PersonId m_person_id; ///< Id of the Person
-        Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
-    };
-
-    /**
      * @brief Create a Person.
      * @param[in, out] rng RandomNumberGenerator.
      * @param[in, out] location Initial Location of the Person.
@@ -128,7 +55,7 @@ public:
      * @param[in] person_id Index of the Person.
      */
     explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
-                    PersonId person_id = INVALID_PERSON_ID);
+                    PersonId person_id = PersonId::invalid_id());
 
     explicit Person(const Person& other, PersonId id);
 
@@ -208,11 +135,7 @@ public:
     void set_location(const Location& location);
 
     // set new location, e.g. when migrating
-    void set_location(LocationId id)
-    {
-        m_location         = id;
-        m_time_at_location = TimeSpan(0);
-    }
+    void set_location(LocationId id);
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -332,7 +255,7 @@ public:
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
      */
-    bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
+    bool get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
      * @brief Get the PersonId of the Person.
@@ -399,7 +322,7 @@ public:
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
+    bool apply_mask_intervention(PersonalRandomNumberGenerator& rng, const Location& target);
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -454,7 +377,7 @@ public:
 
     /**
     * Get this persons RandomNumberGenerator counter.
-    * @see mio::abm::Person::RandomNumberGenerator.
+    * @see mio::abm::PersonalRandomNumberGenerator.
     */
     Counter<uint32_t>& get_rng_counter()
     {

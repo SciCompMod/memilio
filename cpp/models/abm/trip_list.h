@@ -20,14 +20,8 @@
 #ifndef MIO_ABM_TRIP_LIST_H
 #define MIO_ABM_TRIP_LIST_H
 
-#include "abm/parameters.h"
-#include "abm/location.h"
-#include "abm/infection.h"
 #include "abm/location_type.h"
-
-#include "memilio/math/eigen.h"
-#include <array>
-#include <random>
+#include "abm/person.h"
 
 namespace mio
 {
@@ -38,7 +32,7 @@ namespace abm
  * @brief A trip describes a migration from one Location to another Location.
  */
 struct Trip {
-    uint32_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
+    PersonId person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     World, where all Person%s are saved.*/
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
@@ -58,7 +52,7 @@ struct Trip {
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person migrates to.
      */
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin, TransportMode mode_of_transport,
+    Trip(PersonId id, TimePoint time_new, LocationId destination, LocationId origin, TransportMode mode_of_transport,
          ActivityType type_of_activity, const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
         , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
@@ -70,13 +64,13 @@ struct Trip {
     {
     }
 
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
+    Trip(PersonId id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
         : Trip(id, time_new, destination, destination, mio::abm::TransportMode::Unknown,
                mio::abm::ActivityType::UnknownActivity, input_cells)
     {
     }
 
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
+    Trip(PersonId id, TimePoint time_new, LocationId destination, LocationId origin,
          const std::vector<uint32_t>& input_cells = {})
         : Trip(id, time_new, destination, origin, mio::abm::TransportMode::Unknown,
                mio::abm::ActivityType::UnknownActivity, input_cells)
@@ -116,7 +110,7 @@ struct Trip {
     static IOResult<Trip> deserialize(IOContext& io)
     {
         auto obj               = io.expect_object("Trip");
-        auto person_id         = obj.expect_element("person_id", Tag<uint32_t>{});
+        auto person_id         = obj.expect_element("person_id", Tag<PersonId>{});
         auto time              = obj.expect_element("time", Tag<int>{});
         auto destination_index = obj.expect_element("destination_index", Tag<uint32_t>{});
         auto destination_type  = obj.expect_element("destination_type", Tag<uint32_t>{});

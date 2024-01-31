@@ -102,6 +102,12 @@ void Person::set_location(const Location& location)
     set_location(location.get_id());
 }
 
+void Person::set_location(LocationId id)
+{
+    m_location         = id;
+    m_time_at_location = TimeSpan(0);
+}
+
 const Infection& Person::get_infection() const
 {
     return m_infections.back();
@@ -164,7 +170,7 @@ void Person::remove_quarantine()
     m_quarantine_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
 }
 
-bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
+bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
     ScalarType random   = UniformDistribution<double>::get_instance()(rng);
     m_time_of_last_test = t;
@@ -218,7 +224,7 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
     }
 }
 
-bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location& target)
+bool Person::apply_mask_intervention(PersonalRandomNumberGenerator& rng, const Location& target)
 {
     if (target.get_npi_active() == false) {
         m_wears_mask = false;

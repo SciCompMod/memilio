@@ -1,5 +1,5 @@
 #include "abm/simulation.h"
-#include "memilio/utils/stl_util.h"
+
 #include "benchmark/benchmark.h"
 
 mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
@@ -23,10 +23,10 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
             home_size         = 0;
         }
 
-        auto age     = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
+        auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
             world.get_rng(), size_t(0), world.parameters.get_num_groups() - 1));
-        auto& person = world.add_person(home, age);
-        person.set_assigned_location(home);
+        auto person = world.add_person(home, age);
+        world.get_person(person).set_assigned_location(home);
         home_size++;
     }
 
@@ -49,7 +49,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
 
     //infections and masks
     for (auto& person : world.get_persons()) {
-        auto prng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto prng = mio::abm::PersonalRandomNumberGenerator(world.get_rng(), person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
         auto pct_infected = 0.05;
         if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < pct_infected) {

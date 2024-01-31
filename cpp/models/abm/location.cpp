@@ -46,7 +46,7 @@ Location Location::copy_location_without_persons(size_t) const
 For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
 the location "Home", which is 66. We multiply this rate with the individual size of each cell to obtain a "space per person" factor.
 */
-ScalarType Cell::compute_space_per_person_relative()
+ScalarType Cell::compute_space_per_person_relative() const
 {
     if (m_capacity.volume != 0) {
         return 66.0 / m_capacity.volume;

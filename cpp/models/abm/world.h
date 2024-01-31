@@ -179,7 +179,7 @@ public:
         }()); // assert that location is in world
         assert(person.get_age().get() < parameters.get_num_groups());
 
-        uint32_t new_id = static_cast<uint32_t>(m_persons.size()); // TODO: this breaks when removing a person
+        PersonId new_id = static_cast<PersonId>(m_persons.size()); // TODO: this breaks when removing a person
         m_persons.emplace_back(person, new_id);
         auto& new_person = m_persons.back();
         new_person.set_assigned_location(m_cemetery_id);
@@ -195,6 +195,10 @@ public:
      * @return A range of all Location%s.
      */
     Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
+    Range<std::pair<LocationIterator, LocationIterator>> get_locations()
+    {
+        return make_range(m_locations.begin(), m_locations.end());
+    }
 
     /**
      * @brief Get a range of all Person%s in the World.
@@ -319,24 +323,24 @@ public:
 
     Person& get_person(PersonId id)
     {
-        assert(id == m_persons[id].get_person_id());
-        assert((size_t)id < m_persons.size());
-        return m_persons[id];
+        assert(id == m_persons[id.get()].get_person_id());
+        assert(id.get() < m_persons.size());
+        return m_persons[id.get()];
     }
 
     const Person& get_person(PersonId id) const
     {
-        assert(id == m_persons[id].get_person_id());
-        assert((size_t)id < m_persons.size());
-        return m_persons[id];
+        assert(id == m_persons[id.get()].get_person_id());
+        assert(id.get() < m_persons.size());
+        return m_persons[id.get()];
     }
 
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
         if (m_local_populations_cache.is_valid()) {
             return std::count_if(m_local_populations_cache.data.at(location).begin(),
-                                 m_local_populations_cache.data.at(location).end(), [&](PersonId p) {
-                                     return get_person(p).get_infection_state(t) == state;
+                                 m_local_populations_cache.data.at(location).end(), [&](uint32_t p) {
+                                     return get_person(PersonId(p)).get_infection_state(t) == state;
                                  });
         }
 
@@ -372,20 +376,20 @@ public:
         LocationId origin    = get_location(person).get_id();
         const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), cells, mode);
         if (has_moved && m_local_populations_cache.is_valid()) {
-            m_local_populations_cache.data.at(origin).erase(person);
-            m_local_populations_cache.data.at(destination).emplace(person);
+            m_local_populations_cache.data.at(origin).erase(person.get());
+            m_local_populations_cache.data.at(destination).emplace(person.get());
         }
     }
 
     // let a person interact with its current location
     inline void interact(PersonId person, TimePoint t, TimeSpan dt)
     {
-        auto personal_rng = Person::RandomNumberGenerator(m_rng, get_person(person));
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
         interact(person, t, dt, personal_rng, parameters);
     }
 
     // let a person interact with its current location
-    inline void interact(PersonId person, TimePoint t, TimeSpan dt, Person::RandomNumberGenerator& personal_rng,
+    inline void interact(PersonId person, TimePoint t, TimeSpan dt, PersonalRandomNumberGenerator& personal_rng,
                          const Parameters& global_parameters)
     {
         if (!m_air_exposure_rates_cache.is_valid() || !m_contact_exposure_rates_cache.is_valid()) {
@@ -505,7 +509,7 @@ private:
         }
     }
 
-    Cache<std::unordered_map<LocationId, std::unordered_set<PersonId>>>
+    Cache<std::unordered_map<LocationId, std::unordered_set<uint32_t>>>
         m_local_populations_cache; // TODO: change this to storing only (sub)population(s) in numbers, using atomic ints
     Cache<std::unordered_map<LocationId, Location::AirExposureRates>> m_air_exposure_rates_cache;
     Cache<std::unordered_map<LocationId, Location::ContactExposureRates>> m_contact_exposure_rates_cache;
@@ -517,7 +521,7 @@ private:
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+    std::vector<std::pair<LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                            const Parameters&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.

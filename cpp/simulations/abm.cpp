@@ -54,7 +54,7 @@ void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarT
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
+mio::abm::InfectionState determine_infection_state(mio::abm::PersonalRandomNumberGenerator& rng, ScalarType exposed,
                                                    ScalarType infected_no_symptoms, ScalarType infected_symptoms,
                                                    ScalarType recovered)
 {
@@ -448,7 +448,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng             = mio::abm::PersonalRandomNumberGenerator(world.get_rng(), person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible) {

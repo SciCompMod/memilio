@@ -438,7 +438,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto pid =
         add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, current_time);
     auto& person    = world.get_person(pid);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
@@ -589,7 +589,7 @@ TEST(TestWorld, copyWorld) // TODO: this needs either a rewrite or to be removed
     auto& p1 = world.get_person(pid1);
     auto& p2 = world.get_person(pid2);
 
-    auto rng_p1 = mio::abm::Person::RandomNumberGenerator(rng, p1);
+    auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(rng, p1);
     p1.add_new_infection(mio::abm::Infection(rng_p1, mio::abm::VirusVariant::Wildtype, p1.get_age(), world.parameters,
                                              mio::abm::TimePoint(0)));
     p2.set_mask_preferences(std::vector<double>(15, 0.2));

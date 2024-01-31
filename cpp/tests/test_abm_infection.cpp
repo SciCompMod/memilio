@@ -34,7 +34,7 @@ TEST(TestInfection, init)
     //uses uniformdistribution but result doesn't matter, so init before the mock
     mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
     auto counter = mio::Counter<uint32_t>(0);
-    auto rng     = mio::abm::Person::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
+    auto rng     = mio::abm::PersonalRandomNumberGenerator(mio::Key<uint64_t>{0}, mio::abm::PersonId(0), counter);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -100,7 +100,7 @@ TEST(TestInfection, init)
 TEST(TestInfection, getInfectionState)
 {
     auto counter   = mio::Counter<uint32_t>(0);
-    auto rng       = mio::abm::Person::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
+    auto rng       = mio::abm::PersonalRandomNumberGenerator(mio::Key<uint64_t>{0}, mio::abm::PersonId(0), counter);
     auto params    = mio::abm::Parameters(num_age_groups);
     auto t         = mio::abm::TimePoint(0);
     auto infection = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
@@ -112,7 +112,7 @@ TEST(TestInfection, getInfectionState)
 TEST(TestInfection, drawInfectionCourseBackward)
 {
     auto counter = mio::Counter<uint32_t>(0);
-    auto rng     = mio::abm::Person::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
+    auto rng     = mio::abm::PersonalRandomNumberGenerator(mio::Key<uint64_t>{0}, mio::abm::PersonId(0), counter);
 
     auto t                      = mio::abm::TimePoint(1);
     auto dt                     = mio::abm::days(1);

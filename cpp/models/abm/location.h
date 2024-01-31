@@ -20,7 +20,6 @@
 #ifndef MIO_ABM_LOCATION_H
 #define MIO_ABM_LOCATION_H
 
-#include "abm/person.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
 #include "abm/location_type.h"
@@ -31,7 +30,6 @@ namespace mio
 {
 namespace abm
 {
-class Person;
 
 struct CellIndex : public mio::Index<CellIndex> {
     CellIndex(size_t i)
@@ -66,7 +64,7 @@ struct Cell {
     * @brief Computes a relative cell size for the Cell.
     * @return The relative cell size for the Cell.
     */
-    ScalarType compute_space_per_person_relative();
+    ScalarType compute_space_per_person_relative() const;
 
     /**
     * @brief Get subpopulation of a particular #InfectionState in the Cell.
@@ -206,12 +204,6 @@ public:
         return m_cells;
     }
 
-    // TODO: remove and/or refactor
-    std::vector<Cell>& get_cells()
-    {
-        return m_cells;
-    }
-
     /**
      * @brief Get the type of Mask that is demanded when entering this Location.
      * @return Least secure MaskType that is demanded when entering this Location.
@@ -238,6 +230,7 @@ public:
      */
     void set_capacity(uint32_t persons, uint32_t volume, uint32_t cell_idx = 0)
     {
+        assert(cell_idx < m_cells.size());
         m_cells[cell_idx].m_capacity.persons = persons;
         m_cells[cell_idx].m_capacity.volume  = volume;
     }
@@ -249,6 +242,7 @@ public:
      */
     CellCapacity get_capacity(uint32_t cell_idx = 0) const
     {
+        assert(cell_idx < m_cells.size());
         return m_cells[cell_idx].m_capacity;
     }
 

@@ -32,7 +32,7 @@ namespace mio
 namespace abm
 {
 
-LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType random_migration(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                               const Parameters& params)
 {
     auto current_loc     = person.get_location().get_type();
@@ -48,7 +48,7 @@ LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& 
     return current_loc;
 }
 
-LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_school(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
                           const Parameters& params)
 {
     auto current_loc = person.get_location().get_type();
@@ -67,7 +67,7 @@ LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& 
     return current_loc;
 }
 
-LocationType go_to_work(Person::RandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_work(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params)
 {
     auto current_loc = person.get_location().get_type();
@@ -86,7 +86,7 @@ LocationType go_to_work(Person::RandomNumberGenerator& /*rng*/, const Person& pe
     return current_loc;
 }
 
-LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params)
 {
     auto current_loc = person.get_location().get_type();
@@ -105,7 +105,7 @@ LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person
     return current_loc;
 }
 
-LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                          const Parameters& params)
 {
     auto current_loc = person.get_location().get_type();
@@ -127,7 +127,7 @@ LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& perso
     return current_loc;
 }
 
-LocationType go_to_quarantine(Person::RandomNumberGenerator& /*rng*/, const Person& person, TimePoint t,
+LocationType go_to_quarantine(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t,
                               TimeSpan /*dt*/, const Parameters& params)
 {
     auto current_loc = person.get_location().get_type();
@@ -138,7 +138,7 @@ LocationType go_to_quarantine(Person::RandomNumberGenerator& /*rng*/, const Pers
     return current_loc;
 }
 
-LocationType go_to_hospital(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+LocationType go_to_hospital(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                             TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
@@ -148,7 +148,7 @@ LocationType go_to_hospital(Person::RandomNumberGenerator& /*rng*/, const Person
     return current_loc;
 }
 
-LocationType go_to_icu(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t, TimeSpan /*dt*/,
+LocationType go_to_icu(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t, TimeSpan /*dt*/,
                        const Parameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
@@ -158,7 +158,7 @@ LocationType go_to_icu(Person::RandomNumberGenerator& /*rng*/, const Person& per
     return current_loc;
 }
 
-LocationType return_home_when_recovered(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+LocationType return_home_when_recovered(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                                         TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
@@ -169,7 +169,7 @@ LocationType return_home_when_recovered(Person::RandomNumberGenerator& /*rng*/, 
     return current_loc;
 }
 
-LocationType get_buried(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+LocationType get_buried(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                         TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();

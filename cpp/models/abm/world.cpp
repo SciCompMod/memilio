@@ -62,7 +62,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         // TODO: i == get_person(i).get_person_id(), but this does not have to stay true
-        interact(i, t, dt);
+        interact(m_persons[i].get_person_id(), t, dt);
     }
 }
 
@@ -70,8 +70,8 @@ void World::migration(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person     = m_persons[i];
-        auto personal_rng = Person::RandomNumberGenerator(m_rng, person);
+        auto& person      = m_persons[i];
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
@@ -122,8 +122,8 @@ void World::migration(TimePoint t, TimeSpan dt)
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
             auto& trip        = m_trip_list.get_next_trip(weekend);
-            auto& person      = m_persons[trip.person_id];
-            auto personal_rng = Person::RandomNumberGenerator(m_rng, person);
+            auto& person      = get_person(trip.person_id);
+            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {

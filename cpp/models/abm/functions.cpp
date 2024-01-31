@@ -16,6 +16,8 @@ namespace abm
 
 // TODO: on argument order: maybe personal_rng first, as it always(?) is a non-const reference
 
+// TODO: daily_transmissions functions are only used in interact. expose in header anyways?
+
 ScalarType daily_transmissions_by_contacts(const Location::ContactExposureRates& rates, CellIndex cell_index,
                                            VirusVariant virus, AgeGroup age_receiver,
                                            const LocalInfectionParameters& params)
@@ -37,7 +39,7 @@ ScalarType daily_transmissions_by_air(const Location::AirExposureRates& rates, C
 
 void interact(Person& person, const Location& location, const Location::AirExposureRates& local_air_exposure,
               const Location::ContactExposureRates& local_contact_exposure, const TimePoint t, const TimeSpan dt,
-              const Parameters& global_parameters, Person::RandomNumberGenerator& personal_rng)
+              const Parameters& global_parameters, PersonalRandomNumberGenerator& personal_rng)
 {
     // make sure all dimensions are set correctly and all indices are valid
     assert(location.get_cells().size() == local_air_exposure.size<CellIndex>().get());
@@ -85,11 +87,11 @@ void interact(Person& person, const Location& location, const Location::AirExpos
 
 void add_exposure_contribution(Location::AirExposureRates& local_air_exposure,
                                Location::ContactExposureRates& local_contact_exposure, const Person& person,
-                               Location& location, TimePoint t, TimeSpan dt)
-{ // TODO: location should be const, but there is no const cell accessor
+                               const Location& location, TimePoint t, TimeSpan dt)
+{
     assert([&]() {
         if (person.get_location() != location.get_id()) {
-            mio::log_warning("Person with id {} is not at Location with id {}", person.get_person_id(),
+            mio::log_warning("Person with id {} is not at Location with id {}", person.get_person_id().get(),
                              location.get_index());
         }
         return true;
@@ -113,9 +115,9 @@ void add_exposure_contribution(Location::AirExposureRates& local_air_exposure,
     }
 }
 
-void interact(Person& person, Location& location, const std::vector<Person>& local_population, const TimePoint t,
-              const TimeSpan dt, const Parameters& global_parameters, Person::RandomNumberGenerator& personal_rng)
-{ // TODO: make location const&, need to fix add_exposure_contribution
+void interact(Person& person, const Location& location, const std::vector<Person>& local_population, const TimePoint t,
+              const TimeSpan dt, const Parameters& global_parameters, PersonalRandomNumberGenerator& personal_rng)
+{
     Location::AirExposureRates local_air_exposure{{CellIndex(location.get_cells().size()), VirusVariant::Count}, 0.};
     Location::ContactExposureRates local_contact_exposure{
         {CellIndex(location.get_cells().size()), VirusVariant::Count, AgeGroup(global_parameters.get_num_groups())},

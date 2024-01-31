@@ -1,6 +1,9 @@
 add_library(abm
     functions.cpp
     functions.h
+    person_id.h
+    personal_rng.cpp
+    personal_rng.h
     location.cpp
     location.h
     household.cpp

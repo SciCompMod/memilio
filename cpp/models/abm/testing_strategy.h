@@ -136,12 +136,12 @@ public:
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
-     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
+     * @param[inout] rng PersonalRandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const;
+    bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
@@ -213,13 +213,13 @@ public:
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
-     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
+     * @param[inout] rng PersonalRandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+    bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
 private:
     std::vector<std::pair<LocationId, std::vector<TestingScheme>>>

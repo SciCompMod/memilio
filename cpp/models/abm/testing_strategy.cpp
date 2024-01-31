@@ -100,7 +100,7 @@ void TestingScheme::update_activity_status(TimePoint t)
     m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
-bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
+bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
     if (t - person.get_time_of_last_test() > m_minimal_time_since_last_test) {
         if (m_testing_criteria.evaluate(person, t)) {
@@ -165,7 +165,7 @@ void TestingStrategy::update_activity_status(TimePoint t)
     }
 }
 
-bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location,
+bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location,
                                    TimePoint t)
 {
     // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.
