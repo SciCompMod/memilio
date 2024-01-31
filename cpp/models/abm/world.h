@@ -375,9 +375,13 @@ public:
     {
         LocationId origin    = get_location(person).get_id();
         const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), cells, mode);
-        if (has_moved && m_local_populations_cache.is_valid()) {
-            m_local_populations_cache.data.at(origin).erase(person.get());
-            m_local_populations_cache.data.at(destination).emplace(person.get());
+        if (has_moved) {
+            m_air_exposure_rates_cache.invalidate();
+            m_contact_exposure_rates_cache.invalidate();
+            if (m_local_populations_cache.is_valid()) {
+                m_local_populations_cache.data.at(origin).erase(person.get());
+                m_local_populations_cache.data.at(destination).emplace(person.get());
+            }
         }
     }
 
@@ -394,6 +398,8 @@ public:
     {
         if (!m_air_exposure_rates_cache.is_valid() || !m_contact_exposure_rates_cache.is_valid()) {
             recompute_exposure_rates(t, dt);
+            m_air_exposure_rates_cache.validate();
+            m_contact_exposure_rates_cache.validate();
         }
         mio::abm::interact(get_person(person), get_location(person),
                            m_air_exposure_rates_cache.data.at(get_location(person).get_id()),
