@@ -38,7 +38,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     m_has_locations[size_t(type)] = true;
 
     if (m_local_populations_cache.is_valid()) {
-        m_local_populations_cache.data[id];
+        m_local_populations_cache.data[id.index];
     }
     return id;
 }
