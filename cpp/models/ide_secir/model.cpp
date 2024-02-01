@@ -35,7 +35,7 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
     , m_transitions{std::move(init)}
     , m_populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
     , m_N{N_init}
-    , m_total_confirmed_cases(total_confirmed_cases)
+    , m_total_confirmed_cases{total_confirmed_cases}
 {
     m_deaths_before =
         deaths - m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
