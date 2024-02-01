@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -56,34 +56,6 @@ void Simulation::advance(ScalarType tmax)
         // compute remaining compartments from flows
         m_model->other_compartments_current_timestep(m_dt);
         m_model->compute_recovered();
-    }
-}
-
-void Simulation::print_transitions() const
-{
-    // print transitions after simulation
-    std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  C -> R  |  I -> H  |  I -> R  |  H -> U  |  H -> R  |  "
-                 "U -> D  |  U -> R  "
-              << std::endl;
-    for (Eigen::Index i = 0; i < m_model->m_transitions.get_num_time_points(); ++i) {
-        std::cout << m_model->m_transitions.get_time(i);
-        for (Eigen::Index j = 0; j < m_model->m_transitions.get_num_elements(); ++j) {
-            std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_transitions[i][j];
-        }
-        std::cout << "\n" << std::endl;
-    }
-}
-
-void Simulation::print_compartments() const
-{
-    // print compartments after simulation
-    std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
-    for (Eigen::Index i = 0; i < m_model->m_populations.get_num_time_points(); ++i) {
-        std::cout << m_model->m_populations.get_time(i);
-        for (Eigen::Index j = 0; j < m_model->m_populations.get_num_elements(); ++j) {
-            std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_populations[i][j];
-        }
-        std::cout << "\n" << std::endl;
     }
 }
 

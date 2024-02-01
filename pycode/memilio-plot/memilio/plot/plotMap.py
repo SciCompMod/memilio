@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Daniel Abele, Martin J. Kuehn
 #
@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
+import matplotlib.colors as mcolors
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -121,7 +122,7 @@ def extract_data(
         df.rename(columns={column: 'Count'}, inplace=True)
         if output == 'sum':
             return df[dffilter].groupby(region_spec).agg(
-                {'Count': sum}).reset_index()
+                {'Count': "sum"}).reset_index()
         elif output == 'matrix':
             if filters != None:
                 return df[dffilter].loc[:, [region_spec] +
@@ -143,10 +144,13 @@ def extract_data(
 
         # Set no filtering if filters were set to None.
         if filters == None:
-            filters['Group'] = list(h5file[regions[i]].keys())[
+            filters['Group'] = list(h5file[regions[0]].keys())[
                 :-2]  # Remove 'Time' and 'Total'.
             filters['InfectionState'] = list(
                 range(h5file[regions[i]]['Group1'].shape[1]))
+
+        if filters['Group'] == None:
+            filters['Group'] = list(h5file[regions[0]].keys())[:-2]
 
         InfectionStateList = [j for j in filters['InfectionState']]
 
@@ -192,12 +196,12 @@ def extract_data(
 
                     k += 1
             else:
-                raise gd.ValueError(
-                    "Time point not found for region " + str(regions[i]) + ".")
+                raise gd.DataError(
+                    "Time point " + str(date) + " not found for region " + str(regions[i]) + ".")
 
         # Aggregated or matrix output.
         if output == 'sum':
-            return df.groupby('Region').agg({'Count': sum}).reset_index()
+            return df.groupby('Region').agg({'Count': "sum"}).reset_index()
         elif output == 'matrix':
             return df
         else:
@@ -205,6 +209,29 @@ def extract_data(
 
     else:
         raise gd.DataError("Data could not be read in.")
+
+
+def extract_time_steps(file, file_format='json'):
+    """ Reads data from a general json or specific hdf5 file as output by the 
+    MEmilio simulation framework and extracts the number of days used.
+
+    @param[in] file Path and filename of file to be read in, relative from current
+        directory.
+    @param[in] file_format File format; either json or h5.
+    @return Number of time steps.
+    """
+    input_file = os.path.join(os.getcwd(), str(file))
+    if file_format == 'json':
+        df = pd.read_json(input_file + '.' + file_format)
+        if 'Date' in df.columns:
+            time_steps = df['Date'].nunique()
+        else:
+            time_steps = 1
+    elif file_format == 'h5':
+        h5file = h5py.File(input_file + '.' + file_format, 'r')
+        regions = list(h5file.keys())
+        time_steps = len(h5file[regions[0]]['Time'])
+    return time_steps
 
 
 def scale_dataframe_relative(df, age_groups, df_population):
@@ -225,7 +252,7 @@ def scale_dataframe_relative(df, age_groups, df_population):
     """
 
     # Merge population data of Eisenach (if counted separately) with Wartburgkreis.
-    if 16056 in df_population[df.columns[0]].values:
+    if 16056 in df_population['ID_County'].values:
         for i in range(1, len(df_population.columns)):
             df_population.loc[df_population[df.columns[0]] == 16063, df_population.columns[i]
                               ] += df_population.loc[df_population.ID_County == 16056, df_population.columns[i]]
@@ -235,12 +262,12 @@ def scale_dataframe_relative(df, age_groups, df_population):
         columns=[df_population.columns[0]] + age_groups)
     # Extrapolate on oldest age group with maximumg age 100.
     for region_id in df.iloc[:, 0]:
-        df_population_agegroups.loc[len(df_population_agegroups.index), :] = [region_id] + list(
-            mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == region_id].iloc[:, 2:], age_groups))
+        df_population_agegroups.loc[len(df_population_agegroups.index), :] = [int(region_id)] + list(
+            mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == int(region_id)].iloc[:, 2:], age_groups))
 
     def scale_row(elem):
         population_local_sum = df_population_agegroups[
-            df_population_agegroups[df.columns[0]] == elem[0]].iloc[
+            df_population_agegroups['ID_County'] == int(elem[0])].iloc[
                 :, 1:].sum(axis=1)
         return elem['Count'] / population_local_sum.values[0]
 
@@ -272,7 +299,8 @@ def plot_map(data: pd.DataFrame,
              output_path: str = '',
              fig_name: str = 'customPlot',
              dpi: int = 300,
-             outercolor='white'):
+             outercolor='white',
+             log_scale=False):
     """! Plots region-specific information onto a interactive html map and
     returning svg and png image. Allows the comparisons of a variable list of
     data sets.
@@ -288,12 +316,14 @@ def plot_map(data: pd.DataFrame,
     @param[in] fig_name Name of the figure created.
     @param[in] dpi Dots-per-inch value for the exported figure.
     @param[in] outercolor Background color of the plot image.
+    @param[in] log_scale Defines if the colorbar is plotted in log scale.
     """
     region_classifier = data.columns[0]
+    region_data = data[region_classifier].to_numpy().astype(int)
 
     data_columns = data.columns[1:]
     # Read and filter map data.
-    if data[region_classifier].isin(geoger.get_county_ids()).all():
+    if np.isin(region_data, geoger.get_county_ids()).all():
         try:
             map_data = geopandas.read_file(
                 os.path.join(
@@ -342,17 +372,23 @@ def plot_map(data: pd.DataFrame,
     # Use top row for title.
     tax = fig.add_subplot(gs[0, :])
     tax.set_axis_off()
-    tax.set_title(title, fontsize=18)
+    tax.set_title(title, fontsize=16)
     if plot_colorbar:
         # Prepare colorbar.
         cax = fig.add_subplot(gs[1, 0])
     else:
         cax = None
 
+    if log_scale:
+        norm = mcolors.LogNorm(vmin=scale_colors[0], vmax=scale_colors[1])
+
     for i in range(len(data_columns)):
 
         ax = fig.add_subplot(gs[:, i+2])
-        if cax is not None:
+        if log_scale:
+            map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
+                          norm=norm)
+        elif cax is not None:
             map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
                           vmin=scale_colors[0], vmax=scale_colors[1])
         else:
@@ -364,8 +400,4 @@ def plot_map(data: pd.DataFrame,
         ax.set_axis_off()
 
     plt.subplots_adjust(bottom=0.1)
-
     plt.savefig(os.path.join(output_path, fig_name + '.png'), dpi=dpi)
-    plt.savefig(os.path.join(output_path, fig_name + '.svg'), dpi=dpi)
-
-    plt.show()

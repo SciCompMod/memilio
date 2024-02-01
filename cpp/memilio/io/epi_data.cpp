@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -25,19 +25,18 @@
 namespace mio
 {
 
-const std::array<const char*, 6> ConfirmedCasesDataEntry::age_group_names = {"A00-A04", "A05-A14", "A15-A34",
-                                                                             "A35-A59", "A60-A79", "A80+"};
+std::vector<const char*> ConfirmedCasesDataEntry::age_group_names = {"A00-A04", "A05-A14", "A15-A34",
+                                                                     "A35-A59", "A60-A79", "A80+"};
 
-const std::array<const char*, 11> PopulationDataEntry::age_group_names = {
+std::vector<const char*> PopulationDataEntry::age_group_names = {
     "<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
     "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"};
 
-const std::array<const char*, 6> VaccinationDataEntry::age_group_names = {"0-4",   "5-14",  "15-34",
-                                                                          "35-59", "60-79", "80-99"};
+std::vector<const char*> VaccinationDataEntry::age_group_names = {"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"};
 
-IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county)
+IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county, bool rki_age_groups)
 {
-    BOOST_OUTCOME_TRY(population_data, read_population_data(path));
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path, rki_age_groups));
     std::vector<int> id;
     id.reserve(population_data.size());
     for (auto&& entry : population_data) {

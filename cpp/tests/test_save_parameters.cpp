@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -48,12 +48,16 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
     auto& params = model.parameters;
 
-    for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.9;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+
+        params.get<mio::osecir::Seasonality>()          = 0.0;
+        params.get<mio::osecir::ICUCapacity>()          = 100.0;
+        params.get<mio::osecir::TestAndTraceCapacity>() = 10.0;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
@@ -69,6 +73,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
         model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
         model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
         model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = beta;
+        model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()   = 0.85;
         model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = rho;
         model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                = theta;
         model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                = delta;
@@ -368,13 +373,16 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     double fact              = 1.0 / (double)(size_t)num_groups;
 
     model.parameters.set<mio::osecir::TestAndTraceCapacity>(30);
+    auto& params = model.parameters;
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
+        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.9;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
+        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-    for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        model.parameters.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        model.parameters.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
-        model.parameters.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+        params.get<mio::osecir::Seasonality>() = 0.0;
+        params.get<mio::osecir::ICUCapacity>() = 100.0;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
@@ -568,6 +576,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result = mio::osecir::read_input_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
@@ -615,6 +624,7 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result =
         mio::osecir::read_input_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -674,6 +684,7 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model3[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model3[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result1 =
         mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf, scaling_factor_icu, path);
     auto read_result2 =

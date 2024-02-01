@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -31,7 +31,7 @@
  * @param tmax end point of simulation
  */
 mio::IOResult<void>
-write_single_run_result(const int run,
+write_single_run_result(const size_t run,
                         const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge>& graph)
 {
     std::string abs_path;

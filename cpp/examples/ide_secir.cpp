@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
 *
@@ -97,7 +97,7 @@ int main()
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);
 
-    sim.print_transitions();
-
-    sim.print_compartments();
+    sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
+                                      16, 8);
 }

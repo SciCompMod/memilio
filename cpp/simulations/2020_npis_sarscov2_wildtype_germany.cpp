@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -490,7 +490,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
         set_node_function(params, start_date, end_date, data_dir,
                           mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
-                          scaling_factor_icu, tnt_capacity_factor, 0, false));
+                          scaling_factor_icu, tnt_capacity_factor, 0, false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
@@ -546,8 +546,19 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //run parameter study
     auto parameter_study =
         mio::ParameterStudy<mio::osecir::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+
+    // parameter_study.get_rng().seed(
+    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+    if (mio::mpi::is_root()) {
+        printf("Seeds: ");
+        for (auto s : parameter_study.get_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
+    }
+
     auto save_single_run_result = mio::IOResult<void>(mio::success());
-    auto ensemble = parameter_study.run(
+    auto ensemble               = parameter_study.run(
         [](auto&& graph) {
             return draw_sample(graph);
         },
@@ -556,8 +567,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 
             auto params = std::vector<mio::osecir::Model>{};
             params.reserve(results_graph.nodes().size());
-            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                           std::back_inserter(params), [](auto&& node) {
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
@@ -568,13 +579,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             return std::make_pair(std::move(interpolated_result), std::move(params));
         });
 
-    if (ensemble.size() > 0){
+    if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
         ensemble_params.reserve(ensemble.size());
-        for (auto&& run: ensemble)
-        {
+        for (auto&& run : ensemble) {
             ensemble_results.emplace_back(std::move(run.first));
             ensemble_params.emplace_back(std::move(run.second));
         }
@@ -595,7 +605,7 @@ int main(int argc, char** argv)
     //- log level
     //- ...
 
-    mio::set_log_level(mio::LogLevel::warn);    
+    mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
 
     RunMode mode;
@@ -650,17 +660,6 @@ int main(int argc, char** argv)
     }
     if (mio::mpi::is_root()) {
         printf("Saving results to \"%s\".\n", result_dir.c_str());
-    }
-
-    // mio::thread_local_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    mio::thread_local_rng().synchronize_seeds();
-    if (mio::mpi::is_root()) {
-        printf("Seeds: ");
-        for (auto s : mio::thread_local_rng().get_seeds()) {
-            printf("%u, ", s);
-        }
-        printf("\n");
     }
 
     auto result = run(mode, data_dir, save_dir, result_dir, save_single_runs);

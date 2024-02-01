@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, David Kerkmann, Sascha Korf
 *

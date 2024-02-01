@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Daniel Abele, Khoa Nguyen
 #
@@ -25,19 +25,21 @@ import numpy as np
 import memilio.simulation as mio
 import memilio.simulation.abm as abm
 
+global num_age_groups
+num_age_groups = 6
+
 
 class TestAbm(unittest.TestCase):
     def test_world(self):
         t0 = abm.TimePoint(0)
-        sim = abm.Simulation(t0)
+        sim = abm.Simulation(t0, num_age_groups)
         world = sim.world
         self.assertEqual(len(world.persons), 0)
         self.assertEqual(len(world.locations), 1)
-        self.assertEqual(len(sim.result), 0)
 
     def test_locations(self):
         t0 = abm.TimePoint(0)
-        sim = abm.Simulation(t0)
+        sim = abm.Simulation(t0, num_age_groups)
         world = sim.world
 
         home_id = world.add_location(abm.LocationType.Home)
@@ -47,15 +49,14 @@ class TestAbm(unittest.TestCase):
         home = world.locations[home_id.index]
         self.assertEqual(home.type, abm.LocationType.Home)
 
-        testing_ages = [abm.AgeGroup.Age0to4]
+        testing_ages = [mio.AgeGroup(0)]
 
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
 
-        testing_locations = [abm.LocationType.Home]
         testing_inf_states = []
-        testing_crit = [abm.TestingCriteria(
-            testing_ages, testing_locations, testing_inf_states)]
+        testing_crit = abm.TestingCriteria(
+            testing_ages, testing_inf_states)
         testing_scheme = abm.TestingScheme(testing_crit, abm.days(
             1), t0, t0 + abm.days(1), abm.AntigenTest(), 1.0)
         # initially false, will only active once simulation starts
@@ -63,27 +64,27 @@ class TestAbm(unittest.TestCase):
 
     def test_persons(self):
         t0 = abm.TimePoint(0)
-        sim = abm.Simulation(t0)
+        sim = abm.Simulation(t0, 6)
         world = sim.world
 
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
 
         p1 = world.add_person(
-            home_id, abm.AgeGroup.Age15to34)
+            home_id, mio.AgeGroup(2))
         p2 = world.add_person(
-            social_event_id, abm.AgeGroup.Age80plus)
+            social_event_id, mio.AgeGroup(5))
 
         # check persons
         self.assertEqual(len(world.persons), 2)
-        self.assertEqual(p1.age, abm.AgeGroup.Age15to34)
+        self.assertEqual(p1.age, mio.AgeGroup(2))
         self.assertEqual(p1.location.index, 1)
         self.assertEqual(world.persons[0], p1)
         self.assertEqual(world.persons[1], p2)
 
     def test_simulation(self):
         t0 = abm.TimePoint(0)
-        sim = abm.Simulation(t0)
+        sim = abm.Simulation(t0, num_age_groups)
         world = sim.world
 
         # add some locations and persons
@@ -93,19 +94,19 @@ class TestAbm(unittest.TestCase):
         social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
         work_id = abm.LocationId(0, abm.LocationType.Work)
         p1 = world.add_person(
-            home_id, abm.AgeGroup.Age0to4)
+            home_id, mio.AgeGroup(0))
         p2 = world.add_person(
-            home_id, abm.AgeGroup.Age15to34)
+            home_id, mio.AgeGroup(2))
         for type in abm.LocationType.values():
             p1.set_assigned_location(abm.LocationId(0, type))
             p2.set_assigned_location(abm.LocationId(0, type))
 
         social_event = world.locations[social_event_id.index]
 
-        world.infection_parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype,
-                                                            abm.AgeGroup.Age0to4] = 0.0
-        world.infection_parameters.InfectedSymptomsToRecovered[
-            abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4] = 0.0
+        world.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
+            0)] = 0.0
+        world.parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(
+            0)] = 0.0
 
         # trips
         trip_list = abm.TripList()
@@ -115,7 +116,7 @@ class TestAbm(unittest.TestCase):
                            abm.hours(8), work_id, home_id))
         world.trip_list = trip_list
         world.use_migration_rules = False
-        self.assertEqual(world.trip_list.num_trips, 2)
+        self.assertEqual(world.trip_list.num_trips(), 2)
 
         # vaccination
         vaccine = abm.Vaccination(
@@ -126,7 +127,6 @@ class TestAbm(unittest.TestCase):
         # run
         t1 = t0 + abm.days(1)
         sim.advance(t1)
-        self.assertEqual(sim.result.get_num_time_points(), 25)
 
 
 if __name__ == '__main__':

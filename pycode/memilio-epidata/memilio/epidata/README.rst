@@ -213,7 +213,7 @@ BAA            Germany     migration_bfa_2020_dim400           number of commute
 ============== ==========  =================================== =================
 
 More detailed information can be found in the
-`documentation <https://dlr-sc.github.io/memilio/documentation/index.html>`_  of the different functions.
+`documentation <https://scicompmod.github.io/memilio/documentation/index.html>`_  of the different functions.
 
 Notes for developers
 --------------------
