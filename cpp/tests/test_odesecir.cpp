@@ -722,7 +722,7 @@ TEST(Secir, getInfectionsRelative)
         {mio::AgeGroup(2), mio::osecir::InfectionState::Susceptible}, 40'000.0);
 
     mio::osecir::Simulation<> sim(model, 0.0);
-    ASSERT_EQ(get_infections_relative(sim, 0.0, sim.get_result().get_last_value()),
+    ASSERT_EQ(mio::osecir::get_infections_relative<double>(sim, 0.0, sim.get_result().get_last_value()),
               (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
 }
 
