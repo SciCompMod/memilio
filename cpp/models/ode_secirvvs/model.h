@@ -538,7 +538,7 @@ public:
      * @param t0 start time
      * @param dt time steps
      */
-    Simulation(Model<FP> const& model, FP t0 = 0., FP dt = 0.1)
+    Simulation(mio::osecirvvs::Model<FP> const& model, FP t0 = 0., FP dt = 0.1)
         : BaseT(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
