@@ -14,7 +14,7 @@ else:
 
 
 ####### minimal sanity check on data #######
-bd = pd.read_csv(r'/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/pycode/memilio-epidata/memilio/epidata/bs_und_umgebung.csv', header=None, skiprows=1)
+bd = pd.read_csv(r'', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 # bd.rename(
