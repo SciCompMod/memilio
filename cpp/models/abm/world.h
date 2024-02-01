@@ -389,11 +389,11 @@ public:
     inline void interact(PersonId person, TimePoint t, TimeSpan dt)
     {
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
-        interact(person, t, dt, personal_rng, parameters);
+        interact(personal_rng, person, t, dt, parameters);
     }
 
     // let a person interact with its current location
-    inline void interact(PersonId person, TimePoint t, TimeSpan dt, PersonalRandomNumberGenerator& personal_rng,
+    inline void interact(PersonalRandomNumberGenerator& personal_rng, PersonId person, TimePoint t, TimeSpan dt,
                          const Parameters& global_parameters)
     {
         if (!m_air_exposure_rates_cache.is_valid() || !m_contact_exposure_rates_cache.is_valid()) {
@@ -401,10 +401,10 @@ public:
             m_air_exposure_rates_cache.validate();
             m_contact_exposure_rates_cache.validate();
         }
-        mio::abm::interact(get_person(person), get_location(person),
+        mio::abm::interact(personal_rng, get_person(person), get_location(person),
                            m_air_exposure_rates_cache.data.at(get_location(person).get_index()),
                            m_contact_exposure_rates_cache.data.at(get_location(person).get_index()), t, dt,
-                           global_parameters, personal_rng);
+                           global_parameters);
     }
 
     // get location by id

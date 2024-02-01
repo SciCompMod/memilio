@@ -208,7 +208,7 @@ TEST(TestPerson, interact)
     auto person     = mio::abm::Person(rng, loc, age_group_15_to_34);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
-    mio::abm::interact(person, loc, {person}, t, dt, infection_parameters, rng_person);
+    mio::abm::interact(rng_person, person, loc, {person}, t, dt, infection_parameters);
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 

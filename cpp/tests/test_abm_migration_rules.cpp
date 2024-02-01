@@ -417,7 +417,7 @@ TEST(TestMigrationRules, shop_return)
     auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
 
     mio::abm::migrate(p, shop);
-    mio::abm::interact(p, shop, {p}, t, dt, params, rng_p); //person only returns home after some time passed
+    mio::abm::interact(rng_p, p, shop, {p}, t, dt, params); //person only returns home after some time passed
 
     ASSERT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);
@@ -467,7 +467,7 @@ TEST(TestMigrationRules, event_return)
     auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
 
     mio::abm::migrate(p, social_event);
-    mio::abm::interact(p, social_event, {p}, t, dt, params, rng_p);
+    mio::abm::interact(rng_p, p, social_event, {p}, t, dt, params);
 
     ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);

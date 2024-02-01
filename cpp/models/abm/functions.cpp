@@ -6,7 +6,6 @@
 #include "abm/infection.h"
 #include "abm/virus_variant.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -14,12 +13,10 @@ namespace mio
 namespace abm
 {
 
-// TODO: on argument order: maybe personal_rng first, as it always(?) is a non-const reference
-
 // TODO: daily_transmissions functions are only used in interact. expose in header anyways?
 
-ScalarType daily_transmissions_by_contacts(const Location::ContactExposureRates& rates, CellIndex cell_index,
-                                           VirusVariant virus, AgeGroup age_receiver,
+ScalarType daily_transmissions_by_contacts(const Location::ContactExposureRates& rates, const CellIndex cell_index,
+                                           const VirusVariant virus, const AgeGroup age_receiver,
                                            const LocalInfectionParameters& params)
 {
     assert(age_receiver < rates.size<AgeGroup>());
@@ -31,15 +28,16 @@ ScalarType daily_transmissions_by_contacts(const Location::ContactExposureRates&
     return prob;
 }
 
-ScalarType daily_transmissions_by_air(const Location::AirExposureRates& rates, CellIndex cell_index, VirusVariant virus,
-                                      const Parameters& global_params)
+ScalarType daily_transmissions_by_air(const Location::AirExposureRates& rates, const CellIndex cell_index,
+                                      const VirusVariant virus, const Parameters& global_params)
 {
     return rates[{cell_index, virus}] * global_params.get<AerosolTransmissionRates>()[{virus}];
 }
 
-void interact(Person& person, const Location& location, const Location::AirExposureRates& local_air_exposure,
+void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
+              const Location::AirExposureRates& local_air_exposure,
               const Location::ContactExposureRates& local_contact_exposure, const TimePoint t, const TimeSpan dt,
-              const Parameters& global_parameters, PersonalRandomNumberGenerator& personal_rng)
+              const Parameters& global_parameters)
 {
     // make sure all dimensions are set correctly and all indices are valid
     assert(location.get_cells().size() == local_air_exposure.size<CellIndex>().get());
@@ -87,7 +85,7 @@ void interact(Person& person, const Location& location, const Location::AirExpos
 
 void add_exposure_contribution(Location::AirExposureRates& local_air_exposure,
                                Location::ContactExposureRates& local_contact_exposure, const Person& person,
-                               const Location& location, TimePoint t, TimeSpan dt)
+                               const Location& location, const TimePoint t, const TimeSpan dt)
 {
     assert([&]() {
         if (person.get_location() != location.get_id()) {
@@ -115,8 +113,9 @@ void add_exposure_contribution(Location::AirExposureRates& local_air_exposure,
     }
 }
 
-void interact(Person& person, const Location& location, const std::vector<Person>& local_population, const TimePoint t,
-              const TimeSpan dt, const Parameters& global_parameters, PersonalRandomNumberGenerator& personal_rng)
+void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
+              const std::vector<Person>& local_population, const TimePoint t, const TimeSpan dt,
+              const Parameters& global_parameters)
 {
     Location::AirExposureRates local_air_exposure{{CellIndex(location.get_cells().size()), VirusVariant::Count}, 0.};
     Location::ContactExposureRates local_contact_exposure{
@@ -125,7 +124,7 @@ void interact(Person& person, const Location& location, const std::vector<Person
     for (const Person& p : local_population) {
         add_exposure_contribution(local_air_exposure, local_contact_exposure, p, location, t, dt);
     }
-    interact(person, location, local_air_exposure, local_contact_exposure, t, dt, global_parameters, personal_rng);
+    interact(personal_rng, person, location, local_air_exposure, local_contact_exposure, t, dt, global_parameters);
 }
 
 bool migrate(Person& person, const Location& destination, const std::vector<uint32_t>& cells, const TransportMode mode)
