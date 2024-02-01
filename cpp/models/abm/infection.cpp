@@ -272,18 +272,18 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
                            params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}] *
                            params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}] *
                            params.get<DeathsPerInfectedCritical>()[{m_virus_variant, age}];
-            if (p < (1 - params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}]) / (1 - p_death)) {
+            if (p > (1 - params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}]) / (1 - p_death)) {
                 time_in_state      = params.get<TimeInfectedNoSymptomsToRecovered>()[{m_virus_variant, age}];
                 time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state     = InfectionState::InfectedNoSymptoms;
             }
-            else if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
+            else if (p > params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
                              (1 - params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}]) / (1 - p_death)) {
                 time_in_state      = params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}];
                 time_period        = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state     = InfectionState::InfectedSymptoms;
             }
-            else if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
+            else if (p > params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
                              params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}] *
                              (1 - params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}]) / (1 - p_death)) {
                 time_in_state      = params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}];
