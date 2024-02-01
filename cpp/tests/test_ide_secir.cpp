@@ -242,7 +242,7 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
-// Check if the model uses uses the correct method for initialization.
+// Check if the model uses the correct method for initialization.
 // This is done by comparing the compartment sizes at t0 with a previous run with the same initialization method.
 TEST(IdeSecir, checkInitializations)
 {
