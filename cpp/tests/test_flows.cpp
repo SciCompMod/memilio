@@ -103,7 +103,7 @@ TEST(TestFlows, FlowSimulation)
     double tmax = 1;
     double dt   = 0.001;
 
-    mio::oseir::Model model;
+    mio::oseir::Model<double> model;
 
     double total_population                                                                            = 10000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
@@ -145,7 +145,7 @@ TEST(TestFlows, CompareSimulations)
     double tmax = 1;
     double dt   = 0.001;
 
-    mio::oseir::Model model;
+    mio::oseir::Model<double> model;
 
     double total_population                                                                            = 10000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
@@ -177,7 +177,7 @@ TEST(TestFlows, CompareSimulations)
 
 TEST(TestFlows, GetInitialFlows)
 {
-    mio::oseir::Model m;
+    mio::oseir::Model<double> m;
     EXPECT_EQ(m.get_initial_flows().size(), 3); // 3 == Flows().size()
     EXPECT_EQ(m.get_initial_flows().norm(), 0);
 }

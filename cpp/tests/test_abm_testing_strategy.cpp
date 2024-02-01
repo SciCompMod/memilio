@@ -23,8 +23,8 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
@@ -88,8 +88,8 @@ TEST(TestTestingScheme, runScheme)
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
-    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person<double>::RandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
@@ -128,7 +128,7 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
-    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> loc_work(mio::abm::LocationType::Work, 0);
     auto person1     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto rng_person1 = mio::abm::Person<double>::RandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered);

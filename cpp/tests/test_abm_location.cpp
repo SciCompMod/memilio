@@ -26,7 +26,7 @@
 
 TEST(TestLocation, init)
 {
-    mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
+    mio::abm::Location<double> location(mio::abm::LocationType::School, 0, num_age_groups);
     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
@@ -36,7 +36,7 @@ TEST(TestLocation, init)
 
 TEST(TestLocation, copyLocation)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto location = mio::abm::Location<double>(mio::abm::LocationType::School, 0, num_age_groups);
     auto person   = make_test_person(location, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms);
     EXPECT_EQ(location.get_number_persons(), 0);
     location.add_person(person);
@@ -51,20 +51,20 @@ TEST(TestLocation, copyLocation)
 
 TEST(TestLocation, initCell)
 {
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
     ASSERT_EQ(location.get_cells().size(), 2);
 }
 
 TEST(TestLocation, getIndex)
 {
-    mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0, num_age_groups);
     ASSERT_EQ((int)location.get_index(), 0);
 }
 
 TEST(TestLocation, addRemovePerson)
 {
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, 6, 1);
+    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
 
     auto person1 = make_test_person(home, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms);
     auto person2 = make_test_person(home, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms);
@@ -113,8 +113,8 @@ TEST(TestLocation, CacheExposureRate)
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     // setup a location with some chance of exposure
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, num_age_groups, 3);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups, 1);
+    mio::abm::Location<double> location(mio::abm::LocationType::PublicTransport, 0, num_age_groups, 3);
     auto infected1     = mio::abm::Person<double>(rng, home, age);
     auto rng_infected1 = mio::abm::Person<double>::RandomNumberGenerator(rng, infected1);
     infected1.add_new_infection(
@@ -210,7 +210,7 @@ TEST(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 3);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, 6, 3);
     home.set_capacity(4, 264, 0); // Capacity for Cell 1
     home.set_capacity(2, 132, 1); // Capacity for Cell 2
     home.set_capacity(0, 0, 2); // Capacity for Cell 3
@@ -246,7 +246,7 @@ TEST(TestLocation, interact)
     params.get<mio::abm::IncubationPeriod<double>>()[{variant, age}] = 2.;
 
     //setup location with some chance of exposure
-    mio::abm::Location location(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> location(mio::abm::LocationType::Work, 0, num_age_groups);
     auto infected1 =
         make_test_person(location, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t, params);
     auto infected2 =
@@ -279,7 +279,7 @@ TEST(TestLocation, interact)
 
 TEST(TestLocation, setCapacity)
 {
-    mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0, num_age_groups);
     location.set_capacity(4, 200);
     ASSERT_EQ(location.get_capacity().persons, (uint32_t)4);
     ASSERT_EQ(location.get_capacity().volume, (uint32_t)200);
@@ -287,7 +287,7 @@ TEST(TestLocation, setCapacity)
 
 TEST(TestLocation, setRequiredMask)
 {
-    mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0, num_age_groups);
     ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
 
     location.set_required_mask(mio::abm::MaskType::FFP2);
@@ -296,7 +296,7 @@ TEST(TestLocation, setRequiredMask)
 
 TEST(TestLocation, setNPIActive)
 {
-    mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> location(mio::abm::LocationType::Home, 0, num_age_groups);
     location.set_npi_active(false);
     ASSERT_FALSE(location.get_npi_active());
 
@@ -306,7 +306,7 @@ TEST(TestLocation, setNPIActive)
 
 TEST(TestLocation, getGeographicalLocation)
 {
-    auto location                                        = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto location                                        = mio::abm::Location<double>(mio::abm::LocationType::Home, 0);
     mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
 

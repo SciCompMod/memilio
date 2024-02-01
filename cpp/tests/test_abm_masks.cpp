@@ -64,7 +64,7 @@ TEST(TestMasks, maskProtection)
 
     //setup location with some chance of exposure
     auto t = mio::abm::TimePoint(0);
-    mio::abm::Location infection_location(mio::abm::LocationType::School, 0, num_age_groups);
+    mio::abm::Location<double> infection_location(mio::abm::LocationType::School, 0, num_age_groups);
     auto susc_person1 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
     auto susc_person2 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
     auto infected1    = make_test_person(infection_location, age_group_15_to_34,

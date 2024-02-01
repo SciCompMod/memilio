@@ -33,7 +33,7 @@ TEST(TestMigrationRules, student_goes_to_school)
         .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     auto p_child = mio::abm::Person(rng, home, age_group_5_to_14);
     auto p_adult = mio::abm::Person(rng, home, age_group_15_to_34);
 
@@ -76,7 +76,7 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
         .WillOnce(testing::Return(0.8))
         .WillRepeatedly(testing::Return(1.0));
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     auto p_child_goes_to_school_at_6   = mio::abm::Person(rng, home, age_group_5_to_14);
     auto rng_child_goes_to_school_at_6 = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_6);
     auto p_child_goes_to_school_at_8   = mio::abm::Person(rng, home, age_group_5_to_14);
@@ -136,7 +136,7 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
         .WillOnce(testing::Return(0.9))
         .WillRepeatedly(testing::Return(1.0));
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     auto p_child_goes_to_school_at_6    = mio::abm::Person(rng, home, age_group_5_to_14);
     auto rng_child_goes_to_school_at_6  = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_6);
     auto p_child_goes_to_school_at_8_30 = mio::abm::Person(rng, home, age_group_5_to_14);
@@ -173,7 +173,7 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
 TEST(TestMigrationRules, school_return)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
+    mio::abm::Location<double> school(mio::abm::LocationType::School, 0, num_age_groups);
     auto p_child   = mio::abm::Person(rng, school, age_group_5_to_14);
     auto rng_child = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child);
 
@@ -187,7 +187,7 @@ TEST(TestMigrationRules, school_return)
 TEST(TestMigrationRules, worker_goes_to_work)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
@@ -227,7 +227,7 @@ TEST(TestMigrationRules, worker_goes_to_work)
 TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
@@ -267,7 +267,7 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 TEST(TestMigrationRules, workers_go_to_work_in_different_times)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
@@ -317,7 +317,7 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
 TEST(TestMigrationRules, work_return)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto p_adult   = mio::abm::Person(rng, work, age_group_35_to_59);
     auto rng_adult = mio::abm::Person<double>::RandomNumberGenerator(rng, p_adult);
     auto t         = mio::abm::TimePoint(0) + mio::abm::hours(17);
@@ -333,9 +333,9 @@ TEST(TestMigrationRules, quarantine)
     auto dt  = mio::abm::hours(1);
     auto test_params = mio::abm::TestParameters<double>{1.0,1.0};
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
-    mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
 
     auto p_inf1   = make_test_person(work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_inf1 = mio::abm::Person<double>::RandomNumberGenerator(rng, p_inf1);
@@ -358,7 +358,7 @@ TEST(TestMigrationRules, quarantine)
 TEST(TestMigrationRules, hospital)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     auto t       = mio::abm::TimePoint(12346);
     auto dt      = mio::abm::hours(1);
     auto p_inf   = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
@@ -376,8 +376,8 @@ TEST(TestMigrationRules, hospital)
 TEST(TestMigrationRules, go_shopping)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
 
     auto t_weekday = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
     auto t_sunday  = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9);
@@ -410,8 +410,8 @@ TEST(TestMigrationRules, shop_return)
     auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
     auto dt     = mio::abm::hours(1);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location shop(mio::abm::LocationType::BasicsShop, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> shop(mio::abm::LocationType::BasicsShop, 0, num_age_groups);
     auto p     = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person<double>::RandomNumberGenerator(rng, p);
     home.add_person(p);
@@ -425,10 +425,10 @@ TEST(TestMigrationRules, shop_return)
 TEST(TestMigrationRules, go_event)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto p_work   = mio::abm::Person(rng, work, age_group_35_to_59);
     auto rng_work = mio::abm::Person<double>::RandomNumberGenerator(rng, p_work);
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     auto p_home   = mio::abm::Person(rng, home, age_group_60_to_79);
     auto rng_home = mio::abm::Person<double>::RandomNumberGenerator(rng, p_home);
 
@@ -460,8 +460,8 @@ TEST(TestMigrationRules, event_return)
     auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(21);
     auto dt     = mio::abm::hours(3);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location social_event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> social_event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
     auto p     = mio::abm::Person(rng, home, age_group_15_to_34);
     auto rng_p = mio::abm::Person<double>::RandomNumberGenerator(rng, p);
     home.add_person(p);
@@ -475,7 +475,7 @@ TEST(TestMigrationRules, event_return)
 TEST(TestMigrationRules, icu)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
+    mio::abm::Location<double> hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
     auto t        = mio::abm::TimePoint(12346);
     auto dt       = mio::abm::hours(1);
     auto p_hosp   = make_test_person(hospital, age_group_15_to_34, mio::abm::InfectionState::InfectedCritical, t);
@@ -484,7 +484,7 @@ TEST(TestMigrationRules, icu)
     ASSERT_EQ(mio::abm::go_to_icu(rng_hosp, p_hosp, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::ICU);
 
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto p_work   = make_test_person(work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_work = mio::abm::Person<double>::RandomNumberGenerator(rng, p_work);
     ASSERT_EQ(mio::abm::go_to_icu(rng_work, p_work, t, dt, mio::abm::Parameters(num_age_groups)),
@@ -494,7 +494,7 @@ TEST(TestMigrationRules, icu)
 TEST(TestMigrationRules, recover)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0);
+    mio::abm::Location<double> hospital(mio::abm::LocationType::Hospital, 0);
     auto t       = mio::abm::TimePoint(12346);
     auto dt      = mio::abm::hours(1);
     auto p_rec   = make_test_person(hospital, age_group_60_to_79, mio::abm::InfectionState::Recovered, t);
@@ -511,7 +511,7 @@ TEST(TestMigrationRules, dead)
 {
     auto rng = mio::RandomNumberGenerator();
 
-    mio::abm::Location icu(mio::abm::LocationType::ICU, 0);
+    mio::abm::Location<double> icu(mio::abm::LocationType::ICU, 0);
     auto t      = mio::abm::TimePoint(12346);
     auto dt     = mio::abm::hours(1);
     auto p_dead = make_test_person(icu, age_group_60_to_79, mio::abm::InfectionState::Dead, t);

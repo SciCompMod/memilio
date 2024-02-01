@@ -32,7 +32,7 @@ TEST(TestInfection, init)
 
     //set up a personal RNG for infections
     //uses uniformdistribution but result doesn't matter, so init before the mock
-    mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
+    mio::abm::Location<double> loc(mio::abm::LocationType::Hospital, 0);
     auto counter = mio::Counter<uint32_t>(0);
     auto rng     = mio::abm::Person<double>::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
 
@@ -165,8 +165,8 @@ TEST(TestInfection, getPersonalProtectiveFactor)
 {
     auto rng = mio::RandomNumberGenerator();
 
-    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person   = mio::abm::Person(rng, location, age_group_15_to_34);
+    auto location = mio::abm::Location<double>(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person   = mio::abm::Person<double>(rng, location, age_group_15_to_34);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0));
     auto latest_protection = person.get_latest_protection();
 
