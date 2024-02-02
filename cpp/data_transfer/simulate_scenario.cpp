@@ -372,8 +372,11 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
             ensemble_params.emplace_back(std::move(run.second));
         }
 
-        BOOST_OUTCOME_TRY(save_single_run_result);
-        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
+        bool save_percentiles = true;
+
+        // BOOST_OUTCOME_TRY(save_single_run_result);
+        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs,
+                                       save_percentiles, size_t(num_days_sim)));
     }
 
     return mio::success();
@@ -419,7 +422,7 @@ int main(int argc, char** argv)
 
     std::string result_dir = "";
 
-    result_dir = "../../data";
+    result_dir = data_dir;
     boost::filesystem::path res_dir(result_dir);
     bool created_results = boost::filesystem::create_directories(res_dir);
     if (created_results) {

@@ -1213,77 +1213,78 @@ IOResult<void> export_input_data_county_timeseries(
     }
     /* end: similar functionality in set_confirmed_cases_data(), here only for vector of TimeSeries */
 
-    // // Aggregate extrapolated_rki into compartments MildInfections, Hospitalized, ICU and Dead
-    // std::vector<TimeSeries<double>> extrapolated_rki_aggregated(
-    //     model.size(), TimeSeries<double>::zero(num_days + 1, (size_t)4 * num_age_groups));
+    // Aggregate extrapolated_rki into compartments MildInfections, Hospitalized, ICU and Dead
+    std::vector<TimeSeries<double>> extrapolated_rki_aggregated(
+        model.size(), TimeSeries<double>::zero(num_days + 1, (size_t)4 * num_age_groups));
 
-    // for (size_t day = 0; day <= static_cast<size_t>(num_days); day++) {
-    //     for (size_t county = 0; county < region.size(); county++) {
-    //         for (size_t age = 0; age < num_age_groups; age++) {
+    for (size_t day = 0; day <= static_cast<size_t>(num_days); day++) {
+        for (size_t county = 0; county < region.size(); county++) {
+            for (size_t age = 0; age < num_age_groups; age++) {
 
-    //             auto age_group_offset            = age * (size_t)InfectionState::Count;
-    //             auto age_group_offset_aggregated = age * 4;
+                auto age_group_offset            = age * (size_t)InfectionState::Count;
+                auto age_group_offset_aggregated = age * 4;
 
-    //             // Compute number of individuals with mild infections, i.e. individuals in Exposed,
-    //             // InfectedNoSymptoms and InfectedSymptoms with any type of immunity, both confirmed and not confirmed
-    //             extrapolated_rki_aggregated[county][day]((size_t)0 + age_group_offset_aggregated) =
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::ExposedNaive + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::ExposedImprovedImmunity + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaive + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunity +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunity +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaiveConfirmed +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
-    //                                               age_group_offset);
+                // Compute number of individuals with mild infections, i.e. individuals in Exposed,
+                // InfectedNoSymptoms and InfectedSymptoms with any type of immunity, both confirmed and not confirmed
+                extrapolated_rki_aggregated[county][day]((size_t)0 + age_group_offset_aggregated) =
+                    extrapolated_rki[county][day]((size_t)InfectionState::ExposedNaive + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::ExposedImprovedImmunity + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaive + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunity +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunity +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaiveConfirmed +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
+                                                  age_group_offset);
 
-    //             // Compute number of all individuals in InfectionState InfectedSevere with any type of immunity
-    //             extrapolated_rki_aggregated[county][day]((size_t)1 + age_group_offset_aggregated) =
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity +
-    //                                               age_group_offset);
+                // Compute number of all individuals in InfectionState InfectedSevere with any type of immunity
+                extrapolated_rki_aggregated[county][day]((size_t)1 + age_group_offset_aggregated) =
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity +
+                                                  age_group_offset);
 
-    //             // Compute number of all individuals in InfectedState InfectedCritical with any type of immunity
-    //             extrapolated_rki_aggregated[county][day]((size_t)2 + age_group_offset_aggregated) =
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
-    //                                               age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity +
-    //                                               age_group_offset);
+                // Compute number of all individuals in InfectedState InfectedCritical with any type of immunity
+                extrapolated_rki_aggregated[county][day]((size_t)2 + age_group_offset_aggregated) =
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
+                                                  age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity +
+                                                  age_group_offset);
 
-    //             // Compute number of all individuals in InfectedState Dead with any type of immunity
-    //             extrapolated_rki_aggregated[county][day]((size_t)3 + age_group_offset_aggregated) =
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity + age_group_offset) +
-    //                 extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity + age_group_offset);
-    //         }
-    //     }
-    // }
+                // Compute number of all individuals in InfectedState Dead with any type of immunity
+                extrapolated_rki_aggregated[county][day]((size_t)3 + age_group_offset_aggregated) =
+                    extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity + age_group_offset) +
+                    extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity + age_group_offset);
+            }
+        }
+    }
 
     auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(save_result(extrapolated_rki, region, num_groups, path_join(dir, "Results.h5")));
+    BOOST_OUTCOME_TRY(save_result(extrapolated_rki_aggregated, region, num_groups, path_join(dir, "Results.h5")));
 
-    auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_rki});
+    auto extrapolated_rki_data_sum_aggregated =
+        sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_rki_aggregated});
     BOOST_OUTCOME_TRY(
-        save_result({extrapolated_rki_data_sum[0][0]}, {0}, num_groups, path_join(dir, "Results_sum.h5")));
+        save_result({extrapolated_rki_data_sum_aggregated[0][0]}, {0}, num_groups, path_join(dir, "Results_sum.h5")));
 
     return success();
 }

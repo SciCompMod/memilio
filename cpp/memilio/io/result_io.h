@@ -21,6 +21,7 @@
 #define MEMILIO_IO_RESULT_IO_H
 
 #include "memilio/config.h"
+#include "models/ode_secirvvs/infection_state.h"
 
 #ifdef MEMILIO_HAS_HDF5
 
@@ -99,6 +100,17 @@ private:
 IOResult<std::vector<SimulationResult>> read_result(const std::string& filename);
 
 /**
+ * @brief Aggregates results of parameter study.
+ * @param results Vector of TimeSeries containing results.
+ * @param county_ids Ids of the county nodes.
+ * @param num_days Number of days that were simulated.
+ * @param num_groups Number of groups. 
+ * @return Any io errors that occur during writing of the files.
+ */
+std::vector<TimeSeries<double>> aggregate_result(std::vector<TimeSeries<double>> results,
+                                                 const std::vector<int>& county_ids, size_t num_days, int num_groups);
+
+/**
  * Save the results and the parameters of a single graph simulation run.
  * Creates a new subdirectory for each run according to run_idx.
  * @param result Simulation results per node of the graph.
@@ -130,12 +142,14 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
  * @param result_dir Top level directory for all results of the parameter study.
  * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
  * @param save_single_runs [Default: true] Defines if percentiles are written to the disk.
+ * @param num_days [Default: 0] Number of days that were simulated.
  * @return Any io errors that occur during writing of the files.
  */
 template <class Model>
 IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& ensemble_results,
                             const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
-                            const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true)
+                            const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true,
+                            size_t num_days = 0)
 {
     //save results and sum of results over nodes
     auto ensemble_result_sum = sum_nodes(ensemble_results);
@@ -170,14 +184,22 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& 
             auto ensemble_results_sum_p75 = ensemble_percentile(ensemble_result_sum, 0.75);
             // auto ensemble_results_sum_p95 = ensemble_percentile(ensemble_result_sum, 0.95);
 
+            // aggregate results
+            auto ensemble_results_sum_p25_aggregated =
+                aggregate_result(ensemble_results_sum_p25, {0}, num_days, num_groups);
+            auto ensemble_results_sum_p50_aggregated =
+                aggregate_result(ensemble_results_sum_p50, {0}, num_days, num_groups);
+            auto ensemble_results_sum_p75_aggregated =
+                aggregate_result(ensemble_results_sum_p75, {0}, num_days, num_groups);
+
             // BOOST_OUTCOME_TRY(
             //     save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results_sum_p25_aggregated, {0}, num_groups,
+                                          (result_dir_p25 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results_sum_p50_aggregated, {0}, num_groups,
+                                          (result_dir_p50 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results_sum_p75_aggregated, {0}, num_groups,
+                                          (result_dir_p75 / "Results_sum.h5").string()));
             // BOOST_OUTCOME_TRY(
             //     save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
         }
@@ -190,14 +212,22 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& 
             auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
             // auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
 
+            // aggregate results
+            auto ensemble_results_p25_aggregated =
+                aggregate_result(ensemble_results_p25, county_ids, num_days, num_groups);
+            auto ensemble_results_p50_aggregated =
+                aggregate_result(ensemble_results_p50, county_ids, num_days, num_groups);
+            auto ensemble_results_p75_aggregated =
+                aggregate_result(ensemble_results_p75, county_ids, num_days, num_groups);
+
             // BOOST_OUTCOME_TRY(
             //     save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results_p25_aggregated, county_ids, num_groups,
+                                          (result_dir_p25 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results_p50_aggregated, county_ids, num_groups,
+                                          (result_dir_p50 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results_p75_aggregated, county_ids, num_groups,
+                                          (result_dir_p75 / "Results.h5").string()));
             // BOOST_OUTCOME_TRY(
             //     save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
         }
