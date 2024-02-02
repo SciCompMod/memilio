@@ -173,6 +173,8 @@ public:
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases to Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
+     *              If the second index is not needed, eg if probability[idx_TransitionDistribution1]=1, 
+     *              just use an arbitrary legal index.
      * @param[in] dt Time discretization step size.
      */
     void compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
