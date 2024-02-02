@@ -161,10 +161,10 @@ TEST(IdeSecir, checkSimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax   = 1;
+    ScalarType tmax   = 0.5;
     ScalarType N      = 10000;
     ScalarType deaths = 10;
-    ScalarType dt     = 1;
+    ScalarType dt     = 0.5;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -351,6 +351,8 @@ TEST(IdeSecir, checkInitializations)
     }
 
     // --- Case with S.
+    /* For the other tests, the contact rate is set to 0 so that the force of infection is zero.
+     The forceofinfection initialization method is therefore not used for these tests.*/
     contact_matrix[0]                              = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
     parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
@@ -392,6 +394,8 @@ TEST(IdeSecir, checkInitializations)
     }
 
     // --- Case without fitting initialization method.
+    // Deactivate temporarily log output for next test. Error is expected here.
+    mio::set_log_level(mio::LogLevel::off);
     mio::isecir::Model model5(std::move(init), N, deaths, 0, std::move(parameters));
 
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
@@ -408,6 +412,8 @@ TEST(IdeSecir, checkInitializations)
     for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
         EXPECT_NEAR(result[0][i], vec_noinit[i], 1e-8);
     }
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 // a) Test if check_constraints() function correctly reports wrongly set parameters.
