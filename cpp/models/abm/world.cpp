@@ -152,6 +152,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
+        location->adjust_contact_rates(parameters.get_num_groups());
         location->cache_exposure_rates(t, dt, parameters.get_num_groups());
     }
 }
