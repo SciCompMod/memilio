@@ -349,7 +349,7 @@ public:
         });
     }
 
-    inline size_t get_subpopulation(Location location, TimePoint t, InfectionState state) const
+    inline size_t get_subpopulation(const Location& location, TimePoint t, InfectionState state) const
     {
         return get_subpopulation(location.get_id(), t, state);
     }
@@ -364,7 +364,7 @@ public:
         });
     }
 
-    inline size_t get_number_persons(Location location) const
+    inline size_t get_number_persons(const Location& location) const
     {
         return get_number_persons(location.get_id());
     }
@@ -452,18 +452,9 @@ private:
     template <class T>
     struct Cache {
         T data;
-        bool m_is_valid         = false;
-        mutable size_t m_hits   = 0;
-        mutable size_t m_misses = 0;
 
         bool is_valid() const
         {
-            if (m_is_valid) {
-                m_hits++;
-            }
-            else {
-                m_misses++;
-            }
             return m_is_valid;
         }
 
@@ -477,10 +468,8 @@ private:
             m_is_valid = true;
         }
 
-        // ~Cache()
-        // {
-        //     std::cout << "hits: " << m_hits << " misses: " << m_misses << "\n";
-        // }
+    private:
+        bool m_is_valid = false;
     };
 
     void rebuild()
@@ -496,22 +485,16 @@ private:
 
     void recompute_exposure_rates(TimePoint t, TimeSpan dt)
     {
-        m_air_exposure_rates_cache.data.clear();
-        m_contact_exposure_rates_cache.data.clear();
-        for (Location& location : m_locations) {
-            m_air_exposure_rates_cache.data.emplace(
-                location.get_index(),
-                Location::AirExposureRates({CellIndex(location.get_cells().size()), VirusVariant::Count}, 0.));
-            m_contact_exposure_rates_cache.data.emplace(
-                location.get_index(),
-                Location::ContactExposureRates({CellIndex(location.get_cells().size()), VirusVariant::Count,
-                                                AgeGroup(parameters.get_num_groups())},
-                                               0.));
+        for (Location& location : get_locations()) {
+            auto index = location.get_index();
+            m_air_exposure_rates_cache.data.at(index).array().setZero();
+            m_contact_exposure_rates_cache.data.at(index).array().setZero();
         }
         for (Person& person : get_persons()) {
-            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.data.at(person.get_location().index),
-                                                m_contact_exposure_rates_cache.data.at(person.get_location().index),
-                                                person, get_location(person.get_person_id()), t, dt);
+            auto location = person.get_location().index;
+            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.data.at(location),
+                                                m_contact_exposure_rates_cache.data.at(location), person,
+                                                get_location(person.get_person_id()), t, dt);
         }
     }
 

@@ -90,7 +90,7 @@ public:
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
      * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    Location(LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
+    explicit Location(LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
 
     /**
      * @brief Construct a Location with provided parameters. 
@@ -99,7 +99,7 @@ public:
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
      * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    Location(LocationType loc_type, uint32_t loc_index, size_t num_agegroups = 1, uint32_t num_cells = 1)
+    explicit Location(LocationType loc_type, uint32_t loc_index, size_t num_agegroups = 1, uint32_t num_cells = 1)
         : Location(LocationId{loc_index, loc_type}, num_agegroups, num_cells)
     {
     }
@@ -119,7 +119,7 @@ public:
      * @brief Return a copy of this #Location object with an empty m_persons.
      * @param[in] num_agegroups The number of age groups in the model.
      */
-    Location copy_location_without_persons(size_t num_agegroups) const;
+    Location copy() const;
 
     /**
      * @brief Compare two Location%s.

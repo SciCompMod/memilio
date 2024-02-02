@@ -177,7 +177,7 @@ struct LogInfectionState : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         auto curr_time      = sim.get_time();
         PRAGMA_OMP(for)
-        for (auto&& location : sim.get_world().get_locations()) {
+        for (auto& location : sim.get_world().get_locations()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                 sum[inf_state] +=
                     sim.get_world().get_subpopulation(location, curr_time, mio::abm::InfectionState(inf_state));

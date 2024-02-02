@@ -37,7 +37,7 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
-Location Location::copy_location_without_persons(size_t) const
+Location Location::copy() const
 {
     return *this;
 }

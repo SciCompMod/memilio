@@ -40,6 +40,11 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     if (m_local_populations_cache.is_valid()) {
         m_local_populations_cache.data[id.index];
     }
+    m_air_exposure_rates_cache.data.emplace(
+        id.index, Location::AirExposureRates({CellIndex(num_cells), VirusVariant::Count}, 0.));
+    m_contact_exposure_rates_cache.data.emplace(
+        id.index, Location::ContactExposureRates(
+                      {CellIndex(num_cells), VirusVariant::Count, AgeGroup(parameters.get_num_groups())}, 0.));
     return id;
 }
 
@@ -75,15 +80,15 @@ void World::migration(TimePoint t, TimeSpan dt)
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
-            auto target_type      = rule(personal_rng, person, t, dt, parameters);
-            auto target_location  = find_location(target_type, person);
-            auto current_location = person.get_location();
+            auto target_type                  = rule(personal_rng, person, t, dt, parameters);
+            const Location& target_location   = get_location(find_location(target_type, person));
+            const LocationId current_location = person.get_location();
             if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                if (target_location != current_location &&
-                    get_number_persons(target_location) < get_location(target_location).get_capacity().persons) {
+                if (target_location.get_id() != current_location &&
+                    get_number_persons(target_location) < target_location.get_capacity().persons) {
                     bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
-                        migrate(person.get_person_id(), target_location); // TODO: i == PersonId, use?
+                        migrate(person.get_person_id(), target_location.get_id()); // TODO: i == PersonId, use?
                     }
                     return true;
                 }
@@ -148,6 +153,8 @@ void World::begin_step(TimePoint t, TimeSpan dt)
         m_local_populations_cache.validate();
     }
     recompute_exposure_rates(t, dt);
+    m_air_exposure_rates_cache.validate();
+    m_contact_exposure_rates_cache.validate();
 }
 
 auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
