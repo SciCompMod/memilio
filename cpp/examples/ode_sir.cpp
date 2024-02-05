@@ -46,8 +46,9 @@ int main()
         model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
     model.parameters.set<mio::osir::TimeInfected>(2);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
-    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
-    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6, mio::SimulationTime(12.5));
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(2.7);
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
 
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
 

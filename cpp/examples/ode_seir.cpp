@@ -50,7 +50,8 @@ int main()
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
     // print_seir_params(model);
