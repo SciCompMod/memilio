@@ -113,6 +113,10 @@ def compute_R_eff(out_folder=dd.defaultDict['out_folder']):
     return df_r_eff
 
 
+def get_regiontype():
+    pass
+
+
 def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
 
     directory = out_folder
@@ -140,8 +144,14 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
     df_npis = df_npis[df_npis['Date'].astype(str).isin(df_r.Date.astype(str))]
 
     Y = df_r['R_eff']
-    X = np.array([df_npis[column] for column in columns]).T
-    X = sm.add_constant(X)
+    if 'const' in list(columns):
+        columns_tmp = list(columns).copy()
+        columns_tmp.remove('const')
+        X = np.array([df_npis[column] for column in columns_tmp]).T
+        X = sm.add_constant(X)
+    else:
+        X = np.array([df_npis[column] for column in columns]).T
+
     plt.plot(df_r.Date, df_r.R_eff, marker='o')
 
     model = sm.GLM(Y, X, family=sm.families.Gamma(
@@ -150,89 +160,93 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
     # model = sm.OLS(Y, X)
 
     results = model.fit()
-    # print(results.summary())
-
-    # plot partial regression plot
-    # fig = sm.graphics.plot_partregress_grid(results)
-    # plt.show()
-
-    # run simple regression model where log(R) depends on NPIs only
-    # use fine_resolution=0 in NPI df for simplicity for now
-
-    # use GLMResults class to store results of fitting
-    # see https://www.statsmodels.org/devel/dev/generated/statsmodels.base.model.LikelihoodModelResults.html#statsmodels.base.model.LikelihoodModelResults
-    # and https://www.statsmodels.org/devel/generated/statsmodels.genmod.generalized_linear_model.GLMResults.html#statsmodels.genmod.generalized_linear_model.GLMResults
-
-    # # TODO: understand what these functions do, especially in comparison with the above fitting
-    # model = sm.genmod.generalized_linear_model.GLM(Y, X)
-    # results = sm.genmod.generalized_linear_model.GLM.fit(model)
-
-    # # initialize with dummy parameters, it needs to be checked how we obtain these parameters
-    # sigma_squared = 1
-    # glmres = sm.genmod.generalized_linear_model.GLMResults(
-    #     model, results.params, (np.dot(X.T, X))**-1, sigma_squared)
-
-    # # GLMResults class allows to compute Akaike information criterion directly
-    # aic = glmres.aic
 
     return results
 
-# compute Akaike informatio criterion based on the results of the fitting
 
-
-def compute_aic(results):
-    # do this by hand for now, should be possible to do directly with statsmodels
-    # https://www.statsmodels.org/stable/generated/statsmodels.regression.linear_model.OLSResults.aic.html
-    aic = -2*results.llf + 2*(results.df_model + 1)
-    return aic
-
-
-# at the moment: remove one NPI from original set of NPIs and check which removed NPI leads to
-# the minimal AIC
 def backward_selection():
 
     # initial set of NPIs
-    columns_init = ['M01a', 'M01b', 'M02a', 'M02b',
+    # use fine_resolution=0 for now for simplicity
+    # include 'const' as this is an additional variable that we want to evaluate according to pvalue (at least for now)
+    column_names = ['const', 'M01a', 'M01b', 'M02a', 'M02b',
                     'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
                     'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
-    # list of NPIs which we want to use to exclude one NPI after another
-    columns = columns_init.copy()
-
     # do regression with all NPIs
-    results = regression_model(columns_init)
+    results = regression_model(column_names)
+    # store pvalues in dataframe
+    df_pvalues = pd.DataFrame({"pvalue": results.pvalues})
+    # add column with column names to df
+    df_pvalues.insert(1, "columns", column_names)
+    # drop rows with pvalue that is NaN
+    # TODO: check why we get NaNs here in the first place
+    df_pvalues.dropna(inplace=True)
 
-    # compute AIC as reference for later
-    aic_min = results.aic # compute_aic(results)
+    # compute AIC and BIC as reference for later
+    aic_min = results.aic
+    bic_min = results.bic_llf
     print('AIC init: ', aic_min)
+    print('BIC init: ', bic_min)
 
-    npi_removed = ''
+    # count how often an NPI was selected by highest p value but not removed due to unclear AIC/BIC in a row
+    counter = 0
 
-    for npi in columns_init:
-        # remove one NPI from columns_init
-        print(npi)
-        columns.remove(npi)
+    # list with NPIs that were removed
+    removed_list = []
 
-        # do regression and compute AIC
-        results = regression_model(columns)
-        aic = results.aic  # is equal to compute_aic(results)
+    # TODO: think about how to decide when backwards selection is "done"
+    while (counter < 10) and (len(df_pvalues) > 5):
+
+        # choose NPI of interest which is chosen according to the n-th highest pvalue
+        # n is determined by the counter which is set accordingly if a NPI was removed or not in the previous iteration, see below
+        npi_of_interest = df_pvalues.sort_values(
+            'pvalue', ascending=False).iloc[counter].name
+
+        # create view of df_pvalues where we remove npi_of_interest and that will be used for regression_model
+        df_view = df_pvalues[~df_pvalues.index.isin([npi_of_interest])]
+        print("NPI of interest: ", df_pvalues['columns'][npi_of_interest])
+
+        # do new regression and compute AIC and BIC
+        results = regression_model(df_view['columns'])
+        aic = results.aic
+        bic = results.bic_llf
         print('AIC: ', aic)
+        print('BIC: ', bic)
 
-        # check if we reached a lower AIC than before
-        if aic < aic_min:
+        # check if AIC and BIC have decreased compared to before
+        if (aic < aic_min) and (bic < bic_min):
+            # set new referene values for AIC and BIC
             aic_min = aic
-            npi_removed = npi
-            print('Reached new minimum')
+            bic_min = bic
 
-        # append NPI so that we can remove the next NPI from the original set of NPIs
-        columns.append(npi)
+            # add npi_of_interest to removed_list
+            removed_list.append(df_pvalues['columns'][npi_of_interest])
+            print('Removed ', df_pvalues['columns'][npi_of_interest])
+            # change df_pvalues to df_view because we actually want to remove npi_of_interest
+            df_pvalues = df_view[:]
 
-    # remove that NPI where its removal led to lowest AIC
-    columns_init.remove(npi_removed)
-    columns = columns_init
-    print('Removed ', npi_removed)
+            # set counter = 0 because we want to count how many times in a row a selected NPI was not removed
+            # due to unclear AIC and BIC
+            # also, in this case we want to select npi_of_interest by taking the NPI with the highest pvalue of remaining NPIs
+            counter = 0
 
-    print(0)
+        else:
+            if aic < aic_min:
+                print("BIC didn't decrease, don't remove {}".format(
+                    df_pvalues['columns'][npi_of_interest]))
+            elif bic < bic_min:
+                print("AIC didn't decrease, don't remove {}".format(
+                    df_pvalues['columns'][npi_of_interest]))
+            else:
+                print("AIC and BIC didn't decrease, don't remove {}".format(
+                    df_pvalues['columns'][npi_of_interest]))
+
+            # increase counter, we select npi_of_interest by taking the NPI with the next highest pvalue
+            counter += 1
+
+    print(removed_list)
+    return
 
 
 def main():
