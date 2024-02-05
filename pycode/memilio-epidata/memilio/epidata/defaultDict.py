@@ -106,7 +106,11 @@ EngEng = {
     'region_name': 'County',
     'region_id': 'ID_County',
     'desc': 'Description',
-    'incidence': 'Incidence'
+    'incidence': 'Incidence',
+    'values': 'Values',
+    'description': 'Description',
+    'variable': 'Variable',
+    'district': 'District'
 }
 
 GerEng = {
@@ -155,7 +159,11 @@ GerEng = {
     'ags5': EngEng['idCounty'],
     'm_code': EngEng['npiCode'],
     'code': EngEng['npiCode'],
-    'Bundesland_Id': EngEng['idState']
+    'Bundesland_Id': EngEng['idState'],
+    'Werte': EngEng['values'],
+    'Beschreibung': EngEng['description'],
+    'Variable': EngEng['variable'],
+    'gem_20': EngEng['district']
 }
 
 EsEng = {'fecha': EngEng['date'],

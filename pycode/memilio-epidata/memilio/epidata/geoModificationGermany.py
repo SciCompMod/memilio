@@ -632,3 +632,47 @@ def merge_df_counties_all(
         df = merge_df_counties(df, key, val, sorting, columns, method)
 
     return df
+
+
+def regiostar_mapping(RegioStaR='7'):
+    """! Mapping of RegioStaR categories to countyIDs
+
+    @param RegioStar str One of [2,4,17,7(default),5,Gem7,Gem5]
+    @return Dict Mapped Regiostar
+    """
+    if not isinstance(RegioStaR, str):
+        RegioStaR = str(RegioStaR)
+    RegioStaR = 'Regiostar'+RegioStaR
+    # read file
+    xlsx = pd.ExcelFile(
+        'https://www.mcloud.de/downloads/mcloud/536149D1-2902-4975-9F7D-253191C0AD07/RegioStaR-Referenzdateien.xlsx', engine='openpyxl')
+    # save different sheets into different variables
+    codeplan = pd.read_excel(xlsx, sheet_name='Codeplan', header=4)
+    codeplan.rename(dd.GerEng, axis=1, inplace=True)
+    codelist = pd.read_excel(xlsx, sheet_name='ReferenzGebietsstand2020')
+    codelist.rename(dd.GerEng, axis=1, inplace=True)
+    # get start and end point of regiostar values
+    idx_begin = np.where(codeplan[dd.EngEng['variable']] == RegioStaR)[0][0]
+    idx_end = idx_begin+1
+    while pd.isnull(codeplan[dd.EngEng['variable']][idx_end]):
+        idx_end += 1
+    # cut codeplan
+    codeplan = codeplan.iloc[idx_begin:idx_end]
+    # save in array
+    regio_values = codeplan[dd.EngEng['values']].values
+    # save them as dict
+    RegioDict = dict()
+    #
+    new_cols = list(codelist.columns[:9])
+    new_cols += [c.lower() for c in codelist.columns[9:]]
+    codelist.columns = new_cols
+    for v in regio_values:
+        subframe = codelist.iloc[np.where(codelist[RegioStaR.lower()] == v)]
+        # remove last 3 digits of gem_20 -> now represents CountyID
+        district_ids = subframe[dd.EngEng['district']].values
+        county_ids = {str(d_id)[:-3] for d_id in district_ids}
+        # write into dict
+        RegioDict[codeplan[codeplan[dd.EngEng['values']] == v]
+                  [dd.EngEng['description']].values[0]] = county_ids
+
+    return RegioDict
