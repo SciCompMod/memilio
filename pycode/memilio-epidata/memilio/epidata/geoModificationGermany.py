@@ -634,7 +634,7 @@ def merge_df_counties_all(
     return df
 
 
-def regiostar_mapping(RegioStaR='7'):
+def regiostar_mapping(RegioStaR='7', count_multiple_entries=False):
     """! Mapping of RegioStaR categories to countyIDs
 
     @param RegioStar str One of [2,4,17,7(default),5,Gem7,Gem5]
@@ -654,6 +654,7 @@ def regiostar_mapping(RegioStaR='7'):
     # get start and end point of regiostar values
     idx_begin = np.where(codeplan[dd.EngEng['variable']] == RegioStaR)[0][0]
     idx_end = idx_begin+1
+
     while pd.isnull(codeplan[dd.EngEng['variable']][idx_end]):
         idx_end += 1
     # cut codeplan
@@ -666,13 +667,28 @@ def regiostar_mapping(RegioStaR='7'):
     new_cols = list(codelist.columns[:9])
     new_cols += [c.lower() for c in codelist.columns[9:]]
     codelist.columns = new_cols
+
+    if count_multiple_entries:
+        # create zero-filled dataframe with countyIDs as rows and RegioStaRIDs as columns
+        count_df = pd.DataFrame(
+            0, columns=codeplan[dd.EngEng['description']], index=dd.County.keys())
+
     for v in regio_values:
+        regio_desc = codeplan[codeplan[dd.EngEng['values']]
+                              == v][dd.EngEng['description']].values[0]
         subframe = codelist.iloc[np.where(codelist[RegioStaR.lower()] == v)]
         # remove last 3 digits of gem_20 -> now represents CountyID
         district_ids = subframe[dd.EngEng['district']].values
-        county_ids = {str(d_id)[:-3] for d_id in district_ids}
+        county_ids = [str(d_id)[:-3] for d_id in district_ids]
+        if count_multiple_entries:
+            for c_id in county_ids:
+                count_df.at[int(c_id), regio_desc] += 1
+        unique_county_ids = set(county_ids)
         # write into dict
-        RegioDict[codeplan[codeplan[dd.EngEng['values']] == v]
-                  [dd.EngEng['description']].values[0]] = county_ids
+        RegioDict[regio_desc] = unique_county_ids
+
+    if count_multiple_entries:
+        gd.write_dataframe(count_df, os.path.join(
+            dd.defaultDict['out_folder'], 'Germany'), 'multiple_entries_'+RegioStaR.lower(), 'txt')
 
     return RegioDict
