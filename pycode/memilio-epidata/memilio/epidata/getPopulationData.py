@@ -56,43 +56,10 @@ def read_population_data(username, password, read_data, directory):
     @return DataFrame
     '''
 
-    filename = '12411-02-03-4'
-    if not read_data:
-        sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
+    download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
+    req = requests.get(download_url, auth=(username, password))
+    df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
 
-        # sign in to regionalstatistik.de with given username and password
-        twill.browser.user_agent = requests.utils.default_headers()[
-            'User-Agent']
-        twill.commands.go(sign_in_url)
-        twill.commands.fv('3', 'KENNUNG', username)
-        twill.commands.fv('3', 'PASSWORT', password)
-        twill.commands.submit('login', '3')
-        # navigate to file as in documentation
-        twill.commands.follow('Themen')
-        twill.commands.follow(filename[:2])
-        # wait 2 seconds to prevent error
-        # page needs some time to load
-        time.sleep(2)
-        twill.commands.follow(filename.split('-')[0])
-        twill.commands.follow(filename)
-        # start 'Werteabruf'
-        twill.commands.submit('45', '3')
-        # read csv file (1,4 for xlsx)
-        twill.commands.submit('1', '5')
-
-        df_pop_raw = pd.read_csv(io.StringIO(
-            twill.browser.html), sep=';', header=6)
-
-    else:
-        data_file = os.path.join(directory, filename)
-        if os.path.isfile(data_file+'.xlsx'):
-            df_pop_raw = pd.read_excel(
-                data_file+'.xlsx', engine='openpyxl', sheet_name=filename, header=4)
-        elif os.path.isfile(data_file+'.csv'):
-            df_pop_raw = pd.read_excel(data_file+'.csv', sep=';', header=6)
-        else:
-            raise FileNotFoundError(
-                'Data file '+filename+' was not found in out_folder/Germany')
 
     return df_pop_raw
 
@@ -364,6 +331,10 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
+
+    if read_data == True:
+        gd.default_print('Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
+        read_data = False
 
     # If no username or password is provided, the credentials are either read from an .ini file or,
     # if the file does not exist they have to be given as user input.
