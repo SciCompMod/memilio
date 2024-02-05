@@ -66,6 +66,7 @@ set(TESTSOURCES
     temp_file_register.h
     sanitizers.cpp
     test_lct_secir.cpp
+    test_lct_parameters_io.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
