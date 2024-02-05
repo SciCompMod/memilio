@@ -138,8 +138,8 @@ TEST(TestGraphSimulation, stopsAtTmaxStochastic)
     const auto dt   = 0.076;
 
     mio::oseir::Model model(1);
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 0.9;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.1;
     model.populations.set_total(1000);
 
     mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
@@ -194,8 +194,8 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     const auto dt   = 0.076;
 
     mio::oseir::Model model(1);
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.7;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.3;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 0.7;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.3;
     model.populations.set_total(1000);
 
     mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
@@ -277,14 +277,14 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
 
     mio::oseir::Model model(1);
     double total_population                                                                            = 10000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
         total_population -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);

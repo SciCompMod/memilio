@@ -36,14 +36,15 @@ int main()
     mio::oseir::Model model(1);
 
     double total_population                                                                            = 10000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    //model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
         total_population -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
     model.parameters.set<mio::oseir::TimeExposed>(5.2);

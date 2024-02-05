@@ -38,12 +38,12 @@ int main()
 
     mio::osir::Model model(1);
 
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 1000;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 1000;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] =
         total_population -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
+        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
     model.parameters.set<mio::osir::TimeInfected>(2);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
     model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);

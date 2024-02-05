@@ -39,8 +39,8 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     auto dt   = 0.5;
 
     mio::oseir::Model model1(1);
-    model1.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
-    model1.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
+    model1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 0.9;
+    model1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.1;
     model1.populations.set_total(1000);
     model1.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
     model1.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.4);
@@ -48,7 +48,7 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     model1.parameters.set<mio::oseir::TimeInfected>(10);
 
     auto model2                                                                                           = model1;
-    model2.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 1.;
+    model2.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 1.;
     model2.populations.set_total(500);
 
     auto graph_sim = mio::make_migration_sim(
