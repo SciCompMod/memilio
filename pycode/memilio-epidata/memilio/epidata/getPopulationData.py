@@ -28,8 +28,6 @@ import warnings
 import getpass
 import requests
 import os
-import twill
-import time
 import io
 
 import numpy as np
@@ -59,7 +57,6 @@ def read_population_data(username, password, read_data, directory):
     download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
     req = requests.get(download_url, auth=(username, password))
     df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
-
 
     return df_pop_raw
 
@@ -333,7 +330,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     out_folder = conf.path_to_use
 
     if read_data == True:
-        gd.default_print('Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
+        gd.default_print(
+            'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
         read_data = False
 
     # If no username or password is provided, the credentials are either read from an .ini file or,

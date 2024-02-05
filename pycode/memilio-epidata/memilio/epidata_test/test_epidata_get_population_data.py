@@ -67,7 +67,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
                                                        '18-24 years', '25-29 years', '30-39 years', '40-49 years',
                                                        '50-64 years', '65-74 years', '>74 years'])
 
-
     @patch('memilio.epidata.getPopulationData.read_population_data',
            return_value=df_pop_raw)
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
