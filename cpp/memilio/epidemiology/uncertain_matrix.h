@@ -39,7 +39,7 @@ namespace mio
  * that are sampled to modify the contacts at some points in time.
  * @see UncertainValue
  */
-template<typename FP=double>
+template <typename FP = double>
 class UncertainContactMatrix
 {
 public:
@@ -61,7 +61,8 @@ public:
      * @brief Conversion to const ContactMatrix reference by returning the 
      *        ContactMatrix contained in UncertainContactMatrix
      */
-    operator ContactMatrixGroup const &() const{
+    operator ContactMatrixGroup const &() const
+    {
         return m_cont_freq;
     }
 
@@ -69,7 +70,8 @@ public:
      * @brief Conversion to ContactMatrix reference by returning the 
      *        ContactMatrix contained in UncertainContactMatrix
      */
-    operator ContactMatrixGroup&(){
+    operator ContactMatrixGroup&()
+    {
         return m_cont_freq;
     }
 
@@ -77,7 +79,8 @@ public:
      * @brief Set an UncertainContactMatrix from a ContactMatrix, 
      *        all distributions remain unchanged.
      */
-    UncertainContactMatrix& operator=(const ContactMatrixGroup& cont_freq){
+    UncertainContactMatrix& operator=(const ContactMatrixGroup& cont_freq)
+    {
         m_cont_freq = cont_freq;
         return *this;
     }
@@ -86,7 +89,8 @@ public:
      * @brief Returns the ContactMatrix reference 
      *        of the UncertainContactMatrix object
      */
-    ContactMatrixGroup& get_cont_freq_mat(){
+    ContactMatrixGroup& get_cont_freq_mat()
+    {
         return m_cont_freq;
     }
 
@@ -94,7 +98,8 @@ public:
      * @brief Returns the const ContactMatrix reference 
      *        of the UncertainContactMatrix object
      */
-    ContactMatrixGroup const& get_cont_freq_mat() const{
+    ContactMatrixGroup const& get_cont_freq_mat() const
+    {
         return m_cont_freq;
     }
 
@@ -148,7 +153,8 @@ public:
      * @param accum accumulating current and newly sampled dampings if true;
      *              default: false; removing all previously set dampings
      */
-    ContactMatrixGroup draw_sample(bool accum = false){
+    ContactMatrixGroup draw_sample(bool accum = false)
+    {
         draw_sample_dampings();
         return make_matrix(accum);
     }
@@ -156,7 +162,8 @@ public:
     /**
      * draw sample of all dampings.
      */
-    void draw_sample_dampings(){
+    void draw_sample_dampings()
+    {
         for (auto& d : m_dampings) {
             d.draw_sample();
         }
@@ -168,7 +175,8 @@ public:
      * @param accum accumulating current and newly dampings if true;
      *              default: false; removing all previously set dampings
      */
-    ContactMatrixGroup make_matrix(bool accum = false){
+    ContactMatrixGroup make_matrix(bool accum = false)
+    {
         if (!accum) {
             m_cont_freq.clear_dampings();
         }
@@ -225,10 +233,10 @@ public:
             return apply(
                 io,
                 [](auto&& c_, auto&& d_, auto&& e_, auto&& f_) {
-                    auto m           = UncertainContactMatrix{c_};
-                    m.get_dampings() = d_;
+                    auto m                         = UncertainContactMatrix{c_};
+                    m.get_dampings()               = d_;
                     m.get_school_holiday_damping() = e_;
-                    m.get_school_holidays() = f_;
+                    m.get_school_holidays()        = f_;
                     return m;
                 },
                 c, d, e, f);

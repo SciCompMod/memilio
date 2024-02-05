@@ -44,10 +44,10 @@ TEST(TestMigrationRules, student_goes_to_school)
     auto child_rng              = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child);
     auto adult_rng              = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -77,10 +77,12 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
         .WillRepeatedly(testing::Return(1.0));
 
     mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto p_child_goes_to_school_at_6   = mio::abm::Person(rng, home, age_group_5_to_14);
-    auto rng_child_goes_to_school_at_6 = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_6);
-    auto p_child_goes_to_school_at_8   = mio::abm::Person(rng, home, age_group_5_to_14);
-    auto rng_child_goes_to_school_at_8 = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_8);
+    auto p_child_goes_to_school_at_6 = mio::abm::Person(rng, home, age_group_5_to_14);
+    auto rng_child_goes_to_school_at_6 =
+        mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_6);
+    auto p_child_goes_to_school_at_8 = mio::abm::Person(rng, home, age_group_5_to_14);
+    auto rng_child_goes_to_school_at_8 =
+        mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_8);
 
     auto t_morning_6 = mio::abm::TimePoint(0) + mio::abm::hours(6);
     auto t_morning_8 = mio::abm::TimePoint(0) + mio::abm::hours(8);
@@ -88,10 +90,10 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
 
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -137,8 +139,9 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
         .WillRepeatedly(testing::Return(1.0));
 
     mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto p_child_goes_to_school_at_6    = mio::abm::Person(rng, home, age_group_5_to_14);
-    auto rng_child_goes_to_school_at_6  = mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_6);
+    auto p_child_goes_to_school_at_6 = mio::abm::Person(rng, home, age_group_5_to_14);
+    auto rng_child_goes_to_school_at_6 =
+        mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_6);
     auto p_child_goes_to_school_at_8_30 = mio::abm::Person(rng, home, age_group_5_to_14);
     auto rng_child_goes_to_school_at_8_30 =
         mio::abm::Person<double>::RandomNumberGenerator(rng, p_child_goes_to_school_at_8_30);
@@ -148,10 +151,10 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
     auto dt                     = mio::abm::seconds(1800);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -212,10 +215,10 @@ TEST(TestMigrationRules, worker_goes_to_work)
 
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -252,10 +255,10 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -293,10 +296,10 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
     auto dt                     = mio::abm::hours(1);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -328,10 +331,10 @@ TEST(TestMigrationRules, work_return)
 
 TEST(TestMigrationRules, quarantine)
 {
-    auto rng = mio::RandomNumberGenerator();
-    auto t   = mio::abm::TimePoint(12346);
-    auto dt  = mio::abm::hours(1);
-    auto test_params = mio::abm::TestParameters<double>{1.0,1.0};
+    auto rng         = mio::RandomNumberGenerator();
+    auto t           = mio::abm::TimePoint(12346);
+    auto dt          = mio::abm::hours(1);
+    auto test_params = mio::abm::TestParameters<double>{1.0, 1.0};
 
     mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);

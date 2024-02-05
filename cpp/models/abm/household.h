@@ -207,7 +207,7 @@ AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
  * @param[in,out] world The World to which the Household has to be added.
  * @param[in] household The Household to add to World.
  */
-template<typename FP=double>
+template <typename FP = double>
 void add_household_to_world(World<FP>& world, const Household& household)
 {
     auto home    = world.add_location(LocationType::Home);
@@ -228,14 +228,12 @@ void add_household_to_world(World<FP>& world, const Household& household)
     }
 }
 
-
-
 /**
  * @brief Adds Household%s from a HouseholdGroup to the World.
  * @param[in,out] world The World to which the group has to be added.
  * @param[in] household_group The HouseholdGroup to add.
  */
-template<typename FP=double>
+template <typename FP = double>
 void add_household_group_to_world(World<FP>& world, const HouseholdGroup& household_group)
 {
     auto households = household_group.get_households();

@@ -377,8 +377,6 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
     return success(vnum_population);
 }
 
-
-
 } // namespace details
 } // namespace osecirvvs
 } // namespace mio

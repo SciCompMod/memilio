@@ -30,7 +30,7 @@ int main()
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.5; //time step of migration, daily migration every second step
-    using FP=double;
+    using FP        = double;
 
     mio::oseir::Model<FP> model;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 10000;

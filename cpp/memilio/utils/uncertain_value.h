@@ -27,8 +27,6 @@
 #include <memory>
 #include <ostream>
 
-
-
 namespace mio
 {
 
@@ -43,7 +41,7 @@ namespace mio
  * replaced by drawing a new sample from the the distribution
  * @tparam FP underlying floating point type, e.g., double
  */
-template<typename FP=double>
+template <typename FP = double>
 class UncertainValue
 {
 public:
@@ -104,8 +102,6 @@ public:
         return m_value;
     }
 
-
-
     /**
      * @brief Set an UncertainValue from a scalar, distribution remains unchanged.
      */
@@ -114,8 +110,6 @@ public:
         m_value = v;
         return *this;
     }
-
-
 
     /**
      * @brief Sets the distribution of the value.
@@ -127,7 +121,6 @@ public:
     {
         m_dist.reset(dist.clone());
     }
-
 
     /**
      * @brief Returns the parameter distribution.
@@ -235,14 +228,15 @@ private:
     std::unique_ptr<ParameterDistribution> m_dist;
 };
 
-template<typename FP>
-bool operator<(const UncertainValue<typename ad::gt1s<FP>::type>& a,const FP b){
+template <typename FP>
+bool operator<(const UncertainValue<typename ad::gt1s<FP>::type>& a, const FP b)
+{
     return ad::value(a.value()) < b;
 }
 
 //gtest printer
 //TODO: should be extended when UncertainValue gets operator== that compares distributions as well
-template<typename FP=double>
+template <typename FP = double>
 inline void PrintTo(const UncertainValue<FP>& uv, std::ostream* os)
 {
     (*os) << uv.value();

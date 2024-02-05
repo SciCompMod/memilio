@@ -19,5 +19,3 @@
 */
 
 #include "ide_secir/model.h" // IWYU pragma: keep
-
-

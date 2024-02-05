@@ -249,7 +249,8 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
 }
 
 template <typename Graph>
-mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model<double>& model, double t0, double tmax, double dt)
+mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model<double>& model, double t0, double tmax,
+                                              double dt)
 {
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
@@ -293,11 +294,12 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     model.check_constraints();
 
     auto sim_no_flows = create_simulation(
-        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model<double>>>, mio::MigrationEdge<double>>(), model, t0, tmax, dt);
+        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model<double>>>, mio::MigrationEdge<double>>(),
+        model, t0, tmax, dt);
 
-    auto sim_flows =
-        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::oseir::Model<double>>>, mio::MigrationEdge<double>>(),
-                          model, t0, tmax, dt);
+    auto sim_flows = create_simulation(
+        mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::oseir::Model<double>>>, mio::MigrationEdge<double>>(),
+        model, t0, tmax, dt);
 
     //test if all results of both simulations are equal for all nodes
     for (size_t node_id = 0; node_id < sim_no_flows.get_graph().nodes().size(); ++node_id) {
@@ -333,10 +335,10 @@ namespace
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&)            = delete;
+    MoveOnly(const MoveOnly&) = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&)      = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
 using MoveOnlyGraph    = mio::Graph<MoveOnly, MoveOnly>;
 using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph>;

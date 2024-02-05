@@ -25,8 +25,8 @@
 #include <fstream>
 #include <string>
 
-
-namespace mio {
+namespace mio
+{
 
 /**
  * Print TimeSeries to file.
@@ -35,21 +35,22 @@ namespace mio {
  * @param file_name name of the output file to be created
  */
 template <class FP>
-void time_series_to_file(const TimeSeries<FP>& time_series, const std::string& file_name) {
-  std::ofstream output_file(file_name);
-  output_file.precision(16);
+void time_series_to_file(const TimeSeries<FP>& time_series, const std::string& file_name)
+{
+    std::ofstream output_file(file_name);
+    output_file.precision(16);
 
-  for(int i=0; i < time_series.get_num_time_points();++i) {
-    auto time = time_series.get_time(i);
-    auto y = time_series.get_value(i);
-    output_file << time;
-    for (int j=0; j < y.size(); ++j) {
-      output_file << " " << y[j];
+    for (int i = 0; i < time_series.get_num_time_points(); ++i) {
+        auto time = time_series.get_time(i);
+        auto y    = time_series.get_value(i);
+        output_file << time;
+        for (int j = 0; j < y.size(); ++j) {
+            output_file << " " << y[j];
+        }
+        output_file << std::endl;
     }
-    output_file << std::endl;
-  }
 
-  output_file.close();
+    output_file.close();
 }
 
 } // end namespace mio

@@ -66,9 +66,10 @@ void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
                                [](mio::DynamicNPIs<double>& self) {
                                    return self.get_thresholds();
                                })
-        .def("set_threshold", [](mio::DynamicNPIs<double>& self, double threshold, const std::vector<mio::DampingSampling<double>>& v) {
-            self.set_threshold(threshold, v);
-        });
+        .def("set_threshold",
+             [](mio::DynamicNPIs<double>& self, double threshold, const std::vector<mio::DampingSampling<double>>& v) {
+                 self.set_threshold(threshold, v);
+             });
 }
 
 } // namespace pymio

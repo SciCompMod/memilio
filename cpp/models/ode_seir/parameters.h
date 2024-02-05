@@ -38,7 +38,7 @@ namespace oseir
 /**
      * @brief probability of getting infected from a contact
      */
-template<typename FP=double>
+template <typename FP = double>
 struct TransmissionProbabilityOnContact {
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -54,7 +54,7 @@ struct TransmissionProbabilityOnContact {
 /**
      * @brief the latent time in day unit
      */
-template<typename FP=double>
+template <typename FP = double>
 struct TimeExposed {
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -70,7 +70,7 @@ struct TimeExposed {
 /**
      * @brief the infectious time in day unit
      */
-template<typename FP=double>
+template <typename FP = double>
 struct TimeInfected {
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -98,14 +98,14 @@ struct ContactPatterns {
     }
 };
 
-template<typename FP=double>
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>,
-                                    TimeInfected<FP>, ContactPatterns>;
+template <typename FP = double>
+using ParametersBase =
+    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>, ContactPatterns>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -138,7 +138,7 @@ public:
                         "and reset parameters.",
                         this->template get<TimeExposed<FP>>(), tol_times);
             this->template get<TimeExposed<FP>>() = tol_times;
-            corrected                = true;
+            corrected                             = true;
         }
         if (this->template get<TimeInfected<FP>>() < tol_times) {
             log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
@@ -146,14 +146,14 @@ public:
                         "and reset parameters.",
                         this->template get<TimeInfected<FP>>(), tol_times);
             this->template get<TimeInfected<FP>>() = tol_times;
-            corrected                 = true;
+            corrected                              = true;
         }
         if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
             log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
                         this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0);
             this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
-            corrected                                     = true;
+            corrected                                                  = true;
         }
         return corrected;
     }

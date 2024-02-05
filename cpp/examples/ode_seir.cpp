@@ -27,8 +27,6 @@
 #include "memilio/utils/time_series_to_file.h"
 #include <fstream>
 
-
-
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
@@ -42,7 +40,7 @@ int main()
     mio::oseir::Model<double> model;
 
     double total_population                                                                            = 10000;
-    model.populations[mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)]   = 100;
+    model.populations[mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)]     = 100;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
@@ -64,8 +62,8 @@ int main()
     integrator->set_abs_tolerance(1e-6);
     integrator->set_rel_tolerance(1e-6);
 
-    auto seir = mio::simulate<mio::oseir::Model<double>,double>(t0, tmax, dt, model, integrator);
-    mio::time_series_to_file(seir,"seir.txt");
+    auto seir = mio::simulate<mio::oseir::Model<double>, double>(t0, tmax, dt, model, integrator);
+    mio::time_series_to_file(seir, "seir.txt");
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);

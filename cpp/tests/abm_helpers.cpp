@@ -22,8 +22,8 @@
 #include "memilio/utils/random_number_generator.h"
 
 mio::abm::Person<double> make_test_person(mio::abm::Location<double>& location, mio::AgeGroup age,
-                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
-                                  mio::abm::Parameters<double> params)
+                                          mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
+                                          mio::abm::Parameters<double> params)
 {
     assert(age.get() < params.get_num_groups());
     auto rng           = mio::RandomNumberGenerator();
@@ -36,8 +36,9 @@ mio::abm::Person<double> make_test_person(mio::abm::Location<double>& location, 
     return p;
 }
 
-mio::abm::Person<double>& add_test_person(mio::abm::World<double>& world, mio::abm::LocationId loc_id, mio::AgeGroup age,
-                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
+mio::abm::Person<double>& add_test_person(mio::abm::World<double>& world, mio::abm::LocationId loc_id,
+                                          mio::AgeGroup age, mio::abm::InfectionState infection_state,
+                                          mio::abm::TimePoint t)
 {
     assert(age.get() < world.parameters.get_num_groups());
     mio::abm::Person<double>& p = world.add_person(loc_id, age);

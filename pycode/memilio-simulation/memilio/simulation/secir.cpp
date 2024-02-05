@@ -71,8 +71,8 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>&, double, double, double,
-                      size_t>(),
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>&, double, double,
+                      double, size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
                       &mio::ParameterStudy<Simulation>::set_num_runs)
@@ -206,11 +206,11 @@ PYBIND11_MODULE(_simulation_secir, m)
     using SecirPopulations = mio::Populations<double, mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model<double>::Populations>{});
 
-    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>(m,
-                                                                                                           "ModelBase");
+    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>(
+        m, "ModelBase");
     py::class_<mio::osecir::Model<double>,
-               mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>>(m,
-                                                                                                                "Model")
+               mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>>(
+        m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecir::Simulation<>>(m, "Simulation");
@@ -255,15 +255,15 @@ PYBIND11_MODULE(_simulation_secir, m)
     // These functions are in general not secir dependent, only with the current config
     m.def(
         "set_nodes",
-        [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date, const std::string& data_dir,
-           const std::string& population_data_path, bool is_node_for_county,
+        [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
+           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
            mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
            int num_days = 0, bool export_time_series = false) {
-            auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
-                                         mio::osecir::Model<double>, mio::MigrationParameters<double>, mio::osecir::Parameters<double>,
-                                         decltype(mio::osecir::read_input_data_county<mio::osecir::Model<double>>),
-                                         decltype(mio::get_node_ids)>(
+            auto result = mio::set_nodes<
+                mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
+                mio::osecir::Model<double>, mio::MigrationParameters<double>, mio::osecir::Parameters<double>,
+                decltype(mio::osecir::read_input_data_county<mio::osecir::Model<double>>), decltype(mio::get_node_ids)>(
                 params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
                 mio::osecir::read_input_data_county<mio::osecir::Model<double>>, mio::get_node_ids, scaling_factor_inf,
                 scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
@@ -279,14 +279,15 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     m.def(
         "set_edges",
-        [](const std::string& data_dir, mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
+        [](const std::string& data_dir,
+           mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto migrating_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
             auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
-            auto result         = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MigrationParameters<double>,
+            auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MigrationParameters<double>,
                                          mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
                                          decltype(mio::read_mobility_plain)>(
                 data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain, weights);

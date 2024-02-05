@@ -42,7 +42,7 @@ namespace abm
 /**
  * @brief Time that a Person is infected but not yet infectious.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct IncubationPeriod {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -55,7 +55,7 @@ struct IncubationPeriod {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct InfectedNoSymptomsToSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -68,7 +68,7 @@ struct InfectedNoSymptomsToSymptoms {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct InfectedNoSymptomsToRecovered {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -81,7 +81,7 @@ struct InfectedNoSymptomsToRecovered {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct InfectedSymptomsToRecovered {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -94,7 +94,7 @@ struct InfectedSymptomsToRecovered {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct InfectedSymptomsToSevere {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -107,7 +107,7 @@ struct InfectedSymptomsToSevere {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct SevereToCritical {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -120,7 +120,7 @@ struct SevereToCritical {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct SevereToRecovered {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -133,7 +133,7 @@ struct SevereToRecovered {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct CriticalToRecovered {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -146,7 +146,7 @@ struct CriticalToRecovered {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct CriticalToDead {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -159,7 +159,7 @@ struct CriticalToDead {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct RecoveredToSusceptible {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -221,7 +221,7 @@ struct InfectivityDistributions {
 /**
  * @brief Probability that an Infection is detected.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct DetectInfection {
     using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -237,7 +237,7 @@ struct DetectInfection {
 /**
  * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue<FP>, MaskType>;
     static Type get_default(AgeGroup /*size*/)
@@ -323,13 +323,13 @@ struct HighViralLoadProtectionFactor {
 /**
  * @brief Parameters that describe the reliability of a test.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct TestParameters {
     UncertainValue<FP> sensitivity;
     UncertainValue<FP> specificity;
 };
 
-template<typename FP=double>
+template <typename FP = double>
 struct GenericTest {
     using Type = TestParameters<FP>;
     static Type get_default()
@@ -345,7 +345,7 @@ struct GenericTest {
 /**
  * @brief Reliability of an AntigenTest.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct AntigenTest : public GenericTest<FP> {
     using Type = TestParameters<FP>;
     static Type get_default()
@@ -361,7 +361,7 @@ struct AntigenTest : public GenericTest<FP> {
 /**
  * @brief Reliability of a PCRTest.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct PCRTest : public GenericTest<FP> {
     using Type = TestParameters<FP>;
     static Type get_default()
@@ -407,7 +407,7 @@ struct QuarantineDuration {
 /**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct BasicShoppingRate {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static auto get_default(AgeGroup size)
@@ -560,16 +560,16 @@ struct AgeGroupGotoWork {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 using ParametersBase =
     ParameterSet<IncubationPeriod<FP>, InfectedNoSymptomsToSymptoms<FP>, InfectedNoSymptomsToRecovered<FP>,
-                 InfectedSymptomsToRecovered<FP>, InfectedSymptomsToSevere<FP>, SevereToCritical<FP>, SevereToRecovered<FP>,
-                 CriticalToDead<FP>, CriticalToRecovered<FP>, RecoveredToSusceptible<FP>, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection<FP>, MaskProtection<FP>, AerosolTransmissionRates, LockdownDate,QuarantineDuration,
-                 SocialEventRate, BasicShoppingRate<FP>, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
-
+                 InfectedSymptomsToRecovered<FP>, InfectedSymptomsToSevere<FP>, SevereToCritical<FP>,
+                 SevereToRecovered<FP>, CriticalToDead<FP>, CriticalToRecovered<FP>, RecoveredToSusceptible<FP>,
+                 ViralLoadDistributions, InfectivityDistributions, DetectInfection<FP>, MaskProtection<FP>,
+                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate<FP>,
+                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
+                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
+                 SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -610,7 +610,7 @@ using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -710,14 +710,16 @@ public:
             }
 
             if (this->template get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
-                this->template get<GotoWorkTimeMinimum>()[i].seconds() > this->template get<GotoWorkTimeMaximum>()[i].seconds()) {
+                this->template get<GotoWorkTimeMinimum>()[i].seconds() >
+                    this->template get<GotoWorkTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoWorkTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, this->template get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->template get<GotoWorkTimeMaximum>()[i].seconds() < this->template get<GotoWorkTimeMinimum>()[i].seconds() ||
+            if (this->template get<GotoWorkTimeMaximum>()[i].seconds() <
+                    this->template get<GotoWorkTimeMinimum>()[i].seconds() ||
                 this->template get<GotoWorkTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
@@ -726,14 +728,16 @@ public:
             }
 
             if (this->template get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
-                this->template get<GotoSchoolTimeMinimum>()[i].seconds() > this->template get<GotoSchoolTimeMaximum>()[i].seconds()) {
+                this->template get<GotoSchoolTimeMinimum>()[i].seconds() >
+                    this->template get<GotoSchoolTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, this->template get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->template get<GotoSchoolTimeMaximum>()[i].seconds() < this->template get<GotoSchoolTimeMinimum>()[i].seconds() ||
+            if (this->template get<GotoSchoolTimeMaximum>()[i].seconds() <
+                    this->template get<GotoSchoolTimeMinimum>()[i].seconds() ||
                 this->template get<GotoSchoolTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
@@ -750,7 +754,8 @@ public:
             return true;
         }
 
-        if (this->template get<MaskProtection<FP>>()[MaskType::FFP2] < 0.0 || this->template get<MaskProtection<FP>>()[MaskType::FFP2] > 1.0) {
+        if (this->template get<MaskProtection<FP>>()[MaskType::FFP2] < 0.0 ||
+            this->template get<MaskProtection<FP>>()[MaskType::FFP2] > 1.0) {
             log_error("Constraint check: Parameter MaskProtection for MaskType FFP2 is smaller {:d} or larger {:d}", 0,
                       1);
             return true;

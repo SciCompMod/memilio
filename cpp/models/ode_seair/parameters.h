@@ -25,7 +25,6 @@
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
 
-
 #include <vector>
 
 namespace mio
@@ -40,142 +39,135 @@ namespace oseair
 /**
  * @brief Social distancing.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct AlphaA {
     using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.2);
-  }
-  static std::string name()
-  {
-    return "AlphaA";
-  }
+    static Type get_default()
+    {
+        return Type(0.2);
+    }
+    static std::string name()
+    {
+        return "AlphaA";
+    }
 };
-
 
 /**
  * @brief Quarantining.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct AlphaI {
-  using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.2);
-  }
-  static std::string name()
-  {
-    return "AlphaI";
-  }
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.2);
+    }
+    static std::string name()
+    {
+        return "AlphaI";
+    }
 };
 
 /**
  * @brief Rate of testing.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct Kappa {
-  using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.2);
-  }
-  static std::string name()
-  {
-    return "Kappa";
-  }
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.2);
+    }
+    static std::string name()
+    {
+        return "Kappa";
+    }
 };
-
 
 /**
  * @brief Recovery rate.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct Beta {
-  using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.0067);
-  }
-  static std::string name()
-  {
-    return "Beta";
-  }
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.0067);
+    }
+    static std::string name()
+    {
+        return "Beta";
+    }
 };
 
 /**
  * @brief Death Rate.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct Mu {
-  using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.0041);
-  }
-  static std::string name()
-  {
-    return "Mu";
-  }
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.0041);
+    }
+    static std::string name()
+    {
+        return "Mu";
+    }
 };
-
 
 /**
  * @brief Inverse of the latent period of the virus.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct TLatentInverse {
-  using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.5);
-  }
-  static std::string name()
-  {
-    return "TLatentInverse";
-  }
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.5);
+    }
+    static std::string name()
+    {
+        return "TLatentInverse";
+    }
 };
 
 /**
  * @brief Infectious period for unconfirmed infected people.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct Rho {
-  using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.1);
-  }
-  static std::string name()
-  {
-    return "Rho";
-  }
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.1);
+    }
+    static std::string name()
+    {
+        return "Rho";
+    }
 };
-
 
 /**
  * @brief Rate recovered people become susceptible again.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct Gamma {
-  using Type = FP;
-  static Type get_default()
-  {
-    return Type(0.0);
-  }
-  static std::string name()
-  {
-    return "Gamma";
-  }
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.0);
+    }
+    static std::string name()
+    {
+        return "Gamma";
+    }
 };
-
-
-
 
 /**
      * @brief probability of getting infected from a contact
      */
-template<typename FP=double>
+template <typename FP = double>
 struct TransmissionProbabilityOnContact {
     using Type = FP;
     static Type get_default()
@@ -191,7 +183,7 @@ struct TransmissionProbabilityOnContact {
 /**
      * @brief the latent time in day unit
      */
-template<typename FP=double>
+template <typename FP = double>
 struct TimeExposed {
     using Type = FP;
     static Type get_default()
@@ -207,7 +199,7 @@ struct TimeExposed {
 /**
      * @brief the infectious time in day unit
      */
-template<typename FP=double>
+template <typename FP = double>
 struct TimeInfected {
     using Type = FP;
     static Type get_default()
@@ -234,13 +226,14 @@ struct ContactPatterns {
         return "ContactPatterns";
     }
 };
-template<typename FP=double>
-using ParametersBase = ParameterSet<AlphaA<FP>, AlphaI<FP>, Kappa<FP>, Beta<FP>, Mu<FP>, TLatentInverse<FP>, Rho<FP>, Gamma<FP>>;
+template <typename FP = double>
+using ParametersBase =
+    ParameterSet<AlphaA<FP>, AlphaI<FP>, Kappa<FP>, Beta<FP>, Mu<FP>, TLatentInverse<FP>, Rho<FP>, Gamma<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -278,7 +271,7 @@ public:
     }
 };
 
-} // namespace oseir
+} // namespace oseair
 } // namespace mio
 
 #endif // SEAIR_PARAMETERS_H

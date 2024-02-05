@@ -24,7 +24,7 @@
 #include "memilio/math/floating_point.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
-#include "memilio/math/eigen.h"  // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/math/smoother.h" // IWYU pragma: keep
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -87,7 +87,7 @@ struct TransitionProbabilities {
 /**
  * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct ContactPatterns {
     using Type = UncertainContactMatrix<FP>;
 
@@ -152,15 +152,15 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 // Define Parameterset for IDE SECIR model.
-template<typename FP=double>
+template <typename FP = double>
 using ParametersBase =
-    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns<FP>, TransmissionProbabilityOnContact,
-                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns<FP>,
+                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -211,51 +211,55 @@ public:
         }
 
         for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
-            if (this->template get<TransitionProbabilities>()[i] < 0.0 || this->template get<TransitionProbabilities>()[i] > 1.0) {
+            if (this->template get<TransitionProbabilities>()[i] < 0.0 ||
+                this->template get<TransitionProbabilities>()[i] > 1.0) {
                 log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}", 0,
                           1);
                 return true;
             }
         }
 
-        if (!floating_point_equal(this->template get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed],
-                                  1.0, 1e-14)) {
+        if (!floating_point_equal(
+                this->template get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed], 1.0,
+                1e-14)) {
             log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {:d}", 1);
             return true;
         }
 
         if (!floating_point_equal(
-                this->template get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms], 1.0,
-                1e-14)) {
+                this->template get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms],
+                1.0, 1e-14)) {
             log_error(
                 "Constraint check: Parameter transition probability for ExposedToInfectedNoSymptoms unequal to {:d}",
                 1);
             return true;
         }
 
-        if (!floating_point_equal(
-                this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
-                    this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered],
-                1.0, 1e-14)) {
+        if (!floating_point_equal(this->template get<TransitionProbabilities>()[(
+                                      int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
+                                      this->template get<TransitionProbabilities>()[(
+                                          int)InfectionTransition::InfectedNoSymptomsToRecovered],
+                                  1.0, 1e-14)) {
             log_error("Constraint check: Sum of transition probability for InfectedNoSymptomsToInfectedSymptoms and "
                       "InfectedNoSymptomsToRecovered not equal to {:d}",
 
                       1);
             return true;
         }
-        if (!floating_point_equal(
-                this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
-                    this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered],
-                1.0, 1e-14)) {
+        if (!floating_point_equal(this->template get<TransitionProbabilities>()[(
+                                      int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
+                                      this->template get<TransitionProbabilities>()[(
+                                          int)InfectionTransition::InfectedSymptomsToRecovered],
+                                  1.0, 1e-14)) {
             log_error("Constraint check: Sum of transition probability for InfectedSymptomsToInfectedSevere and "
                       "InfectedSymptomsToRecovered not equal to {:d}",
                       1);
             return true;
         }
 
-
         if (!floating_point_equal(
-                this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
+                this->template get<TransitionProbabilities>()[(
+                    int)InfectionTransition::InfectedSevereToInfectedCritical] +
                     this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToRecovered],
                 1.0, 1e-14)) {
             log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical and "
@@ -264,10 +268,10 @@ public:
             return true;
         }
 
-
         if (!floating_point_equal(
                 this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
-                    this->template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToRecovered],
+                    this->template get<TransitionProbabilities>()[(
+                        int)InfectionTransition::InfectedCriticalToRecovered],
                 1.0, 1e-14)) {
             log_error("Constraint check: Sum of transition probability for InfectedCriticalToDead and "
                       "InfectedCriticalToRecovered not equal to {:d}",

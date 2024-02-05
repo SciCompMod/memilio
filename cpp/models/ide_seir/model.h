@@ -21,12 +21,11 @@
 #ifndef IDE_SEIR_H
 #define IDE_SEIR_H
 
-#include "memilio/math/eigen.h"  // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/utils/time_series.h"
 #include "ide_seir/parameters.h" // IWYU pragma: keep
 #include "ide_seir/infection_state.h"
 #include "memilio/utils/logging.h"
-
 
 #include <iostream>
 
@@ -36,10 +35,10 @@ namespace mio
 {
 namespace iseir
 {
-template<typename FP=double>
+template <typename FP = double>
 class Model
 {
-    using Pa = ParametersBase<FP>;
+    using Pa  = ParametersBase<FP>;
     using Vec = TimeSeries<double>::Vector;
 
 public:
@@ -80,7 +79,8 @@ public:
     {
 
         m_l = (int)std::floor(parameters.template get<LatencyTime>() / m_dt);
-        m_k = (int)std::ceil((parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>()) / m_dt);
+        m_k =
+            (int)std::ceil((parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>()) / m_dt);
         if (m_result.get_time(0) > -(m_k - 1) * m_dt) {
             log_warning("Constraint check: Initial data starts later than necessary. The simulation may be distorted. "
                         "Start the data at time {:.4f} at the latest.",
@@ -92,12 +92,12 @@ public:
             Eigen::Index idx = m_result.get_num_time_points();
 
             // R0t is the effective reproduction number at time t
-            auto R0t1 =
-                parameters.template get<ContactFrequency<double>>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
-                parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
-            auto R0t2 =
-                parameters.template get<ContactFrequency<double>>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
-                parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
+            auto R0t1 = parameters.template get<ContactFrequency<double>>().get_cont_freq_mat().get_matrix_at(
+                            m_result.get_time(idx - 2))(0, 0) *
+                        parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
+            auto R0t2 = parameters.template get<ContactFrequency<double>>().get_cont_freq_mat().get_matrix_at(
+                            m_result.get_last_time())(0, 0) *
+                        parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
 
             m_result.get_last_value() =
                 Vec::Constant(1, m_result[idx - 2][0] * exp(m_dt * (0.5 * 1 / m_N) *
@@ -147,12 +147,12 @@ private:
         if ((parameters.template get<LatencyTime>() < tau) &&
             (parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>() > tau)) {
             return tgamma(p + q) * pow(tau - parameters.template get<LatencyTime>(), p - 1) *
-                   pow(parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>() - tau, q - 1) /
+                   pow(parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>() - tau,
+                       q - 1) /
                    (tgamma(p) * tgamma(q) * pow(parameters.template get<InfectiousTime>(), p + q - 1));
         }
         return 0.0;
     }
-
 
     /**
         * @brief Numerical differentiation of one compartment using a central difference quotient.
@@ -190,7 +190,6 @@ private:
         }
         return res;
     }
-
 
     // TimeSeries containing points of time and the corresponding number of susceptibles.
     TimeSeries<double> m_result;

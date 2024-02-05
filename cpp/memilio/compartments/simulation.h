@@ -30,18 +30,18 @@
 namespace mio
 {
 
-template<typename FP=double>
-using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP,boost::numeric::odeint::runge_kutta_cash_karp54>;
+template <typename FP = double>
+using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
 /**
  * @brief A class for the simulation of a compartment model.
  * @tparam M a CompartmentModel type
  * @tparam FP floating point type, e.g., double
  */
-template <class M, typename FP=double>
+template <class M, typename FP = double>
 class Simulation
 {
-    static_assert(is_compartment_model<M,FP>::value, "Template parameter must be a compartment model.");
+    static_assert(is_compartment_model<M, FP>::value, "Template parameter must be a compartment model.");
 
 public:
     using Model = M;
@@ -96,7 +96,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> advance(FP tmax)
+    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(FP tmax)
     {
         return m_integrator.advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
@@ -171,14 +171,12 @@ protected:
     }
 
 private:
-
     std::shared_ptr<IntegratorCore<FP>> m_integratorCore; ///< Defines the integration scheme via its step function.
     std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
     OdeIntegrator<FP> m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
     TimeSeries<FP> m_result; ///< The simulation results.
     FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
 };
-
 
 /**
  * Defines the return type of the `advance` member function of a type.
@@ -234,7 +232,7 @@ using is_compartment_model_simulation =
  * @tparam FP floating point type, e.g., double
  * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model, typename FP=double, class Sim = Simulation<Model,FP>>
+template <class Model, typename FP = double, class Sim = Simulation<Model, FP>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
                         std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
@@ -246,8 +244,6 @@ TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
     sim.advance(tmax);
     return sim.get_result();
 }
-
-
 
 } // namespace mio
 

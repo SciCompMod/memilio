@@ -67,11 +67,13 @@ PYBIND11_MODULE(_simulation_osir, m)
         .def(py::init<>())
         .def("check_constraints", &mio::osir::Parameters<double>::check_constraints);
 
-    using Populations = mio::Populations<double,mio::osir::InfectionState>;
+    using Populations = mio::Populations<double, mio::osir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::osir::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>(m, "ModelBase");
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>(m,
+                                                                                                          "ModelBase");
     py::class_<mio::osir::Model<double>,
-               mio::CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(m, "Model")
+               mio::CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(m,
+                                                                                                               "Model")
         .def(py::init<>());
 
     m.def(

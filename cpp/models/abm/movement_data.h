@@ -28,7 +28,6 @@ namespace mio
 namespace abm
 {
 
-
 /**
  * @brief Mode of Transport.
  */
@@ -42,7 +41,6 @@ enum class TransportMode : uint32_t
     Other,
     Unknown
 };
-
 
 /**
  * @brief Type of the activity.

@@ -105,9 +105,9 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other)            = default;
+    World(World&& other) = default;
     World& operator=(World&& other) = default;
-    World& operator=(const World&)  = delete;
+    World& operator=(const World&) = delete;
 
     /**
      * serialize this. 
@@ -162,14 +162,14 @@ public:
      * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt)
-{
-    m_testing_strategy.update_activity_status(t);
+    {
+        m_testing_strategy.update_activity_status(t);
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
         location->cache_exposure_rates(t, dt, parameters.get_num_groups());
     }
-}
+    }
 
     /** 
      * @brief Evolve the world one time step.
@@ -224,8 +224,6 @@ public:
     {
         return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
     }
-
-
 
     /**
      * @brief Get a range of all Person%s in the World.
@@ -450,8 +448,10 @@ private:
                 (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu<FP>)) ||
                 (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school<FP>)) ||
                 (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work<FP>)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_migration_rule(&go_to_shop<FP>)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_migration_rule(&go_to_event<FP>)) ||
+                (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
+                 try_migration_rule(&go_to_shop<FP>)) ||
+                (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
+                 try_migration_rule(&go_to_event<FP>)) ||
                 (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine<FP>));
         }
         else {

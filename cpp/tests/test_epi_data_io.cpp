@@ -342,10 +342,12 @@ TEST(TestEpiData, set_vaccination_data)
     auto expected_values_FV =
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 2, 4, 5, 5, 7, 8, 9, 9, 10, 12, 14).finished();
 
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination<double>>().array()),
-                MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination<double>>().array()),
-                MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
 }
 
 TEST(TestEpiData, vaccination_data)

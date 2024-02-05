@@ -25,7 +25,6 @@
 #include "ode_secirvvs/model.h"
 #include "ode_secirvvs/infection_state.h"
 
-
 #include <assert.h>
 
 namespace mio
@@ -37,7 +36,7 @@ namespace osecirvvs
      * @tparam FP floating point type, e.g., double
      * @param[inout] model Model including contact patterns for alle age groups
      */
-template<typename FP=double>
+template <typename FP = double>
 void draw_sample_demographics(Model<FP>& model)
 {
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
@@ -68,7 +67,8 @@ void draw_sample_demographics(Model<FP>& model)
             }
             assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
         }
-        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive}, group_total);
+        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
+                                                                             group_total);
     }
 }
 /**
@@ -76,7 +76,7 @@ void draw_sample_demographics(Model<FP>& model)
      * @tparam FP floating point type, e.g., double
      * @param[inout] model Model including contact patterns for alle age groups
      */
-template<typename FP=double>
+template <typename FP = double>
 void draw_sample_infection(Model<FP>& model)
 {
     model.parameters.template get<Seasonality<FP>>().draw_sample();
@@ -98,8 +98,10 @@ void draw_sample_infection(Model<FP>& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.template get<IncubationTime<FP>>()[i] = model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
-        model.parameters.template get<SerialInterval<FP>>()[i] = model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
+        model.parameters.template get<IncubationTime<FP>>()[i] =
+            model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
+        model.parameters.template get<SerialInterval<FP>>()[i] =
+            model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
         model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i] =
             model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)];
         model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i] =
@@ -119,7 +121,8 @@ void draw_sample_infection(Model<FP>& model)
             model.parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[AgeGroup(0)];
         model.parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[i] =
             model.parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[AgeGroup(0)];
-        model.parameters.template get<ReducTimeInfectedMild<FP>>()[i] = model.parameters.template get<ReducTimeInfectedMild<FP>>()[AgeGroup(0)];
+        model.parameters.template get<ReducTimeInfectedMild<FP>>()[i] =
+            model.parameters.template get<ReducTimeInfectedMild<FP>>()[AgeGroup(0)];
 
         //age dependent
         model.parameters.template get<TimeInfectedSymptoms<FP>>()[i].draw_sample();
@@ -139,7 +142,7 @@ void draw_sample_infection(Model<FP>& model)
     * @tparam FP floating point type, e.g., double
     * @param[inout] model Model including contact patterns for alle age groups
     */
-template<typename FP=double>
+template <typename FP = double>
 void draw_sample(Model<FP>& model)
 {
     draw_sample_infection(model);
@@ -147,7 +150,6 @@ void draw_sample(Model<FP>& model)
     model.parameters.template get<ContactPatterns<FP>>().draw_sample();
     model.apply_constraints();
 }
-
 
 /**
     * Draws samples for each model node in a graph.
@@ -157,8 +159,9 @@ void draw_sample(Model<FP>& model)
     * @param variant_high If true, use high value for infectiousness of variant.
     * @return Graph with nodes and edges from the input graph sampled.
     */
-template<typename FP=double>
-Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, MigrationParameters<FP>>& graph, bool variant_high)
+template <typename FP = double>
+Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, MigrationParameters<FP>>& graph,
+                                                      bool variant_high)
 {
     Graph<Model<FP>, MigrationParameters<FP>> sampled_graph;
 

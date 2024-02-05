@@ -52,7 +52,8 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     model2.populations.set_total(500);
 
     auto graph_sim = mio::make_migration_sim(
-        t0, dt, mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model<double>>>, mio::MigrationEdge<double>>());
+        t0, dt,
+        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model<double>>>, mio::MigrationEdge<double>>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);

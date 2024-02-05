@@ -61,6 +61,5 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
     m_infection_states.set(static_cast<size_t>(infection_state), false);
 }
 
-
 } // namespace abm
 } // namespace mio

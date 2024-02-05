@@ -96,7 +96,7 @@ protected:
 
 public:
     mio::isecir::Model<double>* model = nullptr;
-    ScalarType dt             = 1;
+    ScalarType dt                     = 1;
 };
 
 // Check if population stays constant over course of simulation.
@@ -206,11 +206,10 @@ TEST(IdeSecir, checkSimulationFunctions)
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
 
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 4.));
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 4.));
     model.parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix(contact_matrix);
-
 
     mio::SmootherCosine smoothcos_prob(1.0);
     mio::StateAgeFunctionWrapper prob(smoothcos_prob);
@@ -460,8 +459,8 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.6;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
     mio::ExponentialDecay expdecay2(0.5);
@@ -563,8 +562,8 @@ TEST(IdeSecir, compareEquilibria)
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
     model2.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    mio::ContactMatrixGroup contact_matrix                = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                     = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns<double>>()  = mio::UncertainContactMatrix<double>(contact_matrix);
     model2.parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 

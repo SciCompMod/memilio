@@ -89,14 +89,13 @@ public:
      * @param[in] p Person to be checked.
      * @param[in] t TimePoint when to evaluate the TestingCriteria.
      */
-    template<typename FP=double>
+    template <typename FP = double>
     bool evaluate(const Person<FP>& p, TimePoint t) const
     {
         // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set.
         return (m_ages.none() || m_ages[static_cast<size_t>(p.get_age())]) &&
                (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
     }
-
 
 private:
     std::bitset<MAX_NUM_AGE_GROUPS> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
@@ -108,7 +107,7 @@ private:
 /**
  * @brief TestingScheme to regular test Person%s.
  */
-template<typename FP=double>
+template <typename FP = double>
 class TestingScheme
 {
 public:
@@ -122,8 +121,8 @@ public:
      * @param test_type The type of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
-    TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
-                  TimePoint start_date, TimePoint end_date, const GenericTest<FP>& test_type, double probability)
+    TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test, TimePoint start_date,
+                  TimePoint end_date, const GenericTest<FP>& test_type, double probability)
         : m_testing_criteria(testing_criteria)
         , m_minimal_time_since_last_test(minimal_time_since_last_test)
         , m_start_date(start_date)
@@ -171,8 +170,7 @@ public:
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(typename Person<FP>::RandomNumberGenerator& rng, Person<FP>& person,
-                    TimePoint t) const
+    bool run_scheme(typename Person<FP>::RandomNumberGenerator& rng, Person<FP>& person, TimePoint t) const
     {
         if (t - person.get_time_of_last_test() > m_minimal_time_since_last_test) {
             if (m_testing_criteria.evaluate(person, t)) {
@@ -198,7 +196,7 @@ private:
 /**
  * @brief Set of TestingSchemes that are checked for testing.
  */
-template<typename FP=double>
+template <typename FP = double>
 class TestingStrategy
 {
 public:
@@ -207,7 +205,8 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::unordered_map<LocationId, std::vector<TestingScheme<FP>>>& location_to_schemes_map)
+    explicit TestingStrategy(
+        const std::unordered_map<LocationId, std::vector<TestingScheme<FP>>>& location_to_schemes_map)
         : m_location_to_schemes_map(location_to_schemes_map.begin(), location_to_schemes_map.end())
     {
     }
@@ -271,7 +270,6 @@ public:
         }
     }
 
-
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
      * A TestingScheme applies to all Location of the same type is store in 
@@ -306,8 +304,8 @@ public:
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(typename Person<FP>::RandomNumberGenerator& rng,
-                      Person<FP>& person, const Location<FP>& location, TimePoint t)
+    bool run_strategy(typename Person<FP>::RandomNumberGenerator& rng, Person<FP>& person, const Location<FP>& location,
+                      TimePoint t)
     {
         // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.
         if (location.get_type() == mio::abm::LocationType::Home) {
@@ -334,8 +332,9 @@ public:
         }
         return true;
     }
+
 private:
-    std::vector<std::pair<LocationId, std::vector<TestingScheme<FP> > > >
+    std::vector<std::pair<LocationId, std::vector<TestingScheme<FP>>>>
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 

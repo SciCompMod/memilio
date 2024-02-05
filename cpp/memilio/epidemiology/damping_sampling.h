@@ -34,7 +34,7 @@ namespace mio
  * The damping value is weighted by group (e.g. age) to be able to e.g. construct dampings that only
  * apply to specific groups.
  */
-template<typename FP=double>
+template <typename FP = double>
 class DampingSampling
 {
 public:

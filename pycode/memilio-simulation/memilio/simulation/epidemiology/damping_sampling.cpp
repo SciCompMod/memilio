@@ -41,8 +41,7 @@ void bind_damping_sampling(py::module_& m, std::string const& name)
              py::arg("value"), py::arg("level"), py::arg("type"), py::arg("time"), py::arg("matrix_indices"),
              py::arg("group_weights"))
         .def_property("value", py::overload_cast<>(&mio::DampingSampling<double>::get_value),
-                      &mio::DampingSampling<double>::set_value,
-                      py::return_value_policy::reference_internal)
+                      &mio::DampingSampling<double>::set_value, py::return_value_policy::reference_internal)
         .def_property(
             "level",
             [](const mio::DampingSampling<double>& self) {

@@ -18,4 +18,3 @@
 * limitations under the License.
 */
 #include "memilio/utils/uncertain_value.h"
-

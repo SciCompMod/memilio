@@ -20,7 +20,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>  // IWYU pragma: keep
+#include <functional> // IWYU pragma: keep
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -261,7 +261,7 @@ private:
  * @param[in] rki_age_groups Specifies whether rki-age_groups should be used.
  */
 template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
-          class ReadFunction, class NodeIdFunction, typename FP=double>
+          class ReadFunction, class NodeIdFunction, typename FP = double>
 IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
                          const std::string& population_data_path, bool is_node_for_county,
                          Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,

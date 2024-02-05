@@ -34,7 +34,7 @@ namespace mio
 {
 namespace isecir
 {
-template<typename FP=double>
+template <typename FP = double>
 class Model
 {
     using ParameterSet = Parameters<FP>;
@@ -69,7 +69,6 @@ public:
             m_deaths_before + m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
     }
 
-
     /**
     * @brief Checks constraints on model parameters.
     */
@@ -90,19 +89,22 @@ public:
                 "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
-
         ScalarType support_max = std::max(
             {parameters.template get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
                  .get_support_max(dt),
-             parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+             parameters
+                 .template get<TransitionDistributions>()[(
+                     int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
                  .get_support_max(dt),
              parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
                  .get_support_max(dt),
-             parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+             parameters
+                 .template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
                  .get_support_max(dt),
              parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
                  .get_support_max(dt),
-             parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+             parameters
+                 .template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
                  .get_support_max(dt),
              parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
                  .get_support_max(dt),
@@ -110,7 +112,6 @@ public:
                  .get_support_max(dt),
              parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
                  .get_support_max(dt)});
-
 
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
             log_error(
@@ -202,9 +203,9 @@ public:
         // using number of susceptibles from previous time step and force of infection from previous time step:
         // compute current number of susceptibles and store susceptibles in m_populations
         m_populations.get_last_value()[Eigen::Index(InfectionState::Susceptible)] =
-            m_populations[num_time_points - 2][Eigen::Index(InfectionState::Susceptible)] / (1 + dt * m_forceofinfection);
+            m_populations[num_time_points - 2][Eigen::Index(InfectionState::Susceptible)] /
+            (1 + dt * m_forceofinfection);
     }
-
 
     /**
      * @brief Computes size of a flow.
@@ -290,8 +291,6 @@ public:
                      Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt);
     }
 
-
-
     /**
      * @brief Computes total number of Deaths for the current last time in m_populations.
      * 
@@ -322,11 +321,14 @@ public:
 
         // determine the relevant calculation area = union of the supports of the relevant transition distributions
         ScalarType calc_time = std::max(
-            {parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+            {parameters
+                 .template get<TransitionDistributions>()[(
+                     int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
                  .get_support_max(dt),
              parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
                  .get_support_max(dt),
-             parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+             parameters
+                 .template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
                  .get_support_max(dt),
              parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
                  .get_support_max(dt)});
@@ -360,28 +362,37 @@ public:
             m_forceofinfection +=
                 parameters.template get<TransmissionProbabilityOnContact>().eval(state_age) *
                 parameters.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
-                ((parameters
-                          .template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+                ((parameters.template get<TransitionProbabilities>()[(
+                      int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
                       parameters
-                          .template get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+                          .template get<TransitionDistributions>()[(
+                              int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
                           .eval(state_age) +
-                  parameters.template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] *
-                      parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
+                  parameters.template get<TransitionProbabilities>()[(
+                      int)InfectionTransition::InfectedNoSymptomsToRecovered] *
+                      parameters
+                          .template get<TransitionDistributions>()[(
+                              int)InfectionTransition::InfectedNoSymptomsToRecovered]
                           .eval(state_age)) *
                      m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] *
                      parameters.template get<RelativeTransmissionNoSymptoms>().eval(state_age) +
-                 (parameters.template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
-                      parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+                 (parameters.template get<TransitionProbabilities>()[(
+                      int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
+                      parameters
+                          .template get<TransitionDistributions>()[(
+                              int)InfectionTransition::InfectedSymptomsToInfectedSevere]
                           .eval(state_age) +
-                  parameters.template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] *
-                      parameters.template get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered].eval(
-                          state_age)) *
+                  parameters.template get<TransitionProbabilities>()[(
+                      int)InfectionTransition::InfectedSymptomsToRecovered] *
+                      parameters
+                          .template get<TransitionDistributions>()[(
+                              int)InfectionTransition::InfectedSymptomsToRecovered]
+                          .eval(state_age)) *
                      m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
                      parameters.template get<RiskOfInfectionFromSymptomatic>().eval(state_age));
         }
         m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
     }
-
 
     /**
      * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_populations.
@@ -405,9 +416,9 @@ public:
         ScalarType sum = 0;
 
         // determine relevant calculation area and corresponding index
-        ScalarType calc_time =
-            std::max(parameters.template get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt),
-                     parameters.template get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt));
+        ScalarType calc_time = std::max(
+            parameters.template get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt),
+            parameters.template get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt));
 
         Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
@@ -417,18 +428,16 @@ public:
 
             ScalarType state_age = (num_time_points - 1 - i) * dt;
 
-            sum += (parameters.template get<TransitionProbabilities>()[idx_TransitionDistribution1] *
-                        parameters.template get<TransitionDistributions>()[idx_TransitionDistribution1].eval(state_age) +
-                    (1 - parameters.template get<TransitionProbabilities>()[idx_TransitionDistribution1]) *
-                        parameters.template get<TransitionDistributions>()[idx_TransitionDistribution2].eval(state_age)) *
-                   m_transitions[i + 1][idx_IncomingFlow];
+            sum +=
+                (parameters.template get<TransitionProbabilities>()[idx_TransitionDistribution1] *
+                     parameters.template get<TransitionDistributions>()[idx_TransitionDistribution1].eval(state_age) +
+                 (1 - parameters.template get<TransitionProbabilities>()[idx_TransitionDistribution1]) *
+                     parameters.template get<TransitionDistributions>()[idx_TransitionDistribution2].eval(state_age)) *
+                m_transitions[i + 1][idx_IncomingFlow];
         }
 
         m_populations.get_last_value()[idx_InfectionState] = sum;
     }
-
-
-
 
     /**
      * @brief Sets all values of remaining compartments (compartments apart from S, R, D) for the current last timestep in m_populations.
@@ -440,7 +449,8 @@ public:
     void other_compartments_current_timestep(ScalarType dt)
     {
         // E
-        compute_compartment(Eigen::Index(InfectionState::Exposed), Eigen::Index(InfectionTransition::SusceptibleToExposed),
+        compute_compartment(Eigen::Index(InfectionState::Exposed),
+                            Eigen::Index(InfectionTransition::SusceptibleToExposed),
                             (int)InfectionTransition::ExposedToInfectedNoSymptoms, 0,
                             dt); // this is a dummy index as there is no transition from E to R in our model,
         // write any transition here as probability from E to R is 0
@@ -465,7 +475,6 @@ public:
                             (int)InfectionTransition::InfectedCriticalToDead,
                             (int)InfectionTransition::InfectedCriticalToRecovered, dt);
     }
-
 
     /**
      * @brief Computes total number of Recovered for the current last time in m_populations.

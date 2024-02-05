@@ -53,7 +53,8 @@ void bind_templated_members_Population(pybind11::class_<C, Base>& c)
  * @brief bind Populations class template for any choice of categories
  */
 template <class... Cats>
-void bind_Population(pybind11::module_& m, std::string const& name, mio::Tag<mio::Populations<double, Cats...>> /*tags*/)
+void bind_Population(pybind11::module_& m, std::string const& name,
+                     mio::Tag<mio::Populations<double, Cats...>> /*tags*/)
 {
     using C    = mio::Populations<double, Cats...>;
     using Base = mio::CustomIndexArray<mio::UncertainValue<double>, Cats...>;

@@ -70,7 +70,6 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
         params.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.3;
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
-
     }
 
     params.apply_constraints();
@@ -85,7 +84,8 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secihurd = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> secihurd =
+        mio::simulate<mio::osecir::Model<double>, double>(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -165,7 +165,8 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secihurd = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> secihurd =
+        mio::simulate<mio::osecir::Model<double>, double>(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare-cashkarp.csv");
 

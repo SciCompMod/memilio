@@ -36,10 +36,10 @@ namespace osir
 /********************
     * define the model *
     ********************/
-template<typename FP=double>
-class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>,FP>
+template <typename FP = double>
+class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, FP>
 {
-    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>,FP>;
+    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, FP>;
 
 public:
     Model()

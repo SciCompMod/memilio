@@ -37,7 +37,7 @@ namespace isecir
 /**
  * run the simulation in discrete steps and report results.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Simulation
 {
 
@@ -87,8 +87,6 @@ public:
             m_model->compute_recovered();
         }
     }
-
-
 
     /**
      * @brief Get the result of the simulation.
@@ -168,7 +166,7 @@ private:
  * @param[in] model an instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  */
-template<typename FP=double>
+template <typename FP = double>
 TimeSeries<ScalarType> simulate(FP t0, FP tmax, FP dt, Model<FP> const& m_model)
 {
     m_model.check_constraints(dt);
@@ -176,7 +174,6 @@ TimeSeries<ScalarType> simulate(FP t0, FP tmax, FP dt, Model<FP> const& m_model)
     sim.advance(tmax);
     return sim.get_result();
 }
-
 
 } // namespace isecir
 } // namespace mio

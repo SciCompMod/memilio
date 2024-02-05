@@ -54,7 +54,8 @@ public:
     double err;
 };
 
-using TestVerifyNumericalIntegratorEuler = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore<double>>>;
+using TestVerifyNumericalIntegratorEuler =
+    TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore<double>>>;
 TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
 {
     n   = 1000;
@@ -86,10 +87,11 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-using TestTypes = ::testing::Types<mio::RKIntegratorCore<double>,
-                                   mio::ControlledStepperWrapper<double,boost::numeric::odeint::runge_kutta_cash_karp54>,
-                                   mio::ControlledStepperWrapper<double,boost::numeric::odeint::runge_kutta_dopri5>,
-                                   mio::ControlledStepperWrapper<double,boost::numeric::odeint::runge_kutta_fehlberg78>>;
+using TestTypes =
+    ::testing::Types<mio::RKIntegratorCore<double>,
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>,
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_dopri5>,
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>;
 
 TYPED_TEST_SUITE(TestVerifyNumericalIntegrator, TestTypes);
 

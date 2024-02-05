@@ -23,7 +23,6 @@
 #include "abm/world.h"
 #include "abm/time.h"
 
-
 namespace mio
 {
 namespace abm
@@ -32,7 +31,7 @@ namespace abm
 /**
  * @brief Run the Simulation in discrete steps, evolve the World and report results.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Simulation
 {
 

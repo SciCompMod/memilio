@@ -63,7 +63,7 @@ struct StartDay {
  * the seasonality is given as (1+k*sin()) where the sine
  * curve is below one in summer and above one in winter
  */
-template<typename FP=double>
+template <typename FP = double>
 struct Seasonality {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
@@ -79,7 +79,7 @@ struct Seasonality {
 /**
  * @brief the icu capacity in the SECIR model
  */
-template<typename FP=double>
+template <typename FP = double>
 struct ICUCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
@@ -96,7 +96,7 @@ struct ICUCapacity {
  * @brief the incubation time in the SECIR model
  * @param tinc incubation time in day unit
  */
-template<typename FP=double>
+template <typename FP = double>
 struct IncubationTime {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -113,7 +113,7 @@ struct IncubationTime {
  * @brief the infectious time for symptomatic cases that are infected but
  *        who do not need to be hsopitalized in the SECIR model in day unit
  */
-template<typename FP=double>
+template <typename FP = double>
 struct TimeInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -129,7 +129,7 @@ struct TimeInfectedSymptoms {
 /**
  * @brief the serial interval in the SECIR model in day unit
  */
-template<typename FP=double>
+template <typename FP = double>
 struct SerialInterval {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -146,7 +146,7 @@ struct SerialInterval {
  * @brief the time people are 'simply' hospitalized before returning home in the SECIR model
  *        in day unit
  */
-template<typename FP=double>
+template <typename FP = double>
 struct TimeInfectedSevere {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -163,7 +163,7 @@ struct TimeInfectedSevere {
  * @brief the time people are treated by ICU before returning home in the SECIR model
  *        in day unit
  */
-template<typename FP=double>
+template <typename FP = double>
 struct TimeInfectedCritical {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -179,7 +179,7 @@ struct TimeInfectedCritical {
 /**
 * @brief probability of getting infected from a contact
 */
-template<typename FP=double>
+template <typename FP = double>
 struct TransmissionProbabilityOnContact {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -195,7 +195,7 @@ struct TransmissionProbabilityOnContact {
 /**
 * @brief the relative InfectedNoSymptoms infectability
 */
-template<typename FP=double>
+template <typename FP = double>
 struct RelativeTransmissionNoSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -211,7 +211,7 @@ struct RelativeTransmissionNoSymptoms {
 /**
 * @brief the percentage of asymptomatic cases in the SECIR model
 */
-template<typename FP=double>
+template <typename FP = double>
 struct RecoveredPerInfectedNoSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -227,7 +227,7 @@ struct RecoveredPerInfectedNoSymptoms {
 /**
 * @brief the risk of infection from symptomatic cases in the SECIR model
 */
-template<typename FP=double>
+template <typename FP = double>
 struct RiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -243,7 +243,7 @@ struct RiskOfInfectionFromSymptomatic {
 /**
 * @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
 */
-template<typename FP=double>
+template <typename FP = double>
 struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -259,7 +259,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
 /**
 * @brief the percentage of hospitalized patients per infected patients in the SECIR model
 */
-template<typename FP=double>
+template <typename FP = double>
 struct SeverePerInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -275,7 +275,7 @@ struct SeverePerInfectedSymptoms {
 /**
 * @brief the percentage of ICU patients per hospitalized patients in the SECIR model
 */
-template<typename FP=double>
+template <typename FP = double>
 struct CriticalPerSevere {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -291,7 +291,7 @@ struct CriticalPerSevere {
 /**
 * @brief the percentage of dead patients per ICU patients in the SECIR model
 */
-template<typename FP=double>
+template <typename FP = double>
 struct DeathsPerCritical {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -307,7 +307,7 @@ struct DeathsPerCritical {
 /**
  * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
  */
-template<typename FP=double>
+template <typename FP = double>
 struct ContactPatterns {
     using Type = UncertainContactMatrix<FP>;
     static Type get_default(AgeGroup size)
@@ -323,7 +323,7 @@ struct ContactPatterns {
 /**
  * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct DynamicNPIsInfectedSymptoms {
     using Type = DynamicNPIs<FP>;
     static Type get_default(AgeGroup /*size*/)
@@ -339,7 +339,7 @@ struct DynamicNPIsInfectedSymptoms {
 /**
  * @brief capacity to test and trace contacts of infected for quarantine per day.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct TestAndTraceCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
@@ -352,18 +352,19 @@ struct TestAndTraceCapacity {
     }
 };
 
-template<typename FP=double>
+template <typename FP = double>
 using ParametersBase =
-    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>,
-                 IncubationTime<FP>, TimeInfectedSymptoms<FP>, SerialInterval<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>,
-                 TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>,
-                 CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
+    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>,
+                 DynamicNPIsInfectedSymptoms<FP>, IncubationTime<FP>, TimeInfectedSymptoms<FP>, SerialInterval<FP>,
+                 TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
+                 RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
+                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
+                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -454,20 +455,26 @@ public:
                 log_warning("Constraint check: Parameter IncubationTime changed from {:.4f} to {:.4f}",
                             this->template get<IncubationTime<FP>>()[i], tol_times);
                 this->template get<IncubationTime<FP>>()[i] = 2 * tol_times;
-                corrected                      = true;
+                corrected                                   = true;
             }
 
-            if (2 * this->template get<SerialInterval<FP>>()[i] < this->template get<IncubationTime<FP>>()[i] + tol_times) {
+            if (2 * this->template get<SerialInterval<FP>>()[i] <
+                this->template get<IncubationTime<FP>>()[i] + tol_times) {
                 log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->template get<SerialInterval<FP>>()[i], 0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2);
-                this->template get<SerialInterval<FP>>()[i] = 0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2;
-                corrected                      = true;
+                            this->template get<SerialInterval<FP>>()[i],
+                            0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2);
+                this->template get<SerialInterval<FP>>()[i] =
+                    0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2;
+                corrected = true;
             }
-            else if (this->template get<SerialInterval<FP>>()[i] > this->template get<IncubationTime<FP>>()[i] - tol_times / 2) {
+            else if (this->template get<SerialInterval<FP>>()[i] >
+                     this->template get<IncubationTime<FP>>()[i] - tol_times / 2) {
                 log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->template get<SerialInterval<FP>>()[i], this->template get<IncubationTime<FP>>()[i] - tol_times / 2);
-                this->template get<SerialInterval<FP>>()[i] = this->template get<IncubationTime<FP>>()[i] - tol_times / 2;
-                corrected                      = true;
+                            this->template get<SerialInterval<FP>>()[i],
+                            this->template get<IncubationTime<FP>>()[i] - tol_times / 2);
+                this->template get<SerialInterval<FP>>()[i] =
+                    this->template get<IncubationTime<FP>>()[i] - tol_times / 2;
+                corrected = true;
             }
 
             if (this->template get<TimeInfectedSymptoms<FP>>()[i] < tol_times) {
@@ -476,7 +483,7 @@ public:
                             "Consider to cancel and reset parameters.",
                             this->template get<TimeInfectedSymptoms<FP>>()[i], tol_times);
                 this->template get<TimeInfectedSymptoms<FP>>()[i] = tol_times;
-                corrected                            = true;
+                corrected                                         = true;
             }
 
             if (this->template get<TimeInfectedSevere<FP>>()[i] < tol_times) {
@@ -485,7 +492,7 @@ public:
                             "to cancel and reset parameters.",
                             this->template get<TimeInfectedSevere<FP>>()[i], tol_times);
                 this->template get<TimeInfectedSevere<FP>>()[i] = tol_times;
-                corrected                          = true;
+                corrected                                       = true;
             }
 
             if (this->template get<TimeInfectedCritical<FP>>()[i] < tol_times) {
@@ -494,7 +501,7 @@ public:
                             "Consider to cancel and reset parameters.",
                             this->template get<TimeInfectedCritical<FP>>()[i], tol_times);
                 this->template get<TimeInfectedCritical<FP>>()[i] = tol_times;
-                corrected                            = true;
+                corrected                                         = true;
             }
 
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
@@ -503,14 +510,14 @@ public:
                     "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
                     this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] = 0.0;
-                corrected                                        = true;
+                corrected                                                     = true;
             }
 
             if (this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms changed from {:0.4f} to {:d} ",
                             this->template get<RelativeTransmissionNoSymptoms<FP>>()[i], 0);
                 this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] = 0;
-                corrected                                      = true;
+                corrected                                                   = true;
             }
 
             if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] < 0.0 ||
@@ -518,7 +525,7 @@ public:
                 log_warning("Constraint check: Parameter RecoveredPerInfectedNoSymptoms changed from {:0.4f} to {:d} ",
                             this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i], 0);
                 this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] = 0;
-                corrected                                      = true;
+                corrected                                                   = true;
             }
 
             if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] < 0.0 ||
@@ -526,28 +533,31 @@ public:
                 log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic changed from {:0.4f} to {:d}",
                             this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i], 0);
                 this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] = 0;
-                corrected                                      = true;
+                corrected                                                   = true;
             }
 
-            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 || this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
+            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 ||
+                this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter SeverePerInfectedSymptoms changed from {:0.4f} to {:d}",
                             this->template get<SeverePerInfectedSymptoms<FP>>()[i], 0);
                 this->template get<SeverePerInfectedSymptoms<FP>>()[i] = 0;
-                corrected                                 = true;
+                corrected                                              = true;
             }
 
-            if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 || this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
+            if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter CriticalPerSevere changed from {:0.4f} to {:d}",
                             this->template get<CriticalPerSevere<FP>>()[i], 0);
                 this->template get<CriticalPerSevere<FP>>()[i] = 0;
-                corrected                         = true;
+                corrected                                      = true;
             }
 
-            if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 || this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
+            if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {:0.4f} to {:d}",
                             this->template get<DeathsPerCritical<FP>>()[i], 0);
                 this->template get<DeathsPerCritical<FP>>()[i] = 0;
-                corrected                         = true;
+                corrected                                      = true;
             }
         }
         return corrected;
@@ -580,14 +590,18 @@ public:
                 return true;
             }
 
-            if (2 * this->template get<SerialInterval<FP>>()[i] < this->template get<IncubationTime<FP>>()[i] + tol_times) {
+            if (2 * this->template get<SerialInterval<FP>>()[i] <
+                this->template get<IncubationTime<FP>>()[i] + tol_times) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
-                          this->template get<SerialInterval<FP>>()[i], 0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2);
+                          this->template get<SerialInterval<FP>>()[i],
+                          0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2);
                 return true;
             }
-            else if (this->template get<SerialInterval<FP>>()[i] > this->template get<IncubationTime<FP>>()[i] - tol_times / 2) {
+            else if (this->template get<SerialInterval<FP>>()[i] >
+                     this->template get<IncubationTime<FP>>()[i] - tol_times / 2) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
-                          this->template get<SerialInterval<FP>>()[i], this->template get<IncubationTime<FP>>()[i] - tol_times / 2);
+                          this->template get<SerialInterval<FP>>()[i],
+                          this->template get<IncubationTime<FP>>()[i] - tol_times / 2);
                 return true;
             }
 
@@ -641,17 +655,20 @@ public:
                 return true;
             }
 
-            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 || this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
+            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 ||
+                this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }
 
-            if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 || this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
+            if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }
 
-            if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 || this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
+            if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }

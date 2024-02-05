@@ -207,13 +207,14 @@ TEST(TestSaveResult, save_result_with_params)
     EXPECT_EQ(ensemble_results.back().back().get_num_time_points(),
               result_from_file.get_groups().get_num_time_points());
 
-    auto read_graph = mio::read_graph<mio::osecir::Model<double>>(tmp_results_dir + "/run0", mio::IOF_OmitDistributions, false);
+    auto read_graph =
+        mio::read_graph<mio::osecir::Model<double>>(tmp_results_dir + "/run0", mio::IOF_OmitDistributions, false);
 
-    EXPECT_EQ(
-        read_graph.value()
-            .nodes()[0]
-            .property.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::Index<mio::AgeGroup>(0)],
-        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::Index<mio::AgeGroup>(0)]);
+    EXPECT_EQ(read_graph.value()
+                  .nodes()[0]
+                  .property.parameters
+                  .get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::Index<mio::AgeGroup>(0)],
+              params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::Index<mio::AgeGroup>(0)]);
 
     EXPECT_EQ(read_graph.value()
                   .nodes()[0]
@@ -279,7 +280,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto graph = mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+    graph.add_edge(0, 1,
+                   mio::MigrationParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);

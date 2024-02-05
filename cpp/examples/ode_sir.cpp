@@ -53,7 +53,7 @@ int main()
 
     model.check_constraints();
 
-    auto sir = mio::simulate<mio::osir::Model<double>,double>(t0, tmax, dt, model, integrator);
+    auto sir = mio::simulate<mio::osir::Model<double>, double>(t0, tmax, dt, model, integrator);
 
     bool print_to_terminal = true;
 

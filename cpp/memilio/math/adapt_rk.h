@@ -140,7 +140,7 @@ public:
  *
  * This class integrates a system of ODEs via the step method
  */
-template<typename FP=double>
+template <typename FP = double>
 class RKIntegratorCore : public IntegratorCore<FP>
 {
 public:
@@ -286,7 +286,8 @@ protected:
     mutable Eigen::Matrix<FP, Eigen::Dynamic, 1> m_yt_eval;
 
 private:
-    mutable Eigen::Array<FP,Eigen::Dynamic,Eigen::Dynamic> m_eps, m_error_estimate; // tolerance and estimate used for time step adaption
+    mutable Eigen::Array<FP, Eigen::Dynamic, Eigen::Dynamic> m_eps,
+        m_error_estimate; // tolerance and estimate used for time step adaption
 };
 
 } // namespace mio

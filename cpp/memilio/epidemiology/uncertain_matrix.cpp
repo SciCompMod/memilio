@@ -18,4 +18,3 @@
 * limitations under the License.
 */
 #include "memilio/epidemiology/uncertain_matrix.h"
-

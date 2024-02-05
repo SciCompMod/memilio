@@ -18,4 +18,3 @@
 * limitations under the License.
 */
 #include "memilio/math/euler.h" // IWYU pragma: keep
-

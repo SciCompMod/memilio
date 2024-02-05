@@ -30,7 +30,7 @@ namespace mio
 /**
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
  */
-template<typename FP=double>
+template <typename FP = double>
 class EulerIntegratorCore : public IntegratorCore<FP>
 {
 public:
@@ -42,9 +42,8 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic,1>> yt,
-              FP& t, FP& dt,
-              Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic,1>> ytp1) const override
+    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> yt, FP& t, FP& dt,
+              Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> ytp1) const override
     {
         // we are misusing the next step y as temporary space to store the derivative
         f(yt, t, ytp1);

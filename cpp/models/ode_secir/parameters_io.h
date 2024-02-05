@@ -87,7 +87,7 @@ IOResult<void> read_confirmed_cases_data(
      * @param[in] day Specifies day at which the data is read
      * @param[in] scaling_factor_inf factors by which to scale the confirmed cases of rki data
      */
-template<typename FP=double>
+template <typename FP = double>
 IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
@@ -111,21 +111,23 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
 
-            t_InfectedNoSymptoms[node].push_back(
-                static_cast<int>(std::round(2 * (model[node].parameters.template get<IncubationTime<FP>>()[(AgeGroup)group] -
-                                                 model[node].parameters.template get<SerialInterval<FP>>()[(AgeGroup)group]))));
-            t_Exposed[node].push_back(
-                static_cast<int>(std::round(2 * model[node].parameters.template get<SerialInterval<FP>>()[(AgeGroup)group] -
-                                            model[node].parameters.template get<IncubationTime<FP>>()[(AgeGroup)group])));
-            t_InfectedSymptoms[node].push_back(
-                static_cast<int>(std::round(model[node].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group])));
-            t_InfectedSevere[node].push_back(
-                static_cast<int>(std::round(model[node].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms[node].push_back(static_cast<int>(
+                std::round(2 * (model[node].parameters.template get<IncubationTime<FP>>()[(AgeGroup)group] -
+                                model[node].parameters.template get<SerialInterval<FP>>()[(AgeGroup)group]))));
+            t_Exposed[node].push_back(static_cast<int>(
+                std::round(2 * model[node].parameters.template get<SerialInterval<FP>>()[(AgeGroup)group] -
+                           model[node].parameters.template get<IncubationTime<FP>>()[(AgeGroup)group])));
+            t_InfectedSymptoms[node].push_back(static_cast<int>(
+                std::round(model[node].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group])));
+            t_InfectedSevere[node].push_back(static_cast<int>(
+                std::round(model[node].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
             t_InfectedCritical[node].push_back(static_cast<int>(
                 std::round(model[node].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group])));
 
-            mu_C_R[node].push_back(model[node].parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[(AgeGroup)group]);
-            mu_I_H[node].push_back(model[node].parameters.template get<SeverePerInfectedSymptoms<FP>>()[(AgeGroup)group]);
+            mu_C_R[node].push_back(
+                model[node].parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[(AgeGroup)group]);
+            mu_I_H[node].push_back(
+                model[node].parameters.template get<SeverePerInfectedSymptoms<FP>>()[(AgeGroup)group]);
             mu_H_U[node].push_back(model[node].parameters.template get<CriticalPerSevere<FP>>()[(AgeGroup)group]);
             mu_U_D[node].push_back(model[node].parameters.template get<DeathsPerCritical<FP>>()[(AgeGroup)group]);
         }
@@ -168,8 +170,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
     return success();
 }
 
-
-
 /**
      * @brief reads number of ICU patients from DIVI register into Parameters
      * @param path Path to DIVI file
@@ -193,7 +193,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
      * @param day Specifies day at which the data is read
      * @param scaling_factor_icu factor by which to scale the icu cases of divi data
      */
-template<typename FP=double>
+template <typename FP = double>
 IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
@@ -240,9 +240,9 @@ read_population_data(const std::string& path, const std::vector<int>& vregion, b
      * @param[in] vregion vector of keys of the regions of interest
      * @param[in] accumulate_age_groups specifies whether population data sould be accumulated to one age group
      */
-template<typename FP=double>
-IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
-                                   bool accumulate_age_groups = false)
+template <typename FP = double>
+IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
+                                   const std::vector<int>& vregion, bool accumulate_age_groups = false)
 {
     BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion, accumulate_age_groups));
 
@@ -250,8 +250,8 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
-                model[region].populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
-                                                                                    num_population[region][size_t(i)]);
+                model[region].populations.template set_difference_from_group_total<AgeGroup>(
+                    {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
             }
         }
         else {
@@ -262,7 +262,6 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
 
     return success();
 }
-
 
 } //namespace details
 
@@ -310,9 +309,9 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
             t_InfectedNoSymptoms[node].push_back(static_cast<int>(
                 std::round(2 * (model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)] -
                                 model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)]))));
-            t_Exposed[node].push_back(
-                static_cast<int>(std::round(2 * model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)] -
-                                            model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)])));
+            t_Exposed[node].push_back(static_cast<int>(
+                std::round(2 * model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)] -
+                           model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)])));
             t_InfectedSymptoms[node].push_back(static_cast<int>(
                 std::round(model[node].parameters.template get<TimeInfectedSymptoms<double>>()[AgeGroup(group)])));
             t_InfectedSevere[node].push_back(static_cast<int>(
@@ -322,9 +321,9 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
             t_InfectedNoSymptoms[node].push_back(static_cast<int>(
                 std::round(2 * (model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)] -
                                 model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)]))));
-            t_Exposed[node].push_back(
-                static_cast<int>(std::round(2 * model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)] -
-                                            model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)])));
+            t_Exposed[node].push_back(static_cast<int>(
+                std::round(2 * model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)] -
+                           model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)])));
             t_InfectedSymptoms[node].push_back(static_cast<int>(
                 std::round(model[node].parameters.template get<TimeInfectedSymptoms<double>>()[AgeGroup(group)])));
             t_InfectedSevere[node].push_back(static_cast<int>(
@@ -334,14 +333,17 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
 
             mu_C_R[node].push_back(
                 model[node].parameters.template get<RecoveredPerInfectedNoSymptoms<double>>()[AgeGroup(group)]);
-            mu_I_H[node].push_back(model[node].parameters.template get<SeverePerInfectedSymptoms<double>>()[AgeGroup(group)]);
+            mu_I_H[node].push_back(
+                model[node].parameters.template get<SeverePerInfectedSymptoms<double>>()[AgeGroup(group)]);
             mu_H_U[node].push_back(model[node].parameters.template get<CriticalPerSevere<double>>()[AgeGroup(group)]);
             mu_U_D[node].push_back(model[node].parameters.template get<DeathsPerCritical<double>>()[AgeGroup(group)]);
 
-            sum_mu_I_U[node] += model[node].parameters.template get<CriticalPerSevere<double>>()[AgeGroup(group)] *
-                                model[node].parameters.template get<SeverePerInfectedSymptoms<double>>()[AgeGroup(group)];
-            mu_I_U[node].push_back(model[node].parameters.template get<CriticalPerSevere<double>>()[AgeGroup(group)] *
-                                   model[node].parameters.template get<SeverePerInfectedSymptoms<double>>()[AgeGroup(group)]);
+            sum_mu_I_U[node] +=
+                model[node].parameters.template get<CriticalPerSevere<double>>()[AgeGroup(group)] *
+                model[node].parameters.template get<SeverePerInfectedSymptoms<double>>()[AgeGroup(group)];
+            mu_I_U[node].push_back(
+                model[node].parameters.template get<CriticalPerSevere<double>>()[AgeGroup(group)] *
+                model[node].parameters.template get<SeverePerInfectedSymptoms<double>>()[AgeGroup(group)]);
         }
     }
 

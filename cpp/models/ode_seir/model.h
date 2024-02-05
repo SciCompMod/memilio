@@ -46,19 +46,20 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Exposed,     InfectionState::Infected>,
                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
-template<typename FP=double>
+template <typename FP = double>
 class Model : public FlowModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows, FP>
 {
     using Base = FlowModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows, FP>;
 
 public:
     Model()
-        : Base(typename Base::Populations({InfectionState::Count}, 0.),typename Base::ParameterSet())
+        : Base(typename Base::Populations({InfectionState::Count}, 0.), typename Base::ParameterSet())
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop, Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, FP t,
-                   Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> flows) const override
+    void get_flows(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
+                   Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
+                   Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> flows) const override
     {
         auto& params     = this->parameters;
         double coeffStoE = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *

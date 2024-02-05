@@ -67,7 +67,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters<double>::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters<double>::specificity);
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
+        m, "_AgeParameterArray");
     pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase<double>>(m, "ParametersBase");
     py::class_<mio::abm::Parameters<double>, mio::abm::ParametersBase<double>>(m, "Parameters")
@@ -131,7 +132,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self != py::self);
 
     py::class_<mio::abm::Person<double>>(m, "Person")
-        .def("set_assigned_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Person<double>::set_assigned_location))
+        .def("set_assigned_location",
+             py::overload_cast<mio::abm::LocationId>(&mio::abm::Person<double>::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person<double>::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person<double>::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person<double>::is_in_quarantine);
@@ -203,7 +205,8 @@ PYBIND11_MODULE(_simulation_abm, m)
                 self.get_trip_list() = list;
             },
             py::return_value_policy::reference_internal)
-        .def_property("use_migration_rules", py::overload_cast<>(&mio::abm::World<double>::use_migration_rules, py::const_),
+        .def_property("use_migration_rules",
+                      py::overload_cast<>(&mio::abm::World<double>::use_migration_rules, py::const_),
                       py::overload_cast<bool>(&mio::abm::World<double>::use_migration_rules))
         .def_readwrite("parameters", &mio::abm::World<double>::parameters)
         .def_property(
@@ -216,7 +219,8 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::Simulation<double>>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
-             static_cast<void (mio::abm::Simulation<double>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<double>::advance),
+             static_cast<void (mio::abm::Simulation<double>::*)(mio::abm::TimePoint)>(
+                 &mio::abm::Simulation<double>::advance),
              py::arg("tmax"))
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation<double>::get_world));
 }

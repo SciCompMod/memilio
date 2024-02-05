@@ -18,4 +18,3 @@
 * limitations under the License.
 */
 #include "memilio/math/adapt_rk.h" // IWYU pragma: keep
-

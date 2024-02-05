@@ -29,19 +29,17 @@
 #include <functional>
 #include <algorithm>
 
-
 namespace mio
 {
 
 /**
  * Function template to be integrated
  */
-template<typename FP=double>
-using DerivFunction =
-    std::function<void(Eigen::Ref<const typename Eigen::Matrix<FP, Eigen::Dynamic,1> > y , FP t,
-                       Eigen::Ref<typename Eigen::Matrix<FP,Eigen::Dynamic,1> > dydt)>;
+template <typename FP = double>
+using DerivFunction = std::function<void(Eigen::Ref<const typename Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
+                                         Eigen::Ref<typename Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt)>;
 
-template<typename FP=double>
+template <typename FP = double>
 class IntegratorCore
 {
 public:
@@ -56,16 +54,15 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic,1>> yt,
-                      FP& t, FP& dt,
-                      Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic,1>> ytp1) const = 0;
+    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> yt, FP& t,
+                      FP& dt, Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> ytp1) const = 0;
 };
 
 /**
  * Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
  * tparam FP a floating point type accepted by Eigen
  */
-template<typename FP=double>
+template <typename FP = double>
 class OdeIntegrator
 {
 public:
@@ -88,9 +85,8 @@ public:
      * @return A reference to the last value in the results time series.
      */
 
-
-    Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1> > advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
-                                                       TimeSeries<FP>& results)
+    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
+                                                             TimeSeries<FP>& results)
     {
         using std::fabs;
         using std::min;
@@ -105,7 +101,7 @@ public:
 
         bool step_okay = true;
 
-        auto t = t0;
+        auto t   = t0;
         size_t i = results.get_num_time_points() - 1;
         while (fabs((tmax - t) / (tmax - t0)) > 1e-10) {
             //we don't make timesteps too small as the error estimator of an adaptive integrator

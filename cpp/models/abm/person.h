@@ -39,9 +39,9 @@ namespace abm
 {
 
 struct LocationId;
-template<typename FP>
+template <typename FP>
 class Location;
-template<typename FP>
+template <typename FP>
 class Infection;
 
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
@@ -50,7 +50,7 @@ static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max
  * @tparam FP floating point type, e.g., double
  * @brief Agents in the simulated World that can carry and spread the Infection.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Person
 {
 public:
@@ -153,7 +153,6 @@ public:
         m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
     }
 
-
     /**
      * @brief Create a copy of this #Person object with a new Location.
      * @param[in, out] location The new #Location of the Person.
@@ -165,7 +164,6 @@ public:
         location.add_person(*this);
         return copied_person;
     }
-
 
     /**
      * @brief Compare two Person%s.
@@ -223,7 +221,8 @@ public:
      * @brief Get the latest #Infection of the Person.
      * @return The latest #Infection of the Person.
      */
-    Infection<FP>& get_infection(){
+    Infection<FP>& get_infection()
+    {
         return m_infections.back();
     }
     const Infection<FP>& get_infection() const
@@ -286,7 +285,6 @@ public:
     {
         m_infections.push_back(std::move(inf));
     }
-
 
     /**
      * @brief Get the AgeGroup of this Person.
@@ -354,8 +352,6 @@ public:
         m_assigned_locations[(uint32_t)id.type] = id.index;
     }
 
-
-
     /**
      * @brief Returns the index of an assigned Location of the Person.
      * Assume that a Person has at most one assigned Location of a certain #LocationType.
@@ -388,7 +384,6 @@ public:
     {
         return m_random_workgroup < params.template get<WorkRatio>().get_matrix_at(t.days())[0];
     }
-
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -445,7 +440,7 @@ public:
     {
         return t < m_quarantine_start + params.template get<mio::abm::QuarantineDuration>();
     }
-    
+
     /**
      * @brief Removes the quarantine status of the Person.
      */
@@ -605,7 +600,6 @@ public:
         }
         return true;
     }
-
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.

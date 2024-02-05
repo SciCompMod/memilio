@@ -43,7 +43,7 @@ namespace osecir
 * @param[in] tmax end time
 * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
 */
-template<typename FP=double>
+template <typename FP = double>
 void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, double dev_rel)
 {
     auto set_distribution = [dev_rel](UncertainValue<FP>& v, double min_val = 0.001) {
@@ -94,13 +94,14 @@ void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, d
 
     // dampings
     auto matrices = std::vector<size_t>();
-    for (size_t i = 0; i < model.parameters.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_matrices(); ++i) {
+    for (size_t i = 0; i < model.parameters.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_matrices();
+         ++i) {
         matrices.push_back(i);
     }
     auto groups = Eigen::VectorXd::Constant(Eigen::Index(model.parameters.get_num_groups().get()), 1.0);
     model.parameters.template get<ContactPatterns<FP>>().get_dampings().emplace_back(
-        mio::UncertainValue<FP>(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(t0 + (tmax - t0) / 2),
-        matrices, groups);
+        mio::UncertainValue<FP>(0.5), mio::DampingLevel(0), mio::DampingType(0),
+        mio::SimulationTime(t0 + (tmax - t0) / 2), matrices, groups);
     set_distribution(model.parameters.template get<ContactPatterns<FP>>().get_dampings()[0].get_value(), 0.0);
 }
 
@@ -108,7 +109,7 @@ void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, d
  * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
  * @param[inout] model Model including contact patterns for alle age groups
  */
-template<typename FP=double>
+template <typename FP = double>
 void draw_sample_demographics(Model<FP>& model)
 {
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
@@ -127,9 +128,10 @@ void draw_sample_demographics(Model<FP>& model)
         // no sampling for dead and total numbers
         // [...]
 
-        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible}, group_total);
         model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
-                                                                    model.populations.get_group_total(i));
+                                                                             group_total);
+        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
+                                                                             model.populations.get_group_total(i));
     }
 }
 
@@ -137,7 +139,7 @@ void draw_sample_demographics(Model<FP>& model)
  * draws a sample from the specified distributions for all parameters related to the infection.
  * @param[inout] model Model including contact patterns for alle age groups
  */
-template<typename FP=double>
+template <typename FP = double>
 void draw_sample_infection(Model<FP>& model)
 {
     model.parameters.template get<Seasonality<FP>>().draw_sample();
@@ -152,8 +154,10 @@ void draw_sample_infection(Model<FP>& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.template get<IncubationTime<FP>>()[i] = model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
-        model.parameters.template get<SerialInterval<FP>>()[i] = model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
+        model.parameters.template get<IncubationTime<FP>>()[i] =
+            model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
+        model.parameters.template get<SerialInterval<FP>>()[i] =
+            model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
         model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i] =
             model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)];
         model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i] =
@@ -174,14 +178,11 @@ void draw_sample_infection(Model<FP>& model)
     }
 }
 
-
-
-
 /** Draws a sample from Model parameter distributions and stores sample values
 * as SecirParams parameter values (cf. UncertainValue and SecirParams classes)
 * @param[inout] model Model including contact patterns for alle age groups
 */
-template<typename FP=double>
+template <typename FP = double>
 void draw_sample(Model<FP>& model)
 {
     draw_sample_infection(model);
@@ -190,7 +191,7 @@ void draw_sample(Model<FP>& model)
     model.apply_constraints();
 }
 
-template<typename FP=double>
+template <typename FP = double>
 Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, MigrationParameters<FP>>& graph)
 {
     Graph<Model<FP>, MigrationParameters<FP>> sampled_graph;

@@ -69,7 +69,7 @@ TEST(TestSeir, CompareSeirWithJS)
 
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("seir-js-compare.csv");
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto result                              = mio::simulate<mio::oseir::Model<double>,double>(t0, tmax, dt, model, integrator);
+    auto result = mio::simulate<mio::oseir::Model<double>, double>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

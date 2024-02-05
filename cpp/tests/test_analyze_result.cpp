@@ -377,39 +377,39 @@ TEST(TestEnsembleParamsPercentile, graph_osecir_basic)
     mio::osecir::Model<double> model(2);
     mio::osecir::Model<double> model2(2);
 
-    auto& params                                                                       = model.parameters;
-    params.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]                  = 3;
-    params.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]                    = 5;
-    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]        = 0.2;
-    params.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]                     = 0.5;
-    model.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 10;
-    model.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 10;
+    auto& params                                                                        = model.parameters;
+    params.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]           = 3;
+    params.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]             = 5;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)] = 0.2;
+    params.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]              = 0.5;
+    model.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]         = 10;
+    model.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]  = 10;
 
-    auto& params2                                                                       = model2.parameters;
-    params2.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]                  = 5;
-    params2.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]                    = 2;
-    params2.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]        = 0.4;
-    params2.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]                     = 0.2;
-    model2.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 20;
-    model2.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 12;
+    auto& params2                                                                        = model2.parameters;
+    params2.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]           = 5;
+    params2.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]             = 2;
+    params2.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)] = 0.4;
+    params2.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]              = 0.2;
+    model2.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]         = 20;
+    model2.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]  = 12;
 
     auto g = std::vector<mio::osecir::Model<double>>({model, model2});
 
     params.set<mio::osecir::Seasonality<double>>(0.4);
-    params.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]                  = 4;
-    params.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]                    = 6;
-    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]        = 0.3;
-    params.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]                     = 0.6;
-    model.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 11;
-    model.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 11;
+    params.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]           = 4;
+    params.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]             = 6;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)] = 0.3;
+    params.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]              = 0.6;
+    model.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]         = 11;
+    model.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]  = 11;
 
     params2.set<mio::osecir::Seasonality<double>>(0.4);
-    params2.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]                  = 6;
-    params2.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]                    = 1;
-    params2.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]        = 0.5;
-    params2.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]                     = 0.3;
-    model2.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 22;
-    model2.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 14;
+    params2.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]           = 6;
+    params2.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)]             = 1;
+    params2.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)] = 0.5;
+    params2.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)]              = 0.3;
+    model2.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]         = 22;
+    model2.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]  = 14;
 
     auto g2 = std::vector<mio::osecir::Model<double>>({model, model2});
 
@@ -424,11 +424,15 @@ TEST(TestEnsembleParamsPercentile, graph_osecir_basic)
     EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::Seasonality<double>>(), 0.4);
     EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::Seasonality<double>>(), 0.4);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)], 3.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)], 5.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)],
+              3.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)],
+              5.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)], 4.0);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)], 6.0);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)],
+              4.0);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)],
+              6.0);
 
     EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)], 5.0);
     EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)], 1.0);
@@ -436,15 +440,19 @@ TEST(TestEnsembleParamsPercentile, graph_osecir_basic)
     EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)], 6.0);
     EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(1)], 2.0);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
-              0.2);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
-              0.4);
+    EXPECT_EQ(
+        ensemble_p49_params[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
+        0.2);
+    EXPECT_EQ(
+        ensemble_p49_params[1].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
+        0.4);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
-              0.3);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
-              0.5);
+    EXPECT_EQ(
+        ensemble_p51_params[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
+        0.3);
+    EXPECT_EQ(
+        ensemble_p51_params[1].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)],
+        0.5);
 
     EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)], 0.5);
     EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(1)], 0.2);
@@ -475,27 +483,33 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
     auto world1           = mio::abm::World(num_age_groups);
     auto world2           = mio::abm::World(num_age_groups);
 
-    world1.parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.1;
-    world1.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
-
-    world2.parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+    world1.parameters
+        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.1;
+    world1.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.2;
-    world2.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
+
+    world2.parameters
+        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
+    world2.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        0.3;
 
     auto g1 = std::vector<mio::abm::World<double>>({world1, world2});
 
     world1.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
-    world1.parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.3;
-    world1.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        0.2;
+    world1.parameters
+        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
+    world1.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        0.4;
 
     world2.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.7;
-    world2.parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.4;
-    world2.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.5;
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        0.7;
+    world2.parameters
+        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
+    world2.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        0.5;
 
     auto g2 = std::vector<mio::abm::World<double>>({world1, world2});
 
@@ -506,11 +520,13 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     auto check1 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters
+            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
     auto check2 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters
+            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
 
     EXPECT_EQ(check1, 0.1);
@@ -518,11 +534,13 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     auto check3 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters
+            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
     auto check4 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters
+            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
 
     EXPECT_EQ(check3, 0.3);

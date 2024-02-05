@@ -24,7 +24,6 @@
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/utils/logging.h"
 
-
 #include <vector>
 
 int main()

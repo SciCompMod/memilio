@@ -192,7 +192,7 @@ TEST(BinarySerializer, type_check)
 {
     Foo foo;
     auto stream = mio::serialize_binary(foo, mio::IOF_IncludeTypeInfo);
-    auto r = mio::deserialize_binary(stream, mio::Tag<Foo>{}, mio::IOF_IncludeTypeInfo);
+    auto r      = mio::deserialize_binary(stream, mio::Tag<Foo>{}, mio::IOF_IncludeTypeInfo);
     EXPECT_THAT(r, IsSuccess());
 }
 
@@ -200,7 +200,7 @@ TEST(BinarySerializer, fail_type_check)
 {
     Foo foo;
     auto stream = mio::serialize_binary(foo, mio::IOF_IncludeTypeInfo);
-    auto r = mio::deserialize_binary(stream, mio::Tag<Bar>{}, mio::IOF_IncludeTypeInfo);
+    auto r      = mio::deserialize_binary(stream, mio::Tag<Bar>{}, mio::IOF_IncludeTypeInfo);
     EXPECT_THAT(r, IsFailure(mio::StatusCode::InvalidType));
 }
 

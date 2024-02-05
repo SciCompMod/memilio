@@ -32,7 +32,7 @@ namespace mio
  * represents non-pharmaceutical interventions (NPI) that are activated during the simulation if
  * some value (e.g. infections) exceeds specified thresholds.
  */
-template<typename FP=double>
+template <typename FP = double>
 class DynamicNPIs
 {
 public:
@@ -278,7 +278,7 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  * @param end end of the time span that the NPIs will be active for.
  * @param make_matrix function to make a matrix of the same shape as the damping expression, see e.g. make_contact_damping_matrix
  */
-template <class DampingExprGroup, class MakeMatrix, typename FP=double>
+template <class DampingExprGroup, class MakeMatrix, typename FP = double>
 void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vector<DampingSampling<FP>>& npis,
                             SimulationTime begin, SimulationTime end, MakeMatrix&& make_matrix)
 {

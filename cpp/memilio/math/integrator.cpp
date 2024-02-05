@@ -18,4 +18,3 @@
 * limitations under the License.
 */
 #include "memilio/math/integrator.h" // IWYU pragma: keep
-

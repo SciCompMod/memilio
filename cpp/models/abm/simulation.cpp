@@ -18,5 +18,3 @@
 * limitations under the License.
 */
 #include "abm/simulation.h" // IWYU pragma: keep
-
-

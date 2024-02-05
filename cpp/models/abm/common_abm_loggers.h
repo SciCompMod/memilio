@@ -87,7 +87,7 @@ struct LogLocationInformation : mio::LogOnce {
      * -# The number of cells in the location.
      * -# The capacity of the location.
     */
-    template<typename FP=double>
+    template <typename FP = double>
     static Type log(const mio::abm::Simulation<FP>& sim)
     {
         Type location_information{};
@@ -119,7 +119,7 @@ struct LogPersonInformation : mio::LogOnce {
      * -# The index of the home location.
      * -# The age group of the person.
     */
-    template<typename FP=double>
+    template <typename FP = double>
     static Type log(const mio::abm::Simulation<FP>& sim)
     {
         Type person_information{};
@@ -150,7 +150,7 @@ struct LogDataForMovement : mio::LogAlways {
      * -# The activity type.
      * -# The infection state.
      */
-    template<typename FP=double>
+    template <typename FP = double>
     static Type log(const mio::abm::Simulation<FP>& sim)
     {
         Type movement_data{};
@@ -174,7 +174,7 @@ struct LogInfectionState : mio::LogAlways {
      * @param[in] sim The simulation of the abm.
      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
      */
-    template<typename FP=double>
+    template <typename FP = double>
     static Type log(const mio::abm::Simulation<FP>& sim)
     {
 

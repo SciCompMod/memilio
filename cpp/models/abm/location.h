@@ -39,7 +39,7 @@ namespace mio
 {
 namespace abm
 {
-template<typename>
+template <typename>
 class Person;
 
 /**
@@ -61,14 +61,14 @@ struct CellCapacity {
  * @brief The Location can be split up into several Cell%s. 
  * This allows a finer division of the people at the Location.
  */
-template<typename FP=double>
+template <typename FP = double>
 struct Cell {
-    std::vector<observer_ptr<Person<FP> > > m_persons;
+    std::vector<observer_ptr<Person<FP>>> m_persons;
     CustomIndexArray<FP, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
     CustomIndexArray<FP, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    Cell(size_t num_agegroups, std::vector<observer_ptr<Person<FP> > > persons = {})
+    Cell(size_t num_agegroups, std::vector<observer_ptr<Person<FP>>> persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup(num_agegroups)}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
@@ -111,7 +111,7 @@ struct Cell {
 /**
  * @brief All Location%s in the simulated World where Person%s gather.
  */
-template<typename FP=double>
+template <typename FP = double>
 class Location
 {
 public:
@@ -131,7 +131,6 @@ public:
     {
         assert(num_cells > 0 && "Number of cells has to be larger than 0.");
     }
-
 
     /**
      * @brief Construct a Location with provided parameters. 
@@ -219,13 +218,14 @@ public:
      * @return Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
     */
     FP transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
-                                             size_t num_agegroups) const
+                                     size_t num_agegroups) const
     {
         assert(age_receiver.get() < num_agegroups);
         FP prob = 0;
         for (uint32_t age_transmitter = 0; age_transmitter != num_agegroups; ++age_transmitter) {
-            prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
-                    m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
+            prob +=
+                m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
+                m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
         }
         return prob;
     }
@@ -237,7 +237,8 @@ public:
      * @param[in] global_params The Parameters set of the World. 
      * @return Amount of average Infection%s with the virus per day.
     */
-    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters<FP>& global_params) const
+    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
+                                        const Parameters<FP>& global_params) const
     {
         return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
                global_params.template get<AerosolTransmissionRates>()[{virus}];
@@ -263,9 +264,9 @@ public:
             for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
                 VirusVariant virus = static_cast<VirusVariant>(v);
                 ScalarType local_indiv_trans_prob_v =
-                    (std::min(
-                         m_parameters.get<MaximumContacts>(),
-                         transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups())) +
+                    (std::min(m_parameters.get<MaximumContacts>(),
+                              transmission_contacts_per_day(cell_index, virus, age_receiver,
+                                                            global_params.get_num_groups())) +
                      transmission_air_per_day(cell_index, virus, global_params)) *
                     (1 - mask_protection) * dt.days() * (1 - person.get_protection_factor(t, virus, global_params));
 
@@ -294,7 +295,6 @@ public:
         for (uint32_t cell_idx : cells)
             m_cells[cell_idx].m_persons.push_back(&p);
     }
-
 
     /** 
      * @brief Remove a Person from the population of this Location.
@@ -528,8 +528,8 @@ private:
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
-    std::vector<observer_ptr<Person<FP> > > m_persons{}; ///< A vector of all Person%s at the Location.
-    std::vector<Cell<FP> > m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
+    std::vector<observer_ptr<Person<FP>>> m_persons{}; ///< A vector of all Person%s at the Location.
+    std::vector<Cell<FP>> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.

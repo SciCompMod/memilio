@@ -26,14 +26,14 @@
 namespace mio
 {
 
-template <class M, typename FP=double>
+template <class M, typename FP = double>
 class FlowSimulation : public Simulation<M, FP>
 {
     static_assert(is_flow_model<M, FP>::value, "Template parameter must be a flow model.");
 
 public:
     using Model = M;
-    using Base  = Simulation<M,FP>;
+    using Base  = Simulation<M, FP>;
 
     /**
      * @brief Set up the simulation with an ODE solver.
@@ -53,7 +53,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> advance(FP tmax)
+    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(FP tmax)
     {
         // the derivfunktion (i.e. the lambda passed to m_integrator.advance below) requires that there are at least
         // as many entries in m_flow_result as in Base::m_result
@@ -127,7 +127,7 @@ private:
         }
     }
 
-    Eigen::Matrix<FP,Eigen::Dynamic,1> m_pop; ///< pre-allocated temporary, used in right_hand_side()
+    Eigen::Matrix<FP, Eigen::Dynamic, 1> m_pop; ///< pre-allocated temporary, used in right_hand_side()
     mio::TimeSeries<FP> m_flow_result; ///< flow result of the simulation
 };
 
@@ -142,9 +142,9 @@ private:
  * @tparam FP a floating point type, e.g., double
  * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model, typename FP=double, class Sim = FlowSimulation<Model,FP>>
+template <class Model, typename FP = double, class Sim = FlowSimulation<Model, FP>>
 std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model const& model,
-                                                   std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
+                                           std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);

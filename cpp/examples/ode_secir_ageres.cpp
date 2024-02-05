@@ -90,7 +90,7 @@ int main()
 
     model.apply_constraints();
 
-    mio::TimeSeries<double> secir = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model);
+    mio::TimeSeries<double> secir = mio::simulate<mio::osecir::Model<double>, double>(t0, tmax, dt, model);
 
     std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
     printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));

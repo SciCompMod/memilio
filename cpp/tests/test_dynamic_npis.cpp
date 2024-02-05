@@ -36,9 +36,9 @@ TEST(DynamicNPIs, set_threshold)
 {
     mio::DynamicNPIs<double> npis;
     npis.set_threshold(0.5, {mio::DampingSampling<double>(123.0, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
     npis.set_threshold(1.0, {mio::DampingSampling<double>(543.0, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
 
     EXPECT_EQ(npis.get_thresholds()[0].first, 1.0);
     EXPECT_EQ(npis.get_thresholds()[0].second[0].get_value().value(), 543.0);
@@ -50,9 +50,9 @@ TEST(DynamicNPIs, get_threshold)
 {
     mio::DynamicNPIs<double> npis;
     npis.set_threshold(0.5, {mio::DampingSampling<double>(0.5, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
     npis.set_threshold(1.0, {mio::DampingSampling<double>(0.5, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
 
     EXPECT_EQ(npis.get_max_exceeded_threshold(2.0), npis.get_thresholds().begin());
     EXPECT_EQ(npis.get_max_exceeded_threshold(0.75), npis.get_thresholds().begin() + 1);
@@ -160,8 +160,8 @@ TEST(DynamicNPIs, implement)
 
     {
         auto dynamic_npis = std::vector<mio::DampingSampling<double>>(
-            {mio::DampingSampling<double>(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0, 1},
-                                  Eigen::MatrixXd::Ones(3, 1))});
+            {mio::DampingSampling<double>(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0),
+                                          {0, 1}, Eigen::MatrixXd::Ones(3, 1))});
         mio::implement_dynamic_npis(dampexprs, dynamic_npis, mio::SimulationTime(0.45), mio::SimulationTime(0.6),
                                     make_mask);
     }
@@ -377,13 +377,18 @@ TEST(DynamicNPIs, secir_threshold_safe)
     npis.set_base_value(23'000);
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
 
-    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+              0);
 
-    mio::osecir::Simulation<double,mio_test::MockSimulation> sim(model);
+    mio::osecir::Simulation<double, mio_test::MockSimulation> sim(model);
     sim.advance(3.0);
 
-    ASSERT_EQ(
-        sim.get_model().parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    ASSERT_EQ(sim.get_model()
+                  .parameters.get<mio::osecir::ContactPatterns<double>>()
+                  .get_cont_freq_mat()[0]
+                  .get_dampings()
+                  .size(),
+              0);
 }
 
 TEST(DynamicNPIs, secir_threshold_exceeded)
@@ -401,11 +406,16 @@ TEST(DynamicNPIs, secir_threshold_exceeded)
     npis.set_base_value(50'000);
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
 
-    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+              0);
 
-    mio::osecir::Simulation<double,mio_test::MockSimulation> sim(model);
+    mio::osecir::Simulation<double, mio_test::MockSimulation> sim(model);
     sim.advance(3.0);
 
-    ASSERT_EQ(
-        sim.get_model().parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(), 2);
+    ASSERT_EQ(sim.get_model()
+                  .parameters.get<mio::osecir::ContactPatterns<double>>()
+                  .get_cont_freq_mat()[0]
+                  .get_dampings()
+                  .size(),
+              2);
 }

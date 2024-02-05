@@ -68,7 +68,7 @@ TEST(TestMasks, maskProtection)
     auto susc_person1 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
     auto susc_person2 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
     auto infected1    = make_test_person(infection_location, age_group_15_to_34,
-                                         mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
+                                      mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
     infection_location.add_person(infected1);
 

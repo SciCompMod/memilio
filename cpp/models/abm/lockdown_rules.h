@@ -25,7 +25,6 @@
 #include "abm/person.h" // IWYU pragma: keep
 #include "abm/parameters.h"
 
-
 #include "memilio/epidemiology/damping.h" // IWYU pragma: keep
 #include "memilio/epidemiology/contact_matrix.h" // IWYU pragma: keep
 
@@ -48,13 +47,12 @@ namespace abm
  * @param[in] p Percentage of Person%s that work in home office.
  * @param[in, out] params Simulation parameters that include Damping.
  */
-template<typename FP=double>
+template <typename FP = double>
 void set_home_office(TimePoint t_begin, double p, Parameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.template get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
-
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
@@ -62,7 +60,7 @@ void set_home_office(TimePoint t_begin, double p, Parameters<FP>& params)
  * @param[in] p Percentage of Person%s that are homeschooled.
  * @param[in,out] params Simulation parameters.
  */
-template<typename FP=double>
+template <typename FP = double>
 void set_school_closure(TimePoint t_begin, double p, Parameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
@@ -78,13 +76,12 @@ void set_school_closure(TimePoint t_begin, double p, Parameters<FP>& params)
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
  * @param[in,out] params Simulation parameters that include Damping.
  */
-template<typename FP=double>
+template <typename FP = double>
 void close_social_events(TimePoint t_begin, double p, Parameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(params.get_num_groups(), p);
     params.template get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
-
 
 } // namespace abm
 } //namespace mio

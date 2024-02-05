@@ -51,14 +51,15 @@ namespace mio
  *
  */
 
-template <typename FP=double, class... Categories>
+template <typename FP = double, class... Categories>
 class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
     using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
     using Index = typename Base::Index;
 
-    template <class... Ts, typename std::enable_if_t<std::is_constructible<UncertainValue<FP>, Ts...>::value>* = nullptr>
+    template <class... Ts,
+              typename std::enable_if_t<std::is_constructible<UncertainValue<FP>, Ts...>::value>* = nullptr>
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
     {
@@ -81,7 +82,7 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    inline Eigen::Matrix<FP,Eigen::Dynamic,1> get_compartments() const
+    inline Eigen::Matrix<FP, Eigen::Dynamic, 1> get_compartments() const
     {
         return this->array().template cast<FP>();
     }

@@ -73,15 +73,25 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             }
             // times
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<IncubationTime<double>>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<IncubationTime<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<SerialInterval<double>>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<SerialInterval<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSymptoms<double>>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSymptoms<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSevere<double>>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSevere<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedCritical<double>>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedCritical<double>>()[i];
+                });
             //probs
             param_percentil(
                 node, [i](auto&& model) -> auto& {
@@ -108,9 +118,13 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                     return model.parameters.template get<SeverePerInfectedSymptoms<double>>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<CriticalPerSevere<double>>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<CriticalPerSevere<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerCritical<double>>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<DeathsPerCritical<double>>()[i];
+                });
         }
         // group independent params
         param_percentil(

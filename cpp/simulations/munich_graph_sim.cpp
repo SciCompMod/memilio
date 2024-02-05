@@ -28,7 +28,6 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/data/analyze_result.h"
 
-
 namespace fs = boost::filesystem;
 
 /**
@@ -69,7 +68,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters<double>& params
 }
 
 mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
-                              const mio::osecir::Parameters<double>& params, const fs::path& data_dir, mio::Date start_date)
+                              const mio::osecir::Parameters<double>& params, const fs::path& data_dir,
+                              mio::Date start_date)
 {
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
@@ -87,7 +87,8 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::Migrat
     bool interpolate_rki_age_groups = false;
     BOOST_OUTCOME_TRY(node_ids, mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"),
                                                   is_node_for_county, interpolate_rki_age_groups));
-    std::vector<mio::osecir::Model<double>> nodes(node_ids.size(), mio::osecir::Model<double>(int(size_t(params.get_num_groups()))));
+    std::vector<mio::osecir::Model<double>> nodes(node_ids.size(),
+                                                  mio::osecir::Model<double>(int(size_t(params.get_num_groups()))));
     //set parameters for every node
     for (auto& node : nodes) {
         node.parameters = params;
@@ -141,8 +142,8 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::Migrat
 /**
  *
 */
-mio::IOResult<mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>> get_graph(mio::Date start_date,
-                                                                                  const fs::path& data_dir)
+mio::IOResult<mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>>
+get_graph(mio::Date start_date, const fs::path& data_dir)
 {
     const int num_age_groups = 1;
     mio::osecir::Parameters params(num_age_groups);

@@ -18,6 +18,3 @@
 * limitations under the License.
 */
 #include "ode_secir/parameter_space.h" // IWYU pragma: keep
-
-
-

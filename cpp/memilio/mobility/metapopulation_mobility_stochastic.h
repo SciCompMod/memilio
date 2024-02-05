@@ -207,15 +207,13 @@ void MigrationEdgeStochastic::apply_migration(size_t event, SimulationNode<Sim>&
  * @see MigrationEdgeStochastic::apply_migration
  */
 template <class Sim, class StochasticEdge,
-          std::enable_if_t<std::is_same<StochasticEdge,MigrationEdgeStochastic>::value,bool> tag =true>
+          std::enable_if_t<std::is_same<StochasticEdge, MigrationEdgeStochastic>::value, bool> tag = true>
 void apply_migration(StochasticEdge& migrationEdge, size_t event, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)
 {
-    static_assert(tag==true,"tag has to be true");
+    static_assert(tag == true, "tag has to be true");
     migrationEdge.apply_migration(event, node_from, node_to);
 }
-
-
 
 /**
  * create a migration simulation.
@@ -238,9 +236,8 @@ template <class Sim>
 GraphSimulationStochastic<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
 make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdgeStochastic>&& graph)
 {
-    return make_graph_sim_stochastic
-        (t0, dt, std::move(graph), &evolve_model<Sim>,
-         &apply_migration<Sim, MigrationEdgeStochastic,true>);
+    return make_graph_sim_stochastic(t0, dt, std::move(graph), &evolve_model<Sim>,
+                                     &apply_migration<Sim, MigrationEdgeStochastic, true>);
 }
 
 /** @} */

@@ -71,9 +71,11 @@ PYBIND11_MODULE(_simulation_oseir, m)
 
     using Populations = mio::Populations<double, mio::oseir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>(m, "ModelBase");
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>(
+        m, "ModelBase");
     py::class_<mio::oseir::Model<double>,
-               mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>>(m, "Model")
+               mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>>(
+        m, "Model")
         .def(py::init<>());
 
     m.def(

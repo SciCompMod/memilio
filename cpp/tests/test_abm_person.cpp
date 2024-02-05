@@ -102,8 +102,8 @@ TEST(TestPerson, setGetAssignedLocation)
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
-    auto test_params = mio::abm::TestParameters<double>{1.01,1.01}; //100% safe test
+    auto rng         = mio::RandomNumberGenerator();
+    auto test_params = mio::abm::TestParameters<double>{1.01, 1.01}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -126,9 +126,9 @@ TEST(TestPerson, quarantine)
         0.5 * dt.days();
 
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
-                                       infection_parameters);
+                                   infection_parameters);
     auto rng_person = mio::abm::Person<double>::RandomNumberGenerator(rng, person);
-    
+
     person.get_tested(rng_person, t_morning, test_params);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
@@ -280,7 +280,7 @@ TEST(TestPerson, getMaskProtectiveFactor)
     auto person_without = make_test_person(location);
     person_without.set_wear_mask(false);
 
-    mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
+    mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.get<mio::abm::MaskProtection<double>>()[{mio::abm::MaskType::Community}] = 0.5;
     params.get<mio::abm::MaskProtection<double>>()[{mio::abm::MaskType::Surgical}]  = 0.8;
     params.get<mio::abm::MaskProtection<double>>()[{mio::abm::MaskType::FFP2}]      = 0.9;

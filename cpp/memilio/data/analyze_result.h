@@ -107,7 +107,7 @@ std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vecto
  * @param graph_result graph of simulations whose results will be interpolated
  * @return one interpolated time series per node
  */
-template <class Simulation, typename FP=double>
+template <class Simulation, typename FP = double>
 std::vector<TimeSeries<double>>
 interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MigrationEdge<FP>>& graph_result)
 {

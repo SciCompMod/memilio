@@ -30,7 +30,6 @@ namespace mio
 namespace abm
 {
 
-
 AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
                                               const CustomIndexArray<int, AgeGroup>& age_groups)
 {
@@ -38,7 +37,6 @@ AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
     size_t age_group       = DiscreteDistribution<size_t>::get_instance()(rng, age_group_weights);
     return (AgeGroup)age_group;
 }
-
 
 void Household::add_members(HouseholdMember household_member, int number_of_members)
 {
@@ -51,8 +49,6 @@ void HouseholdGroup::add_households(Household household, int number_of_household
     m_household_list.push_back(std::make_tuple(household, number_of_households));
     m_number_of_households += number_of_households;
 }
-
-
 
 } // namespace abm
 } // namespace mio
