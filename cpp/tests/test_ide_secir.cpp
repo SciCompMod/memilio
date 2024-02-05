@@ -244,8 +244,8 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
-// a) Test if check_constraints() function correctly reports wrongly set parameters.
-// b) Test if check_constraints() does not complain if parameters are set within correct ranges.
+// a) Test if check_constraints() function of parameters correctly reports wrongly set parameters.
+// b) Test if check_constraints() function of parameters does not complain if parameters are set within correct ranges.
 TEST(IdeSecir, testValueConstraints)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -338,8 +338,8 @@ TEST(IdeSecir, testValueConstraints)
     model.parameters
         .get<mio::isecir::TransitionProbabilities>()[(int)mio::isecir::InfectionTransition::SusceptibleToExposed] = 1.0;
     model.parameters.get<mio::isecir::TransitionProbabilities>()[(
-        int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = -1.0;
-    constraint_check                                                       = model.parameters.check_constraints();
+        int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]                                        = 0.6;
+    constraint_check = model.parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check sum InfectedNoSymptomsToInfectedSymptoms + InfectedNoSymptomsToRecovered.
