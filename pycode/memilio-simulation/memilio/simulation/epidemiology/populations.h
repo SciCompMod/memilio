@@ -53,14 +53,14 @@ void bind_templated_members_Population(pybind11::class_<C, Base>& c)
  * @brief bind Populations class template for any choice of categories
  */
 template <class... Cats>
-void bind_Population(pybind11::module_& m, std::string const& name, mio::Tag<mio::Populations<Cats...>> /*tags*/)
+void bind_Population(pybind11::module_& m, std::string const& name, mio::Tag<mio::Populations<double, Cats...>> /*tags*/)
 {
-    using C    = mio::Populations<Cats...>;
-    using Base = mio::CustomIndexArray<mio::UncertainValue, Cats...>;
+    using C    = mio::Populations<double, Cats...>;
+    using Base = mio::CustomIndexArray<mio::UncertainValue<double>, Cats...>;
 
     // Catch warning ImportError: generic_type: type "" is already registered!
     try {
-        bind_CustomIndexArray<mio::UncertainValue, Cats...>(m, (name + "Array").c_str());
+        bind_CustomIndexArray<mio::UncertainValue<double>, Cats...>(m, (name + "Array").c_str());
     }
     catch (std::runtime_error& e) {
     }

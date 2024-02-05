@@ -110,7 +110,7 @@ TEST(TestPopulations, group_population)
     ASSERT_NEAR(1., m.get_group_total(mio::Index<AgeGroup>(5)), 1e-12);
     ASSERT_NEAR(2 - 1. / static_cast<size_t>(num_ageGroup), m.get_total(), 1e-12);
 
-    Eigen::Matrix<mio::UncertainValue<double>,Eigen::Dynamic,1> y_tmp = m.get_compartments();
+    Eigen::Matrix<double, Eigen::Dynamic,1> y_tmp = m.get_compartments();
     Eigen::VectorXd y = y_tmp.template cast<double>();
     size_t idx        = 0;
     for (auto i = mio::Index<InfectionState>(0); i < m.size<InfectionState>(); ++i) {
