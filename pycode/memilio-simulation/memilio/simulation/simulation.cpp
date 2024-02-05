@@ -53,7 +53,7 @@ std::string pretty_name<mio::AgeGroup>()
 
 PYBIND11_MODULE(_simulation, m)
 {
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
 
     pymio::bind_date(m, "Date");
