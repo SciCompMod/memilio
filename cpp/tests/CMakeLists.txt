@@ -66,13 +66,13 @@ set(TESTSOURCES
     temp_file_register.h
     sanitizers.cpp
     test_lct_secir.cpp
-    test_lct_parameters_io.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
 set(TESTSOURCES ${TESTSOURCES}
 test_json_serializer.cpp
 test_epi_data_io.cpp
+test_lct_parameters_io.cpp
 )
 endif()
 
