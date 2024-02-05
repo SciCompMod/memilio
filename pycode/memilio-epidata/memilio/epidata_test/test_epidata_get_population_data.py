@@ -116,7 +116,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             username=None, password=None, read_data=False, out_folder=self.path, interactive=False)
         # The file exist in the directory (mocked) and the credentials should be read.
         mock_read.assert_called_with(
-            self.test_username, self.test_password, False, os.path.join(self.path, 'Germany'))
+            self.test_username, self.test_password)
 
 
 if __name__ == '__main__':

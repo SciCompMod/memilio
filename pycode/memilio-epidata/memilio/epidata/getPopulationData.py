@@ -41,16 +41,14 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def read_population_data(username, password, read_data, directory):
-    '''! Reads Population data either from regionalstatistik.de or from directory
+def read_population_data(username, password):
+    '''! Reads Population data from regionalstatistik.de
 
-    A request is made using the twill package. Username and Password are required to
-    sign in on regionalstatistik.de. After the sign twill navigates to the file to download.
+    Username and Password are required to sign in on regionalstatistik.de.
+    A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
 
     @param username Username to sign in at regionalstatistik.de. 
     @param password Password to sign in at regionalstatistik.de.
-    @param read_data False or True. Defines if data is read from file or downloaded.
-    @param directory Path to folder where data is read from.
     @return DataFrame
     '''
 
@@ -341,7 +339,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
-    df_pop_raw = read_population_data(username, password, read_data, directory)
+    df_pop_raw = read_population_data(username, password)
 
     column_names = list(df_pop_raw.columns)
     # rename columns
