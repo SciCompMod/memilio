@@ -29,7 +29,7 @@
 
 int main()
 {
-    /** Simple example to demonstrate how to simulate using an LCT SECIR model. 
+    /** Simple example to demonstrate how to run a simulation using an LCT SECIR model. 
     Parameters, initial values and subcompartments are not realistic. */
 
     // Set vector that specifies the number of subcompartments.
