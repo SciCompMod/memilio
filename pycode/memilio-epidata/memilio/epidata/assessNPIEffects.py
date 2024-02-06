@@ -182,7 +182,7 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
 
         # append new npi_idx to cluster_idx assignment to list of assignments
         # npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
-        #n += 1
+        # n += 1
         # get around 55 clusters
         if npi_idx_to_cluster_idx.max() > 45:
             if npi_idx_to_cluster_idx.max() < 65:
@@ -190,7 +190,7 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
                 return npi_idx_to_cluster_idx
 
     # print scores on clustering
-    #print("Number of clusters: " + str(int(np.nanmin(np.array(total_eval_number)))))
+    # print("Number of clusters: " + str(int(np.nanmin(np.array(total_eval_number)))))
 
     return npi_idx_to_cluster_idx_list[total_eval_number.index(np.nanmin(np.array(total_eval_number)))]
 
@@ -255,6 +255,7 @@ def analyze_npi_data(
         npi_codes_considered):
 
     if not read_data:
+        # return df_npis, npis or remove else from below
         gnpi.get_npi_data(fine_resolution=2,
                           file_format=dd.defaultDict['file_format'],
                           out_folder=dd.defaultDict['out_folder'],
@@ -281,6 +282,7 @@ def analyze_npi_data(
     except KeyError:
         pass
     # df_npis = mdfs.extract_subframe_based_on_dates(df_npis, date(2021,1,1), date(2021,6,1))
+    # TODO: Check if we need the next line
     npis = pd.read_json(os.path.join(directory, 'npis.json'))
     # get code levels (main/subcodes) and position of main codes
 
@@ -300,6 +302,7 @@ def analyze_npi_data(
     # make sure that only considered subcodes are in npis dataframe
     npis = npis[npis[dd.EngEng['npiCode']].isin(npi_codes_considered)]
 
+    # use copy on write of df_merged
     df_npis = df_merged[:]
 
     if ~df_npis[npi_codes_considered].isin([0, 1]).any().any():
@@ -307,7 +310,7 @@ def analyze_npi_data(
         print("Info: Please ensure that NPI information is only boolean.")
 
     else:
-        # sum over different NPIs and plot share of countires implementing
+        # sum over different NPIs and plot share of counties implementing
         # these NPIs versus counties without corresponding actions
         df_npis_aggregated = df_npis.groupby(
             dd.EngEng['date']).agg(
@@ -355,7 +358,7 @@ def analyze_npi_data(
         # Closing file
         file_npi.close()
 
-        # open file to write unused categories
+        # open file to write used categories
         if fine_resolution > 0:
             if fine_resolution == 1:
                 filename = 'used_subcats_incgrouped.txt'
@@ -364,7 +367,7 @@ def analyze_npi_data(
         else:
             filename = 'used_maincats.txt'
         file_npi = open(directory + filename, 'w')
-        # Writing unused NPIs
+        # Writing used NPIs
         for i in range(len(npis_used)):
             file_npi.write(npi_codes_used[i] + ": " + npis_used[i])
             file_npi.write("\n")
