@@ -39,17 +39,17 @@ public:
     * @brief Constructor to create an IDE SECIR model.
     *
     * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
-    *   which transit within one timestep dt_init from one compartment to another.
+    *   which transit within one timestep dt from one compartment to another.
     *   Possible transitions are specified in as #InfectionTransition%s.
-    *   Considered points of times should have the distance dt_init and the last time point should be 0. 
+    *   Considered points of times should have the distance dt and the last time point should be 0. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
-    * @param[in] dt_init The size of the time step used for numerical simulation.
     * @param[in] N_init The population of the considered region.
-    * @param[in] Dead_before The total number of deaths at the time point - dt_init.
+    * @param[in] deaths The total number of deaths at the time zero.
+    * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
+    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
           const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
@@ -205,7 +205,8 @@ public:
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
+    ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point - dt.
+    ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
 };
 
 } // namespace isecir
