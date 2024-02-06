@@ -30,7 +30,7 @@
 int main()
 {
     /** Simple example to demonstrate how to run a simulation using an LCT SECIR model. 
-    Parameters, initial values and subcompartments are not realistic. */
+    Parameters, initial values and subcompartments are not meant to represent a realistic scenario. */
 
     // Set vector that specifies the number of subcompartments.
     std::vector<int> num_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
