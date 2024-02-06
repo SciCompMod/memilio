@@ -33,7 +33,7 @@ from memilio.simulation.secir import Model, Simulation, simulate
 
 def run_secir_simulation(show_plot=True):
     """
-    Runs the c++ secir model using multiple age group
+    Runs the c++ secir model using multiple age groups
     and plots the results
     """
 
