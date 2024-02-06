@@ -367,8 +367,7 @@ TEST(TestLCTSecir, testConstraints)
     mio::set_log_level(mio::LogLevel::off);
 
     // Check InfectionState with a wrong size of the initialization vector.
-    std::vector<int> SubcompartmentNumbers1((int)mio::lsecir::InfectionStateBase::Count - 1, 1);
-    mio::lsecir::InfectionState InfState1(SubcompartmentNumbers1);
+    mio::lsecir::InfectionState InfState1(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count + 1, 1));
     bool constraint_check = InfState1.check_constraints();
     EXPECT_TRUE(constraint_check);
 
