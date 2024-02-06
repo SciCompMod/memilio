@@ -368,8 +368,8 @@ TEST(TestLCTSecir, testConstraints)
 
     // Check InfectionState with a wrong size of the initialization vector.
     std::vector<int> SubcompartmentNumbers1((int)mio::lsecir::InfectionStateBase::Count - 1, 1);
-    mio::lsecir::InfectionState InfState(SubcompartmentNumbers1);
-    bool constraint_check = InfState.check_constraints();
+    mio::lsecir::InfectionState InfState1(SubcompartmentNumbers1);
+    bool constraint_check = InfState1.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with right size but wrong number of Subcompartments for Susceptibles.
@@ -380,34 +380,39 @@ TEST(TestLCTSecir, testConstraints)
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 4;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 5;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 6;
-    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
-    constraint_check = InfState.check_constraints();
+
+    std::vector<int> SubcompartmentNumbers_copy1(SubcompartmentNumbers);
+    mio::lsecir::InfectionState InfState2(SubcompartmentNumbers_copy1);
+    constraint_check = InfState2.check_constraints();
     EXPECT_TRUE(constraint_check);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Susceptible] = 1;
 
     // Wrong number of subcompartments for Recovered.
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Recovered] = 5;
-    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
-    constraint_check = InfState.check_constraints();
+    std::vector<int> SubcompartmentNumbers_copy2(SubcompartmentNumbers);
+    mio::lsecir::InfectionState InfState3(SubcompartmentNumbers_copy2);
+    constraint_check = InfState3.check_constraints();
     EXPECT_TRUE(constraint_check);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Recovered] = 1;
 
     // For Dead.
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 3;
-    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
-    constraint_check = InfState.check_constraints();
+    std::vector<int> SubcompartmentNumbers_copy3(SubcompartmentNumbers);
+    mio::lsecir::InfectionState InfState4(SubcompartmentNumbers_copy3);
+    constraint_check = InfState4.check_constraints();
     EXPECT_TRUE(constraint_check);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 1;
 
     // Check if number of Subcompartments is zero.
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed] = 0;
-    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
-    constraint_check = InfState.check_constraints();
+    std::vector<int> SubcompartmentNumbers_copy4(SubcompartmentNumbers);
+    mio::lsecir::InfectionState InfState5(SubcompartmentNumbers_copy4);
+    constraint_check = InfState5.check_constraints();
     EXPECT_TRUE(constraint_check);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed] = 2;
 
     // Check with correct parameters.
-    InfState.set_SubcompartmentNumbers(SubcompartmentNumbers);
+    mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
     constraint_check = InfState.check_constraints();
     EXPECT_FALSE(constraint_check);
 
@@ -528,6 +533,37 @@ TEST(TestLCTSecir, testConstraints)
                               std::move(parameters_lct));
     constraint_check = model3.check_constraints();
     EXPECT_FALSE(constraint_check);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+// Test some setter and getter of the class InfectionState.
+TEST(TestLCTSecir, testInfectionState)
+{
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
+    // Initialize InfectionState.
+    mio::lsecir::InfectionState InfState;
+
+    // Try to set new number of subcompartments with an invalid vector.
+    bool not_valid =
+        InfState.set_subcompartment_numbers(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count - 1, 1));
+    EXPECT_TRUE(not_valid);
+    // Try to set new number of subcompartments with valid vector.
+    not_valid = InfState.set_subcompartment_numbers(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count, 1));
+    EXPECT_FALSE(not_valid);
+
+    // Try to get the number of subcompartments for an invalid index.
+    EXPECT_EQ(-1, InfState.get_number(-1));
+    // Valid index.
+    EXPECT_NE(-1, InfState.get_number(0));
+
+    // Try to get the index of the first subcompartment in a vector for an invalid index.
+    EXPECT_EQ(-1, InfState.get_firstindex(-1));
+    // Valid index.
+    EXPECT_NE(-1, InfState.get_firstindex(0));
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);

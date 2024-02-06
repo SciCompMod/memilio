@@ -30,7 +30,7 @@ namespace mio
 namespace lsecir
 {
 
-Model::Model(Eigen::VectorXd init, const InfectionState infectionState_init, Parameters&& parameters_init)
+Model::Model(Eigen::VectorXd init, InfectionState infectionState_init, Parameters&& parameters_init)
     : parameters{parameters_init}
     , infectionState{infectionState_init}
     , m_initial_values{std::move(init)}
@@ -179,7 +179,7 @@ TimeSeries<ScalarType> Model::calculate_populations(const TimeSeries<ScalarType>
     Eigen::VectorXd dummy((int)InfectionStateBase::Count);
     for (Eigen::Index i = 0; i < result.get_num_time_points(); ++i) {
         for (int j = 0; j < dummy.size(); ++j) {
-            // Use segment of vector of the rsult with subcompartments of InfectionStateBase with index j and sum up values of subcompartments.
+            // Use segment of vector of the result with subcompartments of InfectionStateBase with index j and sum up values of subcompartments.
             dummy[j] =
                 result[i]
                     .segment(Eigen::Index(infectionState.get_firstindex(j)), Eigen::Index(infectionState.get_number(j)))

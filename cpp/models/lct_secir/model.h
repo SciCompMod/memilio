@@ -87,7 +87,7 @@ public:
         return m_initial_values;
     }
 
-    Parameters parameters{}; ///< Parameters of Model Parameters.
+    Parameters parameters{}; ///< Parameters of the model.
     InfectionState infectionState; ///< InfectionState specifies number of subcompartments.
 
 private:
