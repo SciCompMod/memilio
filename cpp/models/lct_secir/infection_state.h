@@ -198,11 +198,11 @@ public:
             return true;
         }
         if (!(m_subcompartment_numbers[(int)InfectionStateBase::Susceptible] == 1)) {
-            log_error("Susceptible compartment can not have Subcompartments.");
+            log_error("Susceptible compartment can not have subcompartments.");
             return true;
         }
         if (!(m_subcompartment_numbers[(int)InfectionStateBase::Recovered] == 1)) {
-            log_error("Recovered compartment can not have Subcompartments.");
+            log_error("Recovered compartment can not have subcompartments.");
             return true;
         }
         if (!(m_subcompartment_numbers[(int)InfectionStateBase::Dead] == 1)) {

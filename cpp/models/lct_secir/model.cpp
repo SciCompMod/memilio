@@ -23,7 +23,6 @@
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
-#include "memilio/math/eigen.h"
 
 namespace mio
 {
