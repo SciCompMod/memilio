@@ -53,23 +53,22 @@ public:
           const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
-    * @brief Checks constraints on model parameters.
+    * @brief Checks constraints on model parameters and initial data.
+    * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
     */
-    void check_constraints(ScalarType dt) const
+    bool check_constraints(ScalarType dt) const
     {
-        if (!(m_populations.get_num_time_points() > 0)) {
-            log_error("Model construction failed. No initial time point for populations.");
+        if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
+            log_error(
+                "Initialization failed. Number of elements in transition vector does not match the required number.");
+            return true;
         }
 
         for (int i = 0; i < (int)InfectionState::Count; i++) {
             if (m_populations[0][i] < 0) {
                 log_error("Initialization failed. Initial values for populations are less than zero.");
+                return true;
             }
-        }
-
-        if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-            log_error(
-                "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
         ScalarType support_max = std::max(
@@ -95,9 +94,10 @@ public:
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
+            return true;
         }
 
-        parameters.check_constraints();
+        return parameters.check_constraints();
     }
 
     /**
