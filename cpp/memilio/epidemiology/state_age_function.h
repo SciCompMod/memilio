@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
 #ifndef STATEAGEFUNCTION_H
 #define STATEAGEFUNCTION_H
 
@@ -26,10 +27,10 @@
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 
-//MSVC_WARNING_DISABLE_PUSH(4702)
-//#include <boost/math/distributions/gamma.hpp>
-//MSVC_WARNING_POP()
-//#include "boost/math/distributions/lognormal.hpp"
+MSVC_WARNING_DISABLE_PUSH(4702)
+#include <boost/math/distributions/gamma.hpp>
+MSVC_WARNING_POP()
+#include "boost/math/distributions/lognormal.hpp"
 
 namespace mio
 {
@@ -301,7 +302,7 @@ protected:
 struct ExponentialDecay : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new ExponentialDecay object
+     * @brief Constructs a new ExponentialDecay object.
      * 
      * @param[in] init_parameter Specifies the initial function parameter of the function.
      * @param[in] init_location Location paramter to shift the exponentialdecay function. 
@@ -346,7 +347,7 @@ protected:
 struct SmootherCosine : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new SmootherCosine object.
+     * @brief Constructs a new SmootherCosine object
      * 
      * @param[in] init_parameter specifies the initial parameter of the function.
      * @param[in] init_location Location paramter to shift the SmootherCosine function. 
@@ -394,11 +395,110 @@ protected:
     /**
      * @brief Clones unique pointer to a StateAgeFunction.
      * 
-     * @return std::unique_ptr<StateAgeFunction> unique pointer to a StateAgeFunction
+     * @return std::unique_ptr<StateAgeFunction> unique pointer to a StateAgeFunction.
      */
     StateAgeFunction* clone_impl() const override
     {
         return new SmootherCosine(*this);
+    }
+};
+
+/**
+ * @brief Class that defines an GammaSurvivalFunction function depending on the state age.
+ * A survival function is defined as 1 - cumulative density function.
+ * GammaSurvivalFunction is derived from StateAgeFunction.
+ * The shape parameter of the Gamma function is the parameter of the StateAgeFunction. 
+ * If shape is an unsigned Integer, the Gamma distribution is an Erlang function.
+ */
+struct GammaSurvivalFunction : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new GammaSurvivalFunction object.
+     *
+     * @param[in] init_shape Parameter shape of the GammaSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
+     *  Choosing shape = 1 leads to an exponential function with parameter 1/scale.
+     * @param[in] init_location Location paramter to shift the GammaSurvivalFunction. 
+     *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
+     * @param[in] init_scale Parameter shape of the GammaSurvivalFunction. Corresponds to the inverse of the rate parameter of a Gamma distribution.
+     */
+    GammaSurvivalFunction(ScalarType init_shape = 1, ScalarType init_location = 0, ScalarType init_scale = 1)
+        : StateAgeFunction(init_shape, init_location, init_scale)
+    {
+    }
+
+    /**
+     * @brief Defines GammaSurvivalFunction depending on state_age.
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        if (state_age <= m_location) {
+            return 1;
+        }
+        boost::math::gamma_distribution<ScalarType, boost::math::policies::policy<>> gamma(m_parameter, m_scale);
+        return boost::math::cdf(boost::math::complement(gamma, state_age - m_location));
+    }
+
+protected:
+    /**
+     * @brief Implements clone for GammaSurvivalFunction.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new GammaSurvivalFunction(*this);
+    }
+};
+
+/**
+ * @brief Class that defines an LognormSurvivalFunction function depending on the state age.
+ * A survival function is defined as 1 - cumulative density function.
+ */
+struct LognormSurvivalFunction : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new LognormSurvivalFunction object.
+     * 
+     * Location and scale parameters are according to these parameters in the python package scipy.
+     *
+     * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_location Location paramter of LognormSurvivalFunction. The parameter can be
+     *       used to shift the function. Should be non-negative to fulfill the conditions of a 
+     *       StateAgeFunction.
+     * @param[in] init_scale Scale paramter of LognormSurvivalFunction.
+     */
+    LognormSurvivalFunction(ScalarType init_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
+        : StateAgeFunction(init_parameter, init_location, init_scale)
+    {
+    }
+
+    /**
+     * @brief Defines the value of the LognormSurvivalFunction depending on state_age.
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        if (state_age < m_location) {
+            return 1;
+        }
+        boost::math::lognormal_distribution<ScalarType, boost::math::policies::policy<>> logn(0., m_parameter);
+        return boost::math::cdf(boost::math::complement(logn, (state_age - m_location) / m_scale));
+    }
+
+protected:
+    /**
+     * @brief Implements clone for LognormSurvivalFunction.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new LognormSurvivalFunction(*this);
     }
 };
 
@@ -408,7 +508,7 @@ protected:
 struct ConstantFunction : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new ConstantFunction object
+     * @brief Constructs a new ConstantFunction object.
      * 
      * @param init_parameter specifies value of the constant function.
      */
@@ -466,6 +566,84 @@ protected:
     StateAgeFunction* clone_impl() const override
     {
         return new ConstantFunction(*this);
+    }
+};
+
+/**
+ * @brief Class that defines an Erlang density function with the parameters shape and scale depending on the state age.
+ * Class is needed for the initialization of the subcompartments for LCT model.
+ * ErlangDensity is derived from StateAgeFunction. 
+ * The shape parameter of the Erlang function is the parameter of the Stateagefunction. 
+ * Attention: The density does not have the characteristics of a TransitionDistribution!!
+ */
+struct ErlangDensity : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new ErlangDensity object.
+     * 
+     * @param[in] init_shape Parameter shape of the ErlangDensity. For the Erlang distribution, shape has to be a positive integer.
+      * @param[in] init_scale Parameter scale of the ErlangDensity. Corresponds to the inverse rate parameter.
+     */
+    ErlangDensity(unsigned int init_shape, ScalarType init_scale)
+        : StateAgeFunction(init_shape, 0., init_scale)
+    {
+    }
+
+    /**
+     * @brief Defines ErlangDensity depending on state_age.
+     *
+     * Parameters scale and shape are used.
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        if (state_age < 0) {
+            return 0;
+        }
+        int shape = (int)m_parameter;
+        return std::pow(state_age / m_scale, shape - 1) / (m_scale * boost::math::factorial<ScalarType>(shape - 1)) *
+               std::exp(-state_age / m_scale);
+    }
+
+    /**
+     * @brief Computes the maximum of the support of the function. 
+     * 
+     * For small time steps and small variance of the density it is possible that dt is returned with the function of StateAgeFunction.
+     * StateAgeFunction is designed for survialfunctions, not for densities.
+     * Therefore with this function we calculate the smallest time value t where function(tau)=0 for all tau>t.
+     *
+     * @param[in] dt Time step size. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
+     * @return ScalarType support_max
+     */
+    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
+    { // We are looking for the smallest time value t where function(tau)=0 for all tau>t. Thus support max is bigger than the mean.
+        ScalarType mean        = m_parameter * m_scale;
+        ScalarType support_max = (ScalarType)dt * (int)(mean / dt);
+
+        if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
+            while (eval(support_max) >= tol) {
+                support_max += dt;
+            }
+
+            m_support_max = support_max;
+            m_support_tol = tol;
+        }
+
+        return m_support_max;
+    }
+
+protected:
+    /**
+     * @brief Implements clone for ErlangDensity.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new ErlangDensity(*this);
     }
 };
 
