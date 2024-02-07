@@ -183,6 +183,58 @@ struct LogInfectionState : mio::LogAlways {
 };
 
 /**
+* @brief Logger to log the TimeSeries of the number of Person%s got new infection per LocationType.
+*/
+struct LogInfectionPerLocationType : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s got new infection per LocationType.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s got new infection per LocationType.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::LocationType::Count));
+        auto prev_time      = sim.get_prev_time();
+        auto curr_time      = sim.get_time();
+        PRAGMA_OMP(for)
+        for (auto&& person : sim.get_world().get_persons()) {
+            if ((person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
+                (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+                sum[(int)(person.get_location().get_type())] += 1;
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
+/**
+* @brief Logger to log the TimeSeries of the number of Person%s got new infection per AgeGroup.
+*/
+struct LogInfectionPerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s got new infection per AgeGroup.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s got new infection per AgeGroup.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(sim.get_world().parameters.get_num_groups()));
+        auto prev_time      = sim.get_prev_time();
+        auto curr_time      = sim.get_time();
+        PRAGMA_OMP(for)
+        for (auto&& person : sim.get_world().get_persons()) {
+            if ((person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
+                (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+                sum[(size_t)(person.get_age())] += 1;
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
+/**
 * @brief This is like the DataWriterToMemory, but it only logs time series data.
 * @tparam Loggers The loggers that are used to log data. The loggers must return a touple with a TimePoint and a value.
 */

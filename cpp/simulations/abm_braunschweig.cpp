@@ -939,7 +939,6 @@ void write_log_to_file_person_and_location_data(const T& history)
 template <typename T>
 void write_log_to_file_trip_data(const T& history)
 {
-
     auto movement_data = std::get<0>(history.get_log());
     std::ofstream myfile3("movement_data.txt");
     myfile3 << "agent_id, trip_id, start_location, end_location, start_time, end_time, transport_mode, activity, "
@@ -984,10 +983,28 @@ void write_log_to_file_trip_data(const T& history)
     myfile3.close();
 }
 
+template <typename T>
+void write_log_to_file_infection_per_location_type(const T& history)
+{
+    std::ofstream myfile4("infection_per_location_type.txt");
+    const std::vector<std::string>& labels = {
+        "Home",     "Work", "School", "SocialEvent",     "BasicsShop",
+        "Hospital", "ICU",  "Car",    "PublicTransport", "TransportWithoutContact",
+        "Cemetery"};
+    std::get<0>(history.get_log()).print_table(labels, 12, 4, myfile4);
+}
+
+template <typename T>
+void write_log_to_file_infection_per_age_group(const T& history)
+{
+    std::ofstream myfile5("infection_per_age_group.txt");
+    const std::vector<std::string>& labels = {"0_to_4", "5_to_14", "15_to_34", "35_to_59", "60_to_79", "80_plus"};
+    std::get<0>(history.get_log()).print_table(labels, 7, 4, myfile5);
+}
+
 mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
-
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(2); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
@@ -1007,6 +1024,10 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
             historyPersonInf;
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
             Eigen::Index(mio::abm::InfectionState::Count)};
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerLocationType> historyInfectionPerLocationType{
+            Eigen::Index(mio::abm::LocationType::Count)};
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerAgeGroup> historyInfectionPerAgeGroup{
+            Eigen::Index(sim.get_world().parameters.get_num_groups())};
         mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
@@ -1014,7 +1035,8 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
             loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
-        sim.advance(tmax, historyPersonInf, historyTimeSeries, historyPersonInfDelta);
+        sim.advance(tmax, historyPersonInf, historyTimeSeries, historyInfectionPerLocationType,
+                    historyInfectionPerAgeGroup, historyPersonInfDelta);
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
         // Push result of the simulation back to the result vector
@@ -1026,6 +1048,8 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         }
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);
+        write_log_to_file_infection_per_location_type(historyInfectionPerLocationType);
+        write_log_to_file_infection_per_age_group(historyInfectionPerAgeGroup);
 
         ++run_idx;
     }

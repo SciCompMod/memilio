@@ -82,6 +82,14 @@ public:
     }
 
     /**
+     * @brief Get the previous time of the Simulation.
+     */
+    TimePoint get_prev_time() const
+    {
+        return m_prev_t;
+    }
+
+    /**
      * @brief Get the World that this Simulation evolves.
      */
     World& get_world()
@@ -99,6 +107,7 @@ private:
 
     World m_world; ///< The World to simulate.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
+    TimePoint m_prev_t; ///< The previous TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };
 
