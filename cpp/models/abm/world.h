@@ -185,7 +185,7 @@ public:
         new_person.set_assigned_location(m_cemetery_id);
 
         if (m_local_populations_cache.is_valid()) {
-            m_local_populations_cache.data.at(new_person.get_location().index).emplace(new_id);
+            m_local_populations_cache.write().at(new_person.get_location().index).emplace(new_id);
         }
         return new_id;
     }
@@ -338,8 +338,8 @@ public:
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
         if (m_local_populations_cache.is_valid()) {
-            return std::count_if(m_local_populations_cache.data.at(location.index).begin(),
-                                 m_local_populations_cache.data.at(location.index).end(), [&](uint32_t p) {
+            return std::count_if(m_local_populations_cache.read().at(location.index).begin(),
+                                 m_local_populations_cache.read().at(location.index).end(), [&](uint32_t p) {
                                      return get_person(PersonId(p)).get_infection_state(t) == state;
                                  });
         }
@@ -357,7 +357,7 @@ public:
     size_t get_number_persons(LocationId location) const
     {
         if (m_local_populations_cache.is_valid()) {
-            return m_local_populations_cache.data.at(location.index).size();
+            return m_local_populations_cache.read().at(location.index).size();
         }
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p.get_location() == location;
@@ -379,8 +379,8 @@ public:
             m_air_exposure_rates_cache.invalidate();
             m_contact_exposure_rates_cache.invalidate();
             if (m_local_populations_cache.is_valid()) {
-                m_local_populations_cache.data.at(origin.index).erase(person.get());
-                m_local_populations_cache.data.at(destination.index).emplace(person.get());
+                m_local_populations_cache.write().at(origin.index).erase(person.get());
+                m_local_populations_cache.write().at(destination.index).emplace(person.get());
             }
         }
     }
@@ -402,8 +402,8 @@ public:
             m_contact_exposure_rates_cache.validate();
         }
         mio::abm::interact(personal_rng, get_person(person), get_location(person),
-                           m_air_exposure_rates_cache.data.at(get_location(person).get_index()),
-                           m_contact_exposure_rates_cache.data.at(get_location(person).get_index()), t, dt,
+                           m_air_exposure_rates_cache.read().at(get_location(person).get_index()),
+                           m_contact_exposure_rates_cache.read().at(get_location(person).get_index()), t, dt,
                            global_parameters);
     }
 
@@ -451,7 +451,16 @@ private:
 
     template <class T>
     struct Cache {
-        T data;
+
+        const T& read() const
+        {
+            return data;
+        }
+
+        T& write()
+        {
+            return data;
+        }
 
         bool is_valid() const
         {
@@ -469,17 +478,18 @@ private:
         }
 
     private:
+        T data;
         bool m_is_valid = false;
     };
 
     void rebuild()
     {
-        m_local_populations_cache.data.clear();
+        m_local_populations_cache.write().clear();
         for (size_t i = 0; i < m_locations.size(); i++) {
-            m_local_populations_cache.data[m_locations[i].get_index()].clear();
+            m_local_populations_cache.write()[m_locations[i].get_index()].clear();
         }
         for (Person& person : get_persons()) {
-            m_local_populations_cache.data.at(person.get_location().index).emplace(person.get_person_id());
+            m_local_populations_cache.write().at(person.get_location().index).emplace(person.get_person_id());
         }
     }
 
@@ -487,13 +497,13 @@ private:
     {
         for (Location& location : get_locations()) {
             auto index = location.get_index();
-            m_air_exposure_rates_cache.data.at(index).array().setZero();
-            m_contact_exposure_rates_cache.data.at(index).array().setZero();
+            m_air_exposure_rates_cache.write().at(index).array().setZero();
+            m_contact_exposure_rates_cache.write().at(index).array().setZero();
         }
         for (Person& person : get_persons()) {
             auto location = person.get_location().index;
-            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.data.at(location),
-                                                m_contact_exposure_rates_cache.data.at(location), person,
+            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.write().at(location),
+                                                m_contact_exposure_rates_cache.write().at(location), person,
                                                 get_location(person.get_person_id()), t, dt);
         }
     }

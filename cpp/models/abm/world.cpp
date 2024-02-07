@@ -38,11 +38,11 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     m_has_locations[size_t(type)] = true;
 
     if (m_local_populations_cache.is_valid()) {
-        m_local_populations_cache.data[id.index];
+        m_local_populations_cache.write()[id.index];
     }
-    m_air_exposure_rates_cache.data.emplace(
+    m_air_exposure_rates_cache.write().emplace(
         id.index, Location::AirExposureRates({CellIndex(num_cells), VirusVariant::Count}, 0.));
-    m_contact_exposure_rates_cache.data.emplace(
+    m_contact_exposure_rates_cache.write().emplace(
         id.index, Location::ContactExposureRates(
                       {CellIndex(num_cells), VirusVariant::Count, AgeGroup(parameters.get_num_groups())}, 0.));
     return id;
