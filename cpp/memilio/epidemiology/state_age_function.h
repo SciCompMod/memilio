@@ -22,11 +22,14 @@
 
 #include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
-#include "ide_secir/infection_state.h"
-#include "memilio/math/eigen.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+
+//MSVC_WARNING_DISABLE_PUSH(4702)
+//#include <boost/math/distributions/gamma.hpp>
+//MSVC_WARNING_POP()
+//#include "boost/math/distributions/lognormal.hpp"
 
 namespace mio
 {
@@ -48,7 +51,11 @@ namespace mio
  *  b) Arbitrary non-negative functions used for parameters such as TransmissionProbabilityOnContact.
  * 
  * Derived classes must implement the eval method which implements the actual function that is evaluated at some state age.
- * This function can depend on one parameter.
+ * This function can depend on the parameter scale to scale the function and on the parameter location to shift the function. 
+ * Location should be a positive number to fulfill the characteristics of a TransitionDistribution and shift has to be positive.
+ * For a Function F we normally use these parameters at state age x as F(x,location,scale)=F((x-location)/scale). 
+ * A derived class does not have to use these two parameters.
+ * Additionally there is one parameter which specifies the distribution.
  *
  * The derived classes must also implement the clone_impl method which allows to deepcopy the derived class.
  * 
@@ -66,12 +73,20 @@ struct StateAgeFunction {
      * @brief Constructs a new StateAgeFunction object
      * 
      * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_location Location paramter to shift the StateAgeFunction. 
+     * @param[in] init_scale Scale paramter to scale the StateAgeFunction. 
      */
-    StateAgeFunction(ScalarType init_parameter)
+    StateAgeFunction(ScalarType init_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
         : m_parameter{init_parameter}
+        , m_location{init_location}
+        , m_scale{init_scale}
         , m_support_max{-1.} // initialize support maximum as not set
         , m_support_tol{-1.} // initialize support tolerance as not set
     {
+        if (m_scale <= 0) {
+            log_error("The scale Parameter of a  StateAgeFunction has to be positive. Set scale to 1.");
+            m_scale = 1;
+        }
     }
 
     /**
@@ -104,7 +119,8 @@ struct StateAgeFunction {
      */
     bool operator==(const StateAgeFunction& other) const
     {
-        return (typeid(*this).name() == typeid(other).name() && m_parameter == other.get_parameter());
+        return (typeid(*this).name() == typeid(other).name() && m_parameter == other.get_parameter() &&
+                m_location == other.get_location() && m_scale == other.get_scale());
     }
 
     /**
@@ -117,7 +133,7 @@ struct StateAgeFunction {
     virtual ScalarType eval(ScalarType state_age) = 0;
 
     /**
-     * @brief Get the m_parameter object
+     * @brief Get the m_parameter object.
      * 
      * Can be used to access the m_parameter object, which specifies the used function.
      * 
@@ -141,9 +157,73 @@ struct StateAgeFunction {
      */
     void set_parameter(ScalarType new_parameter)
     {
-        m_parameter = new_parameter;
-
+        m_parameter   = new_parameter;
         m_support_max = -1.;
+        m_support_tol = -1.;
+    }
+
+    /**
+     * @brief Get the m_location object.
+     * 
+     * Can be used to access the m_location object, which specifies the shift of the function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_location() const
+    {
+        return m_location;
+    }
+
+    /**
+     * @brief Set the m_location object.
+     * 
+     * Can be used to set the m_location object, which specifies the shift of the function.
+     * The maximum support of a function may be costly to evaluate. In order to not always reevaluate or recompute the
+     * support when the user asks for it, a cached value is used. If m_support_max is set to -1, the cached value is
+     * deleted and a recomputation is done the next time the user asks for the support. As the support (potentially)
+     * depends on the m_location object, the cached value has to be deleted. For details see get_support_max().
+     *
+     *@param[in] new_location New location for StateAgeFunction.
+     */
+    void set_location(ScalarType new_location)
+    {
+        m_location    = new_location;
+        m_support_max = -1.;
+        m_support_tol = -1.;
+    }
+
+    /**
+     * @brief Get the m_scale object.
+     * 
+     * Can be used to access the m_scale object, which is used to scale the function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_scale() const
+    {
+        return m_scale;
+    }
+
+    /**
+     * @brief Set the m_scale object.
+     * 
+     * Can be used to access the m_scale object, which is used to scale the function.
+     * The maximum support of a function may be costly to evaluate. In order to not always reevaluate or recompute the
+     * support when the user asks for it, a cached value is used. If m_support_max is set to -1, the cached value is
+     * deleted and a recomputation is done the next time the user asks for the support. As the support (potentially)
+     * depends on the m_scale object, the cached value has to be deleted. For details see get_support_max().
+     *
+     *@param[in] new_scale New Scale for StateAgeFunction.
+     */
+    void set_scale(ScalarType new_scale)
+    {
+        if (new_scale <= 0) {
+            log_error("The scale Parameter of a  StateAgeFunction has to be positive. Set scale to 1.");
+            new_scale = 1;
+        }
+        m_scale       = new_scale;
+        m_support_max = -1.;
+        m_support_tol = -1.;
     }
 
     /**
@@ -205,6 +285,8 @@ protected:
     virtual StateAgeFunction* clone_impl() const = 0;
 
     ScalarType m_parameter; ///< Parameter for function in derived class.
+    ScalarType m_location; ///< Location parameter for function in derived class.
+    ScalarType m_scale; ///< Scale parameter for function in derived class.
     ScalarType m_support_max; ///< Maximum of the support of the function.
     ScalarType m_support_tol; ///< Tolerance for computation of the support.
 };
@@ -222,9 +304,11 @@ struct ExponentialDecay : public StateAgeFunction {
      * @brief Constructs a new ExponentialDecay object
      * 
      * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_location Location paramter to shift the exponentialdecay function. 
+     *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
      */
-    ExponentialDecay(ScalarType init_parameter)
-        : StateAgeFunction(init_parameter)
+    ExponentialDecay(ScalarType init_parameter, ScalarType init_location = 0)
+        : StateAgeFunction(init_parameter, init_location)
     {
     }
 
@@ -238,7 +322,10 @@ struct ExponentialDecay : public StateAgeFunction {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        return std::exp(-m_parameter * state_age);
+        if (state_age <= m_location) {
+            return 1;
+        }
+        return std::exp(-m_parameter * (state_age - m_location));
     }
 
 protected:
@@ -259,12 +346,14 @@ protected:
 struct SmootherCosine : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new SmootherCosine object
+     * @brief Constructs a new SmootherCosine object.
      * 
      * @param[in] init_parameter specifies the initial parameter of the function.
+     * @param[in] init_location Location paramter to shift the SmootherCosine function. 
+     *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
      */
-    SmootherCosine(ScalarType init_parameter)
-        : StateAgeFunction(init_parameter)
+    SmootherCosine(ScalarType init_parameter, ScalarType init_location = 0)
+        : StateAgeFunction(init_parameter, init_location)
     {
     }
 
@@ -278,7 +367,10 @@ struct SmootherCosine : public StateAgeFunction {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        return smoother_cosine(state_age, 0.0, m_parameter, 1.0, 0.0);
+        if (state_age <= m_location) {
+            return 1;
+        }
+        return smoother_cosine(state_age - m_location, 0.0, m_parameter, 1.0, 0.0);
     }
 
     /**
@@ -294,7 +386,7 @@ struct SmootherCosine : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        m_support_max = m_parameter;
+        m_support_max = m_parameter + m_location;
         return m_support_max;
     }
 
@@ -444,7 +536,8 @@ struct StateAgeFunctionWrapper {
     bool operator==(const StateAgeFunctionWrapper& other) const
     {
         return (m_function->get_state_age_function_type() == other.get_state_age_function_type() &&
-                m_function->get_parameter() == other.get_parameter());
+                m_function->get_parameter() == other.get_parameter() &&
+                m_function->get_location() == other.get_location() && m_function->get_scale() == other.get_scale());
     }
 
     /**
@@ -496,6 +589,45 @@ struct StateAgeFunctionWrapper {
     void set_parameter(ScalarType new_parameter)
     {
         m_function->set_parameter(new_parameter);
+    }
+
+    /**
+     * @brief Get the m_location object of m_function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_location() const
+    {
+        return m_function->get_location();
+    }
+
+    /**
+     * @brief Set the m_location object of m_function. 
+     * 
+     * @param[in] new_location New location for StateAgeFunction.
+     */
+    void set_location(ScalarType new_location)
+    {
+        m_function->set_location(new_location);
+    }
+    /**
+     * @brief Get the m_scale object of m_function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_scale() const
+    {
+        return m_function->get_scale();
+    }
+
+    /**
+     * @brief Set the m_scale object of m_function. 
+     * 
+     * @param[in] new_scale New scale for StateAgeFunction.
+     */
+    void set_scale(ScalarType new_scale)
+    {
+        m_function->set_scale(new_scale);
     }
 
     ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) const

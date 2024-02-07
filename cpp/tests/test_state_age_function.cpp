@@ -18,23 +18,14 @@
 * limitations under the License.
 */
 
-#include "boost/fusion/functional/invocation/invoke.hpp"
-#include "load_test_data.h"
-#include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
-#include "ide_secir/parameters.h"
-#include "ide_secir/simulation.h"
-#include "memilio/math/eigen.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/utils/logging.h"
 #include "memilio/config.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/state_age_function.h"
-#include <iostream>
 #include <gtest/gtest.h>
 
 TEST(TestStateAgeFunction, testSpecialMember)
 {
+    /* Copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes, therefore test for one Special Member.
+    Constructors of other members will be tested in other tests. */
     ScalarType dt = 0.5;
     mio::SmootherCosine smoothcos(1.0);
 
