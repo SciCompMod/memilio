@@ -20,15 +20,14 @@ import matplotlib.lines as mlines
 
 def main(n_runs):
     # read in folder and convert txt files to numpy arrays
-    
-    #folder path
-    folder_path = "memilio/epidata/folder_run_bs" 
+    # folder path
+    folder_path = "memilio/epidata/folder_run_bs"
 
     # get first_file in folder
     first_file = os.listdir(folder_path)[0]
     file_path = os.path.join(folder_path, first_file)
     # read in txt file
-    df = pd.read_csv(file_path, delim_whitespace=True )
+    df = pd.read_csv(file_path, delim_whitespace=True)
     # convert to numpy array
     df_np = df.to_numpy()
     # get the number of rows and columns
@@ -41,54 +40,65 @@ def main(n_runs):
     # get the compartment names
     compartment_names = df.columns[1:]
     # get the time steps
-    time_steps = df_np[:,0]
+    time_steps = df_np[:, 0]
 
-    #get number of files in folder
+    # get number of files in folder
     num_files = len([entry for entry in os.listdir(folder_path)])
-    
     # read in each txt file and convert to numpy array
     df_np_3d = np.empty((num_rows, num_cols, n_runs))
     for (file, i) in zip(os.listdir(folder_path), range(n_runs)):
-        if file.endswith(".txt"):
-            file_path = os.path.join(folder_path, file)
-            # read in txt file
-            df = pd.read_csv(file_path, delim_whitespace=True)
+        file_path = os.path.join(folder_path, file)
+        # read in txt file
+        df = pd.read_csv(file_path, delim_whitespace=True)
+        if file.startswith("infection_per_location_type"):
+            plot_infection_per_location_type(df)
+        if file.startswith("infection_per_age_group"):
+            plot_infection_per_age_group(df)
+        if file.startswith("abm_result"):
             # convert to numpy array
             df_np = df.to_numpy()
-            #attach to array
-            df_np_3d[:,:,i] = df_np
-            
-    plot_mean_and_std(df_np_3d)
+            # attach to array
+            df_np_3d[:, :, i] = df_np
+            plot_mean_and_std(df_np_3d)
 
-            
+
+def plot_infection_per_location_type(df):
+    df.plot(x='Time', y=['Home', 'Work', 'School', 'SocialEvent', 'BasicsShop', 'Hospital',
+            'ICU', 'Car', 'PublicTransport', 'TransportWithoutContact', 'Cemetery'], figsize=(10, 6))
+    plt.show()
+
+
+def plot_infection_per_age_group(df):
+    df.plot(x='Time', y=['0_to_4', '5_to_14', '15_to_34',
+            '35_to_59', '60_to_79', '80_plus'], figsize=(10, 6))
+    plt.show()
 
 
 def plot_mean_and_std(Y):
 
-    
-    x_plot = Y[:,0,0]
-    compartments = Y[:,1:,1:]
+    x_plot = Y[:, 0, 0]
+    compartments = Y[:, 1:, 1:]
     # average value
-    compartments_avg = np.mean(compartments,axis=2)
-    #plot average
+    compartments_avg = np.mean(compartments, axis=2)
+    # plot average
     for i in range(compartments_avg.shape[1]):
-        plt.plot(x_plot,compartments_avg[:,i])
-    
-    #plt.plot(x_plot,compartments_avg)
-    #legend
+        plt.plot(x_plot, compartments_avg[:, i])
+    # plt.plot(x_plot,compartments_avg)
+    # legend
     plt.legend(['S', 'E', 'I_NS', 'I_Sy', 'I_Sev', 'I_Crit', 'R', 'D'])
     plt.show()
     # standard deviation
-    #compartments_std = np.std(compartments,axis=2)
-    #plt.plot(x_plot,compartments_avg + compartments_std)
-    #plt.plot(x_plot,compartments_avg - compartments_std)
-    #plt.show()
+    # compartments_std = np.std(compartments,axis=2)
+    # plt.plot(x_plot,compartments_avg + compartments_std)
+    # plt.plot(x_plot,compartments_avg - compartments_std)
+    # plt.show()
 
 
 if __name__ == "__main__":
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
-        folder_path = "memilio/epidata/folder_run_bs" 
-        n_runs = len([entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry))])
+        folder_path = "memilio/epidata/folder_run_bs"
+        n_runs = len([entry for entry in os.listdir(folder_path)
+                     if os.path.isfile(os.path.join(folder_path, entry))])
     main(n_runs)
