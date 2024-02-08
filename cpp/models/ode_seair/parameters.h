@@ -22,10 +22,8 @@
 #define SEAIR_PARAMETERS_H
 
 //#include "memilio/utils/uncertain_value.h"
-#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
 
-#include <vector>
 
 namespace mio
 {
@@ -180,52 +178,7 @@ struct TransmissionProbabilityOnContact {
     }
 };
 
-/**
-     * @brief the latent time in day unit
-     */
-template <typename FP = double>
-struct TimeExposed {
-    using Type = FP;
-    static Type get_default()
-    {
-        return Type(5.2);
-    }
-    static std::string name()
-    {
-        return "TimeExposed";
-    }
-};
 
-/**
-     * @brief the infectious time in day unit
-     */
-template <typename FP = double>
-struct TimeInfected {
-    using Type = FP;
-    static Type get_default()
-    {
-        return Type(6.0);
-    }
-    static std::string name()
-    {
-        return "TimeInfected";
-    }
-};
-
-/**
-     * @brief the contact patterns within the society are modelled using a ContactMatrix
-     */
-struct ContactPatterns {
-    using Type = ContactMatrix;
-    static Type get_default()
-    {
-        return Type{1};
-    }
-    static std::string name()
-    {
-        return "ContactPatterns";
-    }
-};
 template <typename FP = double>
 using ParametersBase =
     ParameterSet<AlphaA<FP>, AlphaI<FP>, Kappa<FP>, Beta<FP>, Mu<FP>, TLatentInverse<FP>, Rho<FP>, Gamma<FP>>;
