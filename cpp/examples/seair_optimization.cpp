@@ -33,13 +33,13 @@
 class Seair_NLP : public Ipopt::TNLP
 {
 public:
-    static constexpr double N   = 327167434;
-    Seair_NLP()                 = default;
-    Seair_NLP(const Seair_NLP&) = delete;
-    Seair_NLP(Seair_NLP&&)      = delete;
+    static constexpr double N              = 327167434;
+    Seair_NLP()                            = default;
+    Seair_NLP(const Seair_NLP&)            = delete;
+    Seair_NLP(Seair_NLP&&)                 = delete;
     Seair_NLP& operator=(const Seair_NLP&) = delete;
-    Seair_NLP& operator=(Seair_NLP&&) = delete;
-    ~Seair_NLP()                      = default;
+    Seair_NLP& operator=(Seair_NLP&&)      = delete;
+    ~Seair_NLP()                           = default;
     bool get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g, Ipopt::Index& nnz_h_lag,
                       IndexStyleEnum& index_style) override;
     bool get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Number* x_u, Ipopt::Index m, Ipopt::Number* g_l,
@@ -111,7 +111,7 @@ private:
 template <typename FP>
 void set_initial_values(mio::oseair::Model<FP>& model)
 {
-    const double N = 327167434; // total population of the United States
+    const double N = Seair_NLP::N; // total population of the United States
 
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] =
         0.9977558755803503;
@@ -156,7 +156,7 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
                 model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
             }
             if (gridindex == numIntervals_ - 1) {
-                objective = result.get_last_value()[(int)mio::oseair::InfectionState::ObjectiveFunction];
+                objective = result.get_last_value()[(int)mio::oseair::InfectionState::ObjectiveFunction] - (tmax - t0);
             }
             constraints[gridindex] = result.get_last_value()[(int)mio::oseair::InfectionState::Infected];
         }
@@ -375,10 +375,84 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
                                   const Ipopt::Number* g, const Ipopt::Number* lambda, Ipopt::Number obj_value,
                                   const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* ip_cq)
 {
-    std::cout << "optiomal solution is\n";
-    for (int i = 0; i < n; ++i) {
-        std::cout << x[i] << std::endl;
+    std::cout << "optimal solution is\n";
+    std::cout << "Writing output to text files" << std::endl;
+    using FP  = double;
+    using IS  = mio::oseair::InfectionState;
+    using Idx = mio::Index<mio::oseair::InfectionState>;
+
+    FP t0   = 0;
+    FP tmax = 100;
+    FP dt   = 0.2;
+    std::vector<FP> grid(numIntervals_ + 1);
+    for (int i = 0; i < numIntervals_ + 1; ++i) {
+        grid[i] = (tmax / numIntervals_) * i + (t0 / numIntervals_) * (numIntervals_ - i);
     }
+    mio::oseair::Model<FP> model;
+    auto& params = model.parameters;
+
+    //open files for parameter output
+    std::ofstream outFileAlphaA("alpha_a.txt");
+    std::ofstream outFileAlphaI("alpha_i.txt");
+    std::ofstream outFileKappa("kappa.txt");
+
+    //open files for state output
+    std::ofstream outFileS("s.txt");
+    std::ofstream outFileE("e.txt");
+    std::ofstream outFileA("a.txt");
+    std::ofstream outFileI("i.txt");
+    std::ofstream outFileR("r.txt");
+    std::ofstream outFileP("p.txt");
+
+    set_initial_values(model);
+    int gridindex = 0;
+    for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
+        model.parameters.template get<mio::oseair::AlphaA<FP>>() = x[controlIndex];
+        model.parameters.template get<mio::oseair::AlphaI<FP>>() = x[controlIndex + numControlIntervals_];
+        model.parameters.template get<mio::oseair::Kappa<FP>>()  = x[controlIndex + 2 * numControlIntervals_];
+
+        outFileAlphaA << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaA<FP>>() << "\n";
+        outFileAlphaI << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaI<FP>>() << "\n";
+        outFileKappa << grid[gridindex] << " " << model.parameters.template get<mio::oseair::Kappa<FP>>() << "\n";
+
+        outFileS << grid[gridindex] << " " << model.populations[{Idx(IS::Susceptible)}] * N / 1000.0 << "\n";
+        outFileE << grid[gridindex] << " " << model.populations[{Idx(IS::Exposed)}] * N / 1000.0 << "\n";
+        outFileA << grid[gridindex] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0 << "\n";
+        outFileI << grid[gridindex] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
+        outFileR << grid[gridindex] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0 << "\n";
+        outFileP << grid[gridindex] << " " << model.populations[{Idx(IS::Perished)}] * N / 1000.0 << "\n";
+
+        for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
+
+            auto result = mio::simulate<mio::oseair::Model<FP>, FP>(grid[gridindex], grid[gridindex + 1], dt, model);
+
+            for (int j = 0; j < (int)mio::oseair::InfectionState::Count; ++j) {
+                model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
+            }
+            outFileS << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Susceptible)}] * N / 1000.0 << "\n";
+            outFileE << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Exposed)}] * N / 1000.0 << "\n";
+            outFileA << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0 << "\n";
+            outFileI << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
+            outFileR << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0 << "\n";
+            outFileP << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Perished)}] * N / 1000.0 << "\n";
+        }
+
+        outFileAlphaA << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaA<FP>>() << "\n";
+        outFileAlphaI << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaI<FP>>() << "\n";
+        outFileKappa << grid[gridindex] << " " << model.parameters.template get<mio::oseair::Kappa<FP>>() << "\n";
+    }
+
+    //close files
+    outFileAlphaA.close();
+    outFileAlphaI.close();
+    outFileKappa.close();
+    outFileS.close();
+    outFileE.close();
+    outFileA.close();
+    outFileI.close();
+    outFileR.close();
+    outFileP.close();
+
     return;
 }
 
