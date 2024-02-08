@@ -165,11 +165,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             //virus variants
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<BaseInfectiousnessB161>()[i];
-                });
-            param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<BaseInfectiousnessB117>()[i];
+                    return model.parameters.template get<InfectiousnessNewVariant>()[i];
                 });
         }
         // group independent params
