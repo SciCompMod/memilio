@@ -484,7 +484,7 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
-    params.get<mio::abm::LookAheadTime>()                                 = mio::abm::hours(1);
+    params.get<mio::abm::PlanAheadTime>()                                 = mio::abm::hours(1);
     ASSERT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;
@@ -548,7 +548,7 @@ TEST(TestWorld, checkParameterConstraints)
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(2);
 
-    params.get<mio::abm::LookAheadTime>() = mio::abm::hours(-1);
+    params.get<mio::abm::PlanAheadTime>() = mio::abm::hours(-1);
     ASSERT_EQ(params.check_constraints(), true);
 }
 
@@ -742,7 +742,7 @@ TEST(TestWorld, personPlanning)
         .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
     //setup so the person look 2 hours ahead.
-    world.parameters.get<mio::abm::LookAheadTime>() = mio::abm::hours(2);
+    world.parameters.get<mio::abm::PlanAheadTime>() = mio::abm::hours(2);
 
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);

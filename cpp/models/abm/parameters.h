@@ -559,9 +559,9 @@ struct AgeGroupGotoWork {
 };
 
 /**
- * @brief The TimeSpan agents look forward to take tests.  
+ * @brief The TimeSpan agents plan forward to take tests.  
  */
-struct LookAheadTime {
+struct PlanAheadTime {
     using Type = TimeSpan;
     static Type get_default(AgeGroup /*size*/)
     {
@@ -569,7 +569,7 @@ struct LookAheadTime {
     }
     static std::string name()
     {
-        return "LookAheadTime";
+        return "PlanAheadTime";
     }
 };
 
@@ -581,7 +581,7 @@ using ParametersBase =
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
                  AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
-                 LookAheadTime>;
+                 PlanAheadTime>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -778,8 +778,8 @@ public:
             return true;
         }
 
-        if (this->get<LookAheadTime>().seconds() < 0.0) {
-            log_error("Constraint check: Parameter LookAheadTime smaller {:d}", 0);
+        if (this->get<PlanAheadTime>().seconds() < 0.0) {
+            log_error("Constraint check: Parameter PlanAheadTime smaller {:d}", 0);
             return true;
         }
 

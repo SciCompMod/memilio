@@ -196,7 +196,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             return result;
         });
         param_percentil(node, [](auto&& model) -> auto& {
-            static auto result = model.parameters.template get<LookAheadTime>().days();
+            static auto result = model.parameters.template get<PlanAheadTime>().days();
             return result;
         });
     }

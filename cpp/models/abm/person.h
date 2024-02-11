@@ -548,6 +548,14 @@ public:
     */
     std::vector<std::pair<TimePoint, Location&>> get_migration_plan(TimePoint from_time, TimePoint to_time);
 
+    /**
+     * @brief Get the agent's lastest TimePoint of its planning.
+     * @return The agent's lastest TimePoint of its planning.
+    */
+    TimePoint get_planned_time() {
+        return m_planned_time;
+    }
+
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
@@ -572,6 +580,7 @@ private:
     CustomIndexArray<TestResult, TestingTypeIndex> m_test_results; ///< CustomIndexArray for TestResults.
     std::vector<std::pair<TimePoint, Location&>>
         m_migration_planning; ///< Vector to store all migration plans (pairs of TimePoint and Location).
+    TimePoint m_planned_time; ///< TimePoint of the last recored planning.
 };
 
 } // namespace abm
