@@ -28,8 +28,6 @@ import warnings
 import getpass
 import requests
 import os
-import twill
-import time
 import io
 
 import numpy as np
@@ -43,61 +41,35 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def read_population_data(username, password, read_data, directory):
-    '''! Reads Population data either from regionalstatistik.de or from directory
+def read_population_data(username, password):
+    '''! Reads Population data from regionalstatistik.de
 
-    A request is made using the twill package. Username and Password are required to
-    sign in on regionalstatistik.de. After the sign twill navigates to the file to download.
+    Username and Password are required to sign in on regionalstatistik.de.
+    A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
 
     @param username Username to sign in at regionalstatistik.de. 
     @param password Password to sign in at regionalstatistik.de.
-    @param read_data False or True. Defines if data is read from file or downloaded.
-    @param directory Path to folder where data is read from.
     @return DataFrame
     '''
 
-    filename = '12411-02-03-4'
-    if not read_data:
-        sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
-
-        # sign in to regionalstatistik.de with given username and password
-        twill.browser.user_agent = requests.utils.default_headers()[
-            'User-Agent']
-        twill.commands.go(sign_in_url)
-        twill.commands.fv('3', 'KENNUNG', username)
-        twill.commands.fv('3', 'PASSWORT', password)
-        twill.commands.submit('login', '3')
-        # navigate to file as in documentation
-        twill.commands.follow('Themen')
-        twill.commands.follow(filename[:2])
-        # wait 2 seconds to prevent error
-        # page needs some time to load
-        time.sleep(2)
-        twill.commands.follow(filename.split('-')[0])
-        twill.commands.follow(filename)
-        # start 'Werteabruf'
-        twill.commands.submit('45', '3')
-        # read csv file (1,4 for xlsx)
-        twill.commands.submit('1', '5')
-
-        df_pop_raw = pd.read_csv(io.StringIO(
-            twill.browser.html), sep=';', header=6)
-
-    else:
-        data_file = os.path.join(directory, filename)
-        if os.path.isfile(data_file+'.xlsx'):
-            df_pop_raw = pd.read_excel(
-                data_file+'.xlsx', engine='openpyxl', sheet_name=filename, header=4)
-        elif os.path.isfile(data_file+'.csv'):
-            df_pop_raw = pd.read_excel(data_file+'.csv', sep=';', header=6)
-        else:
-            raise FileNotFoundError(
-                'Data file '+filename+' was not found in out_folder/Germany')
+    download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
+    req = requests.get(download_url, auth=(username, password))
+    df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
 
     return df_pop_raw
 
+# This function is needed for unittests
+# Fakefilesystem has problems with os.path
 
-def manage_credentials():
+
+def path_to_credential_file():
+    '''Returns path to .ini file where credentials are stored.
+    The Path can be changed if neccessary.
+    '''
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'CredentialsRegio.ini')
+
+
+def manage_credentials(interactive):
     '''! Manages credentials for regionalstatistik.de (needed for dowload).
 
     A connfig file inside the epidata folder is either written (if not existent yet)
@@ -109,25 +81,32 @@ def manage_credentials():
     @return Username and password to sign in at regionalstatistik.de. 
     '''
     # path where ini file is found
-    path = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), 'CredentialsRegio.ini')
+    path = path_to_credential_file()
+
+    gd.default_print(
+        'Info', 'No passwaord and/or username for regionalstatistik.de provided. Try to read from .ini file.')
 
     # check if .ini file exists
     if not os.path.exists(path):
-        print('.ini file not found. Writing CredentialsRegio.ini...')
-        username = input(
-            "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
-        password = getpass.getpass(
-            "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
-        # create file
-        write_ini = gd.user_choice(
-            message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
-            'The next time this function is called, the credentials can be read from that file.')
-        if write_ini:
-            string = '[CREDENTIALS]\nUsername = ' + \
-                username+'\nPassword = '+password
-            with open(path, 'w+') as file:
-                file.write(string)
+        if interactive:
+            gd.default_print(
+                'Info', '.ini file not found. Writing CredentialsRegio.ini...')
+            username = input(
+                "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
+            password = getpass.getpass(
+                "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
+            # create file
+            write_ini = gd.user_choice(
+                message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
+                'The next time this function is called, the credentials can be read from that file.')
+            if write_ini:
+                string = '[CREDENTIALS]\nUsername = ' + \
+                    username+'\nPassword = '+password
+                with open(path, 'w+') as file:
+                    file.write(string)
+        else:
+            raise gd.DataError(
+                'No .ini file found. Cannot access regionalstatistik.de for downloading population data.')
 
     else:
         parser = configparser.ConfigParser()
@@ -275,10 +254,10 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
         elif len(county_id) < 5:
             pass
         else:
-            print('no data for ' + df_pop_raw.loc
-                  [start_idx, dd.EngEng['idCounty']])
             raise gd.DataError(
-                'Error. County ID in input population data '
+                'No data for ' + df_pop_raw.loc
+                [start_idx, dd.EngEng['idCounty']] +
+                'County ID in input population data '
                 'found which could not be assigned.')
 
     return df_pop
@@ -307,10 +286,10 @@ def test_total_population(df_pop, age_cols):
 def get_population_data(read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
-                        no_raw=dd.defaultDict['no_raw'],
                         merge_eisenach=True,
                         username='',
-                        password=''):
+                        password='',
+                        **kwargs):
     """! Download age-stratified population data for the German counties.
 
     The data we use is:
@@ -338,8 +317,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is written or
-        not. Default defined in defaultDict. Currently not used.
     @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
@@ -347,14 +324,22 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+
+    if read_data == True:
+        gd.default_print(
+            'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
+        read_data = False
+
     # If no username or password is provided, the credentials are either read from an .ini file or,
     # if the file does not exist they have to be given as user input.
     if (username is None) or (password is None):
-        username, password = manage_credentials()
+        username, password = manage_credentials(conf.interactive)
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
-    df_pop_raw = read_population_data(username, password, read_data, directory)
+    df_pop_raw = read_population_data(username, password)
 
     column_names = list(df_pop_raw.columns)
     # rename columns
