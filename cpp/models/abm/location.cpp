@@ -184,12 +184,5 @@ size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
     });
 }
 
-size_t Location::get_num_person_wear_mask() const
-{
-    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
-        return p->get_wear_mask() == true;
-    });
-}
-
 } // namespace abm
 } // namespace mio

@@ -106,7 +106,6 @@ InfectionState Person::get_infection_state(TimePoint t) const
 void Person::add_new_infection(Infection&& inf)
 {
     m_infections.push_back(std::move(inf));
-    m_location->add_new_infected();
 }
 
 Location& Person::get_location()

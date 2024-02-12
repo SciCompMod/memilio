@@ -176,9 +176,6 @@ struct LogInfectionState : mio::LogAlways {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                 sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
             }
-            sum[Eigen::Index(mio::abm::InfectionState::Count)] += location.get_num_person_wear_mask();
-            if (curr_time > mio::abm::TimePoint(0))
-                sum[Eigen::Index(mio::abm::InfectionState::Count)+1] += location.get_new_infected();
         }
         return std::make_pair(curr_time, sum);
     }

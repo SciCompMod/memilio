@@ -56,13 +56,10 @@ Person& World::add_person(const LocationId id, AgeGroup age)
 
 void World::evolve(TimePoint t, TimeSpan dt)
 {
-    for (auto&& location : m_locations) {
-        location->reset_new_infected();
-    }
     begin_step(t, dt);
-    //log_info("ABM World interaction.");
+    log_info("ABM World interaction.");
     interaction(t, dt);
-    //log_info("ABM World migration.");
+    log_info("ABM World migration.");
     migration(t, dt);
 }
 
