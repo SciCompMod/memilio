@@ -17,6 +17,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
+from mpm_plotter import read_from_terminal, plot_populations
 
 def main(n_runs):
     # read in folder and convert txt files to numpy arrays
@@ -77,14 +78,15 @@ def plot_infection_per_age_group(df):
 def plot_mean_and_std(Y):
 
     x_plot = Y[:, 0, 0]
-    compartments = Y[:, 1:, 1:]
+    compartments = Y[:,1:,1:]
     # average value
-    compartments_avg = np.mean(compartments, axis=2)
-    # plot average
+    compartments_avg = np.mean(compartments,axis=2)
+    #plot average
     for i in range(compartments_avg.shape[1]):
-        plt.plot(x_plot, compartments_avg[:, i])
-    # plt.plot(x_plot,compartments_avg)
-    # legend
+        plt.plot(x_plot,compartments_avg[:,i])
+    
+    #plt.plot(x_plot,compartments_avg)
+    #legend
     plt.legend(['S', 'E', 'I_NS', 'I_Sy', 'I_Sev', 'I_Crit', 'R', 'D'])
     plt.show()
     # standard deviation

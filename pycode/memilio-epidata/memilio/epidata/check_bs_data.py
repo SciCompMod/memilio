@@ -54,9 +54,10 @@ if(person_homes.size > 0):
 # check if the proportion of single-person-households is too high
 households = bd[['personID', 'hhID']].drop_duplicates().groupby(['hhID']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
 
-if households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size >= 0.4:
+# check if the proportion of single-person-households is too high
+if (households.loc[households['counts']==1]['counts'].size)/(households['counts'].size)  > 0.5:
     print("Error: The proportion of single-person-households is too high: " + 
-          str(households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size))
+          str((households.loc[households['counts']==1]['counts'].size)/(households['counts'].size)))
 
 # check if there are invalid entries
 # if not bd['idTrafficZone'].ge(30000000).all():
@@ -106,20 +107,21 @@ print(str(number_of_people) + ' are people. \n')
 # number_of_trips = bd[['tripID']].drop_duplicates().size
 # print(str(number_of_trips) + ' trips. \n')
 
+
 students = bd[['personID', 'loc_id_end', 'age']].loc[bd['ActivityAfter']==2]
 print('Minimal age of people going to school: ' + str(students['age'].min()) + '. Maximal age of people going to school: ' + str(students['age'].max()) + '.\n')
-print(str(students.loc[students['age'] > 20].size) + ' persons of ' + str(students.size) + ' people going to school are in a higher age group than 10. \n')
+print(str(students.loc[students['age'] > 20].size) + ' trips of ' + str(students.size) + ' trips going to school are in a higher age group than 10. \n')
 
-children = bd[['personID','ActivityAfter']].loc[(bd['age']<=17) & (bd['age']>=7)]
+children = bd[['personID','ActivityAfter']].loc[(bd['age']<=16) & (bd['age']>=7)]
 number_of_children = children['personID'].drop_duplicates().size
 number_of_children_school = children[children['ActivityAfter'] == 2]['personID'].drop_duplicates().size
 print(str(number_of_children - number_of_children_school) + ' of ' + str(number_of_children) + ' children do not go to school. \n')
 
 
-workers = bd[['personID','ActivityAfter']].loc[(bd['age']>0)]
+workers = bd[['personID','ActivityAfter']].loc[(bd['age']>30)]
 number_of_workers = workers['personID'].drop_duplicates().size
 number_of_workers_work = workers[workers['ActivityAfter'] == 1]['personID'].drop_duplicates().size
-print(str(number_of_workers - number_of_workers_work) + ' of ' + str(number_of_workers) + ' children do not go to school. \n')
+print(str(number_of_workers - number_of_workers_work) + ' of ' + str(number_of_workers) + ' workers do not go to work. \n')
 
 
 
@@ -153,18 +155,18 @@ figs_path = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'figs_bs_data')
 
 # check whether first start location is the last end location
-first_trip = bd[['personID','loc_id_start']].sort_values(by=['personID']).drop_duplicates(subset=['personID'], keep='first').reset_index(drop=True)
-last_trip = bd[['personID', 'loc_id_end', 'ActivityAfter']].sort_values(by=['personID']).drop_duplicates(subset=['personID'], keep='last').reset_index(drop=True)
-compare_first_and_last_trip = first_trip['loc_id_start'].compare(last_trip['loc_id_end'])
-print("Number of persons where first start location is not the last end location: " + str(compare_first_and_last_trip.size)+ ".")
+first_trip = bd[['personID','loc_id_start']].drop_duplicates(subset=['personID'], keep='first').reset_index(drop=True)
+last_trip = bd[['personID', 'loc_id_end']].drop_duplicates(subset=['personID'], keep='last').reset_index(drop=True)
+print("Number of persons where first start location is home: " + str(first_trip.loc[first_trip['loc_id_start']==-1]['loc_id_start'].size)+ ".")
+print("Number of persons where last end location is home: " + str(last_trip.loc[last_trip['loc_id_end']==-1]['loc_id_end'].size)+ ".")
 
 # check what persons are doing which only do one trip
-location_types = last_trip.groupby(['ActivityAfter']).size()
+# location_types = last_trip.groupby(['ActivityAfter']).size()
 
-location_types.plot(kind='bar')
-plt.xlabel('Activity')
-plt.ylabel('Number of persons')
-plt.savefig(os.path.join(figs_path, 'last_activity_of_day.png'), dpi=300)
+# location_types.plot(kind='bar')
+# plt.xlabel('Activity')
+# plt.ylabel('Number of persons')
+# plt.savefig(os.path.join(figs_path, 'last_activity_of_day.png'), dpi=300)
 
 # probably the traffic zones that are in braunschweig because in idTrafficzones the people of bs are located
 # bd_tz_bs = bd.groupby(['idTrafficZone']).size().reset_index(
