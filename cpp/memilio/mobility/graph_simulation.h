@@ -110,6 +110,25 @@ public:
         }
     }
 
+    template <class M>
+    void add_infections_from_flow(M model, double& infections_any, double& infecions_symptomatic)
+    {
+        auto flows_step                  = model.get_flow_values();
+        std::vector<int> indx_infections = {0,   33,  17,  53,  86,  70,  106, 139, 123,
+                                            159, 192, 176, 212, 245, 229, 265, 298, 282};
+        auto sum_infections =
+            std::accumulate(indx_infections.begin(), indx_infections.end(), 0.0, [&flows_step](double sum, int i) {
+                return sum + flows_step(i);
+            });
+        infections_any += sum_infections;
+
+        std::vector<int> indx_symp = {20, 36, 56, 73, 89, 109, 126, 142, 162, 179, 195, 215, 232, 248, 268, 285, 301};
+        auto sum_symp = std::accumulate(indx_symp.begin(), indx_symp.end(), 0.0, [&flows_step](double sum, int i) {
+            return sum + flows_step(i);
+        });
+        infecions_symptomatic += sum_symp;
+    }
+
     // void check_for_negative_value(Eigen::Ref<Eigen::Matrix<double, -1, 1>> y)
     // {
     //     const double epsilon = 1e-10;
@@ -276,12 +295,12 @@ public:
                 break;
             }
 
-            for (auto& n : m_graph.nodes()) {
-                n.node_pt.get_result().add_time_point(m_t + 1);
-                n.node_pt.get_simulation().get_flows().add_time_point(m_t + 1);
-                n.node_pt.get_simulation().get_flows().get_last_value().setZero();
-                n.node_pt.get_result().get_last_value().setZero();
-            }
+            // for (auto& n : m_graph.nodes()) {
+            //     n.node_pt.get_result().add_time_point(m_t + 1);
+            //     n.node_pt.get_simulation().get_flows().add_time_point(m_t + 1);
+            //     n.node_pt.get_simulation().get_flows().get_last_value().setZero();
+            //     n.node_pt.get_result().get_last_value().setZero();
+            // }
 
             size_t indx_schedule = 0;
             while (indx_schedule <= 100) {
@@ -292,6 +311,8 @@ public:
                     if (indx_schedule == first_mobility[edge_indx]) {
                         auto& node_from = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
                         auto& node_to   = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt;
+                        e.infecions_any.push_back(0.0);
+                        e.infecions_symptomatic.push_back(0.0);
                         m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
                     }
                     else if (indx_schedule == 100) {
@@ -353,6 +374,9 @@ public:
                                 set_contact_mobility(node_from.get_simulation().get_model(), e.contact_matrix);
                             }
                             m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
+                            add_infections_from_flow(node_from.get_simulation().get_model(),
+                                                     e.infecions_any[e.infecions_any.size() - 1],
+                                                     e.infecions_symptomatic[e.infecions_symptomatic.size() - 1]);
                         }
                         else {
 
@@ -365,6 +389,9 @@ public:
                                 set_contact_mobility(node_from.get_simulation().get_model(), e.contact_matrix);
                             }
                             m_edge_func(m_t, dt_mobility, e.property, node_from, node_from, 3);
+                            add_infections_from_flow(node_from.get_simulation().get_model(),
+                                                     e.infecions_any[e.infecions_any.size() - 1],
+                                                     e.infecions_symptomatic[e.infecions_symptomatic.size() - 1]);
                         }
                     }
                 }

@@ -52,8 +52,8 @@ using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()
 
 // Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
 template <class OmittedTag, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
+using filtered_index_t = decltype(
+    as_index<IndexTemplate>(std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
 
 } //namespace details
 
@@ -204,6 +204,11 @@ public:
     {
         static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indices must be specified");
         return index_of_type_v<Flow<Source, Target>, Flows>;
+    }
+
+    Eigen::VectorXd get_flow_values() const
+    {
+        return m_flow_values;
     }
 
 private:

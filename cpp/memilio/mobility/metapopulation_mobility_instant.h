@@ -343,22 +343,22 @@ void update_status_migrated(Eigen::Ref<TimeSeries<double>::Vector> migrated, Sim
         y0, t, dt, y1);
 
     // if integrator type == EulerIntegratorCore
-    if (dynamic_cast<EulerIntegratorCore*>(&integrator) != nullptr) {
-        auto flows_step                  = model.get_flow_values();
-        std::vector<int> indx_infections = {0,   33,  17,  53,  86,  70,  106, 139, 123,
-                                            159, 192, 176, 212, 245, 229, 265, 298, 282};
-        auto sum_infections =
-            std::accumulate(indx_infections.begin(), indx_infections.end(), 0.0, [&flows_step](double sum, int i) {
-                return sum + flows_step(i);
-            });
-        sim.get_flows().get_last_value()(0) += sum_infections;
+    // if (dynamic_cast<EulerIntegratorCore*>(&integrator) != nullptr) {
+    //     auto flows_step                  = model.get_flow_values();
+    //     std::vector<int> indx_infections = {0,   33,  17,  53,  86,  70,  106, 139, 123,
+    //                                         159, 192, 176, 212, 245, 229, 265, 298, 282};
+    //     auto sum_infections =
+    //         std::accumulate(indx_infections.begin(), indx_infections.end(), 0.0, [&flows_step](double sum, int i) {
+    //             return sum + flows_step(i);
+    //         });
+    //     sim.get_flows().get_last_value()(0) += sum_infections;
 
-        std::vector<int> indx_symp = {20, 36, 56, 73, 89, 109, 126, 142, 162, 179, 195, 215, 232, 248, 268, 285, 301};
-        auto sum_symp = std::accumulate(indx_symp.begin(), indx_symp.end(), 0.0, [&flows_step](double sum, int i) {
-            return sum + flows_step(i);
-        });
-        sim.get_flows().get_last_value()(1) += sum_symp;
-    }
+    //     std::vector<int> indx_symp = {20, 36, 56, 73, 89, 109, 126, 142, 162, 179, 195, 215, 232, 248, 268, 285, 301};
+    //     auto sum_symp = std::accumulate(indx_symp.begin(), indx_symp.end(), 0.0, [&flows_step](double sum, int i) {
+    //         return sum + flows_step(i);
+    //     });
+    //     sim.get_flows().get_last_value()(1) += sum_symp;
+    // }
 }
 
 template <typename FP>
