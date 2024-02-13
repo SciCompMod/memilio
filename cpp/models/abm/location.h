@@ -213,6 +213,12 @@ public:
      */
     void remove_person(Person& person);
 
+    /**
+     * @brief Adjust local contact rates based on maximum contacts.
+     * @param[in] num_agegroups The number of age groups in the model.
+    */
+    void adjust_contact_rates(size_t num_agegroups);
+
     /** 
      * @brief Prepare the Location for the next Simulation step.
      * @param[in] t Current TimePoint of the Simulation.

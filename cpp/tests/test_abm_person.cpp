@@ -122,7 +122,7 @@ TEST(TestPerson, quarantine)
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto dt        = mio::abm::hours(1);
     infection_parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
         0.5 * dt.days();
 
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,

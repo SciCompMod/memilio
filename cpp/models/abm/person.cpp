@@ -62,7 +62,8 @@ Person Person::copy_person(Location& location)
 
 void Person::interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
+    if (get_infection_state(t) == InfectionState::Susceptible ||
+        get_infection_state(t) == InfectionState::Recovered) { // Susceptible or Recovered people can be (re)infected
         m_location->interact(rng, *this, t, dt, params);
     }
     m_time_at_location += dt;
