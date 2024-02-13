@@ -126,7 +126,7 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     This needs to be adjusted if we are changing the finite difference scheme */
 
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
-        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_support_max(dt) / dt);
+        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_support_max(dt, m_tol) / dt);
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
@@ -196,13 +196,13 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
     // determine the relevant calculation area = union of the supports of the relevant transition distributions
     ScalarType calc_time = std::max(
         {parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-             .get_support_max(dt),
+             .get_support_max(dt, m_tol),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-             .get_support_max(dt),
+             .get_support_max(dt, m_tol),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-             .get_support_max(dt),
+             .get_support_max(dt, m_tol),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-             .get_support_max(dt)});
+             .get_support_max(dt, m_tol)});
 
     // corresponding index
     /* need calc_time_index timesteps in sum,
@@ -262,8 +262,8 @@ void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index id
 
     // determine relevant calculation area and corresponding index
     ScalarType calc_time =
-        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt),
-                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt));
+        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt, m_tol),
+                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt, m_tol));
 
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
