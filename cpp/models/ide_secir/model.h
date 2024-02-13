@@ -205,6 +205,21 @@ public:
         m_tol = new_tol;
     }
 
+    /**
+     * @brief Specifies a number associated with the method used for initialization.
+     *
+     * @returns 0 if the initialization method has not yet been selected,
+     *      1 if the method using the total number of confirmed cases at time 0 is used,
+     *      2 if the force of infection method is used,
+     *      3 if the initialization is calculated using a prior set value for S,
+     *      4 if the initialization is calculated using a prior set value for R and
+     *      -1 if the initialization was not possible using any of the methods.
+     */
+    int get_initialization_method()
+    {
+        return m_initialization_method;
+    }
+
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     /* Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the initialization part. */
     TimeSeries<ScalarType>
@@ -218,6 +233,8 @@ private:
     ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point - dt.
     ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
+    int m_initialization_method{
+        0}; ///< Gives the index of the method used for the initialization of the model. See also get_initialization_method() for the number code.
 };
 
 } // namespace isecir
