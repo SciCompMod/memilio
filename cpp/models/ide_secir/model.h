@@ -74,23 +74,23 @@ public:
 
         ScalarType support_max = std::max(
             {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_support_max(dt),
+                 .get_support_max(dt, m_tol),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_support_max(dt)});
+                 .get_support_max(dt, m_tol)});
 
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
             log_error(
@@ -195,6 +195,16 @@ public:
      */
     void compute_recovered();
 
+    /**
+     * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
+     *
+     * @param[in] new_tol New tolerance.
+     */
+    void set_tol_for_support_max(ScalarType new_tol)
+    {
+        m_tol = new_tol;
+    }
+
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     /* Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the initialization part. */
     TimeSeries<ScalarType>
@@ -206,6 +216,7 @@ private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
     ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
+    ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
 };
 
 } // namespace isecir
