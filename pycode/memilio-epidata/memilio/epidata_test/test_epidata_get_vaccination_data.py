@@ -28,7 +28,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import progress_indicator
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
@@ -106,12 +105,11 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
         gvd.get_vaccination_data(out_folder=self.path, read_data=True)
 
@@ -124,7 +122,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_get_standard_vaccination_sanitize_3(self, mockin, mockp, mockv):
         gvd.get_vaccination_data(out_folder=self.path,
                                  sanitize_data=3, read_data=True)
