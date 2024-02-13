@@ -30,6 +30,9 @@ using FlowModel = osecirvvs::Model;
 // For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
 // For more details see the original implementation in:
 // https://github.com/SciCompMod/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_secirvvs/model.h
+// Updates from Issue/PR 888:
+// - Apply_variant function has been adjusted to be more generic
+// - Fixed a bug where the transmission probability was always set to zero.
 
 class FlowlessModel : public CompartmentalModel<osecirvvs::InfectionState,
                                                 Populations<AgeGroup, osecirvvs::InfectionState>, osecirvvs::Parameters>
@@ -421,22 +424,23 @@ public:
     {
     }
 
-    void apply_b161(double t)
+    void apply_variant(const double t, const CustomIndexArray<UncertainValue, AgeGroup> base_infectiousness)
     {
+        auto start_day             = this->get_model().parameters.template get<osecirvvs::StartDay>();
+        auto start_day_new_variant = this->get_model().parameters.template get<osecirvvs::StartDayNewVariant>();
 
-        auto start_day   = this->get_model().parameters.template get<osecirvvs::StartDay>();
-        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-        // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-        size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; ++i) {
-            double new_transmission =
-                (1 - share_new_variant) *
-                    this->get_model().parameters.template get<osecirvvs::BaseInfectiousnessB117>()[(AgeGroup)i] +
-                share_new_variant *
-                    this->get_model().parameters.template get<osecirvvs::BaseInfectiousnessB161>()[(AgeGroup)i];
-            this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] =
-                new_transmission;
+        if (start_day + t >= start_day_new_variant - 1e-10) {
+            const double days_variant      = t - (start_day_new_variant - start_day);
+            const double share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
+            const auto num_groups          = this->get_model().parameters.get_num_groups();
+            for (auto i = AgeGroup(0); i < num_groups; ++i) {
+                double new_transmission =
+                    (1 - share_new_variant) * base_infectiousness[i] +
+                    share_new_variant * base_infectiousness[i] *
+                        this->get_model().parameters.template get<osecirvvs::InfectiousnessNewVariant>()[i];
+                this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[i] =
+                    new_transmission;
+            }
         }
     }
 
@@ -500,9 +504,13 @@ public:
     */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
-        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
-        auto& dyn_npis         = this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms>();
-        auto& contact_patterns = this->get_model().parameters.template get<osecirvvs::ContactPatterns>();
+        auto& t_end_dyn_npis    = this->get_model().parameters.get_end_dynamic_npis();
+        auto& dyn_npis          = this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms>();
+        auto& contact_patterns  = this->get_model().parameters.template get<osecirvvs::ContactPatterns>();
+        const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
+
+        auto base_infectiousness =
+            this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>();
 
         double delay_lockdown;
         auto t        = Base::get_result().get_last_time();
@@ -516,12 +524,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_b161(t);
+                this->apply_variant(t, base_infectiousness);
             }
             Base::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_b161(t);
+                this->apply_variant(t, base_infectiousness);
             }
 
             if (t > 0) {
@@ -560,6 +568,9 @@ public:
                 m_t_last_npi_check = t;
             }
         }
+
+        this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>() = base_infectiousness;
+
         return this->get_result().get_last_value();
     }
 

@@ -27,7 +27,6 @@ from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getPopulationData as gpd
-from memilio.epidata import progress_indicator
 
 
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
@@ -51,7 +50,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def test_export_population_data(self):
 
@@ -69,15 +67,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
                                                        '18-24 years', '25-29 years', '30-39 years', '40-49 years',
                                                        '50-64 years', '65-74 years', '>74 years'])
 
-    def test_read_population_data(self):
-
-        directory = os.path.join(self.path, 'Germany/')
-
-        # test file not found
-        with self.assertRaises(FileNotFoundError) as error:
-            df = gpd.read_population_data(
-                username='', password='', read_data=True, directory=directory)
-
     @patch('memilio.epidata.getPopulationData.read_population_data',
            return_value=df_pop_raw)
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
@@ -89,14 +78,14 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     @patch('builtins.input', return_value=test_username)
     @patch('getpass.getpass', return_value=test_password)
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
-    @patch('os.path.abspath', return_value='')
+    @patch('memilio.epidata.getPopulationData.path_to_credential_file', return_value='./CredentialsRegio.ini')
     @patch('memilio.epidata.getPopulationData.read_population_data', return_value=df_pop_raw)
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
     @patch('memilio.epidata.getPopulationData.test_total_population')
     def test_config_write(self, mock_test, mock_export, mock_raw, mock_path, mock_choice, mock_pw, mock_un):
         # username and password should be written into the config file.
         # The download and assigning to counties of the population data is mocked.
-        gpd.get_population_data(username=None, password=None)
+        gpd.get_population_data(username=None, password=None, interactive=True)
         # Check if the file is written.
         self.assertTrue(self.config_file_name in os.listdir(os.getcwd()))
         # Check content of the file.
@@ -107,7 +96,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.assertEqual(parser['CREDENTIALS']['Username'], self.test_username)
         self.assertEqual(parser['CREDENTIALS']['Password'], self.test_password)
 
-    @patch('os.path.abspath', return_value='')
+    @patch('memilio.epidata.getPopulationData.path_to_credential_file', return_value='./CredentialsRegio.ini')
     @patch('memilio.epidata.getPopulationData.read_population_data', return_value=df_pop_raw)
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
     @patch('memilio.epidata.getPopulationData.test_total_population')
@@ -124,10 +113,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.assertTrue(self.config_file_name in os.listdir(os.getcwd()))
         # The download and assigning to counties of the population data is mocked.
         gpd.get_population_data(
-            username=None, password=None, read_data=False, out_folder=self.path)
+            username=None, password=None, read_data=False, out_folder=self.path, interactive=False)
         # The file exist in the directory (mocked) and the credentials should be read.
         mock_read.assert_called_with(
-            self.test_username, self.test_password, False, os.path.join(self.path, 'Germany'))
+            self.test_username, self.test_password)
 
 
 if __name__ == '__main__':
