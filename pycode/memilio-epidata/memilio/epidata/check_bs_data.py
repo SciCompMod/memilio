@@ -503,7 +503,20 @@ x = bd[bd.ActivityAfter==6].loc[:, 'loc_id_end'].nunique()
 # downscaling of locations of type 6 to 2000 agents
 x / (bd['personID'].nunique()/2000)
 
-
-
-
 x = 42
+
+### draft to add collumn to check if the location in Braunschweig
+# pip install geopy
+# from geopy.geocoders import Nominatim
+# geolocator = Nominatim(user_agent="MEmilio")
+# longitude = bd['loCe']
+# latitude = bd['laCe']
+# coordination =  str(longitude) + "," + str(latitude)
+# location = geolocator.reverse(coordination)
+# loc_dict = location.raw
+# print(loc_dict['address']['city'])
+# if loc_dict['address']['city'] == 'Braunschweig' :
+#     bd['in_bs'] = 1
+# else:
+#     bd['in_bs'] = 0
+# bd.to_csv('modified_input.csv', index=False)
