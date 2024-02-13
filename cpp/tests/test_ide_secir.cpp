@@ -396,6 +396,7 @@ TEST(IdeSecir, checkInitializations)
     // --- Case without fitting initialization method.
     // Deactivate temporarily log output for next test. Error is expected here.
     mio::set_log_level(mio::LogLevel::off);
+    // Here we do not need a copy of init as this is the last use of the vector. We can apply move directly.
     mio::isecir::Model model5(std::move(init), N, deaths, 0, std::move(parameters));
 
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
