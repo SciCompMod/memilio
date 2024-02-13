@@ -55,7 +55,7 @@ def main(n_runs):
             plot_infection_per_location_type(df)
         if file.startswith("infection_per_age_group"):
             plot_infection_per_age_group(df)
-        if file.startswith("abm_result"):
+        if file.startswith("run_"):
             # convert to numpy array
             df_np = df.to_numpy()
             # attach to array

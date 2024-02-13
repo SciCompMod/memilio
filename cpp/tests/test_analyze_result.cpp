@@ -512,12 +512,12 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
         ensemble_p49_params[0]
             .parameters
             .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.m();
     auto check2 =
         ensemble_p49_params[1]
             .parameters
             .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.m();
 
     EXPECT_EQ(check1, 0.1);
     EXPECT_EQ(check2, 0.2);
@@ -526,12 +526,12 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
         ensemble_p51_params[0]
             .parameters
             .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.m();
     auto check4 =
         ensemble_p51_params[1]
             .parameters
             .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.m();
 
     EXPECT_EQ(check3, 0.3);
     EXPECT_EQ(check4, 0.4);
@@ -540,12 +540,12 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
         ensemble_p49_params[0]
             .parameters
             .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.m();
     auto check6 =
         ensemble_p49_params[1]
             .parameters
             .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.m();
 
     EXPECT_EQ(check5, 0.2);
     EXPECT_EQ(check6, 0.3);
@@ -554,12 +554,12 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
         ensemble_p51_params[0]
             .parameters
             .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.m();
     auto check8 =
         ensemble_p51_params[1]
             .parameters
             .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .params.a();
+            .params.s();
 
     EXPECT_EQ(check7, 0.4);
     EXPECT_EQ(check8, 0.5);
