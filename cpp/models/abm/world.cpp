@@ -37,14 +37,12 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     m_locations.emplace_back(id, parameters.get_num_groups(), num_cells);
     m_has_locations[size_t(type)] = true;
 
-    if (m_local_populations_cache.is_valid()) {
-        m_local_populations_cache.write()[id.index];
+    if (m_local_population_size_cache.is_valid()) {
+        m_local_population_size_cache.write()[id.index].value = 0.;
     }
-    m_air_exposure_rates_cache.write().emplace(
-        id.index, Location::AirExposureRates({CellIndex(num_cells), VirusVariant::Count}, 0.));
-    m_contact_exposure_rates_cache.write().emplace(
-        id.index, Location::ContactExposureRates(
-                      {CellIndex(num_cells), VirusVariant::Count, AgeGroup(parameters.get_num_groups())}, 0.));
+    m_air_exposure_rates_cache.write().push_back({{CellIndex(num_cells), VirusVariant::Count}, 0.});
+    m_contact_exposure_rates_cache.write().push_back(
+        {{CellIndex(num_cells), VirusVariant::Count, AgeGroup(parameters.get_num_groups())}, 0.});
     return id;
 }
 
@@ -64,17 +62,18 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
+    const auto num_persons = m_persons.size();
     PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        // TODO: i == get_person(i).get_person_id(), but this does not have to stay true
-        interact(m_persons[i].get_person_id(), t, dt);
+    for (auto i = size_t(0); i < num_persons; ++i) {
+        interact(i, t, dt);
     }
 }
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
+    const auto num_persons = m_persons.size();
     PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_persons.size(); ++i) {
+    for (auto i = size_t(0); i < num_persons; ++i) {
         auto& person      = m_persons[i];
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
@@ -88,7 +87,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                     get_number_persons(target_location) < target_location.get_capacity().persons) {
                     bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
-                        migrate(person.get_person_id(), target_location.get_id()); // TODO: i == PersonId, use?
+                        migrate(i, target_location.get_id());
                     }
                     return true;
                 }
@@ -148,9 +147,9 @@ void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
 
-    if (!m_local_populations_cache.is_valid()) {
-        rebuild();
-        m_local_populations_cache.validate();
+    if (!m_local_population_size_cache.is_valid()) {
+        build_local_population_cache();
+        m_local_population_size_cache.validate();
     }
     recompute_exposure_rates(t, dt);
     m_air_exposure_rates_cache.validate();

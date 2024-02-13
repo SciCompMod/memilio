@@ -20,7 +20,8 @@
 #ifndef MIO_ABM_WORLD_H
 #define MIO_ABM_WORLD_H
 
-#include "abm/config.h"
+#include "abm/caching.h"
+#include "abm/functions.h"
 #include "abm/location_type.h"
 #include "abm/movement_data.h"
 #include "abm/parameters.h"
@@ -30,19 +31,14 @@
 #include "abm/trip_list.h"
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
-#include "abm/virus_variant.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/index.h"
+#include "memilio/utils/mioomp.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
-#include "functions.h"
-
+#include <atomic>
 #include <bitset>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
 
 namespace mio
 {
@@ -179,13 +175,13 @@ public:
         }()); // assert that location is in world
         assert(person.get_age().get() < parameters.get_num_groups());
 
-        PersonId new_id = static_cast<PersonId>(m_persons.size()); // TODO: this breaks when removing a person
+        PersonId new_id = static_cast<PersonId>(m_persons.size());
         m_persons.emplace_back(person, new_id);
         auto& new_person = m_persons.back();
         new_person.set_assigned_location(m_cemetery_id);
 
-        if (m_local_populations_cache.is_valid()) {
-            m_local_populations_cache.write().at(new_person.get_location().index).emplace(new_id);
+        if (m_local_population_size_cache.is_valid()) {
+            ++m_local_population_size_cache.write().at(new_person.get_location().index).value;
         }
         return new_id;
     }
@@ -337,13 +333,13 @@ public:
 
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
-        if (m_local_populations_cache.is_valid()) {
-            return std::count_if(m_local_populations_cache.read().at(location.index).begin(),
-                                 m_local_populations_cache.read().at(location.index).end(), [&](uint32_t p) {
-                                     return get_person(PersonId(p)).get_infection_state(t) == state;
-                                 });
-        }
-
+        // if (m_local_populations_cache.is_valid()) {
+        //     return std::count_if(m_local_populations_cache.read().at(location.index).begin(),
+        //                          m_local_populations_cache.read().at(location.index).end(), [&](uint32_t p) {
+        //                              return get_person(PersonId(p)).get_infection_state(t) == state;
+        //                          });
+        // }
+        // TODO: check performance on this.
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p.get_location() == location && p.get_infection_state(t) == state;
         });
@@ -356,8 +352,8 @@ public:
 
     size_t get_number_persons(LocationId location) const
     {
-        if (m_local_populations_cache.is_valid()) {
-            return m_local_populations_cache.read().at(location.index).size();
+        if (m_local_population_size_cache.is_valid()) {
+            return m_local_population_size_cache.read().at(location.index).value;
         }
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p.get_location() == location;
@@ -378,9 +374,9 @@ public:
         if (has_moved) {
             m_air_exposure_rates_cache.invalidate();
             m_contact_exposure_rates_cache.invalidate();
-            if (m_local_populations_cache.is_valid()) {
-                m_local_populations_cache.write().at(origin.index).erase(person.get());
-                m_local_populations_cache.write().at(destination.index).emplace(person.get());
+            if (m_local_population_size_cache.is_valid()) {
+                --m_local_population_size_cache.write().at(origin.index).value;
+                ++m_local_population_size_cache.write().at(destination.index).value;
             }
         }
     }
@@ -449,69 +445,52 @@ private:
      */
     void migration(TimePoint t, TimeSpan dt);
 
-    template <class T>
-    struct Cache {
-
-        const T& read() const
-        {
-            return data;
-        }
-
-        T& write()
-        {
-            return data;
-        }
-
-        bool is_valid() const
-        {
-            return m_is_valid;
-        }
-
-        void invalidate()
-        {
-            m_is_valid = false;
-        }
-
-        void validate()
-        {
-            m_is_valid = true;
-        }
-
-    private:
-        T data;
-        bool m_is_valid = false;
-    };
-
-    void rebuild()
+    void build_local_population_cache()
     {
-        m_local_populations_cache.write().clear();
+        m_local_population_size_cache.write().resize(m_locations.size());
+        // this loop (in partikular map[]) cannot run in parallel
         for (size_t i = 0; i < m_locations.size(); i++) {
-            m_local_populations_cache.write()[m_locations[i].get_index()].clear();
+            m_local_population_size_cache.write()[i].value = 0.;
         }
+        PRAGMA_OMP(parallel for)
         for (Person& person : get_persons()) {
-            m_local_populations_cache.write().at(person.get_location().index).emplace(person.get_person_id());
+            ++m_local_population_size_cache.write().at(person.get_location().index).value;
         }
     }
 
     void recompute_exposure_rates(TimePoint t, TimeSpan dt)
     {
-        for (Location& location : get_locations()) {
-            auto index = location.get_index();
-            m_air_exposure_rates_cache.write().at(index).array().setZero();
-            m_contact_exposure_rates_cache.write().at(index).array().setZero();
+        // use these const values to help omp recognize that the for loops are bounded
+        const auto num_locations = m_locations.size();
+        const auto num_persons   = m_persons.size();
+
+        // 1) reset all cached values
+        // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
+        PRAGMA_OMP(parallel for)
+        for (size_t i = 0; i < num_locations; ++i) {
+            const auto index = i;
+            m_air_exposure_rates_cache.write().at(index).setZero();
+            m_contact_exposure_rates_cache.write().at(index).setZero();
         }
-        for (Person& person : get_persons()) {
-            auto location = person.get_location().index;
+        // here is an implicit (and needed) barrier from parallel for
+
+        // 2) add all contributions from each person
+        PRAGMA_OMP(parallel for)
+        for (size_t i = 0; i < num_persons; ++i) {
+            const Person& person = m_persons[i];
+            const auto location  = person.get_location().index;
             mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.write().at(location),
                                                 m_contact_exposure_rates_cache.write().at(location), person,
                                                 get_location(person.get_person_id()), t, dt);
         }
     }
 
-    Cache<std::unordered_map<uint32_t, std::unordered_set<uint32_t>>>
-        m_local_populations_cache; // TODO: change this to storing only (sub)population(s) in numbers, using atomic ints
-    Cache<std::unordered_map<uint32_t, Location::AirExposureRates>> m_air_exposure_rates_cache;
-    Cache<std::unordered_map<uint32_t, Location::ContactExposureRates>> m_contact_exposure_rates_cache;
+    Cache<std::vector<CopyableAtomic<std::atomic_int_fast32_t>>>
+        m_local_population_size_cache; ///< Current number of Persons in a given location.
+    Cache<std::vector<AirExposureRates>>
+        m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
+    Cache<std::vector<ContactExposureRates>>
+        m_contact_exposure_rates_cache; ///< Cache for local exposure through contacts in #transmissions/day.
 
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.

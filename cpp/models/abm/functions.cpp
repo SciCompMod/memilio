@@ -1,5 +1,24 @@
-#include "functions.h"
+/* 
+* Copyright (C) 2020-2024 MEmilio
+*
+* Authors: Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
+#include "abm/functions.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/random_events.h"
@@ -15,7 +34,7 @@ namespace abm
 
 // TODO: daily_transmissions functions are only used in interact. expose in header anyways?
 
-ScalarType daily_transmissions_by_contacts(const Location::ContactExposureRates& rates, const CellIndex cell_index,
+ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                            const VirusVariant virus, const AgeGroup age_receiver,
                                            const LocalInfectionParameters& params)
 {
@@ -28,16 +47,15 @@ ScalarType daily_transmissions_by_contacts(const Location::ContactExposureRates&
     return prob;
 }
 
-ScalarType daily_transmissions_by_air(const Location::AirExposureRates& rates, const CellIndex cell_index,
+ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellIndex cell_index,
                                       const VirusVariant virus, const Parameters& global_params)
 {
     return rates[{cell_index, virus}] * global_params.get<AerosolTransmissionRates>()[{virus}];
 }
 
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
-              const Location::AirExposureRates& local_air_exposure,
-              const Location::ContactExposureRates& local_contact_exposure, const TimePoint t, const TimeSpan dt,
-              const Parameters& global_parameters)
+              const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
+              const TimePoint t, const TimeSpan dt, const Parameters& global_parameters)
 {
     // make sure all dimensions are set correctly and all indices are valid
     assert(location.get_cells().size() == local_air_exposure.size<CellIndex>().get());
@@ -83,9 +101,8 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
     person.add_time_at_location(dt);
 }
 
-void add_exposure_contribution(Location::AirExposureRates& local_air_exposure,
-                               Location::ContactExposureRates& local_contact_exposure, const Person& person,
-                               const Location& location, const TimePoint t, const TimeSpan dt)
+void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
+                               const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
 {
     assert([&]() {
         if (person.get_location() != location.get_id()) {
@@ -117,8 +134,8 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
               const std::vector<Person>& local_population, const TimePoint t, const TimeSpan dt,
               const Parameters& global_parameters)
 {
-    Location::AirExposureRates local_air_exposure{{CellIndex(location.get_cells().size()), VirusVariant::Count}, 0.};
-    Location::ContactExposureRates local_contact_exposure{
+    AirExposureRates local_air_exposure{{CellIndex(location.get_cells().size()), VirusVariant::Count}, 0.};
+    ContactExposureRates local_contact_exposure{
         {CellIndex(location.get_cells().size()), VirusVariant::Count, AgeGroup(global_parameters.get_num_groups())},
         0.};
     for (const Person& p : local_population) {

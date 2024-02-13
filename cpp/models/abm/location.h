@@ -20,11 +20,12 @@
 #ifndef MIO_ABM_LOCATION_H
 #define MIO_ABM_LOCATION_H
 
+#include "caching.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
 #include "abm/location_type.h"
-#include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/custom_index_array.h"
+
+#include "boost/atomic/atomic.hpp"
 
 namespace mio
 {
@@ -37,6 +38,9 @@ struct CellIndex : public mio::Index<CellIndex> {
     {
     }
 };
+
+using ContactExposureRates = CustomAtomicIndexArray<boost::atomic<ScalarType>, CellIndex, VirusVariant, AgeGroup>;
+using AirExposureRates     = CustomAtomicIndexArray<boost::atomic<ScalarType>, CellIndex, VirusVariant>;
 
 /**
  * @brief CellCapacity describes the size of a Cell. 
@@ -82,8 +86,6 @@ struct Cell {
 class Location
 {
 public:
-    using ContactExposureRates = CustomIndexArray<ScalarType, CellIndex, VirusVariant, AgeGroup>;
-    using AirExposureRates     = CustomIndexArray<ScalarType, CellIndex, VirusVariant>;
     /**
      * @brief Construct a Location of a certain LocationId.
      * @param[in] loc_id The #LocationId.
