@@ -86,6 +86,6 @@ int main()
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, tmax, 0.5, model);
     // Calculate the distribution in infectionState without subcompartments of the result and print it.
-    mio::TimeSeries<ScalarType> populations_no_subcompartments = model.calculate_populations(result);
-    populations_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_populations(result);
+    population_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 }

@@ -547,12 +547,10 @@ TEST(TestLCTSecir, testInfectionState)
     mio::lsecir::InfectionState InfState;
 
     // Try to set new number of subcompartments with an invalid vector.
-    bool not_valid =
-        InfState.set_subcompartment_numbers(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count - 1, 1));
-    EXPECT_TRUE(not_valid);
+    EXPECT_FALSE(
+        InfState.set_subcompartment_numbers(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count - 1, 1)));
     // Try to set new number of subcompartments with valid vector.
-    not_valid = InfState.set_subcompartment_numbers(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count, 1));
-    EXPECT_FALSE(not_valid);
+    EXPECT_TRUE(InfState.set_subcompartment_numbers(std::vector<int>((int)mio::lsecir::InfectionStateBase::Count, 1)));
 
     // Try to get the number of subcompartments for an invalid index.
     EXPECT_EQ(-1, InfState.get_number(-1));
