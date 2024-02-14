@@ -377,10 +377,10 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     world.get_trip_list().use_weekday_trips_on_weekend();
 }
 
-std::pair<double, double> get_my_and_sigma(std::pair<double, double> mean_and_qstd)
+std::pair<double, double> get_my_and_sigma(std::pair<double, double> mean_and_std)
 {
-    auto mean    = mean_and_qstd.first;
-    auto stddev  = mean_and_qstd.second;
+    auto mean    = mean_and_std.first;
+    auto stddev  = mean_and_std.second;
     double my    = log(mean * mean / sqrt(mean * mean + stddev * stddev));
     double sigma = sqrt(log(1 + stddev * stddev / (mean * mean)));
     return {my, sigma};
@@ -395,48 +395,50 @@ void set_parameters(mio::abm::Parameters params)
     auto incubation_period_my_sigma          = get_my_and_sigma({4.5, 1.5});
     params.get<mio::abm::IncubationPeriod>() = {incubation_period_my_sigma.first, incubation_period_my_sigma.second};
 
-    auto InfectedNoSymptoms_to_symptoms_my_sigma             = get_my_and_sigma({0.5, 0.5});
+    auto InfectedNoSymptoms_to_symptoms_my_sigma             = get_my_and_sigma({1.1, 0.9});
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>() = {InfectedNoSymptoms_to_symptoms_my_sigma.first,
                                                                 InfectedNoSymptoms_to_symptoms_my_sigma.second};
 
-    auto TimeInfectedNoSymptomsToRecovered_my_sigma           = get_my_and_sigma({10, 5});
+    auto TimeInfectedNoSymptomsToRecovered_my_sigma           = get_my_and_sigma({8.0, 2.0});
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>() = {TimeInfectedNoSymptomsToRecovered_my_sigma.first,
                                                                  TimeInfectedNoSymptomsToRecovered_my_sigma.second};
 
-    auto TimeInfectedSymptomsToSevere_my_sigma           = get_my_and_sigma({7, 2});
+    auto TimeInfectedSymptomsToSevere_my_sigma           = get_my_and_sigma({6.6, 4.9});
     params.get<mio::abm::TimeInfectedSymptomsToSevere>() = {TimeInfectedSymptomsToSevere_my_sigma.first,
                                                             TimeInfectedSymptomsToSevere_my_sigma.second};
 
-    auto TimeInfectedSymptomsToRecovered_my_sigma           = get_my_and_sigma({14, 3});
+    auto TimeInfectedSymptomsToRecovered_my_sigma           = get_my_and_sigma({8.0, 2.0});
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>() = {TimeInfectedSymptomsToRecovered_my_sigma.first,
                                                                TimeInfectedSymptomsToRecovered_my_sigma.second};
 
-    auto TimeInfectedSevereToCritical_my_sigma           = get_my_and_sigma({7, 2});
+    auto TimeInfectedSevereToCritical_my_sigma           = get_my_and_sigma({1.5, 2.0});
     params.get<mio::abm::TimeInfectedSevereToCritical>() = {TimeInfectedSevereToCritical_my_sigma.first,
                                                             TimeInfectedSevereToCritical_my_sigma.second};
 
-    auto TimeInfectedSevereToRecovered_my_sigma           = get_my_and_sigma({14, 3});
+    auto TimeInfectedSevereToRecovered_my_sigma           = get_my_and_sigma({18.1, 6.3});
     params.get<mio::abm::TimeInfectedSevereToRecovered>() = {TimeInfectedSevereToRecovered_my_sigma.first,
                                                              TimeInfectedSevereToRecovered_my_sigma.second};
 
-    auto TimeInfectedCriticalToDead_my_sigma           = get_my_and_sigma({7, 2});
+    auto TimeInfectedCriticalToDead_my_sigma           = get_my_and_sigma({10.7, 4.8});
     params.get<mio::abm::TimeInfectedCriticalToDead>() = {TimeInfectedCriticalToDead_my_sigma.first,
                                                           TimeInfectedCriticalToDead_my_sigma.second};
 
-    auto TimeInfectedCriticalToRecovered_my_sigma           = get_my_and_sigma({14, 3});
+    auto TimeInfectedCriticalToRecovered_my_sigma           = get_my_and_sigma({18.1, 6.3});
     params.get<mio::abm::TimeInfectedCriticalToRecovered>() = {TimeInfectedCriticalToRecovered_my_sigma.first,
                                                                TimeInfectedCriticalToRecovered_my_sigma.second};
 
     // Set percentage parameters
-    params.get<mio::abm::CriticalPerInfectedSevere>() = 0.05;
-    params.get<mio::abm::DeathsPerInfectedCritical>() = 0.1;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>() = 0.5;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()     = 0.1;
+    params.get<mio::abm::CriticalPerInfectedSevere>()     = 0.05;
+    params.get<mio::abm::DeathsPerInfectedCritical>()     = 0.002;
 
     // Set infection parameters
-    // // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
-    // params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
-    //     return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-    //         {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
-    // };
+    // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
+            {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
+    };
 
     // Set protection level from low viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     // params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_60_to_79,
@@ -487,7 +489,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
 
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
+    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(1);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
