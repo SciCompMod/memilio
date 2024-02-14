@@ -67,13 +67,14 @@ int main()
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2;
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
     model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
-    // Also possible to change values with setter.
+    // It is also possible to change values with the set function.
     model.parameters.set<mio::lsecir::TimeInfectedCritical>(7.1);
 
     model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
 
     model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
