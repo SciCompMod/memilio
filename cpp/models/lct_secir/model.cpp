@@ -40,7 +40,7 @@ Model::Model(Eigen::VectorXd init, InfectionState infectionState_init, Parameter
 bool Model::check_constraints() const
 {
     if (!(infectionState.get_count() == m_initial_values.size())) {
-        log_error("Size of the initial values does not match Subcompartments.");
+        log_error("Size of the initial values does not match subcompartments.");
         return true;
     }
     for (int i = 0; i < infectionState.get_count(); i++) {

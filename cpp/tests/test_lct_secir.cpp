@@ -55,7 +55,7 @@ TEST(TestLCTSecir, simulateDefault)
     }
 }
 
-/* Test compares the result for an LCT SECIR model with one single Subcompartment for each infection state 
+/* Test compares the result for an LCT SECIR model with one single subcompartment for each infection state 
     with the result of the equivalent ODE SECIR model. */
 TEST(TestLCTSecir, compareWithOdeSecir)
 {
@@ -259,7 +259,7 @@ protected:
         SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
         mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
 
-        // Define initial population distribution in infection states, one entry per Subcompartment.
+        // Define initial population distribution in infection states, one entry per subcompartment.
         Eigen::VectorXd init(InfState.get_count());
         init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
         init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
@@ -371,7 +371,7 @@ TEST(TestLCTSecir, testConstraints)
     bool constraint_check = InfState1.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    // Check with right size but wrong number of Subcompartments for Susceptibles.
+    // Check with right size but wrong number of subcompartments for Susceptibles.
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Susceptible]        = 2;
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
@@ -402,7 +402,7 @@ TEST(TestLCTSecir, testConstraints)
     EXPECT_TRUE(constraint_check);
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Dead] = 1;
 
-    // Check if number of Subcompartments is zero.
+    // Check if number of subcompartments is zero.
     SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed] = 0;
     std::vector<int> SubcompartmentNumbers_copy4(SubcompartmentNumbers);
     mio::lsecir::InfectionState InfState5(SubcompartmentNumbers_copy4);
