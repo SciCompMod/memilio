@@ -18,19 +18,18 @@
 # limitations under the License.
 #############################################################################
 
+from memilio.epidata import modifyDataframeSeries as mdfs
+from memilio.epidata import getNPIData as gnd
+from memilio.epidata import getCaseData as gcd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from datetime import date
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
-from datetime import date
-
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import getCaseData as gcd
-from memilio.epidata import getNPIData as gnd
-from memilio.epidata import modifyDataframeSeries as mdfs
 
 pd.options.mode.copy_on_write = True
 
@@ -176,7 +175,7 @@ def backward_selection():
     # do regression with all NPIs
     results = regression_model(column_names)
     # store pvalues in dataframe
-    df_pvalues = pd.DataFrame({"pvalue": results.pvalues})
+    df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
     # add column with column names to df
     df_pvalues.insert(1, "columns", column_names)
     # drop rows with pvalue that is NaN
@@ -201,7 +200,7 @@ def backward_selection():
         # choose NPI of interest which is chosen according to the n-th highest pvalue
         # n is determined by the counter which is set accordingly if a NPI was removed or not in the previous iteration, see below
         npi_of_interest = df_pvalues.sort_values(
-            'pvalue', ascending=False).iloc[counter].name
+            'pvalues', ascending=False).iloc[counter].name
 
         # create view of df_pvalues where we remove npi_of_interest and that will be used for regression_model
         df_view = df_pvalues[~df_pvalues.index.isin([npi_of_interest])]
@@ -216,7 +215,7 @@ def backward_selection():
 
         # check if AIC and BIC have decreased compared to before
         if (aic < aic_min) and (bic < bic_min):
-            # set new referene values for AIC and BIC
+            # set new reference values for AIC and BIC
             aic_min = aic
             bic_min = bic
 
@@ -246,11 +245,42 @@ def backward_selection():
             counter += 1
 
     print(removed_list)
+
+    # do one last regression here to make sure that df_pvalues and results are matching
+    # (i.e. also if in last loop no NPI was removed)
+    results = regression_model(df_pvalues['columns'])
+
+    # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
+    df_pvalues.insert(2, "coeffs", list(results.params))
+    df_pvalues.insert(3, "conf_int_min", list(results.conf_int()[0]))
+    df_pvalues.insert(4, "conf_int_max", list(results.conf_int()[1]))
+
+    return df_pvalues, results
+
+
+def plot_confidence_intervals(df_pvalues):
+
+    # plot coefficients and confidence intervals per NPI
+    fig, ax = plt.subplots()
+    for i in range(len(df_pvalues)):
+        ax.plot((df_pvalues['conf_int_min'][i],
+                 df_pvalues['conf_int_max'][i]), (i, i), '-o', color='teal', markersize=3)
+        ax.scatter(df_pvalues['coeffs'][i], i, color='teal', marker='x')
+
+    ax.set_yticks(range(0, len(df_pvalues)), list(df_pvalues['columns']))
+    ax.invert_yaxis()
+
+    if not os.path.isdir('plots'):
+        os.makedirs('plots')
+    plt.savefig('plots/regression_results.png', format='png',
+                dpi=500)
+
     return
 
 
 def main():
-    backward_selection()
+    df_pvalues, results = backward_selection()
+    plot_confidence_intervals(df_pvalues)
 
 
 if __name__ == "__main__":
