@@ -52,7 +52,7 @@ def download_testing_data():
     header = {'User-Agent': 'Mozilla/5.0'}
     r = requests.get(url, headers=header)
     with io.BytesIO(r.content) as fh:
-        df = pd.io.excel.ExcelFile(fh, engine='openpyxl')
+        df = pd.io.excel.ExcelFile(fh, engine=gd.Conf.excel_engine)
         sheet_names = df.sheet_names
         df_test[0] = pd.read_excel(
             df, sheet_name=sheet_names[1],
@@ -68,7 +68,7 @@ def download_testing_data():
     header = {'User-Agent': 'Mozilla/5.0'}
     r = requests.get(url, headers=header)
     with io.BytesIO(r.content) as fh:
-        df = pd.io.excel.ExcelFile(fh, engine='openpyxl')
+        df = pd.io.excel.ExcelFile(fh, engine=gd.Conf.excel_engine)
         sheet_names = df.sheet_names
         df_test[1] = pd.read_excel(df, sheet_name=sheet_names[3], header=[4],
                                    dtype={'Anteil positiv': float})
