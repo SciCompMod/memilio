@@ -22,10 +22,6 @@
 
 #include "abm/world.h"
 #include "abm/time.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/epidemiology/populations.h"
-#include "memilio/io/history.h"
 
 namespace mio
 {
@@ -35,6 +31,7 @@ namespace abm
 /**
  * @brief Run the Simulation in discrete steps, evolve the World and report results.
  */
+template <typename FP = double>
 class Simulation
 {
 
@@ -44,7 +41,12 @@ public:
      * @param[in] t0 The starting time of the Simulation.
      * @param[in] world The World to simulate.
      */
-    Simulation(TimePoint t0, World&& world);
+    Simulation(TimePoint t0, World<FP>&& world)
+        : m_world(std::move(world))
+        , m_t(t0)
+        , m_dt(hours(1))
+    {
+    }
 
     /**
      * @brief Create a Simulation with an empty World.
@@ -53,7 +55,7 @@ public:
      * @param[in] t0 The starting time of the Simulation.
      */
     Simulation(TimePoint t0, size_t num_agegroups)
-        : Simulation(t0, World(num_agegroups))
+        : Simulation(t0, World<FP>(num_agegroups))
     {
     }
 
@@ -84,20 +86,25 @@ public:
     /**
      * @brief Get the World that this Simulation evolves.
      */
-    World& get_world()
+    World<FP>& get_world()
     {
         return m_world;
     }
-    const World& get_world() const
+    const World<FP>& get_world() const
     {
         return m_world;
     }
 
 private:
     void store_result_at(TimePoint t);
-    void evolve_world(TimePoint tmax);
+    void evolve_world(TimePoint tmax)
+    {
+        auto dt = std::min(m_dt, tmax - m_t);
+        m_world.evolve(m_t, dt);
+        m_t += m_dt;
+    }
 
-    World m_world; ///< The World to simulate.
+    World<FP> m_world; ///< The World to simulate.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

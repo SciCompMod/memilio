@@ -28,8 +28,8 @@ TEST(TestLockdownRules, school_closure)
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(6);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> school(mio::abm::LocationType::School, 0, num_age_groups);
 
     //setup rng mock so one person is home schooled and the other goes to school
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -53,17 +53,17 @@ TEST(TestLockdownRules, school_closure)
     p2.set_assigned_location(school);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
     mio::abm::set_school_closure(t, 0.7, params);
 
-    auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, p1);
+    auto p1_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, p1);
     ASSERT_EQ(mio::abm::go_to_school(p1_rng, p1, t_morning, dt, params), mio::abm::LocationType::Home);
-    auto p2_rng = mio::abm::Person::RandomNumberGenerator(rng, p2);
+    auto p2_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, p2);
     ASSERT_EQ(mio::abm::go_to_school(p2_rng, p2, t_morning, dt, params), mio::abm::LocationType::School);
 }
 
@@ -75,8 +75,8 @@ TEST(TestLockdownRules, school_opening)
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(7);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> school(mio::abm::LocationType::School, 0, num_age_groups);
     //setup rng mock so the person is homeschooled in case of lockdown
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -86,21 +86,21 @@ TEST(TestLockdownRules, school_opening)
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
-    auto p = mio::abm::Person(rng, home, age_group_5_to_14);
+    auto p = mio::abm::Person<double>(rng, home, age_group_5_to_14);
     p.set_assigned_location(home);
     p.set_assigned_location(school);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
     mio::abm::set_school_closure(t_closing, 1., params);
     mio::abm::set_school_closure(t_opening, 0., params);
 
-    auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, p);
     ASSERT_EQ(mio::abm::go_to_school(p_rng, p, t_morning, dt, params), mio::abm::LocationType::School);
 }
 
@@ -111,15 +111,15 @@ TEST(TestLockdownRules, home_office)
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt        = mio::abm::hours(1);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0);
     mio::abm::Parameters params(num_age_groups);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -142,9 +142,9 @@ TEST(TestLockdownRules, home_office)
     person2.set_assigned_location(home);
     person2.set_assigned_location(work);
 
-    auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, person1);
+    auto p1_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, person1);
     ASSERT_EQ(mio::abm::go_to_work(p1_rng, person1, t_morning, dt, params), mio::abm::LocationType::Work);
-    auto p2_rng = mio::abm::Person::RandomNumberGenerator(rng, person2);
+    auto p2_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, person2);
     ASSERT_EQ(mio::abm::go_to_work(p2_rng, person2, t_morning, dt, params), mio::abm::LocationType::Home);
 }
 
@@ -156,8 +156,8 @@ TEST(TestLockdownRules, no_home_office)
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(8);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);
 
     //setup rng mock so the person works in home office
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -173,17 +173,17 @@ TEST(TestLockdownRules, no_home_office)
     p.set_assigned_location(work);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = false;
+    params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = false;
+    params.get<mio::abm::AgeGroupGotoWork>()                     = false;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
     mio::abm::set_home_office(t_closing, 0.5, params);
     mio::abm::set_home_office(t_opening, 0., params);
 
-    auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, p);
     ASSERT_EQ(mio::abm::go_to_work(p_rng, p, t_morning, dt, params), mio::abm::LocationType::Work);
 }
 
@@ -194,8 +194,8 @@ TEST(TestLockdownRules, social_event_closure)
     auto dt        = mio::abm::hours(1);
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::hours(19);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
     auto p = mio::abm::Person(rng, home, age_group_5_to_14);
     p.set_assigned_location(home);
     p.set_assigned_location(event);
@@ -203,7 +203,7 @@ TEST(TestLockdownRules, social_event_closure)
 
     mio::abm::close_social_events(t, 1, params);
 
-    auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, p);
     ASSERT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::Home);
 }
 
@@ -215,8 +215,8 @@ TEST(TestLockdownRules, social_events_opening)
     auto dt        = mio::abm::hours(1);
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(19);
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
+    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location<double> event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
     auto p = mio::abm::Person(rng, home, age_group_5_to_14);
     p.set_assigned_location(event);
     p.set_assigned_location(home);
@@ -228,6 +228,6 @@ TEST(TestLockdownRules, social_events_opening)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
-    auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::Person<double>::RandomNumberGenerator(rng, p);
     ASSERT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::SocialEvent);
 }

@@ -29,7 +29,7 @@ add_library(abm
     mask.cpp
     common_abm_loggers.h
 )
-target_link_libraries(abm PUBLIC memilio)
+target_link_libraries(abm PUBLIC memilio AD::AD)
 target_include_directories(abm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>

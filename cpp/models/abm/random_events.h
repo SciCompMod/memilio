@@ -17,11 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef EPI_ABM_RANDOM_EVENTS_H
+#define EPI_ABM_RANDOM_EVENTS_H
+
 #include "abm/time.h"
 #include "memilio/utils/random_number_generator.h"
 #include <algorithm>
 #include <array>
 #include <numeric>
+#include "ad/ad.hpp"
 
 namespace mio
 {
@@ -40,14 +44,15 @@ namespace abm
  * @tparam RNG Type that satisfies the UniformRandomBitGenerator concept.
  * @tparam T Type that represents the states.
  * @tparam NumTransitions Number of possible transitions.
+ * @tparam FP, floating point type, e.g., double
  * @param[inout] rng RandomNumberGenerator.
  * @param[in] current_state Current state before transition.
  * @param[in] dt Length of the time step.
  * @param[in] transitions Array of pairs of new states and their rates (probabilities).
  * @return New state from the list if transition happens, current_state otherwise.
  */
-template <class RNG, class T, size_t NumTransitions>
-T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, double> (&transitions)[NumTransitions])
+template <class RNG, class T, size_t NumTransitions, typename FP=double>
+T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, FP> (&transitions)[NumTransitions])
 {
     assert(std::all_of(std::begin(transitions), std::end(transitions),
                        [](auto& p) {
@@ -56,16 +61,16 @@ T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, d
            "transition rates must be non-negative");
 
     //check if any transition happens using exponential distribution with the sum of all transition rates
-    auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& a, auto&& t) {
+    auto sum = std::accumulate(std::begin(transitions), std::end(transitions), FP(0.0), [](auto&& a, auto&& t) {
         return a + t.second;
     });
     if (sum <= 0) { //no transitions or all transitions have rate zero
         return current_state;
     }
-    auto v = ExponentialDistribution<double>::get_instance()(rng, sum);
+    auto v = ExponentialDistribution<double>::get_instance()(rng, ad::value(sum));
     if (v < dt.days()) {
         //pick one of the possible transitions using discrete distribution
-        std::array<double, NumTransitions> rates;
+        std::array<FP, NumTransitions> rates;
         std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&& t) {
             return t.second;
         });
@@ -78,3 +83,5 @@ T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, d
 
 } // namespace abm
 } // namespace mio
+
+#endif

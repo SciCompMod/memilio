@@ -77,7 +77,8 @@ mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_locati
 struct LogLocationInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
     /**
-     * @brief Log the LocationInformation of the simulation. 
+     * @brief Log the LocationInformation of the simulation.
+     * @tparam FP floating point type, e.g., double.
      * @param[in] sim The simulation of the abm.
      * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
      * -# The index of the location.
@@ -86,7 +87,8 @@ struct LogLocationInformation : mio::LogOnce {
      * -# The number of cells in the location.
      * -# The capacity of the location.
     */
-    static Type log(const mio::abm::Simulation& sim)
+    template <typename FP = double>
+    static Type log(const mio::abm::Simulation<FP>& sim)
     {
         Type location_information{};
         for (auto&& location : sim.get_world().get_locations()) {
@@ -110,13 +112,15 @@ struct LogPersonInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::AgeGroup>>;
     /** 
      * @brief Log the LocationInformation of the simulation. 
+     * @tparam FP floating point type, e.g., double.
      * @param[in] sim The simulation of the abm.
      * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
      * -# The person id.
      * -# The index of the home location.
      * -# The age group of the person.
     */
-    static Type log(const mio::abm::Simulation& sim)
+    template <typename FP = double>
+    static Type log(const mio::abm::Simulation<FP>& sim)
     {
         Type person_information{};
         for (auto&& person : sim.get_world().get_persons()) {
@@ -136,6 +140,7 @@ struct LogDataForMovement : mio::LogAlways {
                                         mio::abm::ActivityType, mio::abm::InfectionState>>;
     /** 
      * @brief Log the Movement Data of the agents in the simulation.
+     * @tparam FP floating point type, e.g., double.
      * @param[in] sim The simulation of the abm.
      * @return A vector of tuples with the Movement Data, where each tuple contains the following information:
      * -# The person id.
@@ -145,7 +150,8 @@ struct LogDataForMovement : mio::LogAlways {
      * -# The activity type.
      * -# The infection state.
      */
-    static Type log(const mio::abm::Simulation& sim)
+    template <typename FP = double>
+    static Type log(const mio::abm::Simulation<FP>& sim)
     {
         Type movement_data{};
         for (Person p : sim.get_world().get_persons()) {
@@ -164,10 +170,12 @@ struct LogInfectionState : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
     /** 
      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @tparam FP floating point type, e.g., double.
      * @param[in] sim The simulation of the abm.
      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
      */
-    static Type log(const mio::abm::Simulation& sim)
+    template <typename FP = double>
+    static Type log(const mio::abm::Simulation<FP>& sim)
     {
 
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));

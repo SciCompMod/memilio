@@ -18,14 +18,14 @@
 * limitations under the License.
 */
 
-#include "ide_secir/model.h"
+#include "ide_secir/model.h" // IWYU pragma: keep
 #include "ide_secir/infection_state.h"
-#include "ide_secir/parameters.h"
+#include "ide_secir/parameters.h" // IWYU pragma: keep
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
-#include "memilio/math/eigen.h"
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/utils/time_series.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/uncertain_matrix.h" // IWYU pragma: keep
 #include <iostream>
 
 int main()
@@ -63,7 +63,7 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model<double> model(std::move(init), N, Dead_before);
 
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
@@ -81,9 +81,9 @@ int main()
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    model.parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
     mio::ExponentialDecay expdecay(0.5);
     mio::StateAgeFunctionWrapper prob(expdecay);
@@ -94,7 +94,7 @@ int main()
     model.check_constraints(dt);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation<double> sim(model, 0, dt);
     sim.advance(tmax);
 
     sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);

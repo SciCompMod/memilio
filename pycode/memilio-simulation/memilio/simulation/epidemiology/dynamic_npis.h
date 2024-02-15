@@ -34,41 +34,42 @@ namespace pymio
 
 void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
 {
-    bind_Range<decltype(std::declval<mio::DynamicNPIs>().get_thresholds())>(m, "_ThresholdRange");
-    using C = mio::DynamicNPIs;
+    bind_Range<decltype(std::declval<mio::DynamicNPIs<double>>().get_thresholds())>(m, "_ThresholdRange");
+    using C = mio::DynamicNPIs<double>;
     pybind11::class_<C>(m, name.c_str())
         .def(pybind11::init<>())
         .def_property(
             "interval",
-            [](mio::DynamicNPIs& self) {
+            [](mio::DynamicNPIs<double>& self) {
                 return static_cast<double>(self.get_interval());
             },
-            [](mio::DynamicNPIs& self, double v) {
+            [](mio::DynamicNPIs<double>& self, double v) {
                 self.set_interval(mio::SimulationTime(v));
             })
         .def_property(
             "duration",
-            [](mio::DynamicNPIs& self) {
+            [](mio::DynamicNPIs<double>& self) {
                 return static_cast<double>(self.get_duration());
             },
-            [](mio::DynamicNPIs& self, double v) {
+            [](mio::DynamicNPIs<double>& self, double v) {
                 self.set_duration(mio::SimulationTime(v));
             })
         .def_property(
             "base_value",
-            [](mio::DynamicNPIs& self) {
+            [](mio::DynamicNPIs<double>& self) {
                 return static_cast<double>(self.get_base_value());
             },
-            [](mio::DynamicNPIs& self, double v) {
+            [](mio::DynamicNPIs<double>& self, double v) {
                 self.set_base_value(v);
             })
         .def_property_readonly("threshold",
-                               [](mio::DynamicNPIs& self) {
+                               [](mio::DynamicNPIs<double>& self) {
                                    return self.get_thresholds();
                                })
-        .def("set_threshold", [](mio::DynamicNPIs& self, double threshold, const std::vector<mio::DampingSampling>& v) {
-            self.set_threshold(threshold, v);
-        });
+        .def("set_threshold",
+             [](mio::DynamicNPIs<double>& self, double threshold, const std::vector<mio::DampingSampling<double>>& v) {
+                 self.set_threshold(threshold, v);
+             });
 }
 
 } // namespace pymio

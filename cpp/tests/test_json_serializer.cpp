@@ -328,7 +328,7 @@ TEST(TestJsonSerializer, uniform_distribution)
 
 TEST(TestJsonSerializer, serialize_uv)
 {
-    mio::UncertainValue uv(2.0);
+    mio::UncertainValue<double> uv(2.0);
     Json::Value expected_value;
     expected_value["Value"] = 2.0;
     auto js                 = mio::serialize_json(uv);
@@ -350,7 +350,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     Json::Value json_uv;
     json_uv["Value"] = 2.0;
     {
-        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue>{});
+        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});
         EXPECT_TRUE(r);
         EXPECT_EQ(double(r.value()), 2.0);
         EXPECT_EQ(r.value().get_distribution(), nullptr);
@@ -363,7 +363,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     json_uv["Distribution"]["StandardDev"]       = 0.1;
     json_uv["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     {
-        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue>{});
+        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});
         EXPECT_TRUE(r);
         EXPECT_EQ(double(r.value()), 2.0);
         EXPECT_NE(r.value().get_distribution(), nullptr);
@@ -475,21 +475,21 @@ TEST(TestJsonSerializer, container_of_objects)
 
 TEST(TestJsonSerializer, abmLocation)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, num_age_groups);
+    auto location = mio::abm::Location<double>(mio::abm::LocationType::Home, 0, num_age_groups);
     auto js       = mio::serialize_json(location);
     Json::Value expected_json;
     expected_json["index"] = Json::UInt64(0);
     expected_json["type"]  = Json::UInt64(mio::abm::LocationType::Home);
     ASSERT_EQ(js.value(), expected_json);
 
-    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location>());
+    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location<double>>());
     ASSERT_THAT(print_wrap(r), IsSuccess());
     EXPECT_EQ(r.value(), location);
 }
 
 TEST(TestJsonSerializer, abmPerson)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
+    auto location = mio::abm::Location<double>(mio::abm::LocationType::School, 0, 6);
     auto person   = make_test_person(location);
     auto js       = mio::serialize_json(person);
     Json::Value expected_json;

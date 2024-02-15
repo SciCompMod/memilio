@@ -24,10 +24,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <string>
 #include <vector>
-#include <fstream>
-#include <ios>
 #include <cmath>
 
 void sin_deriv(Eigen::Ref<Eigen::VectorXd const> /*y*/, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
@@ -57,7 +54,8 @@ public:
     double err;
 };
 
-using TestVerifyNumericalIntegratorEuler = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore>>;
+using TestVerifyNumericalIntegratorEuler =
+    TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore<double>>>;
 TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
 {
     n   = 1000;
@@ -71,7 +69,7 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
-    mio::EulerIntegratorCore euler;
+    mio::EulerIntegratorCore<double> euler;
 
     auto t = t0;
     for (size_t i = 0; i < n - 1; i++) {
@@ -89,10 +87,11 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-using TestTypes = ::testing::Types<mio::RKIntegratorCore,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
+using TestTypes =
+    ::testing::Types<mio::RKIntegratorCore<double>,
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>,
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_dopri5>,
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>;
 
 TYPED_TEST_SUITE(TestVerifyNumericalIntegrator, TestTypes);
 
@@ -145,7 +144,7 @@ auto DoStep()
                           testing::Return(true));
 }
 
-class MockIntegratorCore : public mio::IntegratorCore
+class MockIntegratorCore : public mio::IntegratorCore<double>
 {
 public:
     MockIntegratorCore()
@@ -153,7 +152,7 @@ public:
         ON_CALL(*this, step).WillByDefault(DoStep());
     }
     MOCK_METHOD(bool, step,
-                (const mio::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                (const mio::DerivFunction<double>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
 };
@@ -165,7 +164,7 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     EXPECT_CALL(*mock_core, step).Times(100);
 
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(mock_core);
+    auto integrator = mio::OdeIntegrator<double>(mock_core);
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt = 1e-2;
     integrator.advance(f, 1, dt, result);
@@ -177,7 +176,7 @@ TEST(TestOdeIntegrator, integratorStopsAtTMax)
     auto f = [](auto&&, auto&&, auto&&) {};
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 0.137;
-    auto integrator = mio::OdeIntegrator(std::make_shared<testing::NiceMock<MockIntegratorCore>>());
+    auto integrator = mio::OdeIntegrator<double>(std::make_shared<testing::NiceMock<MockIntegratorCore>>());
     integrator.advance(f, 2.34, dt, result);
     EXPECT_DOUBLE_EQ(result.get_last_time(), 2.34);
 }
@@ -221,7 +220,7 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     auto f = [](auto&&, auto&&, auto&&) {};
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 1.0;
-    auto integrator = mio::OdeIntegrator(mock_core);
+    auto integrator = mio::OdeIntegrator<double>(mock_core);
     integrator.advance(f, 10.0, dt, result);
     integrator.advance(f, 23.0, dt, result);
 }
@@ -243,7 +242,7 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     auto y0         = Eigen::VectorXd::Constant(1, 0);
     auto mock_core  = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(mock_core);
+    auto integrator = mio::OdeIntegrator<double>(mock_core);
     mio::TimeSeries<double> result(0, y0);
 
     {

@@ -43,7 +43,7 @@ const auto age_group_80_plus  = mio::AgeGroup(5);
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarType max)
+void assign_uniform_distribution(mio::UncertainValue<double>& p, ScalarType min, ScalarType max)
 {
     p = mio::UncertainValue(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
@@ -54,9 +54,9 @@ void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarT
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
-                                                   ScalarType infected_no_symptoms, ScalarType infected_symptoms,
-                                                   ScalarType recovered)
+mio::abm::InfectionState determine_infection_state(mio::abm::Person<double>::RandomNumberGenerator& rng,
+                                                   ScalarType exposed, ScalarType infected_no_symptoms,
+                                                   ScalarType infected_symptoms, ScalarType recovered)
 {
     ScalarType susceptible          = 1 - exposed - infected_no_symptoms - infected_symptoms - recovered;
     std::vector<ScalarType> weights = {
@@ -172,7 +172,7 @@ mio::abm::HouseholdGroup make_homes_with_families(const mio::abm::HouseholdMembe
     return private_household_group;
 }
 
-void create_world_from_statistical_data(mio::abm::World& world)
+void create_world_from_statistical_data(mio::abm::World<double>& world)
 {
 
     /** The data is taken from
@@ -279,7 +279,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int two_person_half_families  = 1765;
     int two_person_other_families = 166;
     auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
-                                                             two_person_half_families, two_person_other_families);
+                                                        two_person_half_families, two_person_other_families);
     add_household_group_to_world(world, twoPersonHouseholds);
 
     // Three person households
@@ -287,7 +287,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int three_person_half_families  = 662;
     int three_person_other_families = 175;
     auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
-                                                               three_person_half_families, three_person_other_families);
+                                                          three_person_half_families, three_person_other_families);
     add_household_group_to_world(world, threePersonHouseholds);
 
     // Four person households
@@ -295,7 +295,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int four_person_half_families  = 110;
     int four_person_other_families = 122;
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
-                                                              four_person_half_families, four_person_other_families);
+                                                         four_person_half_families, four_person_other_families);
     add_household_group_to_world(world, fourPersonHouseholds);
 
     // Five plus person households
@@ -311,7 +311,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
 /**
  * Add locations to the world and assign locations to the people.
  */
-void create_assign_locations(mio::abm::World& world)
+void create_assign_locations(mio::abm::World<double>& world)
 {
     // Add one social event with 100 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
@@ -443,12 +443,12 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_prob,
+void assign_infection_state(mio::abm::World<double>& world, mio::abm::TimePoint t, double exposed_prob,
                             double infected_no_symptoms_prob, double infected_symptoms_prob, double recovered_prob)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng             = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
@@ -459,9 +459,10 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
     }
 }
 
-void set_parameters(mio::abm::Parameters params)
+void set_parameters(mio::abm::Parameters<double> params)
 {
-    params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
+    params.set<mio::abm::IncubationPeriod<double>>(
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
@@ -470,160 +471,217 @@ void set_parameters(mio::abm::Parameters params)
     };
 
     //0-4
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.276;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.092;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.142;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]             = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]              = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]           = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]                = 0.001;
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.276;
+    params
+        .get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.092;
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.142;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.001;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.186;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = 0.015;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.143;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 0.001;
 
     //5-14
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.276;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.276;
+    params
+        .get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
         0.092;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.142;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]    = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]           = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]            = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]         = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]              = 0.001;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 0.;
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.142;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.001;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]   = 0.186;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]    = 0.015;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.143;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.;
 
     //15-34
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         0.315;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        0.079;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.139;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]    = 0.003;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]           = 0.157;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]            = 0.013;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]         = 0.126;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]              = 0.021;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                                   age_group_15_to_34}] = 0.079;
+    params
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.139;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.003;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]   = 0.157;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]    = 0.013;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.126;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]      = 0.021;
 
     //35-59
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
         0.315;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        0.079;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.136;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]    = 0.009;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]           = 0.113;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]            = 0.02;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]         = 0.05;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]              = 0.008;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]      = 0.;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                                   age_group_35_to_59}] = 0.079;
+    params
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.136;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.009;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]   = 0.113;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]    = 0.02;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.05;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]      = 0.008;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.;
 
     //60-79
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
         0.315;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        0.079;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.123;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]    = 0.024;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]           = 0.083;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]            = 0.035;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]         = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]              = 0.023;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]      = 0.;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                                   age_group_60_to_79}] = 0.079;
+    params
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.123;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.024;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]   = 0.083;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]    = 0.035;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.035;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]      = 0.023;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.;
 
     //80+
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.315;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.315;
+    params
+        .get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
         0.079;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.115;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]    = 0.033;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]           = 0.055;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]            = 0.036;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]         = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]              = 0.052;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.;
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.115;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.033;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]   = 0.055;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]    = 0.036;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.035;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.052;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.;
 
     // Set each parameter for vaccinated people including personal infection and vaccine protection levels.
     // Summary: https://doi.org/10.1038/s41577-021-00550-x,
 
     //0-4
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.161;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.132;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.143;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]             = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]              = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]           = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]                = 0.001;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]        = 0.0;
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.161;
+    params
+        .get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.132;
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.143;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        0.001;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.186;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = 0.015;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.143;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.0;
 
     //5-14
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.161;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.161;
+    params
+        .get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
         0.132;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.143;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]    = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]           = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]            = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]         = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]              = 0.001;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 0.0;
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.143;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
+        0.001;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]   = 0.186;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]    = 0.015;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.143;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.0;
 
     //15-34
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         0.179;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        0.126;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.142;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]    = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]           = 0.157;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]            = 0.013;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]         = 0.126;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]              = 0.021;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]      = 0.0;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                                   age_group_15_to_34}] = 0.126;
+    params
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.142;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.001;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]   = 0.157;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]    = 0.013;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.126;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]      = 0.021;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.0;
 
     //35-59
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
         0.179;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        0.126;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.141;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]    = 0.003;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]           = 0.113;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]            = 0.02;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]         = 0.05;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]              = 0.008;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]      = 0.0;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                                   age_group_35_to_59}] = 0.126;
+    params
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.141;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.003;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]   = 0.113;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]    = 0.02;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.05;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]      = 0.008;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.0;
 
     //60-79
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
         0.179;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        0.126;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.136;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]    = 0.009;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]           = 0.083;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]            = 0.035;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]         = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]              = 0.023;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]      = 0.0;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype,
+                                                                   age_group_60_to_79}] = 0.126;
+    params
+        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.136;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.009;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]   = 0.083;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]    = 0.035;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.035;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]      = 0.023;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.0;
 
     //80+
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.179;
-    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+    params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.179;
+    params
+        .get<mio::abm::InfectedNoSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
         0.126;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.133;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]    = 0.012;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]           = 0.055;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]            = 0.036;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]         = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]              = 0.052;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.0;
+    params.get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.133;
+    params.get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.012;
+    params.get<mio::abm::SevereToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]   = 0.055;
+    params.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]    = 0.036;
+    params.get<mio::abm::CriticalToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.035;
+    params.get<mio::abm::CriticalToDead<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.052;
+    params.get<mio::abm::RecoveredToSusceptible<double>>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.0;
 }
 
 /**
  * Create a sampled world with start time t0.
  * @param t0 the start time of the simulation
 */
-mio::abm::World create_sampled_world(const mio::abm::TimePoint& t0)
+mio::abm::World<double> create_sampled_world(const mio::abm::TimePoint& t0)
 {
     // mio::thread_local_rng().seed(
     //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
@@ -684,13 +742,13 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
-    auto ensemble_params = std::vector<std::vector<mio::abm::World>>{};
+    auto ensemble_params = std::vector<std::vector<mio::abm::World<double>>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto run_idx = size_t(1); // The run index
 
     // Create the sampled simulation with start time t0
     auto world = create_sampled_world(t0);
-    ensemble_params.push_back(std::vector<mio::abm::World>{world});
+    ensemble_params.push_back(std::vector<mio::abm::World<double>>{world});
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {

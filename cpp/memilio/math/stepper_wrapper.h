@@ -43,12 +43,10 @@ namespace mio
  * @brief Creates and manages an instance of a boost::numeric::odeint::controlled_runge_kutta
  * integrator, wrapped as mio::IntegratorCore.
  */
-template <template <class State = Eigen::VectorXd, class Value = double, class Deriv = State, class Time = double,
-                    class Algebra    = boost::numeric::odeint::vector_space_algebra,
-                    class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
-                    class Resizer    = boost::numeric::odeint::never_resizer>
+template <typename FP,
+          template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
           class ControlledStepper>
-class ControlledStepperWrapper : public mio::IntegratorCore
+class ControlledStepperWrapper : public mio::IntegratorCore<FP>
 {
 public:
     /**
@@ -76,18 +74,18 @@ public:
     * @param[in,out] dt current time step h=dt
     * @param[out] ytp1 approximated value y(t+1)
     */
-    bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1) const override
+    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1> const> yt, FP& t, FP& dt,
+              Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> ytp1) const override
     {
         // copy y(t) to dydt, to retrieve the VectorXd from the Ref
-        dydt               = yt;
-        const double t_old = t; // t is updated by try_step on a successfull step
+        dydt           = yt;
+        const FP t_old = t; // t is updated by try_step on a successfull step
         do {
             // we use the scheme try_step(sys, inout, t, dt) with sys=f, inout=y(t) for
             // in-place computation. This is similiar to do_step, but it can update t and dt
             m_stepper.try_step(
                 // reorder arguments of the DerivFunction f for the stepper
-                [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxds, double s) {
+                [&](const Eigen::Matrix<FP, Eigen::Dynamic, 1>& x, Eigen::Matrix<FP, Eigen::Dynamic, 1>& dxds, FP s) {
                     dxds.resizeLike(x); // try_step calls sys with a vector of size 0 for some reason
                     f(x, s, dxds);
                 },
@@ -99,48 +97,51 @@ public:
     }
 
     /// @param tol the required absolute tolerance for comparison of the iterative approximation
-    void set_abs_tolerance(double abs_tol)
+    void set_abs_tolerance(FP abs_tol)
     {
         m_abs_tol = abs_tol;
         m_stepper = create_stepper();
     }
 
     /// @param tol the required relative tolerance for comparison of the iterative approximation
-    void set_rel_tolerance(double rel_tol)
+    void set_rel_tolerance(FP rel_tol)
     {
         m_rel_tol = rel_tol;
         m_stepper = create_stepper();
     }
 
     /// @param dt_min sets the minimum step size
-    void set_dt_min(double dt_min)
+    void set_dt_min(FP dt_min)
     {
         m_dt_min = dt_min;
     }
 
     /// @param dt_max sets the maximum step size
-    void set_dt_max(double dt_max)
+    void set_dt_max(FP dt_max)
     {
         m_dt_max  = dt_max;
         m_stepper = create_stepper();
     }
 
 private:
-    boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>> create_stepper()
+    using CS = ControlledStepper<
+        Eigen::Matrix<FP, Eigen::Dynamic, 1>, FP, Eigen::Matrix<FP, Eigen::Dynamic, 1>, FP,
+        boost::numeric::odeint::vector_space_algebra,
+        typename boost::numeric::odeint::operations_dispatcher<Eigen::Matrix<FP, Eigen::Dynamic, 1>>::operations_type,
+        boost::numeric::odeint::never_resizer>;
+
+    boost::numeric::odeint::controlled_runge_kutta<CS> create_stepper()
     {
         // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
-        return boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>>(
-            boost::numeric::odeint::default_error_checker<typename ControlledStepper<>::value_type,
-                                                          typename ControlledStepper<>::algebra_type,
-                                                          typename ControlledStepper<>::operations_type>(m_abs_tol,
-                                                                                                         m_rel_tol),
-            boost::numeric::odeint::default_step_adjuster<typename ControlledStepper<>::value_type,
-                                                          typename ControlledStepper<>::time_type>(m_dt_max));
+        return boost::numeric::odeint::controlled_runge_kutta<CS>(
+            boost::numeric::odeint::default_error_checker<typename CS::value_type, typename CS::algebra_type,
+                                                          typename CS::operations_type>(m_abs_tol, m_rel_tol),
+            boost::numeric::odeint::default_step_adjuster<typename CS::value_type, typename CS::time_type>(m_dt_max));
     }
 
-    double m_abs_tol, m_rel_tol, m_dt_min, m_dt_max; // integrator parameters
-    mutable Eigen::VectorXd dydt;
-    mutable boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>> m_stepper;
+    FP m_abs_tol, m_rel_tol, m_dt_min, m_dt_max; // integrator parameters
+    mutable Eigen::Matrix<FP, Eigen::Dynamic, 1> dydt;
+    mutable boost::numeric::odeint::controlled_runge_kutta<CS> m_stepper;
 };
 
 } // namespace mio

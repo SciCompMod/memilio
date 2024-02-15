@@ -49,6 +49,22 @@ else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
+# ## IPOPT
+if(NOT WIN32)
+if(MEMILIO_USE_BUNDLED_IPOPT)
+    message(STATUS "Downloading Ipopt library")
+
+    include(FetchContent)
+
+    FetchContent_Declare(Ipopt
+        GIT_REPOSITORY https://git.rwth-aachen.de/avt-svt/public/thirdparty/IpoptCmake.git
+        GIT_TAG 3.14.12)
+
+    FetchContent_MakeAvailable(Ipopt)
+endif()
+endif()
+
+
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
     include(BuildBoost)

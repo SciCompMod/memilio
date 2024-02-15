@@ -97,17 +97,18 @@ struct ScopedMockDistribution {
 /**
  * @brief Create a Person without a World object. Intended for simple use in tests.
 */
-mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
-                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
-                                  mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups));
+mio::abm::Person<double>
+make_test_person(mio::abm::Location<double>& location, mio::AgeGroup age = age_group_15_to_34,
+                 mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                 mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
+                 mio::abm::Parameters<double> params      = mio::abm::Parameters(num_age_groups));
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.
 */
-mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
-                                  mio::AgeGroup age                        = age_group_15_to_34,
-                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+mio::abm::Person<double>&
+add_test_person(mio::abm::World<double>& world, mio::abm::LocationId loc_id, mio::AgeGroup age = age_group_15_to_34,
+                mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 
 #endif //ABM_HELPERS_H

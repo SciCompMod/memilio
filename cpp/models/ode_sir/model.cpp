@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "ode_sir/model.h"
+#include "ode_sir/model.h" // IWYU pragma: keep
 
 namespace mio
 {

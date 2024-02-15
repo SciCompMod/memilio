@@ -20,7 +20,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>
+#include <functional> // IWYU pragma: keep
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -30,7 +30,7 @@
 #include "memilio/geography/regions.h"
 #include <iostream>
 
-#include "boost/filesystem.hpp"
+#include "boost/filesystem.hpp" // IWYU pragma: keep
 
 //is used to provide some paths as function arguments
 namespace fs = boost::filesystem;
@@ -261,13 +261,14 @@ private:
  * @param[in] rki_age_groups Specifies whether rki-age_groups should be used.
  */
 template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
-          class ReadFunction, class NodeIdFunction>
+          class ReadFunction, class NodeIdFunction, typename FP = double>
 IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
                          const std::string& population_data_path, bool is_node_for_county,
                          Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
                          NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
                          double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
                          bool export_time_series = false, bool rki_age_groups = true)
+
 {
     BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
@@ -284,7 +285,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
 
         //local parameters
         auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
-        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value       = UncertainValue<FP>(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
         auto id = 0;
@@ -310,7 +311,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
             for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
                 auto& compartment_value = nodes[node_idx].populations[{i, j}];
                 compartment_value =
-                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                    UncertainValue<FP>(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
                                                                                      1.1 * double(compartment_value)));
             }

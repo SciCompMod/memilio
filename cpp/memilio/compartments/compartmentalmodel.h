@@ -20,14 +20,14 @@
 #ifndef MIO_COMPARTMENTALMODEL_H
 #define MIO_COMPARTMENTALMODEL_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
-#include "memilio/utils/custom_index_array.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/utils/custom_index_array.h" // IWYU pragma: keep
 #include "memilio/utils/metaprogramming.h"
-#include <cstddef>
+#include <cstddef> // IWYU pragma: keep
 #include <type_traits>
-#include <vector>
-#include <functional>
+#include <vector> // IWYU pragma: keep
+#include <functional> // IWYU pragma: keep
 
 namespace mio
 {
@@ -72,13 +72,12 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
  * studies
  *
  */
-template <class Comp, class Pop, class Params>
+template <class Comp, class Pop, class Params, typename FP = double>
 struct CompartmentalModel {
 public:
     using Compartments = Comp;
     using Populations  = Pop;
     using ParameterSet = Params;
-
     /**
      * @brief CompartmentalModel default constructor
      */
@@ -88,15 +87,17 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                                 double /*t*/, Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
+    virtual void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>,
+                                 Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> /*y*/, FP /*t*/,
+                                 Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> /*dydt*/) const {};
+
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
      *
@@ -117,8 +118,9 @@ public:
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
-    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                              Eigen::Ref<Eigen::VectorXd> dydt) const
+    void eval_right_hand_side(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
+                              Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
+                              Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt) const
     {
         dydt.setZero();
         this->get_derivatives(pop, y, t, dydt);
@@ -129,9 +131,9 @@ public:
      * This can be used as initial conditions in an ODE solver
      * @return the initial populatoins
      */
-    Eigen::VectorXd get_initial_values() const
+    Eigen::Matrix<FP, Eigen::Dynamic, 1> get_initial_values() const
     {
-        return populations.get_compartments();
+        return populations.get_compartments().template cast<FP>();
     }
 
     void apply_constraints()
@@ -161,10 +163,11 @@ public:
  * Otherwise the template is invalid.
  * @tparam M a type that has a eval_right_hand_side member function, e.g. a compartment model type.
  */
-template <class M>
+template <class M, typename FP = double>
 using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right_hand_side(
-    std::declval<Eigen::Ref<const Eigen::VectorXd>>(), std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
-    std::declval<double>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+    std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
+    std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(), std::declval<double>(),
+    std::declval<Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>>>()));
 
 /**
  * detect the get_initial_values member function of a compartment model.
@@ -173,9 +176,9 @@ using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right
  * Otherwise the template is invalid.
  * @tparam M a type that has a get_initial_values member function, e.g. a compartment model type.
  */
-template <class M>
+template <class M, typename FP = double>
 using get_initial_values_expr_t =
-    decltype(std::declval<Eigen::VectorXd&>() = std::declval<const M&>().get_initial_values());
+    decltype(std::declval<Eigen::Matrix<FP, Eigen::Dynamic, 1>&>() = std::declval<const M&>().get_initial_values());
 
 /**
  * Template meta function to check if a type is a valid compartment model. 
@@ -184,9 +187,14 @@ using get_initial_values_expr_t =
  * Otherwise, `value` will be equal to false.
  * @tparam Sim a type that may or may not be a compartment model.
  */
-template <class M>
-using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
-                                                           is_expression_valid<get_initial_values_expr_t, M>::value)>;
+//template <class M>
+//using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
+//                                                           is_expression_valid<get_initial_values_expr_t, M>::value>)>;
+
+template <class M, typename FP = double>
+using is_compartment_model =
+    std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M, FP>::value &&
+                                  is_expression_valid<get_initial_values_expr_t, M, FP>::value)>;
 
 } // namespace mio
 

@@ -15,6 +15,7 @@ option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
+option(MEMILIO_USE_BUNDLED_IPOPT "Use bundled Ipopt, requires a fortran compiler" ON)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
 
@@ -22,6 +23,7 @@ mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SAN
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_OSX_DEPLOYMENT_TARGET 14) # avoid linker warnings (built for newer OSX version than being linked)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Please choose Release or Debug. Default is Release." FORCE)
@@ -75,7 +77,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
+            "${CMAKE_BINARY_DIR}/*" "/usr*" "*.F"
         )
     endif()
 endif()
@@ -113,6 +116,7 @@ endif()
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
+add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
@@ -122,6 +126,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
+    add_subdirectory(models/ode_seair)
     add_subdirectory(models/ode_sir)
 endif()
 

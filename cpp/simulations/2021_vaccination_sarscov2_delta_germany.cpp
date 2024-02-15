@@ -79,9 +79,9 @@ enum class InterventionLevel
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
+void assign_uniform_distribution(mio::UncertainValue<double>& p, double min, double max)
 {
-    p = mio::UncertainValue(0.5 * (max + min));
+    p = mio::UncertainValue<double>(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -94,7 +94,7 @@ void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
  * @param max minimum of distribution for each element of array.
  */
 template <size_t N>
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>& array,
+void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
                                        const double (&min)[N], const double (&max)[N])
 {
     assert(N == array.numel());
@@ -110,8 +110,8 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>& array, double min,
-                                       double max)
+void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
+                                       double min, double max)
 {
     for (auto i = mio::AgeGroup(0); i < array.size<mio::AgeGroup>(); ++i) {
         assign_uniform_distribution(array[i], min, max);
@@ -123,7 +123,7 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, bool long_time)
+mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters<double>& params, bool long_time)
 {
     //times
     const double incubationTime            = 5.2;
@@ -136,15 +136,16 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), incubationTime, incubationTime);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), serialIntervalMin,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime<double>>(), incubationTime,
+                                      incubationTime);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval<double>>(), serialIntervalMin,
                                       serialIntervalMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
-                                      timeInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), timeInfectedSevereMin,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms<double>>(),
+                                      timeInfectedSymptomsMin, timeInfectedSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere<double>>(), timeInfectedSevereMin,
                                       timeInfectedSevereMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedCritical>(), timeInfectedCriticalMin,
-                                      timeInfectedCriticalMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedCritical<double>>(),
+                                      timeInfectedCriticalMin, timeInfectedCriticalMax);
 
     //probabilities
     double fac_variant                                 = 1.4;
@@ -192,46 +193,46 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     }
     const double reducTimeInfectedMild = temp_reducTimeInfectedMild;
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TransmissionProbabilityOnContact>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(),
                                       transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>(),
                                       relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>(),
                                       riskOfInfectionFromSymptomaticMin, riskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<double>>(),
                                       maxRiskOfInfectionFromSymptomaticMin, maxRiskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>(),
                                       recoveredPerInfectedNoSymptomsMin, recoveredPerInfectedNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms<double>>(),
                                       severePerInfectedSymptomsMin, severePerInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::CriticalPerSevere>(), criticalPerSevereMin,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::CriticalPerSevere<double>>(), criticalPerSevereMin,
                                       criticalPerSevereMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical>(), deathsPerCriticalMin,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical<double>>(), deathsPerCriticalMin,
                                       deathsPerCriticalMax);
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedPartialImmunity>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedPartialImmunity<double>>(),
                                       reducExposedPartialImmunityMin, reducExposedPartialImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedImprovedImmunity>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedImprovedImmunity<double>>(),
                                       reducExposedImprovedImmunityMin, reducExposedImprovedImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>(),
                                       reducInfectedSymptomsPartialImmunityMin, reducInfectedSymptomsPartialImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>(),
                                       reducInfectedSymptomsImprovedImmunityMin,
                                       reducInfectedSymptomsImprovedImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(),
-                                      reducInfectedSevereCriticalDeadPartialImmunityMin,
-                                      reducInfectedSevereCriticalDeadPartialImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(),
-                                      reducInfectedSevereCriticalDeadImprovedImmunityMin,
-                                      reducInfectedSevereCriticalDeadImprovedImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducTimeInfectedMild>(), reducTimeInfectedMild,
-                                      reducTimeInfectedMild);
+    array_assign_uniform_distribution(
+        params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(),
+        reducInfectedSevereCriticalDeadPartialImmunityMin, reducInfectedSevereCriticalDeadPartialImmunityMax);
+    array_assign_uniform_distribution(
+        params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(),
+        reducInfectedSevereCriticalDeadImprovedImmunityMin, reducInfectedSevereCriticalDeadImprovedImmunityMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducTimeInfectedMild<double>>(),
+                                      reducTimeInfectedMild, reducTimeInfectedMild);
 
     //sasonality
     const double seasonality_min = 0.1;
     const double seasonality_max = 0.3;
 
-    assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality>(), seasonality_min, seasonality_max);
+    assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality<double>>(), seasonality_min, seasonality_max);
 
     // Delta specific parameter
     params.get<mio::osecirvvs::StartDayNewVariant>() = mio::get_day_in_year(mio::Date(2021, 6, 6));
@@ -251,7 +252,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @param params Object that the contact matrices will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters& params)
+mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters<double>& params)
 {
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
@@ -263,7 +264,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
     }
-    params.get<mio::osecirvvs::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
+    params.get<mio::osecirvvs::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
 
     return mio::success();
 }
@@ -275,10 +276,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
  * @param params Object that the NPIs will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osecirvvs::Parameters& params, bool late,
-                             bool masks, bool test)
+mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osecirvvs::Parameters<double>& params,
+                             bool late, bool masks, bool test)
 {
-    auto& contacts         = params.get<mio::osecirvvs::ContactPatterns>();
+    auto& contacts         = params.get<mio::osecirvvs::ContactPatterns<double>>();
     auto& contact_dampings = contacts.get_dampings();
 
     if (test) {
@@ -296,75 +297,75 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
 
     //helper functions that create dampings for specific NPIs
     auto contacts_at_home = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::Home)), t, {size_t(ContactLocation::Home)},
-                                    group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                            mio::DampingType(int(Intervention::Home)), t,
+                                            {size_t(ContactLocation::Home)}, group_weights_all);
     };
     auto school_closure = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::SchoolClosure)), t,
-                                    {size_t(ContactLocation::School)}, group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                            mio::DampingType(int(Intervention::SchoolClosure)), t,
+                                            {size_t(ContactLocation::School)}, group_weights_all);
     };
     auto home_office = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::HomeOffice)), t, {size_t(ContactLocation::Work)},
-                                    group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                            mio::DampingType(int(Intervention::HomeOffice)), t,
+                                            {size_t(ContactLocation::Work)}, group_weights_all);
     };
     auto social_events = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
-                                    {size_t(ContactLocation::Other)}, group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                            mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+                                            {size_t(ContactLocation::Other)}, group_weights_all);
     };
     auto social_events_work = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
-                                    {size_t(ContactLocation::Work)}, group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                            mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+                                            {size_t(ContactLocation::Work)}, group_weights_all);
     };
     auto physical_distancing_home = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::Home)}, group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                            {size_t(ContactLocation::Home)}, group_weights_all);
     };
     auto physical_distancing_school = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::School)}, group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                            {size_t(ContactLocation::School)}, group_weights_all);
     };
     auto physical_distancing_work = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::Work)}, group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                            {size_t(ContactLocation::Work)}, group_weights_all);
     };
     auto physical_distancing_other = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::Other)}, group_weights_all);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                            mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                            {size_t(ContactLocation::Other)}, group_weights_all);
     };
     auto senior_awareness = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
+        auto v = mio::UncertainValue<double>();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::SeniorAwareness)),
-                                    mio::DampingType(int(Intervention::SeniorAwareness)), t,
-                                    {size_t(ContactLocation::Home), size_t(ContactLocation::Other)},
-                                    group_weights_seniors);
+        return mio::DampingSampling<double>(v, mio::DampingLevel(int(InterventionLevel::SeniorAwareness)),
+                                            mio::DampingType(int(Intervention::SeniorAwareness)), t,
+                                            {size_t(ContactLocation::Home), size_t(ContactLocation::Other)},
+                                            group_weights_seniors);
     };
 
     //OPEN SCENARIO SPRING
@@ -441,8 +442,8 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
 
     narrow = 0.0;
     //local dynamic NPIs
-    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>();
-    auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
+    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
+    auto dynamic_npi_dampings = std::vector<mio::DampingSampling<double>>();
 
     dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
     dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.2 + narrow,
@@ -456,7 +457,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
     dynamic_npi_dampings.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
     dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
 
-    auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling>();
+    auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling<double>>();
     dynamic_npi_dampings2.push_back(contacts_at_home(mio::SimulationTime(0), 0.5 + narrow, 0.7 - narrow));
     dynamic_npi_dampings2.push_back(school_closure(mio::SimulationTime(0), 0.4 + narrow,
                                                    0.6 - narrow)); //0.25 - 0.25 in autumn
@@ -476,12 +477,12 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
     dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2);
 
     //school holidays (holiday periods are set per node, see set_nodes)
-    auto school_holiday_value = mio::UncertainValue();
+    auto school_holiday_value = mio::UncertainValue<double>();
     assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
     contacts.get_school_holiday_damping() =
-        mio::DampingSampling(school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
-                             mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime(0.0),
-                             {size_t(ContactLocation::School)}, group_weights_all);
+        mio::DampingSampling<double>(school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
+                                     mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime(0.0),
+                                     {size_t(ContactLocation::School)}, group_weights_all);
 
     return mio::success();
 }
@@ -492,7 +493,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
  * Same total populaton but different spread of infection in each county.
  * @param counties parameters for each county.
  */
-void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
+void set_synthetic_population_data(std::vector<mio::osecirvvs::Model<double>>& counties)
 {
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
         double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
@@ -523,7 +524,7 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>
+mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>>
 get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
           bool long_time)
 {
@@ -531,7 +532,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
 
     // global parameters
     const int num_age_groups = 6;
-    mio::osecirvvs::Parameters params(num_age_groups);
+    mio::osecirvvs::Parameters<double> params(num_age_groups);
     params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
     params.get_end_dynamic_npis()          = mio::get_offset_in_days(start_date, summer_date);
     BOOST_OUTCOME_TRY(set_covid_parameters(params, long_time));
@@ -556,18 +557,18 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
 
     // graph of counties with populations and local parameters
     // and mobility between counties
-    mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
-    const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model>;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>> params_graph;
+    const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>;
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& node_id_function    = mio::get_node_ids;
 
     const auto& set_node_function =
-        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns, mio::osecirvvs::Model,
-                       mio::MigrationParameters, mio::osecirvvs::Parameters, decltype(read_function_nodes),
-                       decltype(node_id_function)>;
+        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+                       mio::osecirvvs::Model<double>, mio::MigrationParameters<double>,
+                       mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>;
     const auto& set_edge_function =
-        mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
-                       mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MigrationParameters<double>,
+                       mio::MigrationCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(set_node_function(
         params, start_date, end_date, data_dir,
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"), true,
@@ -616,14 +617,14 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto num_runs     = 500;
 
     //create or load graph
-    mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created, get_graph(start_date, end_date, data_dir, late, masks, test, long_time));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
+        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model<double>>(save_dir.string()));
         params_graph = loaded;
     }
 
@@ -653,7 +654,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         },
         [&](auto results_graph, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-            auto params              = std::vector<mio::osecirvvs::Model>();
+            auto params              = std::vector<mio::osecirvvs::Model<double>>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
                            [](auto&& node) {
@@ -671,7 +672,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_results.reserve(ensemble.size());
-        auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
+        auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model<double>>>{};
         ensemble_params.reserve(ensemble.size());
         for (auto&& run : ensemble) {
             ensemble_results.emplace_back(std::move(run.first));

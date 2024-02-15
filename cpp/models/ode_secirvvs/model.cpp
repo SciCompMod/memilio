@@ -17,12 +17,4 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_secirvvs/model.h"
-
-namespace mio
-{
-namespace osecirvvs
-{
-
-} // namespace osecirvvs
-} // namespace mio
+#include "ode_secirvvs/model.h" // IWYU pragma: keep

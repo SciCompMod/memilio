@@ -20,26 +20,28 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // IWYU pragma: keep
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/euler.h"
+#include "memilio/math/euler.h" // IWYU pragma: keep
 
 namespace mio
 {
 
-using DefaultIntegratorCore = mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>;
+template <typename FP = double>
+using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
 /**
  * @brief A class for the simulation of a compartment model.
  * @tparam M a CompartmentModel type
+ * @tparam FP floating point type, e.g., double
  */
-template <class M>
+template <class M, typename FP = double>
 class Simulation
 {
-    static_assert(is_compartment_model<M>::value, "Template parameter must be a compartment model.");
+    static_assert(is_compartment_model<M, FP>::value, "Template parameter must be a compartment model.");
 
 public:
     using Model = M;
@@ -50,8 +52,8 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(std::make_shared<DefaultIntegratorCore>())
+    Simulation(Model const& model, FP t0 = 0., FP dt = 0.1)
+        : m_integratorCore(std::make_shared<DefaultIntegratorCore<FP>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(m_integratorCore)
         , m_result(t0, m_model->get_initial_values())
@@ -63,7 +65,7 @@ public:
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
      */
-    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    void set_integrator(std::shared_ptr<IntegratorCore<FP>> integrator)
     {
         m_integratorCore = std::move(integrator);
         m_integrator.set_integrator(m_integratorCore);
@@ -74,12 +76,16 @@ public:
      * @return A reference to the integrator core used in the simulation
      * @{
      */
-    IntegratorCore& get_integrator()
+    IntegratorCore<FP>& get_integrator()
     {
         return *m_integratorCore;
     }
 
-    IntegratorCore const& get_integrator() const
+    /**
+     * @brief get_integrator
+     * @return reference to the core integrator used in the simulation
+     */
+    IntegratorCore<FP> const& get_integrator() const
     {
         return *m_integratorCore;
     }
@@ -90,7 +96,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(FP tmax)
     {
         return m_integrator.advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
@@ -109,12 +115,16 @@ public:
      * For each simulated time step, the TimeSeries contains the population size in each compartment.
      * @{
      */
-    TimeSeries<ScalarType>& get_result()
+    TimeSeries<FP>& get_result()
     {
         return m_result;
     }
 
-    const TimeSeries<ScalarType>& get_result() const
+    /**
+     * @brief get_result returns the final simulation result
+     * @return a TimeSeries to represent the final simulation result
+     */
+    const TimeSeries<FP>& get_result() const
     {
         return m_result;
     }
@@ -142,12 +152,12 @@ public:
      * next step size in this value.
      * @{
      */
-    double& get_dt()
+    FP& get_dt()
     {
         return m_dt;
     }
 
-    const double& get_dt() const
+    const FP& get_dt() const
     {
         return m_dt;
     }
@@ -155,17 +165,17 @@ public:
 
 protected:
     /// @brief Get a reference to the integrater. Can be used to overwrite advance.
-    OdeIntegrator& get_ode_integrator()
+    OdeIntegrator<FP>& get_ode_integrator()
     {
         return m_integrator;
     }
 
 private:
-    std::shared_ptr<IntegratorCore> m_integratorCore; ///< Defines the integration scheme via its step function.
+    std::shared_ptr<IntegratorCore<FP>> m_integratorCore; ///< Defines the integration scheme via its step function.
     std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
-    OdeIntegrator m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
-    TimeSeries<ScalarType> m_result; ///< The simulation results.
-    ScalarType m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
+    OdeIntegrator<FP> m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
+    TimeSeries<FP> m_result; ///< The simulation results.
+    FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
 };
 
 /**
@@ -188,6 +198,29 @@ using is_compartment_model_simulation =
     std::integral_constant<bool, (is_expression_valid<advance_expr_t, Sim>::value &&
                                   is_compartment_model<typename Sim::Model>::value)>;
 
+///**
+// * @brief simulate simulates a compartmental model
+// * @param[in] t0 start time
+// * @param[in] tmax end time
+// * @param[in] dt initial step size of integration
+// * @param[in] model: An instance of a compartmental model
+// * @return a TimeSeries to represent the final simulation result
+// * @tparam Model a compartment model type
+// * @tparam Sim a simulation type that can simulate the model.
+// */
+//template <class Model, class Sim = Simulation<Model>>
+//TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
+//                                std::shared_ptr<IntegratorCore> integrator = nullptr)
+//{
+//    model.check_constraints();
+//    Sim sim(model, t0, dt);
+//    if (integrator) {
+//        sim.set_integrator(integrator);
+//    }
+//    sim.advance(tmax);
+//    return sim.get_result();
+//}
+
 /**
  * @brief simulate simulates a compartmental model
  * @param[in] t0 start time
@@ -196,11 +229,12 @@ using is_compartment_model_simulation =
  * @param[in] model: An instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  * @tparam Model a compartment model type
+ * @tparam FP floating point type, e.g., double
  * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model, class Sim = Simulation<Model>>
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
-                                std::shared_ptr<IntegratorCore> integrator = nullptr)
+template <class Model, typename FP = double, class Sim = Simulation<Model, FP>>
+TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
+                        std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);

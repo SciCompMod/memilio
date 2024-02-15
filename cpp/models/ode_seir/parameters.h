@@ -38,8 +38,9 @@ namespace oseir
 /**
      * @brief probability of getting infected from a contact
      */
+template <typename FP = double>
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue;
+    using Type = UncertainValue<FP>;
     static Type get_default()
     {
         return Type(1.0);
@@ -53,8 +54,9 @@ struct TransmissionProbabilityOnContact {
 /**
      * @brief the latent time in day unit
      */
+template <typename FP = double>
 struct TimeExposed {
-    using Type = UncertainValue;
+    using Type = UncertainValue<FP>;
     static Type get_default()
     {
         return Type(5.2);
@@ -68,8 +70,9 @@ struct TimeExposed {
 /**
      * @brief the infectious time in day unit
      */
+template <typename FP = double>
 struct TimeInfected {
-    using Type = UncertainValue;
+    using Type = UncertainValue<FP>;
     static Type get_default()
     {
         return Type(6.0);
@@ -95,16 +98,19 @@ struct ContactPatterns {
     }
 };
 
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
+template <typename FP = double>
+using ParametersBase =
+    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>, ContactPatterns>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-class Parameters : public ParametersBase
+template <typename FP = double>
+class Parameters : public ParametersBase<FP>
 {
 public:
     Parameters()
-        : ParametersBase()
+        : ParametersBase<FP>()
     {
     }
 
@@ -126,28 +132,28 @@ public:
         const double tol_times = 1e-1;
 
         int corrected = false;
-        if (this->get<TimeExposed>() < tol_times) {
+        if (this->template get<TimeExposed<FP>>() < tol_times) {
             log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
-                        this->get<TimeExposed>(), tol_times);
-            this->get<TimeExposed>() = tol_times;
-            corrected                = true;
+                        this->template get<TimeExposed<FP>>(), tol_times);
+            this->template get<TimeExposed<FP>>() = tol_times;
+            corrected                             = true;
         }
-        if (this->get<TimeInfected>() < tol_times) {
+        if (this->template get<TimeInfected<FP>>() < tol_times) {
             log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
-                        this->get<TimeInfected>(), tol_times);
-            this->get<TimeInfected>() = tol_times;
-            corrected                 = true;
+                        this->template get<TimeInfected<FP>>(), tol_times);
+            this->template get<TimeInfected<FP>>() = tol_times;
+            corrected                              = true;
         }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+        if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
+            this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
             log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                        this->get<TransmissionProbabilityOnContact>(), 0.0);
-            this->get<TransmissionProbabilityOnContact>() = 0.0;
-            corrected                                     = true;
+                        this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0);
+            this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
+            corrected                                                  = true;
         }
         return corrected;
     }
@@ -161,33 +167,33 @@ public:
     {
         const double tol_times = 1e-1;
 
-        if (this->get<TimeExposed>() < tol_times) {
+        if (this->template get<TimeExposed<FP>>() < tol_times) {
             log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
-                      this->get<TimeExposed>(), 0.0);
+                      this->template get<TimeExposed<FP>>(), 0.0);
             return true;
         }
-        if (this->get<TimeInfected>() < tol_times) {
+        if (this->template get<TimeInfected<FP>>() < tol_times) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
-                      this->get<TimeInfected>(), 0.0);
+                      this->template get<TimeInfected<FP>>(), 0.0);
             return true;
         }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+        if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
+            this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
+                this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
             return true;
         }
         return false;
     }
 
 private:
-    Parameters(ParametersBase&& base)
-        : ParametersBase(std::move(base))
+    Parameters(ParametersBase<FP>&& base)
+        : ParametersBase<FP>(std::move(base))
     {
     }
 
@@ -199,7 +205,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        BOOST_OUTCOME_TRY(base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 };

@@ -36,18 +36,18 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model model(1);
+    mio::osecir::Model<double> model(1);
 
-    model.parameters.set<mio::osecir::StartDay>(60);
-    model.parameters.set<mio::osecir::Seasonality>(0.2);
+    model.parameters.template set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
-    model.parameters.get<mio::osecir::IncubationTime>()       = 5.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms>() = 5.8;
-    model.parameters.get<mio::osecir::SerialInterval>()       = 4.2;
-    model.parameters.get<mio::osecir::TimeInfectedSevere>()   = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical>() = 7.1;
+    model.parameters.get<mio::osecir::IncubationTime<double>>()       = 5.2;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>() = 5.8;
+    model.parameters.get<mio::osecir::SerialInterval<double>>()       = 4.2;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()   = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>() = 7.1;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
@@ -64,32 +64,24 @@ int main()
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 nb_total_t0);
 
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()  = 0.05;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>() = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>()              = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
+    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()  = 0.05;
+    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()    = 0.7;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()    = 0.09;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()    = 0.25;
+    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>() = 0.45;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>()              = 35;
+    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()         = 0.2;
+    model.parameters.get<mio::osecir::CriticalPerSevere<double>>()                 = 0.25;
+    model.parameters.get<mio::osecir::DeathsPerCritical<double>>()                 = 0.3;
 
     model.apply_constraints();
 
-    // Using default Integrator
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
-
-    /*
-    Example of using a different integrator
-   All available integrators are listed in cpp/memilio/math/README.md
-
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_shared<mio::RKIntegratorCore<double>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
-    */
+    mio::TimeSeries<double> secir = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
 
     bool print_to_terminal = true;
 

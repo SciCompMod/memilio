@@ -21,6 +21,23 @@ target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 
+
+add_executable(seair_example seair.cpp)
+target_link_libraries(seair_example PRIVATE memilio ode_seair AD::AD)
+
+if(NOT WIN32 AND MEMILIO_USE_BUNDLED_IPOPT)
+    add_executable(seair_optimization seair_optimization.cpp)
+    target_link_libraries(seair_optimization PRIVATE memilio ode_seair AD::AD Ipopt::Ipopt)
+endif()
+
+add_executable(ad_square_example ad_square_example.cpp)
+target_link_libraries(ad_square_example PRIVATE AD::AD)
+set_target_properties(ad_square_example PROPERTIES CXX_STANDARD 14)
+
+add_executable(ad_odeint_example ad_odeint_example.cpp)
+target_link_libraries(ad_odeint_example PRIVATE AD::AD Boost::boost memilio)
+set_target_properties(ad_odeint_example PROPERTIES CXX_STANDARD 14)
+
 add_executable(seir_flows_example ode_seir_flows.cpp)
 target_link_libraries(seir_flows_example PRIVATE memilio ode_seir)
 
@@ -47,6 +64,11 @@ target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_F
 add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+
+add_executable(ad_abm_minimal_example ad_abm_minimal.cpp)
+target_link_libraries(ad_abm_minimal_example PRIVATE memilio abm AD::AD)
+target_compile_options(ad_abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)

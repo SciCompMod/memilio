@@ -73,58 +73,72 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             }
             // times
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<IncubationTime>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<IncubationTime<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<SerialInterval>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<SerialInterval<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSymptoms>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSymptoms<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSevere>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSevere<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedCritical>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedCritical<double>>()[i];
+                });
             //probs
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<TransmissionProbabilityOnContact>()[i];
+                    return model.parameters.template get<TransmissionProbabilityOnContact<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RelativeTransmissionNoSymptoms>()[i];
+                    return model.parameters.template get<RelativeTransmissionNoSymptoms<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RiskOfInfectionFromSymptomatic>()[i];
+                    return model.parameters.template get<RiskOfInfectionFromSymptomatic<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic>()[i];
+                    return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[i];
+                    return model.parameters.template get<RecoveredPerInfectedNoSymptoms<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<SeverePerInfectedSymptoms>()[i];
+                    return model.parameters.template get<SeverePerInfectedSymptoms<double>>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<CriticalPerSevere>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<CriticalPerSevere<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerCritical>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<DeathsPerCritical<double>>()[i];
+                });
         }
         // group independent params
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality<double>>(); });
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity<double>>(); });
 
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params = ensemble_params[run][node];
             single_element_ensemble[run] =
-                params.parameters.template get<ICUCapacity>() * params.populations.get_total();
+                params.parameters.template get<ICUCapacity<double>>() * params.populations.get_total();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-        percentile[node].parameters.template set<ICUCapacity>(
+        percentile[node].parameters.template set<ICUCapacity<double>>(
             single_element_ensemble[static_cast<size_t>(num_runs * p)]);
     }
     return percentile;
