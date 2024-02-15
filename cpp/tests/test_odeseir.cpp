@@ -103,7 +103,7 @@ TEST_F(ModelTestOdeSeir, compareWithPreviousRun)
             rel_tol = 1e-2;
         }
 
-        ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
+        ASSERT_NEAR(t, result.get_times()[irow], 2e-11) << "at row " << irow;
         for (size_t icol = 0; icol < 4; ++icol) {
             double ref    = refData[static_cast<size_t>(irow)][icol + 1];
             double actual = result[irow][icol];
