@@ -41,7 +41,7 @@ namespace mio
  * replaced by drawing a new sample from the the distribution
  * @tparam FP underlying floating point type, e.g., double
  */
-template <typename FP = double>
+template <typename FP = ScalarType>
 class UncertainValue
 {
 public:
