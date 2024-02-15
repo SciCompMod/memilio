@@ -162,21 +162,6 @@ struct Gamma {
     }
 };
 
-/**
-     * @brief probability of getting infected from a contact
-     */
-template <typename FP = double>
-struct TransmissionProbabilityOnContact {
-    using Type = FP;
-    static Type get_default()
-    {
-        return Type(1.0);
-    }
-    static std::string name()
-    {
-        return "TransmissionProbabilityOnContact";
-    }
-};
 
 
 template <typename FP = double>
