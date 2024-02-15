@@ -84,7 +84,7 @@ runs:
       with:
         name: test-py-coverage-reports-${{ inputs.package }}-${{ inputs.version }}
         path: |
-          pycode/memilio-${{ inputs.package }}/**/coverage_python.xml
+          pycode/memilio-${{ inputs.package }}/**/coverage_python_${{ inputs.version }}.xml
           coverage_python
         retention-days: 7
         if-no-files-found: ${{ inputs.coverage == 'ON' && 'error' || 'ignore' }}
