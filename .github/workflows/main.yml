@@ -260,6 +260,16 @@ jobs:
         with:
           package: surrogatemodel
           coverage: ON
+  
+  merge-artifacts:
+    runs-on: ubuntu-latest
+    needs: test-py-surrogatemodel
+    steps:
+      - name: merge epidata reports
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-py-coverage-reports-surrogatemodel
+          pattern: test-py-coverage-reports-surrogatemodel-*
 
   test-docs:
     if: github.event.pull_request.draft == false

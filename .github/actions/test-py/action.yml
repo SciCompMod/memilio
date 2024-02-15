@@ -82,7 +82,7 @@ runs:
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
-        name: test-py-coverage-reports-${{ inputs.package }}
+        name: test-py-coverage-reports-${{ inputs.package }}-${{ inputs.version }}
         path: |
           pycode/memilio-${{ inputs.package }}/**/coverage_python.xml
           coverage_python

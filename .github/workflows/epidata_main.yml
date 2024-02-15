@@ -49,6 +49,9 @@ jobs:
 
   test-py-epidata:
     needs: build-py-epidata
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,6 +73,19 @@ jobs:
         with: 
           package: plot
           coverage: ON 
+
+  merge-artifacts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        packages: [epidata, plot]
+    needs: [test-py-plot, test-py-epidata]
+    steps:
+      - name: merge epidata reports
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-py-coverage-reports-${{ matrix.packages }}
+          pattern: test-py-coverage-reports-${{ matrix.packages }}-*
 
   test-pylint-epidata:
     needs: build-py-epidata
