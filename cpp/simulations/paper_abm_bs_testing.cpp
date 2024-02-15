@@ -386,7 +386,7 @@ std::pair<double, double> get_my_and_sigma(std::pair<double, double> mean_and_st
     return {my, sigma};
 }
 
-void set_parameters(mio::abm::Parameters params)
+void set_parameters(mio::abm::Parameters& params)
 {
     mio::RandomNumberGenerator rng;
 
@@ -440,30 +440,28 @@ void set_parameters(mio::abm::Parameters params)
             {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
     };
 
-    // Set protection level from low viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
-    // params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_60_to_79,
-    //                                                   mio::abm::VirusVariant::Wildtype}] =
-    //     [](ScalarType days) -> ScalarType {
-    //     return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
-    //                                                                           {30, 0.975},
-    //                                                                           {60, 0.977},
-    //                                                                           {90, 0.974},
-    //                                                                           {120, 0.963},
-    //                                                                           {150, 0.947},
-    //                                                                           {180, 0.93},
-    //                                                                           {210, 0.929},
-    //                                                                           {240, 0.923},
-    //                                                                           {270, 0.908},
-    //                                                                           {300, 0.893},
-    //                                                                           {330, 0.887},
-    //                                                                           {360, 0.887},
-    //                                                                           {360, 0.5}},
-    //                                                                          days);
-    // };
+    // Set protection level against an severe infection. Information based on: https://doi.org/10.1093/cid/ciaa886
+    params.get<mio::abm::SeverityProtectionFactor>() = [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
+                                                                              {30, 0.975},
+                                                                              {60, 0.977},
+                                                                              {90, 0.974},
+                                                                              {120, 0.963},
+                                                                              {150, 0.947},
+                                                                              {180, 0.93},
+                                                                              {210, 0.929},
+                                                                              {240, 0.923},
+                                                                              {270, 0.908},
+                                                                              {300, 0.893},
+                                                                              {330, 0.887},
+                                                                              {360, 0.887},
+                                                                              {360, 0.5}},
+                                                                             days);
+    };
 
     //Set other parameters
-    params.get<mio::abm::MaskProtection>()           = 0.5;
-    params.get<mio::abm::AerosolTransmissionRates>() = 1.0;
+    params.get<mio::abm::MaskProtection>()           = 0.66;
+    params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
 }
 
 /**
@@ -474,7 +472,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
                                                int max_num_persons)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
-    ScalarType exposed_prob = 0.05, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
+    ScalarType exposed_prob = 0.08, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
@@ -489,7 +487,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
 
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(1);
+    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
@@ -614,7 +612,17 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 10000;
+    auto max_num_persons    = 5000;
+
+    int tid = -1;
+#pragma omp parallel private(tid) // Start of parallel region: forks threads
+    {
+        tid = omp_get_thread_num(); // default is number of CPUs on machine
+        printf("Hello from Thread %d\n", tid);
+        if (tid == 0) {
+            printf("Number of threads = %d\n", omp_get_num_threads());
+        }
+    } // ** end of the the parallel: joins threads
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
