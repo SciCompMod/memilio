@@ -87,6 +87,8 @@ protected:
         model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
         model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
         model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+
+        model->set_tol_for_support_max(1e-10);
     }
 
     virtual void TearDown()
