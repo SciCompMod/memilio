@@ -26,24 +26,24 @@ runs:
         fi
         python -m pip install --upgrade pip
     - name: Download Python Wheels
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
     - name: Download additional Python Wheels for plot package
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       if:  inputs.package == 'plot'
       with:
         name: python-wheels-epidata
         path: pycode/wheelhouse
     - name: Download Python Wheels for surrogatemodel
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       if:  inputs.package == 'surrogatemodel'
       with:
         name: python-wheels-simulation
         path: pycode/wheelhouse
     - name: Set up Python ${{ inputs.version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.version }}
     - name: Install Python Wheels
@@ -80,7 +80,7 @@ runs:
           gethospitalizationdata --help
         fi
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-py-coverage-reports-${{ inputs.package }}
         path: |

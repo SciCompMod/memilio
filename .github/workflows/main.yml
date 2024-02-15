@@ -20,8 +20,8 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.11
       - uses: pre-commit/action@v3.0.0
@@ -40,7 +40,7 @@ jobs:
             os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-build
         with:
           compiler: ${{ matrix.compiler }}
@@ -54,7 +54,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-build
         with:
           compiler: gcc
@@ -75,7 +75,7 @@ jobs:
             os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-build
         with:
           config: ${{ matrix.config }}
@@ -85,7 +85,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-build
         with:
           config: Release
@@ -107,7 +107,7 @@ jobs:
             os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-test
         with:
           build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
@@ -118,7 +118,7 @@ jobs:
     needs: build-cpp-gcc-no-optional-deps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-test
         with:
           build-artifact: build-cpp-linux-gcc-latest-Release-part
@@ -137,7 +137,7 @@ jobs:
             os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-test
         with:
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
@@ -147,7 +147,7 @@ jobs:
     needs: build-cpp-msvc-no-optional-deps
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-test
         with:
           build-artifact: build-cpp-windows-msvc-latest-Release-part
@@ -167,7 +167,7 @@ jobs:
             os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-run_examples
         with:
           build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
@@ -186,7 +186,7 @@ jobs:
             os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-run_examples
         with:
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
@@ -197,7 +197,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
         with:
           package: generation
@@ -208,7 +208,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
         with:
           package: simulation
@@ -219,7 +219,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
         with:
           package: surrogatemodel
@@ -232,7 +232,7 @@ jobs:
     needs: build-py-generation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
         with:
           package: generation
@@ -245,7 +245,7 @@ jobs:
         version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
         with:
           package: simulation
@@ -258,7 +258,7 @@ jobs:
         version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
         with:
           package: surrogatemodel
@@ -268,7 +268,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-docs
 
   codecov:
@@ -276,17 +276,17 @@ jobs:
     needs: [test-cpp-gcc_clang, test-py-surrogatemodel]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-py-coverage-reports-surrogatemodel
       - name: Download cpp coverage report
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-cpp-coverage-reports
       - name: Deploy to codecov.io
@@ -304,17 +304,17 @@ jobs:
     needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git
       - name: Download python coverage report
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-py-coverage-reports-surrogatemodel
       - name: Download cpp coverage report
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-cpp-coverage-reports
       - name: Download pylint report
@@ -326,7 +326,7 @@ jobs:
             name: pylint-report-epidata
             path: pycode/build_pylint
       - name: Download documentation
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation
           path: docs/html
@@ -351,7 +351,7 @@ jobs:
           cp -r coverage_python/* public/coverage/python/
           cp -r coverage/* public/coverage/cpp/
       - name: Upload pages as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: github.event_name == 'pull_request' && github.ref != 'refs/heads/main'
         with:
           name: pages

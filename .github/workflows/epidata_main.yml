@@ -22,8 +22,8 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.11
     - uses: pre-commit/action@v3.0.0
@@ -33,7 +33,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
         with:
           package: epidata
@@ -44,7 +44,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
         with:
           package: plot
@@ -53,7 +53,7 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
         with: 
           package: epidata
@@ -67,7 +67,7 @@ jobs:
         version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
         with: 
           package: plot
@@ -77,7 +77,7 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-pylint
         with:
           package: epidata
@@ -86,7 +86,7 @@ jobs:
     needs: build-py-plot
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-pylint
         with:
           package: plot
@@ -96,19 +96,19 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install python3-pip gnupg
           python -m pip install --upgrade pip
       - name: Download Python Wheels
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: python-wheels-epidata
           path: pycode/wheelhouse
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
       - name: Install Python Wheels
@@ -126,7 +126,7 @@ jobs:
           getvaccinationdata -o data_dl --no-progress-indicators
           gethospitalizationdata -o data_dl --no-progress-indicators
       - name: Upload Data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: data
           path: |
