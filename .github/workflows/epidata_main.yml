@@ -30,8 +30,7 @@ jobs:
 
   build-py-epidata:
     runs-on: ubuntu-latest
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
+    container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
@@ -41,8 +40,7 @@ jobs:
   build-py-plot:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
+    container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
