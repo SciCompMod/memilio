@@ -213,7 +213,10 @@ size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
-        return p->get_infection_state(t) == state;
+        if (p->is_home_in_bs()) {
+            return p->get_infection_state(t) == state;
+        }
+        return false;
     });
 }
 

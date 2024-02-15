@@ -43,11 +43,12 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-Person& World::add_person(const LocationId id, AgeGroup age)
+Person& World::add_person(const LocationId id, AgeGroup age, bool is_home_in_bs)
 {
     assert(age.get() < parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
+    m_persons.push_back(
+        std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id, is_home_in_bs));
     auto& person = *m_persons.back();
     person.set_assigned_location(m_cemetery_id);
     get_individualized_location(id).add_person(person);

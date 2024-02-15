@@ -127,9 +127,10 @@ public:
      * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
+     * @param[in] is_home_in_bs Whether the Person has a home in Braunschweig.
      */
     explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
-                    uint32_t person_id = INVALID_PERSON_ID);
+                    uint32_t person_id = INVALID_PERSON_ID, bool is_home_in_bs = true);
 
     /**
      * @brief Create a copy of this #Person object with a new Location.
@@ -329,7 +330,7 @@ public:
     {
         return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
     }
-    
+
     /**
      * @brief Removes the quarantine status of the Person.
      */
@@ -505,6 +506,15 @@ public:
             loc, age, id);
     }
 
+    /**
+     * @brief Whether the Person has a home in Braunschweig.
+     * @return Whether the Person has a home in Braunschweig.
+    */
+    bool is_home_in_bs()
+    {
+        return m_is_home_in_bs;
+    }
+
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
@@ -525,7 +535,8 @@ private:
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    bool m_is_home_in_bs; ///< Whether the Person has a home in Braunschweig.
 };
 
 } // namespace abm

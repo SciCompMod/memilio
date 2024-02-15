@@ -199,7 +199,8 @@ struct LogInfectionPerLocationType : mio::LogAlways {
         auto curr_time      = sim.get_time();
         PRAGMA_OMP(for)
         for (auto&& person : sim.get_world().get_persons()) {
-            if ((person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
+            if (person.is_home_in_bs() &&
+                (person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
                 (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
                 sum[(int)(person.get_location().get_type())] += 1;
             }
@@ -225,7 +226,8 @@ struct LogInfectionPerAgeGroup : mio::LogAlways {
         auto curr_time      = sim.get_time();
         PRAGMA_OMP(for)
         for (auto&& person : sim.get_world().get_persons()) {
-            if ((person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
+            if (person.is_home_in_bs() &&
+                (person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
                 (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
                 sum[(size_t)(person.get_age())] += 1;
             }

@@ -32,7 +32,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t person_id)
+Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t person_id,
+               bool is_home_in_bs)
     : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
@@ -45,6 +46,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
+    , m_is_home_in_bs(is_home_in_bs)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);

@@ -510,15 +510,18 @@ x = 42
 ### draft to add collumn to check if the location in Braunschweig
 # pip install geopy
 # from geopy.geocoders import Nominatim
-# geolocator = Nominatim(user_agent="MEmilio")
-# longitude = bd['loCe']
-# latitude = bd['laCe']
-# coordination =  str(longitude) + "," + str(latitude)
-# location = geolocator.reverse(coordination)
-# loc_dict = location.raw
-# print(loc_dict['address']['city'])
-# if loc_dict['address']['city'] == 'Braunschweig' :
-#     bd['in_bs'] = 1
-# else:
-#     bd['in_bs'] = 0
+# from geopy.extra.rate_limiter import RateLimiter
+# geolocator = Nominatim(user_agent="MEmilio")bd['in_bs'] = 0
+# reverse = RateLimiter(geolocator.reverse, min_delay_seconds=1)
+# # Loop through each row of the data
+# for index, row in bd.iterrows(): 
+#     # Check if the end location is in Braunschweig and homeID is the same as loc_id_end, i.e. the Person ends with a trip in Braunschweig 
+# 	location = reverse(str(row['loCe']) + "," + str(row['laCe'])).raw
+# 	if location['address']['city'] == 'Braunschweig' and row['loc_id_end'] == row['hhID'] :
+# 		bd.at[index,'in_bs'] = 1
+# 		next
+#     # Check if the end location is in Braunschweig and homeID is the same as loc_id_start, i.e. the Person starts with a trip in Braunschweig 
+# 	location = reverse(str(row['loCs']) + "," + str(row['laCs'])).raw
+# 	if location['address']['city'] == 'Braunschweig' and row['loc_id_start'] == row['hhID'] :
+# 		bd.at[index,'in_bs'] = 1
 # bd.to_csv('modified_input.csv', index=False)
