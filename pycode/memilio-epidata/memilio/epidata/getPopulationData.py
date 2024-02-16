@@ -28,8 +28,6 @@ import warnings
 import getpass
 import requests
 import os
-import twill
-import time
 import io
 
 import numpy as np
@@ -43,56 +41,20 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def read_population_data(username, password, read_data, directory):
-    '''! Reads Population data either from regionalstatistik.de or from directory
+def read_population_data(username, password):
+    '''! Reads Population data from regionalstatistik.de
 
-    A request is made using the twill package. Username and Password are required to
-    sign in on regionalstatistik.de. After the sign twill navigates to the file to download.
+    Username and Password are required to sign in on regionalstatistik.de.
+    A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
 
     @param username Username to sign in at regionalstatistik.de. 
     @param password Password to sign in at regionalstatistik.de.
-    @param read_data False or True. Defines if data is read from file or downloaded.
-    @param directory Path to folder where data is read from.
     @return DataFrame
     '''
 
-    filename = '12411-02-03-4'
-    if not read_data:
-        sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
-
-        # sign in to regionalstatistik.de with given username and password
-        twill.browser.user_agent = requests.utils.default_headers()[
-            'User-Agent']
-        twill.commands.go(sign_in_url)
-        twill.commands.fv('3', 'KENNUNG', username)
-        twill.commands.fv('3', 'PASSWORT', password)
-        twill.commands.submit('login', '3')
-        # navigate to file as in documentation
-        twill.commands.follow('Themen')
-        twill.commands.follow(filename[:2])
-        # wait 2 seconds to prevent error
-        # page needs some time to load
-        time.sleep(2)
-        twill.commands.follow(filename.split('-')[0])
-        twill.commands.follow(filename)
-        # start 'Werteabruf'
-        twill.commands.submit('45', '3')
-        # read csv file (1,4 for xlsx)
-        twill.commands.submit('1', '5')
-
-        df_pop_raw = pd.read_csv(io.StringIO(
-            twill.browser.html), sep=';', header=6)
-
-    else:
-        data_file = os.path.join(directory, filename)
-        if os.path.isfile(data_file+'.xlsx'):
-            df_pop_raw = pd.read_excel(
-                data_file+'.xlsx', engine='openpyxl', sheet_name=filename, header=4)
-        elif os.path.isfile(data_file+'.csv'):
-            df_pop_raw = pd.read_excel(data_file+'.csv', sep=';', header=6)
-        else:
-            raise FileNotFoundError(
-                'Data file '+filename+' was not found in out_folder/Germany')
+    download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
+    req = requests.get(download_url, auth=(username, password))
+    df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
 
     return df_pop_raw
 
@@ -365,6 +327,11 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
+    if read_data == True:
+        gd.default_print(
+            'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
+        read_data = False
+
     # If no username or password is provided, the credentials are either read from an .ini file or,
     # if the file does not exist they have to be given as user input.
     if (username is None) or (password is None):
@@ -372,7 +339,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
-    df_pop_raw = read_population_data(username, password, read_data, directory)
+    df_pop_raw = read_population_data(username, password)
 
     column_names = list(df_pop_raw.columns)
     # rename columns

@@ -42,7 +42,7 @@ Simulation::Simulation(Model const& model, ScalarType t0, ScalarType dt)
 {
 }
 
-TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model,
+TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, const Model& model,
                                 std::shared_ptr<IntegratorCore> integrator)
 {
     model.check_constraints();

@@ -40,7 +40,7 @@ public:
      * @brief Constructor to create an LCT SECIR Model.
      *
      * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
-     * @param[in, out] infectionState_init infectionState for the Model, specifies number of Subcompartments for each infection state.
+     * @param[in, out] infectionState_init infectionState for the Model, specifies number of subcompartments for each infection state.
      * @param[in, out] parameters_init Specifies Parameters necessary for the Model. 
      */
     Model(Eigen::VectorXd init, InfectionState infectionState_init = InfectionState(),
@@ -54,7 +54,7 @@ public:
     /**
      * @brief Evaulates the right-hand-side f of the LCT dydt = f(y, t).
      *
-     * The LCT-SECIR model is defined through ordinary differetial equations of the form dydt = f(y, t). 
+     * The LCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
      * y is a vector containing number of individuals for each (sub-) compartment.
      * This function evaluates the right-hand-side f of the ODE and can be used in an ODE solver.
      * @param[in] y the current state of the model
@@ -65,11 +65,11 @@ public:
                               Eigen::Ref<Eigen::VectorXd> dydt) const;
 
     /**
-     * @brief Calculates the population divided in states defined in InfectionStateBase out of a result with subcompartments.
+     * @brief Cumulates a simulation result with subcompartments to produce a result that divides the population only into the infection states defined in InfectionStateBase.
      *
-     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided in Subcompartments.
+     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided in subcompartments.
      * Function transforms this TimeSeries in another TimeSeries with just the Basic infectionState. 
-     * This is done by summing up the numbers in the Subcompartments.
+     * This is done by summing up the numbers in the subcompartments.
      * @param[in] result result of a simulation with the model.
      * @return result of the simulation divided in the Base infection states. 
      *  Returns TimeSeries with values -1 if calculation is not possible.
@@ -87,7 +87,7 @@ public:
         return m_initial_values;
     }
 
-    Parameters parameters{}; ///< Parameters of Model Parameters.
+    Parameters parameters{}; ///< Parameters of the model.
     InfectionState infectionState; ///< InfectionState specifies number of subcompartments.
 
 private:
