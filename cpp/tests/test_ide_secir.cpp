@@ -348,8 +348,97 @@ TEST(IdeSecir, checkInitializations)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-// a) Test if check_constraints() function correctly reports wrongly set parameters.
-// b) Test if check_constraints() does not complain if parameters are set within correct ranges.
+// a) Test if the function check_constraints() of the class Model correctly reports errors in the model constraints.
+// b) Test if check_constraints() does not complain if the conditions are met.
+TEST(IdeSecir, testModelConstraints)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
+    // Set wrong initial data and use check_constraints().
+    // Follow the same order as in check_constraints().
+
+    // --- Test with wrong size of the initial value vector for the flows.
+    ScalarType N      = 10000;
+    ScalarType deaths = 10;
+    ScalarType dt     = 1;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // Create TimeSeries of the wrong size.
+    mio::TimeSeries<ScalarType> init_wrong_size(num_transitions + 1);
+    // Add time points with vectors of the wrong size.
+    Vec vec_init_wrong_size = Vec::Constant(num_transitions + 1, 0.);
+    vec_init_wrong_size[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
+    init_wrong_size.add_time_point(-3, vec_init_wrong_size);
+    while (init_wrong_size.get_last_time() < 0) {
+        init_wrong_size.add_time_point(init_wrong_size.get_last_time() + dt, vec_init_wrong_size);
+    }
+
+    // Initialize a model.
+    mio::isecir::Model model_wrong_size(std::move(init_wrong_size), N, deaths);
+
+    // Return true for negative entry in m_populations.
+    auto constraint_check = model_wrong_size.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- Test with negative number of deaths.
+    deaths = -10;
+    // Create TimeSeries with num_transitions elements.
+    mio::TimeSeries<ScalarType> init(num_transitions);
+    // Add time points for initialization of transitions.
+    Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
+    init.add_time_point(-3, vec_init);
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    // Initialize a model.
+    mio::TimeSeries<ScalarType> init_copy(init);
+    mio::isecir::Model model_negative_deaths(std::move(init_copy), N, deaths);
+
+    // Return true for negative entry in m_populations.
+    constraint_check = model_negative_deaths.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- Test with too few time points.
+    deaths = 10;
+    // Initialize a model.
+    mio::isecir::Model model_few_timepoints(std::move(init), N, deaths);
+
+    mio::ExponentialDecay expdecay(4.0);
+    mio::StateAgeFunctionWrapper delaydistribution(expdecay);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    model_few_timepoints.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+
+    constraint_check = model_few_timepoints.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- The check_constraints() function of parameters is tested in its own test below. ---
+
+    // --- Correct wrong setup so that next check can go through.
+    mio::TimeSeries<ScalarType> init_enough_timepoints(num_transitions);
+    init_enough_timepoints.add_time_point(-5, vec_init);
+    while (init_enough_timepoints.get_last_time() < 0) {
+        init_enough_timepoints.add_time_point(init_enough_timepoints.get_last_time() + dt, vec_init);
+    }
+
+    // Initialize a model.
+    mio::isecir::Model model(std::move(init_enough_timepoints), N, deaths);
+
+    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_FALSE(constraint_check);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+// a) Test if check_constraints() function of Parameters correctly reports wrongly set parameters.
+// b) Test if check_constraints() function of Parameters does not complain if parameters are set within correct ranges.
 TEST(IdeSecir, testValueConstraints)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
