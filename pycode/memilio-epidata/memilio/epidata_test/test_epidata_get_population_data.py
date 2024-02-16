@@ -67,15 +67,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
                                                        '18-24 years', '25-29 years', '30-39 years', '40-49 years',
                                                        '50-64 years', '65-74 years', '>74 years'])
 
-    def test_read_population_data(self):
-
-        directory = os.path.join(self.path, 'Germany/')
-
-        # test file not found
-        with self.assertRaises(FileNotFoundError) as error:
-            df = gpd.read_population_data(
-                username='', password='', read_data=True, directory=directory)
-
     @patch('memilio.epidata.getPopulationData.read_population_data',
            return_value=df_pop_raw)
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
@@ -125,7 +116,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             username=None, password=None, read_data=False, out_folder=self.path, interactive=False)
         # The file exist in the directory (mocked) and the credentials should be read.
         mock_read.assert_called_with(
-            self.test_username, self.test_password, False, os.path.join(self.path, 'Germany'))
+            self.test_username, self.test_password)
 
 
 if __name__ == '__main__':

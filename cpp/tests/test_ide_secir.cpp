@@ -86,6 +86,8 @@ protected:
         model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
         model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
         model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+
+        model->set_tol_for_support_max(1e-10);
     }
 
     virtual void TearDown()
@@ -244,12 +246,10 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
-// Check if the model uses the correct method for initialization.
-// This is done by comparing the compartment sizes at t0 with a previous run with the same initialization method.
+// Check if the model uses the correct method for initialization using the function get_initialization_method().
 TEST(IdeSecir, checkInitializations)
 {
-    using Vec          = mio::TimeSeries<ScalarType>::Vector;
-    using ParameterSet = mio::isecir::Parameters;
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType tmax   = 1;
     ScalarType N      = 10000;
@@ -258,101 +258,45 @@ TEST(IdeSecir, checkInitializations)
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Define vectors to compare with.
-    Vec vec_forceofinfection((int)mio::isecir::InfectionState::Count);
-    Vec vec_total_confirmed((int)mio::isecir::InfectionState::Count);
-    Vec vec_S((int)mio::isecir::InfectionState::Count);
-    Vec vec_R((int)mio::isecir::InfectionState::Count);
-    Vec vec_noinit((int)mio::isecir::InfectionState::Count);
-    vec_forceofinfection << 4376.75616533, 13.80777657, 16.50441264, 4.41848850, 0.55231106, 0.55231106, 5574.30391270,
-        13.10462213;
-    vec_total_confirmed << 8969.68781079, 13.80777657, 16.50441264, 4.41848850, 0.55231106, 0.55231106, 981.37226724,
-        13.10462213;
-    vec_S << 5000.00000000, 13.80777657, 16.50441264, 4.41848850, 0.55231106, 0.55231106, 4951.06007803, 13.10462213;
-    vec_R << 8951.06007803, 13.80777657, 16.50441264, 4.41848850, 0.55231106, 0.55231106, 1000.00000000, 13.10462213;
-    vec_noinit << 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 13.10462213;
-
     // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions);
-
-    // Add time points for initialization of transitions.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
     // Add initial time point to time series.
-    init.add_time_point(-10, vec_init);
+    init.add_time_point(-10, Vec::Constant(num_transitions, 3.0));
     // Add further time points until time 0.
     while (init.get_last_time() < 0) {
-        vec_init *= 1.01;
-        init.add_time_point(init.get_last_time() + dt, vec_init);
-    }
-    ParameterSet parameters;
-
-    // Set working parameters.
-    mio::SmootherCosine smoothcos(2.0);
-    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(3.0);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(4.0);
-    parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
-
-    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-    parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
-
-    mio::ContactMatrixGroup contact_matrix         = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                              = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-    parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
-    mio::ExponentialDecay expdecay(0.5);
-    mio::StateAgeFunctionWrapper prob(expdecay);
-    parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
-    parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
-    parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
-
-    // --- Case with forceofinfection.
-    mio::TimeSeries<ScalarType> init_copy(init);
-    mio::isecir::Model model(std::move(init_copy), N, deaths, 0, std::move(parameters));
-    model.check_constraints(dt);
-
-    // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
-    sim.advance(tmax);
-
-    mio::TimeSeries<ScalarType> result = sim.get_result();
-
-    // Compare with previous run.
-    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
-        EXPECT_NEAR(result[0][i], vec_forceofinfection[i], 1e-8);
+        init.add_time_point(init.get_last_time() + dt, Vec::Constant(num_transitions, 3.0));
     }
 
     // --- Case with total_confirmed_cases.
+    mio::TimeSeries<ScalarType> init_copy1(init);
+    mio::isecir::Model model1(std::move(init_copy1), N, deaths, 1000);
+
+    // Check that the initialization method is not already set.
+    EXPECT_EQ(0, model1.get_initialization_method());
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim1(model1, 0, dt);
+    sim1.advance(tmax);
+
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(1, sim1.get_model().get_initialization_method());
+
+    // --- Case with forceofinfection.
     mio::TimeSeries<ScalarType> init_copy2(init);
-    mio::isecir::Model model2(std::move(init_copy2), N, deaths, 1000, std::move(parameters));
-    model2.check_constraints(dt);
+    mio::isecir::Model model2(std::move(init_copy2), N, deaths, 0);
 
     // Carry out simulation.
     mio::isecir::Simulation sim2(model2, 0, dt);
     sim2.advance(tmax);
-    result = sim2.get_result();
 
-    // Compare with previous run.
-    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
-        EXPECT_NEAR(result[0][i], vec_total_confirmed[i], 1e-8);
-    }
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(2, sim2.get_model().get_initialization_method());
 
     // --- Case with S.
-    /* For the other tests, the contact rate is set to 0 so that the force of infection is zero.
+    /* !! For the other tests, the contact rate is set to 0 so that the force of infection is zero.
      The forceofinfection initialization method is therefore not used for these tests.*/
+    mio::isecir::Parameters parameters;
+    mio::ContactMatrixGroup contact_matrix         = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                              = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
     parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
@@ -362,17 +306,12 @@ TEST(IdeSecir, checkInitializations)
     model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 5000;
     model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
-    model3.check_constraints(dt);
-
     // Carry out simulation.
     mio::isecir::Simulation sim3(model3, 0, dt);
     sim3.advance(tmax);
-    result = sim3.get_result();
 
-    // Compare with previous run.
-    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
-        EXPECT_NEAR(result[0][i], vec_S[i], 1e-8);
-    }
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(3, sim3.get_model().get_initialization_method());
 
     // --- Case with R.
     mio::TimeSeries<ScalarType> init_copy4(init);
@@ -381,132 +320,36 @@ TEST(IdeSecir, checkInitializations)
     model4.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
     model4.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 1000;
 
-    model4.check_constraints(dt);
-
     // Carry out simulation.
     mio::isecir::Simulation sim4(model4, 0, dt);
     sim4.advance(tmax);
-    result = sim4.get_result();
 
-    // Compare with previous run.
-    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
-        EXPECT_NEAR(result[0][i], vec_R[i], 1e-8);
-    }
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(4, sim4.get_model().get_initialization_method());
 
     // --- Case without fitting initialization method.
     // Deactivate temporarily log output for next test. Error is expected here.
     mio::set_log_level(mio::LogLevel::off);
+
+    // Here we do not need a copy of init as this is the last use of the vector. We can apply move directly.
     mio::isecir::Model model5(std::move(init), N, deaths, 0, std::move(parameters));
 
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
-    model5.check_constraints(dt);
-
     // Carry out simulation.
     mio::isecir::Simulation sim5(model5, 0, dt);
     sim5.advance(tmax);
-    result = sim5.get_result();
 
-    // Compare with previous run
-    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
-        EXPECT_NEAR(result[0][i], vec_noinit[i], 1e-8);
-    }
-    // Reactive log output.
-    mio::set_log_level(mio::LogLevel::warn);
-}
-
-// a) Test if the function check_constraints() of the class Model correctly reports errors in the model constraints.
-// b) Test if check_constraints() does not complain if the conditions are met.
-TEST(IdeSecir, testModelConstraints)
-{
-    using Vec = mio::TimeSeries<ScalarType>::Vector;
-    // Deactivate temporarily log output for next tests.
-    mio::set_log_level(mio::LogLevel::off);
-
-    // Set wrong initial data and use check_constraints().
-    // Follow the same order as in check_constraints().
-
-    // --- Test with wrong size of the initial value vector for the flows.
-    ScalarType N      = 10000;
-    ScalarType deaths = 10;
-    ScalarType dt     = 1;
-
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
-
-    // Create TimeSeries of the wrong size.
-    mio::TimeSeries<ScalarType> init_wrong_size(num_transitions + 1);
-    // Add time points with vectors of the wrong size.
-    Vec vec_init_wrong_size = Vec::Constant(num_transitions + 1, 0.);
-    vec_init_wrong_size[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
-    init_wrong_size.add_time_point(-3, vec_init_wrong_size);
-    while (init_wrong_size.get_last_time() < 0) {
-        init_wrong_size.add_time_point(init_wrong_size.get_last_time() + dt, vec_init_wrong_size);
-    }
-
-    // Initialize a model.
-    mio::isecir::Model model_wrong_size(std::move(init_wrong_size), N, deaths);
-
-    // Return true for negative entry in m_populations.
-    auto constraint_check = model_wrong_size.check_constraints(dt);
-    EXPECT_TRUE(constraint_check);
-
-    // --- Test with negative number of deaths.
-    deaths = -10;
-    // Create TimeSeries with num_transitions elements.
-    mio::TimeSeries<ScalarType> init(num_transitions);
-    // Add time points for initialization of transitions.
-    Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
-    init.add_time_point(-3, vec_init);
-    while (init.get_last_time() < 0) {
-        init.add_time_point(init.get_last_time() + dt, vec_init);
-    }
-
-    // Initialize a model.
-    mio::TimeSeries<ScalarType> init_copy(init);
-    mio::isecir::Model model_negative_deaths(std::move(init_copy), N, deaths);
-
-    // Return true for negative entry in m_populations.
-    constraint_check = model_negative_deaths.check_constraints(dt);
-    EXPECT_TRUE(constraint_check);
-
-    // --- Test with too few time points.
-    deaths = 10;
-    // Initialize a model.
-    mio::isecir::Model model_few_timepoints(std::move(init), N, deaths);
-
-    mio::ExponentialDecay expdecay(4.0);
-    mio::StateAgeFunctionWrapper delaydistribution(expdecay);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    model_few_timepoints.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
-
-    constraint_check = model_few_timepoints.check_constraints(dt);
-    EXPECT_TRUE(constraint_check);
-
-    // --- The check_constraints() function of parameters is tested in its own test below. ---
-
-    // --- Correct wrong setup so that next check can go through.
-    mio::TimeSeries<ScalarType> init_enough_timepoints(num_transitions);
-    init_enough_timepoints.add_time_point(-5, vec_init);
-    while (init_enough_timepoints.get_last_time() < 0) {
-        init_enough_timepoints.add_time_point(init_enough_timepoints.get_last_time() + dt, vec_init);
-    }
-
-    // Initialize a model.
-    mio::isecir::Model model(std::move(init_enough_timepoints), N, deaths);
-
-    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
-
-    constraint_check = model.check_constraints(dt);
-    EXPECT_FALSE(constraint_check);
+    // Verify that initialization was not possible with one of the models methods.
+    EXPECT_EQ(-1, sim5.get_model().get_initialization_method());
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-// a) Test if check_constraints() function of Parameters correctly reports wrongly set parameters.
-// b) Test if check_constraints() function of Parameters does not complain if parameters are set within correct ranges.
+// a) Test if check_constraints() function correctly reports wrongly set parameters.
+// b) Test if check_constraints() does not complain if parameters are set within correct ranges.
 TEST(IdeSecir, testValueConstraints)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;

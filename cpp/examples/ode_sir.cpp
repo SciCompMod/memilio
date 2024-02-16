@@ -30,7 +30,7 @@ int main()
 
     double t0   = 0.;
     double tmax = 50.;
-    double dt   = 0.1002004008016032;
+    double dt   = 0.1;
 
     double total_population = 1061000;
 
@@ -45,7 +45,7 @@ int main()
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
     model.parameters.set<mio::osir::TimeInfected>(2);
-    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
+    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
