@@ -11,13 +11,13 @@ import matplotlib.pyplot as plt
 
 
 # We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
-def read_groundtruth(data_dir):
+def read_groundtruth(data_dir, setting):
 
     model = 'ode'
     results = {model: []}
 
-    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt=1e-6_setting2'.format(
-        model)) + '.h5', 'r')
+    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt=1e-3_setting{}'.format(
+        model, setting)) + '.h5', 'r')
 
     # if (len(list(h5file.keys())) > 1):
     #     raise gd.DataError("File should contain one dataset.")
@@ -48,14 +48,14 @@ def read_groundtruth(data_dir):
 # Read data into a dict, where the keys correspond to ODE and IDE models. There
 # we have an array that contains all results for SECIHURD for all time points
 # for each time step size that is investigated.
-def read_data(data_dir, timesteps):
+def read_data(data_dir, timesteps, setting):
 
     models = ['ode', 'ide']
     results = {models[0]: [], models[1]: []}
     for model in models:
         for timestep in timesteps:
-            h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_setting2'.format(
-                model, timestep)) + '.h5', 'r')
+            h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_setting{}'.format(
+                model, timestep, setting)) + '.h5', 'r')
 
             # if (len(list(h5file.keys())) > 1):
             #     raise gd.DataError("File should contain one dataset.")
@@ -133,17 +133,23 @@ def compute_error_norm_tmax(groundtruth, results, timesteps):
 # Plot errors against timesteps.
 
 
-def plot_convergence(errors, timesteps, compartment=None, save=False):
+def plot_convergence(errors, timesteps, setting, compartment=None, save=False):
 
+    secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
+                  5: 'ICU', 6: 'Recovered', 7: 'Dead'}
     compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
+
+    # helmholtzdarkblue, helmholtzclaim
+    colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
     if compartment != None:
 
         # TODO: include check if compartment is in 0,...,8
 
         fig, ax = plt.subplots()
 
-        ax.plot(timesteps, errors[:, compartment], '-o', label='Results')
-        comparison = [2400 * dt for dt in timesteps]
+        ax.plot(timesteps, errors[:, compartment],
+                '-o', color=colors[0], label='Results')
+        comparison = [1800 * dt for dt in timesteps]
         ax.plot(timesteps, comparison, color='lightgray',
                 label=r"$\mathcal{O}(\Delta t)$")
 
@@ -160,7 +166,7 @@ def plot_convergence(errors, timesteps, compartment=None, save=False):
         if save:
             if not os.path.isdir('plots'):
                 os.makedirs('plots')
-            plt.savefig(f'plots/convergence_{compartments[compartment]}.png',
+            plt.savefig('plots/convergence_{compartments[compartment]}_setting{}.png'.format(setting),
                         bbox_inches='tight', dpi=500)
 
         else:
@@ -172,33 +178,37 @@ def plot_convergence(errors, timesteps, compartment=None, save=False):
         for i in range(8):
 
             # plot comparison line for linear convergence
-            comparison = [1800 * dt for dt in timesteps]
+            comparison = [500 * dt for dt in timesteps]
             ax[int(i/2), i % 2].plot(timesteps, comparison, color='lightgray',
                                      label=r"$\mathcal{O}(\Delta t)$")
 
             # plot results
             ax[int(i/2), i % 2].plot(timesteps,
-                                     errors[:, i], '-o', label='Results')
+                                     errors[:, i], '-o', color=colors[0], label='Results')
 
             # adapt plots
             ax[int(i/2), i % 2].set_xscale("log", base=10)
             ax[int(i/2), i % 2].set_yscale("log", base=10)
 
-            ax[int(i/2), i % 2].set_title(compartments[i], fontsize=8)
+            ax[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
 
-            fig.supxlabel('        Time step')
+            fig.supxlabel('Time step')
             fig.supylabel(
                 r"$\Vert {K}_{IDE}(t_{max}) - {K}_{ODE}(t_{max})\Vert$")
 
         # invert x axis only for one plot so that sharex=True and invert_xaxis work as intended
         ax[0, 0].invert_xaxis()
 
-        plt.tight_layout()
+        labels = [r"$\mathcal{O}(\Delta t)$", 'Results']
+        fig.legend(labels, loc='center right',
+                   fancybox=False, shadow=False, ncol=1)
+
+        plt.tight_layout(rect=[0, 0, 0.83, 1])
 
         if save:
             if not os.path.isdir('plots'):
                 os.makedirs('plots')
-            plt.savefig('plots/convergence_all.png', format='png',
+            plt.savefig(f'plots/convergence_all_setting={setting}.png', format='png',
                         dpi=500)  # bbox_inches='tight',
 
         # plt.show()
@@ -221,12 +231,6 @@ def compute_order_of_convergence(errors, timesteps):
 
 def print_results(groundtruth, results, timesteps):
 
-    # for i in range(len(timesteps)-1):
-    #     print('ODE: ', results['ode'][i][-1][0]/results['ode'][i+1][-1][0])
-
-    # for i in range(len(timesteps)-1):
-    #     print('IDE: ', results['ide'][i][-1][0]/results['ide'][i+1][-1][0])
-
     compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
 
     for compartment in range(8):
@@ -241,20 +245,36 @@ def print_results(groundtruth, results, timesteps):
                   results['ide'][i][-1][compartment])
 
 
+def print_errors(errors, timesteps):
+
+    compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
+
+    for compartment in range(8):
+        print('\n')
+        print(f'{compartments[compartment]}: ')
+        print('\n')
+        print('Errors of IDE (compared to ODE):')
+        for i in range(len(timesteps)):
+            print('Timestep ', timesteps[i], ':',
+                  errors[i][compartment])
+
+
 def main():
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    timesteps = ['1e-2', '1e-3', '1e-4']
+    setting = 2
 
-    groundtruth = read_groundtruth(data_dir)
+    timesteps = ['1e-2', '1e-3', '1e-4']  # , '1e-4'
 
-    results = read_data(data_dir, timesteps)
+    groundtruth = read_groundtruth(data_dir, setting)
 
-    timesteps = [1e-2, 1e-3, 1e-4]
+    results = read_data(data_dir, timesteps, setting)
+
+    timesteps = [1e-2, 1e-3, 1e-4]  # , 1e-4
     errors = compute_error_norm_tmax(groundtruth, results, timesteps)
 
-    plot_convergence(errors, timesteps, save=True)
+    plot_convergence(errors, timesteps, setting, save=True)
 
     # order = compute_order_of_convergence(errors, timesteps)
 
@@ -262,7 +282,9 @@ def main():
 
     # print_results(groundtruth, results, timesteps)
 
-    return 0
+    # print_errors(errors, timesteps)
+
+    return
 
 
 if __name__ == '__main__':

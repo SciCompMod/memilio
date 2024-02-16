@@ -23,6 +23,7 @@
 
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
+#include "ode_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 
@@ -91,11 +92,13 @@ public:
      * 
      * Uses differences in compartment sizes over time to compute flows that are needed for iniitalization of IDE model.
      * 
-     * @param[in] secihurd_ode Time series containing results of ODE simulation   
+     * @param[in] model_ode ODE model used for simulation. 
+     * @param[in] secihurd_ode Time series containing results of ODE simulation.   
      * @param[in] t0_ide Start time of IDE simulation.
      * @param[in] dt Time discretization step size.         
      */
-    void compute_initial_flows_from_ode_compartments(mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
+    void compute_initial_flows_from_ode_compartments(mio::osecir::Model model_ode,
+                                                     mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
                                                      ScalarType dt);
     /**
      * @brief Computes initial flows from ODE results by calculating flows based on preceeding flow.

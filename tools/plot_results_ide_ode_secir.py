@@ -29,14 +29,14 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import memilio.epidata.getDataIntoPandasDataFrame as gd
+# import memilio.epidata.getDataIntoPandasDataFrame as gd
 
 # Define compartments
 secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
-              5: 'ICU', 6: 'Recovered', 7: 'Death'}
+              5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
 
-def compare_results(files, legendplot, save=True):
+def compare_results(timestep, setting, legendplot, save=True):
     """ Creates a 4x2 Plot with one subplot per compartment and one line per result one wants to compare.
     @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
         Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
@@ -44,6 +44,8 @@ def compare_results(files, legendplot, save=True):
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] save: if save is True, the plot is saved in a folder named Plots.
     """
+    files = [os.path.join(data_dir, f"result_ode_dt={timestep}_setting{setting}"), os.path.join(
+        data_dir, f"result_ide_dt={timestep}_setting{setting}")]
 
     fig, axs = plt.subplots(4, 2, sharex='all', num='Compare files')
     # helmholtzdarkblue, helmholtzclaim
@@ -96,65 +98,11 @@ def compare_results(files, legendplot, save=True):
 
     # save result
     if save:
-        if not os.path.isdir('Plots'):
-            os.makedirs('Plots')
-        fig.savefig('Plots/ide_ode_compare_dt=1e-3_setting2.png',
+        if not os.path.isdir('plots'):
+            os.makedirs('plots')
+        plt.savefig(f'plots/ide_ode_compare_dt={timestep}_setting{setting}.png',
                     bbox_inches='tight', dpi=500)
-    plt.show()
-
-
-def plot_new_infections(files, legendplot, save=True):
-    """ Single plot to compare the incidence of different results. Incidence means the number of people leaving the susceptible class per day.
-    @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
-        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
-        One could compare results with eg different parameters or different models.
-    @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
-    @param[in] save: if save is True, the plot is saved in a folder named Plots.
-    """
-    # define plot
-    plt.figure(
-        'Number of disease transmission compared for different models')
-
-    # add results to plot
-    for file in range(len(files)):
-        # load data
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
-
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
-
-        data = h5file[list(h5file.keys())[0]]
-        dates = data['Time'][:]
-        # As there should be only one Group, total is the simulation result
-        total = data['Total'][:, :]
-        if (total.shape[1] != 8):
-            raise gd.DataError(
-                "Expected a different number of subcompartments.")
-        incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
-
-        # plot result
-        plt.plot(dates[1:], incidence, linewidth=1.0)
-
-        h5file.close()
-
-    plt.xlabel('Time', fontsize=14)
-    plt.ylabel('Number of disease transmission per day', fontsize=10)
-    plt.ylim(bottom=0)
-    plt.xlim(left=0)
-    plt.legend(legendplot, fontsize=14)
-    plt.grid(True, linestyle='--')
-    plt.tight_layout()
-    plt.show(block=True)
-    # save result
-    if save:
-        if not os.path.isdir('Plots'):
-            os.makedirs('Plots')
-        plt.savefig('Plots/compare_incidence.png',
-                    bbox_inches='tight', dpi=500)
-
-    h5file.close()
+    # plt.show()
 
 
 if __name__ == '__main__':
@@ -162,6 +110,8 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
+    timestep = '1e-2'
+    setting = 4
     # Plot comparison of ODE and IDE models
-    compare_results([os.path.join(data_dir, "result_ode_dt=1e-3_setting2"), os.path.join(data_dir, "result_ide_dt=1e-3_setting2")],
+    compare_results(timestep, setting,
                     legendplot=list(["ODE", "IDE"]), save=True)
