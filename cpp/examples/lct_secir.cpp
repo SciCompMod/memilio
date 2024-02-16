@@ -37,43 +37,44 @@ int main()
     num_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
     num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
     num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
-    mio::lsecir::InfectionState infectionState(num_subcompartments);
+    mio::lsecir::InfectionState infection_state(num_subcompartments);
 
     ScalarType tmax = 20;
 
     // Define initial distribution of the population in the subcompartments.
-    Eigen::VectorXd init(infectionState.get_count());
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 1]            = 20;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)]     = 20;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 1] = 10;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 2] = 10;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms)]       = 50;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere)]         = 50;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical)]       = 10;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 1]   = 10;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 2]   = 5;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 3]   = 3;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 4]   = 2;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
-    init[infectionState.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
+    Eigen::VectorXd init(infection_state.get_count());
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 1]            = 20;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)]     = 20;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 1] = 10;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 2] = 10;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms)]       = 50;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere)]         = 50;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical)]       = 10;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 1]   = 10;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 2]   = 5;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 3]   = 3;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 4]   = 2;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
+    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
 
     // Initialize model.
-    mio::lsecir::Model model(std::move(init), infectionState);
+    mio::lsecir::Model model(std::move(init), infection_state);
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2;
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
     model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
-    // Also possible to change values with setter.
+    // It is also possible to change values with the set function.
     model.parameters.set<mio::lsecir::TimeInfectedCritical>(7.1);
 
     model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
 
     model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
@@ -85,7 +86,7 @@ int main()
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, tmax, 0.5, model);
-    // Calculate the distribution in infectionState without subcompartments of the result and print it.
-    mio::TimeSeries<ScalarType> populations_no_subcompartments = model.calculate_populations(result);
-    populations_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    // Calculate the distribution in the InfectionState%s without subcompartments of the result and print it.
+    mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_populations(result);
+    population_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 }

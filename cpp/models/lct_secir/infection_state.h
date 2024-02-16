@@ -71,7 +71,7 @@ public:
     /**
      * @brief Constructor for the InfectionState class.
      *
-     * InfectionState class defines the possible InfectionState%s with the number of Subcompartments for the LCT model.
+     * InfectionState class defines the possible InfectionState%s with the number of subcompartments for the LCT model.
      * With the default constructor, the class is defined without subcompartments, i.e. only the subdivision in InfectionStateBase 
      * is used.
      */
@@ -85,8 +85,8 @@ public:
     /**
      * @brief Constructor for the InfectionState class.
      *
-     * InfectionState class defines the possible InfectionState%s with the number of Subcompartments for the LCT model.
-     * @param[in] subcompartment_numbers Vector which defines the number of Subcompartments for each infection state of InfectionStateBase.       
+     * InfectionState class defines the possible InfectionState%s with the number of subcompartments for the LCT model.
+     * @param[in] subcompartment_numbers Vector which defines the number of subcompartments for each infection state of InfectionStateBase.       
      */
     InfectionState(std::vector<int> subcompartment_numbers)
         : m_subcompartment_numbers(std::move(subcompartment_numbers))
@@ -97,11 +97,11 @@ public:
     }
 
     /**
-     * @brief Setter for the number of Subcompartments.
+     * @brief Setter for the number of subcompartments.
      *
-     * The number of Subcompartments is only updated if the vector is valid.
-     * @param[in] subcompartment_numbers Vector which defines the number of Subcompartments for each infection state of InfectionStateBase. 
-     * @return Returns true if the vector is not valid, otherwise false.      
+     * The number of subcompartments is only updated if the vector is valid.
+     * @param[in] subcompartment_numbers Vector which defines the number of subcompartments for each infection state of InfectionStateBase. 
+     * @return Returns true if the function works as intended and false if the vector is not valid.      
      */
     bool set_subcompartment_numbers(std::vector<int> subcompartment_numbers)
     {
@@ -109,12 +109,14 @@ public:
         m_subcompartment_numbers = std::move(subcompartment_numbers);
         if (check_constraints()) {
             // Case where the vector is not valid.
+            log_warning("The vector you tried to set as the number of subcompartments is invalid. The previous vector "
+                        "is kept.");
             m_subcompartment_numbers = copy_m_subcompartment_numbers;
-            return true;
+            return false;
         }
         else {
             set_compartment_index();
-            return false;
+            return true;
         }
     }
 
@@ -122,7 +124,7 @@ public:
      * @brief Gets the number of subcompartments in an infection state.
      *
      * @param[in] infectionstatebase Infection state for which the number of subcompartments should be returned.   
-     * @return Number of Subcompartments for infectionstatebase.
+     * @return Number of subcompartments for infectionstatebase.
      */
     int get_number(InfectionStateBase infectionstatebase) const
     {
@@ -134,7 +136,7 @@ public:
      *
      * @param[in] infectionstatebase Index of an infection state for which the number of subcompartments should be returned.   
      * If the index does not match an infectionstate, the return value will be -1.
-     * @return Number of Subcompartments for infectionstatebase or -1.
+     * @return Number of subcompartments for infectionstatebase or -1.
      */
     int get_number(int infectionstatebaseindex) const
     {
@@ -142,6 +144,8 @@ public:
             return m_subcompartment_numbers[infectionstatebaseindex];
         }
         else {
+            // Invalid index.
+            log_warning("The index you tried to get the number of subcompartments for was not valid.");
             return -1;
         }
     }
@@ -152,7 +156,7 @@ public:
      * In a simulation, the number of individuals in the subcompartments are stored in vectors. 
      * Accordingly, the index in such a vector of the first subcompartment of an infection state is given.
      * @param[in] infectionstatebase Infection state for which the index should be returned.    
-     * @return Index of the first Subcompartment for a vector with one entry per subcompartment.
+     * @return Index of the first subcompartment for a vector with one entry per subcompartment.
      */
     int get_firstindex(InfectionStateBase infectionstatebase) const
     {
@@ -166,7 +170,7 @@ public:
      * Accordingly, the index in such a vector of the first subcompartment of an infection state is given.
      * @param[in] infectionstatebase Index of an infection state for which the index of a vector should be returned.   
      * If the index does not match an infectionstate, the return value will be -1.  
-     * @return Index of the first Subcompartment for a vector with one entry per subcompartment or -1.
+     * @return Index of the first subcompartment for a vector with one entry per subcompartment or -1.
      */
     int get_firstindex(int infectionstatebaseindex) const
     {
@@ -179,7 +183,7 @@ public:
     }
 
     /**
-     * @brief Gets the total number of (sub-)compartments of infection states.
+     * @brief Gets the total number of subcompartments of all infection states.
      */
     int get_count() const
     {
@@ -206,12 +210,12 @@ public:
             return true;
         }
         if (!(m_subcompartment_numbers[(int)InfectionStateBase::Dead] == 1)) {
-            log_error("Dead compartment can not have Subcompartments.");
+            log_error("Dead compartment can not have subcompartments.");
             return true;
         }
         for (int i = 0; i < (int)InfectionStateBase::Count; ++i) {
             if (m_subcompartment_numbers[i] < 1) {
-                log_error("All compartments should have at least one Subcompartment.");
+                log_error("All compartments should have at least one subcompartment.");
                 return true;
             }
         }
@@ -220,7 +224,7 @@ public:
 
 private:
     /**
-     * @brief Calculates Index of the first Subcompartment for a vector with one entry per subcompartment.
+     * @brief Calculates Index of the first subcompartment for a vector with one entry per subcompartment.
      *
      * Therefore the vector with number of subcompartments per infection state is used.
      */
@@ -235,10 +239,10 @@ private:
     }
 
     std::vector<int>
-        m_subcompartment_numbers; ///< Vector which defines the number of Subcompartments for each infection state of InfectionStateBase.
+        m_subcompartment_numbers; ///< Vector which defines the number of subcompartments for each infection state of InfectionStateBase.
     std::vector<int>
-        m_subcompartment_indexfirst; ///< Vector with Indexes for all infection states of the first Subcompartment for a vector with one entry per subcompartment.
-    int m_count; ///< Total number of (sub-)compartments of infection states.
+        m_subcompartment_indexfirst; ///< Vector with Indexes for all infection states of the first subcompartment for a vector with one entry per subcompartment.
+    int m_count; ///< Total number of subcompartments of all infection states.
 };
 
 } // namespace lsecir
