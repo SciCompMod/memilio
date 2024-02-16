@@ -36,7 +36,7 @@ namespace lsecir
 bool Initializer::check_constraints() const
 {
     if (!((int)InfectionTransition::Count == (int)m_flows.get_num_elements())) {
-        log_error("Initial condition size does not match Subcompartments.");
+        log_error("Initial condition size does not match subcompartments.");
         return true;
     }
 
@@ -82,7 +82,7 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
         erlang.set_parameter(j + 1);
 
         // Determine relevant calculation area and corresponding index.
-        calc_time       = erlang.get_support_max(m_dt, 1e-6);
+        calc_time       = erlang.get_support_max(m_dt, m_tol);
         calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
         if (num_time_points < calc_time_index) {

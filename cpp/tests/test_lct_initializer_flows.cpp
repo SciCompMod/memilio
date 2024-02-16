@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -29,6 +29,7 @@
 
 #include <vector>
 #include <gtest/gtest.h>
+
 // Test compares a calculation of an initial vector using data for flows with a previous result.
 TEST(TestInitializer, compareWithPrevious)
 {
@@ -95,6 +96,7 @@ TEST(TestInitializer, compareWithPrevious)
 
     // Calculate initial vector and compare with previous reult.
     mio::lsecir::Initializer initializer(std::move(init), InfState, std::move(parameters_lct));
+    initializer.set_tol_for_support_max(1e-6);
     auto init_compartments = initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
     for (int i = 0; i < InfState.get_count(); i++) {
@@ -102,7 +104,7 @@ TEST(TestInitializer, compareWithPrevious)
     }
 }
 
-// Check if the constraints of the Initializer are validated as expected.
+// Check if the constraints of the initializer are validated as expected.
 TEST(TestInitializer, testConstraints)
 {
     // Deactivate temporarily log output for next tests.
@@ -174,6 +176,7 @@ TEST(TestInitializer, testConstraints)
     }
 
     mio::lsecir::Initializer initializer_right(std::move(init_right), InfState);
+    initializer_right.set_tol_for_support_max(1e-6);
 
     constraint_check = initializer_right.check_constraints();
     EXPECT_FALSE(constraint_check);

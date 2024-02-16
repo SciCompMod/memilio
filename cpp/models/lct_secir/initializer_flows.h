@@ -44,7 +44,7 @@ public:
      * @param[in] flows Initalizing TimeSeries with flows fitting to these defined in InfectionTransition. 
      *      Timesteps should be equidistant.
      * @param[in, out] infectionState_init InfectionState%s for the Initializer, specifies number of Subcompartments for each infection state.
-     * @param[in, out] parameters_init Specifies Parameters necessary for the Initializer.
+     * @param[in, out] parameters_init Specifies parameters necessary for the Initializer.
      */
     Initializer(TimeSeries<ScalarType>&& flows, InfectionState infectionState_init = InfectionState(),
                 Parameters&& parameters_init = Parameters())
@@ -75,6 +75,16 @@ public:
      */
     bool check_constraints() const;
 
+    /**
+     * @brief Setter for the tolerance used to calculate the maximum support of ErlangDensity%s.
+     *
+     * @param[in] new_tol New tolerance.
+     */
+    void set_tol_for_support_max(ScalarType new_tol)
+    {
+        m_tol = new_tol;
+    }
+
     Parameters parameters{}; ///< Parameters with the Initalizers Parameters.
     InfectionState infectionState; ///< InfectionState specifies number of subcompartments.
 
@@ -95,6 +105,7 @@ private:
 
     TimeSeries<ScalarType> m_flows; ///< TimeSeries with the flows which are used to calculate the initial vector.
     ScalarType m_dt{}; ///< Step size of the times in m_flows and time step for the approximation of the integral.
+    ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the ErlangDensity%s.
 };
 
 } // namespace lsecir
