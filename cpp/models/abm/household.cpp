@@ -30,6 +30,13 @@ namespace mio
 namespace abm
 {
 
+namespace
+{
+/**
+ * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
+ * @param[in] age_groups A CustomIndexArray with the weights.
+ * @return The picked AgeGroup.
+ */
 AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
                                               const CustomIndexArray<int, AgeGroup>& age_groups)
 {
@@ -37,6 +44,7 @@ AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
     size_t age_group       = DiscreteDistribution<size_t>::get_instance()(rng, age_group_weights);
     return (AgeGroup)age_group;
 }
+} // namespace
 
 void Household::add_members(HouseholdMember household_member, int number_of_members)
 {
@@ -48,6 +56,40 @@ void HouseholdGroup::add_households(Household household, int number_of_household
 {
     m_household_list.push_back(std::make_tuple(household, number_of_households));
     m_number_of_households += number_of_households;
+}
+
+void add_household_to_world(World& world, const Household& household)
+{
+    auto home    = world.add_location(LocationType::Home);
+    auto members = household.get_members();
+    world.get_individualized_location(home).set_capacity(household.get_total_number_of_members(),
+                                                         household.get_total_number_of_members() *
+                                                             household.get_space_per_member());
+
+    for (auto& memberTouple : members) {
+        int count;
+        HouseholdMember member  = HouseholdMember(world.parameters.get_num_groups());
+        std::tie(member, count) = memberTouple;
+        for (int j = 0; j < count; j++) {
+            auto age_group = pick_age_group_from_age_distribution(world.get_rng(), member.get_age_weights());
+            auto& person   = world.add_person(home, age_group);
+            person.set_assigned_location(home);
+        }
+    }
+}
+
+void add_household_group_to_world(World& world, const HouseholdGroup& household_group)
+{
+    auto households = household_group.get_households();
+
+    for (auto& householdTuple : households) {
+        int count;
+        Household household;
+        std::tie(household, count) = householdTuple;
+        for (int j = 0; j < count; j++) {
+            add_household_to_world(world, household);
+        }
+    }
 }
 
 } // namespace abm

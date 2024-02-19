@@ -17,4 +17,29 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/simulation.h" // IWYU pragma: keep
+#include "abm/simulation.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/mioomp.h"
+#include <random>
+
+namespace mio
+{
+namespace abm
+{
+
+Simulation::Simulation(TimePoint t, World&& world)
+    : m_world(std::move(world))
+    , m_t(t)
+    , m_dt(hours(1))
+{
+}
+
+void Simulation::evolve_world(TimePoint tmax)
+{
+    auto dt = std::min(m_dt, tmax - m_t);
+    m_world.evolve(m_t, dt);
+    m_t += m_dt;
+}
+
+} // namespace abm
+} // namespace mio

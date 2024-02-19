@@ -35,16 +35,16 @@ int main()
     const auto age_group_35_to_59 = mio::AgeGroup(3);
 
     // Create the world with 4 age groups.
-    auto world = mio::abm::World<double>(num_age_groups);
+    auto world = mio::abm::World(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    world.parameters.get<mio::abm::IncubationPeriod<double>>() = 4.;
+    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = false;
     world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
-    world.parameters.get<mio::abm::AgeGroupGotoWork>()                     = false;
+    world.parameters.get<mio::abm::AgeGroupGotoWork>() = false;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
@@ -122,7 +122,7 @@ int main()
     for (auto& person : world.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.parameters, start_date, infection_state));

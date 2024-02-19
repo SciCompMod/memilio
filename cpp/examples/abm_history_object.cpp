@@ -68,10 +68,10 @@ int main()
     const auto age_group_35_to_59 = mio::AgeGroup(3);
 
     // Create the world with 4 age groups.
-    auto world = mio::abm::World<double>(num_age_groups);
+    auto world = mio::abm::World(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    world.parameters.get<mio::abm::IncubationPeriod<double>>() = 4.;
+    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // There are 3 households for each household group.
     int n_households = 3;
@@ -135,7 +135,7 @@ int main()
     // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::Person<double>::RandomNumberGenerator(world.get_rng(), person);
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -170,14 +170,14 @@ int main()
 
     struct LogTimePoint : mio::LogAlways {
         using Type = double;
-        static Type log(const mio::abm::Simulation<double>& sim)
+        static Type log(const mio::abm::Simulation& sim)
         {
             return sim.get_time().hours();
         }
     };
     struct LogLocationIds : mio::LogOnce {
         using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
-        static Type log(const mio::abm::Simulation<double>& sim)
+        static Type log(const mio::abm::Simulation& sim)
         {
             Type location_ids{};
             for (auto& location : sim.get_world().get_locations()) {

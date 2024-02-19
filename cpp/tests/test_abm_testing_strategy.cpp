@@ -23,8 +23,8 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    mio::abm::Location<double> home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location<double> work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
@@ -59,7 +59,7 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::InfectedSymptoms,
                                                                     mio::abm::InfectionState::InfectedNoSymptoms};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
-                                                                mio::abm::LocationType::Work};
+                                                                    mio::abm::LocationType::Work};
 
     auto testing_criteria1                                   = mio::abm::TestingCriteria({}, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
@@ -88,12 +88,12 @@ TEST(TestTestingScheme, runScheme)
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
-    mio::abm::Location<double> loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location<double> loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto rng_person1 = mio::abm::Person<double>::RandomNumberGenerator(rng, person1);
+    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
-    auto rng_person2 = mio::abm::Person<double>::RandomNumberGenerator(rng, person2);
+    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -128,11 +128,11 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
 
-    mio::abm::Location<double> loc_work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     auto person1     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto rng_person1 = mio::abm::Person<double>::RandomNumberGenerator(rng, person1);
+    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered);
-    auto rng_person2 = mio::abm::Person<double>::RandomNumberGenerator(rng, person2);
+    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -140,8 +140,8 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5));
 
-    mio::abm::TestingStrategy test_strategy = mio::abm::TestingStrategy(
-        std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme<double>>>());
+    mio::abm::TestingStrategy test_strategy =
+        mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
     ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),

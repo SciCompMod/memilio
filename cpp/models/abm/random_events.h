@@ -17,9 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_RANDOM_EVENTS_H
-#define EPI_ABM_RANDOM_EVENTS_H
-
 #include "abm/time.h"
 #include "memilio/utils/random_number_generator.h"
 #include <algorithm>
@@ -81,5 +78,3 @@ T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, d
 
 } // namespace abm
 } // namespace mio
-
-#endif

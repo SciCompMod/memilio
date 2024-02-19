@@ -20,19 +20,15 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
-#include "abm/config.h" // IWYU pragma: keep
+#include "abm/config.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
+#include "abm/lockdown_rules.h"
 #include "abm/trip_list.h"
 #include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
-#include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/stl_util.h"
-#include "abm/migration_rules.h"
-#include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -50,17 +46,13 @@ namespace abm
  * @brief The World of the Simulation.
  * It consists of Location%s and Person%s (Agents).
  */
-template <typename FP = double>
 class World
 {
 public:
-    using LocationIterator =
-        PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::iterator>;
-    using ConstLocationIterator =
-        PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::const_iterator>;
-    using PersonIterator = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::iterator>;
-    using ConstPersonIterator =
-        PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::const_iterator>;
+    using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
+    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
+    using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
+    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
 
     /**
      * @brief Create a World.
@@ -89,15 +81,15 @@ public:
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
                 // Copy a location
-                m_locations.emplace_back(std::make_unique<Location<FP>>(
-                    origin_loc.copy_location_without_persons(parameters.get_num_groups())));
+                m_locations.emplace_back(
+                    std::make_unique<Location>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
             }
             for (auto& person : other.get_persons()) {
                 // If a person is in this location, copy this person and add it to this location.
                 if (person.get_location() == origin_loc) {
                     LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
                     m_persons.push_back(
-                        std::make_unique<Person<FP>>(person.copy_person(get_individualized_location(origin_id))));
+                        std::make_unique<Person>(person.copy_person(get_individualized_location(origin_id))));
                 }
             }
         }
@@ -105,9 +97,9 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other) = default;
+    World(World&& other)            = default;
     World& operator=(World&& other) = default;
-    World& operator=(const World&) = delete;
+    World& operator=(const World&)  = delete;
 
     /**
      * serialize this. 
@@ -144,9 +136,9 @@ public:
     {
         auto obj                 = io.expect_object("World");
         auto size                = obj.expect_element("num_agegroups", Tag<size_t>{});
-        auto locations           = obj.expect_list("locations", Tag<Location<FP>>{});
+        auto locations           = obj.expect_list("locations", Tag<Location>{});
         auto trip_list           = obj.expect_list("trips", Tag<Trip>{});
-        auto persons             = obj.expect_list("persons", Tag<Person<FP>>{});
+        auto persons             = obj.expect_list("persons", Tag<Person>{});
         auto use_migration_rules = obj.expect_element("use_migration_rules", Tag<bool>{});
         return apply(
             io,
@@ -161,29 +153,14 @@ public:
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
-    void begin_step(TimePoint t, TimeSpan dt)
-    {
-        m_testing_strategy.update_activity_status(t);
-    PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_locations.size(); ++i) {
-        auto&& location = m_locations[i];
-        location->cache_exposure_rates(t, dt, parameters.get_num_groups());
-    }
-    }
+    void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
      * @brief Evolve the world one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
-    void evolve(TimePoint t, TimeSpan dt)
-    {
-        begin_step(t, dt);
-        log_info("ABM World interaction.");
-        interaction(t, dt);
-        log_info("ABM World migration.");
-        migration(t, dt);
-    }
+    void evolve(TimePoint t, TimeSpan dt);
 
     /** 
      * @brief Add a Location to the World.
@@ -191,13 +168,7 @@ public:
      * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
      * @return Index and type of the newly created Location.
      */
-    LocationId add_location(LocationType type, uint32_t num_cells = 1)
-    {
-        LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
-        m_locations.emplace_back(std::make_unique<Location<FP>>(id, parameters.get_num_groups(), num_cells));
-        m_has_locations[size_t(type)] = true;
-        return id;
-    }
+    LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
     /** 
      * @brief Add a Person to the World.
@@ -205,49 +176,28 @@ public:
      * @param[in] age AgeGroup of the person.
      * @return Reference to the newly created Person.
      */
-    Person<FP>& add_person(const LocationId id, AgeGroup age)
-    {
-        assert(age.get() < parameters.get_num_groups());
-        uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-        m_persons.push_back(std::make_unique<Person<FP>>(m_rng, get_individualized_location(id), age, person_id));
-        auto& person = *m_persons.back();
-        person.set_assigned_location(m_cemetery_id);
-        get_individualized_location(id).add_person(person);
-        return person;
-    }
+    Person& add_person(const LocationId id, AgeGroup age);
 
     /**
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
-    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const
-    {
-        return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
-    }
+    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
 
     /**
      * @brief Get a range of all Person%s in the World.
      * @return A range of all Person%s.
      */
-    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const
-    {
-        return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
-    }
+    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
 
     /**
      * @brief Get an individualized Location.
      * @param[in] id LocationId of the Location.
      * @return Reference to the Location.
      */
-    const Location<FP>& get_individualized_location(LocationId id) const
-    {
-        return *m_locations[id.index];
-    }
+    const Location& get_individualized_location(LocationId id) const;
 
-    Location<FP>& get_individualized_location(LocationId id)
-    {
-        return *m_locations[id.index];
-    }
+    Location& get_individualized_location(LocationId id);
 
     /**
      * @brief Find an assigned Location of a Person.
@@ -255,32 +205,16 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
-    const Location<FP>& find_location(LocationType type, const Person<FP>& person) const
-    {
-        auto index = person.get_assigned_location_index(type);
-        assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-        return get_individualized_location({index, type});
-    }
+    const Location& find_location(LocationType type, const Person& person) const;
 
-    Location<FP>& find_location(LocationType type, const Person<FP>& person)
-    {
-        auto index = person.get_assigned_location_index(type);
-        assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-        return get_individualized_location({index, type});
-    }
+    Location& find_location(LocationType type, const Person& person);
 
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s.
      * @param[in] t Specified #TimePoint.
      * @param[in] s Specified #InfectionState.
      */
-    size_t get_subpopulation_combined(TimePoint t, InfectionState s) const
-    {
-        return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                               [t, s](size_t running_sum, const std::unique_ptr<Location<FP>>& loc) {
-                                   return running_sum + loc->get_subpopulation(t, s);
-                               });
-    }
+    size_t get_subpopulation_combined(TimePoint t, InfectionState s) const;
 
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
@@ -288,28 +222,15 @@ public:
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
-    {
-        return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                               [t, s, type](size_t running_sum, const std::unique_ptr<Location<FP>>& loc) {
-                                   return loc->get_type() == type ? running_sum + loc->get_subpopulation(t, s)
-                                                                  : running_sum;
-                               });
-    }
+    size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const;
 
     /**
      * @brief Get the migration data.
      * @return Reference to the list of Trip%s that the Person%s make.
      */
-    TripList& get_trip_list()
-    {
-        return m_trip_list;
-    }
+    TripList& get_trip_list();
 
-    const TripList& get_trip_list() const
-    {
-        return m_trip_list;
-    }
+    const TripList& get_trip_list() const;
 
     /** 
      * @brief Decide if migration rules (like go to school/work) are used or not;
@@ -317,14 +238,8 @@ public:
      * @param[in] param If true uses the migration rules for migration to school/work etc., else only the rules 
      * regarding hospitalization/ICU/quarantine.
      */
-    void use_migration_rules(bool param)
-    {
-        m_use_migration_rules = param;
-    }
-    bool use_migration_rules() const
-    {
-        return m_use_migration_rules;
-    }
+    void use_migration_rules(bool param);
+    bool use_migration_rules() const;
 
     /**
     * @brief Check if at least one Location with a specified LocationType exists.
@@ -353,20 +268,14 @@ public:
      * @brief Get the TestingStrategy.
      * @return Reference to the list of TestingScheme%s that are checked for testing.
      */
-    TestingStrategy<FP>& get_testing_strategy()
-    {
-        return m_testing_strategy;
-    }
+    TestingStrategy& get_testing_strategy();
 
-    const TestingStrategy<FP>& get_testing_strategy() const
-    {
-        return m_testing_strategy;
-    }
+    const TestingStrategy& get_testing_strategy() const;
 
     /** 
      * @brief The simulation parameters of the world.
      */
-    Parameters<FP> parameters;
+    Parameters parameters;
 
     /**
     * Get the RandomNumberGenerator used by this world for random events.
@@ -384,7 +293,7 @@ public:
      * @param[in] loc_type LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationType& loc_type, const TestingScheme<FP>& scheme);
+    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing at all Locations that have 
@@ -392,7 +301,7 @@ public:
      * @param[in] loc_type LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme<FP>& scheme);
+    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
 private:
     /**
@@ -400,104 +309,23 @@ private:
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void interaction(TimePoint t, TimeSpan dt)
-    {
-    PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person     = m_persons[i];
-        auto personal_rng = typename Person<FP>::RandomNumberGenerator(m_rng, *person);
-        person->interact(personal_rng, t, dt, parameters);
-    }
-    }
+    void interaction(TimePoint t, TimeSpan dt);
     /**
      * @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void migration(TimePoint t, TimeSpan dt)
-    {
-    PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person     = m_persons[i];
-        auto personal_rng = typename Person<FP>::RandomNumberGenerator(m_rng, *person);
+    void migration(TimePoint t, TimeSpan dt);
 
-        auto try_migration_rule = [&](auto rule) -> bool {
-            //run migration rule and check if migration can actually happen
-            auto target_type       = rule(personal_rng, *person, t, dt, parameters);
-            auto& target_location  = find_location(target_type, *person);
-            auto& current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
-                    if (wears_mask) {
-                        person->migrate_to(target_location);
-                    }
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        //run migration rules one after the other if the corresponding location type exists
-        //shortcutting of bool operators ensures the rules stop after the first rule is applied
-        if (m_use_migration_rules) {
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried<FP>)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered<FP>)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital<FP>)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu<FP>)) ||
-                (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school<FP>)) ||
-                (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work<FP>)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
-                 try_migration_rule(&go_to_shop<FP>)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
-                 try_migration_rule(&go_to_event<FP>)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine<FP>));
-        }
-        else {
-            //no daily routine migration, just infection related
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried<FP>)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered<FP>)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital<FP>)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu<FP>)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine<FP>));
-        }
-    }
-
-    // check if a person makes a trip
-    bool weekend     = t.is_weekend();
-    size_t num_trips = m_trip_list.num_trips(weekend);
-
-    if (num_trips != 0) {
-        while (m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip        = m_trip_list.get_next_trip(weekend);
-            auto& person      = m_persons[trip.person_id];
-            auto personal_rng = typename Person<FP>::RandomNumberGenerator(m_rng, *person);
-            if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
-                auto& target_location = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location, trip.trip_mode);
-                }
-            }
-            m_trip_list.increase_index();
-        }
-    }
-    if (((t).days() < std::floor((t + dt).days()))) {
-        m_trip_list.reset_index();
-    }
-    }
-
-    std::vector<std::unique_ptr<Person<FP>>> m_persons; ///< Vector with pointers to every Person.
-    std::vector<std::unique_ptr<Location<FP>>> m_locations; ///< Vector with pointers to every Location.
+    std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
+    std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
-    TestingStrategy<FP> m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
+    TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(typename Person<FP>::RandomNumberGenerator&, const Person<FP>&, TimePoint,
-                                           TimeSpan, const Parameters<FP>&),
+    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+                                           const Parameters&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.

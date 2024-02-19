@@ -25,14 +25,14 @@
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/uncertain_value.h" // IWYU pragma: keep
-#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include <limits>
-#include <set> // IWYU pragma: keep
+#include <set>
 
 namespace mio
 {
@@ -42,9 +42,8 @@ namespace abm
 /**
  * @brief Time that a Person is infected but not yet infectious.
  */
-template <typename FP = double>
 struct IncubationPeriod {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -55,9 +54,8 @@ struct IncubationPeriod {
     }
 };
 
-template <typename FP = double>
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -68,9 +66,8 @@ struct InfectedNoSymptomsToSymptoms {
     }
 };
 
-template <typename FP = double>
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -81,9 +78,8 @@ struct InfectedNoSymptomsToRecovered {
     }
 };
 
-template <typename FP = double>
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -94,9 +90,8 @@ struct InfectedSymptomsToRecovered {
     }
 };
 
-template <typename FP = double>
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -107,9 +102,8 @@ struct InfectedSymptomsToSevere {
     }
 };
 
-template <typename FP = double>
 struct SevereToCritical {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -120,9 +114,8 @@ struct SevereToCritical {
     }
 };
 
-template <typename FP = double>
 struct SevereToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -133,9 +126,8 @@ struct SevereToRecovered {
     }
 };
 
-template <typename FP = double>
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -146,9 +138,8 @@ struct CriticalToRecovered {
     }
 };
 
-template <typename FP = double>
 struct CriticalToDead {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -159,9 +150,8 @@ struct CriticalToDead {
     }
 };
 
-template <typename FP = double>
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -221,9 +211,8 @@ struct InfectivityDistributions {
 /**
  * @brief Probability that an Infection is detected.
  */
-template <typename FP = double>
 struct DetectInfection {
-    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -237,9 +226,8 @@ struct DetectInfection {
 /**
  * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
-template <typename FP = double>
 struct MaskProtection {
-    using Type = CustomIndexArray<UncertainValue<FP>, MaskType>;
+    using Type = CustomIndexArray<UncertainValue, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
         return Type({MaskType::Count}, 1.);
@@ -323,15 +311,13 @@ struct HighViralLoadProtectionFactor {
 /**
  * @brief Parameters that describe the reliability of a test.
  */
-template <typename FP = double>
 struct TestParameters {
-    UncertainValue<FP> sensitivity;
-    UncertainValue<FP> specificity;
+    UncertainValue sensitivity;
+    UncertainValue specificity;
 };
 
-template <typename FP = double>
 struct GenericTest {
-    using Type = TestParameters<FP>;
+    using Type = TestParameters;
     static Type get_default()
     {
         return Type{0.9, 0.99};
@@ -345,9 +331,8 @@ struct GenericTest {
 /**
  * @brief Reliability of an AntigenTest.
  */
-template <typename FP = double>
-struct AntigenTest : public GenericTest<FP> {
-    using Type = TestParameters<FP>;
+struct AntigenTest : public GenericTest {
+    using Type = TestParameters;
     static Type get_default()
     {
         return Type{0.8, 0.88};
@@ -361,9 +346,8 @@ struct AntigenTest : public GenericTest<FP> {
 /**
  * @brief Reliability of a PCRTest.
  */
-template <typename FP = double>
-struct PCRTest : public GenericTest<FP> {
-    using Type = TestParameters<FP>;
+struct PCRTest : public GenericTest {
+    using Type = TestParameters;
     static Type get_default()
     {
         return Type{0.9, 0.99};
@@ -407,9 +391,8 @@ struct QuarantineDuration {
 /**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
-template <typename FP = double>
 struct BasicShoppingRate {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
         return Type({size}, 1.0);
@@ -560,16 +543,14 @@ struct AgeGroupGotoWork {
     }
 };
 
-template <typename FP = double>
 using ParametersBase =
-    ParameterSet<IncubationPeriod<FP>, InfectedNoSymptomsToSymptoms<FP>, InfectedNoSymptomsToRecovered<FP>,
-                 InfectedSymptomsToRecovered<FP>, InfectedSymptomsToSevere<FP>, SevereToCritical<FP>,
-                 SevereToRecovered<FP>, CriticalToDead<FP>, CriticalToRecovered<FP>, RecoveredToSusceptible<FP>,
-                 ViralLoadDistributions, InfectivityDistributions, DetectInfection<FP>, MaskProtection<FP>,
-                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate<FP>,
-                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
-                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
-                 SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
+                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -610,12 +591,11 @@ using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.
  */
-template <typename FP = double>
-class Parameters : public ParametersBase<FP>
+class Parameters : public ParametersBase
 {
 public:
     Parameters(size_t num_agegroups)
-        : ParametersBase<FP>(AgeGroup(num_agegroups))
+        : ParametersBase(AgeGroup(num_agegroups))
         , m_num_groups(num_agegroups)
     {
     }
@@ -637,138 +617,132 @@ public:
     {
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->template get<IncubationPeriod<FP>>()[{VirusVariant::Wildtype, i}] < 0) {
+            if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}] < 0) {
                 log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
                           (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<InfectedNoSymptomsToSymptoms<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller "
                           "than {:d}",
                           (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<InfectedNoSymptomsToRecovered<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller "
                           "than {:d}",
                           (size_t)i, 0);
-
                 return true;
             }
 
-            if (this->template get<InfectedSymptomsToRecovered<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error(
                     "Constraint check: Parameter InfectedSymptomsToRecovered of age group {:.0f} smaller than {:d}",
                     (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<InfectedSymptomsToSevere<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter InfectedSymptomsToSevere of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<SevereToCritical<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<SevereToCritical>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<SevereToRecovered<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<CriticalToDead<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<CriticalToDead>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller than {:d}", (size_t)i,
                           0);
                 return true;
             }
 
-            if (this->template get<CriticalToRecovered<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<RecoveredToSusceptible<FP>>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i}] < 0.0) {
                 log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller than {:d}",
                           (size_t)i, 0);
                 return true;
             }
 
-            if (this->template get<DetectInfection<FP>>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->template get<DetectInfection<FP>>()[{VirusVariant::Wildtype, i}] > 1.0) {
+            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0 ||
+                this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] > 1.0) {
                 log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller than {:d} or "
                           "larger than {:d}",
                           (size_t)i, 0, 1);
                 return true;
             }
 
-            if (this->template get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
-                this->template get<GotoWorkTimeMinimum>()[i].seconds() >
-                    this->template get<GotoWorkTimeMaximum>()[i].seconds()) {
+            if (this->get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoWorkTimeMinimum>()[i].seconds() > this->get<GotoWorkTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoWorkTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
-                          (size_t)i, 0, this->template get<GotoWorkTimeMaximum>()[i].seconds());
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->template get<GotoWorkTimeMaximum>()[i].seconds() <
-                    this->template get<GotoWorkTimeMinimum>()[i].seconds() ||
-                this->template get<GotoWorkTimeMaximum>()[i] > days(1)) {
+            if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds() ||
+                this->get<GotoWorkTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
-                          (size_t)i, this->template get<GotoWorkTimeMinimum>()[i].seconds());
+                          (size_t)i, this->get<GotoWorkTimeMinimum>()[i].seconds());
                 return true;
             }
 
-            if (this->template get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
-                this->template get<GotoSchoolTimeMinimum>()[i].seconds() >
-                    this->template get<GotoSchoolTimeMaximum>()[i].seconds()) {
+            if (this->get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoSchoolTimeMinimum>()[i].seconds() > this->get<GotoSchoolTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
-                          (size_t)i, 0, this->template get<GotoWorkTimeMaximum>()[i].seconds());
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->template get<GotoSchoolTimeMaximum>()[i].seconds() <
-                    this->template get<GotoSchoolTimeMinimum>()[i].seconds() ||
-                this->template get<GotoSchoolTimeMaximum>()[i] > days(1)) {
+            if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds() ||
+                this->get<GotoSchoolTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
-                          (size_t)i, this->template get<GotoSchoolTimeMinimum>()[i].seconds());
+                          (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
                 return true;
             }
         }
 
-        if (this->template get<MaskProtection<FP>>()[MaskType::Community] < 0.0 ||
-            this->template get<MaskProtection<FP>>()[MaskType::Community] > 1.0) {
+        if (this->get<MaskProtection>()[MaskType::Community] < 0.0 ||
+            this->get<MaskProtection>()[MaskType::Community] > 1.0) {
             log_error(
                 "Constraint check: Parameter MaskProtection for MaskType Community is smaller {:d} or larger {:d}", 0,
                 1);
             return true;
         }
 
-        if (this->template get<MaskProtection<FP>>()[MaskType::FFP2] < 0.0 ||
-            this->template get<MaskProtection<FP>>()[MaskType::FFP2] > 1.0) {
+        if (this->get<MaskProtection>()[MaskType::FFP2] < 0.0 || this->get<MaskProtection>()[MaskType::FFP2] > 1.0) {
             log_error("Constraint check: Parameter MaskProtection for MaskType FFP2 is smaller {:d} or larger {:d}", 0,
                       1);
             return true;
         }
 
-        if (this->template get<MaskProtection<FP>>()[MaskType::Surgical] < 0.0 ||
-            this->template get<MaskProtection<FP>>()[MaskType::Surgical] > 1.0) {
+        if (this->get<MaskProtection>()[MaskType::Surgical] < 0.0 ||
+            this->get<MaskProtection>()[MaskType::Surgical] > 1.0) {
             log_error("Constraint check: Parameter MaskProtection for MaskType Surgical smaller {:d} or larger {:d}", 0,
                       1);
             return true;
         }
 
-        if (this->template get<LockdownDate>().seconds() < 0.0) {
+        if (this->get<LockdownDate>().seconds() < 0.0) {
             log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
             return true;
         }

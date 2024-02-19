@@ -24,6 +24,7 @@
 #include "abm/world.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
+#include <numeric>
 #include <vector>
 
 namespace mio
@@ -194,59 +195,19 @@ private:
 };
 
 /**
- * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
- * @param[in] age_groups A CustomIndexArray with the weights.
- * @return The picked AgeGroup.
- */
-AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
-                                              const CustomIndexArray<int, AgeGroup>& age_groups);
-
-/**
  * @brief Adds a specific Household to the World.
  * Adds Person%s to the World according to the age distribution of the HouseholdMember%s of the Household.
  * @param[in,out] world The World to which the Household has to be added.
  * @param[in] household The Household to add to World.
  */
-template <typename FP = double>
-void add_household_to_world(World<FP>& world, const Household& household)
-{
-    auto home    = world.add_location(LocationType::Home);
-    auto members = household.get_members();
-    world.get_individualized_location(home).set_capacity(household.get_total_number_of_members(),
-                                                         household.get_total_number_of_members() *
-                                                             household.get_space_per_member());
-
-    for (auto& memberTouple : members) {
-        int count;
-        HouseholdMember member  = HouseholdMember(world.parameters.get_num_groups());
-        std::tie(member, count) = memberTouple;
-        for (int j = 0; j < count; j++) {
-            auto age_group = pick_age_group_from_age_distribution(world.get_rng(), member.get_age_weights());
-            auto& person   = world.add_person(home, age_group);
-            person.set_assigned_location(home);
-        }
-    }
-}
+void add_household_to_world(World& world, const Household& household);
 
 /**
  * @brief Adds Household%s from a HouseholdGroup to the World.
  * @param[in,out] world The World to which the group has to be added.
  * @param[in] household_group The HouseholdGroup to add.
  */
-template <typename FP = double>
-void add_household_group_to_world(World<FP>& world, const HouseholdGroup& household_group)
-{
-    auto households = household_group.get_households();
-
-    for (auto& householdTuple : households) {
-        int count;
-        Household household;
-        std::tie(household, count) = householdTuple;
-        for (int j = 0; j < count; j++) {
-            add_household_to_world(world, household);
-        }
-    }
-}
+void add_household_group_to_world(World& world, const HouseholdGroup& household_group);
 
 } // namespace abm
 } // namespace mio
