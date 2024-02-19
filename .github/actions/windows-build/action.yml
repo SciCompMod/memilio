@@ -54,6 +54,6 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
-        name: build-cpp-windows-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}
+        name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}
         path: cpp/build-win/bin
         retention-days: 1

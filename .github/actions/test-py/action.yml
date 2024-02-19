@@ -25,8 +25,15 @@ runs:
           sudo apt-get -qq -y install python3-pip gnupg
         fi
         python -m pip install --upgrade pip
-    - name: Download Python Wheels
+    - name: Download Python Wheels Simulation
+      uses: actions/download-artifact@v3
+      if: inputs.package == 'simulation'
+      with:
+        name: python-wheels-${{ inputs.package }}
+        path: pycode/wheelhouse
+    - name: Dwonload Python Wheels
       uses: actions/download-artifact@v4
+      if: inputs.package != 'simulation'
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
