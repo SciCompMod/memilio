@@ -24,7 +24,7 @@ target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 add_executable(seair_example seair.cpp)
 target_link_libraries(seair_example PRIVATE memilio ode_seair AD::AD)
 
-if(NOT WIN32 AND MEMILIO_USE_BUNDLED_IPOPT)
+if(MEMILIO_ENABLE_OPTIMIZATION)
     add_executable(seair_optimization seair_optimization.cpp)
     target_link_libraries(seair_optimization PRIVATE memilio ode_seair AD::AD Ipopt::Ipopt)
 endif()

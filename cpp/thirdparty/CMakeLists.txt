@@ -49,9 +49,8 @@ else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
-# ## IPOPT
-if(NOT WIN32)
-if(MEMILIO_USE_BUNDLED_IPOPT)
+# ## IPOPT (numerial optimization)
+if(MEMILIO_ENABLE_OPTIMIZATION)
     message(STATUS "Downloading Ipopt library")
 
     include(FetchContent)
@@ -62,7 +61,7 @@ if(MEMILIO_USE_BUNDLED_IPOPT)
 
     FetchContent_MakeAvailable(Ipopt)
 endif()
-endif()
+
 
 
 # ## BOOST
