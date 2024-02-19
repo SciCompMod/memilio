@@ -126,7 +126,7 @@ jobs:
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
  
   merge-test-artifacts:
-    needs: [test-cpp-gcc-clang, test-cpp-msvc]
+    needs: [test-cpp-gcc_clang, test-cpp-msvc]
     runs-on: ubuntu-latest
     steps:
       - name: merge-coverage-artifacts
