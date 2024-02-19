@@ -164,10 +164,10 @@ jobs:
     env:
       OMP_NUM_THREADS: 4
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-test
         with:
-          build-artifact: gcc-latest-Release
+          artifact-pattern: gcc-latest-Release
           num-repeat: 10
           openmp: ON
 
