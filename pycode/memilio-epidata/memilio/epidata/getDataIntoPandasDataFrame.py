@@ -257,7 +257,8 @@ def get_file(
 
     @return pandas dataframe
     """
-    param_dict_excel = {"sheet_name": 0, "header": 0, "engine": Conf.excel_engine}
+    param_dict_excel = {"sheet_name": 0,
+                        "header": 0, "engine": Conf.excel_engine}
     param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
     param_dict_zip = {}
 
