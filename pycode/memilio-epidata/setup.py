@@ -77,10 +77,8 @@ setup(
     long_description='',
     test_suite='memilio.epidata_test',
     install_requires=[
-        # smaller pandas versions contain a bug that sometimes prevents reading
-        # some excel files (e.g. population or twitter data)
-        # Has to use less than 2.2.0, see Issue #910
-        'pandas>=2.0.0,<2.2.0',
+        # pandas 2.0 is minimum for CoW
+        'pandas>=2.0.0',
         # FutureWarning of pandas that pyarrow will be required in a future release
         'pyarrow',
         'matplotlib',
