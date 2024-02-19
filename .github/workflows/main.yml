@@ -128,6 +128,7 @@ jobs:
   merge-test-artifacts:
     needs: [test-cpp-gcc-clang, test-cpp-msvc]
     runs-on: ubuntu-latest
+    steps:
       - name: merge-coverage-artifacts
         uses: actions/upload-artifact/merge@v4
         with:
