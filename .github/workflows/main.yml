@@ -324,7 +324,7 @@ jobs:
 
   codecov:
     if: github.event.pull_request.draft == false
-    needs: [test-cpp-gcc_clang, test-py-surrogatemodel]
+    needs: [test-cpp-gcc_clang, test-py-surrogatemodel, merge-test-artifacts]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -352,7 +352,7 @@ jobs:
     if: github.event.pull_request.draft == false
     permissions:
       contents: write
-    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel]
+    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel, merge-test-artifacts]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
