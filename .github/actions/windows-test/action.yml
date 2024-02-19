@@ -5,16 +5,16 @@ inputs:
     description: "Name of the build artifact that contains the unit test binary, will also be used for upload artifacts."
     required: true
   optional-deps:
-    description: "Optional dependencies of unit test binary"
+    description: "Optional dependencies of unit test binary (ON or OFF, default ON). If OFF, adds `-nodep` to the artifact name."
     required: false
-    default: "full"
+    default: "ON"
 runs:
   using: "composite"
   steps:
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: build-cpp-windows-msvc-${{ inputs.build-artifact }}-${{ inputs.optional-deps}}
+        name: build-cpp-windows-msvc-${{ inputs.build-artifact }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
         path: cpp/build-win/bin
     - name: Run unit tests
       shell: pwsh

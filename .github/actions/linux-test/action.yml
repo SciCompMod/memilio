@@ -9,13 +9,17 @@ inputs:
     required: false
     default: "OFF"
   optional-deps:
-    description: "Optional dependencies of unit test binary"
+    description: "Optional dependencies of unit test binary (ON or OFF, default ON). If OFF, adds `-nodep` to the artifact name."
     required: false
-    default: "full"
+    default: "ON"
   num-repeat:
     description: "Repeat tests, e.g. to catch random failures like race conditions."
     required: false
     default: "1"
+  openmp: 
+    description: "Enabled Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
+    required: false
+    default: "OFF"
 runs:
   using: "composite"
   steps:
@@ -28,7 +32,7 @@ runs:
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: build-cpp-linux-${{ inputs.artifact-pattern }}-${{ inputs.optional-deps}}
+        name: build-cpp-linux-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp
     - name: extract build archive
       shell: bash
