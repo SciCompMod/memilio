@@ -124,9 +124,6 @@ jobs:
         with:
           artifact-pattern: ${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
-          compiler: ${ matrix.compiler }
-          config: ${ matrix.config }
-          version: ${ matrix.version }
       - name: merge-coverage-artifacts
         uses: actions/upload-artifact/merge@v4
         with:
@@ -148,7 +145,6 @@ jobs:
         with:
           artifact-pattern: gcc-latest-Release
           optional-deps: OFF
-          build-artifact: gcc-latest-Release
 
   test-cpp-gcc-openmp:
     if: github.event.pull_request.draft == false
@@ -197,7 +193,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-test
         with:
-          build-artifact: latest-Release
+          build-artifact: mscv-latest-Release
           optional-deps: OFF
 
   run_examples-cpp-gcc_clang:
@@ -308,7 +304,7 @@ jobs:
         with:
           package: surrogatemodel
           coverage: ON
-      - name: merge epidata reports
+      - name: merge python reports
         uses: actions/upload-artifact/merge@v4
         with:
           name: test-py-coverage-reports-surrogatemodel
