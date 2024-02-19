@@ -364,7 +364,7 @@ template <typename FP = ScalarType>
 inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
                            std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
-    return mio::simulate_flows<Model<FP>, Simulation<FP, mio::FlowSimulation<FP, Model<FP>>>>(t0, tmax, dt, model,
+    return mio::simulate_flows<FP, Model<FP>, Simulation<FP, mio::FlowSimulation<FP, Model<FP>>>>(t0, tmax, dt, model,
                                                                                               integrator);
 }
 

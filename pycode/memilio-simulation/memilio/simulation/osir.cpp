@@ -72,7 +72,7 @@ PYBIND11_MODULE(_simulation_osir, m)
     pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>(m,
                                                                                                           "ModelBase");
     py::class_<mio::osir::Model<double>,
-               mio::CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(m,
+               mio::CompartmentalModel<double, mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(m,
                                                                                                                "Model")
         .def(py::init<>());
 

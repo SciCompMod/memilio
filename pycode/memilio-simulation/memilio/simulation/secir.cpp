@@ -209,7 +209,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>(
         m, "ModelBase");
     py::class_<mio::osecir::Model<double>,
-               mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>>(
+               mio::CompartmentalModel<double, mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>>(
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
@@ -225,7 +225,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     m.def(
         "simulate_flows",
         [](double t0, double tmax, double dt, const mio::osecir::Model<double>& model) {
-            return mio::osecir::simulate_flows(t0, tmax, dt, model);
+            return mio::osecir::simulate_flows<double>(t0, tmax, dt, model);
         },
         "Simulates a Secir model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));

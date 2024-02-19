@@ -33,7 +33,7 @@ namespace pymio
 template <class InfectionState, class Populations, class Parameters>
 void bind_CompartmentalModel(pybind11::module_& m, std::string const& name)
 {
-    using Model = mio::CompartmentalModel<InfectionState, Populations, Parameters>;
+    using Model = mio::CompartmentalModel<double, InfectionState, Populations, Parameters>;
     pybind11::class_<Model>(m, name.c_str())
         .def(pybind11::init<Populations const&, Parameters const&>())
         .def("apply_constraints", &Model::apply_constraints)
