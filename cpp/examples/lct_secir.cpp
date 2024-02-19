@@ -32,35 +32,30 @@ int main()
     /** Simple example to demonstrate how to run a simulation using an LCT SECIR model. 
     Parameters, initial values and subcompartments are not meant to represent a realistic scenario. */
 
-    // Set vector that specifies the number of subcompartments.
-    std::vector<int> num_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
-    num_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
-    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
-    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
-    mio::lsecir::InfectionState infection_state(num_subcompartments);
+    mio::lsecir::InfectionState<mio::lsecir::InfectionStateBase, 1, 2, 3, 1, 1, 5, 1, 1> infection_state;
 
     ScalarType tmax = 20;
 
     // Define initial distribution of the population in the subcompartments.
     Eigen::VectorXd init(infection_state.get_count());
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 1]            = 20;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)]     = 20;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 1] = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 2] = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms)]       = 50;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere)]         = 50;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical)]       = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 1]   = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 2]   = 5;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 3]   = 3;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 4]   = 2;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Susceptible>()]            = 750;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Exposed>()]                = 30;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Exposed>() + 1]            = 20;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedNoSymptoms>()]     = 20;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedNoSymptoms>() + 1] = 10;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedNoSymptoms>() + 2] = 10;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedSymptoms>()]       = 50;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedSevere>()]         = 50;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>()]       = 10;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 1]   = 10;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 2]   = 5;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 3]   = 3;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 4]   = 2;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Recovered>()]              = 20;
+    init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Dead>()]                   = 10;
 
     // Initialize model.
-    mio::lsecir::Model model(std::move(init), infection_state);
+    mio::lsecir::Model<1, 2, 3, 1, 1, 5, 1, 1> model(std::move(init));
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;

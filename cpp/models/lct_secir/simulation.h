@@ -22,11 +22,13 @@
 #define LCT_SECIR_SIMULATION_H
 
 #include "lct_secir/model.h"
+#include "lct_secir/parameters.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/math/eigen.h"
+#include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
 namespace mio
 {
@@ -35,6 +37,7 @@ namespace lsecir
 /**
  * @brief A class for the simulation of a LCT model.
  */
+template <class Model>
 class Simulation
 {
 public:
@@ -47,8 +50,15 @@ public:
      * @param[in] t0 The Start time, usually 0.
      * @param[in] dt Initial step size of integration.
      */
-    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1);
-
+    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+        : m_integratorCore(
+              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+        , m_model(std::make_unique<Model>(model))
+        , m_integrator(m_integratorCore)
+        , m_result(t0, m_model->get_initial_values())
+        , m_dt(dt)
+    {
+    }
     /**
      * @brief Set the core integrator used in the simulation.
      *
@@ -168,8 +178,18 @@ private:
  *      If default value is used the simulation will be performed with the runge_kutta_cash_karp54 method.
  * @return A TimeSeries with the result of the simulation.
  */
+template <class Model, class Sim = Simulation<Model>>
 TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model,
-                                std::shared_ptr<IntegratorCore> integrator = nullptr);
+                                std::shared_ptr<IntegratorCore> integrator = nullptr)
+{
+    model.check_constraints();
+    Sim sim(model, t0, dt);
+    if (integrator) {
+        sim.set_integrator(integrator);
+    }
+    sim.advance(tmax);
+    return sim.get_result();
+}
 
 } // namespace lsecir
 } // namespace mio
