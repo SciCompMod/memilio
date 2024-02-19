@@ -31,7 +31,10 @@ runs:
         fi
         cp -r wheelhouse ..
     - name: Upload Python Wheels
-      uses: actions/upload-artifact@v${{ inputs.package == 'simulation' && 3 || 4 }}
+      if: inputs.package != "simulation"
+        uses: actions/upload-artifact@v4
+      else:
+        uses: actions/upload-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
