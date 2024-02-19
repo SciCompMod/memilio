@@ -475,21 +475,21 @@ TEST(TestJsonSerializer, container_of_objects)
 
 TEST(TestJsonSerializer, abmLocation)
 {
-    auto location = mio::abm::Location<double>(mio::abm::LocationType::Home, 0, num_age_groups);
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, num_age_groups);
     auto js       = mio::serialize_json(location);
     Json::Value expected_json;
     expected_json["index"] = Json::UInt64(0);
     expected_json["type"]  = Json::UInt64(mio::abm::LocationType::Home);
     ASSERT_EQ(js.value(), expected_json);
 
-    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location<double>>());
+    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location>());
     ASSERT_THAT(print_wrap(r), IsSuccess());
     EXPECT_EQ(r.value(), location);
 }
 
 TEST(TestJsonSerializer, abmPerson)
 {
-    auto location = mio::abm::Location<double>(mio::abm::LocationType::School, 0, 6);
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
     auto person   = make_test_person(location);
     auto js       = mio::serialize_json(person);
     Json::Value expected_json;

@@ -483,50 +483,42 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
     auto world1           = mio::abm::World(num_age_groups);
     auto world2           = mio::abm::World(num_age_groups);
 
-    world1.parameters
-        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.1;
-    world1.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.2;
+    world1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        0.1;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
 
-    world2.parameters
-        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
-    world2.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+    world2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        0.2;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
+
+    auto g1 = std::vector<mio::abm::World>({world1, world2});
+
+    world1.parameters
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
+    world1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.3;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
 
-    auto g1 = std::vector<mio::abm::World<double>>({world1, world2});
-
-    world1.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.2;
-    world1.parameters
-        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
-    world1.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+    world2.parameters
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.7;
+    world2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.4;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.5;
 
-    world2.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.7;
-    world2.parameters
-        .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
-    world2.parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.5;
+    auto g2 = std::vector<mio::abm::World>({world1, world2});
 
-    auto g2 = std::vector<mio::abm::World<double>>({world1, world2});
-
-    auto ensemble_params = std::vector<std::vector<mio::abm::World<double>>>({g1, g2});
+    auto ensemble_params = std::vector<std::vector<mio::abm::World>>({g1, g2});
 
     auto ensemble_p49_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.49);
     auto ensemble_p51_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.51);
 
     auto check1 =
         ensemble_p49_params[0]
-            .parameters
-            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
     auto check2 =
         ensemble_p49_params[1]
-            .parameters
-            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
 
     EXPECT_EQ(check1, 0.1);
@@ -534,13 +526,11 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     auto check3 =
         ensemble_p51_params[0]
-            .parameters
-            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
     auto check4 =
         ensemble_p51_params[1]
-            .parameters
-            .get<mio::abm::InfectedSymptomsToSevere<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
 
     EXPECT_EQ(check3, 0.3);
@@ -548,11 +538,11 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     auto check5 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
     auto check6 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
 
     EXPECT_EQ(check5, 0.2);
@@ -560,16 +550,17 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     auto check7 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
     auto check8 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::SevereToCritical<double>>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
             .value();
 
     EXPECT_EQ(check7, 0.4);
     EXPECT_EQ(check8, 0.5);
 }
+
 
 TEST(TestDistance, same_result_zero_distance)
 {
