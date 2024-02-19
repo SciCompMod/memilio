@@ -45,7 +45,7 @@ TEST(TestLCTSecir, simulateDefault)
     init[3]              = 50;
     init[5]              = 30;
 
-    mio::lsecir::Model<1, 1, 1, 1, 1, 1, 1, 1> model(init);
+    mio::lsecir::Model<1, 1, 1, 1, 1> model(init);
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
@@ -70,7 +70,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     init[5]              = 30;
 
     // Define LCT model.
-    mio::lsecir::Model<1, 1, 1, 1, 1, 1, 1, 1> model_lct(init);
+    mio::lsecir::Model<1, 1, 1, 1, 1> model_lct(init);
     // Set Parameters.
     model_lct.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
     model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2;
@@ -209,7 +209,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Recovered>()]              = 20;
     init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Dead>()]                   = 10;
 
-    mio::lsecir::Model<1, 2, 3, 2, 2, 2, 1, 1> model(std::move(init));
+    mio::lsecir::Model<2, 3, 2, 2, 2> model(std::move(init));
 
     // Set parameters.
     model.parameters.set<mio::lsecir::TimeExposed>(3.2);
@@ -274,8 +274,8 @@ protected:
         init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Dead>()]                   = 10;
 
         // Initialize model and set parameters.
-        model = new mio::lsecir::Model<1, 2, 3, 1, 1, 5, 1, 1>(std::move(init));
-        model->parameters.get<mio::lsecir::TimeExposed>()                      = 3.2;
+        model                                             = new mio::lsecir::Model<2, 3, 1, 1, 5>(std::move(init));
+        model->parameters.get<mio::lsecir::TimeExposed>() = 3.2;
         model->parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 2;
         model->parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 5.8;
         model->parameters.get<mio::lsecir::TimeInfectedSevere>()               = 9.5;
@@ -300,7 +300,7 @@ protected:
     }
 
 public:
-    mio::lsecir::Model<1, 2, 3, 1, 1, 5, 1, 1>* model = nullptr;
+    mio::lsecir::Model<2, 3, 1, 1, 5>* model = nullptr;
 };
 
 // Test compares a simulation with the result of a previous run stored in a .csv file.
@@ -463,61 +463,20 @@ TEST(TestLCTSecir, testConstraints)
 
     // Check for model.
     // Check wrong size of initial value vector.
-    mio::lsecir::Model<1, 1, 1, 1, 1, 1, 1, 1> model1(
+    mio::lsecir::Model<1, 1, 1, 1, 1> model1(
         std::move(Eigen::VectorXd::Ones((int)mio::lsecir::InfectionStateBase::Count - 1)), std::move(parameters_lct));
     constraint_check = model1.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with values smaller than zero.
-    mio::lsecir::Model<1, 1, 1, 1, 1, 1, 1, 1> model2(
+    mio::lsecir::Model<1, 1, 1, 1, 1> model2(
         std::move(Eigen::VectorXd::Constant((int)mio::lsecir::InfectionStateBase::Count, -1)),
         std::move(parameters_lct));
     constraint_check = model2.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    // Checks for wrong form of the InfectionState.
-    // Check with wrong number of subcompartments for Susceptibles.
-    mio::lsecir::Model<2, 2, 3, 4, 5, 6, 1, 1> model3(std::move(Eigen::VectorXd::Constant(24, 1)));
-    constraint_check = model3.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Wrong number for Exposed.
-    mio::lsecir::Model<1, 0, 3, 4, 5, 6, 1, 1> model4(std::move(Eigen::VectorXd::Constant(21, 1)));
-    constraint_check = model4.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Wrong number for InfectedNoSymptoms.
-    mio::lsecir::Model<1, 3, 0, 4, 5, 6, 1, 1> model5(std::move(Eigen::VectorXd::Constant(21, 1)));
-    constraint_check = model5.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Wrong number for InfectedSymptoms.
-    mio::lsecir::Model<1, 3, 4, 0, 5, 6, 1, 1> model6(std::move(Eigen::VectorXd::Constant(21, 1)));
-    constraint_check = model6.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Wrong number for InfectedServe.
-    mio::lsecir::Model<1, 3, 4, 5, 0, 6, 1, 1> model7(std::move(Eigen::VectorXd::Constant(21, 1)));
-    constraint_check = model7.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Wrong number for InfectedCritical.
-    mio::lsecir::Model<1, 3, 4, 5, 6, 0, 1, 1> model8(std::move(Eigen::VectorXd::Constant(21, 1)));
-    constraint_check = model8.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Wrong number for Recovered.
-    mio::lsecir::Model<1, 3, 4, 5, 6, 1, 4, 1> model9(std::move(Eigen::VectorXd::Constant(25, 1)));
-    constraint_check = model9.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
-    // Wrong number for Dead.
-    mio::lsecir::Model<1, 3, 4, 5, 6, 1, 1, 4> model10(std::move(Eigen::VectorXd::Constant(25, 1)));
-    constraint_check = model10.check_constraints();
-    EXPECT_TRUE(constraint_check);
-
     // Check with correct conditions.
-    mio::lsecir::Model<1, 3, 4, 5, 5, 1, 1, 1> model11(std::move(Eigen::VectorXd::Constant(21, 1)));
+    mio::lsecir::Model<3, 4, 5, 5, 1> model11(std::move(Eigen::VectorXd::Constant(21, 1)));
     constraint_check = model11.check_constraints();
     EXPECT_FALSE(constraint_check);
 

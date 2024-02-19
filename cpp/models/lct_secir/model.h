@@ -32,10 +32,12 @@ namespace mio
 {
 namespace lsecir
 {
-template <size_t... Ns>
+template <size_t n_Exposed, size_t n_InfectedNoSymptoms, size_t n_InfectedSymptoms, size_t n_InfectedSevere,
+          size_t n_InfectedCritical>
 class Model
 {
-    using Inf = InfectionState<InfectionStateBase, Ns...>;
+    using Inf = InfectionState<InfectionStateBase, 1, n_Exposed, n_InfectedNoSymptoms, n_InfectedSymptoms,
+                               n_InfectedSevere, n_InfectedCritical, 1, 1>;
 
 public:
     /**
@@ -66,39 +68,6 @@ public:
                     "Initial values for one subcompartment are less than zero. Simulation results are not realistic.");
                 return true;
             }
-        }
-        //Check some constraints regarding the InfectionState.
-        if (!(infectionState.template get_number<InfectionStateBase::Susceptible>() == 1)) {
-            log_error("Susceptible compartment can not have subcompartments.");
-            return true;
-        }
-        if (infectionState.template get_number<InfectionStateBase::Exposed>() < 1) {
-            log_error("The compartment Exposed should have at least one subcompartment.");
-            return true;
-        }
-        if (infectionState.template get_number<InfectionStateBase::InfectedNoSymptoms>() < 1) {
-            log_error("The compartment InfectedNoSymptoms should have at least one subcompartment.");
-            return true;
-        }
-        if (infectionState.template get_number<InfectionStateBase::InfectedSymptoms>() < 1) {
-            log_error("The compartment InfectedSymptoms should have at least one subcompartment.");
-            return true;
-        }
-        if (infectionState.template get_number<InfectionStateBase::InfectedSevere>() < 1) {
-            log_error("The compartment InfectedSevere should have at least one subcompartment.");
-            return true;
-        }
-        if (infectionState.template get_number<InfectionStateBase::InfectedCritical>() < 1) {
-            log_error("The compartment InfectedCritical should have at least one subcompartment.");
-            return true;
-        }
-        if (!(infectionState.template get_number<InfectionStateBase::Recovered>() == 1)) {
-            log_error("Recovered compartment can not have subcompartments.");
-            return true;
-        }
-        if (!(infectionState.template get_number<InfectionStateBase::Dead>() == 1)) {
-            log_error("Dead compartment can not have subcompartments.");
-            return true;
         }
 
         return parameters.check_constraints();

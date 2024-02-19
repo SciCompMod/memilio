@@ -53,6 +53,8 @@ class InfectionState
     static_assert((int)Base::Count == sizeof...(Ns), "The number of integers provided as template parameters has to be "
                                                      "the same as the entry Count of InfectionStateBase.");
 
+    static_assert(((Ns > 0) && ...), "TODO.");
+
 public:
     /**
      * @brief Gets the number of subcompartments in an infection state.

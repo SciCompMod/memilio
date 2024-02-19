@@ -55,7 +55,7 @@ int main()
     init[infection_state.get_firstindex<mio::lsecir::InfectionStateBase::Dead>()]                   = 10;
 
     // Initialize model.
-    mio::lsecir::Model<1, 2, 3, 1, 1, 5, 1, 1> model(std::move(init));
+    mio::lsecir::Model<2, 3, 1, 1, 5> model(std::move(init));
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
