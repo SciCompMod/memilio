@@ -30,14 +30,13 @@ runs:
           cp dist/*.whl wheelhouse
         fi
         cp -r wheelhouse ..
-    - name: Upload Python Wheels Simulation
-      condition: eq("${{ inputs.package }}", "simulation")
+    - name: Upload Python Wheels
+      if: eq("${{ inputs.package }}", "simulation")
       uses: actions/upload-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-    - name: Upload Python Wheels
-      condition: ne("${{ inputs.package }}", "simulation")
+      else:
       uses: actions/upload-artifact@v4
       with:
         name: python-wheels-${{ inputs.package }}
