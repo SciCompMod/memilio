@@ -1,16 +1,20 @@
 name: "Windows Test"
 description: "Run the C++ unit tests on Windows"
 inputs:
-  build-artifact:
-    description: "Name of the build artifact that contains the unit test binary."
+  artifact-pattern:
+    description: "Name of the build artifact that contains the unit test binary, will also be used for upload artifacts."
     required: true
+  optional-deps:
+    description: "Optional dependencies of unit test binary"
+    required: false
+    default: "full"
 runs:
   using: "composite"
   steps:
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.build-artifact }}
+        name: build-cpp-windows-msvc-${{ inputs.build-artifact }}-${{ inputs.optional-deps}}
         path: cpp/build-win/bin
     - name: Run unit tests
       shell: pwsh
@@ -20,7 +24,7 @@ runs:
     - name: Upload report
       uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-win-report
+        name: test-cpp-win-report-${{ inputs.artifact-pattern }}
         path: |
           cpp/build-win/bin/report.xml
         retention-days: 1

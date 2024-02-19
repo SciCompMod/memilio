@@ -110,8 +110,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-test
         with:
-          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
+          artifact-pattern: ${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
+          compiler: ${ matrix.compiler }
+          config: ${ matrix.config }
+          version: ${ matrix.version }
+      - name: merge-coverage-artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-cpp-coverage-reports
+          pattern: test-cpp-coverage-reports-*
+      - name: merge-linux-artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-cpp-linux-report
+          pattern: test-cpp-linux-report-*
 
   test-linux-no-optional-deps:
     if: github.event.pull_request.draft == false
@@ -121,7 +134,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-test
         with:
-          build-artifact: build-cpp-linux-gcc-latest-Release-part
+          artifact-pattern: gcc-latest-Release
+          optional-deps: "part"
 
   test-cpp-msvc:
     if: github.event.pull_request.draft == false
@@ -140,7 +154,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-test
         with:
-          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
+          build-artifact: ${{ matrix.version }}-${{ matrix.config }}
+      - name: merge-windows-artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-cpp-win-report
+          pattern: test-cpp-win-report-*
 
   test-windows-no-optional-deps:
     if: github.event.pull_request.draft == false
@@ -150,7 +169,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-test
         with:
-          build-artifact: build-cpp-windows-msvc-latest-Release-part
+          build-artifact: latest-Release
+          optional-deps: "part"
 
   run_examples-cpp-gcc_clang:
     if: github.event.pull_request.draft == false
@@ -260,11 +280,6 @@ jobs:
         with:
           package: surrogatemodel
           coverage: ON
-  
-  merge-artifacts:
-    runs-on: ubuntu-latest
-    needs: test-py-surrogatemodel
-    steps:
       - name: merge epidata reports
         uses: actions/upload-artifact/merge@v4
         with:

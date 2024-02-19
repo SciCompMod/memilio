@@ -1,13 +1,17 @@
 name: "Linux Test"
 description: "Run the C++ unit tests on linux."
 inputs:
-  build-artifact:
-    description: "Name of the build artifact that contains the unit test binary."
+  artifact-pattern:
+    description: "Name of the build artifact that contains the unit test binary, and coverage artifacts that will be uploaded."
     required: true
   coverage:
     description: "Create coverage report (ON or OFF)"
     required: false
     default: "OFF"
+  optional-deps:
+    description: "Optional dependencies of unit test binary"
+    required: false
+    default: "full"
 runs:
   using: "composite"
   steps:
@@ -20,7 +24,7 @@ runs:
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.build-artifact }}
+        name: build-cpp-linux-${{ inputs.artifact-pattern }}-${{ inputs.optional-deps}}
         path: cpp
     - name: extract build archive
       shell: bash
@@ -46,14 +50,14 @@ runs:
     - name: Upload test report
       uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-linux-report
+        name: test-cpp-linux-report-${{ inputs.artifact-pattern }}
         path: cpp/build/bin/report.xml
         if-no-files-found: error
         retention-days: 1
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-coverage-reports
+        name: test-cpp-coverage-reports-${{ inputs.artifact-pattern }}
         path: |
           cpp/build/coverage.info
           cpp/build/coverage
