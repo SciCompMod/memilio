@@ -393,7 +393,7 @@ def download_weekly_deaths_numbers(sheet_names, data_path):
     # Since sheet_names is a list of names get file returns a dict
     # with sheet_names as keys and their corresponding dataframes as values.
     df_dict = gd.get_file(filepath=data_path + name_file + '.json', url=url, read_data=False,
-                          param_dict={'sheet_name': sheet_names, 'header': 0, 'engine': 'openpyxl'})
+                          param_dict={'sheet_name': sheet_names, 'header': 0, 'engine': gd.Conf.excel_engine})
 
     return df_dict
 
