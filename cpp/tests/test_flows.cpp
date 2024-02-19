@@ -53,11 +53,11 @@ struct CatC : public mio::Index<CatC> {
     }
 };
 
-class TestModel : public mio::FlowModel<I, mio::Populations<double, I, CatA, CatB, CatC>,
-                                        mio::oseir::Parameters<double>, Flows, double>
+class TestModel : public mio::FlowModel<double, I, mio::Populations<double, I, CatA, CatB, CatC>,
+                                        mio::oseir::Parameters<double>, Flows>
 {
     using Base =
-        mio::FlowModel<I, mio::Populations<double, I, CatA, CatB, CatC>, mio::oseir::Parameters<double>, Flows, double>;
+        mio::FlowModel<double, I, mio::Populations<double, I, CatA, CatB, CatC>, mio::oseir::Parameters<double>, Flows>;
 
 public:
     TestModel(Populations::Index dimensions)
@@ -125,7 +125,7 @@ TEST(TestFlows, FlowSimulation)
 
     model.check_constraints();
     auto IC   = std::make_shared<mio::DefaultIntegratorCore<double>>();
-    auto seir = mio::simulate_flows<mio::oseir::Model<double>, double>(t0, tmax, dt, model, IC);
+    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, IC);
     // verify results (computed using flows)
     auto results = seir[0].get_last_value();
     EXPECT_NEAR(results[0], 9660.5835936179408, 1e-14);

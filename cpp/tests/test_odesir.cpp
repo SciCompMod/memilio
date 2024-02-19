@@ -66,7 +66,7 @@ TEST(TestOdeSir, compareWithPreviousRun)
 
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-sir-compare.csv");
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto result = mio::simulate<mio::osir::Model<double>, double>(t0, tmax, dt, model, integrator);
+    auto result = mio::simulate<double, mio::osir::Model<double>>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
@@ -118,7 +118,7 @@ TEST(TestOdeSir, checkPopulationConservation)
 
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
-    auto result        = mio::simulate<mio::osir::Model<double>>(t0, tmax, dt, model);
+    auto result        = mio::simulate<double, mio::osir::Model<double>>(t0, tmax, dt, model);
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {
         num_persons += result.get_last_value()[i];

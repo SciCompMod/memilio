@@ -166,7 +166,7 @@ private:
  * @param[in] model an instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  */
-template <typename FP = double>
+template <typename FP = ScalarType>
 TimeSeries<ScalarType> simulate(FP t0, FP tmax, FP dt, Model<FP> const& m_model)
 {
     m_model.check_constraints(dt);

@@ -34,8 +34,8 @@
 
 TEST(TestMobility, compareNoMigrationWithSingleIntegration)
 {
-    auto t0   = 0;
-    auto tmax = 5;
+    auto t0   = 0.0;
+    auto tmax = 5.0;
     auto dt   = 0.5;
 
     mio::oseir::Model<double> model1;
@@ -51,9 +51,10 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     model2.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 1.;
     model2.populations.set_total(500);
 
-    auto graph_sim = mio::make_migration_sim(
-        t0, dt,
-        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model<double>>>, mio::MigrationEdge<double>>());
+    auto graph_sim =
+        mio::make_migration_sim(t0, dt,
+                                mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>,
+                                           mio::MigrationEdge<double>>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
@@ -64,8 +65,8 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
-    auto single_sim1 = mio::Simulation<mio::oseir::Model<double>>(model1, t0);
-    auto single_sim2 = mio::Simulation<mio::oseir::Model<double>>(model2, t0);
+    auto single_sim1 = mio::Simulation<double, mio::oseir::Model<double>>(model1, t0);
+    auto single_sim2 = mio::Simulation<double, mio::oseir::Model<double>>(model2, t0);
     single_sim1.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
     single_sim2.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
 
@@ -103,7 +104,7 @@ TEST(TestMobility, nodeEvolve)
     double t0 = 2.835;
     double dt = 0.5;
 
-    mio::SimulationNode<mio::Simulation<Model>> node(model, t0);
+    mio::SimulationNode<mio::Simulation<double, Model>> node(model, t0);
     node.evolve(t0, dt);
     ASSERT_DOUBLE_EQ(node.get_result().get_last_time(), t0 + dt);
     ASSERT_EQ(print_wrap(node.get_result().get_last_value()), print_wrap(node.get_last_state()));

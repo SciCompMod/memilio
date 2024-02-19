@@ -23,14 +23,12 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/compartments/simulation.h"
 
-#include <iostream>
-
 int main()
 {
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.5; //time step of migration, daily migration every second step
-    using FP        = double;
+    using FP        = ScalarType;
 
     mio::oseir::Model<FP> model;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 10000;
@@ -47,7 +45,7 @@ int main()
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 9990;
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 10;
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model<FP>>>, mio::MigrationEdge<double>> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<FP, mio::oseir::Model<FP>>>, mio::MigrationEdge<FP>> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));

@@ -298,8 +298,8 @@ TEST(IdeSecir, checkInitializations)
     /* !! For the other tests, the contact rate is set to 0 so that the force of infection is zero.
      The forceofinfection initialization method is therefore not used for these tests.*/
     mio::isecir::Parameters parameters;
-    mio::ContactMatrixGroup contact_matrix         = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                              = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
+    mio::ContactMatrixGroup contact_matrix                 = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
     parameters.get<mio::isecir::ContactPatterns<double>>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::TimeSeries<ScalarType> init_copy3(init);

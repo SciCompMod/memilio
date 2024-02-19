@@ -89,7 +89,7 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRun)
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secihurd =
-        mio::simulate<mio::osecir::Model<double>, double>(t0, tmax, dt, model, integrator);
+        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -170,7 +170,7 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRunCashKarp)
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secihurd =
-        mio::simulate<mio::osecir::Model<double>, double>(t0, tmax, dt, model, integrator);
+        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare-cashkarp.csv");
 

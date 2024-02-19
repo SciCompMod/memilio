@@ -55,8 +55,8 @@ using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()
 
 // Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
 template <class OmittedTag, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(
-    as_index<IndexTemplate>(std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
+using filtered_index_t = decltype(as_index<IndexTemplate>(
+    std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
 
 } //namespace details
 
@@ -69,8 +69,8 @@ using filtered_index_t = decltype(
  * Flows is expected to be a TypeList containing types Flow<A,B>, where A and B are compartments from the enum Comp.
  * Some examples can be found in the cpp/models/ directory, within the model.h files.
  */
-template <class Comp, class Pop, class Params, class Flows, typename FP = double>
-class FlowModel : public CompartmentalModel<Comp, Pop, Params, FP>
+template <typename FP, class Comp, class Pop, class Params, class Flows>
+class FlowModel : public CompartmentalModel<FP, Comp, Pop, Params>
 {
     using PopIndex = typename Pop::Index;
     // FlowIndex is the same as PopIndex without the category Comp. It is used as argument type for
@@ -84,13 +84,13 @@ class FlowModel : public CompartmentalModel<Comp, Pop, Params, FP>
     static_assert(FlowIndex::size == PopIndex::size - 1, "Compartments must be used exactly once as population index.");
 
 public:
-    using Base = CompartmentalModel<Comp, Pop, Params, FP>;
+    using Base = CompartmentalModel<FP, Comp, Pop, Params>;
     /**
      * @brief Default constructor, forwarding args to Base constructor.
      */
     template <class... Args>
     FlowModel(Args... args)
-        : CompartmentalModel<Comp, Pop, Params, FP>(args...)
+        : CompartmentalModel<FP, Comp, Pop, Params>(args...)
         , m_flow_values((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size())
     {
     }
@@ -243,23 +243,23 @@ private:
  * Detect whether certain member functions (the name before '_expr_t') exist.
  * If the member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function. Otherwise the template is invalid.
- * @tparam M Any class, e.g. FlowModel.
  * @tparam FP floating point type, e.g. double.
+ * @tparam M Any class, e.g. FlowModel.
  * @{
  */
-template <class M, typename FP = double>
-using get_derivatives_expr_t = decltype(
-    std::declval<const M&>().get_derivatives(std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
-                                             std::declval<Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>>>()));
+template <typename FP, class M>
+using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
+    std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
+    std::declval<Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>>>()));
 
-template <class M, typename FP = double>
+template <typename FP, class M>
 using get_flows_expr_t =
     decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
                                                 std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
-                                                std::declval<double>(),
+                                                std::declval<FP>(),
                                                 std::declval<Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>>>()));
 
-template <class M, typename FP = double>
+template <typename FP, class M>
 using get_initial_flows_expr_t =
     decltype(std::declval<Eigen::Matrix<FP, Eigen::Dynamic, 1>>() = std::declval<const M&>().get_initial_flows());
 /** @} */
@@ -269,13 +269,14 @@ using get_initial_flows_expr_t =
  * Defines a static constant of name `value`. 
  * The constant `value` will be equal to true if M is a valid flow model type.
  * Otherwise, `value` will be equal to false.
+ * @tparam FP floating point type, e.g. double.
  * @tparam Model A type that may or may not be a flow model.
  */
-template <class Model, class FP = double>
-using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, Model, FP>::value &&
-                                                    is_expression_valid<get_flows_expr_t, Model, FP>::value &&
-                                                    is_expression_valid<get_initial_flows_expr_t, Model, FP>::value &&
-                                                    is_compartment_model<Model, FP>::value)>;
+template <typename FP, class Model>
+using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, FP, Model>::value &&
+                                                    is_expression_valid<get_flows_expr_t, FP, Model>::value &&
+                                                    is_expression_valid<get_initial_flows_expr_t, FP, Model>::value &&
+                                                    is_compartment_model<FP, Model>::value)>;
 
 } // namespace mio
 

@@ -30,18 +30,18 @@
 namespace mio
 {
 
-template <typename FP = double>
+template <typename FP = ScalarType>
 using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
 /**
- * @brief A class for the simulation of a compartment model.
- * @tparam M a CompartmentModel type
+ * @brief A class for the simulation of a compartment model
  * @tparam FP floating point type, e.g., double
+ * @tparam M a CompartmentModel type
  */
-template <class M, typename FP = double>
+template <typename FP, class M>
 class Simulation
 {
-    static_assert(is_compartment_model<M, FP>::value, "Template parameter must be a compartment model.");
+    static_assert(is_compartment_model<FP, M>::value, "Template parameter must be a compartment model.");
 
 public:
     using Model = M;
@@ -181,22 +181,25 @@ private:
 /**
  * Defines the return type of the `advance` member function of a type.
  * Template is invalid if this member function does not exist.
+ *
+ * @tparam FP floating point type, e.g., double
  * @tparam Sim a compartment model simulation type.
  */
-template <class Sim>
-using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<double>()));
+template <typename FP, class Sim>
+using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()));
 
 /**
  * Template meta function to check if a type is a compartment model simulation. 
  * Defines a static constant of name `value`. 
  * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
  * Otherwise, `value` will be equal to false.
+ * @tparam FP floating point type, e.g., double
  * @tparam Sim a type that may or may not be a compartment model simulation.
  */
-template <class Sim>
+template <typename FP, class Sim>
 using is_compartment_model_simulation =
-    std::integral_constant<bool, (is_expression_valid<advance_expr_t, Sim>::value &&
-                                  is_compartment_model<typename Sim::Model>::value)>;
+    std::integral_constant<bool, (is_expression_valid<advance_expr_t, FP, Sim>::value &&
+                                  is_compartment_model<FP, typename Sim::Model>::value)>;
 
 ///**
 // * @brief simulate simulates a compartmental model
@@ -228,11 +231,11 @@ using is_compartment_model_simulation =
  * @param[in] dt initial step size of integration
  * @param[in] model: An instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
- * @tparam Model a compartment model type
  * @tparam FP floating point type, e.g., double
+ * @tparam Model a compartment model type
  * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model, typename FP = double, class Sim = Simulation<Model, FP>>
+template <typename FP, class Model, class Sim = Simulation<FP, Model>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
                         std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {

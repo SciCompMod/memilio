@@ -119,7 +119,7 @@ int main()
     // mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
 
     // use default Cash-Karp adaptive integrator
-    mio::TimeSeries<double> result = mio::simulate<mio::osecirvvs::Model<double>, double>(t0, tmax, dt, model);
+    mio::TimeSeries<double> result = mio::simulate<double, mio::osecirvvs::Model<double>>(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 

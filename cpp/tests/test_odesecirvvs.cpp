@@ -64,7 +64,7 @@ TEST(TestOdeSECIRVVS, simulateDefault)
     model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
-    mio::TimeSeries<double> result = mio::simulate<mio::osecirvvs::Model<double>>(t0, tmax, dt, model);
+    mio::TimeSeries<double> result = mio::simulate<double, mio::osecirvvs::Model<double>>(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }

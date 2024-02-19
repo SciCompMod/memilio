@@ -21,13 +21,10 @@
 
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"
-#include "ode_seair/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
-#include "memilio/math/adapt_rk.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/time_series_to_file.h"
-#include <fstream>
 
 template <typename FP>
 void set_initial_values(mio::oseair::Model<FP>& model)
@@ -66,14 +63,14 @@ int main()
     ad::derivative(value)                                                                                   = 1.0;
     model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = value;
     model1.check_constraints();
-    auto seair1 = mio::simulate<mio::oseair::Model<FP>, FP>(t0, tmax, dt, model1);
+    auto seair1 = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, model1);
 
     mio::oseair::Model<double> model2;
     set_initial_values(model2);
     double h = 1e-4;
     model2.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] += h;
     model2.check_constraints();
-    auto seair2 = mio::simulate<mio::oseair::Model<double>, double>(0, 100, 0.2, model2);
+    auto seair2 = mio::simulate<double, mio::oseair::Model<double>>(0, 100, 0.2, model2);
 
     const std::string file_name = "seair.txt";
     std::cout << "Writing output to " << file_name << std::endl;

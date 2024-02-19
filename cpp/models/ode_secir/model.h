@@ -55,10 +55,10 @@ using Flows = TypeList<Flow<InfectionState::Susceptible,                 Infecti
                        Flow<InfectionState::InfectedCritical,            InfectionState::Recovered>>;
 // clang-format on
 
-template <typename FP = double>
-class Model : public FlowModel<InfectionState, Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>
+template <typename FP = ScalarType>
+class Model : public FlowModel<FP, InfectionState, Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>;
+    using Base = FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>;
 
 public:
     Model(const typename Base::Populations& pop, const typename Base::ParameterSet& params)
@@ -73,7 +73,7 @@ public:
     }
 
     void get_flows(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
-                   Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, double t,
+                   Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
                    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> flows) const override
     {
         auto const& params   = this->parameters;
@@ -240,7 +240,7 @@ public:
 };
 
 //forward declaration, see below.
-template <typename FP = double, class BaseT = mio::Simulation<Model<FP>>>
+template <typename FP = ScalarType, class BaseT = mio::Simulation<FP, Model<FP>>>
 class Simulation;
 
 /**
@@ -251,7 +251,7 @@ class Simulation;
  * @tparam FP floating point type, e.g., double.
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
-template <typename FP = double, class Base = mio::Simulation<FP, Model<FP>>>
+template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
 double get_infections_relative(const Simulation<FP, Base>& model, FP t,
                                const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y);
 
@@ -341,11 +341,11 @@ private:
  * 
  * @return Returns the result of the simulation.
  */
-template <typename FP = double>
+template <typename FP = ScalarType>
 inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
                      std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
-    return mio::simulate<Model<FP>, FP, Simulation<>>(t0, tmax, dt, model, integrator);
+    return mio::simulate<FP, Model<FP>, Simulation<>>(t0, tmax, dt, model, integrator);
 }
 
 /**
@@ -360,12 +360,12 @@ inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
  * 
  * @return Returns the result of the Flowsimulation.
  */
-template <typename FP = double>
+template <typename FP = ScalarType>
 inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
                            std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
-    return mio::simulate_flows<Model<FP>, Simulation<FP, mio::FlowSimulation<Model<FP>>>>(t0, tmax, dt, model,
-                                                                                          integrator);
+    return mio::simulate_flows<Model<FP>, Simulation<FP, mio::FlowSimulation<FP, Model<FP>>>>(t0, tmax, dt, model,
+                                                                                              integrator);
 }
 
 //see declaration above.
@@ -428,7 +428,7 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
     double season_val                        = (1 + params.template get<Seasonality<FP>>() *
                                  sin(pi * (std::fmod((sim.get_model().parameters.template get<StartDay>() +
                                                       sim.get_result().get_time(t_idx)),
-                                                     365.0) /
+                                                                            365.0) /
                                                182.5 +
                                            0.5)));
     ContactMatrixGroup const& contact_matrix = sim.get_model().parameters.template get<ContactPatterns<FP>>();
@@ -655,7 +655,7 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
  * @tparam FP floating point type, e.g., double.
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
-template <typename FP = double, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
 auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/,
                            const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y)
 {
@@ -685,7 +685,7 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/,
     return factors;
 }
 
-template <typename FP = double, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
 auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> migrated, FP time)
 {
     auto& model       = sim.get_model();

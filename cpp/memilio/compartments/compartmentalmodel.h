@@ -61,6 +61,7 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
 /**
  * @brief CompartmentalModel is a template for a compartmental model for an
  * array of initial populations and a parameter set
+ * @tparam FP floating point type, e.g., double
  *
  * The Populations must be a concrete class derived from the Populations template,
  * i.e. a multi-dimensional array of compartment populations where each dimension
@@ -72,7 +73,7 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
  * studies
  *
  */
-template <class Comp, class Pop, class Params, typename FP = double>
+template <typename FP, class Comp, class Pop, class Params>
 struct CompartmentalModel {
 public:
     using Compartments = Comp;
@@ -87,11 +88,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&) = default;
-    CompartmentalModel(CompartmentalModel&&)      = default;
+    CompartmentalModel(const CompartmentalModel&)            = default;
+    CompartmentalModel(CompartmentalModel&&)                 = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&) = default;
-    virtual ~CompartmentalModel()                       = default;
+    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
+    virtual ~CompartmentalModel()                            = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>,
@@ -161,12 +162,13 @@ public:
  * If the eval_right_hand_side member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function.
  * Otherwise the template is invalid.
+ * @tparam FP, floating point type, e.g., double.
  * @tparam M a type that has a eval_right_hand_side member function, e.g. a compartment model type.
  */
-template <class M, typename FP = double>
+template <typename FP, class M>
 using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right_hand_side(
     std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
-    std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(), std::declval<double>(),
+    std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(), std::declval<FP>(),
     std::declval<Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>>>()));
 
 /**
@@ -174,9 +176,10 @@ using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right
  * If the detect_initial_values member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function.
  * Otherwise the template is invalid.
+ * @tparam FP, floating point type, e.g., double.
  * @tparam M a type that has a get_initial_values member function, e.g. a compartment model type.
  */
-template <class M, typename FP = double>
+template <typename FP, class M>
 using get_initial_values_expr_t =
     decltype(std::declval<Eigen::Matrix<FP, Eigen::Dynamic, 1>&>() = std::declval<const M&>().get_initial_values());
 
@@ -185,16 +188,17 @@ using get_initial_values_expr_t =
  * Defines a static constant of name `value`. 
  * The constant `value` will be equal to true if M is a valid compartment model type.
  * Otherwise, `value` will be equal to false.
+ * @tparam FP, floating point type, e.g., double.
  * @tparam Sim a type that may or may not be a compartment model.
  */
 //template <class M>
 //using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
 //                                                           is_expression_valid<get_initial_values_expr_t, M>::value>)>;
 
-template <class M, typename FP = double>
+template <typename FP, class M>
 using is_compartment_model =
-    std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M, FP>::value &&
-                                  is_expression_valid<get_initial_values_expr_t, M, FP>::value)>;
+    std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, FP, M>::value &&
+                                  is_expression_valid<get_initial_values_expr_t, FP, M>::value)>;
 
 } // namespace mio
 

@@ -94,7 +94,7 @@ int main(int /*argc*/, char** /*argv*/)
                                                                           fact * num_total);
     }
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecir::Model<double>, double>>, mio::MigrationEdgeStochastic>
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MigrationEdgeStochastic>
         graph;
     graph.add_node(1001, model, t0);
     graph.add_node(1002, model2, t0);

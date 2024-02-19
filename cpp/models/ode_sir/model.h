@@ -36,10 +36,10 @@ namespace osir
 /********************
     * define the model *
     ********************/
-template <typename FP = double>
-class Model : public mio::CompartmentalModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, FP>
+template <typename FP = ScalarType>
+class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
 {
-    using Base = mio::CompartmentalModel<InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, FP>;
+    using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
 
 public:
     Model()
@@ -47,8 +47,9 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
+                         Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
+                         Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt) const override
     {
         auto& params     = this->parameters;
         double coeffStoI = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *

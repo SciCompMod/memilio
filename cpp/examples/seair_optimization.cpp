@@ -25,7 +25,6 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/utils/time_series_to_file.h"
 #include "IpTNLP.hpp" // IWYU pragma: keep
 #include "IpIpoptApplication.hpp"
 #include <fstream>
@@ -150,7 +149,7 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
 
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
 
-            auto result = mio::simulate<mio::oseair::Model<FP>, FP>(grid[gridindex], grid[gridindex + 1], dt, model);
+            auto result = mio::simulate<FP, mio::oseair::Model<FP>>(grid[gridindex], grid[gridindex + 1], dt, model);
 
             for (int j = 0; j < (int)mio::oseair::InfectionState::Count; ++j) {
                 model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
@@ -424,7 +423,7 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
 
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
 
-            auto result = mio::simulate<mio::oseair::Model<FP>, FP>(grid[gridindex], grid[gridindex + 1], dt, model);
+            auto result = mio::simulate<FP, mio::oseair::Model<FP>>(grid[gridindex], grid[gridindex + 1], dt, model);
 
             for (int j = 0; j < (int)mio::oseair::InfectionState::Count; ++j) {
                 model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];

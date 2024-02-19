@@ -26,14 +26,14 @@
 namespace mio
 {
 
-template <class M, typename FP = double>
-class FlowSimulation : public Simulation<M, FP>
+template <typename FP, class M>
+class FlowSimulation : public Simulation<FP, M>
 {
-    static_assert(is_flow_model<M, FP>::value, "Template parameter must be a flow model.");
+    static_assert(is_flow_model<FP, M>::value, "Template parameter must be a flow model.");
 
 public:
     using Model = M;
-    using Base  = Simulation<M, FP>;
+    using Base  = Simulation<FP, M>;
 
     /**
      * @brief Set up the simulation with an ODE solver.
@@ -41,7 +41,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
+    FlowSimulation(Model const& model, FP t0 = 0., FP dt = 0.1)
         : Base(model, t0, dt)
         , m_pop(model.get_initial_values().size())
         , m_flow_result(t0, model.get_initial_flows())
@@ -138,11 +138,11 @@ private:
  * @param[in] dt initial step size of integration
  * @param[in] model: An instance of a compartmental model
  * @return a Tuple of two TimeSeries to represent the final simulation result and flows
- * @tparam Model a compartment model type
  * @tparam FP a floating point type, e.g., double
+ * @tparam Model a compartment model type
  * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model, typename FP = double, class Sim = FlowSimulation<Model, FP>>
+template <typename FP, class Model, class Sim = FlowSimulation<FP, Model>>
 std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model const& model,
                                            std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {

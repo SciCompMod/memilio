@@ -197,7 +197,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     });
 
     //create simulation graph
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecir::Model<double>>>, mio::MigrationEdge<double>> sim_graph;
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MigrationEdge<double>>
+        sim_graph;
 
     for (auto&& node : params_graph.nodes()) {
         sim_graph.add_node(node.id, node.property, 0.0);

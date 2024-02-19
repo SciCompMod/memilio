@@ -91,7 +91,7 @@ int main()
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
                                mio::SimulationTime(30.));
 
-    mio::TimeSeries<double> secir = mio::simulate<mio::osecir::Model<double>, double>(t0, tmax, dt, model);
+    mio::TimeSeries<double> secir = mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model);
     bool print_to_terminal        = true;
 
     if (print_to_terminal) {

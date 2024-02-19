@@ -119,7 +119,7 @@ using MigrationCoefficientGroup = DampingMatrixExpressionGroup<MigrationCoeffici
  * parameters that influence migration.
  * @tparam FP the underlying floating point type, e.g., double
  */
-template<typename FP=double>
+template <typename FP = ScalarType>
 class MigrationParameters
 {
 public:
@@ -246,7 +246,7 @@ private:
 /** 
  * represents the migration between two nodes.
  */
-template<typename FP=double>
+template <typename FP = double>
 class MigrationEdge
 {
 public:
@@ -293,7 +293,7 @@ public:
      * @param node_to node that people migrated to, return from
      */
     template <class Sim>
-    void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
+    void apply_migration(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
 private:
     MigrationParameters<FP> m_parameters;
@@ -315,9 +315,9 @@ private:
  * @param t time of migration
  * @param dt time between migration and return
  */
-template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Sim>::value>>
-void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim,
-                                 Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
+template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
+void calculate_migration_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated, const Sim& sim,
+                                 Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt)
 {
     auto y0 = migrated.eval();
     auto y1 = migrated;
@@ -415,9 +415,9 @@ void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migra
     return test_commuters(node.get_simulation(), migrated, time);
 }
 
-template<typename FP>
+template <typename FP>
 template <class Sim>
-void MigrationEdge<FP>::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
+void MigrationEdge<FP>::apply_migration(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -447,7 +447,8 @@ void MigrationEdge<FP>::apply_migration(double t, double dt, SimulationNode<Sim>
         if (m_return_times.get_time(i) <= t) {
             auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_migration_returns(m_migrated[i], node_to.get_simulation(), *v0, m_migrated.get_time(i), dt);
+            calculate_migration_returns<FP, Sim>(m_migrated[i], node_to.get_simulation(), *v0, m_migrated.get_time(i),
+                                                 dt);
 
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
@@ -506,8 +507,8 @@ void evolve_model(double t, double dt, SimulationNode<Sim>& node)
  * edge functor for migration simulation.
  * @see MigrationEdge::apply_migration
  */
-template <class Sim, typename FP=double>
-void apply_migration(double t, double dt, MigrationEdge<FP>& migrationEdge, SimulationNode<Sim>& node_from,
+template <typename FP, class Sim>
+void apply_migration(FP t, FP dt, MigrationEdge<FP>& migrationEdge, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)
 {
     migrationEdge.apply_migration(t, dt, node_from, node_to);
@@ -523,18 +524,18 @@ void apply_migration(double t, double dt, MigrationEdge<FP>& migrationEdge, Simu
  * @param graph set up for migration simulation
  * @{
  */
-template <class Sim, typename FP=double>
+template <typename FP, class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge<FP>>>
-make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdge<FP>>& graph)
+make_migration_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MigrationEdge<FP>>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<FP, Sim>);
 }
 
-template <class Sim, typename FP=double>
+template <typename FP, class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge<FP>>>
-make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdge<FP>>&& graph)
+make_migration_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MigrationEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<FP, Sim>);
 }
 
 /** @} */

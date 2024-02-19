@@ -85,7 +85,7 @@ TEST_F(ModelTestOdeSeir, compareWithPreviousRun)
     If this test is change the corresponding python test needs to be changed aswell (also updating the data file).
     */
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("seir-compare.csv");
-    auto result                              = mio::simulate<mio::oseir::Model<double>>(t0, tmax, dt, model);
+    auto result                              = mio::simulate<double, mio::oseir::Model<double>>(t0, tmax, dt, model);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
@@ -117,7 +117,7 @@ TEST_F(ModelTestOdeSeir, compareWithPreviousRun)
 TEST_F(ModelTestOdeSeir, checkPopulationConservation)
 {
 
-    auto result = mio::simulate<mio::oseir::Model<double>>(t0, tmax, dt, model);
+    auto result = mio::simulate<double, mio::oseir::Model<double>>(t0, tmax, dt, model);
 
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {

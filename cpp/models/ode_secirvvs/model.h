@@ -85,11 +85,11 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::SusceptibleImprovedImmunity>>;
 // clang-format on
 
-template <typename FP = double>
+template <typename FP = ScalarType>
 class Model
-    : public FlowModel<InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>
+    : public FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows, FP>;
+    using Base = FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>;
 
 public:
     Model(const typename Base::Populations& pop, const typename Base::ParameterSet& params)
@@ -104,7 +104,7 @@ public:
     }
 
     void get_flows(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
-                   Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, double t,
+                   Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
                    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> flows) const override
     {
         auto const& params   = this->parameters;
@@ -235,7 +235,7 @@ public:
                 // effective contact rate by contact rate between groups i and j and damping j
                 FP season_val    = (1 + params.template get<Seasonality<FP>>() *
                                          sin(3.141592653589793 *
-                                             (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                                                (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
                 FP cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                                 static_cast<Eigen::Index>((size_t)j));
                 // without died people
@@ -540,7 +540,7 @@ public:
 };
 
 //forward declaration, see below.
-template <typename FP = double, class Base = mio::Simulation<Model<FP>>>
+template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
 class Simulation;
 
 /**
@@ -752,11 +752,11 @@ private:
  * 
  * @return Returns the result of the simulation.
  */
-template <typename FP = double>
+template <typename FP = ScalarType>
 inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
                      std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
-    return mio::simulate<Model<FP>, FP, Simulation<>>(t0, tmax, dt, model, integrator);
+    return mio::simulate<FP, Model<FP>, Simulation<FP>>(t0, tmax, dt, model, integrator);
 }
 
 /**
@@ -771,11 +771,12 @@ inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
  * 
  * @return Returns the result of the Flowsimulation.
   */
-template <typename FP = double>
+template <typename FP = ScalarType>
 inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
                            std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
-    return mio::simulate_flows<Model, FP, Simulation<mio::FlowSimulation<Model<FP>>>>(t0, tmax, dt, model, integrator);
+    return mio::simulate_flows<Model, FP, Simulation<mio::FlowSimulation<FP, Model<FP>>>>(t0, tmax, dt, model,
+                                                                                          integrator);
 }
 
 //see declaration above.

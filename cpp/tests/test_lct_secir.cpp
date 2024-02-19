@@ -148,9 +148,9 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     model_ode.parameters.get<mio::osecir::DeathsPerCritical<double>>()[(mio::AgeGroup)0]                = 0.3;
 
     // Simulate.
-    mio::TimeSeries<double> result_ode =
-        mio::osecir::simulate<double>(t0, tmax, dt, model_ode,
-                 std::make_shared<mio::ControlledStepperWrapper<double,boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<double> result_ode = mio::osecir::simulate<double>(
+        t0, tmax, dt, model_ode,
+        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Simulation results should be equal.
     ASSERT_EQ(result_lct.get_num_time_points(), result_ode.get_num_time_points());
