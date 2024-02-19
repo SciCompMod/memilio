@@ -24,7 +24,7 @@ runs:
     - name: Upload report
       uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-win-report-${{ inputs.artifact-pattern }}
+        name: test-cpp-win-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
         path: |
           cpp/build-win/bin/report.xml
         retention-days: 1
