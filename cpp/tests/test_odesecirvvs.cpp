@@ -867,10 +867,10 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
 TEST(TestOdeSECIRVVS, get_infections_relative)
 {
     auto model = make_model(2);
-    auto sim   = mio::osecirvvs::Simulation<>(model);
+    auto sim   = mio::osecirvvs::Simulation<ScalarType>(model);
     auto y     = sim.get_result()[0];
 
-    auto relative_infections = get_infections_relative(sim, 0.0, y);
+    auto relative_infections = mio::osecirvvs::get_infections_relative<ScalarType>(sim, 0.0, y);
 
     // see model population init to obtain sum 105=2*(7+7.5+8+9.5+10+10.5)
     ASSERT_DOUBLE_EQ(relative_infections, 105 / model.populations.get_total());

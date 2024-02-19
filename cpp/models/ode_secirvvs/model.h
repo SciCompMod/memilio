@@ -550,9 +550,9 @@ class Simulation;
 * @param y current value of compartments.
 * @tparam Base simulation type that uses a secir compartment model. see Simulation.
 */
-template <typename FP = double, class Base = mio::Simulation<FP, Model<FP>>>
-double get_infections_relative(const Simulation<FP, Base>& model, FP t,
-                               const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y);
+template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
+FP get_infections_relative(const Simulation<FP, Base>& model, FP t,
+                           const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y);
 /**
  * specialization of compartment model simulation for the SECIRVVS model.
  * @tparam FP floating point type, e.g., double.
@@ -703,7 +703,7 @@ public:
             if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
                     if (t < t_end_dyn_npis) {
-                        auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
+                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
                                        dyn_npis.get_base_value();
                         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
                         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
@@ -780,10 +780,11 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
 }
 
 //see declaration above.
-template <class Base>
-double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
+template <typename FP, class Base>
+FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/,
+                           const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y)
 {
-    double sum_inf = 0;
+    FP sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsNaive});
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsNaiveConfirmed});
