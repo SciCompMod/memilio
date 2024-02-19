@@ -62,6 +62,18 @@ jobs:
           config: Release
           optional-dependencies: OFF
 
+  build-cpp-gcc-openmp:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/linux-build
+        with:
+          compiler: gcc
+          version: latest
+          config: Release
+          openmp: ON
+
   build-cpp-msvc:
     if: github.event.pull_request.draft == false
     strategy:
@@ -126,7 +138,7 @@ jobs:
           name: test-cpp-linux-report
           pattern: test-cpp-linux-report-*
 
-  test-linux-no-optional-deps:
+  test-cpp-gcc-no-optional-deps:
     if: github.event.pull_request.draft == false
     needs: build-cpp-gcc-no-optional-deps
     runs-on: ubuntu-latest
@@ -136,6 +148,21 @@ jobs:
         with:
           artifact-pattern: gcc-latest-Release
           optional-deps: "part"
+          build-artifact: build-cpp-linux-gcc-latest-Release-nodep
+
+  test-cpp-gcc-openmp:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc-openmp
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: 4
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/linux-test
+        with:
+          build-artifact: build-cpp-linux-gcc-latest-Release-omp
+          num-repeat: 10
 
   test-cpp-msvc:
     if: github.event.pull_request.draft == false
@@ -161,7 +188,7 @@ jobs:
           name: test-cpp-win-report
           pattern: test-cpp-win-report-*
 
-  test-windows-no-optional-deps:
+  test-cpp-msvc-no-optional-deps:
     if: github.event.pull_request.draft == false
     needs: build-cpp-msvc-no-optional-deps
     runs-on: windows-latest
@@ -190,7 +217,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-run_examples
         with:
-          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
+          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
 
   run_examples-cpp-msvc:
     if: github.event.pull_request.draft == false
@@ -209,7 +236,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-run_examples
         with:
-          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
+          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
 
   build-py-generation:
     if: github.event.pull_request.draft == false

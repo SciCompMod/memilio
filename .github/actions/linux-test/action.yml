@@ -12,6 +12,10 @@ inputs:
     description: "Optional dependencies of unit test binary"
     required: false
     default: "full"
+  num-repeat:
+    description: "Repeat tests, e.g. to catch random failures like race conditions."
+    required: false
+    default: "1"
 runs:
   using: "composite"
   steps:
@@ -38,7 +42,7 @@ runs:
       run: |
         cd cpp/build/bin
         sudo chmod a+x memilio-test
-        ./memilio-test  --gtest_output="xml:report.xml"
+        ./memilio-test  --gtest_output="xml:report.xml" --gtest_repeat=${{ inputs.num-repeat }}
     - name: Compute code coverage
       shell: bash
       # compute code coverage

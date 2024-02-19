@@ -1,5 +1,5 @@
 name: "Build MSVC"
-description: "Build memilio c++ library using MSVC on Windows"
+description: "Build memilio c++ library using MSVC on Windows. Creates artifact build-windows-msvc-$version-$config."
 inputs:
   config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
@@ -10,7 +10,7 @@ inputs:
     required: true
     default: "latest"
   optional-dependencies:
-    description: "Build the library with optional dependencies (ON or OFF)"
+    description: "Build the library with optional dependencies (ON or OFF). If OFF, adds `-nodep` to the artifact name"
     required: false
     default: "ON"
 runs:
@@ -53,6 +53,7 @@ runs:
     - name: Upload built binary files
       uses: actions/upload-artifact@v4
       with:
-        name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
+        #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
+        name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}
         path: cpp/build-win/bin
         retention-days: 1
