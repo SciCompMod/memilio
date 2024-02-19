@@ -17,12 +17,12 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v${MEMILIO_SPDLOG_VERSION}
     )
-    FetchContent_GetProperties(spdlog)
+FetchContent_GetProperties(spdlog)
 
-    if(NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+if(NOT spdlog_POPULATED)
+    FetchContent_Populate(spdlog)
+    add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 else()
     find_package(spdlog REQUIRED)
@@ -89,30 +89,30 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
         jsoncpp
         URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
     )
-    FetchContent_GetProperties(jsoncpp)
+FetchContent_GetProperties(jsoncpp)
 
-    if(NOT jsoncpp_POPULATED)
-        FetchContent_Populate(jsoncpp)
+if(NOT jsoncpp_POPULATED)
+    FetchContent_Populate(jsoncpp)
 
-        # set jsoncpp configurations
-        set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
-        set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
+    # set jsoncpp configurations
+    set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
+    set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
 
-        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
+    add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
 
-        # unset global cache variables to avoid clashes with our code
-        unset(BUILD_OBJECT_LIBS CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_PDB_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE)
-    endif()
+    # unset global cache variables to avoid clashes with our code
+    unset(BUILD_OBJECT_LIBS CACHE)
+    unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
+    unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
+    unset(CMAKE_PDB_OUTPUT_DIRECTORY CACHE)
+    unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE)
+endif()
 
-    if(BUILD_SHARED_LIBS)
-        add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib)
-    else()
-        add_library(JsonCpp::JsonCpp ALIAS jsoncpp_static)
-    endif()
+if(BUILD_SHARED_LIBS)
+    add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib)
+else()
+    add_library(JsonCpp::JsonCpp ALIAS jsoncpp_static)
+endif()
 else()
     find_package(jsoncpp CONFIG)
 endif()
@@ -120,8 +120,8 @@ endif()
 if(TARGET JsonCpp::JsonCpp)
     set(MEMILIO_HAS_JSONCPP ON)
 else()
-    message(WARNING "JsonCpp was not found. Memilio will be built without some IO features. 
-        Set CMake variable MEMILIO_USE_BUNDLED_JSONCPP to ON or install JsonCpp and set the jsoncpp_DIR cmake variable 
+    message(WARNING "JsonCpp was not found. Memilio will be built without some IO features.
+        Set CMake variable MEMILIO_USE_BUNDLED_JSONCPP to ON or install JsonCpp and set the jsoncpp_DIR cmake variable
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
 endif()
 
