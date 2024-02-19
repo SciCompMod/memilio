@@ -14,7 +14,7 @@ runs:
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: build-cpp-windows-msvc${{ inputs.build-artifact }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
+        name: build-cpp-windows-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
         path: cpp/build-win/bin
     - name: Run unit tests
       shell: pwsh
