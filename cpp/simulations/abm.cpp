@@ -25,6 +25,8 @@
 #include "boost/filesystem.hpp"
 #include "abm/common_abm_loggers.h"
 
+#include <chrono>
+
 namespace fs = boost::filesystem;
 
 // Assign the name to general age group.
@@ -279,7 +281,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int two_person_half_families  = 1765;
     int two_person_other_families = 166;
     auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
-                                                             two_person_half_families, two_person_other_families);
+                                                        two_person_half_families, two_person_other_families);
     add_household_group_to_world(world, twoPersonHouseholds);
 
     // Three person households
@@ -287,7 +289,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int three_person_half_families  = 662;
     int three_person_other_families = 175;
     auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
-                                                               three_person_half_families, three_person_other_families);
+                                                          three_person_half_families, three_person_other_families);
     add_household_group_to_world(world, threePersonHouseholds);
 
     // Four person households
@@ -295,7 +297,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int four_person_half_families  = 110;
     int four_person_other_families = 122;
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
-                                                              four_person_half_families, four_person_other_families);
+                                                         four_person_half_families, four_person_other_families);
     add_household_group_to_world(world, fourPersonHouseholds);
 
     // Five plus person households
@@ -699,8 +701,12 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Add a time series writer to the simulation
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
             Eigen::Index(mio::abm::InfectionState::Count)};
+        auto t1 = std::chrono::high_resolution_clock::now();
         // Advance the world to tmax
         sim.advance(tmax, historyTimeSeries);
+        auto t2                                  = std::chrono::high_resolution_clock::now();
+        const std::chrono::duration<double> diff = t2 - t1;
+        printf("Runtime: %f \n", diff);
         // Collect the results from the simulation
         ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())});
         // Increase the run index
@@ -713,7 +719,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
 int main(int argc, char** argv)
 {
-
+    auto start_total = std::chrono::high_resolution_clock::now();
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
@@ -748,5 +754,8 @@ int main(int argc, char** argv)
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
+    auto end                                  = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> total = end - start_total;
+    printf("Total Runtime: %f \n", total);
     return 0;
 }
