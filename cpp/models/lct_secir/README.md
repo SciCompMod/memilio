@@ -18,6 +18,8 @@ The eight compartments
 are used to simulate the spread of the disease. 
 It is possible to include subcompartments for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
 
+![tikzLCTSECIR](https://github.com/SciCompMod/memilio/assets/70579874/133bcec2-499c-4e95-af96-39299bf0fd67)
+
 A simple example can be found at: examples/lct_secir.cpp. 
 
 
