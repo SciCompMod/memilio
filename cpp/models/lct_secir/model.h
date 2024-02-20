@@ -32,6 +32,16 @@ namespace mio
 {
 namespace lsecir
 {
+
+/**
+ * @brief Class that defines an LCT-SECIR model.
+ *
+ * @tparam n_Exposed The number of subcompartents used for the Exposed compartment.
+ * @tparam n_InfectedNoSymptoms The number of subcompartents used for the InfectedNoSymptoms compartment. 
+ * @tparam n_InfectedSymptoms The number of subcompartents used for the InfectedSymptoms compartment.
+ * @tparam n_InfectedSevere The number of subcompartents used for the InfectedSevere compartment.
+ * @tparam n_InfectedCritical The number of subcompartents used for the InfectedCritical compartment.
+ */
 template <unsigned int n_Exposed, unsigned int n_InfectedNoSymptoms, unsigned int n_InfectedSymptoms,
           unsigned int n_InfectedSevere, unsigned int n_InfectedCritical>
 class Model

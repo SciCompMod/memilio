@@ -47,15 +47,22 @@ enum class InfectionStateBase
     Count              = 8
 };
 
+/**
+ * @brief Provides the functionality to be able to work with subcompartments in an LCT model.
+ *
+ * @tparam InfectionStateBase An enum class that defines the basic infection states.
+ * @tparam Ns Number of subcompartments for each infection state defined in InfectionStateBase. 
+ *      The number of given template arguments must be equal to the entry Count from InfectionStateBase.
+ */
 template <class InfectionStateBase, unsigned int... Ns>
 class InfectionState
 {
     using Base = InfectionStateBase;
     static_assert((unsigned int)Base::Count == sizeof...(Ns),
-                  "The number of integers provided as template parameters has to be "
+                  "The number of integers provided as template parameters must be "
                   "the same as the entry Count of InfectionStateBase.");
 
-    static_assert(((Ns > 0) && ...), "TODO.");
+    static_assert(((Ns > 0) && ...), "The number of subcompartments must be at least 1.");
 
 public:
     /**
