@@ -191,10 +191,6 @@ using get_initial_values_expr_t =
  * @tparam FP, floating point type, e.g., double.
  * @tparam Sim a type that may or may not be a compartment model.
  */
-//template <class M>
-//using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
-//                                                           is_expression_valid<get_initial_values_expr_t, M>::value>)>;
-
 template <typename FP, class M>
 using is_compartment_model =
     std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, FP, M>::value &&
