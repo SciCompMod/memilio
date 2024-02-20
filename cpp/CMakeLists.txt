@@ -81,7 +81,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
             NAME coverage
             EXECUTABLE memilio-test
             EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
-            "${CMAKE_BINARY_DIR}/*" "/usr*" "*.F"
+            "${CMAKE_BINARY_DIR}/*" "/usr*"
         )
 endif()
 endif()
