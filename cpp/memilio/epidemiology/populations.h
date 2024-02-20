@@ -24,7 +24,6 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
-#include "memilio/ad/include/ad/ad.hpp"
 
 #include <vector>
 #include <array>
