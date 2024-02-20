@@ -17,7 +17,7 @@ option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
-option(MEMILIO_ENABLE_OPTIMIZATION "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
+option(MEMILIO_ENABLE_OPTIMIZATION "Enable numerical optimization with Ipopt, requires a Fortran compiler" ON)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
