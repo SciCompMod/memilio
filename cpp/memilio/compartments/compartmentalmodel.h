@@ -189,7 +189,7 @@ using get_initial_values_expr_t =
  * The constant `value` will be equal to true if M is a valid compartment model type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP, floating point type, e.g., double.
- * @tparam Sim a type that may or may not be a compartment model.
+ * @tparam M a type that may or may not be a compartment model.
  */
 template <typename FP, class M>
 using is_compartment_model =
