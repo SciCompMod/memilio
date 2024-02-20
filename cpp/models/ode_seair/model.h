@@ -1,7 +1,7 @@
-/* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Ralf Hannemann-Tamas
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,8 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SEAIR_MODEL_H
-#define SEAIR_MODEL_H
+
+#ifndef ODESEAIR_MODEL_H
+#define ODESEAIR_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
@@ -79,4 +80,4 @@ public:
 } // namespace oseair
 } // namespace mio
 
-#endif // SEAIR_MODEL_H
+#endif // ODESEAIR_MODEL_H

@@ -1,7 +1,7 @@
-/* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Ralf Hannemann-Tamas
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,8 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SEAIR_INFECTIONSTATE_H
-#define SEAIR_INFECTIONSTATE_H
+
+#ifndef ODESEAIR_INFECTIONSTATE_H
+#define ODESEAIR_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -44,4 +45,4 @@ enum class InfectionState
 } // namespace oseair
 } // namespace mio
 
-#endif // SEAIR_INFECTIONSTATE_H
+#endif // ODESEAIR_INFECTIONSTATE_H

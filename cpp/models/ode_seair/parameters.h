@@ -1,10 +1,9 @@
-/* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC),
-* Forschungszentrum Juelich (FZJ)
+/*
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn, Ralf Hannemann-Tamas
+* Authors: Ralf Hannemann-Tamas
 *
-* Contact: Ralf Hannemann-Tamas <r.hannemann-tamas@fz-juelich.de>
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SEAIR_PARAMETERS_H
-#define SEAIR_PARAMETERS_H
+
+#ifndef ODESEAIR_PARAMETERS_H
+#define ODESEAIR_PARAMETERS_H
 
 //#include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
-
 
 namespace mio
 {
@@ -31,8 +30,13 @@ namespace oseair
 {
 
 /*******************************************
-      * Define Parameters of the SEAIR model *
-    *******************************************/
+* Define Parameters of the SEAIR model     *
+*******************************************/
+
+/* This model is a extented SEIR type model of the COVID-19 pandemic in the US
+ * that als includes asymptomatic and perished people.
+ * A detailed description of the model can be found in the publication
+ * Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak */
 
 /**
  * @brief Social distancing.
@@ -162,14 +166,12 @@ struct Gamma {
     }
 };
 
-
-
 template <typename FP = double>
 using ParametersBase =
     ParameterSet<AlphaA<FP>, AlphaI<FP>, Kappa<FP>, Beta<FP>, Mu<FP>, TLatentInverse<FP>, Rho<FP>, Gamma<FP>>;
 
 /**
- * @brief Parameters of an age-resolved SECIR/SECIHURD model.
+ * @brief Parameters of an SEAIR model.
  */
 template <typename FP = double>
 class Parameters : public ParametersBase<FP>
@@ -212,4 +214,4 @@ public:
 } // namespace oseair
 } // namespace mio
 
-#endif // SEAIR_PARAMETERS_H
+#endif // ODESEAIR_PARAMETERS_H

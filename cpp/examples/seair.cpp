@@ -1,7 +1,7 @@
-/* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Martin J. Kuehn
+* Authors: Ralf Hannemann-Tamas
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
 #include "ad/ad.hpp"
 
 #include "ode_seair/model.h"
