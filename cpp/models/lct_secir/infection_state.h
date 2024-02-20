@@ -22,7 +22,8 @@
 #define LCTSECIR_INFECTIONSTATE_H
 
 #include "memilio/utils/logging.h"
-#include <vector>
+#include "memilio/math/eigen.h"
+#include <cstddef>
 
 namespace mio
 {
@@ -46,12 +47,13 @@ enum class InfectionStateBase
     Count              = 8
 };
 
-template <class InfectionStateBase, size_t... Ns>
+template <class InfectionStateBase, unsigned int... Ns>
 class InfectionState
 {
     using Base = InfectionStateBase;
-    static_assert((int)Base::Count == sizeof...(Ns), "The number of integers provided as template parameters has to be "
-                                                     "the same as the entry Count of InfectionStateBase.");
+    static_assert((unsigned int)Base::Count == sizeof...(Ns),
+                  "The number of integers provided as template parameters has to be "
+                  "the same as the entry Count of InfectionStateBase.");
 
     static_assert(((Ns > 0) && ...), "TODO.");
 
@@ -63,7 +65,7 @@ public:
      * @return Number of subcompartments for infectionstatebase.
      */
     template <Base infectionstatebase>
-    constexpr int get_number() const
+    constexpr unsigned int get_number() const
     {
         return m_subcompartment_numbers[(int)infectionstatebase];
     }
@@ -77,9 +79,9 @@ public:
      * @return Index of the first subcompartment for a vector with one entry per subcompartment.
      */
     template <Base infectionstatebase>
-    constexpr int get_firstindex() const
+    constexpr unsigned int get_firstindex() const
     {
-        int index = 0;
+        unsigned int index = 0;
         for (int i = 0; i < (int)(infectionstatebase); i++) {
             index = index + m_subcompartment_numbers[i];
         }
@@ -89,9 +91,9 @@ public:
     /**
      * @brief Gets the total number of subcompartments of all infection states.
      */
-    constexpr int get_count() const
+    constexpr unsigned int get_count() const
     {
-        int index = 0;
+        unsigned int index = 0;
         for (int i = 0; i < (int)(Base::Count); i++) {
             index = index + m_subcompartment_numbers[i];
         }
@@ -99,7 +101,7 @@ public:
     }
 
 private:
-    std::array<size_t, sizeof...(Ns)> m_subcompartment_numbers{
+    std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
         Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionStateBase.
 };
 

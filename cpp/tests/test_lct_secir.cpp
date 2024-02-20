@@ -233,7 +233,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
 
     // Compare the result of eval_right_hand_side() with a hand calculated result.
-    size_t num_subcompartments = model.infectionState.get_count();
+    unsigned int num_subcompartments = model.infectionState.get_count();
     Eigen::VectorXd dydt(num_subcompartments);
     model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
 
@@ -241,7 +241,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
         1.6901;
 
-    for (size_t i = 0; i < num_subcompartments; i++) {
+    for (unsigned int i = 0; i < num_subcompartments; i++) {
         ASSERT_NEAR(compare[i], dydt[i], 1e-3);
     }
 }

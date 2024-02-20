@@ -32,8 +32,8 @@ namespace mio
 {
 namespace lsecir
 {
-template <size_t n_Exposed, size_t n_InfectedNoSymptoms, size_t n_InfectedSymptoms, size_t n_InfectedSevere,
-          size_t n_InfectedCritical>
+template <unsigned int n_Exposed, unsigned int n_InfectedNoSymptoms, unsigned int n_InfectedSymptoms,
+          unsigned int n_InfectedSevere, unsigned int n_InfectedCritical>
 class Model
 {
     using Inf = InfectionState<InfectionStateBase, 1, n_Exposed, n_InfectedNoSymptoms, n_InfectedSymptoms,
@@ -62,7 +62,7 @@ public:
             log_error("Size of the initial values does not match subcompartments.");
             return true;
         }
-        for (int i = 0; i < infectionState.get_count(); i++) {
+        for (unsigned int i = 0; i < infectionState.get_count(); i++) {
             if (m_initial_values[i] < 0) {
                 log_warning(
                     "Initial values for one subcompartment are less than zero. Simulation results are not realistic.");
@@ -112,7 +112,7 @@ public:
 
         // E'
         dydt[1] = -dydt[0];
-        for (int i = 0; i < infectionState.template get_number<InfectionStateBase::Exposed>(); i++) {
+        for (Eigen::Index i = 0; i < infectionState.template get_number<InfectionStateBase::Exposed>(); i++) {
             // Dummy stores the value of the flow from dydt[1 + i] to dydt[2 + i].
             // 1+i is always the index of a (sub-)compartment of E and 2+i can also be the index of the first (sub-)compartment of C.
             dummy = infectionState.template get_number<InfectionStateBase::Exposed>() *
@@ -123,7 +123,8 @@ public:
         }
 
         // C'
-        for (int i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedNoSymptoms>(); i++) {
+        for (Eigen::Index i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedNoSymptoms>();
+             i++) {
             dummy = infectionState.template get_number<InfectionStateBase::InfectedNoSymptoms>() *
                     (1 / parameters.get<TimeInfectedNoSymptoms>()) *
                     y[infectionState.template get_firstindex<InfectionStateBase::InfectedNoSymptoms>() + i];
@@ -141,7 +142,7 @@ public:
             dydt[infectionState.template get_firstindex<InfectionStateBase::InfectedSymptoms>()] *
             (1 - parameters.get<RecoveredPerInfectedNoSymptoms>());
 
-        for (int i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedSymptoms>(); i++) {
+        for (Eigen::Index i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedSymptoms>(); i++) {
             dummy = infectionState.template get_number<InfectionStateBase::InfectedSymptoms>() *
                     (1 / parameters.get<TimeInfectedSymptoms>()) *
                     y[infectionState.template get_firstindex<InfectionStateBase::InfectedSymptoms>() + i];
@@ -158,7 +159,7 @@ public:
         dydt[infectionState.template get_firstindex<InfectionStateBase::InfectedSevere>()] =
             dydt[infectionState.template get_firstindex<InfectionStateBase::InfectedSevere>()] *
             parameters.get<SeverePerInfectedSymptoms>();
-        for (int i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedSevere>(); i++) {
+        for (Eigen::Index i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedSevere>(); i++) {
             dummy = infectionState.template get_number<InfectionStateBase::InfectedSevere>() *
                     (1 / parameters.get<TimeInfectedSevere>()) *
                     y[infectionState.template get_firstindex<InfectionStateBase::InfectedSevere>() + i];
@@ -175,7 +176,8 @@ public:
         dydt[infectionState.template get_firstindex<InfectionStateBase::InfectedCritical>()] =
             dydt[infectionState.template get_firstindex<InfectionStateBase::InfectedCritical>()] *
             parameters.get<CriticalPerSevere>();
-        for (int i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedCritical>() - 1; i++) {
+        for (Eigen::Index i = 0; i < infectionState.template get_number<InfectionStateBase::InfectedCritical>() - 1;
+             i++) {
             dummy = infectionState.template get_number<InfectionStateBase::InfectedCritical>() *
                     (1 / parameters.get<TimeInfectedCritical>()) *
                     y[infectionState.template get_firstindex<InfectionStateBase::InfectedCritical>() + i];
@@ -223,36 +225,33 @@ public:
             dummy[(int)InfectionStateBase::Susceptible] = result[i][0];
             dummy[(int)InfectionStateBase::Exposed] =
                 result[i]
-                    .segment(Eigen::Index(infectionState.template get_firstindex<InfectionStateBase::Exposed>()),
-                             Eigen::Index(infectionState.template get_number<InfectionStateBase::Exposed>()))
+                    .segment(infectionState.template get_firstindex<InfectionStateBase::Exposed>(),
+                             infectionState.template get_number<InfectionStateBase::Exposed>())
                     .sum();
             dummy[(int)InfectionStateBase::InfectedNoSymptoms] =
                 result[i]
-                    .segment(
-                        Eigen::Index(infectionState.template get_firstindex<InfectionStateBase::InfectedNoSymptoms>()),
-                        Eigen::Index(infectionState.template get_number<InfectionStateBase::InfectedNoSymptoms>()))
+                    .segment(infectionState.template get_firstindex<InfectionStateBase::InfectedNoSymptoms>(),
+                             infectionState.template get_number<InfectionStateBase::InfectedNoSymptoms>())
                     .sum();
             dummy[(int)InfectionStateBase::InfectedSymptoms] =
                 result[i]
-                    .segment(
-                        Eigen::Index(infectionState.template get_firstindex<InfectionStateBase::InfectedSymptoms>()),
-                        Eigen::Index(infectionState.template get_number<InfectionStateBase::InfectedSymptoms>()))
+                    .segment(infectionState.template get_firstindex<InfectionStateBase::InfectedSymptoms>(),
+                             infectionState.template get_number<InfectionStateBase::InfectedSymptoms>())
                     .sum();
             dummy[(int)InfectionStateBase::InfectedSevere] =
                 result[i]
-                    .segment(Eigen::Index(infectionState.template get_firstindex<InfectionStateBase::InfectedSevere>()),
-                             Eigen::Index(infectionState.template get_number<InfectionStateBase::InfectedSevere>()))
+                    .segment(infectionState.template get_firstindex<InfectionStateBase::InfectedSevere>(),
+                             infectionState.template get_number<InfectionStateBase::InfectedSevere>())
                     .sum();
             dummy[(int)InfectionStateBase::InfectedCritical] =
                 result[i]
-                    .segment(
-                        Eigen::Index(infectionState.template get_firstindex<InfectionStateBase::InfectedCritical>()),
-                        Eigen::Index(infectionState.template get_number<InfectionStateBase::InfectedCritical>()))
+                    .segment(infectionState.template get_firstindex<InfectionStateBase::InfectedCritical>(),
+                             infectionState.template get_number<InfectionStateBase::InfectedCritical>())
                     .sum();
             dummy[(int)InfectionStateBase::Recovered] =
-                result[i][Eigen::Index(infectionState.template get_firstindex<InfectionStateBase::Recovered>())];
+                result[i][infectionState.template get_firstindex<InfectionStateBase::Recovered>()];
             dummy[(int)InfectionStateBase::Dead] =
-                result[i][Eigen::Index(infectionState.template get_firstindex<InfectionStateBase::Dead>())];
+                result[i][infectionState.template get_firstindex<InfectionStateBase::Dead>()];
 
             populations.add_time_point(result.get_time(i), dummy);
         }
