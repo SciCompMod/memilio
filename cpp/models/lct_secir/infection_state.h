@@ -23,7 +23,7 @@
 
 #include "memilio/utils/logging.h"
 #include "memilio/math/eigen.h"
-#include <cstddef>
+#include <array>
 
 namespace mio
 {
