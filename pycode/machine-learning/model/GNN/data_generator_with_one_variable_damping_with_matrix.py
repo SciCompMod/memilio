@@ -99,10 +99,13 @@ def run_secir_groups_simulation(days, populations, t1, damping_coeff):
     # set contact frequency matrix
 
     baseline = getBaselineMatrix()
-    minimum = getMinimumMatrix()
+    #minimum = getMinimumMatrix()
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
+    #model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
+    #set minum matrix to 0 
+    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
+        (num_groups, num_groups)) * 0
 
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
         coeffs=(damping_coeff), t=t1, level=0, type=0))
@@ -123,11 +126,11 @@ def run_secir_groups_simulation(days, populations, t1, damping_coeff):
         result = simulate(0, day, dt, model)
         data[day] = result.get_last_value()[:]
         # dataset.append(val)
-    dataset_entires_without_confirmed = remove_confirmed_compartments(data, num_groups)
-    for row in dataset_entires_without_confirmed:
+    #dataset_entires_without_confirmed = remove_confirmed_compartments(data, num_groups)
+    for row in data:
         dataset.append(row)
 
-    return dataset_entires_without_confirmed, damped_matrix
+    return dataset, damped_matrix
 
 
 def remove_confirmed_compartments(dataset_entries, num_groups):
@@ -209,7 +212,7 @@ def generate_data(
 
     all_days = []
     for i in range(num_runs):
-        dampingday = random.randint(5, 25)
+        dampingday = random.randint(5, 100)
         all_days.append(dampingday)
 
     for i in range(number_of_populations):
@@ -229,7 +232,7 @@ def generate_data(
         for j in range(num_runs):
 
             data_run , damped_matrix= run_secir_groups_simulation(
-                days, population[random.randint(0, len(population) - 1)],
+                days, population[i],
                 all_days[j], all_dampings[j])
 
             # for i in damping_matrix:
@@ -395,10 +398,10 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_400pop_one_var_damp_30days_1k_withmatrix')
+        'data_GNN_400pop_one_var_damp_100days_1k_withmatrix')
 
     input_width = 5
-    days = 35
+    days = 105
     num_runs = 1000
     number_of_populations = 400
     generate_data(num_runs, path_data, input_width,
