@@ -57,6 +57,16 @@ def mlp_multi_input_multi_output(label_width, num_age_groups=6):
     ])
     return model
 
+def cnn_best(label_width, num_outputs, conv_size = 3):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
+        tf.keras.layers.Conv1D(62, activation='relu', kernel_size=(conv_size)),
+        tf.keras.layers.Dense(label_width*num_outputs, kernel_initializer=tf.initializers.zeros()),
+        tf.keras.layers.Reshape([label_width, num_outputs])
+    ])
+    return model
+
+
 
 def cnn_multi_input_multi_output(label_width, num_age_groups=6):
     """! CNN Network which uses multiple time steps as input and returns the 8 compartments for
