@@ -19,16 +19,16 @@ from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
                                       interpolate_simulation_result, simulate)
 
 
-def remove_confirmed_compartments(dataset_entries, num_groups):
-    new_dataset_entries = []
-    for i in dataset_entries : 
-      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
-      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
-      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
-      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
-      dataset_entries_reshaped[:, 4] = sum_inf_symp
-      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
-    return new_dataset_entries
+# def remove_confirmed_compartments(dataset_entries, num_groups):
+#     new_dataset_entries = []
+#     for i in dataset_entries : 
+#       dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+#       sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+#       sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+#       dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+#       dataset_entries_reshaped[:, 4] = sum_inf_symp
+#       new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+#     return new_dataset_entries
 
 
 def run_secir_groups_simulation(days, populations):
@@ -109,16 +109,18 @@ def run_secir_groups_simulation(days, populations):
     # set contact frequency matrix
 
     baseline = getBaselineMatrix()
-    minimum = getMinimumMatrix()
+    #minimum = getMinimumMatrix()
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
+    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
+        (num_groups, num_groups)) * 0
+    #model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()
 
     # Run Simulation
-    result = simulate(0, days, dt, model)
+    result = simulate(0, days-1, dt, model)
     # Interpolate simulation result on days time scale
     result = interpolate_simulation_result(result)
 
@@ -128,9 +130,9 @@ def run_secir_groups_simulation(days, populations):
     # Omit first column, as the time points are not of interest here.
     dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
 
-    dataset_entires_without_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
-    return dataset_entires_without_confirmed
-    #return dataset_entries.tolist()
+    #dataset_entires_without_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    #return dataset_entires_without_confirmed
+    return dataset_entries.tolist()
 
     # # Run Simulation
     # data = np.zeros((days, len(compartments) * num_groups))
@@ -205,6 +207,7 @@ def generate_data(
                 }
 
     population = get_population()
+    days = days+input_width
 
     for i in range(number_of_populations):
         # days = damping_days[-1]+20
@@ -382,10 +385,10 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_nodamp_400pop_1k_90days')
+        'data_GNN_nodamp_400pop_1k_120days_24')
 
     input_width = 5
-    days = 95
+    days = 120
     num_runs = 1000
     number_of_populations = 400
     generate_data(num_runs, path_data, input_width,
