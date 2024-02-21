@@ -51,7 +51,7 @@ int main()
     bool ide_simulation    = true;
     int dt_exponent        = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 5;
+    int setting = 7;
 
     // General set up.
     ScalarType t0   = 0;
@@ -66,6 +66,7 @@ int main()
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     if (setting == 3) {
+        // not recognized by ODE model
         nb_dead_t0 = 2000;
     }
 
@@ -122,6 +123,22 @@ int main()
         model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
         model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 1.;
         model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 1.;
+    }
+
+    if (setting == 6) {
+        // Set probabilities that determine proportion between compartments
+        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.;
+        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
+        model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 1.;
+        model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.;
+    }
+
+    if (setting == 7) {
+        // Set probabilities that determine proportion between compartments
+        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 1.;
+        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 0.;
+        model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 0.;
+        model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.;
     }
 
     // Further model parameters

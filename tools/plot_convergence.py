@@ -16,7 +16,7 @@ def read_groundtruth(data_dir, setting):
     model = 'ode'
     results = {model: []}
 
-    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt=1e-3_setting{}'.format(
+    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt=1e-6_setting{}'.format(
         model, setting)) + '.h5', 'r')
 
     # if (len(list(h5file.keys())) > 1):
@@ -245,6 +245,18 @@ def print_results(groundtruth, results, timesteps):
                   results['ide'][i][-1][compartment])
 
 
+def print_total_population(results, timesteps):
+
+    for i in range(len(timesteps)):
+        print('Timestep ', timesteps[i], ':')
+        total_population = 0
+        for compartment in range(8):
+            total_population += results['ide'][i][-1][compartment]
+
+        print('\n')
+        print('Total population (IDE):', total_population)
+
+
 def print_errors(errors, timesteps):
 
     compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
@@ -263,24 +275,26 @@ def main():
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    setting = 2
+    setting = 7
 
-    timesteps = ['1e-2', '1e-3', '1e-4']  # , '1e-4'
+    timesteps = ['1e-2', '1e-3']  # , '1e-4'
 
     groundtruth = read_groundtruth(data_dir, setting)
 
     results = read_data(data_dir, timesteps, setting)
 
-    timesteps = [1e-2, 1e-3, 1e-4]  # , 1e-4
+    timesteps = [1e-2, 1e-3]  # , 1e-4
     errors = compute_error_norm_tmax(groundtruth, results, timesteps)
 
     plot_convergence(errors, timesteps, setting, save=True)
 
-    # order = compute_order_of_convergence(errors, timesteps)
+    print_total_population(results, timesteps)
 
-    # print('Orders of convergence: ', order)
+    order = compute_order_of_convergence(errors, timesteps)
 
-    # print_results(groundtruth, results, timesteps)
+    print('Orders of convergence: ', order)
+
+    print_results(groundtruth, results, timesteps)
 
     # print_errors(errors, timesteps)
 
