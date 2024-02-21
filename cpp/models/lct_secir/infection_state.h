@@ -72,7 +72,7 @@ public:
      * @return Number of subcompartments for infectionstatebase.
      */
     template <Base infectionstatebase>
-    constexpr unsigned int get_number() const
+    static constexpr unsigned int get_number()
     {
         return m_subcompartment_numbers[(int)infectionstatebase];
     }
@@ -86,7 +86,7 @@ public:
      * @return Index of the first subcompartment for a vector with one entry per subcompartment.
      */
     template <Base infectionstatebase>
-    constexpr unsigned int get_firstindex() const
+    static constexpr unsigned int get_firstindex()
     {
         unsigned int index = 0;
         for (int i = 0; i < (int)(infectionstatebase); i++) {
@@ -98,7 +98,7 @@ public:
     /**
      * @brief Gets the total number of subcompartments of all infection states.
      */
-    constexpr unsigned int get_count() const
+    static constexpr unsigned int get_count()
     {
         unsigned int index = 0;
         for (int i = 0; i < (int)(Base::Count); i++) {
@@ -108,7 +108,7 @@ public:
     }
 
 private:
-    std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
+    static constexpr const std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
         Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionStateBase.
 };
 
