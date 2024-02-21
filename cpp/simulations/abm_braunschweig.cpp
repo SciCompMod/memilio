@@ -333,13 +333,10 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
 
-    // Check if the input file has a column 'in_bs'
-    bool has_column_in_bs;
-    if (index.find("in_bs") == index.end()) {
-        has_column_in_bs = false;
-    }
-    else {
-        has_column_in_bs = true;
+    // Check if the input file has a column 'home_in_bs'
+    bool has_column_home_in_bs = false;
+    if (index.find("home_in_bs") != index.end()) {
+        has_column_home_in_bs = true;
     }
 
     // Add the persons and trips
@@ -376,9 +373,9 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             auto first_location_id = it_first_location_id->second.first;
             auto first_location    = locations.find(first_location_id)->second;
             auto home              = locations.find(home_id)->second;
-            // If the a column 'in_bs' in the input, assign Person accordingly
-            if (has_column_in_bs) {
-                uint32_t home_in_bs = row[index["in_bs"]];
+            // If the a column 'home_in_bs' in the input, assign Person accordingly
+            if (has_column_home_in_bs) {
+                uint32_t home_in_bs = row[index["home_in_bs"]];
                 auto& person        = world.add_person(first_location, determine_age_group(age), home_in_bs == 1);
                 person.set_assigned_location(home);
                 person.set_assigned_location(hospital);
