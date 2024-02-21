@@ -37,7 +37,7 @@ int main()
     ScalarType tmax = 20;
 
     // Define initial distribution of the population in the subcompartments.
-    Eigen::VectorXd init(InfState::get_count());
+    Eigen::VectorXd init(InfState::Count);
     init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Susceptible>()]            = 750;
     init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>()]                = 30;
     init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>() + 1]            = 20;

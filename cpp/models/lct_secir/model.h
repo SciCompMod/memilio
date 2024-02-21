@@ -69,11 +69,11 @@ public:
      */
     bool check_constraints() const
     {
-        if (!(InfState::get_count() == m_initial_values.size())) {
+        if (!(InfState::Count == m_initial_values.size())) {
             log_error("Size of the initial values does not match subcompartments.");
             return true;
         }
-        for (unsigned int i = 0; i < InfState::get_count(); i++) {
+        for (unsigned int i = 0; i < InfState::Count; i++) {
             if (m_initial_values[i] < 0) {
                 log_warning(
                     "Initial values for one subcompartment are less than zero. Simulation results are not realistic.");
@@ -220,7 +220,7 @@ public:
      */
     TimeSeries<ScalarType> calculate_populations(const TimeSeries<ScalarType>& result) const
     {
-        if (!(InfState::get_count() == result.get_num_elements())) {
+        if (!(InfState::Count == result.get_num_elements())) {
             log_error("Result does not match infectionState of the Model.");
             TimeSeries<ScalarType> populations((int)InfectionStateBase::Count);
             Eigen::VectorXd wrong_size = Eigen::VectorXd::Constant((int)InfectionStateBase::Count, -1);

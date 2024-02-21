@@ -187,7 +187,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     using InfState = mio::lsecir::InfectionState<mio::lsecir::InfectionStateBase, 1, 2, 3, 2, 2, 2, 1, 1>;
 
     // Define initial population distribution in infection states, one entry per subcompartment.
-    Eigen::VectorXd init(InfState::get_count());
+    Eigen::VectorXd init(InfState::Count);
     init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Susceptible>()]            = 750;
     init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>()]                = 30;
     init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>() + 1]            = 20;
@@ -227,7 +227,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
 
     // Compare the result of eval_right_hand_side() with a hand calculated result.
-    unsigned int num_subcompartments = InfState::get_count();
+    unsigned int num_subcompartments = InfState::Count;
     Eigen::VectorXd dydt(num_subcompartments);
     model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
 
@@ -250,7 +250,7 @@ protected:
         using InfState = mio::lsecir::InfectionState<mio::lsecir::InfectionStateBase, 1, 2, 3, 1, 1, 5, 1, 1>;
 
         // Define initial distribution of the population in the subcompartments.
-        Eigen::VectorXd init(InfState::get_count());
+        Eigen::VectorXd init(InfState::Count);
         init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Susceptible>()]            = 750;
         init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>()]                = 30;
         init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>() + 1]            = 20;

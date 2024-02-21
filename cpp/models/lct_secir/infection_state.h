@@ -95,17 +95,7 @@ public:
         return index;
     }
 
-    /**
-     * @brief Gets the total number of subcompartments of all infection states.
-     */
-    static constexpr unsigned int get_count()
-    {
-        unsigned int index = 0;
-        for (int i = 0; i < (int)(Base::Count); i++) {
-            index = index + m_subcompartment_numbers[i];
-        }
-        return index;
-    }
+    static constexpr unsigned int Count{(... + Ns)};
 
 private:
     static constexpr const std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
