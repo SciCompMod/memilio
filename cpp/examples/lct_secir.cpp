@@ -25,7 +25,6 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
-#include <vector>
 
 int main()
 {

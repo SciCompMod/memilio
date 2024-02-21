@@ -21,8 +21,6 @@
 #ifndef LCTSECIR_INFECTIONSTATE_H
 #define LCTSECIR_INFECTIONSTATE_H
 
-#include "memilio/utils/logging.h"
-#include "memilio/math/eigen.h"
 #include <array>
 
 namespace mio

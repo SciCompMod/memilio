@@ -22,7 +22,6 @@
 #define LCT_SECIR_SIMULATION_H
 
 #include "lct_secir/model.h"
-#include "lct_secir/parameters.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/metaprogramming.h"

@@ -30,7 +30,6 @@
 #include "load_test_data.h"
 
 #include <gtest/gtest.h>
-#include <vector>
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
 // Test confirms that default construction of an LCT model works.
