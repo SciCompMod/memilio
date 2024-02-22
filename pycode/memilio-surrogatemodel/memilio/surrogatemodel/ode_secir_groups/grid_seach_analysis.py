@@ -228,7 +228,53 @@ def simple_barplot(df):
 
 
 
+############# other plots ##############
+# plot for one damp
 
+def plot_one_damp_secir_groups():
+    # load data from models with damping but no information about damping provided 
+    # we performed five runs and will utiliz the average value 
+    # one random damping, 30 days prediction, baseline matrix is correct, minimum matrix is 0 
+
+    df_noinfo_CNN = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_onedamp_noinfo/datfarame_secirgroups_onedamp_noinfo_CNN')
+    df_noinfo_LSTM = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_onedamp_noinfo/datfarame_secirgroups_onedamp_noinfo')
+    df_noinfo_MLP = pd.read_csv('pycode/memilio-surrogatemodel/memilio/secir_groups_onedamp_noinfo/datfarame_secirgroups_onedamp_noinfo_MLP')
+
+    df_dc_LSTM = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_onedamp_day_and_matrix/datarame_secirgroups_onedamp_noinfo_day_and_matrix_LSTM')
+    df_dc_CNN = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_onedamp_day_and_matrix/datarame_secirgroups_onedamp_noinfo_day_and_matrix_CNN')
+    df_dc_MLP = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_onedamp_day_and_matrix/datarame_secirgroups_onedamp_noinfo_day_and_matrix_MLP')
+
+    means_noinfo= []
+    for i in [df_noinfo_MLP, df_noinfo_CNN, df_noinfo_LSTM]:
+        means_noinfo.append(i['MAPE'].mean().round(4))
+
+    means_day_and_contact = []
+    for i in [df_dc_MLP, df_dc_CNN, df_dc_LSTM]:
+            means_day_and_contact.append(i['MAPE'].mean().round(4))
+
+    models = ("MLP", "CNN", "LSTM")
+    penguin_means = {
+        'Model 1': means_noinfo,
+        'Model 2': means_day_and_contact}
+
+    x = np.arange(len(models))  # the label locations
+    width = 0.25  # the width of the bars
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout='constrained')
+
+    for attribute, measurement in penguin_means.items():
+        offset = width * multiplier
+        rects = ax.bar(x + offset, measurement, width, label=attribute)
+        ax.bar_label(rects, padding=3)
+        multiplier += 1
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Test MAPE')
+    ax.set_title('Model comparison for prediction with variable damping')
+    ax.set_xticks(x + width, models)
+    ax.legend(loc='upper right', ncols=3)
+    plt.savefig("secirgroups_onedamp_modelcomparison.png")
 
 
 
