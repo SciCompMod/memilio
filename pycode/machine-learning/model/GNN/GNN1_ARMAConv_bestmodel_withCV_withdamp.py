@@ -43,10 +43,11 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'xxxxxxxxxxxxxxxxxxxx')
+    'data_GNN_400pop_one_var_damp_100days_1k_withmatrix')
 
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+
 data_secir = pickle.load(file)
 
 
@@ -116,7 +117,7 @@ df = pd.DataFrame(
 
 
 def train_and_evaluate_model(
-        epochs, learning_rate, param, save_name, filename, damping_factors, damping_days, contact_matrices):
+        epochs, learning_rate, param, save_name, filename):
 
     layer_name, number_of_layer, channels = param
 
@@ -207,7 +208,7 @@ def train_and_evaluate_model(
 
             def call(self, inputs):
                 x, a = inputs
-                a = np.asarray(a)
+                #a = np.asarray(a)
 
                 x = self.conv1([x, a])
                 x = self.conv2([x, a])
@@ -409,15 +410,27 @@ def train_and_evaluate_model(
     print("Time for training: {:.4f} minutes".format(elapsed/60))
 
     #save the model
+    #path = os.path.dirname(os.path.realpath(__file__))
+    
+    #path_models = os.path.join(
+    #   os.path.dirname(
+    #       os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+    #   save_name)
+    #if not os.path.isdir(path_models):
+    #   os.mkdir(path_models)
+
+    #model.save(path_models, save_name +'h5')
+
+        # save the model
     path = os.path.dirname(os.path.realpath(__file__))
     path_models = os.path.join(
-       os.path.dirname(
-           os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-       save_name)
+        os.path.dirname(
+            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        'ARMAConv_100days_two_damp_saved_model')
     if not os.path.isdir(path_models):
-       os.mkdir(path_models)
+        os.mkdir(path_models)
 
-    model.save(path_models, save_name +'h5')
+    model.save(path_models, 'ARMAConv_2damp.h5')
 
     # save df 
 
@@ -446,10 +459,10 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/GNNtype1_ARMA_100days_1damp.csv'
-save_name = 'ARMAConv_100days_one_damp_saved_model'
+filename = '/GNNtype1_ARMA_100days_2damp.csv'
+save_name = 'ARMAConv_100days_two_damp_saved_model'
 #for param in parameters:
-train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename, damping_factors, damping_days, contact_matrices)
+train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
 elapsed_hyper = time.perf_counter() - start_hyper
 print(
