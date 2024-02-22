@@ -306,7 +306,8 @@ public:
      * @param node_to node that people migrated to, return from
      */
     template <class Sim>
-    void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to, int mode);
+    void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to, int mode,
+                         int id_from, int id_to);
 
 private:
     MigrationParameters m_parameters;
@@ -331,86 +332,21 @@ template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Si
 void update_status_migrated(Eigen::Ref<TimeSeries<double>::Vector> migrated, Sim& sim, IntegratorCore& integrator,
                             Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
 {
-    // 1) get flows in mobility comp
-    // 2) assure that this does not change the local model before return. (könnte den integrator zur diff nutzen)
-    auto& model = sim.get_model();
-    auto y0     = migrated.eval();
-    auto y1     = migrated;
+    auto y0 = migrated.eval();
+    auto y1 = migrated;
     EulerIntegratorCore().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },
         y0, t, dt, y1);
 
-    // if integrator type == EulerIntegratorCore
-    // if (dynamic_cast<EulerIntegratorCore*>(&integrator) != nullptr) {
-    //     auto flows_step                  = model.get_flow_values();
-    //     std::vector<int> indx_infections = {0,   33,  17,  53,  86,  70,  106, 139, 123,
-    //                                         159, 192, 176, 212, 245, 229, 265, 298, 282};
-    //     auto sum_infections =
-    //         std::accumulate(indx_infections.begin(), indx_infections.end(), 0.0, [&flows_step](double sum, int i) {
-    //             return sum + flows_step(i);
-    //         });
-    //     sim.get_flows().get_last_value()(0) += sum_infections;
-
-    //     std::vector<int> indx_symp = {20, 36, 56, 73, 89, 109, 126, 142, 162, 179, 195, 215, 232, 248, 268, 285, 301};
-    //     auto sum_symp = std::accumulate(indx_symp.begin(), indx_symp.end(), 0.0, [&flows_step](double sum, int i) {
-    //         return sum + flows_step(i);
-    //     });
-    //     sim.get_flows().get_last_value()(1) += sum_symp;
-    // }
+    auto flows_model = sim.get_model().get_flow_values();
+    flows_model *= dt;
+    sim.get_model().set_flow_values(flows_model);
 }
 
 template <typename FP>
 using Vector = Eigen::Matrix<FP, Eigen::Dynamic, 1>;
-
-/*
-    * move migrated people from one node to another.
-    * @param migrated number of people that migrated 
-    * @param results_from current state of node that people migrated from
-    * @param results_to current state of node that people migrated to
-*/
-// template <typename FP>
-// void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> results_from,
-//                    Eigen::Ref<Vector<FP>> results_to)
-// {
-//     double sum_migrated = migrated.sum();
-//     for (size_t i = 0; i < migrated.size(); ++i) {
-//         // Ensure that migrated(i) is not greater than results_from(i)
-//         if (migrated(i) > results_from(i)) {
-//             // Distribute the excess to other elements in migrated
-//             FP excess   = migrated(i) - results_from(i);
-//             migrated(i) = results_from(i);
-//             for (size_t j = 0; j < migrated.size(); ++j) {
-//                 if (j != i && migrated(j) + excess <= results_from(j)) {
-//                     migrated(j) += excess;
-//                     break;
-//                 }
-//             }
-//         }
-//     }
-//     double sum_migrated_new = migrated.sum();
-//     if (std::abs(sum_migrated - sum_migrated_new) > 1e-10) {
-//         std::cout << "Sum of migration is not the same after migration. Difference: " << sum_migrated - sum_migrated_new
-//                   << "\n";
-//     }
-
-//     for (size_t i = 0; i < migrated.size(); ++i) {
-//         results_from(i) -= migrated(i);
-//         results_to(i) += migrated(i);
-//     }
-// }
-
-inline std::vector<double> calc_sum_groupss(Eigen::Ref<Eigen::Matrix<double, -1, 1>> y)
-{
-    const int num_age_groups = 6;
-    std::vector<double> sum_groups(num_age_groups);
-    auto const num_comparts = y.size() / num_age_groups;
-    for (int age_group = 0; age_group < num_age_groups; ++age_group) {
-        sum_groups[age_group] = y.segment(age_group * num_comparts, num_comparts).sum();
-    }
-    return sum_groups;
-}
 
 template <typename FP>
 void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> results_from,
@@ -419,20 +355,10 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
     const auto group        = 6;
     const auto num_comparts = results_to.size() / group;
 
-    // double sum_migrated = migrated.sum();
-    // double sum_from     = results_from.sum();
-    // double sum_to       = results_to.sum();
-
-    // auto groups_from  = calc_sum_groupss(results_from);
-    // auto groups_to    = calc_sum_groupss(results_to);
-    // auto groups_moved = calc_sum_groupss(migrated);
-
-    // std::vector<double> migrated_as_vector(migrated.data(), migrated.data() + migrated.size());
-    // std::vector<double> results_from_as_vector(results_from.data(), results_from.data() + results_from.size());
-    // std::vector<double> results_to_as_vector(results_to.data(), results_to.data() + results_to.size());
-
+    // check for negative values in migrated
     for (Eigen::Index j = 0; j < migrated.size(); ++j) {
-        if (migrated(j) < -1e-10) {
+        if (migrated(j) < -1e-8) {
+            std::cout << "Negative Value in migration detected. With value" << migrated(j) << "\n";
             auto compart        = j % num_comparts;
             auto curr_age_group = int(j / num_comparts);
             auto indx_begin     = curr_age_group * num_comparts;
@@ -450,68 +376,72 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
         }
     }
 
-    // // check if a entry of migrated_as_vector is negative
-    // for (size_t i = 0; i < migrated_as_vector.size(); ++i) {
-    //     if (migrated_as_vector[i] < 0) {
-    //         std::cout << "Negative entry in migrated_as_vector at index " << i << "\n";
-    //     }
-    // }
-
-    Eigen::VectorXd remaining_after_return = (results_from - migrated).eval();
-    // auto remaining_after_return_as_vector  = std::vector<double>(
-    //     remaining_after_return.data(), remaining_after_return.data() + remaining_after_return.size());
-    for (Eigen::Index j = 0; j < results_to.size(); ++j) {
-        if (remaining_after_return(j) < -1e-10) {
-            auto compart        = j % num_comparts;
-            auto curr_age_group = int(j / num_comparts);
-            auto indx_begin     = curr_age_group * num_comparts;
-            auto indx_end       = (curr_age_group + 1) * num_comparts;
-            // calculate max index in indx boundaries
-            Eigen::Index max_index = indx_begin;
-            for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
-                if (remaining_after_return(i) > remaining_after_return(max_index)) {
-                    max_index = i;
-                }
-            }
-
-            // its possible that the max value in the boundaries is not enough to fill the negative value.
-            // Therefore we have to find multiple max values
-            while (remaining_after_return(max_index) + remaining_after_return(j) < -1e-10) {
-
-                // calculate sum between indx_begin and indx_end
-                double result_from_sum_group      = 0;
-                double result_migration_sum_group = 0;
-                for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
-                    result_from_sum_group += results_from(i);
-                    result_migration_sum_group += migrated(i);
-                }
-                auto diff = result_from_sum_group - result_migration_sum_group;
-                if (diff < -1e-10) {
-                    std::cout << "Sum of results_from is smaller than sum of migrated. Diff is "
-                              << result_from_sum_group - result_migration_sum_group << "\n";
-                    // std::cout << "diff overall: " << sum_from - sum_migrated << "\n";
-                }
-
-                results_from(j)         = results_from(j) + remaining_after_return(max_index);
-                results_from(max_index) = results_from(max_index) - remaining_after_return(max_index);
-                remaining_after_return  = (results_from - migrated).eval();
-
-                max_index = indx_begin;
+    // calc sum of migrated and from
+    auto sum_migrated = migrated.sum();
+    auto sum_from     = results_from.sum();
+    if (std::abs(sum_migrated - sum_from) < 1e-8) {
+        results_from = migrated;
+    }
+    else {
+        Eigen::VectorXd remaining_after_return = (results_from - migrated).eval();
+        // auto remaining_after_return_as_vector  = std::vector<double>(
+        //     remaining_after_return.data(), remaining_after_return.data() + remaining_after_return.size());
+        for (Eigen::Index j = 0; j < results_to.size(); ++j) {
+            if (remaining_after_return(j) < -1e-8) {
+                auto compart        = j % num_comparts;
+                auto curr_age_group = int(j / num_comparts);
+                auto indx_begin     = curr_age_group * num_comparts;
+                auto indx_end       = (curr_age_group + 1) * num_comparts;
+                // calculate max index in indx boundaries
+                Eigen::Index max_index = indx_begin;
                 for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
                     if (remaining_after_return(i) > remaining_after_return(max_index)) {
                         max_index = i;
                     }
                 }
-                if (max_index == indx_begin && remaining_after_return(max_index) == 0) {
-                    std::cout << "Fixing negative Value in migration not possible."
-                              << "\n";
-                }
-            }
 
-            // we assume that the solution from migrated is bettter because there is contact with other nodes
-            results_from(j)         = results_from(j) - remaining_after_return(j);
-            results_from(max_index) = results_from(max_index) + remaining_after_return(j);
-            remaining_after_return  = (results_from - migrated).eval();
+                // its possible that the max value in the boundaries is not enough to fill the negative value.
+                // Therefore we have to find multiple max values
+                while (remaining_after_return(max_index) + remaining_after_return(j) < -1e-10) {
+
+                    // calculate sum between indx_begin and indx_end
+                    double result_from_sum_group      = 0;
+                    double result_migration_sum_group = 0;
+                    for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
+                        result_from_sum_group += results_from(i);
+                        result_migration_sum_group += migrated(i);
+                    }
+                    auto diff = result_from_sum_group - result_migration_sum_group;
+                    if (diff < -1e-8) {
+                        std::cout << "Sum of results_from is smaller than sum of migrated. Diff is "
+                                  << result_from_sum_group - result_migration_sum_group << "\n";
+                        // transfer values from migrated to results_from
+                        for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
+                            results_from(i) = migrated(i);
+                        }
+                    }
+
+                    results_from(j)         = results_from(j) + remaining_after_return(max_index);
+                    results_from(max_index) = results_from(max_index) - remaining_after_return(max_index);
+                    remaining_after_return  = (results_from - migrated).eval();
+
+                    max_index = indx_begin;
+                    for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
+                        if (remaining_after_return(i) > remaining_after_return(max_index)) {
+                            max_index = i;
+                        }
+                    }
+                    if (max_index == indx_begin && remaining_after_return(max_index) == 0) {
+                        std::cout << "Fixing negative Value in migration not possible."
+                                  << "\n";
+                    }
+                }
+
+                // we assume that the solution from migrated is bettter because there is contact with other nodes
+                results_from(j)         = results_from(j) - remaining_after_return(j);
+                results_from(max_index) = results_from(max_index) + remaining_after_return(j);
+                remaining_after_return  = (results_from - migrated).eval();
+            }
         }
     }
 
@@ -520,65 +450,6 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
 
     // Addiere migrated zu results_to
     results_to += migrated;
-
-    // again as vectors
-    // std::vector<double> migrated_as_vector_new(migrated.data(), migrated.data() + migrated.size());
-    // std::vector<double> results_from_as_vector_new(results_from.data(), results_from.data() + results_from.size());
-    // std::vector<double> results_to_as_vector_new(results_to.data(), results_to.data() + results_to.size());
-
-    // // check if a entry of migrated_as_vector_new is negative
-    // for (size_t i = 0; i < migrated_as_vector_new.size(); ++i) {
-    //     if (migrated_as_vector_new[i] < -1e-8) {
-    //         std::cout << "Negative entry in migrated_as_vector_new at index " << i << " with value "
-    //                   << migrated_as_vector_new[i] << "\n";
-    //     }
-    // }
-    // // same for results_from_as_vector_new and results_to_as_vector_new
-    // for (size_t i = 0; i < results_from_as_vector_new.size(); ++i) {
-    //     if (results_from_as_vector_new[i] < -1e-8) {
-    //         std::cout << "Negative entry in results_from_as_vector_new at index " << i << "with value "
-    //                   << results_from_as_vector_new[i] << "\n";
-    //     }
-    // }
-    // for (size_t i = 0; i < results_to_as_vector_new.size(); ++i) {
-    //     if (results_to_as_vector_new[i] < -1e-8) {
-    //         std::cout << "Negative entry in results_to_as_vector_new at index " << i << "with value "
-    //                   << results_to_as_vector_new[i] << "\n";
-    //     }
-    // }
-
-    // // teste if sum_from und sum_to gleich sind
-    // if (std::abs(sum_from - sum_to) > 1e-7) {
-    //     double sum_migrated_new = migrated.sum();
-    //     double sum_from_new     = results_from.sum();
-    //     double sum_to_new       = results_to.sum();
-    //     if (std::abs(sum_migrated - sum_migrated_new) > 1e-7) {
-    //         std::cout << "Sum of migration is not the same after migration. Difference: "
-    //                   << sum_migrated - sum_migrated_new << "\n";
-    //     }
-    //     if (std::abs(sum_from - sum_migrated - sum_from_new) > 1e-7) {
-    //         std::cout << "Sum of from is not the same after migration. Difference: " << sum_from - sum_from_new << "\n";
-    //     }
-    //     if (std::abs(sum_to + sum_migrated - sum_to_new) > 1e-7) {
-    //         std::cout << "Sum of to is not the same after migration. Difference: " << sum_to - sum_to_new << "\n";
-    //     }
-    // }
-
-    // // check if the sum of the groups is the same
-    // auto groups_from_new  = calc_sum_groupss(results_from);
-    // auto groups_to_new    = calc_sum_groupss(results_to);
-    // auto groups_moved_new = calc_sum_groupss(migrated);
-
-    // for (size_t i = 0; i < groups_from_new.size(); ++i) {
-    //     if (std::abs(groups_from[i] + groups_to[i] - groups_from_new[i] - groups_to_new[i]) > 1e-7) {
-    //         std::cout << "Sum of group " << i << " in from is not the same after migration. Difference: "
-    //                   << groups_from[i] + groups_to[i] - groups_from_new[i] - groups_to_new[i] << "\n";
-    //     }
-    //     if (std::abs(groups_moved[i] - groups_moved_new[i]) > 1e-7) {
-    //         std::cout << "Sum of group " << i << " in moved is not the same after migration. Difference: "
-    //                   << groups_moved[i] - groups_moved_new[i] << "\n";
-    //     }
-    // }
 
 } // namespace mio
 
@@ -671,7 +542,7 @@ void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migra
 
 template <class Sim>
 void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to,
-                                    int mode)
+                                    int mode, int id_from, int id_to)
 {
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -696,42 +567,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         m_t_last_dynamic_npi_check = t;
     }
 
-    // //returns
-    // for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
-    //     if (mode == 1) {
-    //         auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
-    //         assert(v0 != node_to.get_result().rend() && "unexpected error.");
-    //         IntegratorCore& integrator_node = node_to.get_simulation().get_integrator();
-    //         update_status_migrated(m_migrated[i], node_to.get_simulation(), integrator_node, *v0,
-    //                                m_migrated.get_time(i), dt);
-
-    //         //the lower-order return calculation may in rare cases produce negative compartments,
-    //         //especially at the beginning of the simulation.
-    //         //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
-    //         Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_migrated[i]).eval();
-    //         for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
-    //             if (remaining_after_return(j) < 0) {
-    //                 auto num_comparts = (Eigen::Index)Sim::Model::Compartments::Count;
-    //                 auto group        = Eigen::Index(j / num_comparts);
-    //                 auto compart      = j % num_comparts;
-    //                 log(remaining_after_return(j) < -1e-3 ? LogLevel::warn : LogLevel::info,
-    //                     "Underflow during migration returns at time {}, compartment {}, age group {}: {}", t, compart,
-    //                     group, remaining_after_return(j));
-    //                 Eigen::Index max_index;
-    //                 slice(remaining_after_return, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
-    //                 log_info("Transferring to compartment {}", max_index);
-    //                 max_index += group * num_comparts;
-    //                 m_migrated[i](max_index) -= remaining_after_return(j);
-    //                 m_migrated[i](j) += remaining_after_return(j);
-    //             }
-    //         }
-    //         node_from.get_result().get_last_value() += m_migrated[i];
-    //         node_to.get_result().get_last_value() -= m_migrated[i];
-    //         m_migrated.remove_time_point(i);
-    //         m_return_times.remove_time_point(i);
-    //     }
-    // }
-
     if (mode == 0) {
         //normal daily migration
         m_migrated.add_time_point(
@@ -739,86 +574,82 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
                 get_migration_factors(node_from, t, node_from.get_last_state()).array())
                    .matrix());
         m_return_times.add_time_point(t + dt);
-        // printe twas, wenn die summe von m_migration kleiner als 1e-2 ist
-        if (m_migrated.get_last_value().sum() < 1e-2) {
-            std::cout << "Sum of migration is smaller than 1e-2. Sum: " << m_migrated.get_last_value().sum() << "\n";
-        }
         move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
                       node_to.get_result().get_last_value());
+        if (id_from == 140 && id_to == 135) {
+            // m_migrated.get_last_value() as vector
+            double sus        = 0.0;
+            double infections = 0.0;
+            double tim        = 0.0;
+            auto migrated_as_vector =
+                std::vector<double>(m_migrated.get_last_value().data(),
+                                    m_migrated.get_last_value().data() + m_migrated.get_last_value().size());
+            for (auto i = 0; i < migrated_as_vector.size(); i++) {
+                // reche i modulu 29
+                auto res = i % 29;
+                if (res == 0 || res == 1 || res == 23)
+                    sus += migrated_as_vector[i];
+                else if (res == 27 || res == 28)
+                    tim += migrated_as_vector[i];
+                else
+                    infections += migrated_as_vector[i];
+            }
+        }
     }
     // change county of migrated
     else if (mode == 1) {
         // update status of migrated before moving to next county
         Eigen::Index idx = m_return_times.get_num_time_points() - 1;
 
-        auto node_from_as_vector = std::vector<double>(node_from.get_result().get_last_value().data(),
-                                                       node_from.get_result().get_last_value().data() +
-                                                           node_from.get_result().get_last_value().size());
-        auto node_to_as_vector   = std::vector<double>(node_to.get_result().get_last_value().data(),
-                                                     node_to.get_result().get_last_value().data() +
-                                                         node_to.get_result().get_last_value().size());
-
         IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
-        // when the sum of both is equal, we can assume that only the migrated group is currently in the node.
-        // Therefore, we can use the last value calculated by the node integration.
 
-        if (std::abs(m_migrated[idx].sum() - node_from.get_result().get_last_value().sum()) > 1e-9) {
-            update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
-                                   node_from.get_result().get_last_value(), t, dt);
-        }
-        else {
-            for (size_t i = 0; i < m_migrated[idx].size(); ++i) {
-                m_migrated[idx](i) = node_from.get_result().get_last_value()(i);
-            }
-        }
-
-        // teste, ob die abweichung im bereich 1e-4 bis 1e-12 liegt
-        double diff_from_migrated = std::abs(m_migrated[idx].sum() - node_from.get_result().get_last_value().sum());
-        if (diff_from_migrated < 1e-2 && diff_from_migrated > 1e-9) {
-            if (m_migrated[idx].sum() - node_from.get_result().get_last_value().sum() > 0)
-                std::cout << "Difference between migrated and node_from is in the range 1e-4 to 1e-10. Difference: "
-                          << diff_from_migrated << "\n";
-        }
-        if (m_migrated[idx].sum() - node_from.get_result().get_last_value().sum() > 0) {
-            auto dif = m_migrated[idx].sum() - node_from.get_result().get_last_value().sum();
-            std::cout << "Difference between migrated and node_from bad. Difference: " << dif << "\n";
-        }
+        update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
+                               node_from.get_result().get_last_value(), t, dt);
 
         move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
                       node_to.get_result().get_last_value());
+
+        if (id_from == 140 && id_to == 135) {
+            // m_migrated.get_last_value() as vector
+            double sus        = 0.0;
+            double infections = 0.0;
+            double tim        = 0.0;
+            auto migrated_as_vector =
+                std::vector<double>(m_migrated.get_last_value().data(),
+                                    m_migrated.get_last_value().data() + m_migrated.get_last_value().size());
+            for (auto i = 0; i < migrated_as_vector.size(); i++) {
+                // reche i modulu 29
+                auto res = i % 29;
+                if (res == 0 || res == 1 || res == 23)
+                    sus += migrated_as_vector[i];
+                else if (res == 27 || res == 28)
+                    tim += migrated_as_vector[i];
+                else
+                    infections += migrated_as_vector[i];
+            }
+        }
     }
     // option for last time point to remove time points
     else if (mode == 2) {
-        // Eigen::Index idx = m_return_times.get_num_time_points() - 1;
-
-        // if (std::abs(m_migrated[idx].sum() - node_from.get_result().get_last_value().sum()) > 1e-9) {
-        //     update_status_migrated(m_migrated[idx], node_from.get_simulation(),
-        //                            node_from.get_simulation().get_integrator(), node_from.get_result().get_last_value(),
-        //                            t, dt);
-        // }
-        // else {
-        //     for (size_t i = 0; i < m_migrated[idx].size(); ++i) {
-        //         m_migrated[idx](i) = node_from.get_result().get_last_value()(i);
-        //     }
-        // }
-
-        // double diff_from_migrated = std::abs(m_migrated[idx].sum() - node_from.get_result().get_last_value().sum());
-        // if (diff_from_migrated < 1e-2 && diff_from_migrated > 1e-9) {
-        //     if (m_migrated[idx].sum() - node_from.get_result().get_last_value().sum() > 0)
-        //         std::cout << "Difference between migrated and node_from is in the range 1e-4 to 1e-9. Difference: "
-        //                   << diff_from_migrated << "\n";
-        // }
-        // if (m_migrated[idx].sum() - node_from.get_result().get_last_value().sum() > 0) {
-        //     auto dif = m_migrated[idx].sum() - node_from.get_result().get_last_value().sum();<s
-        //     std::cout << "Difference between migrated and node_from bad. Difference: " << dif << "\n";
-        // }
-
-        // auto node_from_as_vector = std::vector<double>(node_from.get_result().get_last_value().data(),
-        //                                                node_from.get_result().get_last_value().data() +
-        //                                                    node_from.get_result().get_last_value().size());
-
-        // move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-        //               node_to.get_result().get_last_value());
+        if (id_from == 140 && id_to == 135) {
+            // m_migrated.get_last_value() as vector
+            double sus        = 0.0;
+            double infections = 0.0;
+            double tim        = 0.0;
+            auto migrated_as_vector =
+                std::vector<double>(m_migrated.get_last_value().data(),
+                                    m_migrated.get_last_value().data() + m_migrated.get_last_value().size());
+            for (auto i = 0; i < migrated_as_vector.size(); i++) {
+                // reche i modulu 29
+                auto res = i % 29;
+                if (res == 0 || res == 1 || res == 23)
+                    sus += migrated_as_vector[i];
+                else if (res == 27 || res == 28)
+                    tim += migrated_as_vector[i];
+                else
+                    infections += migrated_as_vector[i];
+            }
+        }
 
         for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
             if (m_return_times.get_time(i) <= t) {
@@ -832,18 +663,31 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
         IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
 
-        if (std::abs(m_migrated[idx].sum() - node_from.get_result().get_last_value().sum()) > 1e-12) {
-            update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
-                                   node_from.get_result().get_last_value(), t, dt);
-        }
-        else {
-            for (size_t i = 0; i < m_migrated[idx].size(); ++i) {
-                // if theres only one group located in the node, we take the result from the high order integration.
-                m_migrated[idx](i) = node_from.get_result().get_last_value()(i);
-            }
-        }
+        update_status_migrated(m_migrated[idx], node_from.get_simulation(), integrator_node,
+                               node_from.get_result().get_last_value(), t, dt);
+
         move_migrated(m_migrated.get_last_value(), node_from.get_result().get_last_value(),
                       node_from.get_result().get_last_value());
+
+        if (id_from == 140 && id_to == 135) {
+            // m_migrated.get_last_value() as vector
+            double sus        = 0.0;
+            double infections = 0.0;
+            double tim        = 0.0;
+            auto migrated_as_vector =
+                std::vector<double>(m_migrated.get_last_value().data(),
+                                    m_migrated.get_last_value().data() + m_migrated.get_last_value().size());
+            for (auto i = 0; i < migrated_as_vector.size(); i++) {
+                // reche i modulu 29
+                auto res = i % 29;
+                if (res == 0 || res == 1 || res == 23)
+                    sus += migrated_as_vector[i];
+                else if (res == 27 || res == 28)
+                    tim += migrated_as_vector[i];
+                else
+                    infections += migrated_as_vector[i];
+            }
+        }
     }
 
     else {
@@ -868,9 +712,9 @@ void evolve_model(double t, double dt, SimulationNode<Sim>& node)
  */
 template <class Sim>
 void apply_migration(double t, double dt, MigrationEdge& migrationEdge, SimulationNode<Sim>& node_from,
-                     SimulationNode<Sim>& node_to, int mode)
+                     SimulationNode<Sim>& node_to, int mode, int id_from, int id_to)
 {
-    migrationEdge.apply_migration(t, dt, node_from, node_to, mode);
+    migrationEdge.apply_migration(t, dt, node_from, node_to, mode, id_from, id_to);
 }
 /**
  * create a migration simulation.

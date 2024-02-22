@@ -211,6 +211,11 @@ public:
         return m_flow_values;
     }
 
+    void set_flow_values(const Eigen::VectorXd& flows)
+    {
+        m_flow_values = flows;
+    }
+
 private:
     FlowIndex m_flow_index_dimensions; ///< The dimensions of a FlowIndex.
     MultiIndexRange<PopIndex> m_flow_range; ///< Range used to iterate over all categories except for Comp.

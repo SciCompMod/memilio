@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
@@ -54,12 +54,34 @@ void set_contact_mobility(Model& m, Eigen::Ref<Eigen::MatrixXd> contacts)
     return set_contact_mobility(m, contacts, 0.);
 }
 
+template <class Model>
+using add_infections_from_flow_expr_t = decltype(add_infections_from_flow(
+    std::declval<Model&>(), std::declval<Eigen::Ref<Eigen::MatrixXd>&>(), std::declval<double>()));
+
+template <class Model,
+          std::enable_if_t<!is_expression_valid<add_infections_from_flow_expr_t, Model>::value, void*> = nullptr>
+void add_infections_from_flow(Model /*model*/, double& /*infections_any*/, double& /*infecions_symptomatic_mobility*/,
+                              double /*t*/)
+{
+    std::cout << "Wrong function called"
+              << "\n";
+}
+template <class Model,
+          std::enable_if_t<is_expression_valid<add_infections_from_flow_expr_t, Model>::value, void*> = nullptr>
+void add_infections_from_flow(Model m, double& infections_any, double& infecions_symptomatic_mobility)
+{
+    return add_infections_from_flow(m, infections_any, infecions_symptomatic_mobility);
+}
+
+// template <class M>
+// void add_infections_from_flow(M model, double& infections_any, double& infecions_symptomatic_mobility)
+
 /**
  * @brief abstract simulation on a graph with alternating node and edge actions
  */
-template <class Graph,
-          class edge_f = std::function<void(double, double, typename Graph::EdgeProperty&,
-                                            typename Graph::NodeProperty&, typename Graph::NodeProperty&, int)>>
+template <class Graph, class edge_f = std::function<void(double, double, typename Graph::EdgeProperty&,
+                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&,
+                                                         int, int, int)>>
 class GraphSimulationBase
 {
 public:
@@ -109,57 +131,6 @@ public:
             std::cout << msg << "\n";
         }
     }
-
-    template <class M>
-    void add_infections_from_flow(M model, double& infections_any, double& infecions_symptomatic)
-    {
-        auto flows_step                  = model.get_flow_values();
-        std::vector<int> indx_infections = {0,   33,  17,  53,  86,  70,  106, 139, 123,
-                                            159, 192, 176, 212, 245, 229, 265, 298, 282};
-        auto sum_infections =
-            std::accumulate(indx_infections.begin(), indx_infections.end(), 0.0, [&flows_step](double sum, int i) {
-                return sum + flows_step(i);
-            });
-        infections_any += sum_infections;
-
-        std::vector<int> indx_symp = {20, 36, 56, 73, 89, 109, 126, 142, 162, 179, 195, 215, 232, 248, 268, 285, 301};
-        auto sum_symp = std::accumulate(indx_symp.begin(), indx_symp.end(), 0.0, [&flows_step](double sum, int i) {
-            return sum + flows_step(i);
-        });
-        infecions_symptomatic += sum_symp;
-    }
-
-    // void check_for_negative_value(Eigen::Ref<Eigen::Matrix<double, -1, 1>> y)
-    // {
-    //     const double epsilon = 1e-10;
-    //     auto const num_age_groups =
-    //         m_graph.nodes()[0].property.get_simulation().get_model().parameters.get_num_groups();
-    //     auto const num_comparts = y.size() / static_cast<int>(static_cast<size_t>(num_age_groups));
-    //     if (y.minCoeff() < -epsilon) {
-    //         while (y.minCoeff() < -epsilon) {
-    //             Eigen::Index min_index;
-    //             y.minCoeff(&min_index);
-    //             auto curr_age_group = int(min_index / num_comparts);
-    //             auto indx_begin     = curr_age_group * num_comparts;
-    //             auto indx_end       = (curr_age_group + 1) * num_comparts;
-
-    //             // calculate max index in indx boundaries. Creates no copy of y
-    //             Eigen::VectorBlock<Eigen::Ref<Eigen::Matrix<double, -1, 1>>> y_block =
-    //                 y.segment(indx_begin, indx_end - indx_begin);
-    //             Eigen::Index max_index;
-    //             y_block.maxCoeff(&max_index);
-
-    //             if (y(max_index) <= epsilon) {
-    //                 std::cout << "Fixing negative Value not possible."
-    //                           << "\n";
-    //                 break;
-    //             }
-    //             double transfer = std::min(-y(min_index), y(max_index));
-    //             y(min_index) += transfer;
-    //             y(max_index) -= transfer;
-    //         }
-    //     }
-    // }
 
     void check_for_negative_value(Eigen::Ref<Eigen::Matrix<double, -1, 1>> y, const long unsigned int& index)
     {
@@ -262,15 +233,6 @@ public:
         auto min_dt    = 0.01;
         double t_begin = m_t - 1.;
 
-        // double avg_commuter_share = 0.232487;
-        // double avg_travel_time    = 0.0679489;
-        // Eigen::MatrixXd cmatrix_init(6, 6);
-        // cmatrix_init << 0.0337, 0.0337, 0.0674, 0.0534, 0.0140, 0.0000, 0.0209, 0.0652, 0.0468, 0.0757, 0.0138, 0.0000,
-        //     0.0095, 0.1818, 0.1002, 0.0904, 0.0174, 0.0000, 0.0178, 0.0849, 0.3118, 0.2155, 0.0103, 0.0000, 0.0039,
-        //     0.0160, 0.2554, 0.0461, 0.0095, 0.0171, 0.0137, 0.0134, 0.1296, 0.0863, 0.0140, 0.0000;
-
-        // cmatrix_init = cmatrix_init / (avg_commuter_share * 2 * avg_travel_time);
-
         // calc schedule for each edges
         precompute_schedule();
 
@@ -295,13 +257,6 @@ public:
                 break;
             }
 
-            // for (auto& n : m_graph.nodes()) {
-            //     n.node_pt.get_result().add_time_point(m_t + 1);
-            //     n.node_pt.get_simulation().get_flows().add_time_point(m_t + 1);
-            //     n.node_pt.get_simulation().get_flows().get_last_value().setZero();
-            //     n.node_pt.get_result().get_last_value().setZero();
-            // }
-
             size_t indx_schedule = 0;
             while (indx_schedule <= 100) {
                 // compare_pop(m_graph, total_pop_t0, "vor edges");
@@ -311,14 +266,16 @@ public:
                     if (indx_schedule == first_mobility[edge_indx]) {
                         auto& node_from = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
                         auto& node_to   = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].node_pt;
-                        e.infecions_any.push_back(0.0);
-                        e.infecions_symptomatic.push_back(0.0);
-                        m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
+                        e.infecions_mobility.push_back(0.0);
+                        e.infecions_local_model.push_back(0.0);
+                        e.infecions_symptomatic_mobility.push_back(0.0);
+                        e.infecions_symptomatic_local_model.push_back(0.0);
+                        m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0, e.start_node_idx, e.end_node_idx);
                     }
                     else if (indx_schedule == 100) {
                         auto& node_from = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].node_pt;
                         auto& node_to   = m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property;
-                        m_edge_func(m_t, 0.0, e.property, node_from, node_to, 2);
+                        m_edge_func(m_t, 0.0, e.property, node_from, node_to, 2, e.start_node_idx, e.end_node_idx);
                     }
                     // next mobility activity
                     else if (indx_schedule > first_mobility[edge_indx]) {
@@ -373,10 +330,20 @@ public:
                             if (mobility_schedule_edges[edge_indx][indx_schedule - 1]) {
                                 set_contact_mobility(node_from.get_simulation().get_model(), e.contact_matrix);
                             }
-                            m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
-                            add_infections_from_flow(node_from.get_simulation().get_model(),
-                                                     e.infecions_any[e.infecions_any.size() - 1],
-                                                     e.infecions_symptomatic[e.infecions_symptomatic.size() - 1]);
+                            m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1, e.start_node_idx,
+                                        e.end_node_idx);
+                            if (mobility_schedule_edges[edge_indx][indx_schedule - 1]) {
+                                add_infections_from_flow(
+                                    node_from.get_simulation().get_model(),
+                                    e.infecions_mobility[e.infecions_mobility.size() - 1],
+                                    e.infecions_symptomatic_mobility[e.infecions_symptomatic_mobility.size() - 1]);
+                            }
+                            else {
+                                add_infections_from_flow(
+                                    node_from.get_simulation().get_model(),
+                                    e.infecions_local_model[e.infecions_mobility.size() - 1],
+                                    e.infecions_symptomatic_local_model[e.infecions_symptomatic_mobility.size() - 1]);
+                            }
                         }
                         else {
 
@@ -388,10 +355,20 @@ public:
                             if (mobility_schedule_edges[edge_indx][indx_schedule - 1]) {
                                 set_contact_mobility(node_from.get_simulation().get_model(), e.contact_matrix);
                             }
-                            m_edge_func(m_t, dt_mobility, e.property, node_from, node_from, 3);
-                            add_infections_from_flow(node_from.get_simulation().get_model(),
-                                                     e.infecions_any[e.infecions_any.size() - 1],
-                                                     e.infecions_symptomatic[e.infecions_symptomatic.size() - 1]);
+                            m_edge_func(m_t, dt_mobility, e.property, node_from, node_from, 3, e.start_node_idx,
+                                        e.end_node_idx);
+                            if (mobility_schedule_edges[edge_indx][indx_schedule - 1]) {
+                                add_infections_from_flow(
+                                    node_from.get_simulation().get_model(),
+                                    e.infecions_mobility[e.infecions_mobility.size() - 1],
+                                    e.infecions_symptomatic_mobility[e.infecions_symptomatic_mobility.size() - 1]);
+                            }
+                            else {
+                                add_infections_from_flow(
+                                    node_from.get_simulation().get_model(),
+                                    e.infecions_local_model[e.infecions_mobility.size() - 1],
+                                    e.infecions_symptomatic_local_model[e.infecions_symptomatic_mobility.size() - 1]);
+                            }
                         }
                     }
                 }
@@ -403,15 +380,6 @@ public:
                 if (indx_schedule < 100) {
                     for (const auto& n_indx : nodes_mobility[indx_schedule]) {
                         auto& n = m_graph.nodes()[n_indx];
-                        // if (indx_schedule == 100) {
-                        //     auto res_last = n.property.get_result().get_last_value();
-                        //     auto res_last_as_vector =
-                        //         std::vector<double>(res_last.data(), res_last.data() + res_last.size());
-                        //     m_node_func(m_t, 0.01, n.property);
-                        // }
-                        // else {
-                        // if (indx_schedule == 99)
-                        //     std::cout << "t = " << m_t << "\n";
                         const size_t indx_current =
                             std::distance(ln_int_schedule[n_indx].begin(),
                                           std::lower_bound(ln_int_schedule[n_indx].begin(),
@@ -426,59 +394,18 @@ public:
                         check_for_negative_value(n.property.get_result().get_last_value(), n_indx);
                         // }
                     }
-
-                    // for (const size_t& n_indx : nodes_mobility_m[indx_schedule]) {
-                    //     auto& n = m_graph.nodes()[n_indx];
-                    //     set_contact_mobility(n.node_pt.get_simulation().get_model(), cmatrix_init);
-
-                    //     check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
-
-                    //     const size_t indx_current =
-                    //         std::distance(mb_int_schedule[n_indx].begin(),
-                    //                       std::lower_bound(mb_int_schedule[n_indx].begin(),
-                    //                                        mb_int_schedule[n_indx].end(), indx_schedule));
-                    //     const size_t val_next = (indx_current == mb_int_schedule[n_indx].size() - 1)
-                    //                                 ? 100
-                    //                                 : mb_int_schedule[n_indx][indx_current + 1];
-                    //     const ScalarType next_dt =
-                    //         round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
-
-                    //     // get all time points from the last integration step
-                    //     auto last_time_point =
-                    //         n.node_pt.get_result().get_time(n.node_pt.get_result().get_num_time_points() - 1);
-                    //     if (std::fabs(last_time_point - m_t) > 1e-10) {
-                    //         n.node_pt.get_result().get_last_time()                 = m_t;
-                    //         n.node_pt.get_simulation().get_flows().get_last_time() = m_t;
-                    //     }
-
-                    //     if (n.node_pt.get_result().get_last_value().sum() < 5) {
-                    //         n.node_pt.get_result().get_last_time()                 = m_t + next_dt;
-                    //         n.node_pt.get_simulation().get_flows().get_last_time() = m_t + next_dt;
-                    //     }
-                    //     else {
-                    //         m_node_func(m_t, next_dt, n.node_pt);
-                    //     }
-
-                    //     // check for negative values and set them to zero
-                    //     check_for_negative_value(n.node_pt.get_result().get_last_value(), n_indx);
-                    // }
                 }
 
-                if (indx_schedule == 100) {
-                    for (auto& n : m_graph.nodes()) {
-                        n.property.get_result().get_last_value() += n.node_pt.get_result().get_last_value();
-                        n.node_pt.get_result().get_last_value().setZero();
-                    }
-                }
-                else {
+                if (indx_schedule < 100) {
                     m_t += min_dt;
                 }
 
                 indx_schedule++;
-                // std::cout << "t = " << m_t << "\n";
             }
-            // compare_pop(m_graph, total_pop_t0, "nach t");
-            // std::cout << "t = " << m_t << "\n";
+
+            for (auto& n : m_graph.nodes()) {
+                n.node_pt.get_result().get_last_value().setZero();
+            }
         }
     }
 
@@ -578,7 +505,7 @@ private:
             std::fill(schedule.begin() + current_index, schedule.end() - count_true, e.path[e.path.size() - 1]);
 
             // revert trip for return.
-            std::fill(is_mobility_node.end() - count_true, is_mobility_node.end(), true);
+            std::fill(is_mobility_node.end() - count_true - 1, is_mobility_node.end() - 1, true);
 
             auto first_true = std::find(is_mobility_node.begin(), is_mobility_node.end(), true);
             auto last_true  = std::find(is_mobility_node.rbegin(), is_mobility_node.rend(), true);
@@ -589,7 +516,9 @@ private:
                 std::vector<size_t> path_reversed(schedule.begin() + first_index,
                                                   schedule.begin() + first_index + count_true);
                 std::reverse(path_reversed.begin(), path_reversed.end());
-                std::copy(path_reversed.begin(), path_reversed.end(), schedule.end() - count_true);
+                // - 1 because the last entry should be the local model of the start node
+                std::copy(path_reversed.begin(), path_reversed.end(), schedule.end() - count_true - 1);
+                schedule[schedule.size() - 1] = e.start_node_idx;
                 schedule_edges.push_back(schedule);
                 mobility_schedule_edges.push_back(is_mobility_node);
             }

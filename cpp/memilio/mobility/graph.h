@@ -159,8 +159,10 @@ struct Edge : public EdgeBase {
     std::vector<int> path;
     Eigen::MatrixXd contact_matrix;
     EdgePropertyT property;
-    std::vector<double> infecions_any;
-    std::vector<double> infecions_symptomatic;
+    std::vector<double> infecions_mobility;
+    std::vector<double> infecions_local_model;
+    std::vector<double> infecions_symptomatic_mobility;
+    std::vector<double> infecions_symptomatic_local_model;
 };
 
 /**
