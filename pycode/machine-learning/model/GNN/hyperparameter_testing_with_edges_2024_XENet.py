@@ -34,14 +34,15 @@ from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale
 #from memilio.simulation.secir import InfectionState
 
 
-# load and prepare data
+#load and prepare data
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
-        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+       os.path.realpath(os.path.dirname(os.path.realpath(path)))),
     'data_GNN_nodamp_400pop_1k_30days_1_24')
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+#file = open('', 'rb')
 data_secir = pickle.load(file)
 
 
@@ -103,8 +104,8 @@ layers = [XENetConvBatch]
 #activations = ['relu', 'LeakyReLu', 'sigmoid', 'tanh', 'elu']
 number_of_channels = [32, 64, 128,1024]
 #number_of_channels=[32]
-#number_of_layers = [1, 2, 3]
-number_of_layers = [1]
+number_of_layers = [1, 2, 3]
+#number_of_layers = [1]
 #learning_rates = [0.01, 0.001, 0.0001]
 #optimizers = [Adam, Nadam, RMSprop]
 
@@ -118,11 +119,18 @@ for l in layers:
 
            
 
+parameters = parameters[1:]
+#df = pd.DataFrame(
+#    columns=['layer', 'number_of_layers', 'channels',
+#              'kfold_train',
+#             'kfold_val', 'kfold_test', 'training_time', 'train_losses', 'val_losses'])
 
+parameters = parameters[1:]
 df = pd.DataFrame(
     columns=['layer', 'number_of_layers', 'channels',
               'kfold_train',
-             'kfold_val', 'kfold_test', 'training_time', 'train_losses', 'val_losses'])
+             'kfold_val', 'kfold_test', 'training_time'])
+
 
 
 
@@ -176,7 +184,7 @@ def train_and_evaluate_model(
     data = MyDataset(transforms=NormalizeAdj())
     batch_size = 32
     epochs = epochs
-    es_patience = 100  # Patience for early stopping
+    es_patience = 50  # Patience for early stopping
 
 
 
@@ -476,9 +484,9 @@ def train_and_evaluate_model(
     df.loc[len(df.index)] = [layer, number_of_layer, channels, np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
-                             (elapsed / 60), 
-                             np.asarray(losses_history_all).mean(axis = 0), 
-                             np.asarray(val_losses_history_all).mean(axis = 0)]
+                             (elapsed / 60)]
+                             #np.asarray(losses_history_all).mean(axis = 0), 
+                             #np.asarray(val_losses_history_all).mean(axis = 0)]
 
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(
@@ -492,7 +500,7 @@ def train_and_evaluate_model(
 
 
 start_hyper = time.perf_counter()
-epochs = 1500
+epochs = 500
 filename = '/dataframe_XENEtConv_gridsearch.csv'
 for param in parameters:
     train_and_evaluate_model(epochs, 0.001, param, filename)
