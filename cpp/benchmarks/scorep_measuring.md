@@ -1,5 +1,6 @@
 # Performance measuring with Score-P
 
+This file explains how to use Score-P with GCC. For other compilers this might look different or not work correctly.
 Once you have Score-P you can build the abm with: 
 ```
 export SCOREP_WRAPPER=off #disable scorep during cmake configure
@@ -25,6 +26,8 @@ export OMP_NUM_THREADS=8 #or whatever
 There will be a directory named scorep_... with a .cubex file. That can be opened in the Cube visualization tool. This can give a first indication for bottlenecks, then you don't need Scalasca.
 When changing the abm one should check using ```scorep-score -r scorep-folder/profile.cubex``` how much memory is used by Score-P and that it does not exceed 4 GB which is the maximum value for SCOREP_TOTAL_MEMORY. Also when tracing SCOREP_TOTAL_MEMORY should be adjusted to the value proposed by scorep-score. 
 If the estimated memory requirements exceed 4 GB you need to remove the responsible function from the included functions in the filter. If you added more than one function to the filter, you can check which function is responsible for the increase of required space with the command above. It gives a list with all measured functions where the ones at the top of the table are most likely to be responsible. With ```scorep-score -f filter -r scorep-folder/profile.cubex``` you can see the effect of the adjusted filter on the profile.
+
+There are some functions that appear in the profile that are not of interest. If you checked that the overhead is acceptable you can set the filter for runtime with ```export SCOREP_FILTERING_FILE=${Path to filter}/filter-main``` to get a clearer profile.
 
 ## Tracing
 
