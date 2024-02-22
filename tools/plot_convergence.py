@@ -245,6 +245,25 @@ def print_results(groundtruth, results, timesteps):
                   results['ide'][i][-1][compartment])
 
 
+def print_initial_values(groundtruth, results, timesteps):
+
+    compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
+
+    for compartment in range(8):
+        print('\n')
+        print(f'{compartments[compartment]}: ')
+        # get values of ODE model (computed with dt = 1e-6) at t0_ide = 35
+        print('Groundtruth (using ODE): ',
+              groundtruth['ode'][0][35*(10**6)][compartment])
+        print('\n')
+        print('IDE:')
+        for i in range(len(timesteps)):
+            print('Timestep ', timesteps[i], ':',
+                  results['ide'][i][0][compartment])
+
+    print(0)
+
+
 def print_total_population(results, timesteps):
 
     for i in range(len(timesteps)):
@@ -275,7 +294,7 @@ def main():
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    setting = 7
+    setting = 8
 
     timesteps = ['1e-2', '1e-3']  # , '1e-4'
 
@@ -287,6 +306,8 @@ def main():
     errors = compute_error_norm_tmax(groundtruth, results, timesteps)
 
     plot_convergence(errors, timesteps, setting, save=True)
+
+    # print_initial_values(groundtruth, results, timesteps)
 
     print_total_population(results, timesteps)
 

@@ -49,9 +49,9 @@ int main()
     bool print_to_terminal = false;
     bool save_result       = true;
     bool ide_simulation    = true;
-    int dt_exponent        = 2;
+    int dt_exponent        = 4;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 7;
+    int setting = 8;
 
     // General set up.
     ScalarType t0   = 0;
@@ -139,6 +139,11 @@ int main()
         model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 0.;
         model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 0.;
         model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.;
+    }
+
+    if (setting == 8) {
+        // Set probabilities that determine proportion between compartments
+        model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0] = 0.;
     }
 
     // Further model parameters
@@ -315,7 +320,8 @@ int main()
             // sim.print_transitions();
             sim.print_compartments();
         }
-        mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
+        mio::TimeSeries<ScalarType> secihurd_ide       = sim.get_result();
+        mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
 
         std::cout << "Compartments at last time step of ODE:\n";
         std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
@@ -337,6 +343,10 @@ int main()
                 mio::save_result({secihurd_ide}, {0}, 1,
                                  "../../results/result_ide_dt=1e-" + std::to_string(dt_exponent) + "_setting" +
                                      std::to_string(setting) + ".h5");
+            // auto save_result_status_ide_flows =
+            //     mio::save_result({secihurd_ide_flows}, {0}, 1,
+            //                      "../../results/result_ide_flows_dt=1e-" + std::to_string(dt_exponent) + "_setting" +
+            //                          std::to_string(setting) + ".h5");
         }
     }
 }

@@ -97,10 +97,12 @@ void Model::compute_initial_flows_from_ode_compartments(mio::osecir::Model model
                                 [Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]);
         this->m_transitions[i - init_start_index]
                            [Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
-            (model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] /
-             (1 - model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0])) *
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)];
+            (model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]) *
+            (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)] -
+             secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)] +
+             this->m_transitions[i - init_start_index]
+                                [Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]);
+        ;
     }
 
     // flow from I to H and from I to R for -global_support_max, ..., 0
@@ -114,10 +116,11 @@ void Model::compute_initial_flows_from_ode_compartments(mio::osecir::Model model
                                 [Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]);
         this->m_transitions[i - init_start_index]
                            [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
-            ((1 - model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]) /
-             model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]) *
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)];
+            (1 - model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]) *
+            (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)] -
+             secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)] +
+             this->m_transitions[i - init_start_index]
+                                [Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]);
     }
 
     // flow from H to U and from H to R for -global_support_max, ..., 0
@@ -131,10 +134,11 @@ void Model::compute_initial_flows_from_ode_compartments(mio::osecir::Model model
                                 [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)]);
         this->m_transitions[i - init_start_index]
                            [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
-            ((1 - model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]) /
-             model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]) *
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)];
+            (1 - model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]) *
+            (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedSevere)] -
+             secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedSevere)] +
+             this->m_transitions[i - init_start_index]
+                                [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)]);
     }
 
     // flow from U to D and from U to R for -global_support_max, ..., 0
@@ -148,10 +152,11 @@ void Model::compute_initial_flows_from_ode_compartments(mio::osecir::Model model
                                 [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)]);
         this->m_transitions[i - init_start_index]
                            [Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)] =
-            ((1 - model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]) /
-             model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]) *
-            this->m_transitions[i - init_start_index]
-                               [Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)];
+            (1 - model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]) *
+            (secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::InfectedCritical)] -
+             secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::InfectedCritical)] +
+             this->m_transitions[i - init_start_index]
+                                [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)]);
     }
 }
 
