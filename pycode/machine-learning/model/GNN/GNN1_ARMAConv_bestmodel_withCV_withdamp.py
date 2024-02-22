@@ -73,11 +73,12 @@ contact_matrices = data_secir['damped_matrix']
 
 n_runs = new_inputs.shape[0]
 n_pop = new_inputs.shape[1]
+n_dampings = np.asarray(data_secir['damping_day']).shape[2]
 
 
-inputs_with_damp = np.dstack((new_inputs,(np.asarray(damping_factors).reshape([n_runs,n_pop,1])),
-                               (np.asarray(damping_days).reshape([n_runs,n_pop,1])),
-                               (np.asarray(contact_matrices).reshape([n_runs,n_pop,36]))))
+inputs_with_damp = np.dstack((new_inputs,(np.asarray(damping_factors).reshape([n_runs,n_pop,n_dampings])),
+                               (np.asarray(damping_days).reshape([n_runs,n_pop,n_dampings])),
+                               (np.asarray(contact_matrices).reshape([n_runs,n_pop,36*n_dampings]))))
 
 
 ######## open commuter data #########
