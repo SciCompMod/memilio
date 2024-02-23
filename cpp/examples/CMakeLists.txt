@@ -72,6 +72,10 @@ add_executable(history_example history.cpp)
 target_link_libraries(history_example PRIVATE memilio)
 target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(try_fixed_timestep try_fixed_timestep.cpp)
+target_link_libraries(try_fixed_timestep PRIVATE memilio ode_secir)
+target_compile_options(try_fixed_timestep PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
   target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
