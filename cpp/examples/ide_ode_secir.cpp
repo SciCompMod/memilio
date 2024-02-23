@@ -32,6 +32,7 @@
 #include "ide_secir/model_ide.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
+#include "ide_secir/initialize_from_ode.h"
 #include "memilio/io/result_io.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
@@ -49,7 +50,7 @@ int main()
     bool print_to_terminal = false;
     bool save_result       = true;
     bool ide_simulation    = true;
-    int dt_exponent        = 4;
+    int dt_exponent        = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
     int setting = 8;
 
@@ -308,7 +309,7 @@ int main()
         model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
 
         // Compute initial flows from results of ODE simulation
-        model_ide.compute_initial_flows_from_ode_compartments(model_ode, secihurd_ode, t0_ide, dt);
+        compute_initial_flows_from_ode_compartments(model_ode, model_ide, secihurd_ode, t0_ide, dt);
 
         model_ide.check_constraints(dt);
 
