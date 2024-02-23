@@ -11,14 +11,14 @@ For the concept see
 - P. J. Hurtado und A. S. Kirosingh, "Generalizations of the ‘Linear Chain Trick’: incorporating more flexible dwell time distributions into mean field ODE models“, 2019. (https://doi.org/10.1007/s00285-019-01412-w)
 
 The eight compartments 
-- `Susceptible` (S), may become exposed at any time
-- `Exposed` (E), becomes infected after some time
+- `Susceptible` ($S$), may become exposed at any time
+- `Exposed` ($E$), becomes infected after some time
 - `InfectedNoSymptoms` ($I_{NS}$), becomes InfectedSymptoms or Recovered after some time
 - `InfectedSymptoms` ($I_{Sy}$), becomes InfectedSevere or Recovered after some time
 - `InfectedSevere` ($I_{Sev}$), becomes InfectedCritical or Recovered after some time
 - `InfectedCritical` ($I_{Cr}$), becomes Recovered or Dead after some time
-- `Recovered` (R)
-- `Dead` (D)
+- `Recovered` ($R$)
+- `Dead` ($D$)
 
 are used to simulate the spread of the disease. 
 It is possible to include subcompartments for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
