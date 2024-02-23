@@ -27,9 +27,8 @@
 #endif
 
 #include "memilio/utils/compiler_diagnostics.h"
-#define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
-#define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
 
+// C4996: Some stdext functions will be removed in the future and are used in spdlog. Maybe a future version of spdlog will fix this.
 MSVC_WARNING_DISABLE_PUSH(4996)
 #include <spdlog/spdlog.h>
 MSVC_WARNING_POP()
