@@ -24,6 +24,8 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
 #else
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+
+#define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
 #endif
 
 #include "memilio/utils/compiler_diagnostics.h"
