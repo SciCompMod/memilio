@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
 *
@@ -32,10 +32,10 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax        = 10;
-    ScalarType N           = 10000;
-    ScalarType Dead_before = 12;
-    ScalarType dt          = 1;
+    ScalarType tmax   = 10;
+    ScalarType N      = 10000;
+    ScalarType deaths = 13.10462213;
+    ScalarType dt     = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -63,7 +63,7 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model model(std::move(init), N, deaths);
 
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
@@ -97,7 +97,7 @@ int main()
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);
 
-    sim.print_transitions();
-
-    sim.print_compartments();
+    sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
+                                      16, 8);
 }

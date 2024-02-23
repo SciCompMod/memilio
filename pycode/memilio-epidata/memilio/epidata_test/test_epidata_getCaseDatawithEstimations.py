@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -33,6 +33,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
     path = '/home/CaseEstimationData'
+    gd.Conf.v_level = 'Debug'
 
     # Notice data is not realistic
     str_whole_country_Germany_jh = \
@@ -563,7 +564,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             read_data=read_data, file_format=file_format,
             out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
             moving_average=moving_average, make_plot=make_plot,
-            split_berlin=split_berlin, rep_date=rep_date)
+            split_berlin=split_berlin, rep_date=rep_date, verbosity_level='Debug')
 
         # print is called 9 times, because no file exists
         self.assertEqual(len(mock_print.mock_calls), 9)

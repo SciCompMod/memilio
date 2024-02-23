@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -48,10 +48,11 @@ enum class MockContactLocation
     Count,
 };
 
-mio::IOResult<std::vector<int>> mock_node_function(const std::string& path, int node_id)
+mio::IOResult<std::vector<int>> mock_node_function(const std::string& path, int node_id, bool rki_age_groups)
 {
     mio::unused(path);
     mio::unused(node_id);
+    mio::unused(rki_age_groups);
     std::vector<int> id = {1001, 1002};
     return mio::success(id);
 }

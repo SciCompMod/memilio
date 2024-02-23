@@ -59,6 +59,8 @@ Required python packages:
 - mapclassify
 - geopandas
 - h5py
+- imageio
+- datetime
 
 Testing and Coverage
 --------------------
@@ -87,7 +89,7 @@ To get the coverage report do
 
 Coverage report for actual master:
 
-:Coverage Report: https://dlr-sc.github.io/memilio/coverage/python/
+:Coverage Report: https://scicompmod.github.io/memilio/coverage/python/
 
 Inspection via pylint
 ---------------------

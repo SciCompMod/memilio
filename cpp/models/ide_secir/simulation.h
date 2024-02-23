@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -123,21 +123,6 @@ public:
     {
         return m_dt;
     }
-
-    /**
-     * @brief Print the transition part of the simulation result.
-     * 
-     * The TimeSeries m_transitions with initial values used for the simulation and calculated transitions by the 
-     * simulation are printed. 
-     */
-    void print_transitions() const;
-
-    /**
-     * @brief Print the simulated numbers of individuals in each compartment for each time step.
-     * 
-     * The TimeSeries m_populations with simulated numbers of individuals in each compartment for each time step are printed. 
-     */
-    void print_compartments() const;
 
 private:
     std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.

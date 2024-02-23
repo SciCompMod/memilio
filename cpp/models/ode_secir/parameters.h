@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -411,7 +411,7 @@ public:
      */
     bool apply_constraints()
     {
-        double tol_times = 1e-4; // accepted tolerance for compartment stays
+        const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         int corrected = false;
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
@@ -550,7 +550,7 @@ public:
             return true;
         }
 
-        double tol_times = 1e-4; // accepted tolerance for compartment stays
+        const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 

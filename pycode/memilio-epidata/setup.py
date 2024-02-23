@@ -4,7 +4,7 @@ import sys
 
 from setuptools import Command, find_packages, setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 
 class PylintCommand(Command):
@@ -45,13 +45,19 @@ class PylintCommand(Command):
                 report_file), do_exit=False)
 
 
+# Python-magic needs DLLs for libmagic. They have to be installed only on windows.
+if sys.platform == 'win32':
+    pymagic = 'python-magic-bin'
+else:
+    pymagic = 'python-magic'
+
 setup(
     name='memilio-epidata',
     version=__version__,
     author='DLR-SC',
     author_email='daniel.abele@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
     entry_points={
         'console_scripts': [
@@ -73,23 +79,29 @@ setup(
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
-        'pandas>=1.2.2',
+        # Has to use less than 2.2.0, see Issue #910
+        'pandas>=2.0.0,<2.2.0',
+        # FutureWarning of pandas that pyarrow will be required in a future release
+        'pyarrow',
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
         'numpy>=1.22,<1.25',
         'openpyxl',
         'xlrd',
+        'xlsxwriter',
         'requests',
         'pyxlsb',
         'wget',
-        'twill',
-        'python-magic==0.4.13'  # fails for other versions
+        'twill==3.1',
+        pymagic
     ],
     extras_require={
         'dev': [
-            # first support of python 3.11
-            'pyfakefs>=4.6',
+            # first support of python 3.11 4.6
+            # 5.3.4 has conflicts with openpyxl
+            # 5.3.3 broken
+            'pyfakefs>=4.6,<5.3.3',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
             # pylint 2.16 creates problem with wrapt package version

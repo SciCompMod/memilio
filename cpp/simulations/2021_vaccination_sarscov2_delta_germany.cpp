@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Martin Kühn
 *
@@ -232,6 +232,9 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     const double seasonality_max = 0.3;
 
     assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality>(), seasonality_min, seasonality_max);
+
+    // Delta specific parameter
+    params.get<mio::osecirvvs::StartDayNewVariant>() = mio::get_day_in_year(mio::Date(2021, 6, 6));
 
     return mio::success();
 }
@@ -539,17 +542,17 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 1.43 / 100000.;
     auto migrating_compartments  = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
 
     // graph of counties with populations and local parameters
     // and mobility between counties
@@ -569,7 +572,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
         params, start_date, end_date, data_dir,
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"), true,
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
-        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false));
+        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
@@ -632,17 +635,28 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //run parameter study
     auto parameter_study =
         mio::ParameterStudy<mio::osecirvvs::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
+
+    // parameter_study.get_rng().seed(
+    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+    if (mio::mpi::is_root()) {
+        printf("Seeds: ");
+        for (auto s : parameter_study.get_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
+    }
+
     auto save_single_run_result = mio::IOResult<void>(mio::success());
-    auto ensemble = parameter_study.run(
+    auto ensemble               = parameter_study.run(
         [&](auto&& graph) {
             return draw_sample(graph, high);
         },
         [&](auto results_graph, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-            auto params = std::vector<mio::osecirvvs::Model>();
+            auto params              = std::vector<mio::osecirvvs::Model>();
             params.reserve(results_graph.nodes().size());
-            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                           std::back_inserter(params), [](auto&& node) {
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
@@ -654,13 +668,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             return std::make_pair(interpolated_result, params);
         });
 
-    if (ensemble.size() > 0){
+    if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
         ensemble_params.reserve(ensemble.size());
-        for (auto&& run: ensemble)
-        {
+        for (auto&& run : ensemble) {
             ensemble_results.emplace_back(std::move(run.first));
             ensemble_params.emplace_back(std::move(run.second));
         }
@@ -808,17 +821,6 @@ int main(int argc, char** argv)
             mio::log_info("Directory '{:s}' was created.", dir.string());
         }
         printf("Saving results to \"%s\".\n", result_dir.c_str());
-    }
-
-    //mio::thread_local_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    mio::thread_local_rng().synchronize_seeds();
-    if (mio::mpi::is_root()) {
-        printf("Seeds: ");
-        for (auto s : mio::thread_local_rng().get_seeds()) {
-            printf("%u, ", s);
-        }
-        printf("\n");
     }
 
     auto result =

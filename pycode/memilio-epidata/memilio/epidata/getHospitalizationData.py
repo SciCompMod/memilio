@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -36,6 +36,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def hospit_sanity_checks(df):
     """! Checks the sanity of the hospitalization_data dataframe
@@ -53,7 +56,7 @@ def hospit_sanity_checks(df):
     actual_strings_list = df.columns.tolist()
     # check number of data categories
     if len(actual_strings_list) != 6:
-        print("Warning: Number of data categories changed.")
+        gd.default_print("Warning", "Number of data categories changed.")
 
     # these strings need to be in the header
     test_strings = {
@@ -116,7 +119,8 @@ def get_hospitailzations_per_day(seven_days_values):
 
     # break after 5 runs to prevent endless loop
     if run == 5:
-        print("Can't get hospitalizations per day from incidence.")
+        gd.default_print(
+            "Error", "Can't get hospitalizations per day from incidence.")
     if len(daily_values[daily_values < 0]) > 0:
         raise gd.DataError('Negative hospitalizations found.')
     # check that daily values are calculated correctly
@@ -133,12 +137,11 @@ def get_hospitailzations_per_day(seven_days_values):
 def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                              file_format=dd.defaultDict['file_format'],
                              out_folder=dd.defaultDict['out_folder'],
-                             no_raw=dd.defaultDict['no_raw'],
                              start_date=dd.defaultDict['start_date'],
                              end_date=dd.defaultDict['end_date'],
                              impute_dates=dd.defaultDict['impute_dates'],
                              moving_average=dd.defaultDict['moving_average'],
-                             make_plot=dd.defaultDict['make_plot']
+                             **kwargs
                              ):
     """! Downloads or reads the RKI hospitalization data and writes them in different files.
 
@@ -157,16 +160,17 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         Here Dates are always imputed so False changes nothing.
     @param moving_average [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out weekend effects.  Default defined in defaultDict.
-    @param make_plot [currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
     impute_dates = True
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
@@ -174,22 +178,28 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     filename = "RKIHospitFull"
     url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv"
     path = os.path.join(directory + filename + ".json")
-    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
+    df_raw = gd.get_file(path, url, read_data, param_dict={},
+                         interactive=conf.interactive)
 
-    hospit_sanity_checks(df_raw)
+    if conf.checks == True:
+        hospit_sanity_checks(df_raw)
+    else:
+        gd.default_print(
+            'Warning', "Sanity checks for hospitalization data have not been executed.")
 
     if not no_raw:
         gd.write_dataframe(df_raw, directory, filename, file_format)
-    df_data = df_raw.copy()
+    df_data = df_raw[:]
     # drop unwanted columns and rows, rename and sort dataframe
     df_data.rename(dd.GerEng, axis=1, inplace=True)
     df_data.rename(columns={'Datum': dd.EngEng['date']}, inplace=True)
-    df_data = df_data.drop(columns=['State', '7T_Hospitalisierung_Inzidenz'])
-    df_data = df_data.sort_values(
+    df_data.drop(
+        columns=['State', '7T_Hospitalisierung_Inzidenz'], inplace=True)
+    df_data.sort_values(
         by=[dd.EngEng['date'],
             dd.EngEng['idState'],
-            dd.EngEng['ageRKI']]).reset_index(
-        drop=True)
+            dd.EngEng['ageRKI']], inplace=True)
+    df_data.reset_index(drop=True, inplace=True)
     # impute 6 days before min_date to split up the seven day cases
     df_data = mdfs.impute_and_reduce_df(
         df_old=df_data,
@@ -204,23 +214,23 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     # get data for each day
     # for each state and age group seperately
-    df_daily = pd.DataFrame()
+    # create list of DataFrames, later to be merged
+    df_daily = []
     for age in df_data[dd.EngEng['ageRKI']].unique():
         df_age = df_data[df_data[dd.EngEng['ageRKI']] == age]
         for stateid in df_data[dd.EngEng['idState']].unique():
             df_age_stateid = df_age[df_age[dd.EngEng['idState']]
-                                    == stateid].copy()
+                                    == stateid]
             # get hospitalizations per day from incidence
             seven_days_values = df_age_stateid['7T_Hospitalisierung_Faelle'].values
             daily_values = get_hospitailzations_per_day(seven_days_values)
             # save data in dataframe
             df_age_stateid['hospitalized'] = daily_values
-            df_age_stateid = df_age_stateid.drop(
-                ['7T_Hospitalisierung_Faelle'], axis=1)
-            df_daily = pd.concat(
-                [df_daily.reset_index(drop=True),
-                 df_age_stateid.reset_index(drop=True)],
-                join='outer')
+            df_age_stateid.drop(
+                ['7T_Hospitalisierung_Faelle'], axis=1, inplace=True)
+            df_daily.append(df_age_stateid)
+
+    df_daily = pd.concat(df_daily, join='outer', ignore_index=True)
 
     df_daily = mdfs.extract_subframe_based_on_dates(
         df_daily, start_date, end_date)

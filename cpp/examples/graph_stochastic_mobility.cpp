@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-int main(int argc, char** argv)
+int main(int /*argc*/, char** /*argv*/)
 {
     const auto t0   = 0.;
     const auto tmax = 10.;

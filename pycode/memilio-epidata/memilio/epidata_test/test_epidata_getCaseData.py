@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -29,7 +29,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import progress_indicator
 
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
@@ -138,7 +137,6 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def write_case_data(self, out_folder):
         # write dataset for reading data
@@ -618,8 +616,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         make_plot = False
         split_berlin = True
         rep_date = False
-        files = ['infected_county', 'all_county',
-                 'all_county_age', 'all_county_gender']
+        files = ['infected_county']
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -636,13 +633,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             moving_average=moving_average, make_plot=make_plot,
             split_berlin=split_berlin, rep_date=rep_date, files=files)
 
-        self.assertEqual(len(os.listdir(directory)), 5)
+        self.assertEqual(len(os.listdir(directory)), 2)
         # many files are tested before, don't test them again
         files = [
-            "cases_all_county_split_berlin_all_dates.json",
-            "cases_infected_county_split_berlin_all_dates.json",
-            "cases_all_county_gender_split_berlin_all_dates.json",
-            "cases_all_county_age_split_berlin_all_dates.json"]
+            "CaseDataFull.json",
+            "cases_infected_county_split_berlin_all_dates.json"]
         for file in files:
             self.assertTrue(file in os.listdir(directory))
 
@@ -716,7 +711,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def test_check_for_completeness(self):
         empty_df = pd.DataFrame()
-        self.assertEqual(gcd.check_for_completeness(empty_df), False)
+        self.assertEqual(gcd.check_for_completeness(empty_df, True), False)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_rep_date(self, mock_file):

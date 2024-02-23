@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn, Lena Ploetzke
 #
@@ -33,6 +33,9 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getPopulationData as gPd
 from memilio.epidata import progress_indicator
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
@@ -43,11 +46,11 @@ def verify_sorted(countykey_list):
     if countykey_list_is_sorted:
         return True
     else:
-        print('Error. Input list not sorted.')
+        gd.default_print('Error', 'Input list not sorted.')
         return False
 
 
-def assign_geographical_entities(countykey_list, govkey_list):
+def assign_geographical_entities(countykey_list, govkey_list, run_checks):
     """! Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
 
     Only works with sorted key lists.
@@ -62,9 +65,12 @@ def assign_geographical_entities(countykey_list, govkey_list):
     @return gov_county_table Table of county regional keys per governing region.
     @return state_gov_table Table of governing region regional keys per federal state.
     """
-
-    if verify_sorted(countykey_list) == False:
-        raise gd.DataError("Error. Input list not sorted.")
+    if run_checks:
+        if verify_sorted(countykey_list) == False:
+            raise gd.DataError("Error. Input list not sorted.")
+    else:
+        gd.default_print(
+            'Warning', 'List of county regional keys has not been verified to be sorted.')
 
     # Create list of government regions with lists of counties that belong to them and list of states with government regions that belong to them; only works with sorted lists of keys.
     gov_county_table = []
@@ -93,7 +99,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     gov_county_table.append(col_list)
 
     if len(gov_county_table) != len(govkey_list):
-        print('Error. Number of government regions wrong.')
+        gd.default_print('Error', 'Number of government regions wrong.')
 
     # create a unique hash map from county key to its government region and
     # a global key to local (in gov region) key ordering
@@ -129,10 +135,9 @@ def assign_geographical_entities(countykey_list, govkey_list):
 def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       file_format=dd.defaultDict['file_format'],
                       out_folder=dd.defaultDict['out_folder'],
-                      no_raw=dd.defaultDict['no_raw'],
-                      make_plot=dd.defaultDict['make_plot'],
                       setup_dict='',
-                      ref_year=2022):
+                      ref_year=2022,
+                      **kwargs):
     """! Computes DataFrame of commuter migration patterns based on the Federal
     Agency of Work data.
 
@@ -141,8 +146,6 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         Only for population data. Commuter data is always downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw [Currently not used] True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
-    @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     @param setup_dict dictionary with necessary values:
         'path': String with datapath where migration files can be found
         'abs_tol': tolerated undetected people
@@ -155,6 +158,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     The printed errors are refering to the absolute and relative errors from included numbers per county in DataFrame and
     this cumulative values.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+
     if setup_dict == '':
         abs_tol = 100  # maximum absolute error allowed per county migration
         rel_tol = 0.01  # maximum relative error allowed per county migration
@@ -192,7 +199,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
             states[state_id_file] + '_' + str(ref_year)
         filepath = os.path.join(mobility_dir) + filename + '.json'
         commuter_migration_files[state_id_file] = gd.get_file(
-            filepath, url, read_data, param_dict, interactive=True)
+            filepath, url, read_data, param_dict, interactive=conf.interactive)
         if not no_raw:
             gd.write_dataframe(
                 commuter_migration_files[state_id_file], mobility_dir, filename, 'json')
@@ -216,7 +223,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         zip(govkey_list, list(range(len(govkey_list)))))
 
     (countykey2govkey, countykey2localnumlist, gov_county_table,
-     state_gov_table) = assign_geographical_entities(countykey_list, govkey_list)
+     state_gov_table) = assign_geographical_entities(countykey_list, govkey_list, conf.checks)
 
     mat_commuter_migration = np.zeros(
         [len(countykey_list), len(countykey_list)])
@@ -247,10 +254,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             np.zeros(len(gov_county_table[gov_region])))
 
                     # merge eisenach and wartburgkreis
-                    commuter_migration_file.iloc[:, 2].replace(
-                        '16056', '16063', inplace=True)
-                    commuter_migration_file.iloc[:, 0].replace(
-                        '16056', '16063', inplace=True)
+                    commuter_migration_file.replace({commuter_migration_file.columns[2]:
+                                                     {'16056': '16063'}}, inplace=True)
+                    commuter_migration_file.replace({commuter_migration_file.columns[0]:
+                                                     {'16056': '16063'}}, inplace=True)
 
                     current_col = countykey2numlist[commuter_migration_file.iloc[i, 0]]
                     curr_county_migratedto = commuter_migration_file.iloc[i, 1]
@@ -375,13 +382,13 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         elif ((str(commuter_migration_file.iloc[i, 3]) == 'Übrige Regierungsbezirke (Bundesland)' and str(
                                 commuter_migration_file.iloc[i, 4]).isdigit())
                               or ((commuter_migration_file.iloc[i, 2]).isdigit() and str(
-                                commuter_migration_file.iloc[i - 1][2]).startswith('nan'))
+                                commuter_migration_file.iloc[i - 1, 2]).startswith('nan'))
                               or (len(str(commuter_migration_file.iloc[i, 2])) == 2 and
                                   abs(float(commuter_migration_file.iloc[i, 2]) - float(
-                                      commuter_migration_file.iloc[i - 1][2])) == 1)
+                                      commuter_migration_file.iloc[i - 1, 2])) == 1)
                               or (len(str(commuter_migration_file.iloc[i, 2])) == 2 and
                                   abs(float(commuter_migration_file.iloc[i, 2]) - float(
-                                      commuter_migration_file.iloc[i - 1][2])) == 2)):
+                                      commuter_migration_file.iloc[i - 1, 2])) == 2)):
 
                             # auxiliary key of Bundesland (key translated to int starting at zero)
                             dummy_key = int(
@@ -434,19 +441,19 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                     if abs_err < setup_dict['abs_tol'] and abs_err / checksum < setup_dict['rel_tol']:
                         checksum = 0
                     else:
-                        print('Error in calculations for county ', curr_county_migratedto,
-                              '\nAccumulated values:', checksum,
-                              ', correct sum:', commuter_migration_file.iloc[i, 4])
-                        print('Absolute error:', abs_err,
-                              ', relative error:', abs_err / checksum)
+                        gd.default_print('Warning', 'Error in calculations for county ' + str(curr_county_migratedto) +
+                                         '\nAccumulated values:' + str(checksum) +
+                                         ', correct sum:' + str(commuter_migration_file.iloc[i, 4]))
+                        gd.default_print('Debug', 'Absolute error:' + str(abs_err) +
+                                         ', relative error:' + str(abs_err / checksum))
 
             if np.isnan(mat_commuter_migration).any():
                 raise gd.DataError(
                     'NaN encountered in mobility matrix, exiting '
                     'getCommuterMobility(). Mobility data will be incomplete.')
 
-    print('Maximum absolute error:', max_abs_err)
-    print('Maximum relative error:', max_rel_err)
+    gd.default_print('Debug', 'Maximum absolute error:' + str(max_abs_err))
+    gd.default_print('Debug', 'Maximum relative error:' + str(max_rel_err))
 
     countykey_list = [int(id) for id in countykey_list]
     df_commuter_migration = pd.DataFrame(
@@ -475,8 +482,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
     countykey_list = geoger.get_county_ids()
     df_commuter_migration = pd.DataFrame(
-        data=mat_commuter_migration, columns=countykey_list)
-    df_commuter_migration.index = countykey_list
+        data=mat_commuter_migration, columns=countykey_list, index=countykey_list)
     commuter_sanity_checks(df_commuter_migration)
     filename = 'migration_bfa_' + str(ref_year)
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
@@ -502,7 +508,7 @@ def commuter_sanity_checks(df):
 
 def get_neighbors_mobility(
         countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        out_folder=dd.defaultDict['out_folder'], ref_year=2022):
+        out_folder=dd.defaultDict['out_folder'], ref_year=2022, **kwargs):
     '''! Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -538,8 +544,10 @@ def get_neighbors_mobility(
         commuter = gd.get_file(os.path.join(
             directory, "migration_bfa_"+str(ref_year)+"_dim400.json"), read_data=True)
     except FileNotFoundError:
-        print("Commuter data was not found. Download and process it from the internet.")
-        commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year)
+        gd.default_print(
+            "Info", "Commuter data was not found. Download and process it from the internet.")
+        commuter = get_commuter_data(
+            out_folder=out_folder, ref_year=ref_year, **kwargs)
 
     countykey_list = commuter.columns
     commuter.index = countykey_list

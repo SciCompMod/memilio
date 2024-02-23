@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -76,12 +76,20 @@ int main()
 
     model.apply_constraints();
 
+    // Using default Integrator
+    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+
+    /*
+    Example of using a different integrator
+   All available integrators are listed in cpp/memilio/math/README.md
+
     auto integrator = std::make_shared<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
+    */
 
     bool print_to_terminal = true;
 

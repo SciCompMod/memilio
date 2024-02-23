@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Patrick Lenz, Annette Lutz
 #
@@ -27,7 +27,6 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getDIVIData as gdd
-from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):
@@ -53,15 +52,15 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def gdd_calls(self, text=''):
         directory = os.path.join(self.path, 'Germany/')
         gdd_calls = [
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'FullData_DIVI.json')),
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'county_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'state_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
 
@@ -71,7 +70,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_get_divi_data_prints(self, mock_print, mock_file, mock_san):
         mock_file.return_value = self.df_test
         # case with start_date before 2020-04-24
-        gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
+        gdd.get_divi_data(out_folder=self.path, start_date=date(
+            2020, 1, 1), verbosity_level='Info')
         expected_call = [
             call(
                 'Warning: First data available on 2020-04-24. You asked for 2020-01-01. Changed it to 2020-04-24.')]
@@ -157,11 +157,12 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_gdd_all_dates(self, mock_print, mock_file, mock_san):
-        mock_file.return_value = self.df_test
+        mock_file.return_value = self.df_test.copy()
         # test case with impute dates is True
         (df, df_county, df_states, df_ger) = gdd.get_divi_data(
             out_folder=self.path, impute_dates=True)
-        mock_san.assert_has_calls([call(self.df_test)])
+        # Test if sanity check was called
+        self.assertTrue(mock_san.called)
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertEqual(
             df_ger[df_ger["Date"] == "2021-05-26"]["ICU"].item(), 119)
@@ -203,7 +204,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         # second test
-        # get dataframe with 11 columns but different names
+        # get dataframe with 13 columns but different names
         df = pd.DataFrame(
             {'date_fake': [1, 2, 3],
              '6': [6, 7, 8],
@@ -213,6 +214,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              '9': [9, 0, 1],
              '10': [0, 1, 2],
              '11': [0, 0, 0],
+             'a': [0, 1, 2],
+             'b': [0, 0, 0],
              'gemeindeschluessel_fake': [3, 4, 5],
              'faelle_covid_aktuell_fake': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
@@ -222,16 +225,18 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         # third test
-        # get dataframe with 11 columns and same headers but only 3 rows
+        # get dataframe with 13 columns and same headers but only 3 rows
         df = pd.DataFrame(
-            {'date': [1, 2, 3],
+            {'datum': [1, 2, 3],
              '6': [6, 7, 8],
              '7': [7, 8, 9],
              '8': [8, 9, 0],
-             'bundesland': [2, 3, 4],
-             '9': [9, 0, 1],
-             '10': [0, 1, 2],
-             '11': [0, 0, 0],
+             'bundesland_name': ['a', 'b', 'c'],
+             'bundesland_id': [9, 0, 1],
+             'landkreis_name': ['def', 'asd', 'xyz'],
+             'landkreis_id': [182041, 767890, 1],
+             'a': [0, 1, 2],
+             'b': [0, 0, 0],
              'gemeindeschluessel': [3, 4, 5],
              'faelle_covid_aktuell': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -29,16 +29,19 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def transformWeatherData(read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
                          out_folder=dd.defaultDict['out_folder'],
                          start_date=dd.defaultDict['start_date'],
                          end_date=dd.defaultDict['end_date'],
-                         make_plot=dd.defaultDict['make_plot'],
                          moving_average=dd.defaultDict['moving_average'],
                          merge_berlin=True,
-                         merge_eisenach=False
+                         merge_eisenach=False,
+                         **kwargs
                          ):
     """! ...
     @param file_format File format which is used for writing the data. 
@@ -49,11 +52,11 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
         of stored data frames.
     @param end_date [Default = '', taken from read data] End date of
         stored data frames.
-    @param make_plot False [Default] or True. Defines if plots are
-        generated with matplotlib.
     @param moving_average 0 [Default] or Number > 0. Defines the number of
         days for which a centered moving average is computed.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
 
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
@@ -133,7 +136,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
             # get county-local data frame
             df_local_old = df_weather_old[df_weather_old[dd.EngEng['idCounty']]
-                                          == countyID].copy()
+                                          == countyID]
 
             # create columns for date, county ID and NPI code
             df_local_new = pd.DataFrame(columns=df_weather.columns)
@@ -164,21 +167,21 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                 max_date=max_date,
                 start_w_firstval=True)
 
-            df_weather = pd.concat([df_weather, df_local_new.copy()])
+            df_weather = pd.concat([df_weather, df_local_new])
 
         # reset index and drop old index column
-        df_weather.reset_index(inplace=True)
+        df_weather.reset_index(drop=False, inplace=True)
         try:
-            df_weather = df_weather.drop(columns='index')
+            df_weather.drop(columns='index', inplace=True)
         except KeyError:
             pass
         try:
-            df_weather = df_weather.drop(columns='level_0')
+            df_weather.drop(columns='level_0', inplace=True)
         except KeyError:
             pass
 
-        print(
-            "Time needed: " + str(time.perf_counter()-start_time) + " sec")
+        gd.default_print("Info",
+                         "Time needed: " + str(time.perf_counter()-start_time) + " sec")
 
         #### start validation ####
 
@@ -195,7 +198,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transformWeatherData(read_data=False, make_plot=True, moving_average=30)
+    transformWeatherData(read_data=False, moving_average=30)
 
 
 if __name__ == "__main__":

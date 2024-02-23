@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn, Kathrin Rack
 #
@@ -25,12 +25,16 @@
 """
 import os
 
+import numpy as np
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries
 from memilio.epidata import progress_indicator
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 # Merging of Counties that are reported differently, either separatedly or
 # summed, in different data sources
@@ -206,16 +210,19 @@ def check_for_all_counties(
     missing = len(get_county_ids(merge_berlin, merge_eisenach)
                   )-len(unique_county_list)
     if missing != 0:
-        print("Downloaded data is not complete. Missing " +
-              str(missing) + " counties.")
         if missing < 0:
             # Returning True if source data file contains more counties than list
-            print('Source data frame contains more counties than official '
-                  'county list. This could be OK, please verify yourself.')
+            gd.default_print('Warning', 'Source data frame contains ' + str(abs(missing)) +
+                             ' more counties than official county list. '
+                             'This could be OK, please verify yourself.')
             return True
-        elif missing < 10:
-            print('Missing counties: ' + str(list(set(get_county_ids(merge_berlin,
-                  merge_eisenach)).difference(unique_county_list).difference(set({11000})))))
+        else:
+            gd.default_print('Error', "Downloaded data is not complete. Missing " +
+                             str(missing) + " counties.")
+            if missing < 10:
+                gd.default_print('Info', 'Missing counties: ' +
+                                 str(list(set(get_county_ids(merge_berlin,
+                                                             merge_eisenach)).difference(unique_county_list).difference(set({11000})))))
         # Returning False if source data file lacks at least one county
         return False
 
@@ -560,12 +567,13 @@ def merge_df_counties(
         merged_id rows.
     """
     # ensure that separated_ids and dataframe ids can be compared
-    if type(separated_ids[0]) != type(df[dd.EngEng['idCounty']][0]):
+    # df column should be an int, as seperated_ids and merged_id are int.
+    if not isinstance(df[dd.EngEng['idCounty']][0], (int, np.integer)):
         df[dd.EngEng['idCounty']] = df[dd.EngEng['idCounty']].astype(
             type(separated_ids[0]))
     # extract rows of IDs that will be merged
     rows_merged = df[dd.EngEng['idCounty']].isin(separated_ids)
-    df_merged = df[rows_merged].copy()
+    df_merged = df[rows_merged]
     if not df_merged.empty:
         # set merged ID and county name
         if dd.EngEng['idCounty'] in columns:

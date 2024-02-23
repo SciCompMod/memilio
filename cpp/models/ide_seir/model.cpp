@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -116,27 +116,6 @@ TimeSeries<double> const& Model::calculate_EIR()
         m_result_SEIR.add_time_point(m_result.get_time(i), (Vec(4) << S, E, I, R).finished());
     }
     return m_result_SEIR;
-}
-
-void Model::print_result(bool calculated_SEIR) const
-{
-    if (calculated_SEIR) {
-        std::cout << "# time  |  S  |  E  |  I  |  R" << std::endl;
-        Eigen::Index num_points = m_result_SEIR.get_num_time_points();
-        for (Eigen::Index i = 0; i < num_points; ++i) {
-            printf(" %.9f %.9f %.9f %.9f %.9f\n", m_result_SEIR.get_time(i),
-                   m_result_SEIR[i][Eigen::Index(InfectionState::S)], m_result_SEIR[i][Eigen::Index(InfectionState::E)],
-                   m_result_SEIR[i][Eigen::Index(InfectionState::I)],
-                   m_result_SEIR[i][Eigen::Index(InfectionState::R)]);
-        }
-    }
-    else {
-        std::cout << "# time  |  number of susceptibles" << std::endl;
-        Eigen::Index num_points = m_result.get_num_time_points();
-        for (Eigen::Index i = 0; i < num_points; ++i) {
-            std::cout << m_result.get_time(i) << "  |  " << m_result[i][Eigen::Index(InfectionState::S)] << std::endl;
-        }
-    }
 }
 
 } // namespace iseir
