@@ -100,8 +100,9 @@ int main()
     // model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
     // model.check_constraints(dt);
-    ScalarType rki_dummy{1.};
-    mio::isecir::set_initial_flows(model, dt, rki_dummy);
+    ScalarType rki_cases_dummy{10.};
+    ScalarType rki_deaths_dummy{2.};
+    mio::isecir::set_initial_flows(model, dt, rki_cases_dummy, rki_deaths_dummy);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
