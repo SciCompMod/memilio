@@ -51,7 +51,7 @@ public:
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
-          const ParameterSet& Parameterset_init = ParameterSet());
+          bool need_flow_initialization = false, const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
     * @brief Checks constraints on model parameters.
@@ -209,6 +209,7 @@ private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
     ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
+    bool m_need_flow_initialization{true};
 };
 
 } // namespace isecir

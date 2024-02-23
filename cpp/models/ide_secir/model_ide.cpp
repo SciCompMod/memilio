@@ -30,17 +30,24 @@ namespace mio
 namespace isecir
 {
 
-Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
+Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before, bool need_flow_initialization,
              const ParameterSet& Parameterset_init)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
     , m_N{N_init}
     , m_deaths_before{Dead_before}
+    , m_need_flow_initialization{need_flow_initialization}
 {
-    // // add first timepoint to m_populations at last time from m_transitions
-    // m_populations.add_time_point<Eigen::VectorXd>(
-    //     m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    //TODO: think about this
+    // if we don't need to compute the initializing flows (either from ODE or data) then we want to start at last time step
+    // in m_transitions, we can already set m_populations here accordingly
+    // otherwise wait do this in initialize_solver
+    if (need_flow_initialization == false) {
+        // add first timepoint to m_populations at last time from m_transitions
+        m_populations.add_time_point<Eigen::VectorXd>(
+            m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    }
 }
 
 /***********************
@@ -55,8 +62,13 @@ void Model::initialize_solver(ScalarType dt)
     // fo now do it here to get the right time from m_transitions after initialization of flows
     // but this way we can't write in m_populations
     // another way would be to leave it in the constructor and overwrite it after initializing the flows
-    m_populations.add_time_point<Eigen::VectorXd>(
-        m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+
+    // TODO: think of where its best to add time point to m_populations
+    // if we still need to compute the initial flows after the construction of the model we wet m_populations accodingly here
+    if (m_need_flow_initialization == true) {
+        m_populations.add_time_point<Eigen::VectorXd>(
+            m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    }
 
     // compute deaths at time t0
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =
