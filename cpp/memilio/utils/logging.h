@@ -24,11 +24,10 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
 #else
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-
-#define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
 #endif
 
 #include "memilio/utils/compiler_diagnostics.h"
+#define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
 #define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
 #include <spdlog/spdlog.h>
 
