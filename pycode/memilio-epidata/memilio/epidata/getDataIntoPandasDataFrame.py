@@ -439,7 +439,7 @@ def cli(what):
         parser.add_argument(
             '-sd', '--sanitize-data', type=int, default=dd.defaultDict['sanitize_data'], dest='sanitize_data',
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
-        )     
+        )
     if 'files' in what_list:
         parser.add_argument(
             '--files', nargs="*", default='All'
