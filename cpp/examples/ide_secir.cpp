@@ -18,15 +18,12 @@
 * limitations under the License.
 */
 
-#include "ide_secir/model.h" // IWYU pragma: keep
+#include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/parameters.h" // IWYU pragma: keep
+#include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
-#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/utils/time_series.h"
-#include "memilio/epidemiology/uncertain_matrix.h" // IWYU pragma: keep
-#include <iostream>
 
 int main()
 {
