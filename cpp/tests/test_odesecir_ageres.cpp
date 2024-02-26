@@ -24,8 +24,12 @@
 #include "memilio/math/stepper_wrapper.h"
 #include <gtest/gtest.h>
 
-TEST(TestSecir, compareAgeResWithSingleRun)
+TEST(TestOdeSecir, compareAgeResWithPreviousRun)
 {
+    /*
+    A similar test is implemented in python (without custom integrator) to compare the results of both simulations.
+    If this test is change the corresponding python test needs to be changed aswell (also updating the data file).
+    */
     double t0   = 0;
     double tmax = 50;
     double dt   = 0.1;
@@ -102,7 +106,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     }
 }
 
-TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
+TEST(TestOdeSecir, compareAgeResWithPreviousRunCashKarp)
 {
     double t0   = 0;
     double tmax = 50;
