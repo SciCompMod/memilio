@@ -482,7 +482,7 @@ def cli(what):
         parser.add_argument(
             '--username', type=str
         )
-    if 'password' in what_list:
+
         parser.add_argument(
             '--password', type=str
         )
