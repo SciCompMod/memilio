@@ -32,6 +32,12 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/time_series_to_file.h"
 
+/**
+ * @brief set_initial_values sets the initial value of the mio::oseair::Model<FP> model according to
+ * the publication of Tsay et al. (2020): Modeling, state estimation, and optimal control for the US COVID-19 outbreak .
+ * @tparam FP floating point type, e.g., double
+ * @param model an instance of the mio::oseair::Model<FP> which is a compartmental model.
+ */
 template <typename FP>
 void set_initial_values(mio::oseair::Model<FP>& model)
 {
