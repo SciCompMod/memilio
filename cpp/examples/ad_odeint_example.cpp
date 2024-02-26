@@ -27,12 +27,16 @@
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wdeprecated-declarations")
 
-#include "boost/numeric/odeint.hpp" // IWYU pragma: keep
+#include "boost/numeric/odeint.hpp"
 
 GCC_CLANG_DIAGNOSTIC(pop)
 
-using ad_forward_t = typename ad::gt1s<double>::type;
-using ad_adjoint_t = typename ad::ga1s<double>::type;
+/**
+ * This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
+ * algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp 
+ */
+
+using ad_forward_t = typename ad::gt1s<double>::type; // AD data type for scalar forward mode
 
 /* The type of container used to hold the state vector */
 using value_type = ad_forward_t;
@@ -59,17 +63,28 @@ int main()
     state_type x(2);
     x[0]                 = 1.0; // start at x=1.0, p=0.0
     x[1]                 = 0.0;
-    ad::derivative(x[0]) = 1.0;
+    ad::derivative(x[0]) = 1.0; // compute derivitive with respect to x[0] (scalar tangent-linear mode)
+
+    auto t0    = time_type(0.0);
+    auto t_end = time_type(10.0);
+    auto dt    = time_type(0.01);
+
+    const double abs_tol = 1e-6; // absolute tolerance for error-controlled integration
+    const double rel_tol = 1e-6; // relative tolerance for error-controlled integration
+
     controlled_stepper_type controlled_stepper;
-    boost::numeric::odeint::integrate_adaptive(make_controlled<error_stepper_type>(1e-6, 1e-6), harmonic_oscillator, x,
-                                               time_type(0.0), time_type(10.0), time_type(0.01));
+    boost::numeric::odeint::integrate_adaptive(make_controlled<error_stepper_type>(abs_tol, rel_tol),
+                                               harmonic_oscillator, x, t0, t_end, dt);
     std::cout << "ad derivative of x is (" << ad::derivative(x[0]) << ", " << ad::derivative(x[1]) << ")\n";
+
+    // We want ot compare AD derivatives with difference quotint
+    // To this and we simulate again with perturbation of the initial value of x[0]
     const double h        = 1e-3;
     std::vector<double> y = {ad::value(x[0]), ad::value(x[1])};
     x[0]                  = 1.0 + h;
     x[1]                  = 0.0;
-    boost::numeric::odeint::integrate_adaptive(make_controlled<error_stepper_type>(1e-6, 1e-6), harmonic_oscillator, x,
-                                               time_type(0.0), time_type(10.0), time_type(0.01));
+    boost::numeric::odeint::integrate_adaptive(make_controlled<error_stepper_type>(abs_tol, rel_tol),
+                                               harmonic_oscillator, x, t0, t_end, dt);
 
     std::cout << "finite differences derivative of x is (" << (ad::value(x[0]) - y[0]) / h << ", "
               << (ad::value(x[1]) - y[1]) / h << ")\n";
