@@ -464,6 +464,43 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
 }
 
+// set location specific parameters
+void set_local_parameters(mio::abm::World& world)
+{
+    const int n_age_groups = world.parameters.get_num_groups();
+    // const Eigen::MatrixXd contacts_home{
+    //     {0.4413, 0.4504, 1.2383, 0.8033, 0.0494, 0.0017}, {0.0485, 0.7616, 0.6532, 1.1614, 0.0256, 0.0013},
+    //     {0.1800, 0.1795, 0.8806, 0.6413, 0.0429, 0.0032}, {0.0495, 0.2639, 0.5189, 0.8277, 0.0679, 0.0014},
+    //     {0.0087, 0.0394, 0.1417, 0.3834, 0.7064, 0.0447}, {0.0292, 0.0648, 0.1248, 0.4179, 0.3497, 0.1544}};
+
+    // Eigen::MatrixXi a{
+    //     // construct a 2x2 matrix
+    //     {1, 2}, // first row
+    //     {3, 4} // second row
+    // };
+
+    Eigen::Matrix<int, 2, 3> b{
+        {2, 3, 4},
+        {5, 6, 7},
+    };
+
+    const Eigen::Matrix<double, 1, 1> asb{1, 1.0};
+
+    for (auto& loc : world.get_locations()) {
+        switch (loc.get_type()) {
+        case mio::abm::LocationType::Home:
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() = contacts_home;
+            break;
+        case mio::abm::LocationType::School:
+            break;
+        case mio::abm::LocationType::Work:
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 /**
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
@@ -479,6 +516,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     auto world = mio::abm::World(num_age_groups);
 
     set_parameters(world.parameters);
+    set_local_parameters(world);
 
     // Create the world object from statistical data.
     create_world_from_data(world, input_file, t0, max_num_persons);
