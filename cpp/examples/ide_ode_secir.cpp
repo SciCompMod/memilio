@@ -52,7 +52,7 @@ int main()
     bool ide_simulation    = true;
     int dt_exponent        = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 8;
+    int setting = 2;
 
     // General set up.
     ScalarType t0   = 0;
@@ -66,9 +66,9 @@ int main()
     ScalarType nb_total_t0 = 10000, nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1,
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    if (setting == 3) {
+    if (setting == 10) {
         // not recognized by ODE model
-        nb_dead_t0 = 2000;
+        nb_rec_t0 = 0.;
     }
 
     mio::osecir::Model model_ode(1);
@@ -211,20 +211,23 @@ int main()
         // TODO: Set this automatically or check if this is possible (wrt to global_max_support) with the given ODE simulation
         ScalarType t0_ide = 35.0;
         // Get number of dead individuals at time -dt from ODE model
-        ScalarType Dead_before = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt -
-                                              2][(int)mio::osecir::InfectionState::Dead];
+        ScalarType deaths = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                                        [(int)mio::osecir::InfectionState::Dead];
 
         int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
         mio::TimeSeries<ScalarType> init_transitions(num_transitions);
         Vec vec_init(num_transitions);
         // Add dummy time point so that model initialization works
+        // Attention: here we need to initilaize with a time series that last time point is t0_ide so that m_populations is set correctly
         // TODO: check if it is possible to initialize with an empty time series for init_transitions
         // TODO: check if there is an easier/cleaner way to initialize
-        init_transitions.add_time_point(0, vec_init);
+        init_transitions.add_time_point(t0_ide, vec_init);
+
+        ScalarType total_infections = 0.;
 
         // Initialize model.
-        mio::isecir::Model model_ide(std::move(init_transitions), N, Dead_before);
+        mio::isecir::Model model_ide(std::move(init_transitions), N, deaths, total_infections);
 
         // Set working parameters.
 
@@ -317,12 +320,15 @@ int main()
         std::cout << "Simulating now \n";
         mio::isecir::Simulation sim(model_ide, t0_ide, dt);
         sim.advance(tmax);
-        if (print_to_terminal) {
-            // sim.print_transitions();
-            sim.print_compartments();
-        }
+
         mio::TimeSeries<ScalarType> secihurd_ide       = sim.get_result();
         mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
+
+        if (print_to_terminal) {
+            secihurd_ide.print_table();
+        }
+
+        std::cout << "Initialization method: " << sim.get_model().get_initialization_method() << "\n";
 
         std::cout << "Compartments at last time step of ODE:\n";
         std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
