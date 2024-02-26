@@ -43,13 +43,13 @@ using value_type = ad_forward_t;
 using time_type  = value_type;
 typedef std::vector<value_type> state_type;
 
-double gam = 0.15;
+double damping = 0.15;
 
 /* The rhs of x' = f(x) */
 void harmonic_oscillator(const state_type& x, state_type& dxdt, const time_type /* t */)
 {
     dxdt[0] = x[1];
-    dxdt[1] = -x[0] - gam * x[1];
+    dxdt[1] = -x[0] - damping * x[1];
 }
 
 using error_stepper_type =
