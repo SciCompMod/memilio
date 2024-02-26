@@ -1067,10 +1067,17 @@ void write_log_to_file_infection_per_age_group(const T& history)
 mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
-    auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(2); // End time per simulation
-    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
-    ensemble_results.reserve(size_t(num_runs));
+    auto t0   = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(2); // End time per simulation
+    auto ensemble_results_infections_per_type =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results of infections per type
+    auto ensemble_results_infections_per_loc = std::vector<
+        std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results of infections per location type
+    auto ensemble_results_infections_per_age = std::vector<
+        std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results of infections per age group
+    ensemble_results_infections_per_type.reserve(size_t(num_runs));
+    ensemble_results_infections_per_loc.reserve(size_t(num_runs));
+    ensemble_results_infections_per_age.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
     auto max_num_persons    = 1000;
@@ -1096,22 +1103,45 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
+        // Collect the location types indexes.
+        std::vector<int> loc_type_ids;
+        for (int loc_type_id = 0; loc_type_id < static_cast<int>(mio::abm::LocationType::Count); loc_type_id++) {
+            loc_type_ids.push_back(loc_type_id);
+        }
+        // Collect the age groups indexes.
+        std::vector<int> age_group_ids;
+        for (size_t age_group_id = 0; age_group_id < num_age_groups; age_group_id++) {
+            age_group_ids.push_back(age_group_id);
+        }
         // Advance the world to tmax
         sim.advance(tmax, historyPersonInf, historyTimeSeries, historyInfectionPerLocationType,
                     historyInfectionPerAgeGroup, historyPersonInfDelta);
         // TODO: update result of the simulation to be a vector of location result.
-        auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
+        auto temp_sim_result_infection_per_type =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
+        auto temp_sim_result_infection_per_loc =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
+        auto temp_sim_result_infection_per_age =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
         // Push result of the simulation back to the result vector
-        ensemble_results.push_back(temp_sim_result);
+        ensemble_results_infections_per_type.push_back(temp_sim_result_infection_per_type);
+        ensemble_results_infections_per_loc.push_back(temp_sim_result_infection_per_loc);
+        ensemble_results_infections_per_age.push_back(temp_sim_result_infection_per_age);
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
-            auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
+            auto result_dir_run =
+                result_dir / ("abm_result_infections_per_type_run_" + std::to_string(run_idx) + ".h5");
+            BOOST_OUTCOME_TRY(
+                save_result(ensemble_results_infections_per_type.back(), loc_ids, 1, result_dir_run.string()));
+            result_dir_run = result_dir / ("abm_result_infections_per_loc_run_" + std::to_string(run_idx) + ".h5");
+            BOOST_OUTCOME_TRY(
+                save_result(ensemble_results_infections_per_loc.back(), loc_type_ids, 1, result_dir_run.string()));
+            result_dir_run = result_dir / ("abm_result_infections_per_age_run_" + std::to_string(run_idx) + ".h5");
+            BOOST_OUTCOME_TRY(
+                save_result(ensemble_results_infections_per_age.back(), age_group_ids, 1, result_dir_run.string()));
         }
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);
-        write_log_to_file_infection_per_location_type(historyInfectionPerLocationType);
-        write_log_to_file_infection_per_age_group(historyInfectionPerAgeGroup);
 
         ++run_idx;
     }
