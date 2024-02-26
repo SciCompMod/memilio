@@ -21,11 +21,11 @@ target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 
-add_executable(ode_seair_example seair.cpp)
+add_executable(ode_seair_example ode_seair.cpp)
 target_link_libraries(ode_seair_example PRIVATE memilio ode_seair AD::AD)
 
 if(MEMILIO_ENABLE_OPTIMIZATION)
-    add_executable(ode_seair_optimization seair_optimization.cpp)
+    add_executable(ode_seair_optimization ode_seair_optimization.cpp)
     target_link_libraries(ode_seair_optimization PRIVATE memilio ode_seair AD::AD Ipopt::Ipopt)
 endif()
 
