@@ -52,22 +52,22 @@ public:
     */
 
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
-          const ParameterSet& Parameterset_init = ParameterSet());
+          const ParameterSet& Parameterset_init = ParameterSet(), bool need_flow_initialization = false);
 
     /**
     * @brief Checks constraints on model parameters.
     */
     void check_constraints(ScalarType dt) const
     {
-        if (!(m_populations.get_num_time_points() > 0)) {
-            log_error("Model construction failed. No initial time point for populations.");
-        }
+        // if (!(m_populations.get_num_time_points() > 0)) {
+        //     log_error("Model construction failed. No initial time point for populations.");
+        // }
 
-        for (int i = 0; i < (int)InfectionState::Count; i++) {
-            if (m_populations[0][i] < 0) {
-                log_error("Initialization failed. Initial values for populations are less than zero.");
-            }
-        }
+        // for (int i = 0; i < (int)InfectionState::Count; i++) {
+        //     if (m_populations[0][i] < 0) {
+        //         log_error("Initialization failed. Initial values for populations are less than zero.");
+        //     }
+        // }
 
         if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
             log_error(
@@ -235,11 +235,13 @@ public:
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
+    ScalarType m_deaths{0.};
     ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
     ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{
         0}; ///< Gives the index of the method used for the initialization of the model. See also get_initialization_method() for the number code.
+    bool m_need_flow_init{false};
 };
 
 } // namespace isecir

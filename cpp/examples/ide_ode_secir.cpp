@@ -52,7 +52,7 @@ int main()
     bool ide_simulation    = true;
     int dt_exponent        = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 2;
+    int setting = 6;
 
     // General set up.
     ScalarType t0   = 0;
@@ -126,7 +126,7 @@ int main()
         model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 1.;
     }
 
-    if (setting == 6) {
+    if (setting == 6 || setting == 11) {
         // Set probabilities that determine proportion between compartments
         model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.;
         model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
@@ -226,8 +226,25 @@ int main()
 
         ScalarType total_infections = 0.;
 
+        if (setting == 11) {
+            total_infections = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                                           [(int)mio::osecir::InfectionState::InfectedSymptoms] +
+                               secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                                           [(int)mio::osecir::InfectionState::InfectedSevere] +
+                               secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                                           [(int)mio::osecir::InfectionState::InfectedCritical] +
+                               secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                                           [(int)mio::osecir::InfectionState::Recovered] +
+                               secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                                           [(int)mio::osecir::InfectionState::Dead];
+        }
+
+        bool need_flow_init = true;
+
         // Initialize model.
-        mio::isecir::Model model_ide(std::move(init_transitions), N, deaths, total_infections);
+        mio::isecir::Parameters parameters;
+        mio::isecir::Model model_ide(std::move(init_transitions), N, deaths, total_infections, parameters,
+                                     need_flow_init);
 
         // Set working parameters.
 

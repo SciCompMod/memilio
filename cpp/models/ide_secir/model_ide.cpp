@@ -31,20 +31,24 @@ namespace isecir
 {
 
 Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases,
-             const ParameterSet& Parameterset_init)
+             const ParameterSet& Parameterset_init, bool need_flow_initialization)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
     , m_N{N_init}
+    , m_deaths{deaths}
     , m_total_confirmed_cases{total_confirmed_cases}
+    , m_need_flow_init{need_flow_initialization}
 
 {
-    m_deaths_before =
-        deaths - m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
-    // add first timepoint to m_populations at last time from m_transitions
-    m_populations.add_time_point<Eigen::VectorXd>(
-        m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
-    m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = deaths;
+    if (m_need_flow_init == false) {
+        m_deaths_before =
+            deaths - m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
+        // add first timepoint to m_populations at last time from m_transitions
+        m_populations.add_time_point<Eigen::VectorXd>(
+            m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = deaths;
+    }
 }
 
 /***********************
@@ -53,6 +57,14 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
 
 void Model::initialize_solver(ScalarType dt)
 {
+    if (m_need_flow_init == true) {
+        m_deaths_before =
+            m_deaths - m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
+        // add first timepoint to m_populations at last time from m_transitions
+        m_populations.add_time_point<Eigen::VectorXd>(
+            m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = m_deaths;
+    }
 
     if (m_total_confirmed_cases > 1e-12) {
         m_initialization_method = 1;
