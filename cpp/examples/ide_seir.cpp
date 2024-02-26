@@ -19,7 +19,6 @@
 */
 
 #include "ide_seir/model.h"
-#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 
