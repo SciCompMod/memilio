@@ -18,6 +18,11 @@
 * limitations under the License.
 */
 
+/* This model is a extented SEIR type model of the COVID-19 pandemic in the US
+ * that als includes asymptomatic and perished people.
+ * A detailed description of the model can be found in the publication
+ * Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak */
+
 #include "ad/ad.hpp"
 
 #include "ode_seair/model.h"
