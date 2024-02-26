@@ -22,7 +22,9 @@ from datetime import date, datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 import pandas as pd
+import fit_secir
 
 from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
 from memilio.simulation.secir import Index_InfectionState
@@ -144,6 +146,8 @@ def run_secir_simulation(show_plot=True):
     ax.legend()
     fig.tight_layout
     fig.savefig('Secir_simple.pdf')
+
+    fit_secir.read_data()
 
     if show_plot:
         plt.show()
