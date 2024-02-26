@@ -50,7 +50,7 @@ namespace mio
  *
  */
 
-template <typename FP = double, class... Categories>
+template <typename FP = ScalarType, class... Categories>
 class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
