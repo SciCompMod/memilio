@@ -136,12 +136,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     no_raw = conf.no_raw
     run_checks = conf.checks
 
-    if files == 'All':
+    if (files == 'All') or (files==['All']):
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
                  'all_state', 'infected_county', 'all_county', 'all_gender',
                  'all_state_gender', 'all_county_gender', 'all_age',
                  'all_state_age', 'all_county_age']
-    if files == 'Plot':
+    if (files == 'Plot') or (files==['Plot']):
         # only consider plotable files
         files = ['infected', 'deaths', 'all_gender', 'all_age']
     # handle error of passing a string of one file instead of a list
