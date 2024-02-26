@@ -14,7 +14,7 @@ The model consists of the following major classes:
 
 Below is an overview of the model architecture and its compartments.
 
-![secir_model](https://github.com/SciCompMod/memilio/assets/69154294/d99b257b-1cc2-447d-8e32-ba3aa8329c0c)
+![secir_model](https://github.com/SciCompMod/memilio/assets/70579874/46b09e8a-d083-4ef9-8328-21975890b60f)
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\phi$                      |  `ContactPatterns`               | Matrix of daily contact rates / number of daily contacts between different age groups. |
@@ -23,8 +23,8 @@ Below is an overview of the model architecture and its compartments.
 | $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of infected people with symptomps who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
 | $N_j$                         | `Nj`   | Total population of age group $j$. |
 | $D_i$                         |  `Di`  | Number of death people of age group $i$. |
-| $\frac{1}{T_{E}}$                    |  `rateE`               | Time in days an individual stays in the Exposed compartment  (Computed from `SerialInterval` and `IncubationPeriod`). |
-| $\frac{1}{T_{I_{NS}}}$                    |  `rateINS`               | Time in days an individual stays in the InfectedNoSymptoms compartment (Computed from `SerialInterval` and `IncubationPeriod`). |
+| $\frac{1}{T_{E}}$                    |  `rateE`               | Reciprocal of the time in days an individual stays in the Exposed compartment  (Computed from `SerialInterval` and `IncubationPeriod`). |
+| $\frac{1}{T_{I_{NS}}}$                    |  `rateINS`               | Reciprocal of the time in days an individual stays in the InfectedNoSymptoms compartment (Computed from `SerialInterval` and `IncubationPeriod`). |
 | $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Time in days an individual stays in the InfectedSymptoms compartment. |
 | $T_{I_{Sev}}$                       |  `TimeInfectedSevere`               | Time in days an individual stays in the InfectedSevere compartment. |
 | $T_{I_{Cr}}$                       |  `TimeInfectedCritical`               | Time in days an individual stays in the InfectedCritical compartment. |
