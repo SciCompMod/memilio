@@ -18,40 +18,23 @@
 * limitations under the License.
 */
 
+#include "ide_secir/initialflows.h"
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
 
 //see below for line that causes this warning
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 
-#include "ide_secir/initialflows.h"
-#include "memilio/utils/logging.h"
-#include <iterator>
-
-#ifdef MEMILIO_HAS_JSONCPP
-
 #include "memilio/io/epi_data.h"
-#include "memilio/utils/memory.h"
-#include "memilio/utils/uncertain_value.h"
-#include "memilio/utils/stl_util.h"
-#include "memilio/mobility/graph.h"
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/epidemiology/damping.h"
-#include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
-#include "memilio/utils/date.h"
 
-#include <json/json.h>
+#include "ide_secir/model.h"
+#include "ide_secir/infection_state.h"
+#include "memilio/math/eigen.h"
 
-#include <boost/filesystem.hpp>
-
-#include <numeric>
-#include <vector>
 #include <iostream>
-#include <string>
-#include <random>
-#include <fstream>
 
 namespace mio
 {
@@ -60,7 +43,7 @@ namespace isecir
 
 //TODO: do this in StateAgeFunction or is this only needed here? Or should we take these values from the literature/ consider them as known
 // in the simulation?
-ScalarType compute_mean(int idx_CurrentFlow)
+ScalarType compute_mean(Eigen::Index idx_CurrentFlow)
 {
     // ScalarType mean{};
     unused(idx_CurrentFlow);
@@ -126,7 +109,7 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
 
     // get (global) support_max to determine how many flows in the past we have to compute
     ScalarType global_support_max         = model.get_global_support_max(dt);
-    Eigen::Index global_support_max_index = std::ceil(global_support_max / dt);
+    Eigen::Index global_support_max_index = Eigen::Index(std::ceil(global_support_max / dt));
 
     // TODO: assume that m_transitions is empty, here should be a condition if num_time_points>0 then delete all.
 
@@ -140,7 +123,7 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
 
     // TODO: we need values for t>0 so that we can shift values accordingly, remove them before starting our model?
     // TODO: write rki data into time series for transition from InfectedNoSymptoms to InfectedSymptoms
-    for (int i = start_shift + 1; i <= 2 * global_support_max_index; i++) {
+    for (Eigen::Index i = start_shift + 1; i <= 2 * global_support_max_index; i++) {
         // add time point
         model.m_transitions.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0.));
         // C to I
@@ -191,7 +174,7 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
     // }
 
     // I to H for -3*global_support_max, ..., 0
-    for (int i = -3 * global_support_max_index + 1; i <= 0; i++) {
+    for (Eigen::Index i = -3 * global_support_max_index + 1; i <= 0; i++) {
         // I to H
         model.compute_flow(int(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere),
                            Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
@@ -199,7 +182,7 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
     }
 
     // H to U for -2*global_support_max, ..., 0
-    for (int i = -2 * global_support_max_index + 1; i <= 0; i++) {
+    for (Eigen::Index i = -2 * global_support_max_index + 1; i <= 0; i++) {
         // H to U
         model.compute_flow((int)InfectionTransition::InfectedSevereToInfectedCritical,
                            Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, true,
@@ -207,7 +190,7 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
     }
 
     // C, I, H, U to R and U to D for -1*global_support_max, ..., 0
-    for (int i = -global_support_max_index + 1; i <= 0; i++) {
+    for (Eigen::Index i = -global_support_max_index + 1; i <= 0; i++) {
         // C to R
         model.compute_flow((int)InfectionTransition::InfectedNoSymptomsToRecovered,
                            Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt, true, i - start_shift);

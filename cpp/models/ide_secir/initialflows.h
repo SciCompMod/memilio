@@ -20,11 +20,12 @@
 #ifndef IDE_INITIALFLOWS_H
 #define IDE_INITIALFLOWS_H
 
-#include "ide_secir/parameters.h"
-#include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
 #include "memilio/config.h"
-#include "memilio/utils/time_series.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
+
+#include "ide_secir/model.h"
+#include "memilio/math/eigen.h"
 
 namespace mio
 {
@@ -42,5 +43,7 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
 
 } // namespace isecir
 } // namespace mio
+
+#endif // MEMILIO_HAS_JSONCPP
 
 #endif // IDE_INITIALFLOWS_H

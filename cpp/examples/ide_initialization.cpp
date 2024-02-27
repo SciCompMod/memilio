@@ -33,8 +33,7 @@ int main()
     ScalarType dt     = 1;
 
     // Initialize model.
-    mio::isecir::Model model(std::move(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count)), N,
-                             deaths);
+    mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count), N, deaths);
 
     ScalarType rki_cases_dummy{10.};
     ScalarType rki_deaths_dummy{2.};
