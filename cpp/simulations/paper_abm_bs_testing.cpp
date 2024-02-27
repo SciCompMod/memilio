@@ -29,6 +29,7 @@
 #include "boost/algorithm/string/classification.hpp"
 #include "abm/vaccine.h"
 #include "abm/common_abm_loggers.h"
+#include "generate_graph_from_data.cpp"
 
 namespace fs = boost::filesystem;
 
@@ -77,6 +78,26 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
                                                          world.parameters, t, infection_state));
     }
 }
+
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint /*t*/)
+{
+    // estimate intial population by ODE compartiments
+    auto initial_graph = get_graph(mio::Date(2020, 03, 01), 15, "pydata/Germany/");
+
+    //mio::CustomIndexArray<double, mio::AgeGroup> infection_probs{{6}, 1.};
+    //auto population_data_path =
+    //    mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
+
+    //auto node_ids = mio::get_node_ids(population_data_path, true);
+    //initial_graph[]
+
+    // convert initial population to ABM initial infection probabilities
+    for (auto& person : world.get_persons()) {
+        if (person.get_age() == age_group_0_to_4) {
+        }
+    }
+}
+
 int stringToMinutes(const std::string& input)
 {
     size_t colonPos = input.find(":");
@@ -685,10 +706,6 @@ void set_local_parameters(mio::abm::World& world)
 mio::abm::Simulation create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
                                                int max_num_persons)
 {
-    // Assumed percentage of infection state at the beginning of the simulation.
-    ScalarType exposed_prob = 0.08, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
-               recovered_prob = 0.0;
-
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     auto world = mio::abm::World(num_age_groups);
 
@@ -700,7 +717,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
+    //assign_infection_state(world, t0);
 
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
