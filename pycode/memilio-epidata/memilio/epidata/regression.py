@@ -118,6 +118,7 @@ def get_regiontype():
 
 def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
 
+    # read NPI data
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
@@ -131,6 +132,14 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
         df_npis = pd.read_csv(filepath)
     df_npis = df_npis[df_npis.ID_County == 1001]
 
+    # read vaccination data
+
+    # variable for seasonality
+
+    # variables for region types
+    # tbd
+
+    # read values for effectove reproduction number
     filepath = os.path.join(
         directory, "r_eff_county1001.json")
 
@@ -142,6 +151,7 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
     # remove dates from df_npis which are not in df_r
     df_npis = df_npis[df_npis['Date'].astype(str).isin(df_r.Date.astype(str))]
 
+    # set up regression model
     Y = df_r['R_eff']
 
     X = np.array([df_npis[column] for column in columns]).T
@@ -149,17 +159,16 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
 
     plt.plot(df_r.Date, df_r.R_eff, marker='o')
 
+    # do regression
     model = sm.GLM(Y, X, family=sm.families.Gamma(
         sm.families.links.Log()))
-
-    # model = sm.OLS(Y, X)
 
     results = model.fit()
 
     return results
 
 
-def backward_selection():
+def backward_selection(plot=False):
 
     # initial set of NPIs
     # use fine_resolution=0 for now for simplicity
@@ -189,18 +198,21 @@ def backward_selection():
 
     # list with NPIs that were removed
     removed_list = []
-
+    iteration = 0
     # TODO: think about how to decide when backwards selection is "done"
     while (counter < 10) and (len(df_pvalues) > 5):
+        iteration += 1
 
         # choose NPI of interest which is chosen according to the n-th highest pvalue
         # n is determined by the counter which is set accordingly if a NPI was removed or not in the previous iteration, see below
         npi_of_interest = df_pvalues.sort_values(
             'pvalues', ascending=False).iloc[counter].name
-        # if npi_of_interest is 'const', take variable with next higehr pvalue
+        # if npi_of_interest is 'const', take variable with next higher pvalue
         if npi_of_interest == 'const':
             npi_of_interest = df_pvalues.sort_values(
                 'pvalues', ascending=False).iloc[counter+1].name
+
+        # plot_pvalues(df_pvalues, iteration, npi_of_interest)
 
         # create view of df_pvalues where we remove npi_of_interest and that will be used for regression_model
         df_view = df_pvalues[~df_pvalues.index.isin([npi_of_interest])]
@@ -216,6 +228,11 @@ def backward_selection():
 
         # check if AIC and BIC have decreased compared to before
         if (aic < aic_min) and (bic < bic_min):
+            if plot:
+                # plot pvalues
+                plot_pvalues(df_pvalues, iteration,
+                             npi_of_interest, removed=True)
+
             # set new reference values for AIC and BIC
             aic_min = aic
             bic_min = bic
@@ -232,6 +249,11 @@ def backward_selection():
             counter = 0
 
         else:
+            if plot:
+                # plot pvalues
+                plot_pvalues(df_pvalues, iteration,
+                             npi_of_interest, removed=False)
+
             if aic < aic_min:
                 print("BIC didn't decrease, don't remove {}".format(
                     df_pvalues['columns'][npi_of_interest]))
@@ -271,16 +293,55 @@ def plot_confidence_intervals(df_pvalues):
     ax.set_yticks(range(0, len(df_pvalues)), list(df_pvalues['columns']))
     ax.invert_yaxis()
 
+    ax.set_xlabel('Values of coefficients')
+    ax.set_ylabel('Variables')
+
     if not os.path.isdir('plots'):
         os.makedirs('plots')
     plt.savefig('plots/regression_results.png', format='png',
                 dpi=500)
 
-    return
+    plt.close()
+
+
+def plot_pvalues(df_pvalues, iteration, npi_of_interest, removed):
+    # plot pvalues
+    fig, ax = plt.subplots()
+    ax.barh(range(len(df_pvalues)), df_pvalues['pvalues'])
+    # get index of npi_of interest and change color of that bar
+    index = df_pvalues.index.get_loc(npi_of_interest)
+
+    # if npi_of_interest was removed change color to green
+    if removed:
+        ax.get_children()[index].set_color('g')
+        labels = ['NPI of interest was removed']
+        handles = [plt.Rectangle((0, 0), 1, 1, color='g')]
+
+    # if npi_of_interest was not removed change color to red
+    else:
+        ax.get_children()[index].set_color('r')
+        labels = ['NPI of interest was not removed']
+        handles = [plt.Rectangle((0, 0), 1, 1, color='r')]
+
+    plt.legend(handles, labels, loc='lower right')
+
+    ax.set_yticks(range(0, len(df_pvalues)), list(
+        df_pvalues['columns']))
+    ax.invert_yaxis()
+
+    ax.set_xlabel('P-values')
+    ax.set_ylabel('Variables')
+
+    if not os.path.isdir('plots'):
+        os.makedirs('plots')
+    plt.savefig(f'plots/pvalues_iteration{iteration}.png', format='png',
+                dpi=500)
+
+    plt.close()
 
 
 def main():
-    df_pvalues, results = backward_selection()
+    df_pvalues, results = backward_selection(plot=True)
     plot_confidence_intervals(df_pvalues)
 
 
