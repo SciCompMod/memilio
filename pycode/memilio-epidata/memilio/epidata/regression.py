@@ -143,13 +143,9 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
     df_npis = df_npis[df_npis['Date'].astype(str).isin(df_r.Date.astype(str))]
 
     Y = df_r['R_eff']
-    if 'const' in list(columns):
-        columns_tmp = list(columns).copy()
-        columns_tmp.remove('const')
-        X = np.array([df_npis[column] for column in columns_tmp]).T
-        X = sm.add_constant(X)
-    else:
-        X = np.array([df_npis[column] for column in columns]).T
+
+    X = np.array([df_npis[column] for column in columns]).T
+    X = sm.add_constant(X)
 
     plt.plot(df_r.Date, df_r.R_eff, marker='o')
 
@@ -168,7 +164,7 @@ def backward_selection():
     # initial set of NPIs
     # use fine_resolution=0 for now for simplicity
     # include 'const' as this is an additional variable that we want to evaluate according to pvalue (at least for now)
-    column_names = ['const', 'M01a', 'M01b', 'M02a', 'M02b',
+    column_names = ['M01a', 'M01b', 'M02a', 'M02b',
                     'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
                     'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
@@ -177,7 +173,7 @@ def backward_selection():
     # store pvalues in dataframe
     df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
     # add column with column names to df
-    df_pvalues.insert(1, "columns", column_names)
+    df_pvalues.insert(1, "columns", ['const'] + column_names)
     # drop rows with pvalue that is NaN
     # TODO: check why we get NaNs here in the first place
     df_pvalues.dropna(inplace=True)
@@ -201,13 +197,18 @@ def backward_selection():
         # n is determined by the counter which is set accordingly if a NPI was removed or not in the previous iteration, see below
         npi_of_interest = df_pvalues.sort_values(
             'pvalues', ascending=False).iloc[counter].name
+        # if npi_of_interest is 'const', take variable with next higehr pvalue
+        if npi_of_interest == 'const':
+            npi_of_interest = df_pvalues.sort_values(
+                'pvalues', ascending=False).iloc[counter+1].name
 
         # create view of df_pvalues where we remove npi_of_interest and that will be used for regression_model
         df_view = df_pvalues[~df_pvalues.index.isin([npi_of_interest])]
         print("NPI of interest: ", df_pvalues['columns'][npi_of_interest])
 
         # do new regression and compute AIC and BIC
-        results = regression_model(df_view['columns'])
+        # [1:] because we do only want NPIs as input for regression model, not 'const'
+        results = regression_model(df_view['columns'][1:])
         aic = results.aic
         bic = results.bic_llf
         print('AIC: ', aic)
@@ -248,7 +249,7 @@ def backward_selection():
 
     # do one last regression here to make sure that df_pvalues and results are matching
     # (i.e. also if in last loop no NPI was removed)
-    results = regression_model(df_pvalues['columns'])
+    results = regression_model(df_pvalues['columns'][1:])
 
     # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
     df_pvalues.insert(2, "coeffs", list(results.params))
