@@ -119,7 +119,7 @@ def compute_hierarch_clustering(corr_pairwdist,
 
     # Based on the distances, we compute an hierarchical clustering for
     # different methods
-    max_coph_corr_dist = 0
+    max_coph_corr_dist = -1
     scores = dict()
     # allow single entry
     if not isinstance(methods, list):
@@ -128,7 +128,6 @@ def compute_hierarch_clustering(corr_pairwdist,
     for method in methods:
         cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=method)
         # compute cophenetic correlation distance and cophenetic distance matrix
-        # TODO: < or > max_coph_corr_dist?
         coph_corr_dist, coph_dist_mat = hierarchy.cophenet(
             cluster_hierarch, corr_pairwdist)
         scores[method] = coph_corr_dist
@@ -137,6 +136,7 @@ def compute_hierarch_clustering(corr_pairwdist,
             max_method = method
             max_coph_dist_mat = coph_dist_mat
 
+    # recompute hierarchical clustering with maximal cophenetic correlation distance/coefficient
     cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=max_method)
 
     print(
@@ -147,6 +147,7 @@ def compute_hierarch_clustering(corr_pairwdist,
 
 
 def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
+    # TODO: Adapt comment on cophenetic distance and weights
     """! Flattens a hierarchical clustering for a (list of) maximum cophenetic
     distance(s) in the flat clusters and evaluates the resulting clustering with
     respect to the corresponding correlation matrix.
@@ -475,6 +476,7 @@ def analyze_npi_data(
         hierarchy.dendrogram(cluster_hierarch)
         plt.show()
         max_coph_dist = coph_dist_mat.max()
+        # TODO: Discuss why abs(npis_corr) is used as input and not corr_pairwdist
         npi_idx_to_cluster_idx = flatten_hierarch_clustering(
             abs(npis_corr), cluster_hierarch,
             [wg * max_coph_dist
