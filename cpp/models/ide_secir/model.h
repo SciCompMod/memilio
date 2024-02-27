@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
 *
@@ -57,6 +57,7 @@ public:
     */
     void check_constraints(ScalarType dt) const
     {
+        unused(dt);
         if (!(m_populations.get_num_time_points() > 0)) {
             log_error("Model construction failed. No initial time point for populations.");
         }
@@ -72,27 +73,7 @@ public:
                 "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
-        ScalarType support_max = std::max(
-            {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_support_max(dt, m_tol)});
-
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
+        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
@@ -199,6 +180,18 @@ public:
     void compute_recovered();
 
     /**
+     * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
+     *
+     * This determines how many inital values we need for the flows.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Global support_max.
+     *
+     */
+    ScalarType get_global_support_max(ScalarType dt) const;
+
+    /**
      * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
      *
      * @param[in] new_tol New tolerance.
@@ -233,7 +226,6 @@ public:
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point - dt.
     ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{

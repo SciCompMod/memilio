@@ -1,7 +1,7 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Anna Wendler
+* Authors: Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -30,18 +30,15 @@ namespace mio
 {
 namespace isecir
 {
-ScalarType compute_global_support_max(Model model, ScalarType dt);
-
 void compute_previous_flows(Model& model, Eigen::Index idx_CurrentFlow, Eigen::Index idx_OutgoingFlow,
                             Eigen::Index time_series_index, ScalarType dt);
 
 void compute_flows_with_mean(Model& model, Eigen::Index idx_CurrentFlow, Eigen::Index idx_OutgoingFlow, ScalarType dt,
                              Eigen::Index time_series_index);
 
+// TODO: instead of dummys provide link to real data.
 // assume that we know flow from C to I from RKI data; compute the remaining flows based on this
 void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, ScalarType rki_deaths_dummy);
-
-void print_transitions(Model model);
 
 } // namespace isecir
 } // namespace mio

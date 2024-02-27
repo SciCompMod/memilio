@@ -1,7 +1,7 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Anna Wendler
+* Authors: Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -57,32 +57,6 @@ namespace mio
 {
 namespace isecir
 {
-ScalarType compute_global_support_max(Model model, ScalarType dt)
-{
-    // for simplicity use this function for now to avoid having to deal with different support_max values for the different transitions
-    // depending on the variance of the support_max values it woukd make more sense to treat each transition individually
-    ScalarType global_support_max = std::max(
-        {model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-             .get_support_max(dt),
-         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-             .get_support_max(dt)});
-
-    return global_support_max;
-}
 
 //TODO: do this in StateAgeFunction or is this only needed here? Or should we take these values from the literature/ consider them as known
 // in the simulation?
@@ -151,13 +125,10 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     // get (global) support_max to determine how many flows in the past we have to compute
-    ScalarType global_support_max         = compute_global_support_max(model, dt);
+    ScalarType global_support_max         = model.get_global_support_max(dt);
     Eigen::Index global_support_max_index = std::ceil(global_support_max / dt);
 
-    // remove time point that was needed for initialization of model
-    // TODO: find out of there is a better way to handle that
-    // maybe make flows an optional argument in construction of Model and then check in check constraints that there were flows set
-    model.m_transitions.remove_last_time_point();
+    // TODO: assume that m_transitions is empty, here should be a condition if num_time_points>0 then delete all.
 
     // we already know the flows from C to I for a sufficient number of time points in the past
 
@@ -166,10 +137,9 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
     // define start shift as the number of time pints in the past where we start the computation
     // this is the first timepoint in the m_transitions TimeSeries and we want to store the following flows at the right time point
     Eigen::Index start_shift = -4 * global_support_max_index;
-    unused(start_shift);
 
     // TODO: we need values for t>0 so that we can shift values accordingly, remove them before starting our model?
-    // write rki data into time series for transition from InfectedNoSymptoms to InfectedSymptoms
+    // TODO: write rki data into time series for transition from InfectedNoSymptoms to InfectedSymptoms
     for (int i = start_shift + 1; i <= 2 * global_support_max_index; i++) {
         // add time point
         model.m_transitions.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0.));

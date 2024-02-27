@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
 *
@@ -37,8 +37,6 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
     , m_N{N_init}
     , m_total_confirmed_cases{total_confirmed_cases}
 {
-    m_deaths_before =
-        deaths - m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
     m_populations.add_time_point<Eigen::VectorXd>(
         0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = deaths;
@@ -253,7 +251,9 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
         // determine m_forceofinfection at time -dt which is the penultimate timepoint in m_transitions
         num_time_points = m_transitions.get_num_time_points() - 1;
         current_time    = -dt;
-        deaths          = m_deaths_before;
+        // Determine the number of death at time -dt.
+        deaths = m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] -
+                 m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
     }
     else {
         // determine m_forceofinfection for current last time in m_transitions.
@@ -358,6 +358,29 @@ void Model::compute_recovered()
         m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered)] +
         m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSevereToRecovered)] +
         m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToRecovered)];
+}
+
+ScalarType Model::get_global_support_max(ScalarType dt) const
+{
+    return std::max(
+        {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered].get_support_max(
+             dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_support_max(
+             dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
+             .get_support_max(dt, m_tol)});
 }
 
 } // namespace isecir
