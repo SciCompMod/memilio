@@ -41,8 +41,8 @@ protected:
         using Vec = mio::TimeSeries<ScalarType>::Vector;
 
         //Set initial conditions
-        ScalarType N           = 10000;
-        ScalarType Dead_before = 12;
+        ScalarType N      = 10000;
+        ScalarType deaths = 13.10462213;
 
         int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -65,7 +65,7 @@ protected:
         }
 
         // Initialize model
-        model = new mio::isecir::Model(std::move(init), N, Dead_before);
+        model = new mio::isecir::Model(std::move(init), N, deaths);
 
         // Set working parameters.
         mio::SmootherCosine smoothcos(2.0);
@@ -86,6 +86,8 @@ protected:
         model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
         model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
         model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+
+        model->set_tol_for_support_max(1e-10);
     }
 
     virtual void TearDown()
@@ -161,10 +163,10 @@ TEST(IdeSecir, checkSimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax        = 0.5;
-    ScalarType N           = 10000;
-    ScalarType Dead_before = 10;
-    ScalarType dt          = 0.5;
+    ScalarType tmax   = 0.5;
+    ScalarType N      = 10000;
+    ScalarType deaths = 10;
+    ScalarType dt     = 0.5;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -190,7 +192,7 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model model(std::move(init), N, deaths);
 
     // Set working parameters.
     // In this example, SmootherCosine with parameter 1 (and thus with a maximum support of 1)
@@ -244,15 +246,117 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
+// Check if the model uses the correct method for initialization using the function get_initialization_method().
+TEST(IdeSecir, checkInitializations)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType tmax   = 1;
+    ScalarType N      = 10000;
+    ScalarType deaths = 13.10462213;
+    ScalarType dt     = 1;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
+    mio::TimeSeries<ScalarType> init(num_transitions);
+    // Add initial time point to time series.
+    init.add_time_point(-10, Vec::Constant(num_transitions, 3.0));
+    // Add further time points until time 0.
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt, Vec::Constant(num_transitions, 3.0));
+    }
+
+    // --- Case with total_confirmed_cases.
+    mio::TimeSeries<ScalarType> init_copy1(init);
+    mio::isecir::Model model1(std::move(init_copy1), N, deaths, 1000);
+
+    // Check that the initialization method is not already set.
+    EXPECT_EQ(0, model1.get_initialization_method());
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim1(model1, 0, dt);
+    sim1.advance(tmax);
+
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(1, sim1.get_model().get_initialization_method());
+
+    // --- Case with forceofinfection.
+    mio::TimeSeries<ScalarType> init_copy2(init);
+    mio::isecir::Model model2(std::move(init_copy2), N, deaths, 0);
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim2(model2, 0, dt);
+    sim2.advance(tmax);
+
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(2, sim2.get_model().get_initialization_method());
+
+    // --- Case with S.
+    /* !! For the other tests, the contact rate is set to 0 so that the force of infection is zero.
+     The forceofinfection initialization method is therefore not used for these tests.*/
+    mio::isecir::Parameters parameters;
+    mio::ContactMatrixGroup contact_matrix         = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                              = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
+    parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
+    mio::TimeSeries<ScalarType> init_copy3(init);
+    mio::isecir::Model model3(std::move(init_copy3), N, deaths, 0, std::move(parameters));
+
+    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 5000;
+    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim3(model3, 0, dt);
+    sim3.advance(tmax);
+
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(3, sim3.get_model().get_initialization_method());
+
+    // --- Case with R.
+    mio::TimeSeries<ScalarType> init_copy4(init);
+    mio::isecir::Model model4(std::move(init_copy4), N, deaths, 0, std::move(parameters));
+
+    model4.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
+    model4.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 1000;
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim4(model4, 0, dt);
+    sim4.advance(tmax);
+
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(4, sim4.get_model().get_initialization_method());
+
+    // --- Case without fitting initialization method.
+    // Deactivate temporarily log output for next test. Error is expected here.
+    mio::set_log_level(mio::LogLevel::off);
+
+    // Here we do not need a copy of init as this is the last use of the vector. We can apply move directly.
+    mio::isecir::Model model5(std::move(init), N, deaths, 0, std::move(parameters));
+
+    model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
+    model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim5(model5, 0, dt);
+    sim5.advance(tmax);
+
+    // Verify that initialization was not possible with one of the models methods.
+    EXPECT_EQ(-1, sim5.get_model().get_initialization_method());
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
 // a) Test if check_constraints() function correctly reports wrongly set parameters.
 // b) Test if check_constraints() does not complain if parameters are set within correct ranges.
 TEST(IdeSecir, testValueConstraints)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType N           = 10000;
-    ScalarType Dead_before = 10;
-    ScalarType dt          = 1;
+    ScalarType N      = 10000;
+    ScalarType deaths = 10;
+    ScalarType dt     = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -278,7 +382,7 @@ TEST(IdeSecir, testValueConstraints)
     }
 
     // Initialize a model.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model model(std::move(init), N, deaths);
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
@@ -406,10 +510,10 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax        = 30;
-    ScalarType N           = 10000;
-    ScalarType Dead_before = 10;
-    ScalarType dt          = 1;
+    ScalarType tmax   = 30;
+    ScalarType N      = 10000;
+    ScalarType deaths = 10;
+    ScalarType dt     = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -435,7 +539,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model model(std::move(init), N, deaths);
 
     // Set working parameters.
     // All TransitionDistribution%s are ExponentialDecay functions.
@@ -494,10 +598,10 @@ TEST(IdeSecir, compareEquilibria)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax        = 20;
-    ScalarType N           = 10000;
-    ScalarType Dead_before = 10;
-    ScalarType dt          = 1;
+    ScalarType tmax   = 20;
+    ScalarType N      = 10000;
+    ScalarType deaths = 10;
+    ScalarType dt     = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -525,8 +629,8 @@ TEST(IdeSecir, compareEquilibria)
     mio::TimeSeries<ScalarType> init2(init);
 
     // Initialize two models.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
-    mio::isecir::Model model2(std::move(init2), N, Dead_before);
+    mio::isecir::Model model(std::move(init), N, deaths);
+    mio::isecir::Model model2(std::move(init2), N, deaths);
 
     // Set working parameters.
     // Here the maximum support for the TransitionDistribution%s is set differently for each model

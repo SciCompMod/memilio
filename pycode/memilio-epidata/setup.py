@@ -79,7 +79,10 @@ setup(
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
-        'pandas>=2.0.0',
+        # Has to use less than 2.2.0, see Issue #910
+        'pandas>=2.0.0,<2.2.0',
+        # FutureWarning of pandas that pyarrow will be required in a future release
+        'pyarrow',
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
@@ -95,8 +98,10 @@ setup(
     ],
     extras_require={
         'dev': [
-            # first support of python 3.11
-            'pyfakefs>=4.6',
+            # first support of python 3.11 4.6
+            # 5.3.4 has conflicts with openpyxl
+            # 5.3.3 broken
+            'pyfakefs>=4.6,<5.3.3',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
             # pylint 2.16 creates problem with wrapt package version
