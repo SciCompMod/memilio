@@ -206,17 +206,14 @@ ScalarType Cell::compute_space_per_person_relative()
 size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 {
     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
-        return p->get_infection_state(t) == state;
+        return p->get_infection_state(t) == state && p->is_home_in_bs();
     });
 }
 
 size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
-        if (p->is_home_in_bs()) {
-            return p->get_infection_state(t) == state;
-        }
-        return false;
+        return p->get_infection_state(t) == state && p->is_home_in_bs();
     });
 }
 
