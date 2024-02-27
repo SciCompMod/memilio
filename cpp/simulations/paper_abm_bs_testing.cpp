@@ -82,15 +82,12 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint /*t*/)
 {
     // estimate intial population by ODE compartiments
-    auto initial_graph = get_graph(mio::Date(2020, 03, 01), 15, "pydata/Germany/");
+    auto initial_graph     = get_graph(mio::Date(2020, 03, 01), 1, "/Users/david/Documents/HZI/memilio/data/");
+    size_t braunschweig_id = 0; // TODO: Find correct ID for Braunschweig
+    auto braunschweig_node = initial_graph.value()[braunschweig_id];
 
-    //mio::CustomIndexArray<double, mio::AgeGroup> infection_probs{{6}, 1.};
-    //auto population_data_path =
-    //    mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
-
-    //auto node_ids = mio::get_node_ids(population_data_path, true);
-    //initial_graph[]
-
+    // TODO: Collect number of infected agents and assign randomly to the population
+    
     // convert initial population to ABM initial infection probabilities
     for (auto& person : world.get_persons()) {
         if (person.get_age() == age_group_0_to_4) {
@@ -717,7 +714,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
-    //assign_infection_state(world, t0);
+    assign_infection_state(world, t0);
 
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
