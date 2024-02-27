@@ -31,30 +31,52 @@ int main()
     /** Simple example to demonstrate how to run a simulation using an LCT SECIR model. 
     Parameters, initial values and subcompartments are not meant to represent a realistic scenario. */
 
-    using InfState = mio::lsecir::InfectionState<mio::lsecir::InfectionStateBase, 1, 2, 3, 1, 1, 5, 1, 1>;
+    using Model    = mio::lsecir::Model<2, 3, 1, 1, 5>;
+    using InfState = Model::InfState;
 
     ScalarType tmax = 20;
 
-    // Define initial distribution of the population in the subcompartments.
-    Eigen::VectorXd init(InfState::Count);
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Susceptible>()]            = 750;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>()]                = 30;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Exposed>() + 1]            = 20;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedNoSymptoms>()]     = 20;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedNoSymptoms>() + 1] = 10;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedNoSymptoms>() + 2] = 10;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedSymptoms>()]       = 50;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedSevere>()]         = 50;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>()]       = 10;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 1]   = 10;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 2]   = 5;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 3]   = 3;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::InfectedCritical>() + 4]   = 2;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Recovered>()]              = 20;
-    init[InfState::get_firstindex<mio::lsecir::InfectionStateBase::Dead>()]                   = 10;
+    /* Define the initial value vector init with the distribution of the population into subcompartments.
+    This method of defining the vector is a bit of overhead, but should remind you how the entries of the initial 
+    value vector relate to the defined template parameters of the model or the number of subcompartments.
+    It is also possible to define the initial value vector directly.*/
+    // Define initial values for each infection state with the appropriate number of subcompartments.
+    ScalarType initial_value_Susceptible                                                           = 750;
+    ScalarType initial_value_Exposed[InfState::get_num_subcompartments<InfState::Base::Exposed>()] = {30, 20};
+    ScalarType
+        initial_value_InfectedNoSymptoms[InfState::get_num_subcompartments<InfState::Base::InfectedNoSymptoms>()] = {
+            20, 10, 10};
+    ScalarType initial_value_InfectedSymptoms[InfState::get_num_subcompartments<InfState::Base::InfectedSymptoms>()] = {
+        50};
+    ScalarType initial_value_InfectedSevere[InfState::get_num_subcompartments<InfState::Base::InfectedSevere>()] = {50};
+    ScalarType initial_value_InfectedCritical[InfState::get_num_subcompartments<InfState::Base::InfectedCritical>()] = {
+        10, 10, 5, 3, 2};
+    ScalarType initial_value_Recovered = 20;
+    ScalarType initial_value_Dead      = 10;
+
+    // Transfer the initial values to the vector init.
+    Eigen::VectorXd init                                           = Eigen::VectorXd::Zero(InfState::Count);
+    init[InfState::get_first_index<InfState::Base::Susceptible>()] = initial_value_Susceptible;
+    for (unsigned int i = 0; i < InfState::get_num_subcompartments<InfState::Base::Exposed>(); i++) {
+        init[InfState::get_first_index<InfState::Base::Exposed>() + i] = initial_value_Exposed[i];
+    }
+    for (unsigned int i = 0; i < InfState::get_num_subcompartments<InfState::Base::InfectedNoSymptoms>(); i++) {
+        init[InfState::get_first_index<InfState::Base::InfectedNoSymptoms>() + i] = initial_value_InfectedNoSymptoms[i];
+    }
+    for (unsigned int i = 0; i < InfState::get_num_subcompartments<InfState::Base::InfectedSymptoms>(); i++) {
+        init[InfState::get_first_index<InfState::Base::InfectedSymptoms>() + i] = initial_value_InfectedSymptoms[i];
+    }
+    for (unsigned int i = 0; i < InfState::get_num_subcompartments<InfState::Base::InfectedSevere>(); i++) {
+        init[InfState::get_first_index<InfState::Base::InfectedSevere>() + i] = initial_value_InfectedSevere[i];
+    }
+    for (unsigned int i = 0; i < InfState::get_num_subcompartments<InfState::Base::InfectedCritical>(); i++) {
+        init[InfState::get_first_index<InfState::Base::InfectedCritical>() + i] = initial_value_InfectedCritical[i];
+    }
+    init[InfState::get_first_index<InfState::Base::Recovered>()] = initial_value_Recovered;
+    init[InfState::get_first_index<InfState::Base::Dead>()]      = initial_value_Dead;
 
     // Initialize model.
-    mio::lsecir::Model<2, 3, 1, 1, 5> model(std::move(init));
+    Model model(std::move(init));
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
