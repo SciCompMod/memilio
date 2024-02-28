@@ -22,10 +22,9 @@
 
 #include "memilio/utils/time_series.h"
 
-#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
 #include <memory>
-#include <vector> // IWYU pragma: keep
 #include <functional>
 #include <algorithm>
 
