@@ -200,29 +200,6 @@ using is_compartment_model_simulation =
     std::integral_constant<bool, (is_expression_valid<advance_expr_t, FP, Sim>::value &&
                                   is_compartment_model<FP, typename Sim::Model>::value)>;
 
-///**
-// * @brief simulate simulates a compartmental model
-// * @param[in] t0 start time
-// * @param[in] tmax end time
-// * @param[in] dt initial step size of integration
-// * @param[in] model: An instance of a compartmental model
-// * @return a TimeSeries to represent the final simulation result
-// * @tparam Model a compartment model type
-// * @tparam Sim a simulation type that can simulate the model.
-// */
-//template <class Model, class Sim = Simulation<Model>>
-//TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
-//                                std::shared_ptr<IntegratorCore> integrator = nullptr)
-//{
-//    model.check_constraints();
-//    Sim sim(model, t0, dt);
-//    if (integrator) {
-//        sim.set_integrator(integrator);
-//    }
-//    sim.advance(tmax);
-//    return sim.get_result();
-//}
-
 /**
  * @brief simulate simulates a compartmental model
  * @param[in] t0 start time
