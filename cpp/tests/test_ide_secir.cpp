@@ -281,17 +281,6 @@ TEST(IdeSecir, checkInitializations)
     // Verify that the expected initialization method was used.
     EXPECT_EQ(1, sim1.get_model().get_initialization_method());
 
-    // --- Case with forceofinfection.
-    mio::TimeSeries<ScalarType> init_copy2(init);
-    mio::isecir::Model model2(std::move(init_copy2), N, deaths, 0);
-
-    // Carry out simulation.
-    mio::isecir::Simulation sim2(model2, 0, dt);
-    sim2.advance(tmax);
-
-    // Verify that the expected initialization method was used.
-    EXPECT_EQ(2, sim2.get_model().get_initialization_method());
-
     // --- Case with S.
     /* !! For the other tests, the contact rate is set to 0 so that the force of infection is zero.
      The forceofinfection initialization method is therefore not used for these tests.*/
@@ -311,7 +300,7 @@ TEST(IdeSecir, checkInitializations)
     sim3.advance(tmax);
 
     // Verify that the expected initialization method was used.
-    EXPECT_EQ(3, sim3.get_model().get_initialization_method());
+    EXPECT_EQ(2, sim3.get_model().get_initialization_method());
 
     // --- Case with R.
     mio::TimeSeries<ScalarType> init_copy4(init);
@@ -325,7 +314,18 @@ TEST(IdeSecir, checkInitializations)
     sim4.advance(tmax);
 
     // Verify that the expected initialization method was used.
-    EXPECT_EQ(4, sim4.get_model().get_initialization_method());
+    EXPECT_EQ(3, sim4.get_model().get_initialization_method());
+
+    // --- Case with forceofinfection.
+    mio::TimeSeries<ScalarType> init_copy2(init);
+    mio::isecir::Model model2(std::move(init_copy2), N, deaths, 0);
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim2(model2, 0, dt);
+    sim2.advance(tmax);
+
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(4, sim2.get_model().get_initialization_method());
 
     // --- Case without fitting initialization method.
     // Deactivate temporarily log output for next test. Error is expected here.

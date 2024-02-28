@@ -212,9 +212,9 @@ public:
      *
      * @returns 0 if the initialization method has not yet been selected,
      *      1 if the method using the total number of confirmed cases at time 0 is used,
-     *      2 if the force of infection method is used,
-     *      3 if the initialization is calculated using a prior set value for S,
-     *      4 if the initialization is calculated using a prior set value for R and
+     *      2 if the initialization is calculated using a prior set value for S,
+     *      3 if the initialization is calculated using a prior set value for R 
+     *      4 if the force of infection method is used,and
      *      -1 if the initialization was not possible using any of the methods.
      */
     int get_initialization_method()
