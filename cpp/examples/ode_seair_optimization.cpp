@@ -34,7 +34,7 @@
 class Seair_NLP : public Ipopt::TNLP
 {
 public:
-    static constexpr double N              = 327167434;
+    static constexpr double N              = 327167434; // total US population
     Seair_NLP()                            = default;
     Seair_NLP(const Seair_NLP&)            = delete;
     Seair_NLP(Seair_NLP&&)                 = delete;
@@ -103,7 +103,8 @@ private:
     const int numControlIntervals_ = 20;
     const int numControls_         = 3;
     const int numPathConstraints_  = 1;
-    const int pcresolution_        = 5;
+    const int pcresolution_ =
+        5; // the resultion of path constraints is by this factor higher than the control discretization
     const int numIntervals_        = pcresolution_ * numControlIntervals_;
     const int n_                   = numControlIntervals_ * numControls_;
     const int m_                   = numIntervals_ * numPathConstraints_;
