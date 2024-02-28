@@ -66,9 +66,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
     mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_values{
         {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.};
     initial_values.array() = braunschweig_node.populations.array().cast<double>();
-    std::cout << initial_values.array() << std::endl;
-
-    //Eigen::Array<double, -1, -1> iv_slice = initial_values.slice(age_group_0_to_4).as_array().array();
+    //std::cout << initial_values.array() << std::endl;
 
     // convert initial population to ABM initial infections
     for (auto& person : world.get_persons()) {
