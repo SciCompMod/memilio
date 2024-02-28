@@ -35,6 +35,7 @@ from datetime import date
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import logging
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
@@ -50,7 +51,7 @@ def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=Tr
     """! Checks if all counties are mentioned in the case data set
 
    This check had to be added due to incomplete data downloads
-   It is checked if all all counties are part of the data.
+   It is checked if all counties are part of the data.
    If data is incomplete the data is downloaded from another source.
    Note: There is no check if data for every day and every county is available (which can happen).
 
@@ -70,6 +71,287 @@ def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=Tr
         gd.default_print(
             "Warning", "DataFrame has not been checked for completeness.")
         return True
+
+
+def fetch_case_data(
+    read_data=dd.defaultDict['read_data'],
+    out_folder=dd.defaultDict['out_folder'],
+    **kwargs
+) -> pd.DataFrame:
+    logger = logging.getLogger(__name__)
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    run_checks = conf.checks
+
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+    filename = "CaseDataFull"
+
+    complete = False
+    path = os.path.join(directory + filename + ".json")
+
+    try:
+        url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
+              "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
+        df = gd.get_file(path, url, read_data, param_dict={},
+                         interactive=conf.interactive)
+        complete = check_for_completeness(df, run_checks, merge_eisenach=True)
+    except Exception as ex:
+        logger.exception(f"The data could not be downloaded. The following exception was thrown:\n{ex}")
+        pass
+    if complete:
+        if not read_data:
+            # add column with state ids
+            county_to_state_map = geoger.get_countyid_to_stateid_map(
+                merge_berlin=False)
+            df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
+    else:
+        # try another possibility if df was empty or incomplete
+        gd.default_print(
+            "Info", "Case data is incomplete. Trying another source.")
+        try:
+            url = "https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
+            # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
+            # utf_8_sig can identify those bytes as one sign and display it correctly
+            df = gd.get_file(path, url, False, param_dict={
+                "encoding": 'utf_8_sig'}, interactive=conf.interactive)
+            complete = check_for_completeness(
+                df, run_checks, merge_eisenach=True)
+        except:
+            pass
+        if not complete:
+            gd.default_print(
+                "Info", "Case data is still incomplete. Trying a third source.")
+            try:
+                # If the data on github is not available we download the case data from rki from covid-19 datahub
+                url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" + \
+                      "items/f10774f1c63e40168479a1feb6c7ca74/data"
+                df = gd.get_file(path, url, False, param_dict={
+                    "encoding": 'utf_8_sig'}, interactive=conf.interactive)
+                df.rename(columns={'FID': "OBJECTID"}, inplace=True)
+                complete = check_for_completeness(
+                    df, run_checks, merge_eisenach=True)
+            except:
+                pass
+        if not complete:
+            raise FileNotFoundError(
+                "Something went wrong, dataframe is empty for csv and geojson!")
+
+            # drop columns that do not exist in data from github
+        df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
+                 "Bundesland", "Landkreis"], axis=1, inplace=True)
+
+    print(f"Num cols: {df.shape[0]}")
+    return df
+
+
+def preprocess_case_data(
+    raw_df: pd.DataFrame,
+    split_berlin=dd.defaultDict['split_berlin'],
+    rep_date=dd.defaultDict['rep_date'],
+) -> pd.DataFrame:
+    logger = logging.getLogger(__name__)
+    print(f'The cols are: {raw_df.columns}')
+
+    with progress_indicator.Spinner(message='Preparing DataFrame'):
+        df = raw_df.convert_dtypes()
+
+        # store dict values in parameter to not always call dict itself
+        AnzahlFall = dd.GerEng['AnzahlFall']
+        AnzahlGenesen = dd.GerEng['AnzahlGenesen']
+        AnzahlTodesfall = dd.GerEng['AnzahlTodesfall']
+
+        # translate column gender from German to English and standardize
+        df.loc[df.Geschlecht == 'unbekannt', [
+            'Geschlecht']] = dd.GerEng['unbekannt']
+        df.loc[df.Geschlecht == 'W', ['Geschlecht']] = dd.GerEng['W']
+        df.loc[df.Geschlecht == 'M', ['Geschlecht']] = dd.GerEng['M']
+        df.loc[df.Altersgruppe == 'unbekannt', [
+            'Altersgruppe']] = dd.GerEng['unbekannt']
+
+        # change names of columns
+        df = df.rename(dd.GerEng, axis=1)
+        print(f'The cols are: {df.columns}')
+
+        # Add column 'Date' with Date
+        # = reporting date if rep_date is set
+        # = reference date (date of disease onset) if IstErkrankungsbeginn = 1 else
+        #       take Meldedatum (reporting date)
+        if rep_date:
+            df[dd.EngEng['date']] = df['Meldedatum'].astype('object')
+        else:
+            df[dd.EngEng['date']] = np.where(
+                df['IstErkrankungsbeginn'] == 1, df['Refdatum'],
+                df['Meldedatum'])
+
+        try:
+            df[dd.EngEng['date']] = pd.to_datetime(
+                df[dd.EngEng['date']], format="ISO8601")
+        except ValueError:
+            try:
+                df[dd.EngEng['date']] = pd.to_datetime(
+                    df[dd.EngEng['date']], format="%Y-%m-%d")
+            except:
+                raise gd.DataError(
+                    "Time data can't be transformed to intended format")
+
+        # Date is either Refdatum or Meldedatum after column
+        # 'IstErkrankungsbeginn' has been added. See also rep_date option.
+        dateToUse = dd.EngEng['date']
+        df.sort_values(dateToUse, inplace=True)
+
+        # Manipulate data to get rid of conditions: df.NeuerFall >= 0, df.NeuerTodesfall >= 0, df.NeuGenesen >=0
+        # There might be a better way
+        df.loc[df.NeuerFall < 0, [AnzahlFall]] = 0
+        df.loc[df.NeuerTodesfall < 0, [AnzahlTodesfall]] = 0
+        df.loc[df.NeuGenesen < 0, [AnzahlGenesen]] = 0
+
+        # get rid of unnecessary columns
+        df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
+                 "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1, inplace=True)
+
+        # merge Berlin counties
+        if not split_berlin:
+            df = geoger.merge_df_counties(
+                df, 11000, geoger.CountyMerging[11000],
+                sorting=[dd.EngEng['date']],
+                columns=[dd.EngEng['date'],
+                         dd.EngEng['gender'],
+                         dd.EngEng['idState'],
+                         dd.EngEng['ageRKI']])
+
+    return df
+
+
+def write_case_data(
+    df: pd.DataFrame,
+    file_format=dd.defaultDict['file_format'],
+    out_folder=dd.defaultDict['out_folder'],
+    start_date=dd.defaultDict['start_date'],
+    end_date=dd.defaultDict['end_date'],
+    impute_dates=dd.defaultDict['impute_dates'],
+    moving_average=dd.defaultDict['moving_average'],
+    split_berlin=dd.defaultDict['split_berlin'],
+    rep_date=dd.defaultDict['rep_date'],
+    files='All',
+    **kwargs,
+) -> None:
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+
+    if files == 'All':
+        files = ['infected', 'deaths', 'all_germany', 'infected_state',
+                 'all_state', 'infected_county', 'all_county', 'all_gender',
+                 'all_state_gender', 'all_county_gender', 'all_age',
+                 'all_state_age', 'all_county_age']
+    if files == 'Plot':
+        # only consider plotable files
+        files = ['infected', 'deaths', 'all_gender', 'all_age']
+    # handle error of passing a string of one file instead of a list
+    if isinstance(files, str):
+        files = [files]
+    # dict for all files
+    # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
+    Altersgruppe = dd.GerEng['Altersgruppe']
+    Geschlecht = dd.GerEng['Geschlecht']
+    AnzahlFall = dd.GerEng['AnzahlFall']
+    AnzahlGenesen = dd.GerEng['AnzahlGenesen']
+    AnzahlTodesfall = dd.GerEng['AnzahlTodesfall']
+    IdBundesland = dd.GerEng['IdBundesland']
+    IdLandkreis = dd.GerEng['IdLandkreis']
+    dateToUse = dd.EngEng['date']
+
+    dict_files = {
+        'infected': [dateToUse, {AnzahlFall: "sum"}, None, {}, ['Confirmed']],
+        'deaths': [dateToUse, {AnzahlTodesfall: "sum"}, None, {}, ['Deaths']],
+        'all_germany': [dateToUse, {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
+                        None, {}, ['Confirmed', 'Deaths', 'Recovered']],
+        'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
+                           {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
+        'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
+                      [IdBundesland], {dd.EngEng["idState"]
+                                       : geoger.get_state_ids()},
+                      ['Confirmed', 'Deaths', 'Recovered']],
+        'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
+                            {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
+        'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
+                       [IdLandkreis], {dd.EngEng["idCounty"]
+                                       : df[dd.EngEng["idCounty"]].unique()},
+                       ['Confirmed', 'Deaths', 'Recovered']],
+        'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
+                       [Geschlecht], {dd.EngEng["gender"]: list(
+                df[dd.EngEng["gender"]].unique())},
+                       ['Confirmed', 'Deaths', 'Recovered']],
+        'all_state_gender': [[dateToUse, IdBundesland, Geschlecht],
+                             {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
+                                 IdBundesland, Geschlecht],
+                             {dd.EngEng["idState"]: geoger.get_state_ids(), dd.EngEng["gender"]: list(
+                                 df[dd.EngEng["gender"]].unique())},
+                             ['Confirmed', 'Deaths', 'Recovered']],
+        'all_county_gender': [[dateToUse, IdLandkreis, Geschlecht],
+                              {AnzahlFall: "sum", AnzahlTodesfall: "sum",
+                               AnzahlGenesen: "sum"}, [IdLandkreis, Geschlecht],
+                              {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(
+                              ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
+                              ['Confirmed', 'Deaths', 'Recovered']],
+        'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]
+                                     : df[dd.EngEng["ageRKI"]].unique()},
+                    ['Confirmed', 'Deaths', 'Recovered']],
+        'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
+                          {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
+                              IdBundesland, Altersgruppe],
+                          {dd.EngEng["idState"]: geoger.get_state_ids(
+                          ), dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
+                          ['Confirmed', 'Deaths', 'Recovered']],
+        'all_county_age': [[dateToUse, IdLandkreis, Altersgruppe],
+                           {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
+                               IdLandkreis, Altersgruppe],
+                           {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(),
+                            dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
+                           ['Confirmed', 'Deaths', 'Recovered']]
+    }
+    with progress_indicator.Spinner():
+        for file in files:
+            if file not in dict_files.keys():
+                raise gd.DataError('Error: File '+file+' cannot be written.')
+            # split berlin is only relevant for county level
+            if ('county' in file) and (split_berlin == True):
+                split_berlin_local = True
+            else:
+                # dont append _split_berlin to filename on germany/state level
+                split_berlin_local = False
+            filename = 'cases_' + \
+                       gd.append_filename(file, impute_dates,
+                                          moving_average, split_berlin_local, rep_date)
+            # sum over all columns defined in dict_files
+            df_local = df.groupby(dict_files[file][0]).agg(dict_files[file][1])
+
+            if file == 'deaths':
+                # only consider where deaths > 0
+                df_local = df_local[df_local[AnzahlTodesfall] != 0]
+
+            # cumulative sum over columns defined in dict_files
+            if dict_files[file][2] is None:
+                df_local_cs = df_local.cumsum()
+            else:
+                df_local_cs = df_local.groupby(level=[dict_files[file][0].index(
+                    level_index) for level_index in dict_files[file][2]]).cumsum()
+            df_local_cs.reset_index(drop=False, inplace=True)
+
+            if impute_dates or moving_average > 0:
+                df_local_cs = mdfs.impute_and_reduce_df(
+                    df_local_cs, group_by_cols=dict_files[file][3],
+                    mod_cols=dict_files[file][4],
+                    impute='forward', moving_average=moving_average,
+                    min_date=start_date, max_date=end_date)
+
+            df_local_cs = mdfs.extract_subframe_based_on_dates(
+                df_local_cs, start_date, end_date)
+            gd.write_dataframe(df_local_cs, directory, filename, file_format)
 
 
 def get_case_data(read_data=dd.defaultDict['read_data'],
@@ -415,12 +697,17 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                     plt.show()
 
 
+
+
 def main():
     """! Main program entry."""
-
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
     arg_dict = gd.cli("cases")
-    get_case_data(**arg_dict)
-
+    #get_case_data(**arg_dict)
+    raw_df = fetch_case_data(**arg_dict)
+    prep_df = preprocess_case_data(raw_df=raw_df)
+    write_case_data(df=prep_df, **arg_dict)
 
 if __name__ == "__main__":
     main()
