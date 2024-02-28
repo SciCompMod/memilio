@@ -57,10 +57,10 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
 /**
  * Assign an infection state to each person according to real world data read in through the ODE secir model.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
+void assign_infection_state(mio::abm::World& world, const fs::path& input_dir, mio::abm::TimePoint t)
 {
     // estimate intial population by ODE compartiments
-    auto initial_graph     = get_graph(mio::Date(2020, 03, 01), 1, "/Users/david/Documents/HZI/memilio/data/");
+    auto initial_graph     = get_graph(mio::Date(2020, 03, 01), 1, input_dir);
     size_t braunschweig_id = 16; // Braunschweig has ID 16
     auto braunschweig_node = initial_graph.value()[braunschweig_id];
     mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_values{
@@ -692,7 +692,7 @@ void set_local_parameters(mio::abm::World& world)
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
  */
-mio::abm::Simulation create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
+mio::abm::Simulation create_sampled_simulation(const fs::path& input_dir, const mio::abm::TimePoint& t0,
                                                int max_num_persons)
 {
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
@@ -702,11 +702,12 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     set_local_parameters(world);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, input_file, t0, max_num_persons);
+    create_world_from_data(world, (input_dir / "mobility/braunschweig_result.csv").generic_string(), t0,
+                           max_num_persons);
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, t0);
+    assign_infection_state(world, input_dir, t0);
 
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
@@ -824,7 +825,7 @@ void write_txt_file_for_graphical_compartment_output(std::vector<std::vector<mio
     }
 }
 
-mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
+mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
@@ -849,7 +850,7 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
     while (run_idx <= num_runs) {
 
         // Create the sampled simulation with start time t0.
-        auto sim = create_sampled_simulation(input_file, t0, max_num_persons);
+        auto sim = create_sampled_simulation(input_dir, t0, max_num_persons);
         //output object
         mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
                      mio::abm::LogDataForMovement>
@@ -889,7 +890,7 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    std::string input_file = "/Users/david/Documents/HZI/memilio/data/mobility/braunschweig_result.csv";
+    std::string input_dir  = "/Users/david/Documents/HZI/memilio/data/";
     size_t num_runs;
     bool save_single_runs = true;
 
@@ -924,7 +925,7 @@ int main(int argc, char** argv)
     //}
     //printf("\n");
 
-    auto result = run(input_file, result_dir, num_runs, save_single_runs);
+    auto result = run(input_dir, result_dir, num_runs, save_single_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
