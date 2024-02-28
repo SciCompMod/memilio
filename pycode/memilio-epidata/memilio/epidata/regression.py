@@ -21,6 +21,8 @@
 from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import getNPIData as gnd
 from memilio.epidata import getCaseData as gcd
+from memilio.epidata import getPopulationData as gpd
+from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from datetime import date
@@ -35,6 +37,7 @@ pd.options.mode.copy_on_write = True
 
 
 def compute_R_eff(out_folder=dd.defaultDict['out_folder']):
+    # TODO: discuss how we want to compute R value
 
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
@@ -112,16 +115,18 @@ def compute_R_eff(out_folder=dd.defaultDict['out_folder']):
     return df_r_eff
 
 
-def get_regiontype():
-    pass
-
-
+# TODO: Refactor this function into one where set up the model with all variables that are fixed and will not be evaluated
+# in the backward selection and one function where we solve the model with an input of the variables that go into
+# the backward selection, i.e. the NPIs? At the moment we are reading the data every time we solve the model, not efficient
+# TODO: Discuss which variables should go in backward selection, also vaccination states?
 def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
 
-    # read NPI data
+    # for now, all data is only read for county 1001 to make testing easier
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
+
+    # read NPI data
     filepath = os.path.join(
         directory, 'germany_counties_npi_maincat.csv')
 
@@ -132,14 +137,43 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
         df_npis = pd.read_csv(filepath)
     df_npis = df_npis[df_npis.ID_County == 1001]
 
+    # read population data
+    filepath = os.path.join(
+        directory, 'county_current_population.json')
+
+    if not os.path.exists(filepath):
+        df_population = gpd.get_population_data(
+            start_date=date(2020, 1, 1), file_format='json')
+    else:
+        df_population = pd.read_json(filepath)
+    df_population = df_population[df_population.ID_County == 1001]
+
     # read vaccination data
+    filepath = os.path.join(
+        directory, 'vacc_county_all_dates.json')
+
+    if not os.path.exists(filepath):
+        df_vaccinations = gvd.get_vaccination_data(
+            start_date=date(2020, 1, 1), file_format='json')
+    else:
+        df_vaccinations = pd.read_json(filepath)
+    df_vaccinations = df_vaccinations[df_vaccinations.ID_County == 1001]
+
+    # TODO: discuss if this is what we want (in contrast to absolute values)
+    # computing proportion of vaccinated individuals by dividing by respective population of county
+    counties = df_vaccinations['ID_County'].unique()
+    vacc_states = df_vaccinations.keys()[3:]
+    for county in counties:
+        for vacc_state in vacc_states:
+            df_vaccinations.loc[(df_vaccinations['ID_County'] == county), vacc_state] = df_vaccinations.loc[df_vaccinations['ID_County']
+                                                                                                            == county, vacc_state]/df_population.loc[df_population.ID_County == county, 'Population'].iloc[0]
 
     # variable for seasonality
 
     # variables for region types
     # tbd
 
-    # read values for effectove reproduction number
+    # read values for effective reproduction number
     filepath = os.path.join(
         directory, "r_eff_county1001.json")
 
@@ -148,14 +182,35 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
     else:
         df_r = pd.read_json(filepath)
 
-    # remove dates from df_npis which are not in df_r
-    df_npis = df_npis[df_npis['Date'].astype(str).isin(df_r.Date.astype(str))]
+    # make dates consistent, use df_vaccinations as reference
+
+    # TODO: define timeframe we want to investigate
+    # TODO: make dataframes consistent wrt timeframe, need to insert 0 entries before vaccination timeframe
+    # for now, use df_vaccinations as reference because this has the least entries
+
+    # remove dates from df_r which are not in df_vaccinations and vice versa
+    df_r = df_r[df_r['Date'].astype(
+        str).isin(df_vaccinations.Date.astype(str))]
+    df_vaccinations = df_vaccinations[df_vaccinations['Date'].astype(
+        str).isin(df_r.Date.astype(str))]
+    # remove dates from df_npis which are not in df_vaccinations
+    df_npis = df_npis[df_npis['Date'].astype(
+        str).isin(df_vaccinations.Date.astype(str))]
 
     # set up regression model
     Y = df_r['R_eff']
 
-    X = np.array([df_npis[column] for column in columns]).T
-    X = sm.add_constant(X)
+    # TODO: discuss which vaccination states we want to include
+    # for now use Vacc_completed and Vacc_refreshed and use Vacc_partially as reference
+    vacc_states = vacc_states[1:3]
+    X_vaccinations = np.array([df_vaccinations[vacc_state]
+                              for vacc_state in vacc_states]).T
+    X_npis = np.array([df_npis[column] for column in columns]).T
+
+    X = np.concatenate((X_vaccinations, X_npis), axis=1)
+    # TODO: check why there is not always a constant added automatically, do we have linear dependence somewhere?
+    # with has_constant = 'add' we force it to add a constant but can this lead to issues?
+    X = sm.add_constant(X, has_constant='add')
 
     plt.plot(df_r.Date, df_r.R_eff, marker='o')
 
@@ -165,7 +220,8 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
 
     results = model.fit()
 
-    return results
+    # TODO: returning vacc_states is not nice, refactor this function?
+    return results, list(vacc_states)
 
 
 def backward_selection(plot=False):
@@ -178,11 +234,12 @@ def backward_selection(plot=False):
                     'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
     # do regression with all NPIs
-    results = regression_model(column_names)
+    results, vacc_states = regression_model(column_names)
     # store pvalues in dataframe
     df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
     # add column with column names to df
-    df_pvalues.insert(1, "columns", ['const'] + column_names)
+    non_npi_variables = ['const'] + vacc_states
+    df_pvalues.insert(1, "columns", non_npi_variables + column_names)
     # drop rows with pvalue that is NaN
     # TODO: check why we get NaNs here in the first place
     df_pvalues.dropna(inplace=True)
@@ -194,23 +251,29 @@ def backward_selection(plot=False):
     print('BIC init: ', bic_min)
 
     # count how often an NPI was selected by highest p value but not removed due to unclear AIC/BIC in a row
-    counter = 0
+    counter_not_removed = 0
 
     # list with NPIs that were removed
     removed_list = []
     iteration = 0
     # TODO: think about how to decide when backwards selection is "done"
-    while (counter < 10) and (len(df_pvalues) > 5):
+    while (counter_not_removed < 7) and (len(df_pvalues) > 5):
         iteration += 1
 
         # choose NPI of interest which is chosen according to the n-th highest pvalue
-        # n is determined by the counter which is set accordingly if a NPI was removed or not in the previous iteration, see below
+        # n is determined by the counter_not_removed which is set accordingly if a NPI was removed or not in the previous iteration, see below
         npi_of_interest = df_pvalues.sort_values(
-            'pvalues', ascending=False).iloc[counter].name
-        # if npi_of_interest is 'const', take variable with next higher pvalue
-        if npi_of_interest == 'const':
+            'pvalues', ascending=False).iloc[counter_not_removed].name
+        # if npi_of_interest is 'const' or in vacc_states, take variable with next higher pvalue
+
+        counter_non_npi_var = 0
+        while df_pvalues['columns'][npi_of_interest] in non_npi_variables:
+            counter_non_npi_var += 1
+            # if npi_of_interest in non_npi_variables:
             npi_of_interest = df_pvalues.sort_values(
-                'pvalues', ascending=False).iloc[counter+1].name
+                'pvalues', ascending=False).iloc[counter_not_removed + counter_non_npi_var].name
+            # adjust counter_not_removed in case the new npi_of_interest doesn't get removed
+            counter_not_removed += counter_non_npi_var
 
         # plot_pvalues(df_pvalues, iteration, npi_of_interest)
 
@@ -219,8 +282,10 @@ def backward_selection(plot=False):
         print("NPI of interest: ", df_pvalues['columns'][npi_of_interest])
 
         # do new regression and compute AIC and BIC
-        # [1:] because we do only want NPIs as input for regression model, not 'const'
-        results = regression_model(df_view['columns'][1:])
+        # [1:] because we do only want NPIs as input for regression model, not 'const' or vacc_states
+        num_non_npi_variables = len(non_npi_variables)
+        results, vacc_states = regression_model(
+            df_view['columns'][num_non_npi_variables:])
         aic = results.aic
         bic = results.bic_llf
         print('AIC: ', aic)
@@ -243,10 +308,10 @@ def backward_selection(plot=False):
             # change df_pvalues to df_view because we actually want to remove npi_of_interest
             df_pvalues = df_view[:]
 
-            # set counter = 0 because we want to count how many times in a row a selected NPI was not removed
+            # set counter_not_removed  = 0 because we want to count how many times in a row a selected NPI was not removed
             # due to unclear AIC and BIC
             # also, in this case we want to select npi_of_interest by taking the NPI with the highest pvalue of remaining NPIs
-            counter = 0
+            counter_not_removed = 0
 
         else:
             if plot:
@@ -264,14 +329,15 @@ def backward_selection(plot=False):
                 print("AIC and BIC didn't decrease, don't remove {}".format(
                     df_pvalues['columns'][npi_of_interest]))
 
-            # increase counter, we select npi_of_interest by taking the NPI with the next highest pvalue
-            counter += 1
+            # increase counter_not_removed , we select npi_of_interest by taking the NPI with the next highest pvalue
+            counter_not_removed += 1
 
     print(removed_list)
 
     # do one last regression here to make sure that df_pvalues and results are matching
     # (i.e. also if in last loop no NPI was removed)
-    results = regression_model(df_pvalues['columns'][1:])
+    results, vacc_states = regression_model(
+        df_pvalues['columns'][num_non_npi_variables:])
 
     # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
     df_pvalues.insert(2, "coeffs", list(results.params))
