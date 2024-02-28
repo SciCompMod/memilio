@@ -42,55 +42,49 @@ const auto age_group_35_to_59 = mio::AgeGroup(3);
 const auto age_group_60_to_79 = mio::AgeGroup(4);
 const auto age_group_80_plus  = mio::AgeGroup(5);
 
-/**
- * Determine the infection state of a person at the beginning of the simulation.
- * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
- * @return random infection state
- */
-mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
-                                                   ScalarType infected_no_symptoms, ScalarType infected_symptoms,
-                                                   ScalarType recovered)
-{
-    ScalarType susceptible          = 1 - exposed - infected_no_symptoms - infected_symptoms - recovered;
-    std::vector<ScalarType> weights = {
-        susceptible,           exposed,  infected_no_symptoms, infected_symptoms / 3, infected_symptoms / 3,
-        infected_symptoms / 3, recovered};
-    if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
-        mio::log_error("Initialization in ABM wrong, please correct vector length.");
-    }
-    auto state = mio::DiscreteDistribution<size_t>::get_instance()(rng, weights);
-    return (mio::abm::InfectionState)state;
-}
+const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_state_map{
+    {mio::osecir::InfectionState::Susceptible, mio::abm::InfectionState::Susceptible},
+    {mio::osecir::InfectionState::Exposed, mio::abm::InfectionState::Exposed},
+    {mio::osecir::InfectionState::InfectedNoSymptoms, mio::abm::InfectionState::InfectedNoSymptoms},
+    {mio::osecir::InfectionState::InfectedNoSymptomsConfirmed, mio::abm::InfectionState::InfectedNoSymptoms},
+    {mio::osecir::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedSymptoms},
+    {mio::osecir::InfectionState::InfectedSymptomsConfirmed, mio::abm::InfectionState::InfectedSymptoms},
+    {mio::osecir::InfectionState::InfectedSevere, mio::abm::InfectionState::InfectedSevere},
+    {mio::osecir::InfectionState::InfectedCritical, mio::abm::InfectionState::InfectedCritical},
+    {mio::osecir::InfectionState::Recovered, mio::abm::InfectionState::Recovered},
+    {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
 /**
- * Assign an infection state to each person.
+ * Assign an infection state to each person according to real world data read in through the ODE secir model.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_prob,
-                            double infected_no_symptoms_prob, double infected_symptoms_prob, double recovered_prob)
-{
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
-        auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
-                                                         infected_symptoms_prob, recovered_prob);
-        if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.parameters, t, infection_state));
-    }
-}
-
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint /*t*/)
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
 {
     // estimate intial population by ODE compartiments
     auto initial_graph     = get_graph(mio::Date(2020, 03, 01), 1, "/Users/david/Documents/HZI/memilio/data/");
-    size_t braunschweig_id = 0; // TODO: Find correct ID for Braunschweig
+    size_t braunschweig_id = 16; // Braunschweig has ID 16
     auto braunschweig_node = initial_graph.value()[braunschweig_id];
+    mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_values{
+        {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.};
+    initial_values.array() = braunschweig_node.populations.array().cast<double>();
+    std::cout << initial_values.array() << std::endl;
 
-    // TODO: Collect number of infected agents and assign randomly to the population
-    
-    // convert initial population to ABM initial infection probabilities
+    //Eigen::Array<double, -1, -1> iv_slice = initial_values.slice(age_group_0_to_4).as_array().array();
+
+    // convert initial population to ABM initial infections
     for (auto& person : world.get_persons()) {
-        if (person.get_age() == age_group_0_to_4) {
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+
+        auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
+            rng, initial_values.slice(person.get_age()).as_array().array()));
+
+        //bool detected = false;
+        if (infection_state != mio::osecir::InfectionState::Susceptible) {
+            //if (infection_state == mio::osecir::InfectionState::InfectedNoSymptomsConfirmed ||
+            //    infection_state == mio::osecir::InfectionState::InfectedSymptomsConfirmed) {
+            //    detected = true;
+            //}
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.parameters, t, infection_state_map.at(infection_state)));
         }
     }
 }
@@ -836,12 +830,12 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
                         bool save_single_runs = true)
 {
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(1); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 5000;
+    auto max_num_persons    = 500;
 
     int tid = -1;
 #pragma omp parallel private(tid) // Start of parallel region: forks threads
@@ -897,8 +891,7 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    std::string input_file =
-        "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/bs_und_umgebung.csv";
+    std::string input_file = "/Users/david/Documents/HZI/memilio/data/mobility/braunschweig_result.csv";
     size_t num_runs;
     bool save_single_runs = true;
 

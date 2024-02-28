@@ -63,7 +63,7 @@ public:
      * @param[in] detected [Default: false] If the Infection is detected.     
      */
     Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
-              TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
+              TimePoint init_date, InfectionState init_state = InfectionState::Exposed,
               std::pair<ExposureType, TimePoint> latest_exposure = {ExposureType::NoProtection, TimePoint(0)},
               bool detected                                      = false);
 
