@@ -5,8 +5,8 @@ add_library(ide_secir
     simulation.h
     simulation.cpp
     parameters.h
-    initialflows.h
-    initialflows.cpp
+    parameters_io.h
+    parameters_io.cpp
 )
 target_link_libraries(ide_secir PUBLIC memilio)
 target_include_directories(ide_secir PUBLIC

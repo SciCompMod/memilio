@@ -18,15 +18,11 @@
 * limitations under the License.
 */
 
-#include "ide_secir/initialflows.h"
+#include "ide_secir/parameters_io.h"
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
-
-//see below for line that causes this warning
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 
 #include "memilio/io/epi_data.h"
 
