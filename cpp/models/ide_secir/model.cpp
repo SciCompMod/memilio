@@ -130,6 +130,19 @@ void Model::initialize(ScalarType dt)
                       "larger 0.");
         }
     }
+
+    // Verify that the initialization produces an appropriate result.
+    // Another check would be if the sum of the compartments is equal to N, but in all initialization methods one of the compartments is initialized via N - the others.
+    // This also means that if a compartment is greater than N, we will always have one or more compartments less than zero.
+    // Check if all compartments are non negative.
+    for (int i = 0; i < (int)InfectionState::Count; i++) {
+        if (m_populations[0][i] < 0) {
+            m_initialization_method = -2;
+            log_error("Initialization failed. One or more initial values for populations are less than zero. It may "
+                      "help to use a different method for initialization.");
+        }
+    }
+
     // Compute m_forceofinfection at time 0 needed for further simulation.
     update_forceofinfection(dt);
 }

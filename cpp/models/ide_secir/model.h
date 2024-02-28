@@ -59,16 +59,9 @@ public:
     bool check_constraints(ScalarType dt) const
     {
         if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-            log_error(
-                "Initialization failed. Number of elements in transition vector does not match the required number.");
+            log_error("A variable given for model construction is not valid. Number of elements in transition vector "
+                      "does not match the required number.");
             return true;
-        }
-
-        for (int i = 0; i < (int)InfectionState::Count; i++) {
-            if (m_populations[0][i] < 0) {
-                log_error("Initialization failed. Initial values for populations are less than zero.");
-                return true;
-            }
         }
 
         ScalarType support_max = std::max(
@@ -213,9 +206,10 @@ public:
      * @returns 0 if the initialization method has not yet been selected,
      *      1 if the method using the total number of confirmed cases at time 0 is used,
      *      2 if the initialization is calculated using a prior set value for S,
-     *      3 if the initialization is calculated using a prior set value for R 
-     *      4 if the force of infection method is used,and
-     *      -1 if the initialization was not possible using any of the methods.
+     *      3 if the initialization is calculated using a prior set value for R,
+     *      4 if the force of infection method is used, 
+     *      -1 if the initialization was not possible using any of the methods and
+     *      -2 if the initialization was possible using one of the provided methods but the result is not appropriate.
      */
     int get_initialization_method()
     {
