@@ -89,10 +89,10 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-using TestTypes = ::testing::Types<mio::RKIntegratorCore,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
+using TestTypes = ::testing::Types<
+    mio::RKIntegratorCore, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
+    // mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>, // TODO: reenable once boost bug is fixed
+    mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
 
 TYPED_TEST_SUITE(TestVerifyNumericalIntegrator, TestTypes);
 
