@@ -33,7 +33,10 @@ GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/date.h"
 
+#include <string>
 #include <iostream>
 
 namespace mio
@@ -102,10 +105,28 @@ void compute_previous_flows(Model& model, Eigen::Index idx_CurrentFlow, Eigen::I
 
 // we assume that we start the simulation at time 0 and want to compute the necessary flows
 // in the past for the initialization of the model
-void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, ScalarType rki_deaths_dummy)
+IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date)
 {
-    unused(rki_deaths_dummy);
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    /*// Try to get rki data from path.
+    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_noage(path));
+    auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    if (max_date_entry == rki_data.end()) {
+        log_error("RKI data file is empty.");
+        return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
+    }
+    auto max_date = max_date_entry->date;
+    if (max_date < date) {
+        log_error("Specified date does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
+    }*/
+    unused(path);
+    unused(date);
+
+    ScalarType rki_cases_dummy = 3;
+    int num_transitions        = (int)mio::isecir::InfectionTransition::Count;
 
     // get (global) support_max to determine how many flows in the past we have to compute
     ScalarType global_support_max         = model.get_global_support_max(dt);
@@ -211,7 +232,9 @@ void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, 
                            Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
                            i - start_shift);
     }
+    return mio::success();
 }
+
 } // namespace isecir
 } // namespace mio
 

@@ -26,6 +26,10 @@
 
 #include "ide_secir/model.h"
 #include "memilio/math/eigen.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/date.h"
+
+#include <string>
 
 namespace mio
 {
@@ -39,7 +43,7 @@ void compute_flows_with_mean(Model& model, Eigen::Index idx_CurrentFlow, Eigen::
 
 // TODO: instead of dummys provide link to real data.
 // assume that we know flow from C to I from RKI data; compute the remaining flows based on this
-void set_initial_flows(Model& model, ScalarType dt, ScalarType rki_cases_dummy, ScalarType rki_deaths_dummy);
+IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date);
 
 } // namespace isecir
 } // namespace mio

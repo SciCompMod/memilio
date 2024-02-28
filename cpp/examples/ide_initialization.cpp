@@ -25,6 +25,8 @@
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/date.h"
+#include <iostream>
 
 int main()
 {
@@ -34,10 +36,10 @@ int main()
 
     // Initialize model.
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count), N, deaths);
-
-    ScalarType rki_cases_dummy{10.};
-    ScalarType rki_deaths_dummy{2.};
-    mio::isecir::set_initial_flows(model, dt, rki_cases_dummy, rki_deaths_dummy);
+    auto status = mio::isecir::set_initial_flows(model, dt, "hello", mio::Date(2021, 12, 03));
+    if (!status) {
+        std::cout << "Error : " << status.error().formatted_message();
+    }
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
