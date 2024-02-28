@@ -222,11 +222,11 @@ public:
         m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType>
         m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined #InfectionState%s.
+    ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
 
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{
         0}; ///< Gives the index of the method used for the initialization of the model. See also get_initialization_method() for the number code.

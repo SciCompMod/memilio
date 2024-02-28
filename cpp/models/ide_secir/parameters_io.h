@@ -35,15 +35,29 @@ namespace mio
 {
 namespace isecir
 {
+
+ScalarType compute_mean(Eigen::Index idx_CurrentFlow);
+
 void compute_previous_flows(Model& model, Eigen::Index idx_CurrentFlow, Eigen::Index idx_OutgoingFlow,
                             Eigen::Index time_series_index, ScalarType dt);
 
 void compute_flows_with_mean(Model& model, Eigen::Index idx_CurrentFlow, Eigen::Index idx_OutgoingFlow, ScalarType dt,
                              Eigen::Index time_series_index);
 
-// TODO: instead of dummys provide link to real data.
-// assume that we know flow from C to I from RKI data; compute the remaining flows based on this
-IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date);
+/**
+* @brief Computes a TimeSeries of flows to provide initial data for an IDE SECIR model with data from RKI.
+*   
+* TODO: describe how this is computed
+*
+* @param[in, out] Model The model for which the inital flows should be computed.
+* @param[in] dt Time step size.
+* @param[in] path Path to the RKI file.
+* @param[in] date The start date of the simulation and the last time point of the TimeSeries used for initialization.
+* @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of rki data to consider unreported cases.
+* @returns Any io errors that happen during reading of the files.
+*/
+IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
+                                 ScalarType scale_confirmed_cases = 1.0);
 
 } // namespace isecir
 } // namespace mio

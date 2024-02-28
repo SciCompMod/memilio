@@ -36,9 +36,12 @@ int main()
 
     // Initialize model.
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count), N, deaths);
-    auto status = mio::isecir::set_initial_flows(model, dt, "hello", mio::Date(2021, 12, 03));
+    // Attention: This example is only working if the file cases_all_germany_ma7.json is previously downloaded and stored in the right folder.
+    // TODO: write directions how to dowload and what format.
+    auto status = mio::isecir::set_initial_flows(model, dt, "../../data/pydata/Germany/cases_all_germany_ma7.json",
+                                                 mio::Date(2020, 12, 24));
     if (!status) {
-        std::cout << "Error : " << status.error().formatted_message();
+        std::cout << "Error: " << status.error().formatted_message();
     }
 
     // Carry out simulation.

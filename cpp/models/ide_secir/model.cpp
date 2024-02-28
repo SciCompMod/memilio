@@ -34,8 +34,8 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
-    , m_N{N_init}
     , m_total_confirmed_cases{total_confirmed_cases}
+    , m_N{N_init}
 {
     m_populations.add_time_point<Eigen::VectorXd>(
         0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));

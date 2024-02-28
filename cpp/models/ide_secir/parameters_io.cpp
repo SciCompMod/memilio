@@ -19,6 +19,7 @@
 */
 
 #include "ide_secir/parameters_io.h"
+#include "Eigen/src/Core/util/Meta.h"
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
 
@@ -34,17 +35,21 @@
 
 #include <string>
 #include <iostream>
+#include <cmath>
 
 namespace mio
 {
 namespace isecir
 {
+/* 
+    TODO: -implement a function like "check_quality" or constraints, to check eg if all the flows are nonnegative (and maybe set them to 0 otherwise)
+    - Discuss how to solve the problem with the mean or previous flow.
+    */
 
 //TODO: do this in StateAgeFunction or is this only needed here? Or should we take these values from the literature/ consider them as known
 // in the simulation?
 ScalarType compute_mean(Eigen::Index idx_CurrentFlow)
 {
-    // ScalarType mean{};
     unused(idx_CurrentFlow);
     // use dummy value = 1 for now
     return 1.;
@@ -59,7 +64,7 @@ void compute_flows_with_mean(Model& model, Eigen::Index idx_CurrentFlow, Eigen::
     ScalarType mean = compute_mean(idx_CurrentFlow);
 
     // compute how many time points we need to shift values to shift values using the mean
-    Eigen::Index mean_index = (Eigen::Index)std::round(mean / dt);
+    Eigen::Index mean_index = (Eigen::Index)(std::round(mean / dt));
 
     model.m_transitions.get_value(time_series_index)[Eigen::Index(idx_CurrentFlow)] =
         model.m_transitions.get_value(time_series_index + mean_index)[Eigen::Index(idx_OutgoingFlow)];
@@ -101,10 +106,11 @@ void compute_previous_flows(Model& model, Eigen::Index idx_CurrentFlow, Eigen::I
 
 // we assume that we start the simulation at time 0 and want to compute the necessary flows
 // in the past for the initialization of the model
-IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date)
+IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
+                                 ScalarType scale_confirmed_cases)
 {
-
-    /*// Try to get rki data from path.
+    //--- Preparations ---
+    // Try to get rki data from path.
     BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_noage(path));
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -117,18 +123,65 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     if (max_date < date) {
         log_error("Specified date does not exist in RKI data.");
         return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
-    }*/
-    unused(path);
-    unused(date);
+    }
 
-    ScalarType rki_cases_dummy = 3;
-    int num_transitions        = (int)mio::isecir::InfectionTransition::Count;
-
-    // get (global) support_max to determine how many flows in the past we have to compute
+    // Get (global) support_max to determine how many flows in the past we have to compute
     ScalarType global_support_max         = model.get_global_support_max(dt);
     Eigen::Index global_support_max_index = Eigen::Index(std::ceil(global_support_max / dt));
 
-    // TODO: assume that m_transitions is empty, here should be a condition if num_time_points>0 then delete all.
+    // m_transitions should be empty at the beginning.
+    if (model.m_transitions.get_num_time_points() > 0) {
+        model.m_transitions = TimeSeries<ScalarType>((int)InfectionTransition::Count);
+    }
+
+    // The first time we need is -4 * global_support_max
+    Eigen::Index start_shift = -4 * global_support_max_index;
+    // Create TimeSeries with zeros.
+    for (Eigen::Index i = start_shift; i <= 2 * global_support_max_index; i++) {
+        // Add time point.
+        model.m_transitions.add_time_point(
+            i * dt, TimeSeries<ScalarType>::Vector::Constant((int)InfectionTransition::Count, 0.));
+    }
+
+    //--- Calculate the flow InfectedNoSymptomsToInfectedSymptoms using the RKI data and store in the m_transitions object.---
+    ScalarType min_offset_needed = std::ceil(
+        model.m_transitions.get_time(0) -
+        1); //Need -1 if first time point is integer and just the floor value if not, therefore use ceil and -1
+    ScalarType max_offset_needed = std::ceil(model.m_transitions.get_last_time());
+
+    bool min_offset_needed_avail = false;
+    bool max_offset_needed_avail = false;
+    // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
+    Eigen::Index dummy_idx = 0;
+    for (auto&& entry : rki_data) {
+        auto offset = get_offset_in_days(entry.date, date);
+        if (!(offset < min_offset_needed) && !(offset > max_offset_needed)) {
+            if (offset == min_offset_needed) {
+                min_offset_needed_avail = true;
+            }
+            dummy_idx = (offset - model.m_transitions.get_time(0)) / dt;
+            if (dummy_idx >= 0) {
+                model
+                    .m_transitions[dummy_idx][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == max_offset_needed) {
+                max_offset_needed_avail = true;
+            }
+            if (offset == 0) {
+                model.m_populations[0][(int)InfectionState::Dead] = entry.num_deaths;
+                model.m_total_confirmed_cases                     = scale_confirmed_cases * entry.num_confirmed;
+            }
+        }
+    }
+
+    if (!max_offset_needed_avail || !min_offset_needed_avail) {
+        log_error("Necessary range of dates needed to compute initial values does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+    }
+
+    // ----------------
+    // The first time we need is -4 * global_support_max
 
     // we already know the flows from C to I for a sufficient number of time points in the past
 
@@ -136,16 +189,15 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     // define start shift as the number of time pints in the past where we start the computation
     // this is the first timepoint in the m_transitions TimeSeries and we want to store the following flows at the right time point
-    Eigen::Index start_shift = -4 * global_support_max_index;
 
     // TODO: we need values for t>0 so that we can shift values accordingly, remove them before starting our model?
     // TODO: write rki data into time series for transition from InfectedNoSymptoms to InfectedSymptoms
-    for (Eigen::Index i = start_shift + 1; i <= 2 * global_support_max_index; i++) {
+    /*for (Eigen::Index i = start_shift + 1; i <= 2 * global_support_max_index; i++) {
         // add time point
-        model.m_transitions.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0.));
+        model.m_transitions.add_time_point(
+            i * dt, TimeSeries<ScalarType>::Vector::Constant((int)InfectionTransition::Count, 0.));
         // C to I
-        model.m_transitions
-            .get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
+        model.m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
             rki_cases_dummy;
     }
 
@@ -156,9 +208,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // start with computing necessary values using mean
     for (Eigen::Index i = start_shift + 1; i <= global_support_max_index; i++) {
 
-        compute_flows_with_mean(model, Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms),
-                                Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
-                                dt, i - start_shift - 1);
+        compute_flows_with_mean(model, Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
+                                Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt,
+                                i - start_shift - 1);
     }
 
     // // compute remaining flows from E to C using formula based on flow, see Overleaf
@@ -171,13 +223,13 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     // S to E
     // start with computing necessary values using mean
-    for (Eigen::Index i = start_shift + 1; i <= 0; i++) {
-        std::cout << "Current time index: " << i << "\n";
+    for (Eigen::Index i = start_shift + 1; i <= 0; i++) {*/
+    /*std::cout << "Current time index: " << i << "\n";
         std::cout << "numtimepoints: " << model.m_transitions.get_num_time_points() << "\n";
-        std::cout << "Index in TimeSeries: " << i - start_shift << std::endl;
+        std::cout << "Index in TimeSeries: " << i - start_shift << std::endl;*/
 
-        compute_flows_with_mean(model, Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed),
-                                Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms), dt,
+    /* compute_flows_with_mean(model, Eigen::Index(InfectionTransition::SusceptibleToExposed),
+                                Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt,
                                 i - start_shift - 1);
     }
 
@@ -193,7 +245,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // I to H for -3*global_support_max, ..., 0
     for (Eigen::Index i = -3 * global_support_max_index + 1; i <= 0; i++) {
         // I to H
-        model.compute_flow(int(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere),
+        model.compute_flow(int(InfectionTransition::InfectedSymptomsToInfectedSevere),
                            Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
                            i - start_shift);
     }
@@ -227,6 +279,12 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         model.compute_flow((int)InfectionTransition::InfectedCriticalToDead,
                            Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
                            i - start_shift);
+    }
+*/
+    // At the end of the computation delete all timepoints in the future in m_transitions.
+    // TODO: maybe change this and just keep from -max_supp until 0. Too many negative flows are unneccessary but not a problem, too many positive points are a problem.
+    while (model.m_transitions.get_last_time() > 0) {
+        model.m_transitions.remove_last_time_point();
     }
     return mio::success();
 }
