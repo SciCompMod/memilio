@@ -279,7 +279,4 @@ pycode/memilio-epidata/memilio/epidata/CredentialsRegio.ini
 docs/html
 docs/xml
 
-# Build directories
-build-*
-
 # End of https://www.gitignore.io/api/c++,node,python
