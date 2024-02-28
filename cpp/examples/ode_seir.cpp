@@ -17,15 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_seir/model.h" // IWYU pragma: keep
-#include "ode_seir/infection_state.h" // IWYU pragma: keep
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
-#include "memilio/compartments/simulation.h" // IWYU pragma: keep
+#include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
-#include "memilio/math/adapt_rk.h"
-#include "memilio/utils/time_series.h" // IWYU pragma: keep
-#include "memilio/utils/time_series_to_file.h"
-#include <fstream>
+#include "memilio/utils/time_series.h"
 
 int main()
 {

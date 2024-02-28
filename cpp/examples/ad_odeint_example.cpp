@@ -77,8 +77,8 @@ int main()
                                                harmonic_oscillator, x, t0, t_end, dt);
     std::cout << "ad derivative of x is (" << ad::derivative(x[0]) << ", " << ad::derivative(x[1]) << ")\n";
 
-    // We want ot compare AD derivatives with difference quotint
-    // To this and we simulate again with perturbation of the initial value of x[0]
+    // We want to compare AD derivatives with difference quotient
+    // To this end, we simulate again with a perturbation of the initial value of x[0]
     const double h        = 1e-3;
     std::vector<double> y = {ad::value(x[0]), ad::value(x[1])};
     x[0]                  = 1.0 + h;

@@ -23,6 +23,7 @@
 #include "ode_sir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/euler.h"
 
 int main()
 {

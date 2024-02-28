@@ -25,7 +25,6 @@
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/euler.h" // IWYU pragma: keep
 
 namespace mio
 {
