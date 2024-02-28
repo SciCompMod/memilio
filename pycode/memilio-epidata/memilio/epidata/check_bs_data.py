@@ -517,7 +517,6 @@ list_person_in_bs = np.array([])
 for index, row in bd.iterrows():
 	if((row['countyStart']==3101 and row['ActivityBefore'] == 7) or (row['countyEnd']==3101 and row['ActivityAfter'] == 7)):
             list_person_in_bs = np.append(list_person_in_bs, row['personID'])
-        #   bd.loc[bd['personID']==row['personID'],'home_in_bs'] = 1
 #drop duplicates
 list_person_in_bs = np.unique(list_person_in_bs)
 for index, row in bd.iterrows():
