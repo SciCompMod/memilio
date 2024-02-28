@@ -21,7 +21,7 @@
 #define ODESECIR_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
-#include "memilio/compartments/simulation.h" // IWYU pragma: keep
+#include "memilio/compartments/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secir/infection_state.h"

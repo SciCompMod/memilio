@@ -27,7 +27,7 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
-#include "IpTNLP.hpp" // IWYU pragma: keep
+#include "IpTNLP.hpp"
 #include "IpIpoptApplication.hpp"
 #include <fstream>
 

@@ -21,9 +21,9 @@
 #define ODESECIR_PARAMETER_SPACE_H
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/utils/memory.h" // IWYU pragma: keep
-#include "memilio/utils/logging.h" // IWYU pragma: keep
-#include "memilio/utils/parameter_distributions.h" // IWYU pragma: keep
+#include "memilio/utils/memory.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/parameter_distributions.h"
 #include "ode_secir/model.h"
 
 #include <assert.h>

@@ -24,8 +24,8 @@
 #include "memilio/math/floating_point.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
-#include "memilio/math/eigen.h" // IWYU pragma: keep
-#include "memilio/math/smoother.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h"
+#include "memilio/math/smoother.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 

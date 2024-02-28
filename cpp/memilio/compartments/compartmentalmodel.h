@@ -20,14 +20,14 @@
 #ifndef MIO_COMPARTMENTALMODEL_H
 #define MIO_COMPARTMENTALMODEL_H
 
-#include "memilio/config.h" // IWYU pragma: keep
-#include "memilio/math/eigen.h" // IWYU pragma: keep
-#include "memilio/utils/custom_index_array.h" // IWYU pragma: keep
+#include "memilio/config.h"
+#include "memilio/math/eigen.h"
+#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/metaprogramming.h"
-#include <cstddef> // IWYU pragma: keep
+#include <cstddef>
 #include <type_traits>
-#include <vector> // IWYU pragma: keep
-#include <functional> // IWYU pragma: keep
+#include <vector>
+#include <functional>
 
 namespace mio
 {

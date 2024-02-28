@@ -20,7 +20,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional> // IWYU pragma: keep
+#include <functional>
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -30,7 +30,7 @@
 #include "memilio/geography/regions.h"
 #include <iostream>
 
-#include "boost/filesystem.hpp" // IWYU pragma: keep
+#include "boost/filesystem.hpp"
 
 //is used to provide some paths as function arguments
 namespace fs = boost::filesystem;

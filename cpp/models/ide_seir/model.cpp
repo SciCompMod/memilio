@@ -18,4 +18,4 @@
 * limitations under the License.
 */
 
-#include "ide_seir/model.h" // IWYU pragma: keep
+#include "ide_seir/model.h"

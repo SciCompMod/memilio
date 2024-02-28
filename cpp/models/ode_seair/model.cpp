@@ -18,4 +18,4 @@
 * limitations under the License.
 */
 
-#include "ode_seair/model.h" // IWYU pragma: keep
+#include "ode_seair/model.h"

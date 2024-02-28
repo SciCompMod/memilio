@@ -21,9 +21,9 @@
 #ifndef IDE_SEIR_H
 #define IDE_SEIR_H
 
-#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
-#include "ide_seir/parameters.h" // IWYU pragma: keep
+#include "ide_seir/parameters.h"
 #include "ide_seir/infection_state.h"
 #include "memilio/utils/logging.h"
 

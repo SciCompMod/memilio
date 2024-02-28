@@ -17,5 +17,5 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_seir/model.h" // IWYU pragma: keep
+#include "ode_seir/model.h"
 

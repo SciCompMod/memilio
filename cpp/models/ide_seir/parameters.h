@@ -21,7 +21,7 @@
 #ifndef IDE_SEIR_PARAMS_H
 #define IDE_SEIR_PARAMS_H
 
-#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/parameter_set.h"
 

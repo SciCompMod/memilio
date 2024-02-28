@@ -20,7 +20,7 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/config.h"
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"

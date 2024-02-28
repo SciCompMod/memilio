@@ -21,14 +21,14 @@
 #ifndef IDESECIR_MODEL_H
 #define IDESECIR_MODEL_H
 
-#include "ide_secir/parameters.h" // IWYU pragma: keep
+#include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/logging.h"
-#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h"
 
 namespace mio
 {
