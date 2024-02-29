@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef LCTINFECTIONSTATE_H
-#define LCTINFECTIONSTATE_H
+#ifndef MIO_EPI_LCT_INFECTION_STATE_H
+#define MIO_EPI_LCT_INFECTION_STATE_H
 
 #include <array>
 
@@ -35,8 +35,8 @@ template <class InfectionState, unsigned int... Ns>
 class LctInfectionState
 {
 public:
-    using Base = InfectionState;
-    static_assert((unsigned int)Base::Count == sizeof...(Ns),
+    using InfectionStateBase = InfectionState;
+    static_assert((unsigned int)InfectionStateBase::Count == sizeof...(Ns),
                   "The number of integers provided as template parameters must be "
                   "the same as the entry Count of InfectionState.");
 
@@ -48,10 +48,10 @@ public:
      * @tparam State: Infection state for which the number of subcompartments should be returned.   
      * @return Number of subcompartments for State.
      */
-    template <Base State>
+    template <InfectionStateBase State>
     static constexpr unsigned int get_num_subcompartments()
     {
-        static_assert(State < Base::Count, "State must be a a valid InfectionState.");
+        static_assert(State < InfectionStateBase::Count, "State must be a a valid InfectionStateBase.");
         return m_subcompartment_numbers[(int)State];
     }
 
@@ -63,10 +63,10 @@ public:
      * @tparam State: Infection state for which the index should be returned.    
      * @return Index of the first subcompartment for a vector with one entry per subcompartment.
      */
-    template <Base State>
+    template <InfectionStateBase State>
     static constexpr unsigned int get_first_index()
     {
-        static_assert(State < Base::Count, "State must be a a valid InfectionState.");
+        static_assert(State < InfectionStateBase::Count, "State must be a a valid InfectionStateBase.");
         unsigned int index = 0;
         for (int i = 0; i < (int)(State); i++) {
             index = index + m_subcompartment_numbers[i];
@@ -78,7 +78,7 @@ public:
 
 private:
     static constexpr const std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
-        Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionState.
+        Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionStateBase.
 };
 
 } // namespace mio
