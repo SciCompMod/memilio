@@ -350,6 +350,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         uint32_t trip_start         = row[index["start_time"]];
         uint32_t transport_mode     = row[index["travel_mode"]];
         uint32_t acticity_end       = row[index["activity_end"]];
+        bool home_in_bs             = (bool)row[index["in_bs"]];
 
         // Add the trip to the trip list person and location must exist at this point
         auto target_location = locations.find(target_location_id)->second;
@@ -364,7 +365,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             }
             auto first_location_id = it_first_location_id->second.first;
             auto first_location    = locations.find(first_location_id)->second;
-            auto& person           = world.add_person(first_location, determine_age_group(age));
+            auto& person           = world.add_person(first_location, determine_age_group(age), home_in_bs);
             auto home              = locations.find(home_id)->second;
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
@@ -825,16 +826,50 @@ void write_txt_file_for_graphical_compartment_output(std::vector<std::vector<mio
     }
 }
 
-mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
+struct LogInfectionStatePerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+            Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
+        auto curr_time = sim.get_time();
+        PRAGMA_OMP(for)
+        for (auto&& location : sim.get_world().get_locations()) {
+            for (uint32_t age_group = 0; age_group < num_age_groups; age_group++) {
+                for (uint32_t inf_state = 0; inf_state < (uint32_t)mio::abm::InfectionState::Count; inf_state++) {
+                    auto test = location.get_subpopulation_per_age_group(curr_time, mio::abm::InfectionState(inf_state),
+                                                                         age_group);    
+                    auto test2 =(((size_t)(mio::abm::InfectionState::Count)) * (age_group)) +  inf_state;
+                    sum(test2) += test;
+                }
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(1); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
+    auto ensemble_infection_per_loc_type =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
+    auto ensemble_infection_per_age_group =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per age group results
+    auto ensemble_infection_state_per_age_group =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection state per age group results
+    auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 500;
+    auto max_num_persons    = 23;
 
     int tid = -1;
 #pragma omp parallel private(tid) // Start of parallel region: forks threads
@@ -858,28 +893,57 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
             Eigen::Index(mio::abm::InfectionState::Count)};
         mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerLocationType> historyInfectionPerLocationType{
+            Eigen::Index(mio::abm::LocationType::Count)};
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerAgeGroup> historyInfectionPerAgeGroup{
+            Eigen::Index(sim.get_world().parameters.get_num_groups())};
+        mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
+            Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
+
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
-        sim.advance(tmax, historyPersonInf, historyTimeSeries, historyPersonInfDelta);
+        sim.advance(tmax, historyPersonInf, historyTimeSeries, historyInfectionPerLocationType,
+                    historyInfectionPerAgeGroup, historyPersonInfDelta, historyInfectionStatePerAgeGroup);
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
+        auto temp_sim_infection_per_loc_tpye =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
+        auto temp_sim_infection_per_age_group =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerAgeGroup.get_log())};
+        auto temp_sim_infection_state_per_age_group =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
+
         // Push result of the simulation back to the result vector
         ensemble_results.push_back(temp_sim_result);
+        ensemble_infection_per_loc_type.push_back(temp_sim_infection_per_loc_tpye);
+        ensemble_infection_per_age_group.push_back(temp_sim_infection_per_age_group);
+        ensemble_params.push_back(std::vector<mio::abm::World>{sim.get_world()});
+        ensemble_infection_state_per_age_group.push_back(temp_sim_infection_state_per_age_group);
         // Option to save the current run result to file
-        if (save_result_result && save_single_runs) {
+        /* if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
-        }
+            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), {0}, 1, result_dir_run.string()));
+        } */
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);
 
         std::cout << "Run " << run_idx << " of " << num_runs << " finished." << std::endl;
         ++run_idx;
     }
+
+    BOOST_OUTCOME_TRY(
+        save_results(ensemble_results, ensemble_params, {0}, result_dir / "infection_course/", save_single_runs));
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, {0}, result_dir / "infection_per_location_type/",
+                                   save_single_runs));
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, {0}, result_dir / "infection_per_age_group/",
+                                   save_single_runs));
+    BOOST_OUTCOME_TRY(save_results(ensemble_infection_state_per_age_group, ensemble_params, {0},
+                                   result_dir / "infection_state_per_age_group/", save_single_runs));
+
     write_txt_file_for_graphical_compartment_output(ensemble_results);
     BOOST_OUTCOME_TRY(save_result_result);
     return mio::success();
@@ -890,7 +954,8 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    std::string input_dir  = "/Users/david/Documents/HZI/memilio/data/";
+    std::string input_file =
+        "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/modified_braunschweig_result.csv";
     size_t num_runs;
     bool save_single_runs = true;
 
@@ -915,7 +980,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
         printf("Running with number of runs = 1.\n");
-        num_runs = 1;
+        num_runs = 2;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging

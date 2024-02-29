@@ -1118,11 +1118,11 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
                     historyInfectionPerAgeGroup, historyPersonInfDelta);
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result_infection_per_type =
-            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
         auto temp_sim_result_infection_per_loc =
-            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
         auto temp_sim_result_infection_per_age =
-            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerAgeGroup.get_log())};
         // Push result of the simulation back to the result vector
         ensemble_results_infections_per_type.push_back(temp_sim_result_infection_per_type);
         ensemble_results_infections_per_loc.push_back(temp_sim_result_infection_per_loc);

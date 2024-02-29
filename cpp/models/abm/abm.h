@@ -38,5 +38,6 @@
 #include "abm/vaccine.h"
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
+#include "abm/analyze_result.h"
 
 #endif

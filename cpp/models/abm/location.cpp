@@ -217,5 +217,13 @@ size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
     });
 }
 
+size_t Location::get_subpopulation_per_age_group(TimePoint t, InfectionState state, AgeGroup age_group) const
+{
+    mio::unused(age_group);
+    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
+        return p->get_infection_state(t) == state && p->is_home_in_bs() && p->get_age() == age_group;
+    });
+}
+
 } // namespace abm
 } // namespace mio

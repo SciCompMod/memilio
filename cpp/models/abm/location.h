@@ -384,6 +384,15 @@ public:
     size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
     /**
+     * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
+     * @param[in] t TimePoint of querry.
+     * @param[in] state #InfectionState of interest.
+     * @param[in] age_group AgeGroup of interest.
+     * @return Amount of Person%s of the #InfectionState in all Cell%s.
+     */
+    size_t get_subpopulation_per_age_group(TimePoint t, InfectionState state, AgeGroup age_group) const;
+
+    /**
      * @brief Get the geographical location of the Location.
      * @return The geographical location of the Location.
      */
