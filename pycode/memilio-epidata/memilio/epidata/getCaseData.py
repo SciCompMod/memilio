@@ -439,8 +439,6 @@ def get_case_data(
     )
 
 
-
-
 def main():
     """! Main program entry."""
     logger = logging.getLogger(__name__)
@@ -450,6 +448,7 @@ def main():
     # raw_df = fetch_case_data(**arg_dict)
     # prep_df = preprocess_case_data(raw_df=raw_df)
     # write_case_data(df=prep_df, **arg_dict)
+
 
 if __name__ == "__main__":
     main()
