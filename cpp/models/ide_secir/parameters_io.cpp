@@ -19,7 +19,6 @@
 */
 
 #include "ide_secir/parameters_io.h"
-#include "Eigen/src/Core/util/Meta.h"
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
 
@@ -159,7 +158,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
             }
-            dummy_idx = (offset - model.m_transitions.get_time(0)) / dt;
+            dummy_idx = Eigen::Index(std::ceil((offset - model.m_transitions.get_time(0)) / dt));
             if (dummy_idx >= 0) {
                 model
                     .m_transitions[dummy_idx][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
