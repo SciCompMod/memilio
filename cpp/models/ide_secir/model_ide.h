@@ -185,6 +185,8 @@ public:
      */
     void compute_recovered();
 
+    void set_populations_before_simulation();
+
     /*******************
     * Helper functions *
     *******************/

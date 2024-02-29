@@ -1,8 +1,6 @@
 import h5py
 import os
 import numpy as np
-import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 
 # matplotlib.use('tkagg')
@@ -16,7 +14,7 @@ def read_groundtruth(data_dir, setting):
     model = 'ode'
     results = {model: []}
 
-    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt=1e-6_setting{}'.format(
+    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt=1e-5_setting{}'.format(
         model, setting)) + '.h5', 'r')
 
     # if (len(list(h5file.keys())) > 1):
@@ -143,34 +141,36 @@ def plot_convergence(errors, timesteps, setting, compartment=None, save=False):
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
     if compartment != None:
 
-        # TODO: include check if compartment is in 0,...,8
+        print('Need to uncomment')
 
-        fig, ax = plt.subplots()
+        # # TODO: include check if compartment is in 0,...,8
 
-        ax.plot(timesteps, errors[:, compartment],
-                '-o', color=colors[0], label='Results')
-        comparison = [1800 * dt for dt in timesteps]
-        ax.plot(timesteps, comparison, color='lightgray',
-                label=r"$\mathcal{O}(\Delta t)$")
+        # fig, ax = plt.subplots()
 
-        ax.set_xscale("log", base=10)
-        ax.set_yscale("log", base=10)
-        ax.invert_xaxis()
+        # ax.plot(timesteps, errors[:, compartment],
+        #         '-o', color=colors[0], label='Results')
+        # comparison = [1800 * dt for dt in timesteps]
+        # ax.plot(timesteps, comparison, color='lightgray',
+        #         label=r"$\mathcal{O}(\Delta t)$")
 
-        fig.supxlabel('Time step')
-        fig.supylabel(r"$\Vert {compartment}_{IDE}(t_{max}) - {compartment}_{ODE}(t_{max})\Vert$".replace(
-            'compartment', compartments[compartment]))
+        # ax.set_xscale("log", base=10)
+        # ax.set_yscale("log", base=10)
+        # ax.invert_xaxis()
 
-        plt.legend()
+        # fig.supxlabel('Time step')
+        # fig.supylabel(r"$\Vert {compartment}_{IDE}(t_{max}) - {compartment}_{ODE}(t_{max})\Vert$".replace(
+        #     'compartment', compartments[compartment]))
 
-        if save:
-            if not os.path.isdir('plots'):
-                os.makedirs('plots')
-            plt.savefig('plots/convergence_{compartments[compartment]}_setting{}.png'.format(setting),
-                        bbox_inches='tight', dpi=500)
+        # plt.legend()
 
-        else:
-            plt.show()
+        # if save:
+        #     if not os.path.isdir('plots'):
+        #         os.makedirs('plots')
+        #     plt.savefig('plots/convergence_{compartments[compartment]}_setting{}.png'.format(setting),
+        #                 bbox_inches='tight', dpi=500)
+
+        # else:
+        #     plt.show()
 
     else:
         fig, ax = plt.subplots(4, 2, sharex=True)
@@ -294,7 +294,9 @@ def main():
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    setting = 8
+    setting = '16'
+
+    print('Setting: ', setting)
 
     timesteps = ['1e-2', '1e-3']  # , '1e-4'
 
@@ -309,13 +311,13 @@ def main():
 
     # print_initial_values(groundtruth, results, timesteps)
 
-    print_total_population(results, timesteps)
+    # print_total_population(results, timesteps)
 
     order = compute_order_of_convergence(errors, timesteps)
 
     print('Orders of convergence: ', order)
 
-    print_results(groundtruth, results, timesteps)
+    # print_results(groundtruth, results, timesteps)
 
     # print_errors(errors, timesteps)
 

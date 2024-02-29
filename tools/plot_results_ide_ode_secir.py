@@ -110,8 +110,8 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    timestep = '1e-2'
-    setting = 4
+    timestep = '1e-3'
+    setting = 16
     # Plot comparison of ODE and IDE models
     compare_results(timestep, setting,
                     legendplot=list(["ODE", "IDE"]), save=True)

@@ -50,9 +50,9 @@ int main()
     bool print_to_terminal = false;
     bool save_result       = true;
     bool ide_simulation    = true;
-    int dt_exponent        = 2;
+    int dt_exponent        = 3;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 6;
+    int setting = 16;
 
     // General set up.
     ScalarType t0   = 0;
@@ -66,8 +66,7 @@ int main()
     ScalarType nb_total_t0 = 10000, nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1,
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    if (setting == 10) {
-        // not recognized by ODE model
+    if (setting == 10 || setting == 12 || setting == 13 || setting == 14) {
         nb_rec_t0 = 0.;
     }
 
@@ -118,7 +117,7 @@ int main()
         model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.5;
     }
 
-    if (setting == 5) {
+    if (setting == 5 || setting == 12 || setting == 13 || setting == 15) {
         // Set probabilities that determine proportion between compartments
         model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.;
         model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
@@ -126,7 +125,7 @@ int main()
         model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 1.;
     }
 
-    if (setting == 6 || setting == 11) {
+    if (setting == 6 || setting == 11 || setting == 14) {
         // Set probabilities that determine proportion between compartments
         model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.;
         model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
@@ -226,7 +225,7 @@ int main()
 
         ScalarType total_infections = 0.;
 
-        if (setting == 11) {
+        if (setting == 11 || setting == 13 || setting == 14) {
             total_infections = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
                                            [(int)mio::osecir::InfectionState::InfectedSymptoms] +
                                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
@@ -332,6 +331,14 @@ int main()
         compute_initial_flows_from_ode_compartments(model_ode, model_ide, secihurd_ode, t0_ide, dt);
 
         model_ide.check_constraints(dt);
+
+        model_ide.set_populations_before_simulation();
+
+        if (setting == 15 || setting == 16) {
+            model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] =
+                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                            [(int)mio::osecir::InfectionState::Recovered];
+        }
 
         // Carry out simulation
         std::cout << "Simulating now \n";
