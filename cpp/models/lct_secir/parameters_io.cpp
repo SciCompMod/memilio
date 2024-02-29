@@ -75,7 +75,7 @@ IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Da
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
     for (auto&& entry : rki_data) {
         auto offset = get_offset_in_days(entry.date, date);
-        if (!(offset < min_offset_needed) || !(offset > max_offset_needed)) {
+        if (!(offset < min_offset_needed) && !(offset > max_offset_needed)) {
             // Add confirmed cases at date to compartment Recovered.
             if (offset == 0) {
                 init[infectionState.get_firstindex(InfectionStateBase::Recovered)] +=
