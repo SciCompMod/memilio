@@ -133,7 +133,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         model.m_transitions = TimeSeries<ScalarType>((int)InfectionTransition::Count);
     }
 
-    // The first time we need is -4 * global_support_max
+    // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = -4 * global_support_max_index;
     // Create TimeSeries with zeros.
     for (Eigen::Index i = start_shift; i <= 2 * global_support_max_index; i++) {
@@ -151,19 +151,43 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
-    Eigen::Index dummy_idx = 0;
+    // Define variables to store the first and the last index of the TimeSeries where the entry of rki_data is potentially needed.
+    Eigen::Index idx_needed_first = 0;
+    Eigen::Index idx_needed_last  = 0;
+    ScalarType time_idx           = 0;
     for (auto&& entry : rki_data) {
-        auto offset = get_offset_in_days(entry.date, date);
+        int offset = get_offset_in_days(entry.date, date);
         if (!(offset < min_offset_needed) && !(offset > max_offset_needed)) {
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
             }
-            dummy_idx = Eigen::Index(std::ceil((offset - model.m_transitions.get_time(0)) / dt));
-            if (dummy_idx >= 0) {
-                model
-                    .m_transitions[dummy_idx][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-                    scale_confirmed_cases * entry.num_confirmed;
+            // Smallest index for which the entry is needed is when offset=std::ceil(time_idx).
+            idx_needed_first =
+                Eigen::Index(std::max(std::floor((offset - model.m_transitions.get_time(0) - 1) / dt), 0.));
+            // Biggest index for which the entry is needed is when offset=std::floor(time_idx-dt).
+            idx_needed_last = Eigen::Index(std::min(std::ceil((offset - model.m_transitions.get_time(0) + 1) / dt),
+                                                    double(model.m_transitions.get_num_time_points() - 1)));
+            // dummy_idx = Eigen::Index(std::ceil((offset - model.m_transitions.get_time(0)) / dt));
+            for (Eigen::Index i = idx_needed_first; i <= idx_needed_last; i++) {
+                time_idx = model.m_transitions.get_time(i);
+                if (offset == int(std::floor(time_idx))) {
+                    model.m_transitions[i][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] +=
+                        (1 - (time_idx - std::floor(time_idx))) * scale_confirmed_cases * entry.num_confirmed;
+                }
+                if (offset == int(std::ceil(time_idx))) {
+                    model.m_transitions[i][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] +=
+                        (time_idx - std::floor(time_idx)) * scale_confirmed_cases * entry.num_confirmed;
+                }
+                if (offset == int(std::floor(time_idx - dt))) {
+                    model.m_transitions[i][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] -=
+                        (1 - (time_idx - dt - std::floor(time_idx - dt))) * scale_confirmed_cases * entry.num_confirmed;
+                }
+                if (offset == int(std::ceil(time_idx - dt))) {
+                    model.m_transitions[i][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] -=
+                        (time_idx - dt - std::floor(time_idx - dt)) * scale_confirmed_cases * entry.num_confirmed;
+                }
             }
+
             if (offset == max_offset_needed) {
                 max_offset_needed_avail = true;
             }
