@@ -43,6 +43,7 @@ namespace isecir
 /* 
     TODO: -implement a function like "check_quality" or constraints, to check eg if all the flows are nonnegative (and maybe set them to 0 otherwise)
     - Discuss how to solve the problem with the mean or previous flow.
+    - Seperate function for reading data into flow?
     */
 
 //TODO: do this in StateAgeFunction or is this only needed here? Or should we take these values from the literature/ consider them as known
@@ -203,28 +204,43 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
     }
 
-    // ----------------
-    // The first time we need is -4 * global_support_max
-
-    // we already know the flows from C to I for a sufficient number of time points in the past
-
-    // now we first want to compute the flows that are coming later, i.e. flows starting at I or at a later compartment
-
-    // define start shift as the number of time pints in the past where we start the computation
-    // this is the first timepoint in the m_transitions TimeSeries and we want to store the following flows at the right time point
-
-    // TODO: we need values for t>0 so that we can shift values accordingly, remove them before starting our model?
-    // TODO: write rki data into time series for transition from InfectedNoSymptoms to InfectedSymptoms
-    /*for (Eigen::Index i = start_shift + 1; i <= 2 * global_support_max_index; i++) {
-        // add time point
-        model.m_transitions.add_time_point(
-            i * dt, TimeSeries<ScalarType>::Vector::Constant((int)InfectionTransition::Count, 0.));
-        // C to I
-        model.m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-            rki_cases_dummy;
+    //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
+    // I to H for -3 * global_support_max, ..., 0
+    for (Eigen::Index i = -3 * global_support_max_index + 1; i <= 0; i++) {
+        model.compute_flow(int(InfectionTransition::InfectedSymptomsToInfectedSevere),
+                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
+                           i - start_shift);
+    }
+    // H to U for -2*global_support_max, ..., 0
+    for (Eigen::Index i = -2 * global_support_max_index + 1; i <= 0; i++) {
+        model.compute_flow((int)InfectionTransition::InfectedSevereToInfectedCritical,
+                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, true,
+                           i - start_shift);
+    }
+    // I, H, U to R and U to D for -1*global_support_max, ..., 0
+    for (Eigen::Index i = -global_support_max_index + 1; i <= 0; i++) {
+        // I to R
+        model.compute_flow((int)InfectionTransition::InfectedSymptomsToRecovered,
+                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
+                           i - start_shift);
+        // H to R
+        model.compute_flow((int)InfectionTransition::InfectedSevereToRecovered,
+                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, true,
+                           i - start_shift);
+        // U to R
+        model.compute_flow((int)InfectionTransition::InfectedCriticalToRecovered,
+                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
+                           i - start_shift);
+        // U to D
+        model.compute_flow((int)InfectionTransition::InfectedCriticalToDead,
+                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
+                           i - start_shift);
     }
 
-    // Compute remaining flows
+    //--- Calculate the remaining flows. ---
+    // ----------------
+
+    /*
     // E to C
     // TODO: think about when to start for loops, this should also depend on the mean and not only global_max_support
 
@@ -265,44 +281,14 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     //                            i - start_shift - 1, dt);
     // }
 
-    // I to H for -3*global_support_max, ..., 0
-    for (Eigen::Index i = -3 * global_support_max_index + 1; i <= 0; i++) {
-        // I to H
-        model.compute_flow(int(InfectionTransition::InfectedSymptomsToInfectedSevere),
-                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
-                           i - start_shift);
-    }
-
-    // H to U for -2*global_support_max, ..., 0
-    for (Eigen::Index i = -2 * global_support_max_index + 1; i <= 0; i++) {
-        // H to U
-        model.compute_flow((int)InfectionTransition::InfectedSevereToInfectedCritical,
-                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, true,
-                           i - start_shift);
-    }
-
-    // C, I, H, U to R and U to D for -1*global_support_max, ..., 0
+// C to R for -1*global_support_max, ..., 0
     for (Eigen::Index i = -global_support_max_index + 1; i <= 0; i++) {
         // C to R
         model.compute_flow((int)InfectionTransition::InfectedNoSymptomsToRecovered,
                            Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt, true, i - start_shift);
-        // I to R
-        model.compute_flow((int)InfectionTransition::InfectedSymptomsToRecovered,
-                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
-                           i - start_shift);
-        // H to R
-        model.compute_flow((int)InfectionTransition::InfectedSevereToRecovered,
-                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, true,
-                           i - start_shift);
-        // U to R
-        model.compute_flow((int)InfectionTransition::InfectedCriticalToRecovered,
-                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
-                           i - start_shift);
-        // U to D
-        model.compute_flow((int)InfectionTransition::InfectedCriticalToDead,
-                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
-                           i - start_shift);
     }
+
+    
 */
     // At the end of the computation delete all timepoints in the future in m_transitions.
     // TODO: maybe change this and just keep from -max_supp until 0. Too many negative flows are unneccessary but not a problem, too many positive points are a problem.
