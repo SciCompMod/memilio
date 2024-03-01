@@ -857,14 +857,15 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 {
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(1); // End time per simulation
-    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
-    ensemble_results.reserve(size_t(num_runs));
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
+    ensemble_infection_per_loc_type.reserve(size_t(num_runs));
     auto ensemble_infection_per_age_group =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per age group results
+    ensemble_infection_per_age_group.reserve(size_t(num_runs));
     auto ensemble_infection_state_per_age_group =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection state per age group results
+    ensemble_infection_state_per_age_group.reserve(size_t(num_runs));
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
@@ -930,16 +931,14 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         ++run_idx;
     }
 
-    BOOST_OUTCOME_TRY(
-        save_results(ensemble_results, ensemble_params, {0}, result_dir / "infection_course/", save_single_runs));
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, {0}, result_dir / "infection_per_location_type/",
-                                   save_single_runs));
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, {0}, result_dir / "infection_per_age_group/",
-                                   save_single_runs));
+    BOOST_OUTCOME_TRY(save_results(ensemble_infection_per_loc_type, ensemble_params, {0},
+                                   result_dir / "infection_per_location_type/", save_single_runs));
+    BOOST_OUTCOME_TRY(save_results(ensemble_infection_per_age_group, ensemble_params, {0},
+                                   result_dir / "infection_per_age_group/", save_single_runs));
     BOOST_OUTCOME_TRY(save_results(ensemble_infection_state_per_age_group, ensemble_params, {0},
                                    result_dir / "infection_state_per_age_group/", save_single_runs));
 
-    write_txt_file_for_graphical_compartment_output(ensemble_results);
+    //write_txt_file_for_graphical_compartment_output(ensemble_infection_state_per_age_group);
     BOOST_OUTCOME_TRY(save_result_result);
     return mio::success();
 }
@@ -949,7 +948,7 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data";
     size_t num_runs;
     bool save_single_runs = true;
 
