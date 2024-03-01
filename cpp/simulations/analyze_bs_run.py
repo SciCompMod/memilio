@@ -77,7 +77,7 @@ def plot_infection_per_age_group(df):
 def plot_results(path):
     # median / 50-percentile
     f = h5py.File(
-        "/Users/David/Documents/HZI/memilio/data/results/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
 
     # Get the HDF5 group; key needs to be a group name from above
     group = f['0']
@@ -92,19 +92,20 @@ def plot_results(path):
 
     # 05-percentile
     f = h5py.File(
-        "/Users/David/Documents/HZI/memilio/data/results/infection_state_per_age_group/p05/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
     group = f['0']
     total_05 = group['Total'][()]
     f.close()
 
     # 95-percentile
     f = h5py.File(
-        "/Users/David/Documents/HZI/memilio/data/results/infection_state_per_age_group/p95/Results.h5", 'r')
+        path + "/infection_state_per_age_group/p95/Results.h5", 'r')
     group = f['0']
     total_95 = group['Total'][()]
     f.close()
 
     plot_infection_states(time, total_50, total_05, total_95)
+    x=1
 
 
 def plot_infection_states(x, y50, y05, y95):
@@ -137,11 +138,13 @@ def plot_mean_and_std(Y):
 
 
 if __name__ == "__main__":
+    #path to results
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
-        folder_path = "build/bin"
+        folder_path = path
         n_runs = len([entry for entry in os.listdir(folder_path)
                      if os.path.isfile(os.path.join(folder_path, entry))])
     #main(n_runs)
-    plot_results('build/bin/')
+    plot_results(path)

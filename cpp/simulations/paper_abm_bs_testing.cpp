@@ -64,8 +64,8 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
 {
     // estimate intial population by ODE compartiments
     auto initial_graph                     = get_graph(date, 1, input_dir);
-    size_t braunschweig_id = 16; // Braunschweig has ID 16
-    auto braunschweig_node = initial_graph.value()[braunschweig_id];
+    size_t braunschweig_id                 = 16; // Braunschweig has ID 16
+    auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
 }
 
@@ -858,8 +858,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                         bool save_single_runs = true)
 {
     mio::Date start_date{2020, 3, 1};
-    auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(10); // End time per simulation
+    auto t0   = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(40); // End time per simulation
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -872,7 +872,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 10;
+    auto max_num_persons    = 1000;
 
     // Determine inital infection state distribution
     determine_initial_infection_states_world(input_dir, start_date);
@@ -961,8 +961,8 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    std::string result_dir = "/Users/David/Documents/HZI/memilio/data/results/";
-    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data/";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
 
@@ -987,7 +987,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
         printf("Running with number of runs = 1.\n");
-        num_runs = 1;
+        num_runs = 2;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
