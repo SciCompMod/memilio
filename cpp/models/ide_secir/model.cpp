@@ -141,7 +141,13 @@ void Model::compute_susceptibles(ScalarType dt)
         m_populations[num_time_points - 2][Eigen::Index(InfectionState::Susceptible)] / (1 + dt * m_forceofinfection);
 }
 
-void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt, bool initial_flow,
+void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt)
+{
+    Eigen::Index current_time_index = m_transitions.get_num_time_points() - 1;
+    compute_flow(idx_InfectionTransitions, idx_IncomingFlow, dt, current_time_index);
+}
+
+void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
                          Eigen::Index current_time_index)
 {
     ScalarType sum = 0;
@@ -155,27 +161,17 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
         parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_support_max(dt, m_tol) / dt);
 
-    Eigen::Index num_time_points;
+    for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
+        // (current_time_index - i) * dt is the time, the individuals has already spent in this state.
+        ScalarType state_age = (current_time_index - i) * dt;
 
-    if (initial_flow) {
-        num_time_points = current_time_index;
-    }
-
-    else {
-        num_time_points = m_transitions.get_num_time_points();
-    }
-
-    for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
-        // (num_time_points - 1 - i) * dt is the time, the individuals has already spent in this state.
-        ScalarType state_age = (num_time_points - 1 - i) * dt;
-
-        // backward difference scheme to approximate first derivative
+        // Backward difference scheme to approximate first derivative.
         sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age) -
                 parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age - dt)) /
                dt * m_transitions[i + 1][idx_IncomingFlow];
     }
 
-    m_transitions.get_value(num_time_points - 1)[Eigen::Index(idx_InfectionTransitions)] =
+    m_transitions.get_value(current_time_index)[Eigen::Index(idx_InfectionTransitions)] =
         (-dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
 }
 

@@ -206,35 +206,31 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
     // I to H for -3 * global_support_max, ..., 0
-    for (Eigen::Index i = -3 * global_support_max_index + 1; i <= 0; i++) {
+    for (Eigen::Index i = -3 * global_support_max_index; i <= 0; i++) {
         model.compute_flow(int(InfectionTransition::InfectedSymptomsToInfectedSevere),
-                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
+                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt,
                            i - start_shift);
     }
     // H to U for -2*global_support_max, ..., 0
-    for (Eigen::Index i = -2 * global_support_max_index + 1; i <= 0; i++) {
+    for (Eigen::Index i = -2 * global_support_max_index; i <= 0; i++) {
         model.compute_flow((int)InfectionTransition::InfectedSevereToInfectedCritical,
-                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, true,
-                           i - start_shift);
+                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, i - start_shift);
     }
     // I, H, U to R and U to D for -1*global_support_max, ..., 0
-    for (Eigen::Index i = -global_support_max_index + 1; i <= 0; i++) {
+    for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
         // I to R
         model.compute_flow((int)InfectionTransition::InfectedSymptomsToRecovered,
-                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt, true,
+                           Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt,
                            i - start_shift);
         // H to R
         model.compute_flow((int)InfectionTransition::InfectedSevereToRecovered,
-                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, true,
-                           i - start_shift);
+                           Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, i - start_shift);
         // U to R
         model.compute_flow((int)InfectionTransition::InfectedCriticalToRecovered,
-                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
-                           i - start_shift);
+                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, i - start_shift);
         // U to D
         model.compute_flow((int)InfectionTransition::InfectedCriticalToDead,
-                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, true,
-                           i - start_shift);
+                           Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, i - start_shift);
     }
 
     //--- Calculate the remaining flows. ---
@@ -285,13 +281,14 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     for (Eigen::Index i = -global_support_max_index + 1; i <= 0; i++) {
         // C to R
         model.compute_flow((int)InfectionTransition::InfectedNoSymptomsToRecovered,
-                           Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt, true, i - start_shift);
+                           Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt, i - start_shift);
     }
 
     
 */
     // At the end of the computation delete all timepoints in the future in m_transitions.
     // TODO: maybe change this and just keep from -max_supp until 0. Too many negative flows are unneccessary but not a problem, too many positive points are a problem.
+    // TODO: hier m_transitions alt zerstören und überschreiben mit kopie! nicht einfach time poins löschen, sr ineffizient
     while (model.m_transitions.get_last_time() > 0) {
         model.m_transitions.remove_last_time_point();
     }

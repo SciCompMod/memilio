@@ -57,7 +57,6 @@ public:
     */
     void check_constraints(ScalarType dt) const
     {
-        unused(dt);
         if (!(m_populations.get_num_time_points() > 0)) {
             log_error("Model construction failed. No initial time point for populations.");
         }
@@ -73,9 +72,16 @@ public:
                 "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
+        // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
+        }
+
+        // We have some things that just work out if the last time point is zero, e.g. the first time point in m_populations is set to zero ion the constructor.
+        if (!(m_transitions.get_last_time() == 0)) {
+            log_error("A variable given for model construction is not valid. The last time point in the transition "
+                      "vector should be zero.");
         }
 
         parameters.check_constraints();
@@ -99,19 +105,30 @@ public:
     void compute_susceptibles(ScalarType dt);
 
     /**
-     * @brief Computes size of a flow.
+     * @brief Computes size of a flow for the current last time value in m_transitions.
      * 
      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last time value in m_transitions.
+     * last time value in m_transitions. 
+     * The function compute_flow with one parameter more is called with the specification of current_time_index as 
+     * the last index of m_transitions.
+     * See also compute_flow for a description of the parameters.
+     */
+    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
+
+    /**
+     * @brief Computes size of a flow.
+     * 
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the ctime index current_time_index.
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
      *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
+     * @param[in] current_time_index The time index the flow should be computed for.
      */
     void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
-                      bool initial_flow = false, Eigen::Index current_time_index = 0);
+                      Eigen::Index current_time_index);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
