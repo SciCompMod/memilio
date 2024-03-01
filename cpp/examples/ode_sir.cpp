@@ -23,6 +23,8 @@
 #include "ode_sir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include <fstream>
+#include <stdio.h>
 
 int main()
 {
@@ -77,4 +79,32 @@ int main()
         Eigen::VectorXd res_j = sir.get_last_value();
         printf("number total: %f", res_j[0] + res_j[1] + res_j[2]);
     }
+
+    // Print the resulting table into a string
+    std::ostringstream ostream;
+    sir.print_table({"S","I", "R"}, 16, 5,ostream);
+    std::string result_1 = ostream.rdbuf()->str();
+
+    // Extract existing table from implementation without agegroups into string
+    std::string path = "sir_example_pre_agegroups.txt";
+    constexpr auto read_size = std::size_t(40000);
+    auto istream = std::ifstream(path);
+    istream.exceptions(std::ios_base::badbit);
+
+    if (!istream.is_open()) {
+        throw std::ios_base::failure("file does not exist");
+    }
+    
+    auto result_2 = std::string();
+    auto buf = std::string(read_size, '\0');
+    while (istream.read(& buf[0], read_size)) {
+        result_2.append(buf, 0, istream.gcount());
+    }
+    result_2.append(buf, 0, istream.gcount());
+
+    std::cout<<std::endl;
+    std::cout<<"THIS IS result_1: "<<result_1<<std::endl;
+    std::cout<<"THIS IS result_2: "<<result_2<<std::endl;
+
+    std::cout<<result_1.compare(result_2)<<std::endl;
 }

@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <vector>
+#include <sstream>
 
 TEST(Testsir, simulateDefault)
 {
@@ -169,4 +170,56 @@ TEST(Testsir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_NEAR(model.parameters.get<mio::osir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0], 0.0, 1e-14);
     mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(Testsir, test_age_groups)
+{
+    double t0   = 0.;
+    double tmax = 50.;
+    double dt   = 0.1002004008016032;
+
+    double total_population = 1061000;
+
+    mio::osir::Model model(1);
+
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 1000;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 1000;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] =
+        total_population -
+        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
+    model.parameters.set<mio::osir::TimeInfected>(2);
+    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(2.7);
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
+
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+
+    model.check_constraints();
+
+    auto sir = simulate(t0, tmax, dt, model, integrator);
+
+    // Convert the table from the simulation into a string
+    std::ostringstream ostream;
+    sir.print_table({"S","I", "R"}, 16, 5,ostream);
+    std::string result_1 = ostream.rdbuf()->str();
+
+    // Extract existing table from implementation without agegroups into a string
+    std::string path = "sir_example_pre_agegroups.txt";
+    constexpr auto read_size = std::size_t(40000);
+    auto istream = std::ifstream(path);
+    istream.exceptions(std::ios_base::badbit);
+
+    if (!istream.is_open()) {
+        throw std::ios_base::failure("file does not exist");
+    }
+    
+    auto result_2 = std::string();
+    auto buf = std::string(read_size, '\0');
+    while (istream.read(& buf[0], read_size)) {
+        result_2.append(buf, 0, istream.gcount());
+    }
+    result_2.append(buf, 0, istream.gcount());
+    EXPECT_EQ(result_1,result_2);
 }
