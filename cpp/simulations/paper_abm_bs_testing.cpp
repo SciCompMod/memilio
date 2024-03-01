@@ -853,7 +853,7 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
         return std::make_pair(curr_time, sum);
     }
 };
-mio::IOResult<void> run(const std::string& input_file, const fs::path& result_dir, size_t num_runs,
+mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
@@ -954,8 +954,8 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    std::string input_file =
-        "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/modified_braunschweig_result.csv";
+    std::string input_dir =
+        "/Users/David/Documemts/HZI/memilio/data/";
     size_t num_runs;
     bool save_single_runs = true;
 
