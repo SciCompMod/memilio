@@ -843,10 +843,9 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
         for (auto&& location : sim.get_world().get_locations()) {
             for (uint32_t age_group = 0; age_group < num_age_groups; age_group++) {
                 for (uint32_t inf_state = 0; inf_state < (uint32_t)mio::abm::InfectionState::Count; inf_state++) {
-                    auto test = location.get_subpopulation_per_age_group(curr_time, mio::abm::InfectionState(inf_state),
-                                                                         age_group);    
-                    auto test2 =(((size_t)(mio::abm::InfectionState::Count)) * (age_group)) +  inf_state;
-                    sum(test2) += test;
+                    sum((((size_t)(mio::abm::InfectionState::Count)) * (age_group)) + inf_state) +=
+                        location.get_subpopulation_per_age_group(curr_time, mio::abm::InfectionState(inf_state),
+                                                                 age_group);
                 }
             }
         }
@@ -890,8 +889,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
                      mio::abm::LogDataForMovement>
             historyPersonInf;
-        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-            Eigen::Index(mio::abm::InfectionState::Count)};
         mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerLocationType> historyInfectionPerLocationType{
             Eigen::Index(mio::abm::LocationType::Count)};
@@ -906,10 +903,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
-        sim.advance(tmax, historyPersonInf, historyTimeSeries, historyInfectionPerLocationType,
-                    historyInfectionPerAgeGroup, historyPersonInfDelta, historyInfectionStatePerAgeGroup);
+        sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyInfectionPerAgeGroup,
+                    historyPersonInfDelta, historyInfectionStatePerAgeGroup);
         // TODO: update result of the simulation to be a vector of location result.
-        auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
         auto temp_sim_infection_per_loc_tpye =
             std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
         auto temp_sim_infection_per_age_group =
@@ -918,7 +914,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
 
         // Push result of the simulation back to the result vector
-        ensemble_results.push_back(temp_sim_result);
         ensemble_infection_per_loc_type.push_back(temp_sim_infection_per_loc_tpye);
         ensemble_infection_per_age_group.push_back(temp_sim_infection_per_age_group);
         ensemble_params.push_back(std::vector<mio::abm::World>{sim.get_world()});
@@ -954,8 +949,7 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    std::string input_dir =
-        "/Users/David/Documemts/HZI/memilio/data/";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     size_t num_runs;
     bool save_single_runs = true;
 
