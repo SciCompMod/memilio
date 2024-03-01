@@ -75,26 +75,45 @@ def plot_infection_per_age_group(df):
     plt.show()
 
 def plot_results(path):
-    # df = pd.read_hdf(os.path.join(path, 'infection_course/p50/Results_sum.h5'))
-    f = h5py.File("/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/build/bin/infection_state_per_age_group/p50/Results.h5", 'r')
+    # median / 50-percentile
+    f = h5py.File(
+        "/Users/David/Documents/HZI/memilio/data/results/infection_state_per_age_group/p50/Results.h5", 'r')
 
     # Get the HDF5 group; key needs to be a group name from above
     group = f['0']
 
     # This assumes group[some_key_inside_the_group] is a dataset,
     # and returns a np.array:
-    # time = group['Time'][()]
-    total = group['Total'][()]
-    group1 = group['Group1'][()]
-    group2 = group['Group2'][()]
-
-    comp_simulated = np.sum(total[:, comp], axis=1)
+    time = group['Time'][()]
+    total_50 = group['Total'][()]
 
     # After you are done
     f.close()
 
-    return comp_simulated[:]
-    # print(df.head())
+    # 05-percentile
+    f = h5py.File(
+        "/Users/David/Documents/HZI/memilio/data/results/infection_state_per_age_group/p05/Results.h5", 'r')
+    group = f['0']
+    total_05 = group['Total'][()]
+    f.close()
+
+    # 95-percentile
+    f = h5py.File(
+        "/Users/David/Documents/HZI/memilio/data/results/infection_state_per_age_group/p95/Results.h5", 'r')
+    group = f['0']
+    total_95 = group['Total'][()]
+    f.close()
+
+    plot_infection_states(time, total_50, total_05, total_95)
+
+
+def plot_infection_states(x, y50, y05, y95):
+    plt.plot(x, y50)
+    plt.legend(['S', 'E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Rec', 'Dead'])
+
+    for i in range(y50.shape[1]):
+        plt.fill_between(x, y50[:, i], y05[:, i], alpha=0.1)
+        plt.fill_between(x, y50[:, i], y95[:, i], alpha=0.1)
 
 def plot_mean_and_std(Y):
 

@@ -54,26 +54,32 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
     {mio::osecir::InfectionState::Recovered, mio::abm::InfectionState::Recovered},
     {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
+mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
+    {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.};
+
+/**
+ * Determine initial distribution of infection states.
+*/
+void determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date)
+{
+    // estimate intial population by ODE compartiments
+    auto initial_graph                     = get_graph(date, 1, input_dir);
+    size_t braunschweig_id = 16; // Braunschweig has ID 16
+    auto braunschweig_node = initial_graph.value()[braunschweig_id];
+    initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
+}
+
 /**
  * Assign an infection state to each person according to real world data read in through the ODE secir model.
  */
-void assign_infection_state(mio::abm::World& world, const fs::path& input_dir, mio::abm::TimePoint t)
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
 {
-    // estimate intial population by ODE compartiments
-    auto initial_graph     = get_graph(mio::Date(2020, 03, 01), 1, input_dir);
-    size_t braunschweig_id = 16; // Braunschweig has ID 16
-    auto braunschweig_node = initial_graph.value()[braunschweig_id];
-    mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_values{
-        {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.};
-    initial_values.array() = braunschweig_node.populations.array().cast<double>();
-    //std::cout << initial_values.array() << std::endl;
-
     // convert initial population to ABM initial infections
     for (auto& person : world.get_persons()) {
         auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
 
         auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
-            rng, initial_values.slice(person.get_age()).as_array().array()));
+            rng, initial_infection_distribution.slice(person.get_age()).as_array().array()));
 
         //bool detected = false;
         if (infection_state != mio::osecir::InfectionState::Susceptible) {
@@ -693,11 +699,10 @@ void set_local_parameters(mio::abm::World& world)
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
  */
-mio::abm::Simulation create_sampled_simulation(const fs::path& input_dir, const mio::abm::TimePoint& t0,
-                                               int max_num_persons)
+void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, const mio::abm::TimePoint& t0,
+                          int max_num_persons)
 {
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    auto world = mio::abm::World(num_age_groups);
 
     set_parameters(world.parameters);
     set_local_parameters(world);
@@ -708,18 +713,15 @@ mio::abm::Simulation create_sampled_simulation(const fs::path& input_dir, const 
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, input_dir, t0);
+    assign_infection_state(world, t0);
 
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
+    //auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
-    mio::abm::set_home_office(t_lockdown, 0.25, world.parameters);
-    mio::abm::set_school_closure(t_lockdown, 0.9, world.parameters);
-    mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
-
-    auto sim = mio::abm::Simulation(t0, std::move(world));
-    return sim;
+    //mio::abm::set_home_office(t_lockdown, 0.25, world.parameters);
+    //mio::abm::set_school_closure(t_lockdown, 0.9, world.parameters);
+    //mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
 }
 
 template <typename T>
@@ -855,8 +857,9 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
 mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
+    mio::Date start_date{2020, 3, 1};
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(1); // End time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(10); // End time per simulation
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -869,7 +872,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 23;
+    auto max_num_persons    = 10;
+
+    // Determine inital infection state distribution
+    determine_initial_infection_states_world(input_dir, start_date);
 
     int tid = -1;
 #pragma omp parallel private(tid) // Start of parallel region: forks threads
@@ -881,11 +887,19 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         }
     } // ** end of the the parallel: joins threads
 
+    // Create one world for all simulations that will be copied
+    //auto world = mio::abm::World(num_age_groups);
+    //create_sampled_world(world, input_dir, t0, max_num_persons);
+
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
         // Create the sampled simulation with start time t0.
-        auto sim = create_sampled_simulation(input_dir, t0, max_num_persons);
+        auto world = mio::abm::World(num_age_groups);
+        create_sampled_world(world, input_dir, t0, max_num_persons);
+        // auto world_copy = world; // COPY CONSTRUCTOR DOESN'T WORK. LOCATIONS AREN'T ASSIGNED!
+        auto sim = mio::abm::Simulation(t0, std::move(world));
+
         //output object
         mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
                      mio::abm::LogDataForMovement>
@@ -947,8 +961,8 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    std::string result_dir = ".";
-    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data";
+    std::string result_dir = "/Users/David/Documents/HZI/memilio/data/results/";
+    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data/";
     size_t num_runs;
     bool save_single_runs = true;
 
@@ -973,7 +987,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
         printf("Running with number of runs = 1.\n");
-        num_runs = 2;
+        num_runs = 1;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging

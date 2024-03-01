@@ -75,8 +75,13 @@ public:
         : parameters(other.parameters)
         , m_persons()
         , m_locations()
+        , m_has_locations(other.m_has_locations)
+        , m_testing_strategy(other.m_testing_strategy)
         , m_trip_list(other.m_trip_list)
+        , m_use_migration_rules(other.m_use_migration_rules)
+        , m_migration_rules(other.m_migration_rules)
         , m_cemetery_id(add_location(LocationType::Cemetery))
+        , m_rng(other.m_rng)
     {
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
@@ -93,7 +98,6 @@ public:
                 }
             }
         }
-        use_migration_rules(other.m_use_migration_rules);
     }
 
     //type is move-only for stable references of persons/locations
