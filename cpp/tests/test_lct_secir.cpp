@@ -40,7 +40,7 @@ TEST(TestLCTSecir, simulateDefault)
     ScalarType tmax = 1;
     ScalarType dt   = 0.1;
 
-    Eigen::VectorXd init = Eigen::VectorXd::Constant((int)Model::LctState::InfectionStateBase::Count, 15);
+    Eigen::VectorXd init = Eigen::VectorXd::Constant((int)Model::LctState::InfectionState::Count, 15);
     init[0]              = 200;
     init[3]              = 50;
     init[5]              = 30;
@@ -65,7 +65,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     ScalarType dt   = 0.1;
 
     // Initialization vector for both models.
-    Eigen::VectorXd init = Eigen::VectorXd::Constant((int)Model::LctState::InfectionStateBase::Count, 15);
+    Eigen::VectorXd init = Eigen::VectorXd::Constant((int)Model::LctState::InfectionState::Count, 15);
     init[0]              = 200;
     init[3]              = 50;
     init[5]              = 30;
@@ -103,21 +103,21 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     mio::osecir::Model model_ode(1);
     // Set initial distribution of the population.
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
-        init[Eigen::Index(Model::LctState::InfectionStateBase::Exposed)];
+        init[Eigen::Index(Model::LctState::InfectionState::Exposed)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
-        init[Eigen::Index(Model::LctState::InfectionStateBase::InfectedNoSymptoms)];
+        init[Eigen::Index(Model::LctState::InfectionState::InfectedNoSymptoms)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] =
-        init[Eigen::Index(Model::LctState::InfectionStateBase::InfectedSymptoms)];
+        init[Eigen::Index(Model::LctState::InfectionState::InfectedSymptoms)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] =
-        init[Eigen::Index(Model::LctState::InfectionStateBase::InfectedSevere)];
+        init[Eigen::Index(Model::LctState::InfectionState::InfectedSevere)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =
-        init[Eigen::Index(Model::LctState::InfectionStateBase::InfectedCritical)];
+        init[Eigen::Index(Model::LctState::InfectionState::InfectedCritical)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}] =
-        init[Eigen::Index(Model::LctState::InfectionStateBase::Recovered)];
+        init[Eigen::Index(Model::LctState::InfectionState::Recovered)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}] =
-        init[Eigen::Index(Model::LctState::InfectionStateBase::Dead)];
+        init[Eigen::Index(Model::LctState::InfectionState::Dead)];
     model_ode.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                     init.sum());
 
@@ -158,23 +158,23 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     for (int i = 0; i < 4; ++i) {
         ASSERT_NEAR(result_lct.get_time(i), result_ode.get_time(i), 1e-5);
 
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::Susceptible],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::Susceptible],
                     result_ode[i][(int)mio::osecir::InfectionState::Susceptible], 1e-5);
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::Exposed],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::Exposed],
                     result_ode[i][(int)mio::osecir::InfectionState::Exposed], 1e-5);
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::InfectedNoSymptoms],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::InfectedNoSymptoms],
                     result_ode[i][(int)mio::osecir::InfectionState::InfectedNoSymptoms], 1e-5);
         ASSERT_NEAR(0, result_ode[i][(int)mio::osecir::InfectionState::InfectedNoSymptomsConfirmed], 1e-5);
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::InfectedSymptoms],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::InfectedSymptoms],
                     result_ode[i][(int)mio::osecir::InfectionState::InfectedSymptoms], 1e-5);
         ASSERT_NEAR(0, result_ode[i][(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed], 1e-5);
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::InfectedCritical],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::InfectedCritical],
                     result_ode[i][(int)mio::osecir::InfectionState::InfectedCritical], 1e-5);
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::InfectedSevere],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::InfectedSevere],
                     result_ode[i][(int)mio::osecir::InfectionState::InfectedSevere], 1e-5);
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::Recovered],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::Recovered],
                     result_ode[i][(int)mio::osecir::InfectionState::Recovered], 1e-5);
-        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionStateBase::Dead],
+        ASSERT_NEAR(result_lct[i][(int)Model::LctState::InfectionState::Dead],
                     result_ode[i][(int)mio::osecir::InfectionState::Dead], 1e-5);
     }
 }
@@ -189,20 +189,20 @@ TEST(TestLCTSecir, testEvalRightHandSide)
 
     // Define initial population distribution in infection states, one entry per subcompartment.
     Eigen::VectorXd init(LctState::Count);
-    init[LctState::get_first_index<LctState::InfectionStateBase::Susceptible>()]            = 750;
-    init[LctState::get_first_index<LctState::InfectionStateBase::Exposed>()]                = 30;
-    init[LctState::get_first_index<LctState::InfectionStateBase::Exposed>() + 1]            = 20;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedNoSymptoms>()]     = 20;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedNoSymptoms>() + 1] = 10;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedNoSymptoms>() + 2] = 10;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedSymptoms>()]       = 30;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedSymptoms>() + 1]   = 20;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedSevere>()]         = 40;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedSevere>() + 1]     = 10;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedCritical>()]       = 10;
-    init[LctState::get_first_index<LctState::InfectionStateBase::InfectedCritical>() + 1]   = 20;
-    init[LctState::get_first_index<LctState::InfectionStateBase::Recovered>()]              = 20;
-    init[LctState::get_first_index<LctState::InfectionStateBase::Dead>()]                   = 10;
+    init[LctState::get_first_index<LctState::InfectionState::Susceptible>()]            = 750;
+    init[LctState::get_first_index<LctState::InfectionState::Exposed>()]                = 30;
+    init[LctState::get_first_index<LctState::InfectionState::Exposed>() + 1]            = 20;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>()]     = 20;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 1] = 10;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 2] = 10;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>()]       = 30;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + 1]   = 20;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>()]         = 40;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + 1]     = 10;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>()]       = 10;
+    init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 1]   = 20;
+    init[LctState::get_first_index<LctState::InfectionState::Recovered>()]              = 20;
+    init[LctState::get_first_index<LctState::InfectionState::Dead>()]                   = 10;
 
     Model model(std::move(init));
 
@@ -253,21 +253,21 @@ protected:
     {
         // Define initial distribution of the population in the subcompartments.
         Eigen::VectorXd init(LctState::Count);
-        init[LctState::get_first_index<LctState::InfectionStateBase::Susceptible>()]            = 750;
-        init[LctState::get_first_index<LctState::InfectionStateBase::Exposed>()]                = 30;
-        init[LctState::get_first_index<LctState::InfectionStateBase::Exposed>() + 1]            = 20;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedNoSymptoms>()]     = 20;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedNoSymptoms>() + 1] = 10;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedNoSymptoms>() + 2] = 10;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedSymptoms>()]       = 50;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedSevere>()]         = 50;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedCritical>()]       = 10;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedCritical>() + 1]   = 10;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedCritical>() + 2]   = 5;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedCritical>() + 3]   = 3;
-        init[LctState::get_first_index<LctState::InfectionStateBase::InfectedCritical>() + 4]   = 2;
-        init[LctState::get_first_index<LctState::InfectionStateBase::Recovered>()]              = 20;
-        init[LctState::get_first_index<LctState::InfectionStateBase::Dead>()]                   = 10;
+        init[LctState::get_first_index<LctState::InfectionState::Susceptible>()]            = 750;
+        init[LctState::get_first_index<LctState::InfectionState::Exposed>()]                = 30;
+        init[LctState::get_first_index<LctState::InfectionState::Exposed>() + 1]            = 20;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>()]     = 20;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 1] = 10;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 2] = 10;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>()]       = 50;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>()]         = 50;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>()]       = 10;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 1]   = 10;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 2]   = 5;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 3]   = 3;
+        init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 4]   = 2;
+        init[LctState::get_first_index<LctState::InfectionState::Recovered>()]              = 20;
+        init[LctState::get_first_index<LctState::InfectionState::Dead>()]                   = 10;
 
         // Initialize model and set parameters.
         model                                                                  = new Model(std::move(init));
@@ -339,8 +339,8 @@ TEST_F(ModelTestLCTSecir, testCalculatePopWrongSize)
 {
     // Deactivate temporarily log output because an error is expected.
     mio::set_log_level(mio::LogLevel::off);
-    mio::TimeSeries<ScalarType> init_wrong_size((int)LctState::InfectionStateBase::Count);
-    Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones((int)LctState::InfectionStateBase::Count);
+    mio::TimeSeries<ScalarType> init_wrong_size((int)LctState::InfectionState::Count);
+    Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones((int)LctState::InfectionState::Count);
     init_wrong_size.add_time_point(-10, vec_wrong_size);
     init_wrong_size.add_time_point(-9, vec_wrong_size);
     mio::TimeSeries<ScalarType> population = model->calculate_populations(init_wrong_size);

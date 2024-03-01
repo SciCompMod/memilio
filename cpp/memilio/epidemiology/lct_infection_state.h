@@ -27,16 +27,16 @@ namespace mio
 /**
  * @brief Provides the functionality to be able to work with subcompartments in an LCT model.
  *
- * @tparam InfectionState An enum class that defines the basic infection states.
+ * @tparam InfectionStates An enum class that defines the basic infection states.
  * @tparam Ns Number of subcompartments for each infection state defined in InfectionState. 
  *      The number of given template arguments must be equal to the entry Count from InfectionState.
  */
-template <class InfectionState, unsigned int... Ns>
+template <class InfectionStates, unsigned int... Ns>
 class LctInfectionState
 {
 public:
-    using InfectionStateBase = InfectionState;
-    static_assert((unsigned int)InfectionStateBase::Count == sizeof...(Ns),
+    using InfectionState = InfectionStates;
+    static_assert((unsigned int)InfectionState::Count == sizeof...(Ns),
                   "The number of integers provided as template parameters must be "
                   "the same as the entry Count of InfectionState.");
 
@@ -48,10 +48,10 @@ public:
      * @tparam State: Infection state for which the number of subcompartments should be returned.   
      * @return Number of subcompartments for State.
      */
-    template <InfectionStateBase State>
+    template <InfectionState State>
     static constexpr unsigned int get_num_subcompartments()
     {
-        static_assert(State < InfectionStateBase::Count, "State must be a a valid InfectionStateBase.");
+        static_assert(State < InfectionState::Count, "State must be a a valid InfectionState.");
         return m_subcompartment_numbers[(int)State];
     }
 
@@ -63,10 +63,10 @@ public:
      * @tparam State: Infection state for which the index should be returned.    
      * @return Index of the first subcompartment for a vector with one entry per subcompartment.
      */
-    template <InfectionStateBase State>
+    template <InfectionState State>
     static constexpr unsigned int get_first_index()
     {
-        static_assert(State < InfectionStateBase::Count, "State must be a a valid InfectionStateBase.");
+        static_assert(State < InfectionState::Count, "State must be a a valid InfectionState.");
         unsigned int index = 0;
         for (int i = 0; i < (int)(State); i++) {
             index = index + m_subcompartment_numbers[i];
@@ -78,7 +78,7 @@ public:
 
 private:
     static constexpr const std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
-        Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionStateBase.
+        Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionState.
 };
 
 } // namespace mio
