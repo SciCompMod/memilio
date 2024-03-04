@@ -82,7 +82,7 @@ int main()
 
     // Print the resulting table into a string
     std::ostringstream ostream;
-    sir.print_table({"S","I", "R"}, 16, 5,ostream);
+    sir.print_table({"S","I", "R"}, 16, 1,ostream);
     std::string result_1 = ostream.rdbuf()->str();
 
     // Extract existing table from implementation without agegroups into string

@@ -200,26 +200,14 @@ TEST(Testsir, test_age_groups)
 
     auto sir = simulate(t0, tmax, dt, model, integrator);
 
-    // Convert the table from the simulation into a string
-    std::ostringstream ostream;
-    sir.print_table({"S","I", "R"}, 16, 5,ostream);
-    std::string result_1 = ostream.rdbuf()->str();
+    const auto compare  = load_test_data_csv<ScalarType>("sir-agegrp-compare.csv");
 
-    // Extract existing table from implementation without agegroups into a string
-    std::string path = "sir_example_pre_agegroups.txt";
-    constexpr auto read_size = std::size_t(40000);
-    auto istream = std::ifstream(path);
-    istream.exceptions(std::ios_base::badbit);
-
-    if (!istream.is_open()) {
-        throw std::ios_base::failure("file does not exist");
+    ASSERT_EQ(compare.size(), static_cast<size_t>(sir.get_num_time_points()));
+    for (size_t i = 0; i < compare.size(); i++) {
+        ASSERT_EQ(compare[i].size(), static_cast<size_t>(sir.get_num_elements()) + 1) << "at row " << i;
+        EXPECT_NEAR(sir.get_time(i), compare[i][0], 1e-10) << "at row " << i;
+        for (size_t j = 1; j < compare[i].size(); j++) {
+            EXPECT_NEAR(sir.get_value(i)[j - 1], compare[i][j], 1e-10) << " at row " << i;
+        }
     }
-    
-    auto result_2 = std::string();
-    auto buf = std::string(read_size, '\0');
-    while (istream.read(& buf[0], read_size)) {
-        result_2.append(buf, 0, istream.gcount());
-    }
-    result_2.append(buf, 0, istream.gcount());
-    EXPECT_EQ(result_1,result_2);
 }
