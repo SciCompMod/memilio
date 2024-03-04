@@ -224,21 +224,6 @@ struct DetectInfection {
 };
 
 /**
- * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
- */
-struct MaskProtection {
-    using Type = CustomIndexArray<UncertainValue, MaskType>;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type({MaskType::Count}, 0.83);
-    }
-    static std::string name()
-    {
-        return "MaskProtection";
-    }
-};
-
-/**
  * @brief Aerosol transmission rates. 
 */
 struct AerosolTransmissionRates {
@@ -305,6 +290,23 @@ struct HighViralLoadProtectionFactor {
     static std::string name()
     {
         return "HighViralLoadProtectionFactor";
+    }
+};
+
+/**
+ * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
+ */
+struct MaskProtection {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, MaskType>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({MaskType::Count}, [](ScalarType /*hours*/) -> ScalarType {
+            return 1;
+        });
+    }
+    static std::string name()
+    {
+        return "MaskProtection";
     }
 };
 
@@ -719,27 +721,6 @@ public:
                           (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
                 return true;
             }
-        }
-
-        if (this->get<MaskProtection>()[MaskType::Community] < 0.0 ||
-            this->get<MaskProtection>()[MaskType::Community] > 1.0) {
-            log_error(
-                "Constraint check: Parameter MaskProtection for MaskType Community is smaller {:d} or larger {:d}", 0,
-                1);
-            return true;
-        }
-
-        if (this->get<MaskProtection>()[MaskType::FFP2] < 0.0 || this->get<MaskProtection>()[MaskType::FFP2] > 1.0) {
-            log_error("Constraint check: Parameter MaskProtection for MaskType FFP2 is smaller {:d} or larger {:d}", 0,
-                      1);
-            return true;
-        }
-
-        if (this->get<MaskProtection>()[MaskType::Surgical] < 0.0 ||
-            this->get<MaskProtection>()[MaskType::Surgical] > 1.0) {
-            log_error("Constraint check: Parameter MaskProtection for MaskType Surgical smaller {:d} or larger {:d}", 0,
-                      1);
-            return true;
         }
 
         if (this->get<LockdownDate>().seconds() < 0.0) {

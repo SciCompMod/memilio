@@ -230,7 +230,7 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
         return 0.;
     }
     else {
-        return params.get<MaskProtection>()[m_mask.get_type()];
+        return params.get<MaskProtection>()[m_mask.get_type()](m_mask.get_time_used().hours());
     }
 }
 
@@ -269,7 +269,9 @@ bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location&
             return false;
         }
         if (m_wears_mask == true) {
-            if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
+            if ((static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) ||
+                (m_mask.get_type() == MaskType::FFP2 && m_mask.get_time_used() > hours(8)) ||
+                (m_mask.get_type() == MaskType::Surgical)) {
                 m_mask.change_mask(target.get_required_mask());
             }
         }
