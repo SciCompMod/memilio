@@ -878,16 +878,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     // Determine inital infection state distribution
     determine_initial_infection_states_world(input_dir, start_date);
 
-    int tid = -1;
-#pragma omp parallel private(tid) // Start of parallel region: forks threads
-    {
-        tid = omp_get_thread_num(); // default is number of CPUs on machine
-        printf("Hello from Thread %d\n", tid);
-        if (tid == 0) {
-            printf("Number of threads = %d\n", omp_get_num_threads());
-        }
-    } // ** end of the the parallel: joins threads
-
     // Create one world for all simulations that will be copied
     auto world = mio::abm::World(num_age_groups);
     create_sampled_world(world, input_dir, t0, max_num_persons);
