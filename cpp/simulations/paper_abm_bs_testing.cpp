@@ -860,7 +860,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 {
     mio::Date start_date{2021, 3, 1};
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(20); // End time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -962,7 +962,7 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir  = "/p/project/loki/memilio/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
