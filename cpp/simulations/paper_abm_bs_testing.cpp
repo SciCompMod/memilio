@@ -854,12 +854,13 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
         return std::make_pair(curr_time, sum);
     }
 };
+
 mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
-    mio::Date start_date{2020, 3, 1};
+    mio::Date start_date{2021, 3, 1};
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(40); // End time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(20); // End time per simulation
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -888,17 +889,17 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     } // ** end of the the parallel: joins threads
 
     // Create one world for all simulations that will be copied
-    //auto world = mio::abm::World(num_age_groups);
-    //create_sampled_world(world, input_dir, t0, max_num_persons);
+    auto world = mio::abm::World(num_age_groups);
+    create_sampled_world(world, input_dir, t0, max_num_persons);
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
         // Create the sampled simulation with start time t0.
-        auto world = mio::abm::World(num_age_groups);
-        create_sampled_world(world, input_dir, t0, max_num_persons);
-        // auto world_copy = world; // COPY CONSTRUCTOR DOESN'T WORK. LOCATIONS AREN'T ASSIGNED!
-        auto sim = mio::abm::Simulation(t0, std::move(world));
+        // auto world = mio::abm::World(num_age_groups);
+        // create_sampled_world(world, input_dir, t0, max_num_persons);
+        auto world_copy = world; // COPY CONSTRUCTOR DOESN'T WORK. LOCATIONS AREN'T ASSIGNED!
+        auto sim        = mio::abm::Simulation(t0, std::move(world_copy));
 
         //output object
         mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
@@ -987,7 +988,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
         printf("Running with number of runs = 1.\n");
-        num_runs = 2;
+        num_runs = 15;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
