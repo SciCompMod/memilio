@@ -873,7 +873,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 1000;
+    auto max_num_persons    = 230000;
 
     // Determine inital infection state distribution
     determine_initial_infection_states_world(input_dir, start_date);
@@ -977,8 +977,7 @@ int main(int argc, char** argv)
         printf("abm_braunschweig <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
-        printf("Running with number of runs = 1.\n");
-        num_runs = 15;
+        num_runs = 25;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
