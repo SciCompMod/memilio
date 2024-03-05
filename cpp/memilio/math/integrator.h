@@ -22,11 +22,8 @@
 
 #include "memilio/utils/time_series.h"
 
-#include "memilio/math/eigen.h"
 #include <memory>
-#include <vector>
 #include <functional>
-#include <algorithm>
 
 namespace mio
 {
@@ -43,13 +40,25 @@ public:
     virtual ~IntegratorCore(){};
 
     /**
-     * @brief Step of the integration with possible adaptive with
+     * @brief Make a single integration step.
      *
-     * @param[in] f Right hand side of ODE
-     * @param[in] yt value of y at t, y(t)
-     * @param[in,out] t current time step h=dt
-     * @param[in,out] dt current time step h=dt
-     * @param[out] ytp1 approximated value y(t+1)
+     * The behaviour of this method changes slightly when the integration scheme has adaptive step sizing. 
+     * These changes are noted in (brackets) below.
+     * Adaptive integrators must have bounds dt_min and dt_max for dt.
+     * The adaptive step sizing is considered to have failed, if dt would be adapted to a value strictly below dt_min.
+     * Even if the step sizing failed, the integrator must make a step of at least size dt_min.
+     *
+     * @param[in] f Right hand side of ODE. May be called multiple times with different arguments.
+     * @param[in] yt The known value of y at time t.
+     * @param[in,out] t The current time. It will be increased by dt.
+     *     (If adaptive, the increment is from [dt_min, dt].)
+     * @param[in,out] dt The current step size h=dt.
+     *     (If adaptive, dt is set to an estimate in [dt_min, dt_max] for the optimal size of the next step.)
+     * @param[out] ytp1 Set to the approximated value of y at time t + dt.
+     *     (If adaptive, this time may be smaller, but it is at least t + dt_min.
+     *      Note that the increment on t may be different from the returned value of dt.)
+     * @return Always true.
+     *     (If adaptive, returns whether the adaptive step sizing was successfull.)
      */
     virtual bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                       Eigen::Ref<Eigen::VectorXd> ytp1) const = 0;

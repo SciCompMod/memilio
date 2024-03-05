@@ -139,6 +139,69 @@ TYPED_TEST(TestVerifyNumericalIntegrator, sine)
     EXPECT_NEAR(this->err, 0.0, 1e-7);
 }
 
+TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
+{
+    // set large tolarances and big dt_min, since we want that the step size adaption fails with dt_min
+    const double tol    = 1;
+    const double dt_min = 1, dt_max = 2 * dt_min;
+
+    this->y   = {Eigen::VectorXd::Zero(3)};
+    this->sol = {Eigen::VectorXd::Zero(3)};
+
+    TypeParam integrator;
+    integrator.set_abs_tolerance(tol);
+    integrator.set_rel_tolerance(tol);
+    integrator.set_dt_min(dt_min);
+    integrator.set_dt_max(dt_max);
+
+    double t_eval;
+    bool step_okay;
+
+    // check that on a failed step, dt does decrease, but not below dt_min
+
+    double c  = 1;
+    t_eval    = 0;
+    this->dt  = dt_max;
+    step_okay = integrator.step( // this deriv function is supposed to (not guranteed to!) break any integrator
+        [&c, tol](const auto&&, auto&&, auto&& dxds) {
+            c /= -10 * tol;
+            dxds.array() = 1 / c;
+        },
+        this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, false); // step sizing should fail
+    EXPECT_EQ(this->dt, dt_min); // new step size should fall back to dt_min
+    EXPECT_EQ(t_eval, dt_min) << this->sol[0].transpose(); // a step must be made with no less than dt_min
+
+    // check that on a successful step, dt increases from dt_min
+
+    t_eval    = 0;
+    this->dt  = dt_min;
+    step_okay = integrator.step(
+        [](const auto&&, auto&&, auto&& dxds) {
+            dxds.setZero(); // const f
+        },
+        this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_GE(this->dt, dt_min); // new step size may be larger
+    EXPECT_EQ(t_eval, dt_min); // used step size should still be dt_min
+
+    // check that on a successful step, dt does not increase from dt_max
+
+    t_eval    = 0;
+    this->dt  = dt_max;
+    step_okay = integrator.step(
+        [](const auto&&, auto&&, auto&& dxds) {
+            dxds.setZero(); // const f
+        },
+        this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_EQ(this->dt, dt_max); // new step size must not increase from dt_max
+    EXPECT_EQ(t_eval, dt_max); // used step size should be dt_max
+}
+
 auto DoStep()
 {
     return testing::DoAll(testing::WithArgs<2, 3>(AddAssign()), testing::WithArgs<4, 1>(AssignUnsafe()),
