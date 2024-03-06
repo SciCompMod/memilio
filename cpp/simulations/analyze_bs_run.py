@@ -19,48 +19,48 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import h5py
 
-def main(n_runs):
-    # read in folder and convert txt files to numpy arrays
-    # folder path
-    folder_path = "memilio/epidata/folder_run_bs"
 
+def main(path, n_runs):
     # get first_file in folder
-    first_file = os.listdir(folder_path)[0]
-    file_path = os.path.join(folder_path, first_file)
+    # first_file = os.listdir(path)[0]
+    # file_path = os.path.join(path, first_file)
     # read in txt file
-    df = pd.read_csv(file_path, delim_whitespace=True)
+    # df = pd.read_csv(file_path, delim_whitespace=True)
     # convert to numpy array
-    df_np = df.to_numpy()
+    # df_np = df.to_numpy()
     # get the number of rows and columns
-    num_rows = df_np.shape[0]
-    num_cols = df_np.shape[1]
+    # num_rows = df_np.shape[0]
+    # num_cols = df_np.shape[1]
     # get the number of compartments
-    num_compartments = num_cols - 1
+    # num_compartments = num_cols - 1
     # get the number of time steps
-    num_time_steps = num_rows-1
+    # num_time_steps = num_rows-1
     # get the compartment names
-    compartment_names = df.columns[1:]
+    # compartment_names = df.columns[1:]
     # get the time steps
-    time_steps = df_np[:, 0]
+    # time_steps = df_np[:, 0]
 
     # get number of files in folder
-    num_files = len([entry for entry in os.listdir(folder_path)])
+    # num_files = len([entry for entry in os.listdir(path)])
     # read in each txt file and convert to numpy array
-    df_np_3d = np.empty((num_rows, num_cols, n_runs))
-    for (file, i) in zip(os.listdir(folder_path), range(n_runs)):
-        file_path = os.path.join(folder_path, file)
+    # df_np_3d = np.empty((num_rows, num_cols, n_runs))
+    print(os.listdir(path))
+    for file in os.listdir(path):
+        file_path = os.path.join(path, file)
         # read in txt file
-        df = pd.read_csv(file_path, delim_whitespace=True)
-        if file.startswith("infection_per_location_type"):
+
+        if file.startswith("infection_per_location_type.txt"):
+            df = pd.read_csv(file_path, delim_whitespace=True)
             plot_infection_per_location_type(df)
-        if file.startswith("infection_per_age_group"):
-            plot_infection_per_age_group(df)
-        if file.startswith("run_"):
+        if file.startswith("infection_per_age_group.txt"):
+            df = pd.read_csv(file_path, delim_whitespace=True)
+            #plot_infection_per_age_group(df)
+        # if file.startswith("run_"):
             # convert to numpy array
-            df_np = df.to_numpy()
+        #    df_np = df.to_numpy()
             # attach to array
-            df_np_3d[:, :, i] = df_np
-            plot_mean_and_std(df_np_3d)
+        #    df_np_3d[:, :, i] = df_np
+        #    plot_mean_and_std(df_np_3d)
 
 
 def plot_infection_per_location_type(df):
@@ -92,29 +92,52 @@ def plot_results(path):
 
     # 05-percentile
     f = h5py.File(
-        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p25/Results.h5", 'r')
     group = f['0']
-    total_05 = group['Total'][()]
+    total_25 = group['Total'][()]
     f.close()
 
     # 95-percentile
     f = h5py.File(
-        path + "/infection_state_per_age_group/p95/Results.h5", 'r')
+        path + "/infection_state_per_age_group/p75/Results.h5", 'r')
     group = f['0']
-    total_95 = group['Total'][()]
+    total_75 = group['Total'][()]
     f.close()
 
-    plot_infection_states(time, total_50, total_05, total_95)
-    x=1
+    plot_infection_states(time, total_50, total_25, total_75)
 
 
-def plot_infection_states(x, y50, y05, y95):
+def plot_infection_states(x, y50, y25, y75):
+    plt.figure('Infection_states')
     plt.plot(x, y50)
     plt.legend(['S', 'E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Rec', 'Dead'])
 
     for i in range(y50.shape[1]):
-        plt.fill_between(x, y50[:, i], y05[:, i], alpha=0.1)
-        plt.fill_between(x, y50[:, i], y95[:, i], alpha=0.1)
+        plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.1)
+        plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.1)
+
+
+def plot_infections_per_age_group(path):
+    f = h5py.File(
+        path+"/infection_per_age_group/p50/Results.h5", 'r')
+
+    # Get the HDF5 group; key needs to be a group name from above
+    group = f['0']
+
+    # This assumes group[some_key_inside_the_group] is a dataset,
+    # and returns a np.array:
+    time = group['Time'][()]
+
+    plt.figure('Age_Group')
+    for g in ['Group' + str(n) for n in range(1, 7)]:
+        gr = group[g][()]
+        plt.plot(time, gr)
+
+    plt.legend(['0-4', '5-14', '15-34', '35-59', '60-79', '80+'])
+
+    # After you are done
+    f.close()
+
 
 def plot_mean_and_std(Y):
 
@@ -139,12 +162,11 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     #path to results
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
+    path = "/Users/David/Documents/HZI/memilio/data/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
-        folder_path = path
-        n_runs = len([entry for entry in os.listdir(folder_path)
-                     if os.path.isfile(os.path.join(folder_path, entry))])
-    #main(n_runs)
+        n_runs = len([entry for entry in os.listdir(path)
+                     if os.path.isfile(os.path.join(path, entry))])
     plot_results(path)
+    main(path, n_runs)

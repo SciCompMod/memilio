@@ -55,7 +55,7 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
     {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
 mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
-    {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.};
+    {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.02};
 
 /**
  * Determine initial distribution of infection states.
@@ -696,6 +696,44 @@ void set_local_parameters(mio::abm::World& world)
 }
 
 /**
+ * @brief Add testing strategies to the world.
+*/
+void add_testing_strategies(mio::abm::World& world, bool school, bool work, bool symptomatic)
+{
+    // Tests in schools
+    auto testing_criteria_school = mio::abm::TestingCriteria();
+
+    auto testing_min_time = mio::abm::days(7);
+    auto start_date       = mio::abm::TimePoint(0);
+    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+    auto test_type        = mio::abm::AntigenTest();
+    auto probability      = mio::UncertainValue();
+    assign_uniform_distribution(probability, 0.5, 0.5);
+
+    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
+                                                         end_date, test_type, probability.draw_sample());
+    if (school)
+        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
+
+    // Tests in work places
+    auto testing_criteria_work = mio::abm::TestingCriteria();
+
+    assign_uniform_distribution(probability, 0.5, 0.5);
+    auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
+                                                       test_type, probability.draw_sample());
+    if (work)
+        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+
+    // Test when symptomatic
+    auto testing_criteria_symptomatic = mio::abm::TestingCriteria({}, {mio::abm::InfectionState::InfectedSymptoms});
+    auto testing_scheme_symptomatic =
+        mio::abm::TestingScheme(testing_criteria_symptomatic, testing_min_time, start_date, end_date, test_type, 0.7);
+
+    if (symptomatic)
+        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Home, testing_scheme_symptomatic);
+}
+
+/**
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
  */
@@ -728,6 +766,8 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     //2. testing scheme: Test bei Symptomen (unabh. von Location, 1x am Tag, InfectedSymptomatic, 70% der Bevölkerung) ab Tag 0
     //3. testen in schulen und Arbeitsplätzen (unabh. von Alter, 1x am Tag, unabh. von InfectionState) ab Tag 0
     //4. 2.+3.
+
+    add_testing_strategies(world, false, false, false);
 }
 
 template <typename T>
@@ -834,6 +874,25 @@ void write_txt_file_for_graphical_compartment_output(std::vector<std::vector<mio
     }
 }
 
+template <typename T>
+void write_log_to_file_infection_per_location_type(const T& history, const fs::path& result_dir)
+{
+    std::ofstream myfile4((result_dir / "infection_per_location_type.txt").string());
+    const std::vector<std::string>& labels = {
+        "Home",     "Work", "School", "SocialEvent",     "BasicsShop",
+        "Hospital", "ICU",  "Car",    "PublicTransport", "TransportWithoutContact",
+        "Cemetery"};
+    std::get<0>(history.get_log()).print_table(labels, 12, 4, myfile4);
+}
+
+template <typename T>
+void write_log_to_file_infection_per_age_group(const T& history, const fs::path& result_dir)
+{
+    std::ofstream myfile5((result_dir / "infection_per_age_group.txt").string());
+    const std::vector<std::string>& labels = {"0_to_4", "5_to_14", "15_to_34", "35_to_59", "60_to_79", "80_plus"};
+    std::get<0>(history.get_log()).print_table(labels, 7, 4, myfile5);
+}
+
 struct LogInfectionStatePerAgeGroup : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
     /** 
@@ -865,7 +924,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 {
     mio::Date start_date{2021, 3, 1};
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30); // End time per simulation
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -878,10 +937,12 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 300000;
+    auto max_num_persons    = 1000;
 
     // Determine inital infection state distribution
-    determine_initial_infection_states_world(input_dir, start_date);
+    printf("Compute initial infection distribution for real world data... ");
+    //determine_initial_infection_states_world(input_dir, start_date);
+    printf("done.\n");
 
     int tid = -1;
 #pragma omp parallel private(tid) // Start of parallel region: forks threads
@@ -902,7 +963,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groups);
+
         create_sampled_world(world, input_dir, t0, max_num_persons);
+
         // auto world_copy = world; // COPY CONSTRUCTOR DOESN'T WORK. LOCATIONS AREN'T ASSIGNED!
         auto sim = mio::abm::Simulation(t0, std::move(world));
 
@@ -943,13 +1006,23 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         /* if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
             BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), {0}, 1, result_dir_run.string()));
+            result_dir_run = result_dir / ("abm_result_infections_per_loc_run_" + std::to_string(run_idx) + ".h5");
+            BOOST_OUTCOME_TRY(
+                save_result(ensemble_results_infections_per_loc.back(), loc_type_ids, 1, result_dir_run.string()));
+            result_dir_run = result_dir / ("abm_result_infections_per_age_run_" + std::to_string(run_idx) + ".h5");
+            BOOST_OUTCOME_TRY(
+                save_result(ensemble_results_infections_per_age.back(), age_group_ids, 1, result_dir_run.string()));
         } */
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);
+        write_log_to_file_infection_per_age_group(historyInfectionPerAgeGroup, result_dir);
+        write_log_to_file_infection_per_location_type(historyInfectionPerLocationType, result_dir);
 
         std::cout << "Run " << run_idx << " of " << num_runs << " finished." << std::endl;
         ++run_idx;
     }
+
+    printf("Saving results ... ");
 
     BOOST_OUTCOME_TRY(save_results(ensemble_infection_per_loc_type, ensemble_params, {0},
                                    result_dir / "infection_per_location_type/", save_single_runs));
@@ -958,6 +1031,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     BOOST_OUTCOME_TRY(save_results(ensemble_infection_state_per_age_group, ensemble_params, {0},
                                    result_dir / "infection_state_per_age_group/", save_single_runs));
 
+    printf("done.\n");
     //write_txt_file_for_graphical_compartment_output(ensemble_infection_state_per_age_group);
     BOOST_OUTCOME_TRY(save_result_result);
     return mio::success();
@@ -967,7 +1041,7 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
@@ -993,7 +1067,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
         printf("Running with number of runs = 1.\n");
-        num_runs = 100;
+        num_runs = 10;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
