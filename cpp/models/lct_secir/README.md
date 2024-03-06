@@ -35,11 +35,11 @@ Below is an overview of the model architecture and its compartments.
 | $\xi_{I_{Sy}}$               | `RiskOfInfectionFromSymptomatic`                | Proportion of infected people with symptomps who are not isolated. |
 | $N$                         | `m_N0`   | Total population. |
 | $D$                         |  `D`  | Number of death people. |
-| $n_E$                         |  Defined via `InfectionState`  | Number of subcompartments of the Exposed compartment. |
-| $n_{NS}$                         |  Defined via `InfectionState`  | Number of subcompartments of the InfectedNoSymptoms compartment. |
-| $n_{Sy}$                         |  Defined via `InfectionState`  | Number of subcompartments of the InfectedSymptoms compartment. |
-| $n_{Sev}$                         | Defined via `InfectionState`  | Number of subcompartments of the InfectedSevere compartment.|
-| $n_{Cr}$                         |  Defined via `InfectionState`  | Number of subcompartments of the InfectedCritical compartment. |
+| $n_E$                         |  `NumExposed`  | Number of subcompartments of the Exposed compartment. |
+| $n_{NS}$                         |  `NumInfectedNoSymptoms`  | Number of subcompartments of the InfectedNoSymptoms compartment. |
+| $n_{Sy}$                         |  `NumInfectedSymptoms`  | Number of subcompartments of the InfectedSymptoms compartment. |
+| $n_{Sev}$                         |`NumInfectedSevere`  | Number of subcompartments of the InfectedSevere compartment.|
+| $n_{Cr}$                         |  `NumInfectedCritical`  | Number of subcompartments of the InfectedCritical compartment. |
 | $T_E$                    |  `TimeExposed`               | Average time in days an individual stays in the Exposed compartment. |
 | $T_{I_{NS}}$                    |  `TimeInfectedNoSymptoms`               | Average time in days an individual stays in the InfectedNoSymptoms compartment. |
 | $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Average time  in days an individual stays in the InfectedSymptoms compartment. |
