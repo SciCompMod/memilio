@@ -62,6 +62,8 @@ enum class InfectionState
     DeadNaive,
     DeadPartialImmunity,
     DeadImprovedImmunity,
+    TemporaryImmunPartialImmunity,
+    TemporaryImmunImprovedImmunity,
 
     Count
 };

@@ -1,14 +1,14 @@
-# SECIR model with COVID-19 variants and vaccinations
+# SECIRS-type model including multi-layer waning immunity
 
-This model extends the basic SECIR model by adding vaccinations and allowing the implicit modeling of a newly arriving variant that takes hold.
+This model extends the SECIRVVS model by adding waning immunity and introducing temporary immunity states that change the meaning of recovery.
 
-Vaccinations are modeled by adding compartments for partially and fully vaccinated persons. `Partially and fully vaccinated` is to be understood in this context as the person having received a first and second vaccine shot as in 2021. These model lines can be reused by resetting parameters. Persons that have recovered from the disease are treated as fully vaccinated from that time forward. Vaccinated persons are added on every day of simulation, see parameters `DailyFirstVaccination` and `DailyFullVaccination`. All groups can get an infection or get reinfected. Vaccinated persons are less likely to develop symptoms. E.g., the probability to develop symptoms when carrying the virus is the base probability from the SECIR model multiplied with the `ReducInfectedSymptomsPartialImmunity` parameter.
+In the model, waning immunity is defined by the parameters `WaningPartialImmunity`, `WaningImprovedImmunity`, `TimeTemporaryImmunityPI`, and `TimeTemporaryImmunityII`. `WaningPartialImmunity` and `WaningImprovedImmunity` represent the (mean) duration after which an individual transitions  from one immunity layer to the next less protected one due to waning immunity, assuming no vaccination or recovery from infection has occurred during this period. The parameters `TimeTemporaryImmunityPI` and `TimeTemporaryImmunityII` denote the (mean) duration of temporary immunity following exposure to the virus, either through vaccination or recovery. During this state of temporary immunity, individuals are protected from reinfection and are incapable of transmitting the virus to others. Should individuals previously reside in the naive or partial immunity layer, their stay in the temporary immunity state results in a transition to the next more protected immunity layer.
 
-The ratio of two variants can change over time, which affects the average transmissiblity of the disease. Infectiousness of different variants can be set in the parameters.
+For more details about the model, we refer to [1](https://www.medrxiv.org/content/10.1101/2024.03.01.24303602v1).
 
 Below is an overview of the model architecture and its compartments.
 
-![SECIRVVS_model](https://github.com/SciCompMod/memilio/assets/69154294/5d1b72ec-2f45-44a4-8eba-b77533c9e6cf)
+![SECIRVVS_model](https://github.com/SciCompMod/memilio/assets/69154294/6dec331f-bd91-410f-be5e-c8cf6eb0572b)
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\lambda_{N,i} =  \rho_{N,i} \sum_j \phi_{i,j}\frac{\xi_{I_{NS}} (I_{NS,N,j} + I_{NS,PI,j} + I_{NS,II,j}) + \xi_{I_{Sy}} (I_{Sy,N,j} + I_{Sy,PI,j}+ I_{Sy,II,j})}{N_j^{D^\perp}}$                      |  `ext_inf_force_dummy`               | Force of infection for susceptibles located in the naive immunity level. |
@@ -24,19 +24,12 @@ Below is an overview of the model architecture and its compartments.
 | $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Time in days an individual stays in the InfectedSymptoms compartment. |
 | $T_{I_{Sev}}$                       |  `TimeInfectedSevere`               | Time in days an individual stays in the InfectedSevere compartment. |
 | $T_{I_{Cr}}$                       |  `TimeInfectedCritical`               | Time in days an individual stays in the InfectedCritical compartment. |
+| $T_{\mathcal{I}_{PI}}$                       |  `TimeTemporaryImmunityPI`               | Time in days an individual stays in the TemporaryImmunPartialImmunity compartment. |
+| $T_{\mathcal{I}_{PI}}$                       |  `TimeTemporaryImmunityII`               | Time in days an individual stays in the TemporaryImmunImprovedImmunity compartment. |
+| $T_{W_{PI}}$                       |  `WaningPartialImmunity`               | Time in days an individual stays in the SusceptiblePartialImmunity compartment before waning to the SusceptibleNaive compartment assuming no exposure occurred during this period. |
+| $T_{W_{II}}$                       |  `WaningImprovedImmunity`               | Time in days an individual stays in the SusceptibleImprovedImmunity compartment before waning to the SusceptiblePartialImmunity compartment assuming no exposure occurred during this period. |
 | $\mu_{I_{NS}}^{I_{Sy}}$              |   `1 - RecoveredPerInfectedNoSymptoms`              | Probability of transition from compartment InfectedNoSymptoms to InfectedSymptoms. |  
 | $\mu_{I_{Sy}}^{I_{Sev}}$              |   `SeverePerInfectedSymptoms`              | Probability of transition from compartment InfectedSymptoms to InfectedSevere. |
 | $\mu_{I_{Sev}}^{I_{Cr}}$              |   `CriticalPerSevere`              | Probability of transition from compartment InfectedSevere to InfectedCritical. |  
 | $\mu_{I_{Cr}}^{D}$              |   `DeathsPerCritical`              | Probability of dying when located in compartment InfectedCritical. |   
 | $\kappa$              |   `ReducTimeInfectedMild`              | Reduction factor for time intervals for specific partial and improved immunity compartments. |   
-
-## Examples
-
-The extended model is used in the 2021_vaccination_sarscov2_delta_germany simulation. 
-An easier example can be found in [examples/ode_secirvvs.cpp](../../examples/ode_secirvvs.cpp)
-
-Examples of the basic SECIR model can be found at:
-
-- examples/ode_secir.cpp
-- examples/ode_secir_ageres.cpp
-- examples/ode_secir_parameter_study.cpp

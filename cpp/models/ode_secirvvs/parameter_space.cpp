@@ -52,11 +52,18 @@ void draw_sample_demographics(Model& model)
         model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
         double diff                                              = model.populations.get_group_total(i) - group_total;
         if (diff > 0) {
-            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -= diff;
-            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
-                log_error("Negative Compartment after sampling.");
+            if (model.populations[{i, InfectionState::TemporaryImmunImprovedImmunity}] - diff > 0) {
+                model.populations[{i, InfectionState::TemporaryImmunImprovedImmunity}] =
+                    model.populations[{i, InfectionState::TemporaryImmunImprovedImmunity}] - diff - 1e-10;
             }
-            assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
+            else {
+                model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+                    model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] - diff - 1e-10;
+            }
+            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
+                log_error("Compartment SusceptibleImprovedImmunity negative after sampling.");
+            }
+            assert(group_total - model.populations.get_group_total(i) > 1e-10 && "Sanity check.");
         }
         model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive}, group_total);
     }
@@ -72,6 +79,8 @@ void draw_sample_infection(Model& model)
     model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<TimeTemporaryImmunityPI>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<TimeTemporaryImmunityII>()[AgeGroup(0)].draw_sample();
 
     model.parameters.get<ReducExposedPartialImmunity>()[AgeGroup(0)].draw_sample();
     model.parameters.get<ReducExposedImprovedImmunity>()[AgeGroup(0)].draw_sample();
@@ -127,7 +136,7 @@ void draw_sample(Model& model)
     model.apply_constraints();
 }
 
-Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high)
+Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph)
 {
     Graph<Model, MigrationParameters> sampled_graph;
 
@@ -138,19 +147,6 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
-
-    double delta_fac;
-    if (variant_high) {
-        delta_fac = 1.6;
-    }
-    else {
-        delta_fac = 1.4;
-    }
-
-    //infectiousness of virus variants is not sampled independently but depend on base infectiousness
-    for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-        shared_params_model.parameters.template get<InfectiousnessNewVariant>()[i] = delta_fac;
-    }
 
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
@@ -163,14 +159,16 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
         auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
         auto local_holidays     = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
-        auto local_daily_v1     = node_model.parameters.template get<DailyFirstVaccination>();
+        auto local_daily_v1     = node_model.parameters.template get<DailyPartialVaccination>();
         auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccination>();
+        auto local_daily_v3     = node_model.parameters.template get<DailyBoosterVaccination>();
         node_model.parameters   = shared_params_model.parameters;
         node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
-        node_model.parameters.template get<DailyFirstVaccination>()                 = local_daily_v1;
+        node_model.parameters.template get<DailyPartialVaccination>()               = local_daily_v1;
         node_model.parameters.template get<DailyFullVaccination>()                  = local_daily_v2;
+        node_model.parameters.template get<DailyBoosterVaccination>()               = local_daily_v3;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();
         node_model.apply_constraints();

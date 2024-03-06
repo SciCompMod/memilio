@@ -38,7 +38,7 @@ namespace osecirvvs
 {
 
 /**
-* @brief the start day in the SECIRVVS model
+* @brief the start day in the SECIRS-type model
 * The start day defines in which season the simulation can be started
 * If the start day is 180 and simulation takes place from t0=0 to
 * tmax=100 the days 180 to 280 of the year are simulated
@@ -56,7 +56,7 @@ struct StartDay {
 };
 
 /**
-* @brief the start day of a new variant in the SECIRVVS model
+* @brief the start day of a new variant in the SECIRS-type model
 * The start day of the new variant defines in which day of the simulation the new variant is introduced.
 * Starting on this day, the new variant will impact the transmission probability depending on the
 * infectiousness of the new variant in the parameter InfectiousnessNewVariant.
@@ -74,7 +74,7 @@ struct StartDayNewVariant {
 };
 
 /**
-* @brief the seasonality in the SECIR model
+* @brief the seasonality in the SECIRS-type model
 * the seasonality is given as (1+k*sin()) where the sine
 * curve is below one in summer and above one in winter
 */
@@ -91,7 +91,7 @@ struct Seasonality {
 };
 
 /**
-* @brief the icu capacity in the SECIR model
+* @brief the icu capacity in the SECIRS-type model
 */
 struct ICUCapacity {
     using Type = UncertainValue;
@@ -151,7 +151,7 @@ struct DynamicNPIsInfectedSymptoms {
 };
 
 /**
-* @brief the incubation time in the SECIR model
+* @brief the incubation time in the SECIRS-type model
 * @param tinc incubation time in day unit
 */
 struct IncubationTime {
@@ -168,7 +168,7 @@ struct IncubationTime {
 
 /**
 * @brief the infectious time for symptomatic cases that are infected but
-*        who do not need to be hsopitalized in the SECIR model in day unit
+*        who do not need to be hsopitalized in the SECIRS-type model in day unit
 */
 struct TimeInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -183,7 +183,7 @@ struct TimeInfectedSymptoms {
 };
 
 /**
- * @brief the serial interval in the SECIR model in day unit
+ * @brief the serial interval in the SECIRS-type model in day unit
  */
 struct SerialInterval {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -198,7 +198,39 @@ struct SerialInterval {
 };
 
 /**
- * @brief the time people are 'simply' hospitalized before returning home in the SECIR model
+ * @brief the time people stays immune after infection or vaccination located in S
+         in the model in day unit
+ */
+struct TimeTemporaryImmunityPI {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityPI";
+    }
+};
+
+/**
+ * @brief the time people stays immune after infection or vaccination located in S_pv or S_II
+        in the model in day unit
+ */
+struct TimeTemporaryImmunityII {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityII";
+    }
+};
+
+/**
+ * @brief the time people are 'simply' hospitalized before returning home in the SECIRS-type model
  *        in day unit
  */
 struct TimeInfectedSevere {
@@ -214,7 +246,7 @@ struct TimeInfectedSevere {
 };
 
 /**
- * @brief the time people are treated by ICU before returning home in the SECIR model
+ * @brief the time people are treated by ICU before returning home in the SECIRS-type model
  *        in day unit
  */
 struct TimeInfectedCritical {
@@ -260,7 +292,7 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
-* @brief the percentage of asymptomatic cases in the SECIR model
+* @brief the percentage of asymptomatic cases in the SECIRS-type model
 */
 struct RecoveredPerInfectedNoSymptoms {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -275,7 +307,7 @@ struct RecoveredPerInfectedNoSymptoms {
 };
 
 /**
-* @brief the risk of infection from symptomatic cases in the SECIR model
+* @brief the risk of infection from symptomatic cases in the SECIRS-type model
 */
 struct RiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -305,7 +337,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
 };
 
 /**
-* @brief the percentage of hospitalized patients per infected patients in the SECIR model
+* @brief the percentage of hospitalized patients per infected patients in the SECIRS-type model
 */
 struct SeverePerInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -320,7 +352,7 @@ struct SeverePerInfectedSymptoms {
 };
 
 /**
-* @brief the percentage of ICU patients per hospitalized patients in the SECIR model
+* @brief the percentage of ICU patients per hospitalized patients in the SECIRS-type model
 */
 struct CriticalPerSevere {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -335,7 +367,7 @@ struct CriticalPerSevere {
 };
 
 /**
-* @brief the percentage of dead patients per ICU patients in the SECIR model
+* @brief the percentage of dead patients per ICU patients in the SECIRS-type model
 */
 struct DeathsPerCritical {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -395,9 +427,54 @@ struct DaysUntilEffectiveImprovedImmunity {
 };
 
 /**
+ * @brief Time in days until booster vaccine dose takes full effect.
+ */
+struct DaysUntilEffectiveBoosterImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveBoosterImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from S_pv -> S
+ */
+struct WaningPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WaningPartialImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from R -> S_pv
+ */
+struct WaningImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WaningImprovedImmunity";
+    }
+};
+
+/**
 * @brief Total number of first vaccinations up to the given day.
 */
-struct DailyFirstVaccination {
+struct DailyPartialVaccination {
     using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -405,7 +482,7 @@ struct DailyFirstVaccination {
     }
     static std::string name()
     {
-        return "DailyFirstVaccination";
+        return "DailyPartialVaccination";
     }
 };
 
@@ -421,6 +498,21 @@ struct DailyFullVaccination {
     static std::string name()
     {
         return "DailyFullVaccination";
+    }
+};
+
+/**
+* @brief Total number of full vaccinations up to the given day.
+*/
+struct DailyBoosterVaccination {
+    using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, SimulationDay(0)});
+    }
+    static std::string name()
+    {
+        return "DailyBoosterVaccination";
     }
 };
 
@@ -551,14 +643,17 @@ using ParametersBase =
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity,
-                 DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
-                 ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
+                 DaysUntilEffectiveImprovedImmunity, DaysUntilEffectiveBoosterImmunity, DailyFullVaccination,
+                 DailyBoosterVaccination, DailyPartialVaccination, ReducExposedPartialImmunity,
+                 ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
                  ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
-                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, InfectiousnessNewVariant,
-                 StartDayNewVariant>;
+                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, StartDayNewVariant,
+                 InfectiousnessNewVariant, WaningPartialImmunity, WaningImprovedImmunity, TimeTemporaryImmunityPI,
+                 TimeTemporaryImmunityII>;
 
 /**
- * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
+ * @brief Parameters of the age-resolved SECIRS-type model with high temporary immunity upon immunization and waning immunity over
+time.
  */
 class Parameters : public ParametersBase
 {
@@ -830,6 +925,14 @@ public:
                 this->get<VaccinationGap>()[i] = 0;
                 corrected                      = true;
             }
+            if (this->get<TimeTemporaryImmunityPI>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityPI changed from {:0.4f} to {:d}",
+                            this->get<TimeTemporaryImmunityPI>()[i], 0);
+            }
+            if (this->get<TimeTemporaryImmunityII>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityII changed from {:0.4f} to {:d}",
+                            this->get<TimeTemporaryImmunityII>()[i], 0);
+            }
         }
         return corrected;
     }
@@ -989,6 +1092,15 @@ public:
             }
             if (this->get<InfectiousnessNewVariant>()[i] < 0.0) {
                 log_error("Constraint check: Parameter InfectiousnessNewVariant smaller {}", 0);
+                return true;
+            }
+
+            if (this->get<TimeTemporaryImmunityPI>()[i] < 0.0) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityPI smaller {:d}", 0);
+                return true;
+            }
+            if (this->get<TimeTemporaryImmunityII>()[i] < 0.0) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityII smaller {:d}", 0);
                 return true;
             }
         }
