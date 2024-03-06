@@ -919,12 +919,14 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
         return std::make_pair(curr_time, sum);
     }
 };
+
 mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
                         bool save_single_runs = true)
 {
     mio::Date start_date{2021, 3, 1};
+    mio::Date start_date{2021, 3, 1};
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30); // End time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -937,7 +939,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 1000;
+    auto max_num_persons    = 230000;
 
     // Determine inital infection state distribution
     printf("Compute initial infection distribution for real world data... ");
@@ -955,8 +957,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     } // ** end of the the parallel: joins threads
 
     // Create one world for all simulations that will be copied
-    //auto world = mio::abm::World(num_age_groups);
-    //create_sampled_world(world, input_dir, t0, max_num_persons);
+    auto world = mio::abm::World(num_age_groups);
+    create_sampled_world(world, input_dir, t0, max_num_persons);
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {

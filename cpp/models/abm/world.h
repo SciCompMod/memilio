@@ -75,13 +75,8 @@ public:
         : parameters(other.parameters)
         , m_persons()
         , m_locations()
-        , m_has_locations(other.m_has_locations)
-        , m_testing_strategy(other.m_testing_strategy)
         , m_trip_list(other.m_trip_list)
-        , m_use_migration_rules(other.m_use_migration_rules)
-        , m_migration_rules(other.m_migration_rules)
         , m_cemetery_id(add_location(LocationType::Cemetery))
-        , m_rng(other.m_rng)
     {
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
@@ -89,15 +84,14 @@ public:
                 m_locations.emplace_back(
                     std::make_unique<Location>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
             }
-            for (auto& person : other.get_persons()) {
-                // If a person is in this location, copy this person and add it to this location.
-                if (person.get_location() == origin_loc) {
-                    LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
-                    m_persons.push_back(
-                        std::make_unique<Person>(person.copy_person(get_individualized_location(origin_id))));
-                }
-            }
         }
+        for (auto& person : other.get_persons()) {
+            // add all persons in order. copy_person also adds them to their respective location
+            auto& origin_loc =
+                get_individualized_location({person.get_location().get_index(), person.get_location().get_type()});
+            m_persons.push_back(std::make_unique<Person>(person.copy_person(origin_loc)));
+        }
+        use_migration_rules(other.m_use_migration_rules);
     }
 
     //type is move-only for stable references of persons/locations
