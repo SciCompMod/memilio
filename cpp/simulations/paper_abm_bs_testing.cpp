@@ -941,6 +941,14 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
     auto max_num_persons    = 10000;
 
+    int tid = -1;
+#pragma omp parallel private(tid) // Start of parallel region: forks threads
+    {
+        if (tid == 0) {
+            printf("Number of threads = %d\n", omp_get_num_threads());
+        }
+    } // ** end of the the parallel: joins threads
+
     // Determine inital infection state distribution
     printf("Compute initial infection distribution for real world data... ");
     determine_initial_infection_states_world(input_dir, start_date);
