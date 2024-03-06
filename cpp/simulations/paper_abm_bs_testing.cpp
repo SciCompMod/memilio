@@ -21,6 +21,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <chrono>
 #include "abm/abm.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
@@ -924,7 +925,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                         bool save_single_runs = true)
 {
     mio::Date start_date{2021, 3, 1};
-    mio::Date start_date{2021, 3, 1};
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_infection_per_loc_type =
@@ -939,34 +939,28 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 230000;
+    auto max_num_persons    = 10000;
 
     // Determine inital infection state distribution
     printf("Compute initial infection distribution for real world data... ");
-    //determine_initial_infection_states_world(input_dir, start_date);
+    determine_initial_infection_states_world(input_dir, start_date);
     printf("done.\n");
 
-    int tid = -1;
-#pragma omp parallel private(tid) // Start of parallel region: forks threads
-    {
-        tid = omp_get_thread_num(); // default is number of CPUs on machine
-        printf("Hello from Thread %d\n", tid);
-        if (tid == 0) {
-            printf("Number of threads = %d\n", omp_get_num_threads());
-        }
-    } // ** end of the the parallel: joins threads
-
     // Create one world for all simulations that will be copied
-    auto world = mio::abm::World(num_age_groups);
-    create_sampled_world(world, input_dir, t0, max_num_persons);
+    // auto world = mio::abm::World(num_age_groups);
+    // create_sampled_world(world, input_dir, t0, max_num_persons);
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
-
+        // Start the clock before create_sampled_world
+        auto start1 = std::chrono::high_resolution_clock::now();
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groups);
-
         create_sampled_world(world, input_dir, t0, max_num_persons);
+        // Stop the clock after create_sampled_world and calculate the duration
+        auto stop1     = std::chrono::high_resolution_clock::now();
+        auto duration1 = std::chrono::duration<double>(stop1 - start1);
+        std::cout << "Time taken by create_sampled_world: " << duration1.count() << " seconds" << std::endl;
 
         // auto world_copy = world; // COPY CONSTRUCTOR DOESN'T WORK. LOCATIONS AREN'T ASSIGNED!
         auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -988,9 +982,17 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
+
+        // Start the clock before sim.advance
+        auto start2 = std::chrono::high_resolution_clock::now();
         // Advance the world to tmax
         sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyInfectionPerAgeGroup,
                     historyPersonInfDelta, historyInfectionStatePerAgeGroup);
+        // Stop the clock after sim.advance and calculate the duration
+        auto stop2     = std::chrono::high_resolution_clock::now();
+        auto duration2 = std::chrono::duration<double>(stop2 - start2);
+        std::cout << "Time taken by sim.advance: " << duration2.count() << " seconds" << std::endl;
+
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_infection_per_loc_tpye =
             std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
@@ -1043,7 +1045,7 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
@@ -1068,8 +1070,9 @@ int main(int argc, char** argv)
         printf("abm_braunschweig <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
-        printf("Running with number of runs = 1.\n");
+
         num_runs = 10;
+        printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
