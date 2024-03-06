@@ -2,8 +2,8 @@
 
 This model is based on the Linear Chain Trick. 
 
-The Linear Chain Trick provides the option to use Erlang-distributed sojourn times in the compartments through the use of subcompartments. 
-The normal ODE models have (possibly unrealistic) exponentially distributed sojourn times.
+The Linear Chain Trick provides the option to use Erlang-distributed stay times in the compartments through the use of subcompartments. 
+The normal ODE models have (possibly unrealistic) exponentially distributed stay times.
 The LCT model can still be described by an ordinary differential equation system.
 
 For the concept see 

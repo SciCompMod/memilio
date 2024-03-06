@@ -50,35 +50,24 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.3;
     parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.2;
 
-    // Define number of subcompartments.
-    std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
-    // Use subcompartments with a soujourn time of approximately one day in each subcompartment.
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-        (int)round(parameters.get<mio::lsecir::TimeExposed>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedSevere>());
-    // Both realistic distributions for times corresponding to InfectedCritical of the IDE model are exponential distributions.
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] = 1;
-    mio::lsecir::InfectionState infectionState(vec_subcompartments);
+    // Use rounded stay times for the number of subcompartments except for InfectedCritical.
+    // Template parameters must be compile-time constants, which is why the values are not calculated with parameters.
+    using Model    = mio::lsecir::Model<2, 3, 2, 2, 1>;
+    using LctState = Model::LctState;
+    Model model(Eigen::VectorXd::Zero(LctState::Count), std::move(parameters));
 
     // Calculate initial value vector for subcompartments with RKI data.
-    auto read_result =
-        mio::lsecir::get_initial_data_from_file(mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date,
-                                                infectionState, std::move(parameters), total_population, 1.);
+    auto read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
+        model, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date, total_population, 1.);
 
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
-    auto init_subcompartments = read_result.value();
     // Previous result.
-    Eigen::VectorXd compare(infectionState.get_count());
+    Eigen::VectorXd compare(LctState::Count);
     compare << 863.05, 14.30625, 8.53125, 30.1125, 36.1875, 3.8125, 9.88, 3.52, 0.09, 0.25, 0.6888, 27.8712, 1.7;
 
-    for (int i = 0; i < infectionState.get_count(); i++) {
-        EXPECT_NEAR(init_subcompartments[i], compare[i], 1e-4) << "at subcompartment number " << i;
+    for (unsigned int i = 0; i < LctState::Count; i++) {
+        EXPECT_NEAR(model.get_initial_values()[i], compare[i], 1e-4) << "at subcompartment number " << i;
     }
 }
 
@@ -100,43 +89,32 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
     parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.15;
     parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.22;
 
-    // Define number of subcompartments.
-    std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
-    // Use subcompartments with a soujourn time of approximately one day in each subcompartment.
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed] =
-        (int)round(parameters.get<mio::lsecir::TimeExposed>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedNoSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedSymptoms>());
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere] =
-        (int)round(parameters.get<mio::lsecir::TimeInfectedSevere>());
-    // Both realistic distributions for times corresponding to InfectedCritical of the IDE model are exponential distributions.
-    vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical] = 1;
-    mio::lsecir::InfectionState infectionState(vec_subcompartments);
+    /// Use rounded stay times for the number of subcompartments except for InfectedCritical.
+    // Template parameters must be compile-time constants, which is why the values are not calculated with parameters.
+    using Model    = mio::lsecir::Model<2, 3, 2, 2, 1>;
+    using LctState = Model::LctState;
+    Model model(Eigen::VectorXd::Zero(LctState::Count), std::move(parameters));
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
     // Case where start_date is later than maximal provided date in file.
-    auto start_date = mio::Date(2020, 6, 9);
-    auto read_result1 =
-        mio::lsecir::get_initial_data_from_file(mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date,
-                                                infectionState, std::move(parameters), total_population, 1.);
+    auto start_date   = mio::Date(2020, 6, 9);
+    auto read_result1 = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
+        model, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date, total_population, 1.);
 
     ASSERT_THAT(print_wrap(read_result1), IsFailure(mio::StatusCode::OutOfRange));
+
     // Case where not all needed dates are provided.
-    start_date = mio::Date(2020, 6, 6);
-    auto read_result2 =
-        mio::lsecir::get_initial_data_from_file(mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date,
-                                                infectionState, std::move(parameters), total_population, 1.);
+    start_date        = mio::Date(2020, 6, 6);
+    auto read_result2 = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
+        model, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date, total_population, 1.);
 
     ASSERT_THAT(print_wrap(read_result2), IsFailure(mio::StatusCode::OutOfRange));
 
     // Case with empty RKI data file.
-    auto read_result3 =
-        mio::lsecir::get_initial_data_from_file(mio::path_join(TEST_DATA_DIR, "test_empty_file.json"), start_date,
-                                                infectionState, std::move(parameters), total_population, 1.);
+    auto read_result3 = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
+        model, mio::path_join(TEST_DATA_DIR, "test_empty_file.json"), start_date, total_population, 1.);
 
     ASSERT_THAT(print_wrap(read_result3), IsFailure(mio::StatusCode::InvalidFileFormat));
 
