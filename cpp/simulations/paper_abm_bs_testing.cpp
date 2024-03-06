@@ -945,7 +945,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 #pragma omp parallel private(tid) // Start of parallel region: forks threads
     {
         tid = omp_get_thread_num(); // default is number of CPUs on machine
-        printf("Hello from Thread %d\n", tid);
         if (tid == 0) {
             printf("Number of threads = %d\n", omp_get_num_threads());
         }
