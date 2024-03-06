@@ -55,7 +55,7 @@ public:
      * @param[in,out] dt The current step size h=dt.
      *     (If adaptive, dt is set to an estimate in [dt_min, dt_max] for the optimal size of the next step.)
      * @param[out] ytp1 Set to the approximated value of y at time t + dt.
-     *     (If adaptive, this time may be smaller, but it is at least t + dt_min.
+     *     (If adaptive, this time may be smaller, but it is at least t + dt_min, at most t + dt_max.
      *      Note that the increment on t may be different from the returned value of dt.)
      * @return Always true.
      *     (If adaptive, returns whether the adaptive step sizing was successfull.)

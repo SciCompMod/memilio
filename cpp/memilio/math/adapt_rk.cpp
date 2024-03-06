@@ -73,6 +73,10 @@ Tableau::Tableau()
 bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                             Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
+    assert(0 <= m_dt_min);
+    assert(m_dt_min < m_dt_max);
+    dt = std::min(dt, m_dt_max);
+
     double t_eval; // shifted time for evaluating yt
     double dt_new; // updated dt
 
