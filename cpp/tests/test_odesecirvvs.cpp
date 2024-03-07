@@ -64,6 +64,8 @@ TEST(TestOdeSECIRVVS, simulateDefault)
     model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(0);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().array().setConstant(0);
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
@@ -271,6 +273,8 @@ void set_demographic_parameters(mio::osecirvvs::Model::ParameterSet& parameters,
     parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(5);
     parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
+    parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirvvs::DailyBoosterVaccination>().array().setConstant(3);
 }
 
 void set_contact_parameters(mio::osecirvvs::Model::ParameterSet& parameters, bool set_invalid_initial_value)
