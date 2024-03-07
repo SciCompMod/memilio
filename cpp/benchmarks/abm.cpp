@@ -125,6 +125,14 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
  */
 void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
+    int tid = -1;
+#pragma omp parallel private(tid) // Start of parallel region: forks threads
+    {
+        tid = omp_get_thread_num(); // default is number of CPUs on machine
+        if (tid == 0) {
+            printf("Number of threads = %d\n", omp_get_num_threads());
+        }
+    } // ** end of the the parallel: joins threads
     mio::set_log_level(mio::LogLevel::warn);
 
     for (auto&& _ : state) {
