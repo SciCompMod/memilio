@@ -329,43 +329,55 @@ TEST(TestEpiDataIO, read_vaccination_data)
 TEST(TestEpiData, set_vaccination_data)
 {
     auto num_age_groups = 1;
-    auto num_days       = 10;
+    auto num_days       = 9;
 
     std::vector<int> county_ids = {1001};
     mio::osecirvvs::Model model(num_age_groups);
     model.parameters.set<mio::osecirvvs::VaccinationGap>(3);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(1);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(1);
     std::vector<mio::osecirvvs::Model> model_vector{model};
 
     auto f = mio::osecirvvs::details::set_vaccination_data(model_vector,
                                                            mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
                                                            mio::Date(2022, 4, 15), county_ids, num_days);
 
-    auto expected_values_PV =
-        (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 7, 8, 9, 9, 10, 12, 14, 16, 18, 20, 22).finished();
+    auto expected_values_PI =
+        (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 7, 10, 20, 15, 10, 5, 2, 15, 8, 0).finished();
 
-    auto expected_values_FV =
-        (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 2, 4, 5, 5, 7, 8, 9, 9, 10, 12, 14).finished();
+    auto expected_values_II =
+        (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 2, 4, 5, 5, 7, 8, 9, 9, 10, 12).finished();
 
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
+    auto expected_values_B =
+        (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 5, 7, 9, 11, 13, 9, 7, 5, 5, 0).finished();
+
     ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyPartialVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
+                MatrixNear(print_wrap(expected_values_PI), 1e-8, 1e-8));
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
+                MatrixNear(print_wrap(expected_values_II), 1e-8, 1e-8));
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyBoosterVaccination>().array()),
+                MatrixNear(print_wrap(expected_values_B), 1e-8, 1e-8));
 }
 
 TEST(TestEpiData, vaccination_data)
 {
-    auto js                 = Json::Value(Json::arrayValue);
-    js[0]["Date"]           = "2021-12-01";
-    js[0]["ID_County"]      = 1011;
-    js[0]["Vacc_completed"] = 23.05;
-    js[0]["Age_RKI"]        = "5-14";
+    auto js                   = Json::Value(Json::arrayValue);
+    js[0]["Date"]             = "2021-12-01";
+    js[0]["ID_County"]        = 1011;
+    js[0]["Vacc_partially"]   = 2.0;
+    js[0]["Vacc_completed"]   = 23.05;
+    js[0]["Vacc_refreshed"]   = 6.2;
+    js[0]["Vacc_refreshed_2"] = 10.05;
+    js[0]["Age_RKI"]          = "5-14";
 
-    js[1]["Date"]           = "2021-12-02";
-    js[1]["ID_County"]      = 1012;
-    js[1]["Vacc_completed"] = 12.0;
-    js[1]["Age_RKI"]        = "80-99";
+    js[1]["Date"]             = "2021-12-02";
+    js[1]["ID_County"]        = 1012;
+    js[1]["Vacc_partially"]   = 14.0;
+    js[1]["Vacc_completed"]   = 12.0;
+    js[1]["Vacc_refreshed"]   = 6.2;
+    js[1]["Vacc_refreshed_2"] = 0.0;
+    js[1]["Age_RKI"]          = "80-99";
 
     auto r = mio::deserialize_vaccination_data(js);
     ASSERT_THAT(print_wrap(r), IsSuccess());
@@ -386,16 +398,22 @@ TEST(TestEpiData, vaccination_data)
 
 TEST(TestEpiData, vaccination_data_error_age)
 {
-    auto js                 = Json::Value(Json::arrayValue);
-    js[0]["Date"]           = "2021-12-01";
-    js[0]["ID_County"]      = 1011;
-    js[0]["Vacc_completed"] = 23.05;
-    js[0]["Age_RKI"]        = "5-15"; //error
+    auto js                   = Json::Value(Json::arrayValue);
+    js[0]["Date"]             = "2021-12-01";
+    js[0]["ID_County"]        = 1011;
+    js[0]["Vacc_partially"]   = 2.0;
+    js[0]["Vacc_completed"]   = 23.05;
+    js[0]["Vacc_refreshed"]   = 6.2;
+    js[0]["Vacc_refreshed_2"] = 10.05;
+    js[0]["Age_RKI"]          = "5-15"; //error
 
-    js[1]["Date"]           = "2021-12-02";
-    js[1]["ID_County"]      = 1012;
-    js[1]["Vacc_completed"] = 12.0;
-    js[1]["Age_RKI"]        = "80-99";
+    js[1]["Date"]             = "2021-12-02";
+    js[1]["ID_County"]        = 1012;
+    js[1]["Vacc_partially"]   = 14.0;
+    js[1]["Vacc_completed"]   = 12.0;
+    js[1]["Vacc_refreshed"]   = 6.2;
+    js[1]["Vacc_refreshed_2"] = 0.0;
+    js[1]["Age_RKI"]          = "80-99";
 
     auto r = mio::deserialize_vaccination_data(js);
     ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::InvalidValue));

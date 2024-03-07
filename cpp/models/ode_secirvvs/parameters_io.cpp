@@ -389,7 +389,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         auto date_df = vacc_data_entry.date;
         if (it != vregion.end()) {
             auto region_idx = size_t(it - vregion.begin());
-            auto age        = vacc_data_entry.age_group;
+            AgeGroup age        = vacc_data_entry.age_group;
 
             // initialize the temporary immunity states
             if (date_df >=

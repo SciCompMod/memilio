@@ -428,7 +428,7 @@ public:
         auto district_id                  = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return mio::apply(
             io,
-            [](auto nf, auto np, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&& a_str, auto sid, auto cid,
+            [](auto np, auto nc, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&& a_str, auto sid, auto cid,
                auto did) -> IOResult<VaccinationDataEntry> {
                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
                 auto a  = AgeGroup(0);
@@ -438,9 +438,9 @@ public:
                 else {
                     return failure(StatusCode::InvalidValue, "Invalid vaccination data age group.");
                 }
-                return success(VaccinationDataEntry{nf, np, n_refreshed_1, n_refreshed_2, d, a, sid, cid, did});
+                return success(VaccinationDataEntry{np, nc, n_refreshed_1, n_refreshed_2, d, a, sid, cid, did});
             },
-            num_vaccinations_completed, num_vaccinations_partial, num_vaccinations_refreshed,
+            num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed,
             num_vaccinations_refreshed_2, date, age_group_str, state_id, county_id, district_id);
     }
 };
