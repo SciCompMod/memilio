@@ -54,7 +54,8 @@ class ControlledStepperWrapper : public mio::IntegratorCore
     static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
                                                            boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
     static_assert(!is_fsal_stepper,
-                  "FSAL steppers cannot be used unitl https://github.com/boostorg/odeint/issues/72 is resolved.");
+                  "FSAL steppers cannot be used until https://github.com/boostorg/odeint/issues/72 is resolved.");
+
 
 public:
     /**
@@ -76,7 +77,8 @@ public:
     }
 
     /**
-    * @brief Make a single integration step of a system of ODEs and adapt the step size dt.
+    * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
+
     * @param[in] yt Value of y at t_{k}, y(t_{k}).
     * @param[in,out] t Current time step t_{k} for some k. Will be set to t_{k+1} in [t_{k} + dt_min, t_{k} + dt].
     * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
@@ -103,7 +105,8 @@ public:
                 dt          = m_dt_min;
             }
             // we use the scheme try_step(sys, in, t, out, dt) with sys=f, in=y(t_{k}), out=y(t_{k+1}).
-            // this is similiar to do_step, but it can adapt the step size dt. if successfull, it also updates t.
+            // this is similiar to do_step, but it can adapt the step size dt. If successful, it also updates t.
+
             if constexpr (!is_fsal_stepper) { // prevent compile time errors with fsal steppers
                 step_result = m_stepper.try_step(
                     // reorder arguments of the DerivFunction f for the stepper
@@ -117,7 +120,8 @@ public:
         // output the new value by copying it back to the reference
         ytp1 = m_ytp1;
         // bound dt from below
-        // the last adaptive step (successfull or not) may have calculated a new step size smaller than m_dt_min
+        // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min
+
         dt = std::max(dt, m_dt_min);
         // check whether the last step failed (which means that m_dt_min was still too large to suffice tolerances)
         if (step_result == fail) {

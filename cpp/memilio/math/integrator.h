@@ -43,22 +43,22 @@ public:
      * @brief Make a single integration step.
      *
      * The behaviour of this method changes slightly when the integration scheme has adaptive step sizing. 
-     * These changes are noted in (brackets) below.
+     * These changes are noted in the parentheses (...) below.
      * Adaptive integrators must have bounds dt_min and dt_max for dt.
      * The adaptive step sizing is considered to have failed, if dt would be adapted to a value strictly below dt_min.
      * Even if the step sizing failed, the integrator must make a step of at least size dt_min.
      *
-     * @param[in] f Right hand side of ODE. May be called multiple times with different arguments.
+     * @param[in] f Right hand side of the ODE. May be called multiple times with different arguments.
      * @param[in] yt The known value of y at time t.
      * @param[in,out] t The current time. It will be increased by dt.
      *     (If adaptive, the increment is from [dt_min, dt].)
      * @param[in,out] dt The current step size h=dt.
-     *     (If adaptive, dt is set to an estimate in [dt_min, dt_max] for the optimal size of the next step.)
+     *     (If adaptive, dt is adjusted in [dt_min, dt_max] to have an optimal size for the next step.)
      * @param[out] ytp1 Set to the approximated value of y at time t + dt.
      *     (If adaptive, this time may be smaller, but it is at least t + dt_min, at most t + dt_max.
      *      Note that the increment on t may be different from the returned value of dt.)
-     * @return Always true.
-     *     (If adaptive, returns whether the adaptive step sizing was successfull.)
+     * @return Always true for nonadaptive methods.
+     *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
     virtual bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                       Eigen::Ref<Eigen::VectorXd> ytp1) const = 0;
