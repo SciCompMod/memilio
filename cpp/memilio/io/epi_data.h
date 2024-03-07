@@ -67,7 +67,7 @@ public:
 
 /**
  * Represents the entries of a confirmed cases data file, e.g., from RKI.
- * Number of confirmed, recovered and deceased in a Germany on a specific date.
+ * Number of confirmed, recovered and deceased in Germany on a specific date.
  * ConfirmedCasesNoAgeEntry is a simplified version of ConfirmedCasesDataEntry without agegroups.
  */
 class ConfirmedCasesNoAgeEntry
@@ -97,9 +97,9 @@ public:
 
 /**
  * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
- * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
- *  Exactly one entry per date should be provided, for example no entries per age group.
- * @return list of ConfirmedCasesNoAgeEntry.
+ * @param jsvalue json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Accordingly, there should be one entry per date with the values for Confirmed, Recovered and Deaths. In addition, no age groups should be specified.
+ * @return List of ConfirmedCasesNoAgeEntry.
  */
 inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> deserialize_confirmed_cases_noage(const Json::Value& jsvalue)
 {
@@ -107,10 +107,10 @@ inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> deserialize_confirmed_cas
 }
 
 /**
- * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
- * @param jsvalue  json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
- *  Exactly one entry per date should be provided, for example no entries per age group
- * @return list of ConfirmedCasesNoAgeEntry.
+ * Read list of ConfirmedCasesNoAgeEntry from a json file.
+ * @param filename name of the json file. File content must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Accordingly, there should be one entry per date with the values for Confirmed, Recovered and Deaths. In addition, no age groups should be specified.
+ * @return List of ConfirmedCasesNoAgeEntry.
  */
 inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> read_confirmed_cases_noage(const std::string& filename)
 {
