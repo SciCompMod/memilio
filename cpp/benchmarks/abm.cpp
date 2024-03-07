@@ -1,4 +1,5 @@
 #include "abm/simulation.h"
+#include "memilio/math/interpolation.h"
 #include "memilio/utils/stl_util.h"
 #include "benchmark/benchmark.h"
 
@@ -107,6 +108,12 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         mio::abm::LocationType::SocialEvent,
         mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
                                 mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+
+    // Necessary to set a parameter for the world
+    world.parameters.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
+            {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
+    };
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 }
