@@ -42,18 +42,20 @@ public:
     /**
      * @brief Make a single integration step.
      *
-     * The behaviour of this method changes slightly when the integration scheme has adaptive step sizing. 
+     * The behaviour of this method changes when the integration scheme has adaptive step sizing. 
      * These changes are noted in the parentheses (...) below.
      * Adaptive integrators must have bounds dt_min and dt_max for dt.
-     * The adaptive step sizing is considered to have failed, if dt would be adapted to a value strictly below dt_min.
-     * Even if the step sizing failed, the integrator must make a step of at least size dt_min.
+     * The adaptive step sizing is considered to be successful, if a step of at least size dt_min sufficed tolerances.
+     * Tolerances are defined in each implementation, usually using a criterion with absolute and relative tolerances.
+     * Even if the step sizing failed, the integrator will make a step of at least size dt_min.
      *
      * @param[in] f Right hand side of the ODE. May be called multiple times with different arguments.
      * @param[in] yt The known value of y at time t.
      * @param[in,out] t The current time. It will be increased by dt.
-     *     (If adaptive, the increment is from [dt_min, dt].)
-     * @param[in,out] dt The current step size h=dt.
-     *     (If adaptive, dt is adjusted in [dt_min, dt_max] to have an optimal size for the next step.)
+     *     (If adaptive, the increment is instead within [dt_min, dt].)
+     * @param[in,out] dt The current step size h=dt. Will not be changed.
+     *     (If adaptive, the given dt is used as the maximum step size, and must be within [dt_min, dt_max].
+     *      During integration, dt is adjusted in [dt_min, dt_max] to have an optimal size for the next step.)
      * @param[out] ytp1 Set to the approximated value of y at time t + dt.
      *     (If adaptive, this time may be smaller, but it is at least t + dt_min, at most t + dt_max.
      *      Note that the increment on t may be different from the returned value of dt.)
