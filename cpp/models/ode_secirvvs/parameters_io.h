@@ -79,7 +79,7 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<double>& scaling_factor_inf);
 /**@}*/
 
-IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path, const int& num_age_groups);
+IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path, const size_t& num_age_groups);
 /**@}*/
 
 /**

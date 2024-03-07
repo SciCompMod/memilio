@@ -224,7 +224,7 @@ IOResult<void> read_confirmed_cases_data(
     return success();
 }
 
-IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path, const int& num_age_groups)
+IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path, const size_t& num_age_groups)
 {
     std::vector<std::vector<double>> ans(3, std::vector<double>(num_age_groups, 0.0));
     std::fstream immunity_file;
@@ -383,17 +383,17 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         auto date_df = vacc_data_entry.date;
         if (it != vregion.end()) {
             auto region_idx = size_t(it - vregion.begin());
-            auto age        = vacc_data_entry.age_group;
+            AgeGroup age        = vacc_data_entry.age_group;
 
             // initialize the temporary immunity states
             if (date_df >=
                     offset_date_by_days(
-                        date,
+                        date, static_cast<int>(
                         -model[region_idx].parameters.template get<TimeTemporaryImmunityPI>()[age] -
-                            model[region_idx].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[age]) &&
+                            model[region_idx].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[age])) &&
                 date_df <=
                     offset_date_by_days(
-                        date, -model[region_idx].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[age])) {
+                        date, static_cast<int>(-model[region_idx].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[age]))) {
                 model[region_idx].populations[{age, InfectionState::TemporaryImmunPartialImmunity}] +=
                     vacc_data_entry.num_vaccinations_completed;
             }
@@ -401,11 +401,11 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
             if (date_df >=
                     offset_date_by_days(
                         date,
-                        -model[region_idx].parameters.template get<TimeTemporaryImmunityII>()[age] -
-                            model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity>()[age]) &&
+                        static_cast<int>(-model[region_idx].parameters.template get<TimeTemporaryImmunityII>()[age] -
+                            model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity>()[age])) &&
                 date_df <=
                     offset_date_by_days(
-                        date, -model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity>()[age])
+                        date, static_cast<int>(-model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity>()[age]))
 
             ) {
                 model[region_idx].populations[{age, InfectionState::TemporaryImmunImprovedImmunity}] +=
