@@ -60,8 +60,8 @@ TEST(TestOdeSECIRVVS, simulateDefault)
     model.populations.set_total(10);
     model.populations.set_difference_from_total({(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptibleNaive},
                                                 10);
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(0);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
@@ -114,8 +114,8 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
 
     model.parameters.get<mio::osecirvvs::ICUCapacity>()          = 10000;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() = 10000;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(0);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
 
@@ -267,8 +267,8 @@ void set_demographic_parameters(mio::osecirvvs::Model::ParameterSet& parameters,
     assign_uniform_distribution(parameters.get<mio::osecirvvs::ICUCapacity>(), 20, 50, set_invalid_initial_value);
     assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity>(), 100, 200,
                                 set_invalid_initial_value);
-    parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);
+    parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(5);
     parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
 }
@@ -432,7 +432,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
     graph.add_node(0, make_model(num_age_groups, /*set_invalid_initial_value*/ true));
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(num_age_groups, num_age_groups));
 
-    auto sampled_graph = mio::osecirvvs::draw_sample(graph, true);
+    auto sampled_graph = mio::osecirvvs::draw_sample(graph);
 
     ASSERT_EQ(sampled_graph.nodes().size(), graph.nodes().size());
     ASSERT_EQ(sampled_graph.edges().size(), graph.edges().size());
@@ -504,6 +504,7 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     std::vector<std::vector<int>> t_InfectedSymptoms(1);
     std::vector<std::vector<int>> t_InfectedSevere(1);
     std::vector<std::vector<int>> t_InfectedCritical(1);
+    std::vector<std::vector<int>> t_imm_interval1(1);
 
     std::vector<std::vector<double>> mu_C_R(1);
     std::vector<std::vector<double>> mu_I_H(1);
@@ -511,7 +512,7 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
 
     std::vector<std::vector<double>> num_InfectedSymptoms(1);
     std::vector<std::vector<double>> num_death(1);
-    std::vector<std::vector<double>> num_rec(1);
+    std::vector<std::vector<double>> num_timm(1);
     std::vector<std::vector<double>> num_Exposed(1);
     std::vector<std::vector<double>> num_InfectedNoSymptoms(1);
     std::vector<std::vector<double>> num_InfectedSevere(1);
@@ -519,7 +520,7 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
 
     num_InfectedSymptoms[0]   = std::vector<double>(num_age_groups, 0.0);
     num_death[0]              = std::vector<double>(num_age_groups, 0.0);
-    num_rec[0]                = std::vector<double>(num_age_groups, 0.0);
+    num_timm[0]               = std::vector<double>(num_age_groups, 0.0);
     num_Exposed[0]            = std::vector<double>(num_age_groups, 0.0);
     num_InfectedNoSymptoms[0] = std::vector<double>(num_age_groups, 0.0);
     num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
@@ -538,6 +539,8 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
             std::round(model[0].parameters.template get<mio::osecirvvs::TimeInfectedSevere>()[(mio::AgeGroup)group])));
         t_InfectedCritical[0].push_back(static_cast<int>(std::round(
             model[0].parameters.template get<mio::osecirvvs::TimeInfectedCritical>()[(mio::AgeGroup)group])));
+        t_imm_interval1[0].push_back(static_cast<int>(std::round(
+            model[0].parameters.template get<mio::osecirvvs::TimeTemporaryImmunityPI>()[(mio::AgeGroup)group])));
 
         mu_C_R[0].push_back(
             model[0].parameters.template get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)group]);
@@ -549,8 +552,8 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
 
     auto read = mio::osecirvvs::details::read_confirmed_cases_data(
         path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
-        num_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
-        t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, std::vector<double>(size_t(num_age_groups), 1.0));
+        num_icu, num_death, num_timm, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+        t_InfectedCritical, t_imm_interval1, mu_C_R, mu_I_H, mu_H_U, std::vector<double>(size_t(num_age_groups), 1.0));
 
     ASSERT_THAT(read, IsSuccess());
 }
@@ -728,7 +731,8 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
-                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
+                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "immunity_population.txt")),
                 IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
@@ -809,7 +813,7 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     //sample a few times
     auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
-        return mio::osecirvvs::draw_sample(graph, true);
+        return mio::osecirvvs::draw_sample(graph);
     });
 
     //extract nodes from graph

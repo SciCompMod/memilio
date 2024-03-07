@@ -311,13 +311,19 @@ TEST(TestEpiDataIO, read_vaccination_data)
     ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(0));
     ASSERT_EQ(vacc_data[0].county_id, mio::regions::CountyId(1001));
     ASSERT_EQ(vacc_data[0].district_id, mio::regions::DistrictId(1234));
+    ASSERT_EQ(vacc_data[0].num_vaccinations_partial, 0.0);
     ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 5.0);
+    ASSERT_EQ(vacc_data[0].num_vaccinations_refreshed, 2.0);
+    ASSERT_EQ(vacc_data[0].num_vaccinations_refreshed_2, 1.0);
 
     ASSERT_EQ(vacc_data[1].date, mio::Date(2022, 4, 15));
     ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(2));
     ASSERT_EQ(vacc_data[1].county_id, boost::none);
     ASSERT_EQ(vacc_data[1].district_id, mio::regions::DistrictId(1235));
+    ASSERT_EQ(vacc_data[1].num_vaccinations_partial, 1.0);
     ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 1.0);
+    ASSERT_EQ(vacc_data[1].num_vaccinations_refreshed, 4.0);
+    ASSERT_EQ(vacc_data[1].num_vaccinations_refreshed_2, 3.0);
 }
 
 TEST(TestEpiData, set_vaccination_data)
@@ -344,7 +350,7 @@ TEST(TestEpiData, set_vaccination_data)
 
     ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
                 MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination>().array()),
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyPartialVaccination>().array()),
                 MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
 }
 

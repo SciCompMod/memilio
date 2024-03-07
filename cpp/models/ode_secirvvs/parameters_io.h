@@ -1234,7 +1234,8 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     }
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
-                                                        date, scaling_factor_inf));
+                                                        date, scaling_factor_inf,
+                                                        path_join(data_dir, "immunity_population.json")));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids,
                                                    path_join(data_dir, "immunity_population.txt")));
 
@@ -1247,7 +1248,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
             model, data_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
             path_join(data_dir, "critical_cases.json"), path_join(data_dir, "confirmed_cases.json"),
-            path_join(data_dir, "population_data.json")));
+            path_join(data_dir, "population_data.json"), path_join(data_dir, "immunity_population.txt")));
     }
 
     return success();

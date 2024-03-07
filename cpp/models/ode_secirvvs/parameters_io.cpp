@@ -401,7 +401,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                     offset_date_by_days(
                         date, -model[region_idx].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[age])) {
                 model[region_idx].populations[{age, InfectionState::TemporaryImmunPartialImmunity}] +=
-                    vacc_data_entry.num_second_vaccinations_completed;
+                    vacc_data_entry.num_vaccinations_completed;
             }
 
             if (date_df >=
@@ -424,7 +424,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 if (max_date >= offset_first_date) {
                     if (date_df == offset_first_date) {
                         model[region_idx].parameters.template get<DailyPartialVaccination>()[{age, SimulationDay(d)}] =
-                            vacc_data_entry.num_first_vaccinations_completed;
+                            vacc_data_entry.num_vaccinations_partial;
                     }
                 }
                 else {
@@ -438,7 +438,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 if (max_date >= offset_full_date) {
                     if (date_df == offset_full_date) {
                         model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] =
-                            vacc_data_entry.num_second_vaccinations_completed;
+                            vacc_data_entry.num_vaccinations_completed;
                     }
                 }
                 else {
