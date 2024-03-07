@@ -2,8 +2,7 @@ add_library(lct_secir
     infection_state.h
     model.h
     model.cpp
-    simulation.h
-    simulation.cpp    
+    simulation.h    
     parameters.h
     initializer_flows.cpp
     initializer_flows.h
