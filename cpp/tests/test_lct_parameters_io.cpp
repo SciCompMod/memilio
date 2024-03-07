@@ -34,6 +34,7 @@
 // Check that Initialization based on synthetic RKI data match previous result.
 TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 {
+    // Define start date and the total population used for the initialization.
     ScalarType total_population = 1000.0;
     auto start_date             = mio::Date(2020, 6, 1);
 
