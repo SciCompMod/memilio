@@ -141,7 +141,7 @@ TYPED_TEST(TestVerifyNumericalIntegrator, sine)
 
 TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
 {
-    // set large tolarances and big dt_min, since we want that the step size adaption fails with dt_min
+    // set fixed tolarances to control when a integration step fails
     const double tol    = 1;
     const double dt_min = 1, dt_max = 2 * dt_min;
 
@@ -157,31 +157,32 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
     double t_eval;
     bool step_okay;
 
+    // this deriv function is supposed to (not guaranteed to!) break any integrator
+    double c        = 1;
+    auto deriv_fail = [&c, tol](const auto&&, auto&&, auto&& dxds) {
+        c /= -10 * tol;
+        dxds.array() = 1 / c; // increasing oscillation with each evaluation (indep. of t and dt)
+    };
+    // this deriv function is trivially integrable
+    auto deriv_success = [](const auto&&, auto&&, auto&& dxds) {
+        dxds.setZero(); // const f
+    };
+
     // check that on a failed step, dt does decrease, but not below dt_min
 
-    double c  = 1;
     t_eval    = 0;
     this->dt  = dt_max;
-    step_okay = integrator.step( // this deriv function is supposed to (not guranteed to!) break any integrator
-        [&c, tol](const auto&&, auto&&, auto&& dxds) {
-            c /= -10 * tol;
-            dxds.array() = 1 / c;
-        },
-        this->y[0], t_eval, this->dt, this->sol[0]);
+    step_okay = integrator.step(deriv_fail, this->y[0], t_eval, this->dt, this->sol[0]);
 
     EXPECT_EQ(step_okay, false); // step sizing should fail
     EXPECT_EQ(this->dt, dt_min); // new step size should fall back to dt_min
-    EXPECT_EQ(t_eval, dt_min) << this->sol[0].transpose(); // a step must be made with no less than dt_min
+    EXPECT_EQ(t_eval, dt_min); // a step must be made with no less than dt_min
 
     // check that on a successful step, dt increases from dt_min
 
     t_eval    = 0;
     this->dt  = dt_min;
-    step_okay = integrator.step(
-        [](const auto&&, auto&&, auto&& dxds) {
-            dxds.setZero(); // const f
-        },
-        this->y[0], t_eval, this->dt, this->sol[0]);
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
 
     EXPECT_EQ(step_okay, true); // step sizing must be okay
     EXPECT_GE(this->dt, dt_min); // new step size may be larger
@@ -191,15 +192,29 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
 
     t_eval    = 0;
     this->dt  = dt_max;
-    step_okay = integrator.step(
-        [](const auto&&, auto&&, auto&& dxds) {
-            dxds.setZero(); // const f
-        },
-        this->y[0], t_eval, this->dt, this->sol[0]);
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
 
     EXPECT_EQ(step_okay, true); // step sizing must be okay
     EXPECT_EQ(this->dt, dt_max); // new step size must not increase from dt_max
     EXPECT_EQ(t_eval, dt_max); // used step size should be dt_max
+
+    // check that the integrator does not make time steps for dt not in [dt_min, dt_max]
+
+    t_eval    = 0;
+    this->dt  = 0.5 * dt_min;
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_GE(this->dt, dt_min); // new step size must be bounded by dt_min
+    EXPECT_EQ(t_eval, dt_min); // step size should fall back to dt_min
+
+    t_eval    = 0;
+    this->dt  = 2.0 * dt_max;
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_LE(this->dt, dt_max); // new step size must be bounded by dt_max
+    EXPECT_EQ(t_eval, dt_max); // step size should fall back to dt_max
 }
 
 auto DoStep()

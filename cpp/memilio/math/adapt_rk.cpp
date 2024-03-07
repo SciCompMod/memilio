@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/math/adapt_rk.h"
+#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -74,14 +75,14 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
                             Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
     assert(0 <= m_dt_min);
-    assert(m_dt_min < m_dt_max);
+    assert(m_dt_min <= m_dt_max);
     dt = std::min(dt, m_dt_max);
 
     double t_eval; // shifted time for evaluating yt
     double dt_new; // updated dt
 
-    bool converged              = false; // carry for convergence criterion
-    bool failed_step_size_adapt = false;
+    bool converged     = false; // carry for convergence criterion
+    bool dt_is_invalid = false;
 
     if (m_yt_eval.size() != yt.size()) {
         m_yt_eval.resize(yt.size());
@@ -90,10 +91,10 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
 
     m_yt_eval = yt;
 
-    while (!converged && !failed_step_size_adapt) {
+    while (!converged && !dt_is_invalid) {
         if (dt < m_dt_min) {
-            failed_step_size_adapt = true;
-            dt                     = m_dt_min;
+            dt_is_invalid = true;
+            dt            = m_dt_min;
         }
         // compute first column of kt, i.e. kt_0 for each y in yt_eval
         f(m_yt_eval, t, m_kt_values.col(0));
@@ -121,7 +122,7 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
 
         converged = (m_error_estimate <= m_eps).all(); // convergence criterion
 
-        if (converged || failed_step_size_adapt) {
+        if (converged || dt_is_invalid) {
             // if sufficiently exact, return ytp1, which currently contains the lower order approximation
             // (higher order is not always higher accuracy)
             t += dt; // this is the t where ytp1 belongs to
@@ -139,7 +140,9 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
         dt = std::min(dt_new, m_dt_max);
     }
     dt = std::max(dt, m_dt_min);
-    return !failed_step_size_adapt;
+    // return 'converged' in favor of '!dt_is_invalid', as these values only differ if step sizing failed,
+    // but the step with size dt_min was accepted.
+    return converged;
 }
 
 } // namespace mio
