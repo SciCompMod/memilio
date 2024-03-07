@@ -501,7 +501,6 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
     BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
 
     auto num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
-    std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
     BOOST_OUTCOME_TRY(immunity_population, read_immunity_population(immunity_data_path, num_age_groups));
 
     for (size_t region = 0; region < vregion.size(); region++) {
@@ -816,15 +815,15 @@ IOResult<void> export_input_data_county_timeseries(
         std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_n(model.size(),
                                                                          std::vector<double>(num_age_groups, 0.0));
         // end TODO
-        std::vector<std::vector<double>> num_rec_n(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedSevere_n(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_death_n(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> dummy_timm(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_timm1(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_timm2(model.size(), std::vector<double>(num_age_groups, 0.0));
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
             rki_data, region, date, num_Exposed_n, num_InfectedNoSymptoms_n, num_InfectedSymptoms_n,
-            num_InfectedSevere_n, dummy_icu, num_death_n, num_timm1, t_Exposed_n, t_InfectedNoSymptoms_n,
+            num_InfectedSevere_n, dummy_icu, num_death_n, dummy_timm, t_Exposed_n, t_InfectedNoSymptoms_n,
             t_InfectedSymptoms_n, t_InfectedSevere_n, t_InfectedCritical_n, t_imm_interval1, mu_C_R_n, mu_I_H_n,
             mu_H_U_n, scaling_factor_inf));
 
@@ -842,7 +841,6 @@ IOResult<void> export_input_data_county_timeseries(
                                                                           std::vector<double>(num_age_groups, 0.0));
         // end TODO
         std::vector<std::vector<double>> dummy_death(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> dummy_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
         for (size_t county = 0; county < model.size(); county++) {
             dummy_death[county] = std::vector<double>(num_age_groups, 0.0);
             dummy_icu[county]   = std::vector<double>(num_age_groups, 0.0);
@@ -867,7 +865,6 @@ IOResult<void> export_input_data_county_timeseries(
         // end TODO
         std::vector<std::vector<double>> num_InfectedSevere_ii(model.size(), std::vector<double>(num_age_groups, 0.0));
         for (size_t county = 0; county < model.size(); county++) {
-            dummy_rec[county]   = std::vector<double>(num_age_groups, 0.0);
             dummy_death[county] = std::vector<double>(num_age_groups, 0.0);
             dummy_icu[county]   = std::vector<double>(num_age_groups, 0.0);
         }
@@ -891,8 +888,6 @@ IOResult<void> export_input_data_county_timeseries(
 
         // read population basics
         BOOST_OUTCOME_TRY(num_population, details::read_population_data(population_data, region));
-
-        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
 
         for (size_t county = 0; county < region.size(); county++) {
             if (std::accumulate(num_population[county].begin(), num_population[county].end(), 0.0) > 0) {
@@ -1235,7 +1230,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
                                                         date, scaling_factor_inf,
-                                                        path_join(data_dir, "immunity_population.json")));
+                                                        path_join(data_dir, "immunity_population.txt")));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids,
                                                    path_join(data_dir, "immunity_population.txt")));
 

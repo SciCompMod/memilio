@@ -214,7 +214,7 @@ struct TimeTemporaryImmunityPI {
 };
 
 /**
- * @brief the time people stays immune after infection or vaccination located in S_pv or S_II
+ * @brief the time people stays immune after infection or vaccination located in S_PI or S_II
         in the model in day unit
  */
 struct TimeTemporaryImmunityII {
@@ -442,7 +442,7 @@ struct DaysUntilEffectiveBoosterImmunity {
 };
 
 /** 
- * @brief Time in days to describe waning immunity to get person from S_pv -> S
+ * @brief Time in days to describe waning immunity to get person from S_PI -> S
  */
 struct WaningPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -457,7 +457,7 @@ struct WaningPartialImmunity {
 };
 
 /** 
- * @brief Time in days to describe waning immunity to get person from R -> S_pv
+ * @brief Time in days to describe waning immunity to get person from SII -> SPI
  */
 struct WaningImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;

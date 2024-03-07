@@ -238,26 +238,20 @@ IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::s
         while (linenumber < 3) {
             getline(immunity_file, tp);
             // delete /r at the end by delete last entry.
-            tp.erase(tp.size() - 1);
-            auto line          = split(tp, ' ');
-            ans[linenumber][0] = std::stod(line[0]);
-            ans[linenumber][1] = std::stod(line[1]);
-            ans[linenumber][2] = std::stod(line[2]);
-            ans[linenumber][3] = std::stod(line[3]);
-            ans[linenumber][4] = std::stod(line[4]);
-            ans[linenumber][5] = std::stod(line[5]);
+            if (linenumber < 2)
+                tp.erase(tp.size() - 1);
+            auto line = split(tp, ' ');
+            for (int i = 0; i < num_age_groups; i++) {
+                ans[linenumber][i] = std::stod(line[i]);
+            }
             linenumber++;
         }
         immunity_file.close(); //close the file object.
     }
-    // assert that the sum of the rows is 1 (tolerance 1-10)
-    for (size_t i = 0; i < ans.size(); i++) {
-        double sum = std::accumulate(ans[i].begin(), ans[i].end(), 0.0);
-        if (std::abs(sum - 1.0) > 1e-10) {
-            log_error("Sum of row {:d} in immunity of the population is not 1.0, but {:.4f}.", i, sum);
-            return mio::failure(mio::StatusCode::InvalidValue,
-                                "Sum of row in the immunity of the population is not 1.0.");
-        }
+
+    // assert that the sum of the cols is 1 (tolerance 1-10)
+    for (size_t i = 0; i < 6; ++i) {
+        assert(std::abs(ans[0][i] + ans[1][i] + ans[2][i] - 1.0) < 1e-10);
     }
 
     return ans;
@@ -389,7 +383,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         auto date_df = vacc_data_entry.date;
         if (it != vregion.end()) {
             auto region_idx = size_t(it - vregion.begin());
-            AgeGroup age        = vacc_data_entry.age_group;
+            auto age        = vacc_data_entry.age_group;
 
             // initialize the temporary immunity states
             if (date_df >=
