@@ -20,7 +20,6 @@
 
 #include "lct_secir/infection_state.h"
 #include "lct_secir/initializer_flows.h"
-#include "lct_secir/parameters.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -35,39 +34,35 @@ TEST(TestInitializer, compareWithPrevious)
 {
     ScalarType dt = 0.5;
 
-    // Define number of subcompartments.
-    std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 2;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 3;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 2;
-    mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
+    using Model    = mio::lsecir::Model<2, 3, 2, 3, 2>;
+    using LctState = Model::LctState;
 
     // Previous result.
-    Eigen::VectorXd compare(InfState.get_count());
+    Eigen::VectorXd compare(LctState::Count);
     compare << 82810889.00545, 850.70432, 970.04980, 315.32890, 391.51799, 391.39351, 565.45854, 580.79267, 85.97421,
         86.02738, 80.26791, 189.53449, 167.57963, 329757.36512, 9710;
 
-    // Define parameters.
-    mio::lsecir::Parameters parameters_lct;
-    parameters_lct.get<mio::lsecir::TimeExposed>()                      = 3.1;
-    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.1;
-    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.1;
-    parameters_lct.get<mio::lsecir::TimeInfectedSevere>()               = 11.1;
-    parameters_lct.get<mio::lsecir::TimeInfectedCritical>()             = 17.1;
-    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.01;
-    mio::ContactMatrixGroup contact_matrix                              = mio::ContactMatrixGroup(1, 1);
-    parameters_lct.get<mio::lsecir::ContactPatterns>()                  = mio::UncertainContactMatrix(contact_matrix);
+    // Initialize a model.
+    Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
 
-    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
-    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1;
-    parameters_lct.get<mio::lsecir::Seasonality>()                    = 0;
-    parameters_lct.get<mio::lsecir::StartDay>()                       = 0;
-    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.1;
-    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.1;
-    parameters_lct.get<mio::lsecir::CriticalPerSevere>()              = 0.1;
-    parameters_lct.get<mio::lsecir::DeathsPerCritical>()              = 0.1;
+    // Define parameters.
+    model.parameters.get<mio::lsecir::TimeExposed>()                      = 3.1;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.1;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.1;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()               = 11.1;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()             = 17.1;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.01;
+    mio::ContactMatrixGroup contact_matrix                                = mio::ContactMatrixGroup(1, 1);
+    model.parameters.get<mio::lsecir::ContactPatterns>()                  = mio::UncertainContactMatrix(contact_matrix);
+
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1;
+    model.parameters.get<mio::lsecir::Seasonality>()                    = 0;
+    model.parameters.get<mio::lsecir::StartDay>()                       = 0;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.1;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.1;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.1;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.1;
 
     ScalarType total_confirmed_cases = 341223;
     ScalarType deaths                = 9710;
@@ -95,12 +90,12 @@ TEST(TestInitializer, compareWithPrevious)
     }
 
     // Calculate initial vector and compare with previous reult.
-    mio::lsecir::Initializer initializer(std::move(init), InfState, std::move(parameters_lct));
+    mio::lsecir::Initializer<Model> initializer(std::move(init), model);
     initializer.set_tol_for_support_max(1e-6);
-    auto init_compartments = initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
+    initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
 
-    for (int i = 0; i < InfState.get_count(); i++) {
-        EXPECT_NEAR(init_compartments[i], compare[i], 1e-4) << "at subcompartment number " << i;
+    for (int i = 0; i < (int)LctState::Count; i++) {
+        EXPECT_NEAR(model.get_initial_values()[i], compare[i], 1e-4) << "at subcompartment number " << i;
     }
 }
 
@@ -110,94 +105,94 @@ TEST(TestInitializer, testConstraints)
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
-    ScalarType dt = 0.5;
+    ScalarType dt                    = 0.5;
+    ScalarType total_confirmed_cases = 341223;
+    ScalarType deaths                = 9710;
+    ScalarType total_population      = 83155031.0;
 
-    // Define number of subcompartments.
-    std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 2;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 3;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 2;
-    mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
+    using Model    = mio::lsecir::Model<2, 3, 2, 3, 2>;
+    using LctState = Model::LctState;
+
+    // Initialize a model.
+    Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
 
     // Check wrong size of initial flows.
     mio::TimeSeries<ScalarType> init_wrong_size((int)mio::lsecir::InfectionTransition::Count - 1);
     Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones((int)mio::lsecir::InfectionTransition::Count - 1);
-    init_wrong_size.add_time_point(-10, vec_wrong_size);
-    init_wrong_size.add_time_point(-9, vec_wrong_size);
+    init_wrong_size.add_time_point(-50, vec_wrong_size);
+    while (init_wrong_size.get_last_time() < 0) {
+        init_wrong_size.add_time_point(init_wrong_size.get_last_time() + dt, vec_wrong_size);
+    }
 
-    mio::lsecir::Initializer initializer_init_wrong_size(std::move(init_wrong_size), InfState);
+    mio::lsecir::Initializer<Model> initializer_init_wrong_size(std::move(init_wrong_size), model);
+    bool status =
+        initializer_init_wrong_size.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
 
-    bool constraint_check = initializer_init_wrong_size.check_constraints();
-    EXPECT_TRUE(constraint_check);
+    EXPECT_TRUE(status);
 
     // Check if last time of initial flows is not zero.
     mio::TimeSeries<ScalarType> init_wrong((int)mio::lsecir::InfectionTransition::Count);
     Eigen::VectorXd vec_init = Eigen::VectorXd::Ones((int)mio::lsecir::InfectionTransition::Count);
-    init_wrong.add_time_point(-10, vec_init);
-    init_wrong.add_time_point(-9, vec_init);
+    init_wrong.add_time_point(-50, vec_init);
+    while (init_wrong.get_last_time() < -5) {
+        init_wrong.add_time_point(init_wrong.get_last_time() + dt, vec_init);
+    }
 
     mio::TimeSeries<ScalarType> init_copy(init_wrong);
-    mio::lsecir::Initializer initializer_init_wrong_last_time(std::move(init_copy), InfState);
+    mio::lsecir::Initializer<Model> initializer_init_wrong_last_time(std::move(init_copy), model);
 
-    constraint_check = initializer_init_wrong_last_time.check_constraints();
-    EXPECT_TRUE(constraint_check);
+    status =
+        initializer_init_wrong_last_time.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
+    EXPECT_TRUE(status);
 
     // Check if time steps of initial flows are not equidistant.
-    init_wrong.add_time_point(init_wrong.get_last_time() + 1., vec_init);
+    init_wrong.add_time_point(init_wrong.get_last_time() + 2. * dt, vec_init);
     while (init_wrong.get_last_time() < 0) {
         init_wrong.add_time_point(init_wrong.get_last_time() + dt, vec_init);
     }
 
-    mio::lsecir::Initializer initializer_init_wrong_equidistant(std::move(init_wrong), InfState);
+    mio::lsecir::Initializer<Model> initializer_init_wrong_equidistant(std::move(init_wrong), model);
 
-    constraint_check = initializer_init_wrong_equidistant.check_constraints();
-    EXPECT_TRUE(constraint_check);
+    status = initializer_init_wrong_equidistant.compute_initialization_vector(total_population, deaths,
+                                                                              total_confirmed_cases);
+    EXPECT_TRUE(status);
 
     // Check large step size.
     mio::TimeSeries<ScalarType> init_wrong_step((int)mio::lsecir::InfectionTransition::Count);
-    init_wrong_step.add_time_point(-10, vec_init);
-    init_wrong_step.add_time_point(init_wrong_step.get_last_time() + 2., vec_init);
+    init_wrong_step.add_time_point(-50, vec_init);
+    init_wrong_step.add_time_point(init_wrong_step.get_last_time() + 10 * dt, vec_init);
     while (init_wrong_step.get_last_time() < 0) {
-        init_wrong_step.add_time_point(init_wrong_step.get_last_time() + dt, vec_init);
+        init_wrong_step.add_time_point(init_wrong_step.get_last_time() + 10 * dt, vec_init);
     }
 
-    mio::lsecir::Initializer initializer_init_wrong_step(std::move(init_wrong_step), InfState);
+    mio::lsecir::Initializer<Model> initializer_init_wrong_step(std::move(init_wrong_step), model);
 
-    constraint_check = initializer_init_wrong_step.check_constraints();
-    EXPECT_TRUE(constraint_check);
+    status = initializer_init_wrong_step.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
+    EXPECT_TRUE(status);
 
-    // Check with correct flows.
-    mio::TimeSeries<ScalarType> init_right((int)mio::lsecir::InfectionTransition::Count);
-    init_right.add_time_point(-10, vec_init);
-    while (init_right.get_last_time() < 0) {
-        init_right.add_time_point(init_right.get_last_time() + dt, vec_init);
-    }
-
-    mio::lsecir::Initializer initializer_right(std::move(init_right), InfState);
-    initializer_right.set_tol_for_support_max(1e-6);
-
-    constraint_check = initializer_right.check_constraints();
-    EXPECT_FALSE(constraint_check);
-
-    // Check with too short time period of initial data. The time period above was long enough.
+    // Check with too short time period of initial data.
     mio::TimeSeries<ScalarType> init_short((int)mio::lsecir::InfectionTransition::Count);
     init_short.add_time_point(-1., vec_init);
     while (init_short.get_last_time() < 0) {
         init_short.add_time_point(init_short.get_last_time() + dt, vec_init);
     }
 
-    mio::lsecir::Initializer initializer_init_short(std::move(init_short), InfState);
-    ScalarType total_confirmed_cases = 341223;
-    ScalarType deaths                = 9710;
-    ScalarType total_population      = 83155031.0;
-    auto initialconditions =
-        initializer_init_short.compute_initializationvector(total_population, deaths, total_confirmed_cases);
+    mio::lsecir::Initializer<Model> initializer_init_short(std::move(init_short), model);
+    status = initializer_init_short.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
+    EXPECT_TRUE(status);
 
-    for (int i = 2; i < InfState.get_count() - 2; i++) {
-        EXPECT_EQ(-1, initialconditions[i]);
+    // Check with correct flows.
+    mio::TimeSeries<ScalarType> init_right((int)mio::lsecir::InfectionTransition::Count);
+    init_right.add_time_point(-50, vec_init);
+    while (init_right.get_last_time() < 0) {
+        init_right.add_time_point(init_right.get_last_time() + dt, vec_init);
     }
+
+    mio::lsecir::Initializer<Model> initializer_right(std::move(init_right), model);
+    initializer_right.set_tol_for_support_max(1e-6);
+
+    status = initializer_right.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
+    EXPECT_FALSE(status);
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);

@@ -4,7 +4,6 @@ add_library(lct_secir
     model.cpp
     simulation.h    
     parameters.h
-    initializer_flows.cpp
     initializer_flows.h
 )
 target_link_libraries(lct_secir PUBLIC memilio)

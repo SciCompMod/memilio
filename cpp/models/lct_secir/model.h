@@ -291,6 +291,7 @@ public:
     void set_initial_values(Eigen::VectorXd init)
     {
         m_initial_values = init;
+        m_N0             = m_initial_values.sum();
     }
 
     Parameters parameters{}; ///< Parameters of the model.

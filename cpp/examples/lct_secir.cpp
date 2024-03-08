@@ -69,9 +69,6 @@ int main()
     model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
     model.parameters.set<mio::lsecir::DeathsPerCritical>(0.3);
 
-    // Define initial value vector with subcompartments with the method defined in use_initializer_flows.
-    Eigen::VectorXd init(LctState::Count);
-
     if (use_initializer_flows) {
         // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
         // Create TimeSeries with num_transitions elements.
@@ -94,14 +91,17 @@ int main()
         // Add initial time point to time series.
         flows.add_time_point(-110, vec_flows);
         // Add further time points until time 0.
-        while (flows.get_last_time() < 0) {
+        while (flows.get_last_time() < -1e-10) {
             flows.add_time_point(flows.get_last_time() + dt, vec_flows);
         }
 
-        // Get initialization vector for LCT model with subcompartments defined in infection_state.
-        mio::lsecir::Initializer initializer(std::move(flows), LctState(), &model.parameters);
+        // Set initialization vector for the LCT model.
+        mio::lsecir::Initializer<Model> initializer(std::move(flows), model);
         initializer.set_tol_for_support_max(1e-6);
-        init = initializer.compute_initializationvector(1000000, 10, 16000);
+        auto status = initializer.compute_initialization_vector(1000000, 10, 16000);
+        if (status) {
+            return 1;
+        }
     }
     else {
         // Simple example how to initialize model.
@@ -140,7 +140,8 @@ int main()
             return 1;
         }
 
-        // Transfer the initial values in initial_populations to the vector init.
+        // Define initial value vector with subcompartments and transfer the initial values in initial_populations to the vector.
+        Eigen::VectorXd init(LctState::Count);
         init[(int)LctState::get_first_index<LctState::InfectionState::Susceptible>()] =
             initial_populations[(int)LctState::InfectionState::Susceptible][0];
         for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(); i++) {
@@ -171,10 +172,10 @@ int main()
             initial_populations[(int)LctState::InfectionState::Recovered][0];
         init[(int)LctState::get_first_index<LctState::InfectionState::Dead>()] =
             initial_populations[(int)LctState::InfectionState::Dead][0];
-    }
 
-    // Initialize model.
-    model.set_initial_values(std::move(init));
+        // Set initial values for the model.
+        model.set_initial_values(std::move(init));
+    }
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, tmax, 0.5, model);
