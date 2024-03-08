@@ -911,7 +911,7 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
         auto curr_time     = sim.get_time();
         const auto persons = sim.get_world().get_persons();
 
-        PRAGMA_OMP(parallel for)
+        // PRAGMA_OMP(parallel for)
         for (auto i = size_t(0); i < persons.size(); ++i) {
             auto& p    = persons[i];
             auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
@@ -987,7 +987,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(40); // End time per simulation
-    auto max_num_persons = 30000;
+    auto max_num_persons = 100000;
     // auto ensemble_infection_per_loc_type =
     //     std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     // ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -1173,7 +1173,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 1;
+        num_runs = 124;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 
