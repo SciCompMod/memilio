@@ -73,14 +73,10 @@ def run_secir_groups_simulation(show_plot=True):
     # set parameters
     for i in range(num_groups):
         # Compartment transition duration
-
-        model.parameters.IncubationTime[AgeGroup(i)] = 5.2  # R_2^(-1)+R_3^(-1)
-        model.parameters.TimeInfectedSymptoms[AgeGroup(
-            i)] = 6.  # 4-14  (=R4^(-1))
-        # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        model.parameters.SerialInterval[AgeGroup(i)] = 4.2
-        model.parameters.TimeInfectedSevere[AgeGroup(
-            i)] = 12.  # 7-16 (=R5^(-1))
+        model.parameters.TimeExposed[AgeGroup(i)] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[AgeGroup(i)] = 2.
+        model.parameters.TimeInfectedSymptoms[AgeGroup(i)] = 6.
+        model.parameters.TimeInfectedSevere[AgeGroup(i)] = 12.
         model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
 
         # Initial number of peaople in each compartment

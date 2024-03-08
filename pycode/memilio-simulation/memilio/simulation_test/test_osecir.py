@@ -49,8 +49,8 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.StartDay = 60
         model.parameters.Seasonality.value = 0.2
 
-        model.parameters.IncubationTime[A0] = 5.2
-        model.parameters.SerialInterval[A0] = 4.2
+        model.parameters.TimeExposed[A0] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[A0] = 2.
         model.parameters.TimeInfectedSymptoms[A0] = 5.8
         model.parameters.TimeInfectedSevere[A0] = 9.5
         model.parameters.TimeInfectedCritical[A0] = 7.1

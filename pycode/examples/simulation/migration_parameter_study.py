@@ -31,8 +31,8 @@ def parameter_study():
     # setup basic parameters
     model = secir.Model(1)
 
-    model.parameters.IncubationTime[mio.AgeGroup(0)] = 5.2
-    model.parameters.SerialInterval[mio.AgeGroup(0)] = 4.2
+    model.parameters.TimeExposed[mio.AgeGroup(0)] = 3.2
+    model.parameters.TimeInfectedNoSymptoms[mio.AgeGroup(0)] = 2.
     model.parameters.TimeInfectedSymptoms[mio.AgeGroup(0)] = 6
     model.parameters.TimeInfectedSevere[mio.AgeGroup(0)] = 12
     model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = 8
