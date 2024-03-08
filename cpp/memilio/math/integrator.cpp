@@ -58,7 +58,7 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(const DerivFunction& f, const
     }
 
     if (!step_okay) {
-        log_warning("Adaptive step sizing failed.");
+        log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
     }
     else if (std::abs((tmax - t) / (tmax - t0)) > 1e-14) {
         log_warning("Last time step too small. Could not reach tmax exactly.");
