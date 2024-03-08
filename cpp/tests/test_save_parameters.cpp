@@ -831,11 +831,11 @@ TEST(TestSaveParameters, json_write_read_parameters_secirvvs)
     auto& params = model.parameters;
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::osecirvvs::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecirvvs::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecirvvs::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecirvvs::TimeInfectedSevere>()[i]   = 10.;
-        params.get<mio::osecirvvs::TimeInfectedCritical>()[i] = 8.;
+        params.get<mio::osecirvvs::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i] = 2.;
+        params.get<mio::osecirvvs::TimeInfectedSymptoms>()[i]   = 5.;
+        params.get<mio::osecirvvs::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::osecirvvs::TimeInfectedCritical>()[i]   = 8.;
 
         model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[i] = 0.06;
         model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
@@ -879,12 +879,12 @@ TEST(TestSaveParameters, json_write_read_parameters_secirvvs)
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        ASSERT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[i],
-                  read_model.parameters.get<mio::osecirvvs::IncubationTime>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeExposed>()[i],
+                  read_model.parameters.get<mio::osecirvvs::TimeExposed>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i],
+                  read_model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i],
                   read_model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::osecirvvs::SerialInterval>()[i],
-                  read_model.parameters.get<mio::osecirvvs::SerialInterval>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i],
                   read_model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[i],

@@ -111,7 +111,7 @@ public:
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            auto rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+            auto rateINS = 1 / params.get<TimeInfectedNoSymptoms>()[i];
             test_and_trace_required +=
                 (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
@@ -161,8 +161,8 @@ public:
                 this->populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
             size_t SIIi    = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
-            double rateE   = 1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]);
-            double rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+            double rateE   = 1 / params.get<TimeExposed>()[i];
+            double rateINS = 1 / params.get<TimeInfectedNoSymptoms>()[i];
 
             double reducExposedPartialImmunity           = params.get<ReducExposedPartialImmunity>()[i];
             double reducExposedImprovedImmunity          = params.get<ReducExposedImprovedImmunity>()[i];
@@ -778,13 +778,11 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
-    auto& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
-    auto& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
     auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
     auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
     //slice of InfectedNoSymptoms
-    auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
+    auto y_INS = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
                  slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsPartialImmunity),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
@@ -792,8 +790,8 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)});
 
     //compute isolation, same as infection risk from main model
-    auto R3                      = 0.5 / (t_inc - t_ser);
-    auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
+    auto rateINS                 = 1 / params.template get<TimeInfectedNoSymptoms>().array().template cast<double>();
+    auto test_and_trace_required = ((1 - p_asymp) * rateINS * y_INS.array()).sum();
     auto riskFromInfectedSymptomatic =
         smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity>()),
                         params.template get<TestAndTraceCapacity>() * 5, p_inf.matrix(), p_inf_max.matrix());

@@ -556,7 +556,7 @@ public:
                 log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
-                          this->get<TimeInfectedSymptoms>()[i], tol_times);
+                          this->get<TimeExposed>()[i], tol_times);
                 return true;
             }
 
@@ -564,7 +564,7 @@ public:
                 log_error("Constraint check: Parameter TimeInfectedNoSymptoms {:.4f} smaller {:.4f}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
-                          this->get<TimeInfectedSymptoms>()[i], tol_times);
+                          this->get<TimeInfectedNoSymptoms>()[i], tol_times);
                 return true;
             }
 

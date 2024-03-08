@@ -64,8 +64,7 @@ public:
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            auto rateINS =
-                0.5 / (params.get<osecirvvs::IncubationTime>()[i] - params.get<osecirvvs::SerialInterval>()[i]);
+            auto rateINS = 1 / params.get<osecirvvs::TimeInfectedNoSymptoms>()[i];
             test_and_trace_required +=
                 (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
@@ -128,10 +127,8 @@ public:
             dydt[SIIi] = 0;
             dydt[EIIi] = 0;
 
-            double rateE =
-                1.0 / (2 * params.get<osecirvvs::SerialInterval>()[i] - params.get<osecirvvs::IncubationTime>()[i]);
-            double rateINS =
-                0.5 / (params.get<osecirvvs::IncubationTime>()[i] - params.get<osecirvvs::SerialInterval>()[i]);
+            double rateE   = 1.0 / params.get<osecirvvs::TimeExposed>()[i];
+            double rateINS = 1.0 / params.get<osecirvvs::TimeInfectedNoSymptoms>()[i];
 
             double reducExposedPartialImmunity  = params.get<osecirvvs::ReducExposedPartialImmunity>()[i];
             double reducExposedImprovedImmunity = params.get<osecirvvs::ReducExposedImprovedImmunity>()[i];
@@ -650,11 +647,11 @@ void setup_model(Model& model)
     contact_matrix[0].add_damping(0.3, SimulationTime(5.0));
 
     //times
-    model.parameters.template get<osecirvvs::IncubationTime>()[AgeGroup(0)]       = 5.2;
-    model.parameters.template get<osecirvvs::SerialInterval>()[AgeGroup(0)]       = 0.5 * 3.33 + 0.5 * 5.2;
-    model.parameters.template get<osecirvvs::TimeInfectedSymptoms>()[AgeGroup(0)] = 7;
-    model.parameters.template get<osecirvvs::TimeInfectedSevere>()[AgeGroup(0)]   = 6;
-    model.parameters.template get<osecirvvs::TimeInfectedCritical>()[AgeGroup(0)] = 7;
+    model.parameters.template get<osecirvvs::TimeExposed>()[AgeGroup(0)]            = 3.33;
+    model.parameters.template get<osecirvvs::TimeInfectedNoSymptoms>()[AgeGroup(0)] = 1.87;
+    model.parameters.template get<osecirvvs::TimeInfectedSymptoms>()[AgeGroup(0)]   = 7;
+    model.parameters.template get<osecirvvs::TimeInfectedSevere>()[AgeGroup(0)]     = 6;
+    model.parameters.template get<osecirvvs::TimeInfectedCritical>()[AgeGroup(0)]   = 7;
 
     //probabilities
     model.parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[AgeGroup(0)] = 0.15;
