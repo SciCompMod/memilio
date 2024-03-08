@@ -238,9 +238,12 @@ IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::s
         int linenumber = 0;
         while (linenumber < 3) {
             getline(immunity_file, tp);
-            // delete /r at the end by delete last entry.
-            if (linenumber < 2)
-                tp.erase(tp.size() - 1);
+            // Find the last character that is not a line ending
+            size_t lastChar = tp.find_last_not_of("\r\n");
+            // If such a character was found, reduce the string
+            if (lastChar != std::string::npos) {
+                tp = tp.substr(0, lastChar + 1);
+            }
             auto line = split(tp, ' ');
             for (size_t i = 0; i < num_age_groups; i++) {
                 ans[linenumber][i] = std::stod(line[i]);
