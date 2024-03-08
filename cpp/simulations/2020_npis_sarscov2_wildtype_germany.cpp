@@ -126,9 +126,10 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
 {
     //times
-    const double incubationTime            = 5.2;
-    const double serialIntervalMin         = 0.5 * 2.67 + 0.5 * 5.2;
-    const double serialIntervalMax         = 0.5 * 4.00 + 0.5 * 5.2;
+    const double timeExposedMin            = 2.67;
+    const double timeExposedMax            = 4.;
+    const double timeInfectedNoSymptomsMin = 1.2;
+    const double timeInfectedNoSymptomsMax = 2.53;
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
     const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
     const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
@@ -136,8 +137,9 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecir::IncubationTime>(), incubationTime, incubationTime);
-    array_assign_uniform_distribution(params.get<mio::osecir::SerialInterval>(), serialIntervalMin, serialIntervalMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed>(), timeExposedMin, timeExposedMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedNoSymptoms>(), timeInfectedNoSymptomsMin,
+                                      timeInfectedNoSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
                                       timeInfectedSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSevere>(), timeInfectedSevereMin,
@@ -468,9 +470,9 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 7.5 / 100000.;
     auto migrating_compartments  = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                    mio::osecir::InfectionState::InfectedNoSymptoms,
-                                    mio::osecir::InfectionState::InfectedSymptoms,
-                                    mio::osecir::InfectionState::Recovered};
+                                   mio::osecir::InfectionState::InfectedNoSymptoms,
+                                   mio::osecir::InfectionState::InfectedSymptoms,
+                                   mio::osecir::InfectionState::Recovered};
 
     // graph of counties with populations and local parameters
     // and mobility between counties
@@ -568,7 +570,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             auto params = std::vector<mio::osecir::Model>{};
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 

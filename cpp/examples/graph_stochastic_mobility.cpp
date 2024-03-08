@@ -47,11 +47,11 @@ int main(int /*argc*/, char** /*argv*/)
 
     //set initialization and model parameters
     for (auto i = mio::AgeGroup(0); i < num_age_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 12;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8;
 
         //initial populations is equally distributed among age groups
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp;
