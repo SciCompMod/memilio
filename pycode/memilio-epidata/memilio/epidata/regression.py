@@ -115,11 +115,8 @@ def compute_R_eff(out_folder=dd.defaultDict['out_folder']):
     return df_r_eff
 
 
-# TODO: Refactor this function into one where set up the model with all variables that are fixed and will not be evaluated
-# in the backward selection and one function where we solve the model with an input of the variables that go into
-# the backward selection, i.e. the NPIs? At the moment we are reading the data every time we solve the model, not efficient
 # TODO: Discuss which variables should go in backward selection, also vaccination states?
-def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
+def set_up_model(out_folder=dd.defaultDict['out_folder']):
 
     # for now, all data is only read for county 1001 to make testing easier
     directory = out_folder
@@ -205,6 +202,11 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
     vacc_states = vacc_states[1:3]
     X_vaccinations = np.array([df_vaccinations[vacc_state]
                               for vacc_state in vacc_states]).T
+
+    return df_npis, Y, X_vaccinations, list(vacc_states)
+
+
+def do_regression(columns, df_npis, Y, X_vaccinations):
     X_npis = np.array([df_npis[column] for column in columns]).T
 
     X = np.concatenate((X_vaccinations, X_npis), axis=1)
@@ -212,7 +214,7 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
     # with has_constant = 'add' we force it to add a constant but can this lead to issues?
     X = sm.add_constant(X, has_constant='add')
 
-    plt.plot(df_r.Date, df_r.R_eff, marker='o')
+    # plt.plot(df_r.Date, df_r.R_eff, marker='o')
 
     # do regression
     model = sm.GLM(Y, X, family=sm.families.Gamma(
@@ -220,8 +222,7 @@ def regression_model(columns, out_folder=dd.defaultDict['out_folder']):
 
     results = model.fit()
 
-    # TODO: returning vacc_states is not nice, refactor this function?
-    return results, list(vacc_states)
+    return results
 
 
 def backward_selection(plot=False):
@@ -233,8 +234,12 @@ def backward_selection(plot=False):
                     'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
                     'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
+    # set up regression model
+    df_npis, Y, X_vaccinations, vacc_states = set_up_model(
+        out_folder=dd.defaultDict['out_folder'])
+
     # do regression with all NPIs
-    results, vacc_states = regression_model(column_names)
+    results = do_regression(column_names, df_npis, Y, X_vaccinations)
     # store pvalues in dataframe
     df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
     # add column with column names to df
@@ -284,8 +289,10 @@ def backward_selection(plot=False):
         # do new regression and compute AIC and BIC
         # [1:] because we do only want NPIs as input for regression model, not 'const' or vacc_states
         num_non_npi_variables = len(non_npi_variables)
-        results, vacc_states = regression_model(
-            df_view['columns'][num_non_npi_variables:])
+        results = do_regression(
+            df_view['columns'][num_non_npi_variables:], df_npis, Y, X_vaccinations)
+
+        # compute AIC and BIC
         aic = results.aic
         bic = results.bic_llf
         print('AIC: ', aic)
@@ -336,8 +343,8 @@ def backward_selection(plot=False):
 
     # do one last regression here to make sure that df_pvalues and results are matching
     # (i.e. also if in last loop no NPI was removed)
-    results, vacc_states = regression_model(
-        df_pvalues['columns'][num_non_npi_variables:])
+    results = do_regression(
+        df_pvalues['columns'][num_non_npi_variables:], df_npis, Y, X_vaccinations)
 
     # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
     df_pvalues.insert(2, "coeffs", list(results.params))
