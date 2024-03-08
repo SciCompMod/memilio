@@ -22,6 +22,7 @@
 
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/integrator.h"
+#include "memilio/utils/logging.h"
 
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
@@ -56,7 +57,6 @@ class ControlledStepperWrapper : public mio::IntegratorCore
     static_assert(!is_fsal_stepper,
                   "FSAL steppers cannot be used until https://github.com/boostorg/odeint/issues/72 is resolved.");
 
-
 public:
     /**
      * @brief Set up the integrator
@@ -90,6 +90,11 @@ public:
         using boost::numeric::odeint::fail;
         assert(0 <= m_dt_min);
         assert(m_dt_min <= m_dt_max);
+
+        if (dt < m_dt_min || dt > m_dt_max) {
+            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
+                             m_dt_max);
+        }
         // set initial values for exit conditions
         auto step_result = fail;
         bool is_dt_valid = true;

@@ -76,6 +76,11 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
 {
     assert(0 <= m_dt_min);
     assert(m_dt_min <= m_dt_max);
+
+    if (dt < m_dt_min || dt > m_dt_max) {
+        mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min, m_dt_max);
+    }
+
     dt = std::min(dt, m_dt_max);
 
     double t_eval; // shifted time for evaluating yt
