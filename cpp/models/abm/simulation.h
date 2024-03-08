@@ -69,7 +69,12 @@ public:
         (history.log(*this), ...);
         while (m_t < tmax) {
             evolve_world(tmax);
+            double start;
+            double end;
+            start = omp_get_wtime();
             (history.log(*this), ...);
+            end = omp_get_wtime();
+            printf("Logging took %f seconds\n", end - start);
         }
     }
 

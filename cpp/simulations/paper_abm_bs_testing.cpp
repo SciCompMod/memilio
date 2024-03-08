@@ -907,15 +907,13 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
         auto curr_time = sim.get_time();
-        PRAGMA_OMP(for)
-        for (auto&& location : sim.get_world().get_locations()) {
-            for (uint32_t age_group = 0; age_group < num_age_groups; age_group++) {
-                for (uint32_t inf_state = 0; inf_state < (uint32_t)mio::abm::InfectionState::Count; inf_state++) {
-                    sum((((size_t)(mio::abm::InfectionState::Count)) * (age_group)) + inf_state) +=
-                        location.get_subpopulation_per_age_group(curr_time, mio::abm::InfectionState(inf_state),
-                                                                 age_group);
-                }
-            }
+        const auto persons = sim.get_world().get_persons();
+
+        PRAGMA_OMP(parallel for)
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto& p = persons[i];
+            sum[(((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+                ((uint32_t)p.get_infection_state(curr_time))] += 1;
         }
         return std::make_pair(curr_time, sum);
     }
@@ -926,7 +924,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 {
     mio::Date start_date{2021, 3, 1};
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(1); // End time per simulation
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -939,7 +937,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params    = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
-    auto max_num_persons    = 10000;
+    auto max_num_persons    = 100;
 
     int tid = -1;
 #pragma omp parallel private(tid) // Start of parallel region: forks threads
@@ -952,7 +950,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     // Determine inital infection state distribution
     printf("Compute initial infection distribution for real world data... ");
-    determine_initial_infection_states_world(input_dir, start_date);
+    //determine_initial_infection_states_world(input_dir, start_date);
     printf("done.\n");
 
     // Create one world for all simulations that will be copied
@@ -995,8 +993,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Start the clock before sim.advance
         auto start2 = std::chrono::high_resolution_clock::now();
         // Advance the world to tmax
-        sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyInfectionPerAgeGroup,
-                    historyPersonInfDelta, historyInfectionStatePerAgeGroup);
+        sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyPersonInfDelta,
+                    historyInfectionPerAgeGroup, historyInfectionStatePerAgeGroup);
         // Stop the clock after sim.advance and calculate the duration
         auto stop2     = std::chrono::high_resolution_clock::now();
         auto duration2 = std::chrono::duration<double>(stop2 - start2);
@@ -1054,7 +1052,7 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
@@ -1080,7 +1078,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 10;
+        num_runs = 2;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 
