@@ -115,9 +115,7 @@ def compute_R_eff(out_folder=dd.defaultDict['out_folder']):
     return df_r_eff
 
 
-# TODO: Discuss which variables should go in backward selection, also vaccination states?
-def set_up_model(out_folder=dd.defaultDict['out_folder']):
-
+def read_data(out_folder=dd.defaultDict['out_folder']):
     # for now, all data is only read for county 1001 to make testing easier
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
@@ -166,6 +164,13 @@ def set_up_model(out_folder=dd.defaultDict['out_folder']):
                                                                                                             == county, vacc_state]/df_population.loc[df_population.ID_County == county, 'Population'].iloc[0]
 
     # variable for seasonality
+    # tbd
+
+    # variable for virus variant
+    # tbd
+
+    # variables for age structure
+    # tbd
 
     # variables for region types
     # tbd
@@ -193,6 +198,15 @@ def set_up_model(out_folder=dd.defaultDict['out_folder']):
     # remove dates from df_npis which are not in df_vaccinations
     df_npis = df_npis[df_npis['Date'].astype(
         str).isin(df_vaccinations.Date.astype(str))]
+
+    return df_r, df_vaccinations, df_npis, vacc_states
+
+
+# TODO: Discuss which variables should go in backward selection, also vaccination states?
+def set_up_model():
+
+    df_r, df_vaccinations, df_npis, vacc_states = read_data(
+        out_folder=dd.defaultDict['out_folder'])
 
     # set up regression model
     Y = df_r['R_eff']
@@ -235,8 +249,7 @@ def backward_selection(plot=False):
                     'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
     # set up regression model
-    df_npis, Y, X_vaccinations, vacc_states = set_up_model(
-        out_folder=dd.defaultDict['out_folder'])
+    df_npis, Y, X_vaccinations, vacc_states = set_up_model()
 
     # do regression with all NPIs
     results = do_regression(column_names, df_npis, Y, X_vaccinations)
