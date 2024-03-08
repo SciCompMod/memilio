@@ -264,8 +264,8 @@ def backward_selection(plot=False):
         # n is determined by the counter_not_removed which is set accordingly if a NPI was removed or not in the previous iteration, see below
         npi_of_interest = df_pvalues.sort_values(
             'pvalues', ascending=False).iloc[counter_not_removed].name
-        # if npi_of_interest is 'const' or in vacc_states, take variable with next higher pvalue
 
+        # if npi_of_interest is in non_npi_variables, take variable with next higher pvalue
         counter_non_npi_var = 0
         while df_pvalues['columns'][npi_of_interest] in non_npi_variables:
             counter_non_npi_var += 1
@@ -273,7 +273,7 @@ def backward_selection(plot=False):
             npi_of_interest = df_pvalues.sort_values(
                 'pvalues', ascending=False).iloc[counter_not_removed + counter_non_npi_var].name
             # adjust counter_not_removed in case the new npi_of_interest doesn't get removed
-            counter_not_removed += counter_non_npi_var
+        counter_not_removed += counter_non_npi_var
 
         # plot_pvalues(df_pvalues, iteration, npi_of_interest)
 
