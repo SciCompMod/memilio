@@ -67,15 +67,16 @@ public:
     {
         //log initial system state
         (history.log(*this), ...);
+        double sum = 0;
         while (m_t < tmax) {
             evolve_world(tmax);
-            double start;
-            double end;
+            double start, end;
             start = omp_get_wtime();
             (history.log(*this), ...);
             end = omp_get_wtime();
-            printf("Logging took %f seconds\n", end - start);
+            sum = sum + (end - start);
         }
+        std::cout << "Time spent on logging: " << sum << std::endl;
     }
 
     /**
