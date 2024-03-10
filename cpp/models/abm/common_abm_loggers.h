@@ -89,6 +89,7 @@ struct LogLocationInformation : mio::LogOnce {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type location_information{};
+        location_information.reserve(sim.get_world().get_locations().size());
         for (auto&& location : sim.get_world().get_locations()) {
             auto n_cells     = location.get_cells().size();
             int loc_capacity = 0;
@@ -119,6 +120,7 @@ struct LogPersonInformation : mio::LogOnce {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type person_information{};
+        person_information.reserve(sim.get_world().get_persons().size());
         for (auto&& person : sim.get_world().get_persons()) {
             person_information.push_back(std::make_tuple(
                 person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
@@ -148,7 +150,9 @@ struct LogDataForMovement : mio::LogAlways {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type movement_data{};
-        for (Person p : sim.get_world().get_persons()) {
+        movement_data.reserve(sim.get_world().get_persons().size());
+        PRAGMA_OMP(parallel for)
+        for (auto&& p : sim.get_world().get_persons()) {
             movement_data.push_back(std::make_tuple(
                 p.get_person_id(), p.get_location().get_index(), sim.get_time(), p.get_last_transport_mode(),
                 guess_activity_type(p.get_location().get_type()), p.get_infection_state(sim.get_time())));
@@ -172,7 +176,7 @@ struct LogInfectionState : mio::LogAlways {
 
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         auto curr_time      = sim.get_time();
-        PRAGMA_OMP(for)
+        PRAGMA_OMP(parallel for)
         for (auto&& location : sim.get_world().get_locations()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                 sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
@@ -197,7 +201,7 @@ struct LogInfectionPerLocationType : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::LocationType::Count));
         auto prev_time      = sim.get_prev_time();
         auto curr_time      = sim.get_time();
-        PRAGMA_OMP(for)
+        PRAGMA_OMP(parallel for)
         for (auto&& person : sim.get_world().get_persons()) {
             if (person.is_home_in_bs() &&
                 (person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
@@ -224,7 +228,7 @@ struct LogInfectionPerAgeGroup : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(sim.get_world().parameters.get_num_groups()));
         auto prev_time      = sim.get_prev_time();
         auto curr_time      = sim.get_time();
-        PRAGMA_OMP(for)
+        PRAGMA_OMP(parallel for)
         for (auto&& person : sim.get_world().get_persons()) {
             if (person.is_home_in_bs() &&
                 (person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
