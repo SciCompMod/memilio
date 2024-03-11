@@ -172,10 +172,9 @@ public:
      * @brief Add a Person to the World.
      * @param[in] id Index and type of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
-     * @param[in] is_home_in_bs Whether the Person has a home in Braunschweig.
      * @return Reference to the newly created Person.
      */
-    Person& add_person(const LocationId id, AgeGroup age, bool is_home_in_bs = false);
+    Person& add_person(const LocationId id, AgeGroup age);
 
     /**
      * @brief Get a range of all Location%s in the World.

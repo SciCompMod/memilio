@@ -32,7 +32,7 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include <limits>
-#include <set>
+#include <unordered_set>
 
 namespace mio
 {
@@ -636,6 +636,21 @@ struct AgeGroupGotoWork {
     }
 };
 
+/**
+ * @brief The set of Agent Ids to be logged.
+ */
+struct LogAgentIds {
+    using Type = std::unordered_set<uint32_t>;
+    static Type get_default(AgeGroup /*num_agegroups*/)
+    {
+        return {};
+    }
+    static std::string name()
+    {
+        return "LogAgentIds";
+    }
+};
+
 using ParametersBase =
     ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
@@ -645,7 +660,7 @@ using ParametersBase =
                  DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate, QuarantineDuration,
                  SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
                  GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, LogAgentIds>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

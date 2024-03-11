@@ -166,6 +166,8 @@ struct LogDataForMovement : mio::LogAlways {
 */
 struct LogInfectionState : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    std::unordered_set<uint32_t> ids_in_bs;
+
     /** 
      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
      * @param[in] sim The simulation of the abm.
@@ -173,13 +175,27 @@ struct LogInfectionState : mio::LogAlways {
      */
     static Type log(const mio::abm::Simulation& sim)
     {
-
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         auto curr_time      = sim.get_time();
+        auto ids_in_bs      = sim.get_world().parameters.get<mio::abm::LogAgentIds>();
         PRAGMA_OMP(parallel for)
-        for (auto&& location : sim.get_world().get_locations()) {
-            for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-                sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
+        // If there is no interresting person ids to logged, log all persons.
+        if (ids_in_bs.size() == 0) {
+            for (auto&& location : sim.get_world().get_locations()) {
+                for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+                    sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
+                }
+            }
+        }
+        // Otherwise log accordingly
+        else {
+            for (auto&& person : sim.get_world().get_persons()) {
+                for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+                    if (person.get_infection_state(curr_time) == mio::abm::InfectionState(inf_state) &&
+                        ids_in_bs.find(person.get_person_id()) != ids_in_bs.end()) {
+                        sum[inf_state] += 1;
+                    }
+                }
             }
         }
         return std::make_pair(curr_time, sum);
@@ -201,12 +217,25 @@ struct LogInfectionPerLocationType : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::LocationType::Count));
         auto prev_time      = sim.get_prev_time();
         auto curr_time      = sim.get_time();
+        auto ids_in_bs      = sim.get_world().parameters.get<mio::abm::LogAgentIds>();
         PRAGMA_OMP(parallel for)
-        for (auto&& person : sim.get_world().get_persons()) {
-            if (person.is_home_in_bs() &&
-                (person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
-                (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
-                sum[(int)(person.get_location().get_type())] += 1;
+        // If there is no interresting person ids to logged, log all persons.
+        if (ids_in_bs.size() == 0) {
+            for (auto&& person : sim.get_world().get_persons()) {
+                if ((person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
+                    (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+                    sum[(int)(person.get_location().get_type())] += 1;
+                }
+            }
+        }
+        // Otherwise log accordingly
+        else {
+            for (auto&& person : sim.get_world().get_persons()) {
+                if ((person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
+                    (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed) &&
+                    (ids_in_bs.find(person.get_person_id()) != ids_in_bs.end())) {
+                    sum[(int)(person.get_location().get_type())] += 1;
+                }
             }
         }
         return std::make_pair(curr_time, sum);
@@ -228,14 +257,28 @@ struct LogInfectionPerAgeGroup : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(sim.get_world().parameters.get_num_groups()));
         auto prev_time      = sim.get_prev_time();
         auto curr_time      = sim.get_time();
+        auto ids_in_bs      = sim.get_world().parameters.get<mio::abm::LogAgentIds>();
         PRAGMA_OMP(parallel for)
-        for (auto&& person : sim.get_world().get_persons()) {
-            if (person.is_home_in_bs() &&
-                (person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
-                (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
-                sum[(size_t)(person.get_age())] += 1;
+        // If there is no interresting person ids to logged, log all persons.
+        if (ids_in_bs.size() == 0) {
+            for (auto&& person : sim.get_world().get_persons()) {
+                if ((person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
+                    (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+                    sum[(size_t)(person.get_age())] += 1;
+                }
             }
         }
+        // Otherwise log accordingly
+        else {
+            for (auto&& person : sim.get_world().get_persons()) {
+                if ((person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
+                    (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed) &&
+                    (ids_in_bs.find(person.get_person_id()) != ids_in_bs.end())) {
+                    sum[(size_t)(person.get_age())] += 1;
+                }
+            }
+        }
+
         return std::make_pair(curr_time, sum);
     }
 };

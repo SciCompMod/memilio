@@ -130,7 +130,7 @@ public:
      * @param[in] is_home_in_bs Whether the Person has a home in Braunschweig.
      */
     explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
-                    uint32_t person_id = INVALID_PERSON_ID, bool is_home_in_bs = true);
+                    uint32_t person_id = INVALID_PERSON_ID);
 
     /**
      * @brief Create a copy of this #Person object with a new Location.
@@ -506,15 +506,6 @@ public:
             loc, age, id);
     }
 
-    /**
-     * @brief Whether the Person has a home in Braunschweig.
-     * @return Whether the Person has a home in Braunschweig.
-    */
-    bool is_home_in_bs()
-    {
-        return m_is_home_in_bs;
-    }
-
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
@@ -536,7 +527,6 @@ private:
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
-    bool m_is_home_in_bs; ///< Whether the Person has a home in Braunschweig.
 };
 
 } // namespace abm

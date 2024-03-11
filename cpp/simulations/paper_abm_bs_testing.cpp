@@ -339,6 +339,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     fin.clear();
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
+    std::unordered_set<uint32_t> ids_in_bs;
 
     // Add the persons and trips
     while (std::getline(fin, line)) {
@@ -374,8 +375,11 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             }
             auto first_location_id = it_first_location_id->second.first;
             auto first_location    = locations.find(first_location_id)->second;
-            auto& person           = world.add_person(first_location, determine_age_group(age), home_in_bs);
-            auto home              = locations.find(home_id)->second;
+            auto& person           = world.add_person(first_location, determine_age_group(age));
+            if (home_in_bs) {
+                ids_in_bs.insert(person_id);
+            }
+            auto home = locations.find(home_id)->second;
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
@@ -395,6 +399,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
+    world.parameters.get<mio::abm::LogAgentIds>() = ids_in_bs;
 }
 
 std::pair<double, double> get_my_and_sigma(std::pair<double, double> mean_and_std)
