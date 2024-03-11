@@ -37,13 +37,15 @@ from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale
 #from memilio.simulation.secir import InfectionState
 
 
+# for training without CV 
+
 
 # load and prepare data
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data_GNN_nodamp_400pop_1k_60days_1_24')
+    'data_GNN_nodamp_400pop_1k_90days_24')
 
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
@@ -194,7 +196,7 @@ def train_and_evaluate_model(
 
             def call(self, inputs):
                 x, a = inputs
-                a = np.asarray(a)
+                #a = np.asarray(a)
 
                 x = self.conv1([x, a])
                 x = self.conv2([x, a])
@@ -392,45 +394,46 @@ def train_and_evaluate_model(
     print("Time for training: {:.4f} minutes".format(elapsed/60))
 
     #save the model
-    #path = os.path.dirname(os.path.realpath(__file__))
-    #path_models = os.path.join(
-    #    os.path.dirname(
-    #        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    #    save_name)
-    #if not os.path.isdir(path_models):
-    #    os.mkdir(path_models)
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_models = os.path.join(
+        os.path.dirname(
+            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        save_name)
+    if not os.path.isdir(path_models):
+        os.mkdir(path_models)
 
     #model.save(path_models, save_name +'h5')
+    model.save_weights(path_models+'.h5')
 
     # save df 
 
 
-    df.loc[len(df.index)] = [layer_name, number_of_layer, channels, 
-                             np.mean(train_losses),
-                             np.mean(val_losses),
-                             np.mean(test_scores),
-                             (elapsed / 60),
-                             [losses_history_all],
-                             [val_losses_history_all]]
-    print(df)
+    #df.loc[len(df.index)] = [layer_name, number_of_layer, channels, 
+    #                         np.mean(train_losses),
+    #                         np.mean(val_losses),
+    #                         np.mean(test_scores),
+    #                         (elapsed / 60),
+    #                         [losses_history_all],
+    #                         [val_losses_history_all]]
+    #print(df)
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
-    path = os.path.dirname(os.path.realpath(__file__))
-    file_path = os.path.join(
-       os.path.dirname(
-           os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-       'dataframe_gridsearch_2024')
-    if not os.path.isdir(file_path):
-       os.mkdir(file_path)
-    file_path = file_path+filename
-    df.to_csv(file_path)
+    # path = os.path.dirname(os.path.realpath(__file__))
+    # file_path = os.path.join(
+    #    os.path.dirname(
+    #        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+    #    'dataframe_gridsearch_2024')
+    # if not os.path.isdir(file_path):
+    #    os.mkdir(file_path)
+    # file_path = file_path+filename
+    # df.to_csv(file_path)
 
 
 start_hyper = time.perf_counter()
-epochs = 1500
-filename = '/GNNtype1_ARMA_60days.csv'
-save_name = 'ARMAConv_60days_saved_model'
+epochs = 2
+filename = '/GNNtype1_ARMA_90days.csv'
+save_name = 'ARMAConv_90days_saved_model_test'
 #for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
