@@ -140,6 +140,42 @@ def barplot(df):
 
 
 
+def boxplot_layers():
+
+    plt.figure().clf()   
+
+    df_MLP = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_MLP= df_MLP.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='kfold_test')
+    
+    df_CNN = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_CNN= df_CNN.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='kfold_test')
+    
+    df_LSTM = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    df_LSTM= df_LSTM.pivot(index='number_of_neurons', columns='number_of_hidden_layers', values='kfold_test')
+    
+
+    
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(9, 4), sharex=True, sharey=True,)
+
+    axs[0].boxplot(df_MLP)
+    axs[0].set_title('MLP')
+
+    axs[1].boxplot(df_CNN)
+    axs[1].set_title('CNN')
+
+    axs[2].boxplot(df_LSTM)
+    axs[2].set_title('LSTM')
+
+    # adding horizontal grid lines
+    for ax in axs:
+        ax.yaxis.grid(True)
+        ax.set_xticks([y + 1 for y in range(len(df_MLP))],
+                    labels=['0', '1', '2', '3', '4'])
+        ax.set_xlabel('number of hidden layers')
+        ax.set_ylabel('test MAPE')
+
+    plt.savefig("boxplot_groups_layer.png")
+
 
 # mean MAPE for number of neurons per layer
 def lineplot(df):
