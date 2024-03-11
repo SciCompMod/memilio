@@ -180,7 +180,7 @@ private:
         }
 
         // Check if model is valid and the calculated initial value vector was valid.
-        return m_model.template check_constraints();
+        return m_model.check_constraints();
     }
 
     /**
