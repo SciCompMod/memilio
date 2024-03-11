@@ -223,7 +223,7 @@ private:
                 // Initialization failed. Not enough time points for the transitions are given.
                 // Store the number of necessary time points in the vector and throw one error at the compute_initialization_vector() function,
                 // so that the error is not displayed several times.
-                subcompartments[j] = -calc_time_index;
+                subcompartments[j] = -(double)calc_time_index;
             }
             else {
 
