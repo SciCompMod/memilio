@@ -25,40 +25,290 @@
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "lct_secir/parameters.h"
+#include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
+#include "lct_secir/parameters.h"
+#include "memilio/io/epi_data.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/date.h"
+#include "memilio/utils/logging.h"
 #include "memilio/math/eigen.h"
 
 #include <string>
-
+#include <iostream>
 namespace mio
 {
 namespace lsecir
 {
 
 /**
-* @brief Computes an initialization vector for a LCT model with data from RKI.
+* @brief Computes an initialization vector for a LCT model with case data from RKI.
 *   
-* Computes an initial value vector for an LCT model with the defined infectionState and the parameters. 
-* For the computation expected sojourntime in the subcompartments are used. To calculate the initial values, 
+* Calculates an initial value vector for an LCT model and updates the initial value vector in the model.
+* For the computation expected stay times in the subcompartments are used. To calculate the initial values, 
 * we assume for simplicity that individuals stay in the subcompartment for exactly the expected time.
-* The RKI data are linearly interpolated within one day.
+* The RKI data are linearly interpolated within one day to match the expected stay time in a subcompartment.
 * The RKI data should contain data for each needed day without division of age groups, the completeness of the dates is not verified.
-* Data could be downloaded eg with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py, 
+* Data can be downloaded e.g. with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py, 
 * which creates a file named cases_all_germany.json or a similar name. One should set impute_dates=True so that missing dates are imputed.
 *
-* @param path Path to the RKI file.
-* @param date Date for which the initial values should be computed. date is the start date of the simulation.
-* @param infectionState InfectionState used to calculate the initial values. Defines eg the size of the calculated vector.
-* @param parameters Parameters used to calculate the initial values. Defines eg the expected sojourntimes.
-* @param total_population Total size of the population of the considered region. 
-*       The sum of all values in the returned vector will be equal to that value.
-* @param scale_confirmed_cases Factor by which to scale the confirmed cases of rki data to consider unreported cases.
-* @returns Initialization Vector or any io errors that happen during reading of the files.
+* @param[in, out] model The model for which the inital data should be computed and set.
+* @param[in] path Path to the RKI file.
+* @param[in] date Date for which the initial values should be computed. date is the start date of the simulation.
+* @param[in] total_population Total size of the population of Germany. 
+*       The sum of all values in the vector of subcompartments will be equal to that value.
+* @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of rki data to consider unreported cases.
+* @tparam Model is expected to be an LCT-SECIR model defined in models/lct_secir/model.h.
+* @returns Any io errors that happen during reading of the files.
 */
-IOResult<Eigen::VectorXd> get_initial_data_from_file(std::string const& path, Date date, InfectionState infectionState,
-                                                     Parameters&& parameters, ScalarType total_population,
-                                                     ScalarType scale_confirmed_cases = 1.);
+template <class Model>
+IOResult<void> set_initial_data_from_confirmed_cases(Model& model, const std::string& path, Date date,
+                                                     ScalarType total_population, ScalarType scale_confirmed_cases = 1.)
+{
+    using LctState = typename Model::LctState;
+
+    // Try to get rki data from path.
+    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_noage(path));
+    auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    if (max_date_entry == rki_data.end()) {
+        log_error("RKI data file is empty.");
+        return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
+    }
+    auto max_date = max_date_entry->date;
+    if (max_date < date) {
+        log_error("Specified date does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
+    }
+    // Compute initial values for all subcompartments.
+    Eigen::VectorXd init = Eigen::VectorXd::Zero(LctState::Count);
+    // Define variables for parameters that are often needed.
+
+    ScalarType timeExposed            = model.parameters.template get<TimeExposed>();
+    ScalarType timeInfectedNoSymptoms = model.parameters.template get<TimeInfectedNoSymptoms>();
+    ScalarType timeInfectedSymptoms   = model.parameters.template get<TimeInfectedSymptoms>();
+    ScalarType timeInfectedSevere     = model.parameters.template get<TimeInfectedSevere>();
+    ScalarType timeInfectedCritical   = model.parameters.template get<TimeInfectedCritical>();
+    ScalarType scale_asymptomatic     = 1 / (1 - model.parameters.template get<RecoveredPerInfectedNoSymptoms>());
+
+    ScalarType min_offset_needed = std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical);
+    ScalarType max_offset_needed = std::ceil(timeExposed + timeInfectedNoSymptoms);
+
+    bool min_offset_needed_avail = false;
+    bool max_offset_needed_avail = false;
+
+    // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled by scale_confirmed_cases.
+    for (auto&& entry : rki_data) {
+        int offset = get_offset_in_days(entry.date, date);
+        if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
+            // Add confirmed cases at date to compartment Recovered.
+            if (offset == 0) {
+                init[LctState::template get_first_index<InfectionState::Recovered>()] +=
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+
+            // Compute initial values for compartment InfectedNoSymptoms.
+            if (offset >= 0 && offset <= std::ceil(timeInfectedNoSymptoms)) {
+                ScalarType TCi = timeInfectedNoSymptoms /
+                                 LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
+                int idx_Cn = LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() +
+                             LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() - 1;
+                for (int i = 0;
+                     i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>(); i++) {
+                    if (offset == std::floor(i * TCi)) {
+                        init[idx_Cn - i] -= (1 - (i * TCi - std::floor(i * TCi))) * scale_asymptomatic *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(i * TCi)) {
+                        init[idx_Cn - i] -= (i * TCi - std::floor(i * TCi)) * scale_asymptomatic *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::floor((i + 1) * TCi)) {
+                        init[idx_Cn - i] += (1 - ((i + 1) * TCi - std::floor((i + 1) * TCi))) * scale_asymptomatic *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil((i + 1) * TCi)) {
+                        init[idx_Cn - i] += ((i + 1) * TCi - std::floor((i + 1) * TCi)) * scale_asymptomatic *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                }
+            }
+
+            // Compute initial values for compartment Exposed.
+            if (offset >= std::floor(timeInfectedNoSymptoms) && offset <= max_offset_needed) {
+                ScalarType TEi = timeExposed / LctState::template get_num_subcompartments<InfectionState::Exposed>();
+                int idx_En     = LctState::template get_first_index<InfectionState::Exposed>() +
+                             LctState::template get_num_subcompartments<InfectionState::Exposed>() - 1;
+                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::Exposed>(); i++) {
+                    if (offset == std::floor(timeInfectedNoSymptoms + i * TEi)) {
+                        init[idx_En - i] -=
+                            (1 - (timeInfectedNoSymptoms + i * TEi - std::floor(timeInfectedNoSymptoms + i * TEi))) *
+                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(timeInfectedNoSymptoms + i * TEi)) {
+                        init[idx_En - i] -=
+                            (timeInfectedNoSymptoms + i * TEi - std::floor(timeInfectedNoSymptoms + i * TEi)) *
+                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::floor(timeInfectedNoSymptoms + (i + 1) * TEi)) {
+                        init[idx_En - i] += (1 - (timeInfectedNoSymptoms + (i + 1) * TEi -
+                                                  std::floor(timeInfectedNoSymptoms + (i + 1) * TEi))) *
+                                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(timeInfectedNoSymptoms + (i + 1) * TEi)) {
+                        init[idx_En - i] += (timeInfectedNoSymptoms + (i + 1) * TEi -
+                                             std::floor(timeInfectedNoSymptoms + (i + 1) * TEi)) *
+                                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
+                    }
+                }
+            }
+
+            // Compute initial values for compartment InfectedSymptoms.
+            if (offset >= std::floor(-timeInfectedSymptoms) && offset <= 0) {
+                ScalarType TIi =
+                    timeInfectedSymptoms /
+                    (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
+                int idx_I1 = LctState::template get_first_index<InfectionState::InfectedSymptoms>();
+                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
+                     i++) {
+                    if (offset == std::floor(-TIi * (i + 1))) {
+                        init[idx_I1 + i] -= (1 - (-(i + 1.) * TIi - std::floor(-(i + 1) * TIi))) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(-TIi * (i + 1))) {
+                        init[idx_I1 + i] -=
+                            (-(i + 1) * TIi - std::floor(-(i + 1) * TIi)) * scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::floor(-TIi * i)) {
+                        init[idx_I1 + i] +=
+                            (1 - (-i * TIi - std::floor(-i * TIi))) * scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(-TIi * i)) {
+                        init[idx_I1 + i] +=
+                            (-i * TIi - std::floor(-i * TIi)) * scale_confirmed_cases * entry.num_confirmed;
+                    }
+                }
+            }
+
+            // Compute initial values for compartment InfectedSevere.
+            if (offset >= std::floor(-timeInfectedSymptoms - timeInfectedSevere) &&
+                offset <= std::ceil(-timeInfectedSymptoms)) {
+                ScalarType THi =
+                    timeInfectedSevere /
+                    (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>();
+                ScalarType mu_IH = model.parameters.template get<SeverePerInfectedSymptoms>();
+                int idx_H1       = LctState::template get_first_index<InfectionState::InfectedSevere>();
+                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>();
+                     i++) {
+                    if (offset == std::floor(-timeInfectedSymptoms - THi * (i + 1))) {
+                        init[idx_H1 + i] -= mu_IH *
+                                            (1 - (-timeInfectedSymptoms - (i + 1) * THi -
+                                                  std::floor(-timeInfectedSymptoms - (i + 1) * THi))) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(-timeInfectedSymptoms - THi * (i + 1))) {
+                        init[idx_H1 + i] -= mu_IH *
+                                            (-timeInfectedSymptoms - (i + 1) * THi -
+                                             std::floor(-timeInfectedSymptoms - (i + 1) * THi)) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::floor(-timeInfectedSymptoms - THi * i)) {
+                        init[idx_H1 + i] +=
+                            mu_IH *
+                            (1 - (-timeInfectedSymptoms - i * THi - std::floor(-timeInfectedSymptoms - i * THi))) *
+                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(-timeInfectedSymptoms - THi * i)) {
+                        init[idx_H1 + i] +=
+                            mu_IH * (-timeInfectedSymptoms - i * THi - std::floor(-timeInfectedSymptoms - i * THi)) *
+                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                }
+            }
+
+            // Compute initial values for compartment InfectedCritical.
+            if (offset >= min_offset_needed && offset <= std::ceil(-timeInfectedSymptoms - timeInfectedSevere)) {
+                ScalarType TUi = timeInfectedCritical /
+                                 LctState::template get_num_subcompartments<InfectionState::InfectedCritical>();
+                ScalarType mu_IH = model.parameters.template get<SeverePerInfectedSymptoms>();
+                ScalarType mu_HU = model.parameters.template get<CriticalPerSevere>();
+                int idx_U1       = LctState::template get_first_index<InfectionState::InfectedCritical>();
+                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>();
+                     i++) {
+                    if (offset == std::floor(-timeInfectedSymptoms - timeInfectedSevere - TUi * (i + 1))) {
+                        init[idx_U1 + i] -=
+                            mu_IH * mu_HU *
+                            (1 - (-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * TUi -
+                                  std::floor(-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * TUi))) *
+                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere - TUi * (i + 1))) {
+                        init[idx_U1 + i] -= mu_IH * mu_HU *
+                                            (-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * TUi -
+                                             std::floor(-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * TUi)) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::floor(-timeInfectedSymptoms - timeInfectedSevere - TUi * i)) {
+                        init[idx_U1 + i] += mu_IH * mu_HU *
+                                            (1 - (-timeInfectedSymptoms - timeInfectedSevere - i * TUi -
+                                                  std::floor(-timeInfectedSymptoms - timeInfectedSevere - i * TUi))) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                    if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere - TUi * i)) {
+                        init[idx_U1 + i] += mu_IH * mu_HU *
+                                            (-timeInfectedSymptoms - timeInfectedSevere - i * TUi -
+                                             std::floor(-timeInfectedSymptoms - timeInfectedSevere - i * TUi)) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+                    }
+                }
+            }
+
+            // Compute Dead.
+            if (offset == min_offset_needed) {
+                min_offset_needed_avail = true;
+                init[LctState::template get_first_index<InfectionState::Dead>()] +=
+                    (1 - (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
+                          std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical))) *
+                    entry.num_deaths;
+            }
+            if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical)) {
+                init[LctState::template get_first_index<InfectionState::Dead>()] +=
+                    (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
+                     std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical)) *
+                    entry.num_deaths;
+            }
+            if (offset == max_offset_needed) {
+                max_offset_needed_avail = true;
+            }
+        }
+    }
+
+    // Compute Recovered.
+    init[LctState::template get_first_index<InfectionState::Recovered>()] -=
+        init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() +
+                         LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() +
+                         LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
+            .sum();
+    init[LctState::template get_first_index<InfectionState::Recovered>()] -=
+        init[LctState::template get_first_index<InfectionState::Dead>()];
+
+    // Compute Susceptibles
+    init[LctState::template get_first_index<InfectionState::Susceptible>()] =
+        total_population - init.segment(1, LctState::Count - 1).sum();
+
+    // Check whether all necessary dates are available.
+    if (!max_offset_needed_avail || !min_offset_needed_avail) {
+        log_error("Necessary range of dates needed to compute initial values does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+    }
+
+    // Set computed initial value vector
+    model.set_initial_values(std::move(init));
+
+    return mio::success();
+}
 
 } // namespace lsecir
 } // namespace mio
