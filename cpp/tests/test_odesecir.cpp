@@ -478,8 +478,6 @@ TEST(TestOdeSecir, testSettersAndGetters)
     model.parameters.set<mio::osecir::StartDay>(vec[20]);
     model.parameters.set<mio::osecir::Seasonality>(vec[21]);
 
-    EXPECT_NE(model.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0].get_distribution().get(), nullptr);
-
     check_distribution(*vec[1].get_distribution(),
                        *model.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(
@@ -572,8 +570,8 @@ TEST(TestOdeSecir, testModelConstraints)
 
     mio::osecir::Model model(1);
 
-    model.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]            = 3.2;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0] = 2.0;
+    model.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]            = 2.6;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0] = 2.6;
     model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]   = 5;
     model.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]     = 10.;
     model.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0]   = 8.;
@@ -890,8 +888,8 @@ TEST(Secir, get_migration_factors)
     auto beta                                                                              = 0.25;
     auto max_beta                                                                          = 0.5;
     auto model                                                                             = mio::osecir::Model(1);
-    model.parameters.get<mio::osecir::TimeExposed>().array()                               = 3.2;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>().array()                    = 2.0;
+    model.parameters.get<mio::osecir::TimeExposed>().array()                               = 3.;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>().array()                    = 2.;
     model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>().array()            = 0.1;
     model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>().array()            = beta;
     model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>().array()         = max_beta;

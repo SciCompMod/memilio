@@ -375,8 +375,8 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     model.parameters.set<mio::osecir::TestAndTraceCapacity>(30);
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
-        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.0;
+        params.get<mio::osecir::TimeExposed>()[i]            = 2.6;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.6;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.;
         params.get<mio::osecir::TimeInfectedSevere>()[i]     = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8.;
