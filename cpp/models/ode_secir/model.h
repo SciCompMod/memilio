@@ -441,7 +441,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                      params.template get<RiskOfInfectionFromSymptomatic>()[k]) /
                     (4 * params.template get<TestAndTraceCapacity>()) *
                     (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[l]) /
-                    params.template get<TimeInfectedNoSymptoms>()[k] *
+                    params.template get<TimeInfectedNoSymptoms>()[l] *
                     std::sin(pi / (4 * params.template get<TestAndTraceCapacity>()) *
                              (test_and_trace_required - params.template get<TestAndTraceCapacity>()));
             }
