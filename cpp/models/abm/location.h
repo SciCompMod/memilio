@@ -20,7 +20,6 @@
 #ifndef MIO_ABM_LOCATION_H
 #define MIO_ABM_LOCATION_H
 
-#include "caching.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
 #include "abm/location_type.h"
@@ -39,8 +38,8 @@ struct CellIndex : public mio::Index<CellIndex> {
     }
 };
 
-using ContactExposureRates = CustomAtomicIndexArray<boost::atomic<ScalarType>, CellIndex, VirusVariant, AgeGroup>;
-using AirExposureRates     = CustomAtomicIndexArray<boost::atomic<ScalarType>, CellIndex, VirusVariant>;
+using ContactExposureRates = CustomIndexArray<boost::atomic<ScalarType>, CellIndex, VirusVariant, AgeGroup>;
+using AirExposureRates     = CustomIndexArray<boost::atomic<ScalarType>, CellIndex, VirusVariant>;
 
 /**
  * @brief CellCapacity describes the size of a Cell. 

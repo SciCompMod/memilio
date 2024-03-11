@@ -19,13 +19,8 @@
 */
 #include "abm/migration_rules.h"
 #include "abm/person.h"
-#include "abm/location.h"
 #include "abm/random_events.h"
-#include "abm/location.h"
-#include "memilio/utils/random_number_generator.h"
 #include "abm/location_type.h"
-
-#include <random>
 
 namespace mio
 {

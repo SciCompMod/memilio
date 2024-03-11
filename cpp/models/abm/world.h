@@ -84,8 +84,40 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(const World&)             = default;
-    World(World&& other)            = default;
+    World(const World& other)
+        : parameters(other.parameters)
+        , m_local_population_size_cache()
+        , m_air_exposure_rates_cache()
+        , m_contact_exposure_rates_cache()
+        , m_persons(other.m_persons)
+        , m_locations(other.m_locations)
+        , m_has_locations(other.m_has_locations)
+        , m_testing_strategy(other.m_testing_strategy)
+        , m_trip_list(other.m_trip_list)
+        , m_use_migration_rules(other.m_use_migration_rules)
+        , m_migration_rules(other.m_migration_rules)
+        , m_cemetery_id(other.m_cemetery_id)
+        , m_rng(other.m_rng)
+    {
+        m_air_exposure_rates_cache.write().resize(other.m_air_exposure_rates_cache.read().size());
+        for (Eigen::Index i = 0; i < other.m_air_exposure_rates_cache.read().size(); ++i) {
+            m_air_exposure_rates_cache.write()[i].resize(other.m_air_exposure_rates_cache.read()[i].size());
+            std::for_each(m_air_exposure_rates_cache.write()[i].begin(), m_air_exposure_rates_cache.write()[i].end(),
+                          [](auto& r) {
+                              r = 0.0;
+                          });
+        }
+
+        m_contact_exposure_rates_cache.write().resize(other.m_contact_exposure_rates_cache.read().size());
+        for (Eigen::Index i = 0; i < other.m_contact_exposure_rates_cache.read().size(); ++i) {
+            m_contact_exposure_rates_cache.write()[i].resize(other.m_contact_exposure_rates_cache.read()[i].size());
+            std::for_each(m_contact_exposure_rates_cache.write()[i].begin(),
+                          m_contact_exposure_rates_cache.write()[i].end(), [](auto& r) {
+                              r = 0.0;
+                          });
+        }
+    }
+    World(World&& other)            = default; // TODO?
     World& operator=(World&& other) = default;
     World& operator=(const World&)  = delete;
 
@@ -181,7 +213,7 @@ public:
         new_person.set_assigned_location(m_cemetery_id);
 
         if (m_local_population_size_cache.is_valid()) {
-            ++m_local_population_size_cache.write().at(new_person.get_location().index).value;
+            ++m_local_population_size_cache.write()[new_person.get_location().index];
         }
         return new_id;
     }
@@ -353,7 +385,7 @@ public:
     size_t get_number_persons(LocationId location) const
     {
         if (m_local_population_size_cache.is_valid()) {
-            return m_local_population_size_cache.read().at(location.index).value;
+            return m_local_population_size_cache.read()[location.index];
         }
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p.get_location() == location;
@@ -375,8 +407,8 @@ public:
             m_air_exposure_rates_cache.invalidate();
             m_contact_exposure_rates_cache.invalidate();
             if (m_local_population_size_cache.is_valid()) {
-                --m_local_population_size_cache.write().at(origin.index).value;
-                ++m_local_population_size_cache.write().at(destination.index).value;
+                --m_local_population_size_cache.write()[origin.index];
+                ++m_local_population_size_cache.write()[destination.index];
             }
         }
     }
@@ -398,8 +430,8 @@ public:
             m_contact_exposure_rates_cache.validate();
         }
         mio::abm::interact(personal_rng, get_person(person), get_location(person),
-                           m_air_exposure_rates_cache.read().at(get_location(person).get_index()),
-                           m_contact_exposure_rates_cache.read().at(get_location(person).get_index()), t, dt,
+                           m_air_exposure_rates_cache.read()[get_location(person).get_index()],
+                           m_contact_exposure_rates_cache.read()[get_location(person).get_index()], t, dt,
                            global_parameters);
     }
 
@@ -450,11 +482,11 @@ private:
         m_local_population_size_cache.write().resize(m_locations.size());
         // this loop (in partikular map[]) cannot run in parallel
         for (size_t i = 0; i < m_locations.size(); i++) {
-            m_local_population_size_cache.write()[i].value = 0.;
+            m_local_population_size_cache.write()[i] = 0.;
         }
         PRAGMA_OMP(parallel for)
         for (Person& person : get_persons()) {
-            ++m_local_population_size_cache.write().at(person.get_location().index).value;
+            ++m_local_population_size_cache.write()[person.get_location().index];
         }
     }
 
@@ -468,9 +500,15 @@ private:
         // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
         PRAGMA_OMP(parallel for)
         for (size_t i = 0; i < num_locations; ++i) {
-            const auto index = i;
-            m_air_exposure_rates_cache.write().at(index).setZero();
-            m_contact_exposure_rates_cache.write().at(index).setZero();
+            const auto index         = i;
+            auto& local_air_exposure = m_air_exposure_rates_cache.write()[index];
+            std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
+                r = 0.0;
+            });
+            auto& local_contact_exposure = m_contact_exposure_rates_cache.write()[index];
+            std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
+                r = 0.0;
+            });
         }
         // here is an implicit (and needed) barrier from parallel for
 
@@ -479,17 +517,17 @@ private:
         for (size_t i = 0; i < num_persons; ++i) {
             const Person& person = m_persons[i];
             const auto location  = person.get_location().index;
-            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.write().at(location),
-                                                m_contact_exposure_rates_cache.write().at(location), person,
+            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.write()[location],
+                                                m_contact_exposure_rates_cache.write()[location], person,
                                                 get_location(person.get_person_id()), t, dt);
         }
     }
 
-    Cache<std::vector<CopyableAtomic<std::atomic_int_fast32_t>>>
+    Cache<Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>>
         m_local_population_size_cache; ///< Current number of Persons in a given location.
-    Cache<std::vector<AirExposureRates>>
+    Cache<Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>>
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
-    Cache<std::vector<ContactExposureRates>>
+    Cache<Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>>
         m_contact_exposure_rates_cache; ///< Cache for local exposure through contacts in #transmissions/day.
 
     std::vector<Person> m_persons; ///< Vector of every Person.
