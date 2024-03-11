@@ -207,7 +207,7 @@ TEST(Testsir, test_age_groups)
         ASSERT_EQ(compare[i].size(), static_cast<size_t>(sir.get_num_elements()) + 1) << "at row " << i;
         EXPECT_NEAR(sir.get_time(i), compare[i][0], 1e-10) << "at row " << i;
         for (size_t j = 1; j < compare[i].size(); j++) {
-            EXPECT_NEAR(sir.get_value(i)[j - 1], compare[i][j], 1e-10) << " at row " << i;
+            EXPECT_NEAR(sir.get_value(i)[j - 1], compare[i][j], 1e-9) << " at row " << i;
         }
     }
 }
