@@ -177,7 +177,7 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
         for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
 
             t_Exposed[node].push_back(
-                static_cast<int>(model[node].parameters.template get<TimeExposed>()[AgeGroup(group)]));
+                static_cast<int>(std::round(model[node].parameters.template get<TimeExposed>()[AgeGroup(group)])));
             t_InfectedNoSymptoms[node].push_back(static_cast<int>(
                 std::round(model[node].parameters.template get<TimeInfectedNoSymptoms>()[AgeGroup(group)])));
             t_InfectedSymptoms[node].push_back(static_cast<int>(

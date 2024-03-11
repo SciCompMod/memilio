@@ -211,7 +211,7 @@ TEST(TestSaveParameters, read_graph_without_edges)
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
         params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 4.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.;
         params.get<mio::osecir::TimeInfectedSevere>()[i]     = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8.;

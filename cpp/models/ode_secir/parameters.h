@@ -106,7 +106,7 @@ struct TimeExposed {
 };
 
 /**
- * @brief the (mean) time in day unit for asymptomatic cases that are infected but
+ * @brief the (mean) time in day unit for asymptomatic cases that are infectious but
  *        have not yet developed symptoms.
  */
 struct TimeInfectedNoSymptoms {

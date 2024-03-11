@@ -50,8 +50,8 @@ int main(int /*argc*/, char** /*argv*/)
         params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
         params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 6.;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 12.;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8.;
 
         //initial populations is equally distributed among age groups
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp;
