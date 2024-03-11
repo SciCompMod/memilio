@@ -186,16 +186,6 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
                 std::round(model[node].parameters.template get<TimeInfectedSevere>()[AgeGroup(group)])));
             t_InfectedCritical[node].push_back(static_cast<int>(
                 std::round(model[node].parameters.template get<TimeInfectedCritical>()[AgeGroup(group)])));
-            t_Exposed[node].push_back(
-                static_cast<int>(std::round(model[node].parameters.template get<TimeExposed>()[AgeGroup(group)])));
-            t_InfectedNoSymptoms[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedNoSymptoms>()[AgeGroup(group)])));
-            t_InfectedSymptoms[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSymptoms>()[AgeGroup(group)])));
-            t_InfectedSevere[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSevere>()[AgeGroup(group)])));
-            t_InfectedCritical[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedCritical>()[AgeGroup(group)])));
 
             mu_C_R[node].push_back(
                 model[node].parameters.template get<RecoveredPerInfectedNoSymptoms>()[AgeGroup(group)]);

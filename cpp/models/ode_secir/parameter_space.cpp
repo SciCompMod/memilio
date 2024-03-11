@@ -124,6 +124,8 @@ void draw_sample_infection(Model& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
+        model.parameters.get<TimeExposed>()[i]            = model.parameters.get<TimeExposed>()[AgeGroup(0)];
+        model.parameters.get<TimeInfectedNoSymptoms>()[i] = model.parameters.get<TimeInfectedNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
             model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =
@@ -132,8 +134,6 @@ void draw_sample_infection(Model& model)
             model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
 
         //age dependent
-        model.parameters.get<TimeExposed>()[i].draw_sample();
-        model.parameters.get<TimeInfectedNoSymptoms>()[i].draw_sample();
         model.parameters.get<TimeInfectedSymptoms>()[i].draw_sample();
         model.parameters.get<TimeInfectedSevere>()[i].draw_sample();
         model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
