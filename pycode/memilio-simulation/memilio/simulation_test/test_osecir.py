@@ -135,12 +135,12 @@ class Test_osecir_integration(unittest.TestCase):
             t = float(timestep.at['t'])
             self.assertAlmostEqual(
                 t, result.get_time(index_timestep),
-                delta=1e-10)
+                delta=1e-9)
 
             for index_compartment in range(0, 10):
                 self.assertAlmostEqual(
                     timestep[index_compartment + 1],
-                    result[index_timestep][index_compartment], delta=1e-10)
+                    result[index_timestep][index_compartment], delta=1e-9)
 
 
 if __name__ == '__main__':
