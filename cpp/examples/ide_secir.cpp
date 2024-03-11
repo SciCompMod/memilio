@@ -69,7 +69,7 @@ int main()
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Set working parameters
-    mio::ExponentialDecay expdecay_test(10.0);
+    mio::ExponentialDecay expdecay_test(11.0);
     mio::StateAgeFunctionWrapper delaydistribution(expdecay_test);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(3.0);
