@@ -20,20 +20,17 @@
 
 #include "ide_secir/parameters_io.h"
 #include "memilio/config.h"
-#include "memilio/utils/compiler_diagnostics.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
-
-#include "memilio/io/epi_data.h"
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
 
 #include <string>
-#include <iostream>
 #include <cmath>
 
 namespace mio
@@ -41,71 +38,13 @@ namespace mio
 namespace isecir
 {
 /* 
-    TODO talk: -implement a function like "check_quality" or constraints, to check eg if all the flows are nonnegative (and maybe set them to 0 otherwise)?
-    - Discuss how to solve the problem with the mean or previous flow.
-    - compute_flow in model.h: one index is eigen, one int...
-    - Seperate function for reading data into flow?
-    - GROSSES Problem: ist nicht unwahrscheinlich, dass gamma(t_1) null ist..
+    TODO: add get_mean() function to state_age
+    -add check for non-negative flows in model check_constraints
+    - just use mean in calculation 
+    - überall Eigen::Index in model verwenden statt int 
+    Erlärungen zufügen
+    index max needed anpassen 
     */
-
-// TODO: do this in StateAgeFunction or is this only needed here? Or should we take these values from the literature/ consider them as known
-// in the simulation?
-ScalarType compute_mean(Eigen::Index idx_CurrentFlow)
-{
-    unused(idx_CurrentFlow);
-    // use dummy value = 1 for now
-    return 1.;
-}
-
-// Here we want to implement how to compute previous flow directly from RKI data by using the mean duration spent in
-// some InfectionState
-void compute_flows_with_mean(Model& model, Eigen::Index idx_InfectionTransitions, Eigen::Index idx_OutgoingFlow,
-                             ScalarType dt, Eigen::Index current_time_index)
-{
-    // compute mean
-    ScalarType mean = compute_mean(idx_InfectionTransitions);
-
-    // compute how many time points we need to shift values to shift values using the mean
-    Eigen::Index mean_index = (Eigen::Index)(std::round(mean / dt));
-
-    model.m_transitions.get_value(current_time_index)[Eigen::Index(idx_InfectionTransitions)] =
-        (1 / model.parameters.get<TransitionProbabilities>()[idx_OutgoingFlow]) *
-        model.m_transitions.get_value(current_time_index + mean_index)[Eigen::Index(idx_OutgoingFlow)];
-}
-
-// TODO: this formula can lead to negative flows!!! Not used at the moment
-// TODO: Think about good name for CurrentFlow and OutgoingFlow; also think about if we should use them as int
-// or Eigen::Index in argument
-// Here we want to implement how to compute the previous flow
-void compute_previous_flows(Model& model, Eigen::Index idx_CurrentFlow, Eigen::Index idx_OutgoingFlow,
-                            Eigen::Index current_time_index, ScalarType dt)
-{
-    // TODO: make this formula more similar to compute_flows regarding indices or is this more confusing?
-    // TODO: case distinction for gamma'(dt) = 0 and mu = 0
-
-    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
-        model.parameters.get<TransitionDistributions>()[idx_CurrentFlow].get_support_max(dt) / dt);
-
-    ScalarType sum = 0.;
-    for (Eigen::Index i = current_time_index + 1 - calc_time_index; i < current_time_index; i++) {
-
-        ScalarType state_age = (current_time_index + 1 - i) * dt;
-
-        // backward difference scheme to approximate first derivative of TransitionDistribution
-        sum += (model.parameters.get<TransitionDistributions>()[idx_OutgoingFlow].eval(state_age) -
-                model.parameters.get<TransitionDistributions>()[idx_OutgoingFlow].eval(state_age - dt)) /
-               dt * model.m_transitions.get_value(i)[idx_CurrentFlow];
-    }
-
-    std::cout << "Sum: " << sum << "\n";
-
-    model.m_transitions.get_value(current_time_index)[Eigen::Index(idx_CurrentFlow)] =
-        (-dt / (model.parameters.get<TransitionDistributions>()[idx_OutgoingFlow].eval(dt) -
-                model.parameters.get<TransitionDistributions>()[idx_OutgoingFlow].eval(0))) *
-        (model.m_transitions.get_value(current_time_index)[Eigen::Index(idx_OutgoingFlow)] /
-             (dt * model.parameters.get<TransitionProbabilities>()[idx_OutgoingFlow]) +
-         sum);
-}
 
 // we assume that we start the simulation at time 0 and want to compute the necessary flows
 // in the past for the initialization of the model
@@ -140,6 +79,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = -4 * global_support_max_index;
     // Create TimeSeries with zeros.
+    // TODO: last index needed should be dependent on some mean values
     for (Eigen::Index i = start_shift; i <= 2 * global_support_max_index; i++) {
         // Add time point.
         model.m_transitions.add_time_point(
@@ -238,51 +178,29 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     //--- Calculate the remaining flows. ---
     // E to C for -global_support_max, ..., 0
+    // Use mean value of the TransitionDistribution C to I for the calculation.
+    ScalarType mean_InfectedNoSymptomsToInfectedSymptoms = 1.;
+    Eigen::Index index_shift_mean = Eigen::Index(std::round(mean_InfectedNoSymptomsToInfectedSymptoms / dt));
     for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
-        compute_flows_with_mean(model, Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
-                                Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt,
-                                i - start_shift - 1
-        // Eigen::Index idx_CurrentFlow, Eigen::Index idx_OutgoingFlow, ScalarType dt,
-        // Eigen::Index current_time_index)
-        //model.compute_flow((int)InfectionTransition::InfectedNoSymptomsToRecovered,
-        //             Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt, i - start_shift);
+        model.m_transitions[i - start_shift][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] =
+            (1 / model.parameters.get<TransitionProbabilities>()[Eigen::Index(
+                     InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *
+            model.m_transitions[i - start_shift + index_shift_mean]
+                               [Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)];
     }
-
-    //------------
-    /*// TODO: think about when to start for loops, this should also depend on the mean and not only global_max_support
-    // start with computing necessary values using mean
-    for (Eigen::Index i = start_shift + 1; i <= global_support_max_index; i++) {
-
-        compute_flows_with_mean(model, Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
-                                Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt,
-                                i - start_shift - 1);
-    }
-
-    // // compute remaining flows from E to C using formula based on flow, see Overleaf
-    // for (Eigen::Index i = start_shift + 2 * global_support_max_index + 1; i <= 0; i++) {
-
-    //     compute_previous_flows(model, Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms),
-    //                            Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
-    //                            i - start_shift - 1, dt);
-    // }
 
     // S to E for -global_support_max, ..., 0
-    // start with computing necessary values using mean
-    for (Eigen::Index i = start_shift + 1; i <= 0; i++) {
-
-        compute_flows_with_mean(model, Eigen::Index(InfectionTransition::SusceptibleToExposed),
-                                Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt,
-                                i - start_shift - 1);
+    // Use mean values of the TransitionDistribution E to C and of the TransitionDistribution C to I for the calculation.
+    ScalarType mean_ExposedToInfectedNoSymptoms = 1.;
+    index_shift_mean =
+        Eigen::Index(std::round((mean_ExposedToInfectedNoSymptoms + mean_InfectedNoSymptomsToInfectedSymptoms) / dt));
+    for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
+        model.m_transitions[i - start_shift][Eigen::Index(InfectionTransition::SusceptibleToExposed)] =
+            (1 / model.parameters.get<TransitionProbabilities>()[Eigen::Index(
+                     InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *
+            model.m_transitions[i - start_shift + index_shift_mean]
+                               [Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)];
     }
-
-    // // compute remaining flows from S to E using formula based on flow, see Overleaf
-    // // for (Eigen::Index i = start_shift + global_support_max_index + 1; i <= 0; i++) {
-    // for (Eigen::Index i = start_shift + 1; i <= 0; i++) {
-
-    //     compute_previous_flows(model, Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed),
-    //                            Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms),
-    //                            i - start_shift - 1, dt);
-    // }*/
 
     // C to R for -global_support_max, ..., 0
     // If we previously calculated the transition from E to C, we can calculate this transition using the standard formula.

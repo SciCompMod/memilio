@@ -25,7 +25,6 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ide_secir/model.h"
-#include "memilio/math/eigen.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
 
@@ -35,14 +34,6 @@ namespace mio
 {
 namespace isecir
 {
-
-ScalarType compute_mean(Eigen::Index idx_CurrentFlow);
-
-void compute_previous_flows(Model& model, Eigen::Index idx_CurrentFlow, Eigen::Index idx_OutgoingFlow,
-                            Eigen::Index time_series_index, ScalarType dt);
-
-void compute_flows_with_mean(Model& model, Eigen::Index idx_InfectionTransitions, Eigen::Index idx_OutgoingFlow,
-                             ScalarType dt, Eigen::Index current_time_index);
 
 /**
 * @brief Computes a TimeSeries of flows to provide initial data for an IDE SECIR model with data from RKI.
