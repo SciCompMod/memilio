@@ -32,7 +32,7 @@ int main()
 {
     ScalarType N      = 10000;
     ScalarType deaths = 13.10462213;
-    ScalarType dt     = 1;
+    ScalarType dt     = 0.5;
 
     // Initialize model.
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count), N, deaths);
@@ -43,10 +43,11 @@ int main()
     if (!status) {
         std::cout << "Error: " << status.error().formatted_message();
     }
-
+    model.m_transitions.print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
+                                    16, 8);
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    /*mio::isecir::Simulation sim(model, 0, dt);
 
     sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
-                                      16, 8);
+                                      16, 8);*/
 }
