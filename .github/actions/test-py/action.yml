@@ -31,7 +31,7 @@ runs:
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-    - name: Dwonload Python Wheels
+    - name: Download Python Wheels
       uses: actions/download-artifact@v4
       if: inputs.package != 'simulation'
       with:
