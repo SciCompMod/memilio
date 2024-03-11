@@ -164,9 +164,8 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
         // backward difference scheme to approximate first derivative
-        sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age) -
-                parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age - dt)) /
-               dt * m_transitions[i + 1][idx_IncomingFlow];
+        sum += parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval_derivative(dt, state_age) *
+               m_transitions[i + 1][idx_IncomingFlow];
     }
 
     m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] =
