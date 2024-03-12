@@ -89,6 +89,7 @@ public:
         , m_local_population_size_cache()
         , m_air_exposure_rates_cache()
         , m_contact_exposure_rates_cache()
+        , m_exposure_rates_need_rebuild(true)
         , m_persons(other.m_persons)
         , m_locations(other.m_locations)
         , m_has_locations(other.m_has_locations)
@@ -99,23 +100,6 @@ public:
         , m_cemetery_id(other.m_cemetery_id)
         , m_rng(other.m_rng)
     {
-        m_air_exposure_rates_cache.write().resize(other.m_air_exposure_rates_cache.read().size());
-        for (Eigen::Index i = 0; i < other.m_air_exposure_rates_cache.read().size(); ++i) {
-            m_air_exposure_rates_cache.write()[i].resize(other.m_air_exposure_rates_cache.read()[i].size());
-            std::for_each(m_air_exposure_rates_cache.write()[i].begin(), m_air_exposure_rates_cache.write()[i].end(),
-                          [](auto& r) {
-                              r = 0.0;
-                          });
-        }
-
-        m_contact_exposure_rates_cache.write().resize(other.m_contact_exposure_rates_cache.read().size());
-        for (Eigen::Index i = 0; i < other.m_contact_exposure_rates_cache.read().size(); ++i) {
-            m_contact_exposure_rates_cache.write()[i].resize(other.m_contact_exposure_rates_cache.read()[i].size());
-            std::for_each(m_contact_exposure_rates_cache.write()[i].begin(),
-                          m_contact_exposure_rates_cache.write()[i].end(), [](auto& r) {
-                              r = 0.0;
-                          });
-        }
     }
     World(World&& other)            = default; // TODO?
     World& operator=(World&& other) = default;
@@ -490,8 +474,28 @@ private:
         }
     }
 
+    void build_exposure_caches()
+    {
+        const size_t num_locations = m_locations.size();
+        m_air_exposure_rates_cache.write().resize(num_locations);
+        m_contact_exposure_rates_cache.write().resize(num_locations);
+        for (size_t i = 0; i < num_locations; i++) {
+            m_air_exposure_rates_cache.write()[i].resize(
+                {CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
+            m_contact_exposure_rates_cache.write()[i].resize({CellIndex(m_locations[i].get_cells().size()),
+                                                              VirusVariant::Count,
+                                                              AgeGroup(parameters.get_num_groups())});
+        }
+        m_air_exposure_rates_cache.invalidate();
+        m_contact_exposure_rates_cache.invalidate();
+        m_exposure_rates_need_rebuild = false;
+    }
+
     void recompute_exposure_rates(TimePoint t, TimeSpan dt)
     {
+        if (m_exposure_rates_need_rebuild) {
+            build_exposure_caches();
+        }
         // use these const values to help omp recognize that the for loops are bounded
         const auto num_locations = m_locations.size();
         const auto num_persons   = m_persons.size();
@@ -529,6 +533,7 @@ private:
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
     Cache<Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>>
         m_contact_exposure_rates_cache; ///< Cache for local exposure through contacts in #transmissions/day.
+    bool m_exposure_rates_need_rebuild = true;
 
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.

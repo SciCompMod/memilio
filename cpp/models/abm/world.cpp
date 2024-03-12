@@ -37,31 +37,11 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     m_locations.emplace_back(id, parameters.get_num_groups(), num_cells);
     m_has_locations[size_t(type)] = true;
 
-    // rebuild this on demand // TODO: do this with the other caches too? maybe split the concept valid into valid values / valid shape
+    // mark caches for rebuild
     m_local_population_size_cache.invalidate();
-    // resize air exposures cache
-    std::vector<AirExposureRates::Index> air_dims(id.index, AirExposureRates::Index::Zero());
-    for (size_t i = 0; i < air_dims.size(); i++) {
-        air_dims[i] = m_air_exposure_rates_cache.read()[i].size();
-    }
-    m_air_exposure_rates_cache.write().resize(id.index + 1);
-    for (size_t i = 0; i < air_dims.size(); i++) {
-        m_air_exposure_rates_cache.write()[i].resize(air_dims[i]);
-    }
-    m_air_exposure_rates_cache.write()[id.index].resize({CellIndex(num_cells), VirusVariant::Count});
     m_air_exposure_rates_cache.invalidate();
-    // resize contact exposures cache
-    std::vector<ContactExposureRates::Index> contact_dims(id.index, ContactExposureRates::Index::Zero());
-    for (size_t i = 0; i < contact_dims.size(); i++) {
-        contact_dims[i] = m_contact_exposure_rates_cache.read()[i].size();
-    }
-    m_contact_exposure_rates_cache.write().resize(id.index + 1);
-    for (size_t i = 0; i < contact_dims.size(); i++) {
-        m_contact_exposure_rates_cache.write()[i].resize(contact_dims[i]);
-    }
-    m_contact_exposure_rates_cache.write()[id.index].resize(
-        {CellIndex(num_cells), VirusVariant::Count, AgeGroup(parameters.get_num_groups())});
     m_contact_exposure_rates_cache.invalidate();
+    m_exposure_rates_need_rebuild = true;
 
     return id;
 }
