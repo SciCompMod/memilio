@@ -38,12 +38,9 @@ namespace mio
 namespace isecir
 {
 /* 
-    TODO: add get_mean() function to state_age
-    -add check for non-negative flows in model check_constraints
-    - just use mean in calculation 
-    - überall Eigen::Index in model verwenden statt int 
+    TODO: add get_mean() function to state_age 
     Erlärungen zufügen
-    index max needed anpassen 
+    briefs in state age
     tests!
     */
 
@@ -79,9 +76,16 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = -4 * global_support_max_index;
+    // The last time needed is dependent on the mean stay times in the Exposed compartment and in InfectedNoSymptoms before transition to InfectedSymptoms.
+    Eigen::Index last_time_index_needed = Eigen::Index(std::ceil(
+        (model.parameters.get<TransitionDistributions>()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
+             .get_mean(dt) +
+         model.parameters
+             .get<TransitionDistributions>()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
+             .get_mean(dt)) /
+        dt));
     // Create TimeSeries with zeros.
-    // TODO: last index needed should be dependent on some mean values
-    for (Eigen::Index i = start_shift; i <= 2 * global_support_max_index; i++) {
+    for (Eigen::Index i = start_shift; i <= last_time_index_needed; i++) {
         // Add time point.
         model.m_transitions.add_time_point(
             i * dt, TimeSeries<ScalarType>::Vector::Constant((int)InfectionTransition::Count, 0.));
@@ -180,7 +184,10 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     //--- Calculate the remaining flows. ---
     // E to C for -global_support_max, ..., 0
     // Use mean value of the TransitionDistribution C to I for the calculation.
-    ScalarType mean_InfectedNoSymptomsToInfectedSymptoms = 1.;
+    ScalarType mean_InfectedNoSymptomsToInfectedSymptoms =
+        model.parameters
+            .get<TransitionDistributions>()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
+            .get_mean(dt);
     Eigen::Index index_shift_mean = Eigen::Index(std::round(mean_InfectedNoSymptomsToInfectedSymptoms / dt));
     for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
         model.m_transitions[i - start_shift][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] =
@@ -192,7 +199,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     // S to E for -global_support_max, ..., 0
     // Use mean values of the TransitionDistribution E to C and of the TransitionDistribution C to I for the calculation.
-    ScalarType mean_ExposedToInfectedNoSymptoms = 1.;
+    ScalarType mean_ExposedToInfectedNoSymptoms =
+        model.parameters.get<TransitionDistributions>()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
+            .get_mean(dt);
     index_shift_mean =
         Eigen::Index(std::round((mean_ExposedToInfectedNoSymptoms + mean_InfectedNoSymptomsToInfectedSymptoms) / dt));
     for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {

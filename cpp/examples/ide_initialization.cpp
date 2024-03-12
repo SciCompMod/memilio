@@ -43,11 +43,10 @@ int main()
     if (!status) {
         std::cout << "Error: " << status.error().formatted_message();
     }
-    model.m_transitions.print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
-                                    16, 8);
+
     // Carry out simulation.
-    /*mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation sim(model, 2., dt);
 
     sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
-                                      16, 8);*/
+                                      16, 8);
 }

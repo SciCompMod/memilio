@@ -84,6 +84,14 @@ public:
                       "vector should be zero.");
         }
 
+        for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
+            for (int j = 0; j < (int)InfectionState::Count; j++) {
+                if (m_transitions[i][j] < 0) {
+                    log_error("Initialization failed. One or more initial value for transitions is less than zero.");
+                }
+            }
+        }
+
         parameters.check_constraints();
     }
 
@@ -113,7 +121,7 @@ public:
      * the last index of m_transitions.
      * See also compute_flow for a description of the parameters.
      */
-    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
 
     /**
      * @brief Computes size of a flow.
@@ -127,7 +135,7 @@ public:
      * @param[in] dt Time step to compute flow for.
      * @param[in] current_time_index The time index the flow should be computed for.
      */
-    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
                       Eigen::Index current_time_index);
 
     /**
@@ -177,7 +185,8 @@ public:
      * @param[in] dt Time discretization step size.
      */
     void compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                             int idx_TransitionDistribution1, int idx_TransitionDistribution2, ScalarType dt);
+                             Eigen::Index idx_TransitionDistribution1, Eigen::Index idx_TransitionDistribution2,
+                             ScalarType dt);
 
     /**
      * @brief Sets all values of remaining compartments (compartments apart from S, R, D) for the current last timestep in m_populations.
