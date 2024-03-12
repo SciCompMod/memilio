@@ -44,6 +44,7 @@ namespace isecir
     - überall Eigen::Index in model verwenden statt int 
     Erlärungen zufügen
     index max needed anpassen 
+    tests!
     */
 
 // we assume that we start the simulation at time 0 and want to compute the necessary flows
@@ -212,7 +213,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // At the end of the calculation, delete all time points that are not required for the simulation.
     auto transition_copy(model.m_transitions);
     model.m_transitions = TimeSeries<ScalarType>((int)InfectionTransition::Count);
-    for (int i = -global_support_max_index; i <= 0; i++) {
+    for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
         model.m_transitions.add_time_point(i * dt, transition_copy.get_value(i - start_shift));
     }
 
