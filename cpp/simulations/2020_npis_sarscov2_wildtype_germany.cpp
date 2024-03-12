@@ -126,10 +126,14 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
 {
     //times
+    // TimeExposed and TimeInfectedNoSymptoms are calculated as described in
+    // Khailaie et al. (https://doi.org/10.1186/s12916-020-01884-4)
+    // given SI_min = 3.935, SI_max = 4.6, INC = 5.2
     const double timeExposedMin            = 2.67;
     const double timeExposedMax            = 4.;
     const double timeInfectedNoSymptomsMin = 1.2;
     const double timeInfectedNoSymptomsMax = 2.53;
+
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
     const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
     const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
