@@ -1,16 +1,20 @@
 name: "Windows Test"
 description: "Run the C++ unit tests on Windows"
 inputs:
-  build-artifact:
-    description: "Name of the build artifact that contains the unit test binary."
+  artifact-pattern:
+    description: "Name of the build artifact that contains the unit test binary, will also be used for upload artifacts."
     required: true
+  optional-deps:
+    description: "Optional dependencies of unit test binary (ON or OFF, default ON). If OFF, adds `-nodep` to the artifact name."
+    required: false
+    default: "ON"
 runs:
   using: "composite"
   steps:
     - name: Download built test directory
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.build-artifact }}
+        name: build-cpp-windows-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
         path: cpp/build-win/bin
     - name: Run unit tests
       shell: pwsh
@@ -18,9 +22,9 @@ runs:
         cd cpp/build-win/bin
         .\memilio-test.exe --gtest_output="xml:report.xml"
     - name: Upload report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-win-report
+        name: test-cpp-win-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
         path: |
           cpp/build-win/bin/report.xml
         retention-days: 1
