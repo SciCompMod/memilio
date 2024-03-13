@@ -31,8 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, PersonId person_id)
-    : m_location(location.get_id())
+Person::Person(mio::RandomNumberGenerator& rng, LocationId location, AgeGroup age, PersonId person_id)
+    : m_location(location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
@@ -57,7 +57,7 @@ Person::Person(const Person& other, PersonId id)
     m_person_id = id;
 }
 
-Person Person::copy_person(Location& location)
+Person Person::copy_person(LocationId location)
 {
     Person copy = *this;
     copy.set_location(location);
@@ -97,11 +97,6 @@ LocationId Person::get_location() const
     return m_location;
 }
 
-void Person::set_location(const Location& location)
-{
-    set_location(location.get_id());
-}
-
 void Person::set_location(LocationId id)
 {
     m_location         = id;
@@ -118,18 +113,13 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(Location& location)
+void Person::set_assigned_location(LocationId location)
 {
     /* TODO: This is not safe if the location is not the same as added in the world, e.g. the index is wrong. We need to check this.
     * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
     *                                 person.set_assigned_location(home);
     */
     m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
-}
-
-void Person::set_assigned_location(LocationId id)
-{
-    m_assigned_locations[(uint32_t)id.type] = id.index;
 }
 
 uint32_t Person::get_assigned_location_index(LocationType type) const

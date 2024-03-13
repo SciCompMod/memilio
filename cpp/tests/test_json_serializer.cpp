@@ -509,7 +509,7 @@ TEST(TestJsonSerializer, abmTrip)
     auto world   = mio::abm::World(num_age_groups);
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto& home   = world.get_individualized_location(home_id);
+    auto& home   = world.get_location(home_id);
     auto person  = make_test_person(home);
     mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
     auto js = mio::serialize_json(trip, true);

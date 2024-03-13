@@ -23,6 +23,7 @@
 #include "abm/infection.h"
 #include "abm/infection_state.h"
 #include "abm/location_type.h"
+#include "abm/location.h"
 #include "abm/parameters.h"
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
@@ -38,9 +39,6 @@ namespace mio
 namespace abm
 {
 
-struct LocationId;
-class Location; // TODO: try to remove. include directly, or use id only
-
 /**
  * @brief Agents in the simulated World that can carry and spread the Infection.
  */
@@ -54,7 +52,7 @@ public:
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
+    explicit Person(mio::RandomNumberGenerator& rng, LocationId location, AgeGroup age,
                     PersonId person_id = PersonId::invalid_id());
 
     explicit Person(const Person& other, PersonId id);
@@ -65,7 +63,7 @@ public:
      * @brief Create a copy of this #Person object with a new Location.
      * @param[in, out] location The new #Location of the Person.
      */
-    Person copy_person(Location& location);
+    Person copy_person(LocationId location);
 
     /**
      * @brief Compare two Person%s.
@@ -85,6 +83,7 @@ public:
     /** 
      * @brief Get all Vaccination%s of the Person.
      * @return A vector with all Vaccination%s.
+     * @{
      */
     std::vector<Vaccination>& get_vaccinations()
     {
@@ -95,6 +94,7 @@ public:
     {
         return m_vaccinations;
     }
+    /** @} */
 
     /**
      * @brief Returns if the Person is infected at the TimePoint.
@@ -131,10 +131,10 @@ public:
      */
     LocationId get_location() const;
 
-    // set new location, e.g. when migrating
-    void set_location(const Location& location);
-
-    // set new location, e.g. when migrating
+    /**
+     * @brief Change the location of the person.
+     * @param[in] id The new location.
+     */
     void set_location(LocationId id);
 
     /**
@@ -146,6 +146,10 @@ public:
         return m_time_at_location;
     }
 
+    /**
+     * @brief Add to the time the Person has been at its current Location.
+     * @param[in] dt TimeSpan the Person has spent at the Location.
+     */
     void add_time_at_location(const TimeSpan dt)
     {
         m_time_at_location += dt;
@@ -159,13 +163,6 @@ public:
     {
         return m_time_of_last_test;
     }
-    /**
-     * @brief Set an assigned Location of the Person. 
-     * The assigned Location is saved by its index of its LocationId. Assume that a Person has at most one assigned
-     * Location per #LocationType.
-     * @param[in] location The new assigned Location.
-     */
-    void set_assigned_location(Location& location);
 
     /**
      * @brief Set an assigned Location of the Person. 
@@ -355,7 +352,7 @@ public:
      * @brief Add a new #Vaccination
      * @param[in] v ExposureType (i. e. vaccine) the person takes.  
      * @param[in] t TimePoint of the Vaccination.
-    */
+     */
     void add_new_vaccination(ExposureType v, TimePoint t)
     {
         m_vaccinations.push_back(Vaccination(v, t));
@@ -364,21 +361,25 @@ public:
     /**
      * @brief Get the transport mode the Person used to get to its current Location.
      * @return TransportMode the Person used to get to its current Location.
-    */
+     */
     mio::abm::TransportMode get_last_transport_mode() const
     {
         return m_last_transport_mode;
     }
 
+    /**
+     * @brief Set the transport mode the Person used to get to its current Location.
+     * @param[in] mode TransportMode the Person used to get to its current Location.
+     */
     void set_last_transport_mode(const mio::abm::TransportMode mode)
     {
         m_last_transport_mode = mode;
     }
 
     /**
-    * Get this persons RandomNumberGenerator counter.
-    * @see mio::abm::PersonalRandomNumberGenerator.
-    */
+     * @brief Get this persons RandomNumberGenerator counter.
+     * @see mio::abm::PersonalRandomNumberGenerator.
+     */
     Counter<uint32_t>& get_rng_counter()
     {
         return m_rng_counter;
@@ -386,7 +387,7 @@ public:
 
     /**
      * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
-    */
+     */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
     /**

@@ -51,7 +51,7 @@ struct movement_data {
     mio::abm::InfectionState infection_state;
 };
 
-mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
+constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
 {
     switch (current_location) {
     case mio::abm::LocationType::Home:
@@ -123,9 +123,11 @@ struct LogPersonInformation : mio::LogOnce {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type person_information{};
-        for (auto&& person : sim.get_world().get_persons()) {
+        person_information.reserve(sim.get_world().get_persons().size());
+        for (auto& person : sim.get_world().get_persons()) {
             person_information.push_back(std::make_tuple(
-                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+                person.get_person_id(),
+                sim.get_world().find_location(mio::abm::LocationType::Home, person.get_person_id()).get_index(),
                 person.get_age()));
         }
         return person_information;
@@ -179,8 +181,8 @@ struct LogInfectionState : mio::LogAlways {
         PRAGMA_OMP(for)
         for (auto& location : sim.get_world().get_locations()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-                sum[inf_state] +=
-                    sim.get_world().get_subpopulation(location, curr_time, mio::abm::InfectionState(inf_state));
+                sum[inf_state] += sim.get_world().get_subpopulation(location.get_id(), curr_time,
+                                                                    mio::abm::InfectionState(inf_state));
             }
         }
         return std::make_pair(curr_time, sum);

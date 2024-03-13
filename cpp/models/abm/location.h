@@ -154,37 +154,9 @@ public:
     }
 
     /**
-     * @brief Compute the transmission factor for contact transmission of the virus in a Cell.
-     * @param[in] cell_index Cell index of the Cell.
-     * @param[in] virus VirusVariant of interest.
-     * @param[in] age_receiver AgeGroup of the receiving Person.
-     * @param[in] age_transmitter AgeGroup of the transmitting Person.
-     * @param[in] num_agegroups The number of age groups in the model.
-     * @return Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
-    */
-    // ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
-    //                                          size_t num_agegroups) const;
-
-    /**
-     * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
-     * @param[in] cell_index Cell index of the Cell.
-     * @param[in] virus VirusVariant of interest.
-     * @param[in] global_params The Parameters set of the World. 
-     * @return Amount of average Infection%s with the virus per day.
-    */
-    // ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
-
-    /** 
-     * @brief Prepare the Location for the next Simulation step.
-     * @param[in] t Current TimePoint of the Simulation.
-     * @param[in] dt The duration of the Simulation step.
-     * @param[in] num_agegroups The number of age groups in the model.
-     */
-    // void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups);
-
-    /**
      * @brief Get the Location specific Infection parameters.
      * @return Parameters of the Infection that are specific to this Location.
+     * @{
      */
     LocalInfectionParameters& get_infection_parameters()
     {
@@ -195,6 +167,7 @@ public:
     {
         return m_parameters;
     }
+    /** @} */
 
     /**
      * @brief Get the Cell%s of this Location.
@@ -314,7 +287,10 @@ public:
         m_geographical_location = location;
     }
 
-    // return id by value. used to identify a location in a World
+    /**
+     * @brief Get the location's identifier in a World.
+     * @return The location's LocationId by value.
+     */
     LocationId get_id() const
     {
         return m_id;

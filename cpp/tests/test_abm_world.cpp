@@ -42,10 +42,10 @@ TEST(TestWorld, addLocation)
     ASSERT_EQ((int)school_id1.index, 1);
     ASSERT_EQ((int)school_id2.index, 2);
 
-    auto& school1 = world.get_individualized_location(school_id1);
-    auto& school2 = world.get_individualized_location(school_id2);
-    auto& work    = world.get_individualized_location(work_id);
-    auto& home    = world.get_individualized_location(home_id);
+    auto& school1 = world.get_location(school_id1);
+    auto& school2 = world.get_location(school_id2);
+    auto& work    = world.get_location(work_id);
+    auto& home    = world.get_location(home_id);
 
     size_t count_schools = 0;
     for (auto& loc : world.get_locations()) {
@@ -104,20 +104,21 @@ TEST(TestWorld, findLocation)
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
-    auto& person   = world.get_person(add_test_person(world, home_id));
+    auto person_id = add_test_person(world, home_id);
+    auto& person   = world.get_person(person_id);
 
     person.set_assigned_location(home_id);
     person.set_assigned_location(work_id);
     person.set_assigned_location(school_id);
 
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person), work_id);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person), school_id);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person), home_id);
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person_id), school_id);
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person_id), home_id);
 
     auto&& world_test = std::as_const(world);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Work, person), work_id);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::School, person), school_id);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Home, person), home_id);
+    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::School, person_id), school_id);
+    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
 }
 
 TEST(TestWorld, evolveStateTransition)
@@ -308,38 +309,33 @@ TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a uni
 
         world.evolve(t, dt);
 
-        auto& event    = world.get_individualized_location(event_id);
-        auto& work     = world.get_individualized_location(work_id);
-        auto& home     = world.get_individualized_location(home_id);
-        auto& hospital = world.get_individualized_location(hospital_id);
+        EXPECT_EQ(p1.get_location(), work_id);
+        EXPECT_EQ(p2.get_location(), event_id);
+        EXPECT_EQ(p3.get_location(), hospital_id);
+        EXPECT_EQ(p4.get_location(), home_id);
+        EXPECT_EQ(p5.get_location(), event_id);
+        EXPECT_EQ(world.get_number_persons(event_id), 2);
+        EXPECT_EQ(world.get_number_persons(work_id), 1);
+        EXPECT_EQ(world.get_number_persons(home_id), 1);
+        EXPECT_EQ(world.get_number_persons(hospital_id), 1);
 
-        EXPECT_EQ(p1.get_location(), work.get_id());
-        EXPECT_EQ(p2.get_location(), event.get_id());
-        EXPECT_EQ(p3.get_location(), hospital.get_id());
-        EXPECT_EQ(p4.get_location(), home.get_id());
-        EXPECT_EQ(p5.get_location(), event.get_id());
-        EXPECT_EQ(world.get_number_persons(event), 2);
-        EXPECT_EQ(world.get_number_persons(work), 1);
-        EXPECT_EQ(world.get_number_persons(home), 1);
-        EXPECT_EQ(world.get_number_persons(hospital), 1);
-
-        world.migrate(p1.get_person_id(), home.get_id());
-        world.migrate(p2.get_person_id(), home.get_id());
-        world.migrate(p5.get_person_id(), home.get_id());
+        world.migrate(p1.get_person_id(), home_id);
+        world.migrate(p2.get_person_id(), home_id);
+        world.migrate(p5.get_person_id(), home_id);
 
         t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
         world.get_trip_list().reset_index();
 
         world.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), work.get_id());
-        EXPECT_EQ(p2.get_location(), event.get_id());
-        EXPECT_EQ(p3.get_location(), home.get_id());
-        EXPECT_EQ(p4.get_location(), home.get_id());
-        EXPECT_EQ(p5.get_location(), event.get_id());
-        EXPECT_EQ(world.get_number_persons(event), 2);
-        EXPECT_EQ(world.get_number_persons(work), 1);
-        EXPECT_EQ(world.get_number_persons(home), 2);
+        EXPECT_EQ(p1.get_location(), work_id);
+        EXPECT_EQ(p2.get_location(), event_id);
+        EXPECT_EQ(p3.get_location(), home_id);
+        EXPECT_EQ(p4.get_location(), home_id);
+        EXPECT_EQ(p5.get_location(), event_id);
+        EXPECT_EQ(world.get_number_persons(event_id), 2);
+        EXPECT_EQ(world.get_number_persons(work_id), 1);
+        EXPECT_EQ(world.get_number_persons(home_id), 2);
 
         bool weekend = true;
         mio::abm::Trip tripweekend1(p1.get_person_id(),
@@ -356,14 +352,14 @@ TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a uni
 
         world.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), event.get_id());
-        EXPECT_EQ(p2.get_location(), home.get_id());
-        EXPECT_EQ(p3.get_location(), home.get_id());
-        EXPECT_EQ(p4.get_location(), home.get_id());
-        EXPECT_EQ(p5.get_location(), work.get_id());
-        EXPECT_EQ(world.get_number_persons(event), 1);
-        EXPECT_EQ(world.get_number_persons(work), 1);
-        EXPECT_EQ(world.get_number_persons(home), 3);
+        EXPECT_EQ(p1.get_location(), event_id);
+        EXPECT_EQ(p2.get_location(), home_id);
+        EXPECT_EQ(p3.get_location(), home_id);
+        EXPECT_EQ(p4.get_location(), home_id);
+        EXPECT_EQ(p5.get_location(), work_id);
+        EXPECT_EQ(world.get_number_persons(event_id), 1);
+        EXPECT_EQ(world.get_number_persons(work_id), 1);
+        EXPECT_EQ(world.get_number_persons(home_id), 3);
     }
 
     // Test that a dead person cannot make a movement
@@ -430,17 +426,17 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         100;
     world.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] = 100;
 
-    auto home_id      = world.add_location(mio::abm::LocationType::Home);
-    auto work_id      = world.add_location(mio::abm::LocationType::Work);
-    auto& home        = world.get_individualized_location(home_id);
-    auto& work        = world.get_individualized_location(work_id);
+    auto home_id = world.add_location(mio::abm::LocationType::Home);
+    auto work_id = world.add_location(mio::abm::LocationType::Work);
+    auto& work   = world.get_location(work_id);
+
     auto current_time = mio::abm::TimePoint(0);
     auto pid =
         add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, current_time);
     auto& person    = world.get_person(pid);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
-    person.set_assigned_location(home);
-    person.set_assigned_location(work);
+    person.set_assigned_location(home_id);
+    person.set_assigned_location(work_id);
 
     auto testing_criteria = mio::abm::TestingCriteria();
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
@@ -575,13 +571,13 @@ TEST(TestWorld, copyWorld) // TODO: this needs either a rewrite or to be removed
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
     auto home_id    = world.add_location(mio::abm::LocationType::Home);
 
-    auto& school1 = world.get_individualized_location(school_id1);
+    auto& school1 = world.get_location(school_id1);
     school1.set_required_mask(mio::abm::MaskType::Surgical);
     school1.set_npi_active(true);
-    auto& school2 = world.get_individualized_location(school_id2);
+    auto& school2 = world.get_location(school_id2);
     school2.set_required_mask(mio::abm::MaskType::FFP2);
-    auto& work = world.get_individualized_location(work_id);
-    auto& home = world.get_individualized_location(home_id);
+    auto& work = world.get_location(work_id);
+    auto& home = world.get_location(home_id);
 
     auto pid1 = world.add_person(school_id1, age_group_0_to_4);
     auto pid2 = world.add_person(school_id2, age_group_15_to_34);
@@ -631,44 +627,44 @@ TEST(TestWorld, copyWorld) // TODO: this needs either a rewrite or to be removed
     ASSERT_EQ(copied_world.get_locations()[2].get_index(), world.get_locations()[2].get_index());
     ASSERT_EQ(copied_world.get_locations()[3].get_index(), world.get_locations()[3].get_index());
     ASSERT_EQ(copied_world.get_locations()[4].get_index(), world.get_locations()[4].get_index());
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[1]),
-              world.get_number_persons(world.get_locations()[1]));
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[2]),
-              world.get_number_persons(world.get_locations()[2]));
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[3]),
-              world.get_number_persons(world.get_locations()[3]));
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[4]),
-              world.get_number_persons(world.get_locations()[4]));
+    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[1].get_id()),
+              world.get_number_persons(world.get_locations()[1].get_id()));
+    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[2].get_id()),
+              world.get_number_persons(world.get_locations()[2].get_id()));
+    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[3].get_id()),
+              world.get_number_persons(world.get_locations()[3].get_id()));
+    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[4].get_id()),
+              world.get_number_persons(world.get_locations()[4].get_id()));
     ASSERT_EQ(copied_world.get_locations()[1].get_npi_active(), world.get_locations()[1].get_npi_active());
     ASSERT_EQ(copied_world.get_locations()[2].get_npi_active(), world.get_locations()[2].get_npi_active());
     ASSERT_EQ(copied_world.get_locations()[3].get_npi_active(), world.get_locations()[3].get_npi_active());
     ASSERT_EQ(copied_world.get_locations()[4].get_npi_active(), world.get_locations()[4].get_npi_active());
     ASSERT_EQ(copied_world.get_locations()[1].get_required_mask(), world.get_locations()[1].get_required_mask());
     ASSERT_EQ(copied_world.get_locations()[2].get_required_mask(), world.get_locations()[2].get_required_mask());
-    ASSERT_EQ(
-        copied_world.get_subpopulation(copied_world.get_locations()[1], mio::abm::TimePoint(0),
-                                       mio::abm::InfectionState::Exposed),
-        world.get_subpopulation(world.get_locations()[1], mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[1], mio::abm::TimePoint(0),
+    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
+                                             mio::abm::InfectionState::Exposed),
+              world.get_subpopulation(world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
+                                      mio::abm::InfectionState::Exposed));
+    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
                                              mio::abm::InfectionState::Susceptible),
-              world.get_subpopulation(world.get_locations()[1], mio::abm::TimePoint(0),
+              world.get_subpopulation(world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
                                       mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(
-        copied_world.get_subpopulation(copied_world.get_locations()[2], mio::abm::TimePoint(0),
-                                       mio::abm::InfectionState::Exposed),
-        world.get_subpopulation(world.get_locations()[2], mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[2], mio::abm::TimePoint(0),
+    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
+                                             mio::abm::InfectionState::Exposed),
+              world.get_subpopulation(world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
+                                      mio::abm::InfectionState::Exposed));
+    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
                                              mio::abm::InfectionState::Susceptible),
-              world.get_subpopulation(world.get_locations()[2], mio::abm::TimePoint(0),
+              world.get_subpopulation(world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
                                       mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(
-        copied_world.get_subpopulation(copied_world.get_locations()[3], mio::abm::TimePoint(0),
-                                       mio::abm::InfectionState::Exposed),
-        world.get_subpopulation(world.get_locations()[3], mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(
-        copied_world.get_subpopulation(copied_world.get_locations()[4], mio::abm::TimePoint(0),
-                                       mio::abm::InfectionState::Exposed),
-        world.get_subpopulation(world.get_locations()[4], mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
+    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[3].get_id(), mio::abm::TimePoint(0),
+                                             mio::abm::InfectionState::Exposed),
+              world.get_subpopulation(world.get_locations()[3].get_id(), mio::abm::TimePoint(0),
+                                      mio::abm::InfectionState::Exposed));
+    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[4].get_id(), mio::abm::TimePoint(0),
+                                             mio::abm::InfectionState::Exposed),
+              world.get_subpopulation(world.get_locations()[4].get_id(), mio::abm::TimePoint(0),
+                                      mio::abm::InfectionState::Exposed));
     ASSERT_EQ(copied_world.get_locations()[1].get_cells().size(), world.get_locations()[1].get_cells().size());
     ASSERT_EQ(copied_world.get_locations()[2].get_cells().size(), world.get_locations()[2].get_cells().size());
     ASSERT_EQ(copied_world.get_locations()[3].get_cells().size(), world.get_locations()[2].get_cells().size());

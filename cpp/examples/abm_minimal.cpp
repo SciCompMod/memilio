@@ -82,26 +82,26 @@ int main()
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add one supermarket, maximum constacts are assumed to be 20.
     auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     // At every school, the maximum contacts are 20.
     auto school = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     // At every workplace, maximum contacts are 20.
     auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
 
     // Increase aerosol transmission for all locations
     world.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    world.get_individualized_location(work)
+    world.get_location(work)
         .get_infection_parameters()
         .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
 

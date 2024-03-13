@@ -38,7 +38,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     m_has_locations[size_t(type)] = true;
 
     // mark caches for rebuild
-    m_local_population_size_cache.invalidate();
+    m_local_population_cache.invalidate();
     m_air_exposure_rates_cache.invalidate();
     m_contact_exposure_rates_cache.invalidate();
     m_exposure_rates_need_rebuild = true;
@@ -48,7 +48,24 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 PersonId World::add_person(const LocationId id, AgeGroup age)
 {
-    return add_person(Person(m_rng, get_location(id), age));
+    return add_person(Person(m_rng, id, age));
+}
+
+PersonId World::add_person(Person&& person)
+{
+    assert(person.get_location().index != INVALID_LOCATION_INDEX);
+    assert(person.get_location().index < m_locations.size());
+    assert(person.get_age().get() < parameters.get_num_groups());
+
+    PersonId new_id = static_cast<PersonId>(m_persons.size());
+    m_persons.emplace_back(person, new_id);
+    auto& new_person = m_persons.back();
+    new_person.set_assigned_location(m_cemetery_id);
+
+    if (m_local_population_cache.is_valid()) {
+        ++m_local_population_cache.write()[new_person.get_location().index];
+    }
+    return new_id;
 }
 
 void World::evolve(TimePoint t, TimeSpan dt)
@@ -74,17 +91,17 @@ void World::migration(TimePoint t, TimeSpan dt)
     const auto num_persons = m_persons.size();
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < num_persons; ++i) {
-        auto& person      = m_persons[i];
+        Person& person    = m_persons[i];
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
             auto target_type                  = rule(personal_rng, person, t, dt, parameters);
-            const Location& target_location   = get_location(find_location(target_type, person));
+            const Location& target_location   = get_location(find_location(target_type, i));
             const LocationId current_location = person.get_location();
             if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                 if (target_location.get_id() != current_location &&
-                    get_number_persons(target_location) < target_location.get_capacity().persons) {
+                    get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
                     bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
                         migrate(i, target_location.get_id());
@@ -129,7 +146,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person      = get_person(trip.person_id);
             auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-                auto& target_location = get_individualized_location(trip.migration_destination);
+                auto& target_location = get_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                     person.apply_mask_intervention(personal_rng, target_location);
                     migrate(person.get_person_id(), target_location.get_id(), trip.trip_mode);
@@ -143,42 +160,120 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 }
 
+void World::build_compute_local_population_cache() const
+{
+    PRAGMA_OMP(single)
+    {
+        const auto num_locations = m_locations.size();
+        const auto num_persons   = m_persons.size();
+        m_local_population_cache.write().resize(num_locations);
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; i++) {
+            m_local_population_cache.write()[i] = 0.;
+        } // implicit taskloop barrier
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_persons; i++) {
+            ++m_local_population_cache.write()[m_persons[i].get_location().index];
+        } // implicit taskloop barrier
+    } // implicit single barrier
+}
+
+void World::build_exposure_caches()
+{
+    PRAGMA_OMP(single)
+    {
+        const size_t num_locations = m_locations.size();
+        m_air_exposure_rates_cache.write().resize(num_locations);
+        m_contact_exposure_rates_cache.write().resize(num_locations);
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; i++) {
+            m_air_exposure_rates_cache.write()[i].resize(
+                {CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
+            m_contact_exposure_rates_cache.write()[i].resize({CellIndex(m_locations[i].get_cells().size()),
+                                                              VirusVariant::Count,
+                                                              AgeGroup(parameters.get_num_groups())});
+        } // implicit taskloop barrier
+        m_air_exposure_rates_cache.invalidate();
+        m_contact_exposure_rates_cache.invalidate();
+        m_exposure_rates_need_rebuild = false;
+    } // implicit single barrier
+}
+
+void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
+{
+    PRAGMA_OMP(single)
+    {
+        // if cache shape was changed (e.g. by add_location), rebuild it
+        if (m_exposure_rates_need_rebuild) {
+            build_exposure_caches();
+        }
+        // use these const values to help omp recognize that the for loops are bounded
+        const auto num_locations = m_locations.size();
+        const auto num_persons   = m_persons.size();
+
+        // 1) reset all cached values
+        // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; ++i) {
+            const auto index         = i;
+            auto& local_air_exposure = m_air_exposure_rates_cache.write()[index];
+            std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
+                r = 0.0;
+            });
+            auto& local_contact_exposure = m_contact_exposure_rates_cache.write()[index];
+            std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
+                r = 0.0;
+            });
+        } // implicit taskloop barrier
+        // here is an implicit (and needed) barrier from parallel for
+
+        // 2) add all contributions from each person
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_persons; ++i) {
+            const Person& person = m_persons[i];
+            const auto location  = person.get_location().index;
+            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.write()[location],
+                                                m_contact_exposure_rates_cache.write()[location], person,
+                                                get_location(person.get_person_id()), t, dt);
+        } // implicit taskloop barrier
+    } // implicit single barrier
+}
+
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
 
-    if (!m_local_population_size_cache.is_valid()) {
-        build_local_population_cache();
-        m_local_population_size_cache.validate();
+    if (!m_local_population_cache.is_valid()) {
+        build_compute_local_population_cache();
+        m_local_population_cache.validate();
     }
-    recompute_exposure_rates(t, dt);
+    compute_exposure_caches(t, dt);
     m_air_exposure_rates_cache.validate();
     m_contact_exposure_rates_cache.validate();
 }
 
 auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
 {
-    return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
+    return std::make_pair(m_locations.cbegin(), m_locations.cend());
+}
+auto World::get_locations() -> Range<std::pair<LocationIterator, LocationIterator>>
+{
+    return std::make_pair(m_locations.begin(), m_locations.end());
 }
 
 auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
 {
-    return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
+    return std::make_pair(m_persons.cbegin(), m_persons.cend());
 }
 
-const Location& World::get_individualized_location(LocationId id) const
+auto World::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
 {
-    return m_locations[id.index];
+    return std::make_pair(m_persons.begin(), m_persons.end());
 }
 
-Location& World::get_individualized_location(LocationId id)
+LocationId World::find_location(LocationType type, const PersonId person) const
 {
-    return m_locations[id.index];
-}
-
-LocationId World::find_location(LocationType type, const Person& person) const
-{
-    auto index = person.get_assigned_location_index(type);
+    auto index = get_person(person).get_assigned_location_index(type);
     assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
     return {index, type};
 }

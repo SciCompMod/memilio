@@ -28,13 +28,20 @@
 
 namespace mio
 {
-
 namespace abm
 {
 
 // TODO: daily_transmissions functions are only used in interact. expose in header anyways?
 
-// compute the local contact exposure rate
+/**
+ * @brief Compute the number of daily transmissions for contact transmission of a virus in a cell.
+ * @param[in] rates The local exposure rates. 
+ * @param[in] cell_index Cell index of the Cell.
+ * @param[in] virus VirusVariant of interest.
+ * @param[in] age_receiver AgeGroup of the receiving Person.
+ * @param[in] params The local infection parameters.
+ * @return Average amount of Infection%s with the virus from the AgeGroup of the transmitter per day.
+ */
 ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                            const VirusVariant virus, const AgeGroup age_receiver,
                                            const LocalInfectionParameters& params)
@@ -48,14 +55,20 @@ ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, co
     return prob;
 }
 
-// compute the local air exposure rate
+/**
+ * @brief Compute the number of daily transmissions for aerosol transmission of a virus in a cell.
+ * @param[in] rates The local exposure rates. 
+ * @param[in] cell_index Cell index of the Cell.
+ * @param[in] virus VirusVariant of interest.
+ * @param[in] global_params The parameter set of the World. 
+ * @return Average amount of Infection%s with the virus per day.
+ */
 ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellIndex cell_index,
                                       const VirusVariant virus, const Parameters& global_params)
 {
     return rates[{cell_index, virus}] * global_params.get<AerosolTransmissionRates>()[{virus}];
 }
 
-// let a person interact with a local population
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
               const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
               const TimePoint t, const TimeSpan dt, const Parameters& global_parameters)
@@ -104,7 +117,6 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
     person.add_time_at_location(dt);
 }
 
-// for the given person and time span, add its exposure contributions at the given location and time
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
                                const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
 {
@@ -135,9 +147,9 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
 }
 
 // compatability layer for using interact without existing caches
-void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
-              const std::vector<Person>& local_population, const TimePoint t, const TimeSpan dt,
-              const Parameters& global_parameters)
+void interact_testing(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
+                      const std::vector<Person>& local_population, const TimePoint t, const TimeSpan dt,
+                      const Parameters& global_parameters)
 {
     // allocate and initialize air exposures with 0
     AirExposureRates local_air_exposure;
@@ -167,7 +179,7 @@ bool migrate(Person& person, const Location& destination, const std::vector<uint
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination);
+        person.set_location(destination.get_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 
@@ -179,5 +191,4 @@ bool migrate(Person& person, const Location& destination, const std::vector<uint
 }
 
 } // namespace abm
-
 } // namespace mio

@@ -30,29 +30,54 @@
 
 namespace mio
 {
-
 namespace abm
 {
 
-// add the contribution of person to the exposure rates at location
+/** 
+ * @brief Add the contribution of a person to the local exposure rates.
+ * @param[in, out] local_air_exposure Exposure rates by aerosols for the local population.
+ * @param[in, out] local_contact_exposure Exposure by rates contacts for the local population.
+ * @param[in] person A person from the local population.
+ * @param[in] location The person's current location.
+ * @param[in] t Current Simulation time.
+ * @param[in] dt Length of the current Simulation time step.
+ */
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
                                const Person& person, const Location& location, const TimePoint t, const TimeSpan dt);
 
-// let a person interact with a location for and at some time
+/** 
+ * @brief Let a Person interact with the population at its current Location, possibly getting infected.
+ * @param[in, out] rng PersonalRandomNumberGenerator for this Person.
+ * @param[in, out] person The person to interact with the local population.
+ * @param[in] location The person's current location.
+ * @param[in] local_air_exposure Precomputed exposure rates by aerosols for the local population.
+ * @param[in] local_contact_exposure Precomputed exposure by rates contacts for the local population.
+ * @param[in] t Current Simulation time.
+ * @param[in] dt Length of the current Simulation time step.
+ * @param[in] global_parameters Parameters of the World.
+ */
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
               const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
               const TimePoint t, const TimeSpan dt, const Parameters& global_parameters);
 
 // interact, but it computes the correct exposures for you
-void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
-              const std::vector<Person>& local_population, const TimePoint t, const TimeSpan dt,
-              const Parameters& global_parameters);
+void interact_testing(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
+                      const std::vector<Person>& local_population, const TimePoint t, const TimeSpan dt,
+                      const Parameters& global_parameters);
 
-// move a person to another location. returns false if the person was at the target location already, true otherwise
+/**
+ * @brief Move a person to another location.
+ * If the person already is at the destination, neither mode nor cells are set.
+ * @param[in, out] person The person to be moved.
+ * @param[in] destination The destination to move to.
+ * @param[in] cells The cells within the destination the person should be in.
+ * @param[in] mode The transport mode the person uses to move.
+ * @return Returns false if the person already is at the given destination, true otherwise.
+ */
 bool migrate(Person& person, const Location& destination, const std::vector<uint32_t>& cells = {0},
              const TransportMode mode = TransportMode::Unknown);
-} // namespace abm
 
+} // namespace abm
 } // namespace mio
 
 #endif

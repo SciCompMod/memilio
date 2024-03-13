@@ -32,11 +32,9 @@
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/mioomp.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
-#include <atomic>
 #include <bitset>
 #include <vector>
 
@@ -86,7 +84,7 @@ public:
     //type is move-only for stable references of persons/locations
     World(const World& other)
         : parameters(other.parameters)
-        , m_local_population_size_cache()
+        , m_local_population_cache()
         , m_air_exposure_rates_cache()
         , m_contact_exposure_rates_cache()
         , m_exposure_rates_need_rebuild(true)
@@ -183,53 +181,25 @@ public:
     PersonId add_person(const LocationId id, AgeGroup age);
 
     // adds a copy of person to the world
-    PersonId add_person(const Person& person)
-    {
-        assert([&]() {
-            get_location(person.get_location());
-            return true;
-        }()); // assert that location is in world
-        assert(person.get_age().get() < parameters.get_num_groups());
-
-        PersonId new_id = static_cast<PersonId>(m_persons.size());
-        m_persons.emplace_back(person, new_id);
-        auto& new_person = m_persons.back();
-        new_person.set_assigned_location(m_cemetery_id);
-
-        if (m_local_population_size_cache.is_valid()) {
-            ++m_local_population_size_cache.write()[new_person.get_location().index];
-        }
-        return new_id;
-    }
+    PersonId add_person(Person&& person);
 
     /**
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
+     * @{
      */
     Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
-    Range<std::pair<LocationIterator, LocationIterator>> get_locations()
-    {
-        return make_range(m_locations.begin(), m_locations.end());
-    }
+    Range<std::pair<LocationIterator, LocationIterator>> get_locations();
+    /** @} */
 
     /**
      * @brief Get a range of all Person%s in the World.
      * @return A range of all Person%s.
+     * @{
      */
     Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
-    Range<std::pair<PersonIterator, PersonIterator>> get_persons()
-    {
-        return make_range(m_persons.begin(), m_persons.end());
-    }
-
-    /**
-     * @brief Get an individualized Location.
-     * @param[in] id LocationId of the Location.
-     * @return Reference to the Location.
-     */
-    const Location& get_individualized_location(LocationId id) const; // TODO: replace by get_location?
-
-    Location& get_individualized_location(LocationId id);
+    Range<std::pair<PersonIterator, PersonIterator>> get_persons();
+    /** @} */
 
     /**
      * @brief Find an assigned Location of a Person.
@@ -237,7 +207,7 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
-    LocationId find_location(LocationType type, const Person& person) const;
+    LocationId find_location(LocationType type, const PersonId person) const;
 
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s.
@@ -333,52 +303,51 @@ public:
      */
     void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
+    /**
+     * @brief Get a reference to a Person from this World.
+     * @param[in] id A person's PersonId.
+     * @return A reference to the Person.
+     * @{
+     */
     Person& get_person(PersonId id)
     {
-        assert(id == m_persons[id.get()].get_person_id());
         assert(id.get() < m_persons.size());
         return m_persons[id.get()];
     }
 
     const Person& get_person(PersonId id) const
     {
-        assert(id == m_persons[id.get()].get_person_id());
         assert(id.get() < m_persons.size());
         return m_persons[id.get()];
     }
+    /** @} */
 
+    /**
+     * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
+     * @param[in] location A LocationId from the world.
+     * @param[in] t TimePoint of querry.
+     * @param[in] state #InfectionState of interest.
+     * @return Amount of Person%s of the #InfectionState in all Cell%s of the Location.
+     */
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
-        // if (m_local_populations_cache.is_valid()) {
-        //     return std::count_if(m_local_populations_cache.read().at(location.index).begin(),
-        //                          m_local_populations_cache.read().at(location.index).end(), [&](uint32_t p) {
-        //                              return get_person(PersonId(p)).get_infection_state(t) == state;
-        //                          });
-        // }
-        // TODO: check performance on this.
+        // TODO: if used during simulation, this function may be very slow!
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p.get_location() == location && p.get_infection_state(t) == state;
         });
     }
 
-    inline size_t get_subpopulation(const Location& location, TimePoint t, InfectionState state) const
-    {
-        return get_subpopulation(location.get_id(), t, state);
-    }
-
+    /**
+     * @brief Get the total number of Person%s at the Location.
+     * @param[in] location A LocationId from the world.
+     * @return Number of Person%s in the location.
+     */
     size_t get_number_persons(LocationId location) const
     {
-        if (m_local_population_size_cache.is_valid()) {
-            return m_local_population_size_cache.read()[location.index];
+        if (!m_local_population_cache.is_valid()) {
+            build_compute_local_population_cache();
         }
-        return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
-            return p.get_location() == location;
-        });
-    }
-
-    inline size_t get_number_persons(const Location& location) const
-    {
-        return get_number_persons(location.get_id());
+        return m_local_population_cache.read()[location.index];
     }
 
     // move a person to another location. this requires that location is part of this world.
@@ -387,12 +356,13 @@ public:
     {
         LocationId origin    = get_location(person).get_id();
         const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), cells, mode);
+        // if the person has moved, invalidate exposure caches but keep population caches valid
         if (has_moved) {
             m_air_exposure_rates_cache.invalidate();
             m_contact_exposure_rates_cache.invalidate();
-            if (m_local_population_size_cache.is_valid()) {
-                --m_local_population_size_cache.write()[origin.index];
-                ++m_local_population_size_cache.write()[destination.index];
+            if (m_local_population_cache.is_valid()) {
+                --m_local_population_cache.write()[origin.index];
+                ++m_local_population_cache.write()[destination.index];
             }
         }
     }
@@ -409,7 +379,9 @@ public:
                          const Parameters& global_parameters)
     {
         if (!m_air_exposure_rates_cache.is_valid() || !m_contact_exposure_rates_cache.is_valid()) {
-            recompute_exposure_rates(t, dt);
+            // checking caches is only needed for external calls
+            // during simulation (i.e. in evolve()), the caches are computed in begin_step
+            compute_exposure_caches(t, dt);
             m_air_exposure_rates_cache.validate();
             m_contact_exposure_rates_cache.validate();
         }
@@ -419,7 +391,12 @@ public:
                            global_parameters);
     }
 
-    // get location by id
+    /**
+     * @brief Get a reference to a location in this World.
+     * @param[in] id LocationId of the Location.
+     * @return Reference to the Location.
+     * @{
+     */
     const Location& get_location(LocationId id) const
     {
         assert(id.index != INVALID_LOCATION_INDEX);
@@ -427,25 +404,30 @@ public:
         return m_locations[id.index];
     }
 
-    // get location by id
     Location& get_location(LocationId id)
     {
         assert(id.index != INVALID_LOCATION_INDEX);
         assert(id.index < m_locations.size());
         return m_locations[id.index];
     }
+    /** @} */
 
-    // get current location of the Person
+    /**
+     * @brief Get a reference to the location of a person.
+     * @param[in] id PersonId of a person.
+     * @return Reference to the Location.
+     * @{
+     */
     inline Location& get_location(PersonId id)
     {
         return get_location(get_person(id).get_location());
     }
 
-    // get current location of the Person
     inline const Location& get_location(PersonId id) const
     {
         return get_location(get_person(id).get_location());
     }
+    /** @} */
 
 private:
     /**
@@ -461,74 +443,21 @@ private:
      */
     void migration(TimePoint t, TimeSpan dt);
 
-    void build_local_population_cache()
-    {
-        m_local_population_size_cache.write().resize(m_locations.size());
-        // this loop (in partikular map[]) cannot run in parallel
-        for (size_t i = 0; i < m_locations.size(); i++) {
-            m_local_population_size_cache.write()[i] = 0.;
-        }
-        PRAGMA_OMP(parallel for)
-        for (Person& person : get_persons()) {
-            ++m_local_population_size_cache.write()[person.get_location().index];
-        }
-    }
+    /// @brief Shape the cache and store how many Person%s are at any Location. Use from single thread!
+    void build_compute_local_population_cache() const;
 
-    void build_exposure_caches()
-    {
-        const size_t num_locations = m_locations.size();
-        m_air_exposure_rates_cache.write().resize(num_locations);
-        m_contact_exposure_rates_cache.write().resize(num_locations);
-        for (size_t i = 0; i < num_locations; i++) {
-            m_air_exposure_rates_cache.write()[i].resize(
-                {CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
-            m_contact_exposure_rates_cache.write()[i].resize({CellIndex(m_locations[i].get_cells().size()),
-                                                              VirusVariant::Count,
-                                                              AgeGroup(parameters.get_num_groups())});
-        }
-        m_air_exposure_rates_cache.invalidate();
-        m_contact_exposure_rates_cache.invalidate();
-        m_exposure_rates_need_rebuild = false;
-    }
+    /// @brief Shape the air and contact exposure cache according to the current Location%s.
+    void build_exposure_caches();
 
-    void recompute_exposure_rates(TimePoint t, TimeSpan dt)
-    {
-        if (m_exposure_rates_need_rebuild) {
-            build_exposure_caches();
-        }
-        // use these const values to help omp recognize that the for loops are bounded
-        const auto num_locations = m_locations.size();
-        const auto num_persons   = m_persons.size();
+    /** 
+     * @brief Store all air/contact exposures for the current simulation step.
+     * @param[in] t Current TimePoint of the simulation.
+     * @param[in] dt The duration of the simulation step.
+     */
+    void compute_exposure_caches(TimePoint t, TimeSpan dt);
 
-        // 1) reset all cached values
-        // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
-        PRAGMA_OMP(parallel for)
-        for (size_t i = 0; i < num_locations; ++i) {
-            const auto index         = i;
-            auto& local_air_exposure = m_air_exposure_rates_cache.write()[index];
-            std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
-                r = 0.0;
-            });
-            auto& local_contact_exposure = m_contact_exposure_rates_cache.write()[index];
-            std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
-                r = 0.0;
-            });
-        }
-        // here is an implicit (and needed) barrier from parallel for
-
-        // 2) add all contributions from each person
-        PRAGMA_OMP(parallel for)
-        for (size_t i = 0; i < num_persons; ++i) {
-            const Person& person = m_persons[i];
-            const auto location  = person.get_location().index;
-            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.write()[location],
-                                                m_contact_exposure_rates_cache.write()[location], person,
-                                                get_location(person.get_person_id()), t, dt);
-        }
-    }
-
-    Cache<Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>>
-        m_local_population_size_cache; ///< Current number of Persons in a given location.
+    mutable Cache<Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>>
+        m_local_population_cache; ///< Current number of Persons in a given location.
     Cache<Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>>
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
     Cache<Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>>

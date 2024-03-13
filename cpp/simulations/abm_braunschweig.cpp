@@ -225,13 +225,12 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
     // We assume that no person goes to an hospital, altough e.g. "Sonstiges" could be a hospital
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
-                                                             std::numeric_limits<uint32_t>::max());
+    world.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
+                                              std::numeric_limits<uint32_t>::max());
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(),
-                                                        std::numeric_limits<uint32_t>::max());
+    world.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::max());
 
     // First we determine the persons number and their starting locations
     int number_of_persons = 0;
@@ -310,7 +309,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             locations.insert({home_id, home});
             mio::abm::GeographicalLocation location_long_lat_home = {(double)row[index["lon_start"]] / 1e+5,
                                                                      (double)row[index["lat_start"]] / 1e+5};
-            world.get_individualized_location(home).set_geographical_location(location_long_lat_home);
+            world.get_location(home).set_geographical_location(location_long_lat_home);
         }
         else {
             home = it_home->second;
@@ -324,7 +323,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
                 get_location_type(activity_end),
                 1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
-            world.get_individualized_location(location).set_geographical_location(location_long_lat);
+            world.get_location(location).set_geographical_location(location_long_lat);
         }
     }
     fin.clear();
