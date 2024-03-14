@@ -169,9 +169,10 @@ BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore<ScalarType>)->Na
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Graph Simulation - adapt_rk");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("Graph Simulation - rk_ck54 (boost)");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_dopri5>)
-    ->Name("Graph Simulation - rk_dopri5 (boost)");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>)
+// BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
+// ->Name("Graph Simulation - rk_dopri5 (boost)"); // TODO: reenable once boost bug is fixed
+BENCHMARK_TEMPLATE(graph_sim_secirvvs,
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>)
     ->Name("Graph Simulation - rkf78 (boost)");
 // run all benchmarks
 BENCHMARK_MAIN();

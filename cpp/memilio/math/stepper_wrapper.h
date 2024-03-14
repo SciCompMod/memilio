@@ -22,6 +22,7 @@
 
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/integrator.h"
+#include "memilio/utils/logging.h"
 
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
@@ -32,7 +33,7 @@ MSVC_WARNING_DISABLE_PUSH(4127)
 #include "boost/numeric/odeint/stepper/runge_kutta4.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp"
+// #include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp" // TODO: reenable once boost bug is fixed
 MSVC_WARNING_POP()
 GCC_CLANG_DIAGNOSTIC(pop)
 
@@ -48,6 +49,17 @@ template <typename FP,
           class ControlledStepper>
 class ControlledStepperWrapper : public mio::IntegratorCore<FP>
 {
+    using CS = ControlledStepper<
+        Eigen::Matrix<FP, Eigen::Dynamic, 1>, FP, Eigen::Matrix<FP, Eigen::Dynamic, 1>, FP,
+        boost::numeric::odeint::vector_space_algebra,
+        typename boost::numeric::odeint::operations_dispatcher<Eigen::Matrix<FP, Eigen::Dynamic, 1>>::operations_type,
+        boost::numeric::odeint::never_resizer>;
+    using Stepper                         = boost::numeric::odeint::controlled_runge_kutta<CS>;
+    static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
+                                                           boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
+    static_assert(!is_fsal_stepper,
+                  "FSAL steppers cannot be used until https://github.com/boostorg/odeint/issues/72 is resolved.");
+
 public:
     /**
      * @brief Set up the integrator
@@ -68,32 +80,69 @@ public:
     }
 
     /**
-    * @brief Make a single integration step of a system of ODEs and adapt step width
-    * @param[in] yt value of y at t, y(t)
-    * @param[in,out] t current time step h=dt
-    * @param[in,out] dt current time step h=dt
-    * @param[out] ytp1 approximated value y(t+1)
+    * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
+
+    * @param[in] yt Value of y at t_{k}, y(t_{k}).
+    * @param[in,out] t Current time step t_{k} for some k. Will be set to t_{k+1} in [t_{k} + dt_min, t_{k} + dt].
+    * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
+    * @param[out] ytp1 The approximated value of y(t_{k+1}).
     */
     bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1> const> yt, FP& t, FP& dt,
               Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> ytp1) const override
     {
-        // copy y(t) to dydt, to retrieve the VectorXd from the Ref
-        dydt           = yt;
-        const FP t_old = t; // t is updated by try_step on a successfull step
-        do {
-            // we use the scheme try_step(sys, inout, t, dt) with sys=f, inout=y(t) for
-            // in-place computation. This is similiar to do_step, but it can update t and dt
-            m_stepper.try_step(
-                // reorder arguments of the DerivFunction f for the stepper
-                [&](const Eigen::Matrix<FP, Eigen::Dynamic, 1>& x, Eigen::Matrix<FP, Eigen::Dynamic, 1>& dxds, FP s) {
-                    dxds.resizeLike(x); // try_step calls sys with a vector of size 0 for some reason
-                    f(x, s, dxds);
-                },
-                dydt, t, dt);
-            // stop on a successfull step or a failed step size adaption (w.r.t. the minimal step size)
-        } while (t == t_old && dt > m_dt_min);
-        ytp1 = dydt; // output new y(t)
-        return dt > m_dt_min;
+        using boost::numeric::odeint::fail;
+        using std::max;
+        assert(0 <= m_dt_min);
+        assert(m_dt_min <= m_dt_max);
+
+        if (dt < m_dt_min || dt > m_dt_max) {
+            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
+                             m_dt_max);
+        }
+        // set initial values for exit conditions
+        auto step_result = fail;
+        bool is_dt_valid = true;
+        // copy vectors from the references, since the stepper cannot (trivially) handle Eigen::Ref
+        m_ytp1 = ytp1;
+        m_yt   = yt;
+        // make a integration step, adapting dt to a possibly larger value on success,
+        // or a strictly smaller value on fail.
+        // stop only on a successful step or a failed step size adaption (w.r.t. the minimal step size m_dt_min)
+        while (step_result == fail && is_dt_valid) {
+            if (dt < m_dt_min) {
+                is_dt_valid = false;
+                dt          = m_dt_min;
+            }
+            // we use the scheme try_step(sys, in, t, out, dt) with sys=f, in=y(t_{k}), out=y(t_{k+1}).
+            // this is similiar to do_step, but it can adapt the step size dt. If successful, it also updates t.
+
+            if constexpr (!is_fsal_stepper) { // prevent compile time errors with fsal steppers
+                step_result = m_stepper.try_step(
+                    // reorder arguments of the DerivFunction f for the stepper
+                    [&](const Eigen::Matrix<FP, Eigen::Dynamic, 1>& x, Eigen::Matrix<FP, Eigen::Dynamic, 1>& dxds,
+                        FP s) {
+                        dxds.resizeLike(x); // boost resizers cannot resize Eigen::Vector, hence we need to do that here
+                        f(x, s, dxds);
+                    },
+                    m_yt, t, m_ytp1, dt);
+            }
+        }
+        // output the new value by copying it back to the reference
+        ytp1 = m_ytp1;
+        // bound dt from below
+        // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min
+
+        dt = max(dt, m_dt_min);
+        // check whether the last step failed (which means that m_dt_min was still too large to suffice tolerances)
+        if (step_result == fail) {
+            // adaptive stepping failed, but we still return the result of the last attempt
+            t += m_dt_min;
+            return false;
+        }
+        else {
+            // successfully made an integration step
+            return true;
+        }
     }
 
     /// @param tol the required absolute tolerance for comparison of the iterative approximation
@@ -124,24 +173,19 @@ public:
     }
 
 private:
-    using CS = ControlledStepper<
-        Eigen::Matrix<FP, Eigen::Dynamic, 1>, FP, Eigen::Matrix<FP, Eigen::Dynamic, 1>, FP,
-        boost::numeric::odeint::vector_space_algebra,
-        typename boost::numeric::odeint::operations_dispatcher<Eigen::Matrix<FP, Eigen::Dynamic, 1>>::operations_type,
-        boost::numeric::odeint::never_resizer>;
-
-    boost::numeric::odeint::controlled_runge_kutta<CS> create_stepper()
+    /// @brief (Re)initialize the internal stepper.
+    Stepper create_stepper()
     {
         // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
-        return boost::numeric::odeint::controlled_runge_kutta<CS>(
-            boost::numeric::odeint::default_error_checker<typename CS::value_type, typename CS::algebra_type,
-                                                          typename CS::operations_type>(m_abs_tol, m_rel_tol),
-            boost::numeric::odeint::default_step_adjuster<typename CS::value_type, typename CS::time_type>(m_dt_max));
+        return Stepper(typename Stepper::error_checker_type(m_abs_tol, m_rel_tol),
+                       typename Stepper::step_adjuster_type(m_dt_max));
     }
 
-    FP m_abs_tol, m_rel_tol, m_dt_min, m_dt_max; // integrator parameters
-    mutable Eigen::Matrix<FP, Eigen::Dynamic, 1> dydt;
-    mutable boost::numeric::odeint::controlled_runge_kutta<CS> m_stepper;
+    FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.
+    FP m_dt_min, m_dt_max; ///< Lower and upper bound to the step size dt.
+    mutable Eigen::Matrix<FP, Eigen::Dynamic, 1> m_ytp1,
+        m_yt; ///< Temporary storage to avoid allocations in step function.
+    mutable Stepper m_stepper; ///< A stepper instance used for integration.
 };
 
 } // namespace mio

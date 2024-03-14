@@ -212,11 +212,21 @@ public:
     bool step(const DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override
     {
+        assert(0 <= m_dt_min);
+        assert(m_dt_min <= m_dt_max);
+
+        if (dt < m_dt_min || dt > m_dt_max) {
+            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
+                             m_dt_max);
+        }
+
+        dt = std::min(dt, m_dt_max);
+
         double t_eval; // shifted time for evaluating yt
         double dt_new; // updated dt
 
-        bool converged              = false; // carry for convergence criterion
-        bool failed_step_size_adapt = false;
+        bool converged     = false; // carry for convergence criterion
+        bool dt_is_invalid = false;
 
         if (m_yt_eval.size() != yt.size()) {
             m_yt_eval.resize(yt.size());
@@ -225,7 +235,11 @@ public:
 
         m_yt_eval = yt;
 
-        while (!converged && !failed_step_size_adapt) {
+        while (!converged && !dt_is_invalid) {
+            if (dt < m_dt_min) {
+                dt_is_invalid = true;
+                dt            = m_dt_min;
+            }
             // compute first column of kt, i.e. kt_0 for each y in yt_eval
             f(m_yt_eval, t, m_kt_values.col(0));
 
@@ -252,7 +266,7 @@ public:
 
             converged = (m_error_estimate <= m_eps).all(); // convergence criterion
 
-            if (converged) {
+            if (converged || dt_is_invalid) {
                 // if sufficiently exact, return ytp1, which currently contains the lower order approximation
                 // (higher order is not always higher accuracy)
                 t += dt; // this is the t where ytp1 belongs to
@@ -267,14 +281,12 @@ public:
             // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
             dt_new *= 0.9;
             // check if updated dt stays within desired bounds and update dt for next step
-            if (m_dt_min < dt_new) {
-                dt = std::min(dt_new, m_dt_max);
-            }
-            else {
-                failed_step_size_adapt = true;
-            }
+            dt = std::min(dt_new, m_dt_max);
         }
-        return !failed_step_size_adapt;
+        dt = std::max(dt, m_dt_min);
+        // return 'converged' in favor of '!dt_is_invalid', as these values only differ if step sizing failed,
+        // but the step with size dt_min was accepted.
+        return converged;
     }
 
 protected:

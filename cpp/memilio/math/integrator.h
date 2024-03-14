@@ -21,12 +21,9 @@
 #define INTEGRATOR_H
 
 #include "memilio/utils/time_series.h"
-
-#include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
 #include <memory>
 #include <functional>
-#include <algorithm>
 
 namespace mio
 {
@@ -45,13 +42,27 @@ public:
     virtual ~IntegratorCore(){};
 
     /**
-     * @brief Step of the integration with possible adaptive with
+     * @brief Make a single integration step.
      *
-     * @param[in] f Right hand side of ODE
-     * @param[in] yt value of y at t, y(t)
-     * @param[in,out] t current time step h=dt
-     * @param[in,out] dt current time step h=dt
-     * @param[out] ytp1 approximated value y(t+1)
+     * The behaviour of this method changes when the integration scheme has adaptive step sizing. 
+     * These changes are noted in the parentheses (...) below.
+     * Adaptive integrators must have bounds dt_min and dt_max for dt.
+     * The adaptive step sizing is considered to be successful, if a step of at least size dt_min sufficed tolerances.
+     * Tolerances are defined in each implementation, usually using a criterion with absolute and relative tolerances.
+     * Even if the step sizing failed, the integrator will make a step of at least size dt_min.
+     *
+     * @param[in] f Right hand side of the ODE. May be called multiple times with different arguments.
+     * @param[in] yt The known value of y at time t.
+     * @param[in,out] t The current time. It will be increased by dt.
+     *     (If adaptive, the increment is instead within [dt_min, dt].)
+     * @param[in,out] dt The current step size h=dt. Will not be changed.
+     *     (If adaptive, the given dt is used as the maximum step size, and must be within [dt_min, dt_max].
+     *      During integration, dt is adjusted in [dt_min, dt_max] to have an optimal size for the next step.)
+     * @param[out] ytp1 Set to the approximated value of y at time t + dt.
+     *     (If adaptive, this time may be smaller, but it is at least t + dt_min, at most t + dt_max.
+     *      Note that the increment on t may be different from the returned value of dt.)
+     * @return Always true for nonadaptive methods.
+     *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
     virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> yt, FP& t,
                       FP& dt, Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> ytp1) const = 0;
@@ -89,7 +100,6 @@ public:
     {
         using std::fabs;
         using std::min;
-
         const auto t0 = results.get_last_time();
         assert(tmax > t0);
         assert(dt > 0);
@@ -122,7 +132,7 @@ public:
         }
 
         if (!step_okay) {
-            log_warning("Adaptive step sizing failed.");
+            log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
         }
         else if (fabs((tmax - t) / (tmax - t0)) > 1e-14) {
             log_warning("Last time step too small. Could not reach tmax exactly.");

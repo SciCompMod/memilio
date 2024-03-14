@@ -20,6 +20,7 @@
 
 
 #include "ad/ad.hpp"
+#include "ad/ad_spdlog_formatter.h" // IWYU pragma: keep
 
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"
