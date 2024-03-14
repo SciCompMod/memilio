@@ -31,17 +31,6 @@ namespace mio
 namespace abm
 {
 
-// TODO: daily_transmissions functions are only used in interact. expose in header anyways?
-
-/**
- * @brief Compute the number of daily transmissions for contact transmission of a virus in a cell.
- * @param[in] rates The local exposure rates. 
- * @param[in] cell_index Cell index of the Cell.
- * @param[in] virus VirusVariant of interest.
- * @param[in] age_receiver AgeGroup of the receiving Person.
- * @param[in] params The local infection parameters.
- * @return Average amount of Infection%s with the virus from the AgeGroup of the transmitter per day.
- */
 ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                            const VirusVariant virus, const AgeGroup age_receiver,
                                            const LocalInfectionParameters& params)
@@ -55,14 +44,6 @@ ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, co
     return prob;
 }
 
-/**
- * @brief Compute the number of daily transmissions for aerosol transmission of a virus in a cell.
- * @param[in] rates The local exposure rates. 
- * @param[in] cell_index Cell index of the Cell.
- * @param[in] virus VirusVariant of interest.
- * @param[in] global_params The parameter set of the World. 
- * @return Average amount of Infection%s with the virus per day.
- */
 ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellIndex cell_index,
                                       const VirusVariant virus, const Parameters& global_params)
 {
@@ -144,32 +125,6 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
             local_contact_exposure[{cell, virus, age}] += infection.get_infectivity(t + dt / 2);
         }
     }
-}
-
-// compatability layer for using interact without existing caches
-void interact_testing(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
-                      const std::vector<Person>& local_population, const TimePoint t, const TimeSpan dt,
-                      const Parameters& global_parameters)
-{
-    // allocate and initialize air exposures with 0
-    AirExposureRates local_air_exposure;
-    local_air_exposure.resize({CellIndex(location.get_cells().size()), VirusVariant::Count});
-    std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
-        r = 0.0;
-    });
-    // allocate and initialize contact exposures with 0
-    ContactExposureRates local_contact_exposure;
-    local_contact_exposure.resize(
-        {CellIndex(location.get_cells().size()), VirusVariant::Count, AgeGroup(global_parameters.get_num_groups())});
-    std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
-        r = 0.0;
-    });
-    // caclculate current exposures
-    for (const Person& p : local_population) {
-        add_exposure_contribution(local_air_exposure, local_contact_exposure, p, location, t, dt);
-    }
-    // run interaction
-    interact(personal_rng, person, location, local_air_exposure, local_contact_exposure, t, dt, global_parameters);
 }
 
 bool migrate(Person& person, const Location& destination, const std::vector<uint32_t>& cells, const TransportMode mode)

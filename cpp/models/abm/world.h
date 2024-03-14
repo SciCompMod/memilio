@@ -20,7 +20,6 @@
 #ifndef MIO_ABM_WORLD_H
 #define MIO_ABM_WORLD_H
 
-#include "abm/caching.h"
 #include "abm/functions.h"
 #include "abm/location_type.h"
 #include "abm/movement_data.h"
@@ -87,7 +86,9 @@ public:
         , m_local_population_cache()
         , m_air_exposure_rates_cache()
         , m_contact_exposure_rates_cache()
-        , m_exposure_rates_need_rebuild(true)
+        , m_is_local_population_cache_valid(false)
+        , m_are_exposure_caches_valid(false)
+        , m_exposure_caches_need_rebuild(true)
         , m_persons(other.m_persons)
         , m_locations(other.m_locations)
         , m_has_locations(other.m_has_locations)
@@ -99,9 +100,9 @@ public:
         , m_rng(other.m_rng)
     {
     }
-    World(World&& other)            = default; // TODO?
-    World& operator=(World&& other) = default;
-    World& operator=(const World&)  = delete;
+    World& operator=(const World&) = default;
+    World(World&&)                 = default;
+    World& operator=(World&&)      = default;
 
     /**
      * serialize this. 
@@ -331,7 +332,6 @@ public:
      */
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
-        // TODO: if used during simulation, this function may be very slow!
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p.get_location() == location && p.get_infection_state(t) == state;
         });
@@ -344,10 +344,10 @@ public:
      */
     size_t get_number_persons(LocationId location) const
     {
-        if (!m_local_population_cache.is_valid()) {
+        if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
         }
-        return m_local_population_cache.read()[location.index];
+        return m_local_population_cache[location.index];
     }
 
     // move a person to another location. this requires that location is part of this world.
@@ -358,11 +358,10 @@ public:
         const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), cells, mode);
         // if the person has moved, invalidate exposure caches but keep population caches valid
         if (has_moved) {
-            m_air_exposure_rates_cache.invalidate();
-            m_contact_exposure_rates_cache.invalidate();
-            if (m_local_population_cache.is_valid()) {
-                --m_local_population_cache.write()[origin.index];
-                ++m_local_population_cache.write()[destination.index];
+            m_are_exposure_caches_valid = false;
+            if (m_is_local_population_cache_valid) {
+                --m_local_population_cache[origin.index];
+                ++m_local_population_cache[destination.index];
             }
         }
     }
@@ -378,17 +377,15 @@ public:
     inline void interact(PersonalRandomNumberGenerator& personal_rng, PersonId person, TimePoint t, TimeSpan dt,
                          const Parameters& global_parameters)
     {
-        if (!m_air_exposure_rates_cache.is_valid() || !m_contact_exposure_rates_cache.is_valid()) {
+        if (!m_are_exposure_caches_valid) {
             // checking caches is only needed for external calls
             // during simulation (i.e. in evolve()), the caches are computed in begin_step
             compute_exposure_caches(t, dt);
-            m_air_exposure_rates_cache.validate();
-            m_contact_exposure_rates_cache.validate();
+            m_are_exposure_caches_valid = true;
         }
         mio::abm::interact(personal_rng, get_person(person), get_location(person),
-                           m_air_exposure_rates_cache.read()[get_location(person).get_index()],
-                           m_contact_exposure_rates_cache.read()[get_location(person).get_index()], t, dt,
-                           global_parameters);
+                           m_air_exposure_rates_cache[get_location(person).get_index()],
+                           m_contact_exposure_rates_cache[get_location(person).get_index()], t, dt, global_parameters);
     }
 
     /**
@@ -456,13 +453,15 @@ private:
      */
     void compute_exposure_caches(TimePoint t, TimeSpan dt);
 
-    mutable Cache<Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>>
+    mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.
-    Cache<Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>>
+    Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
-    Cache<Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>>
+    Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>
         m_contact_exposure_rates_cache; ///< Cache for local exposure through contacts in #transmissions/day.
-    bool m_exposure_rates_need_rebuild = true;
+    bool m_is_local_population_cache_valid = false;
+    bool m_are_exposure_caches_valid       = false;
+    bool m_exposure_caches_need_rebuild    = true;
 
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.

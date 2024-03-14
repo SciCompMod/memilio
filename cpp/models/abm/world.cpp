@@ -38,10 +38,9 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     m_has_locations[size_t(type)] = true;
 
     // mark caches for rebuild
-    m_local_population_cache.invalidate();
-    m_air_exposure_rates_cache.invalidate();
-    m_contact_exposure_rates_cache.invalidate();
-    m_exposure_rates_need_rebuild = true;
+    m_is_local_population_cache_valid = false;
+    m_are_exposure_caches_valid       = false;
+    m_exposure_caches_need_rebuild    = true;
 
     return id;
 }
@@ -62,8 +61,8 @@ PersonId World::add_person(Person&& person)
     auto& new_person = m_persons.back();
     new_person.set_assigned_location(m_cemetery_id);
 
-    if (m_local_population_cache.is_valid()) {
-        ++m_local_population_cache.write()[new_person.get_location().index];
+    if (m_is_local_population_cache_valid) {
+        ++m_local_population_cache[new_person.get_location().index];
     }
     return new_id;
 }
@@ -166,14 +165,14 @@ void World::build_compute_local_population_cache() const
     {
         const auto num_locations = m_locations.size();
         const auto num_persons   = m_persons.size();
-        m_local_population_cache.write().resize(num_locations);
+        m_local_population_cache.resize(num_locations);
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
-            m_local_population_cache.write()[i] = 0.;
+            m_local_population_cache[i] = 0.;
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
-            ++m_local_population_cache.write()[m_persons[i].get_location().index];
+            ++m_local_population_cache[m_persons[i].get_location().index];
         } // implicit taskloop barrier
     } // implicit single barrier
 }
@@ -183,19 +182,16 @@ void World::build_exposure_caches()
     PRAGMA_OMP(single)
     {
         const size_t num_locations = m_locations.size();
-        m_air_exposure_rates_cache.write().resize(num_locations);
-        m_contact_exposure_rates_cache.write().resize(num_locations);
+        m_air_exposure_rates_cache.resize(num_locations);
+        m_contact_exposure_rates_cache.resize(num_locations);
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
-            m_air_exposure_rates_cache.write()[i].resize(
-                {CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
-            m_contact_exposure_rates_cache.write()[i].resize({CellIndex(m_locations[i].get_cells().size()),
-                                                              VirusVariant::Count,
-                                                              AgeGroup(parameters.get_num_groups())});
+            m_air_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
+            m_contact_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count,
+                                                      AgeGroup(parameters.get_num_groups())});
         } // implicit taskloop barrier
-        m_air_exposure_rates_cache.invalidate();
-        m_contact_exposure_rates_cache.invalidate();
-        m_exposure_rates_need_rebuild = false;
+        m_are_exposure_caches_valid    = false;
+        m_exposure_caches_need_rebuild = false;
     } // implicit single barrier
 }
 
@@ -204,7 +200,7 @@ void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(single)
     {
         // if cache shape was changed (e.g. by add_location), rebuild it
-        if (m_exposure_rates_need_rebuild) {
+        if (m_exposure_caches_need_rebuild) {
             build_exposure_caches();
         }
         // use these const values to help omp recognize that the for loops are bounded
@@ -216,11 +212,11 @@ void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; ++i) {
             const auto index         = i;
-            auto& local_air_exposure = m_air_exposure_rates_cache.write()[index];
+            auto& local_air_exposure = m_air_exposure_rates_cache[index];
             std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
                 r = 0.0;
             });
-            auto& local_contact_exposure = m_contact_exposure_rates_cache.write()[index];
+            auto& local_contact_exposure = m_contact_exposure_rates_cache[index];
             std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
                 r = 0.0;
             });
@@ -232,8 +228,8 @@ void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
         for (size_t i = 0; i < num_persons; ++i) {
             const Person& person = m_persons[i];
             const auto location  = person.get_location().index;
-            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache.write()[location],
-                                                m_contact_exposure_rates_cache.write()[location], person,
+            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
+                                                m_contact_exposure_rates_cache[location], person,
                                                 get_location(person.get_person_id()), t, dt);
         } // implicit taskloop barrier
     } // implicit single barrier
@@ -243,13 +239,12 @@ void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
 
-    if (!m_local_population_cache.is_valid()) {
+    if (!m_is_local_population_cache_valid) {
         build_compute_local_population_cache();
-        m_local_population_cache.validate();
+        m_is_local_population_cache_valid = true;
     }
     compute_exposure_caches(t, dt);
-    m_air_exposure_rates_cache.validate();
-    m_contact_exposure_rates_cache.validate();
+    m_are_exposure_caches_valid = true;
 }
 
 auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>

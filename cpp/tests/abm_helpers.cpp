@@ -41,3 +41,30 @@ mio::abm::PersonId add_test_person(mio::abm::World& world, mio::abm::LocationId 
 {
     return world.add_person(make_test_person(world.get_location(loc_id), age, infection_state, t, world.parameters));
 }
+
+void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,
+                      const mio::abm::Location& location, const std::vector<mio::abm::Person>& local_population,
+                      const mio::abm::TimePoint t, const mio::abm::TimeSpan dt,
+                      const mio::abm::Parameters& global_parameters)
+{
+    // allocate and initialize air exposures with 0
+    mio::abm::AirExposureRates local_air_exposure;
+    local_air_exposure.resize({mio::abm::CellIndex(location.get_cells().size()), mio::abm::VirusVariant::Count});
+    std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
+        r = 0.0;
+    });
+    // allocate and initialize contact exposures with 0
+    mio::abm::ContactExposureRates local_contact_exposure;
+    local_contact_exposure.resize({mio::abm::CellIndex(location.get_cells().size()), mio::abm::VirusVariant::Count,
+                                   mio::AgeGroup(global_parameters.get_num_groups())});
+    std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
+        r = 0.0;
+    });
+    // caclculate current exposures
+    for (const mio::abm::Person& p : local_population) {
+        add_exposure_contribution(local_air_exposure, local_contact_exposure, p, location, t, dt);
+    }
+    // run interaction
+    mio::abm::interact(personal_rng, person, location, local_air_exposure, local_contact_exposure, t, dt,
+                       global_parameters);
+}

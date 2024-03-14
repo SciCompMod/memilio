@@ -20,7 +20,8 @@
 #ifndef ABM_HELPERS_H
 #define ABM_HELPERS_H
 
-#include "abm/abm.h"
+#include "abm/world.h"
+
 #include "gmock/gmock.h"
 
 // Assign the name to general age group.
@@ -103,5 +104,11 @@ mio::abm::PersonId add_test_person(mio::abm::World& world, mio::abm::LocationId 
                                    mio::AgeGroup age                        = age_group_15_to_34,
                                    mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                    mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+
+/// @brief mio::abm::interact, but it computes the correct exposures for you
+void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,
+                      const mio::abm::Location& location, const std::vector<mio::abm::Person>& local_population,
+                      const mio::abm::TimePoint t, const mio::abm::TimeSpan dt,
+                      const mio::abm::Parameters& global_parameters);
 
 #endif //ABM_HELPERS_H

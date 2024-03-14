@@ -82,12 +82,10 @@ TEST(TestMasks, maskProtection)
         mock_exponential_dist;
 
     auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person1);
-    mio::abm::interact_testing(p1_rng, susc_person1, infection_location, {susc_person1, susc_person2, infected1}, t, dt,
-                               params);
+    interact_testing(p1_rng, susc_person1, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
     auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person2);
-    mio::abm::interact_testing(p2_rng, susc_person2, infection_location, {susc_person1, susc_person2, infected1}, t, dt,
-                               params);
+    interact_testing(p2_rng, susc_person2, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
 
     // The person susc_person1 should have full protection against an infection, susc_person2 not
     ASSERT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);

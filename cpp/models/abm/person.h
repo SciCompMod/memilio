@@ -57,8 +57,6 @@ public:
 
     explicit Person(const Person& other, PersonId id);
 
-    // TODO: re-add migrate_to, using mio::abm::migrate?
-
     /**
      * @brief Create a copy of this #Person object with a new Location.
      * @param[in, out] location The new #Location of the Person.

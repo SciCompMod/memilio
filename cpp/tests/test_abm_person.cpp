@@ -19,6 +19,7 @@
 */
 #include "abm/functions.h"
 #include "abm/location_type.h"
+#include "abm/migration_rules.h"
 #include "abm/person.h"
 
 #include "abm/person_id.h"
@@ -208,7 +209,7 @@ TEST(TestPerson, interact)
     auto person     = mio::abm::Person(rng, loc.get_id(), age_group_15_to_34);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
-    mio::abm::interact_testing(rng_person, person, loc, {person}, t, dt, infection_parameters);
+    interact_testing(rng_person, person, loc, {person}, t, dt, infection_parameters);
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 

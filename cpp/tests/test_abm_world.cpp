@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/movement_data.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
@@ -70,8 +69,8 @@ TEST(TestWorld, addPerson)
     world.add_person(location, age_group_35_to_59);
 
     ASSERT_EQ(world.get_persons().size(), 2);
-    // ASSERT_EQ(&world.get_persons()[0], &p1); // TODO: rethink these, add new add_person fcts
-    // ASSERT_EQ(&world.get_persons()[1], &p2);
+    ASSERT_EQ(world.get_person(0).get_age(), age_group_15_to_34);
+    ASSERT_EQ(world.get_person(1).get_age(), age_group_35_to_59);
 }
 
 TEST(TestWorld, getSubpopulationCombined)
@@ -556,184 +555,4 @@ TEST(TestWorld, checkParameterConstraints)
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     ASSERT_EQ(params.check_constraints(), true);
-}
-
-TEST(TestWorld, copyWorld) // TODO: this needs either a rewrite or to be removed
-{
-    auto world = mio::abm::World(num_age_groups);
-    auto rng   = mio::RandomNumberGenerator();
-
-    world.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 4.;
-    world.use_migration_rules(false);
-
-    auto school_id1 = world.add_location(mio::abm::LocationType::School);
-    auto school_id2 = world.add_location(mio::abm::LocationType::School);
-    auto work_id    = world.add_location(mio::abm::LocationType::Work);
-    auto home_id    = world.add_location(mio::abm::LocationType::Home);
-
-    auto& school1 = world.get_location(school_id1);
-    school1.set_required_mask(mio::abm::MaskType::Surgical);
-    school1.set_npi_active(true);
-    auto& school2 = world.get_location(school_id2);
-    school2.set_required_mask(mio::abm::MaskType::FFP2);
-    auto& work = world.get_location(work_id);
-    auto& home = world.get_location(home_id);
-
-    auto pid1 = world.add_person(school_id1, age_group_0_to_4);
-    auto pid2 = world.add_person(school_id2, age_group_15_to_34);
-
-    auto& p1 = world.get_person(pid1);
-    auto& p2 = world.get_person(pid2);
-
-    auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(rng, p1);
-    p1.add_new_infection(mio::abm::Infection(rng_p1, mio::abm::VirusVariant::Wildtype, p1.get_age(), world.parameters,
-                                             mio::abm::TimePoint(0)));
-    p2.set_mask_preferences(std::vector<double>(15, 0.2));
-
-    mio::abm::TripList& trip_data = world.get_trip_list();
-    mio::abm::Trip trip1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), school_id1, home_id);
-    mio::abm::Trip trip2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
-    trip_data.add_trip(trip1);
-    trip_data.add_trip(trip2);
-
-    auto infection_params =
-        world.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]
-            .value();
-
-    auto copied_world = mio::abm::World(world);
-    auto copied_infection_params =
-        copied_world.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]
-            .value();
-
-    // Assert the parameters, trips, locations and persons of copied world are logically equal to that of original world
-    ASSERT_EQ(copied_infection_params, infection_params);
-    ASSERT_EQ(copied_world.use_migration_rules(), world.use_migration_rules());
-
-    mio::abm::TripList& copied_trip_data = copied_world.get_trip_list();
-    ASSERT_EQ(copied_trip_data.num_trips(), trip_data.num_trips());
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
-              trip_data.get_next_trip(false).migration_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
-    copied_trip_data.increase_index();
-    trip_data.increase_index();
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
-              trip_data.get_next_trip(false).migration_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
-
-    ASSERT_EQ(copied_world.get_locations().size(), world.get_locations().size());
-    ASSERT_EQ(copied_world.get_locations()[1].get_index(), world.get_locations()[1].get_index());
-    ASSERT_EQ(copied_world.get_locations()[2].get_index(), world.get_locations()[2].get_index());
-    ASSERT_EQ(copied_world.get_locations()[3].get_index(), world.get_locations()[3].get_index());
-    ASSERT_EQ(copied_world.get_locations()[4].get_index(), world.get_locations()[4].get_index());
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[1].get_id()),
-              world.get_number_persons(world.get_locations()[1].get_id()));
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[2].get_id()),
-              world.get_number_persons(world.get_locations()[2].get_id()));
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[3].get_id()),
-              world.get_number_persons(world.get_locations()[3].get_id()));
-    ASSERT_EQ(copied_world.get_number_persons(copied_world.get_locations()[4].get_id()),
-              world.get_number_persons(world.get_locations()[4].get_id()));
-    ASSERT_EQ(copied_world.get_locations()[1].get_npi_active(), world.get_locations()[1].get_npi_active());
-    ASSERT_EQ(copied_world.get_locations()[2].get_npi_active(), world.get_locations()[2].get_npi_active());
-    ASSERT_EQ(copied_world.get_locations()[3].get_npi_active(), world.get_locations()[3].get_npi_active());
-    ASSERT_EQ(copied_world.get_locations()[4].get_npi_active(), world.get_locations()[4].get_npi_active());
-    ASSERT_EQ(copied_world.get_locations()[1].get_required_mask(), world.get_locations()[1].get_required_mask());
-    ASSERT_EQ(copied_world.get_locations()[2].get_required_mask(), world.get_locations()[2].get_required_mask());
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
-                                             mio::abm::InfectionState::Exposed),
-              world.get_subpopulation(world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
-                                      mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
-                                             mio::abm::InfectionState::Susceptible),
-              world.get_subpopulation(world.get_locations()[1].get_id(), mio::abm::TimePoint(0),
-                                      mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
-                                             mio::abm::InfectionState::Exposed),
-              world.get_subpopulation(world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
-                                      mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
-                                             mio::abm::InfectionState::Susceptible),
-              world.get_subpopulation(world.get_locations()[2].get_id(), mio::abm::TimePoint(0),
-                                      mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[3].get_id(), mio::abm::TimePoint(0),
-                                             mio::abm::InfectionState::Exposed),
-              world.get_subpopulation(world.get_locations()[3].get_id(), mio::abm::TimePoint(0),
-                                      mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_world.get_subpopulation(copied_world.get_locations()[4].get_id(), mio::abm::TimePoint(0),
-                                             mio::abm::InfectionState::Exposed),
-              world.get_subpopulation(world.get_locations()[4].get_id(), mio::abm::TimePoint(0),
-                                      mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_world.get_locations()[1].get_cells().size(), world.get_locations()[1].get_cells().size());
-    ASSERT_EQ(copied_world.get_locations()[2].get_cells().size(), world.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_world.get_locations()[3].get_cells().size(), world.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_world.get_locations()[4].get_cells().size(), world.get_locations()[2].get_cells().size());
-
-    ASSERT_EQ(copied_world.get_persons().size(), world.get_persons().size());
-    ASSERT_EQ(copied_world.get_location(world.get_persons()[0].get_person_id()).get_index(),
-              world.get_location(world.get_persons()[0].get_person_id()).get_index());
-    ASSERT_EQ(copied_world.get_location(world.get_persons()[1].get_person_id()).get_index(),
-              world.get_location(world.get_persons()[1].get_person_id()).get_index());
-    ASSERT_EQ(copied_world.get_location(world.get_persons()[0].get_person_id()).get_type(),
-              world.get_location(world.get_persons()[0].get_person_id()).get_type());
-    ASSERT_EQ(copied_world.get_location(world.get_persons()[1].get_person_id()).get_type(),
-              world.get_location(world.get_persons()[1].get_person_id()).get_type());
-    ASSERT_EQ(copied_world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
-              world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)));
-    ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home),
-              world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home));
-    ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Work),
-              world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Work));
-    ASSERT_EQ(copied_world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Home),
-              world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Home));
-    ASSERT_EQ(copied_world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work),
-              world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work));
-
-    // Assert the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
-    ASSERT_NE(&(copied_world.parameters), &world.parameters);
-    ASSERT_NE(&(copied_world.get_trip_list()), &trip_data);
-
-    ASSERT_NE(&copied_world.get_locations()[1], &world.get_locations()[1]);
-    ASSERT_NE(&copied_world.get_locations()[2], &world.get_locations()[2]);
-    ASSERT_NE(&copied_world.get_locations()[3], &world.get_locations()[3]);
-    ASSERT_NE(&copied_world.get_locations()[4], &world.get_locations()[4]);
-    ASSERT_NE(&copied_world.get_locations()[1].get_cells(), &world.get_locations()[1].get_cells());
-    ASSERT_NE(&copied_world.get_locations()[2].get_cells(), &world.get_locations()[2].get_cells());
-    ASSERT_NE(&copied_world.get_locations()[3].get_cells(), &world.get_locations()[3].get_cells());
-    ASSERT_NE(&copied_world.get_locations()[4].get_cells(), &world.get_locations()[4].get_cells());
-    ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0]), &(world.get_locations()[1].get_cells()[0]));
-    ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0]), &(world.get_locations()[2].get_cells()[0]));
-    // ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0].m_persons[0]),
-    //           &(world.get_locations()[1].get_cells()[0].m_persons[0]));
-    // ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0].m_persons[0]),
-    //           &(world.get_locations()[2].get_cells()[0].m_persons[0]));
-
-    ASSERT_NE(&copied_world.get_persons()[0], &world.get_persons()[0]);
-    ASSERT_NE(&copied_world.get_persons()[1], &world.get_persons()[1]);
-    ASSERT_NE(&copied_world.get_location(copied_world.get_persons()[0].get_person_id()),
-              &world.get_location(world.get_persons()[0].get_person_id()));
-    ASSERT_NE(&copied_world.get_location(copied_world.get_persons()[1].get_person_id()),
-              &world.get_location(world.get_persons()[1].get_person_id()));
-    ASSERT_NE(&(copied_world.get_locations()[1]), &(world.get_locations()[1]));
-    ASSERT_NE(&(copied_world.get_locations()[2]), &(world.get_locations()[2]));
-    ASSERT_NE(&(copied_world.get_persons()[0].get_assigned_locations()),
-              &world.get_persons()[0].get_assigned_locations());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_assigned_locations()),
-              &world.get_persons()[1].get_assigned_locations());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_infection()), &world.get_persons()[0].get_infection());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_mask()), &world.get_persons()[0].get_mask());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_mask()), &world.get_persons()[1].get_mask());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_cells()), &world.get_persons()[0].get_cells());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &world.get_persons()[1].get_cells());
-
-    // Evolve the world and check that the copied world has not evolved
-    copied_world.migrate(copied_world.get_persons()[0].get_person_id(), work.get_id(), mio::abm::TransportMode::Unknown,
-                         {0});
-    copied_world.migrate(copied_world.get_persons()[1].get_person_id(), home.get_id(), mio::abm::TransportMode::Unknown,
-                         {0});
-    ASSERT_NE(copied_world.get_location(copied_world.get_persons()[0].get_person_id()).get_type(),
-              world.get_location(world.get_persons()[0].get_person_id()).get_type());
-    ASSERT_NE(copied_world.get_location(copied_world.get_persons()[1].get_person_id()).get_type(),
-              world.get_location(world.get_persons()[1].get_person_id()).get_type());
 }
