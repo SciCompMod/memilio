@@ -192,11 +192,22 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::World>(m, "World")
         .def(py::init<int32_t>())
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
-        .def("add_person", &mio::abm::World::add_person, py::arg("location_id"), py::arg("age_group"),
-             py::return_value_policy::reference_internal)
-        .def_property_readonly("locations", &mio::abm::World::get_locations,
-                               py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
-        .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})
+        .def("add_person",
+             static_cast<mio::abm::PersonId (mio::abm::World::*)(mio::abm::LocationId, mio::AgeGroup)>(
+                 &mio::abm::World::add_person),
+             py::arg("location_id"), py::arg("age_group"))
+        .def_property_readonly(
+            "locations",
+            static_cast<
+                mio::Range<std::pair<mio::abm::World::ConstLocationIterator, mio::abm::World::ConstLocationIterator>> (
+                    mio::abm::World::*)() const>(&mio::abm::World::get_locations),
+            py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
+        .def_property_readonly(
+            "persons",
+            static_cast<
+                mio::Range<std::pair<mio::abm::World::ConstPersonIterator, mio::abm::World::ConstPersonIterator>> (
+                    mio::abm::World::*)() const>(&mio::abm::World::get_persons),
+            py::keep_alive<1, 0>{})
         .def_property(
             "trip_list", py::overload_cast<>(&mio::abm::World::get_trip_list),
             [](mio::abm::World& self, const mio::abm::TripList& list) {
