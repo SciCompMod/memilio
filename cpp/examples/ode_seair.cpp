@@ -30,7 +30,6 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/utils/time_series_to_file.h"
 
 /**
  * @brief set_initial_values sets the initial value of the mio::oseair::Model<FP> model according to
@@ -66,7 +65,7 @@ int main()
     using FP = typename ad::gt1s<double>::type; // algorithmic differentiation data type: scalar tangent-linear mode
 
     FP t0   = 0;
-    FP tmax = 100;
+    FP tmax = 10;
     FP dt   = 0.2;
 
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
@@ -87,11 +86,14 @@ int main()
     double h = 1e-4;
     model2.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] += h;
     model2.check_constraints();
-    auto seair2 = mio::simulate<double, mio::oseair::Model<double>>(0, 100, 0.2, model2);
+    mio::TimeSeries<double> seair2 =
+        mio::simulate<double, mio::oseair::Model<double>>(ad::value(t0), ad::value(tmax), ad::value(dt), model2);
 
-    const std::string file_name = "seair.txt";
+    const std::string file_name = "seair-compare.csv";
+    std::ofstream file(file_name);
     std::cout << "Writing output to " << file_name << std::endl;
-    mio::time_series_to_file(seair1, file_name);
+    seair1.print_table({}, 21, 10, file);
+    file.close();
 
     auto last1 = seair1.get_last_value();
     auto last2 = seair2.get_last_value();

@@ -18,6 +18,7 @@ set(TESTSOURCES
     test_date.cpp
     test_eigen_util.cpp
     test_odesecir_ageres.cpp
+    test_odeseair.cpp
     test_parameter_studies.cpp
     test_graph.cpp
     test_graph_simulation.cpp
