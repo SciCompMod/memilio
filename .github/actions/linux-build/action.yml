@@ -97,7 +97,7 @@ runs:
         cd cpp
         tar -czf build.tar.gz build
     - name: Upload built directory
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
