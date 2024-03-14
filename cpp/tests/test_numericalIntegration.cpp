@@ -24,7 +24,10 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <string>
 #include <vector>
+#include <fstream>
+#include <ios>
 #include <cmath>
 
 void sin_deriv(Eigen::Ref<Eigen::VectorXd const> /*y*/, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
@@ -69,7 +72,7 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
-    mio::EulerIntegratorCore<double> euler;
+    mio::EulerIntegratorCore euler;
 
     auto t = t0;
     for (size_t i = 0; i < n - 1; i++) {
