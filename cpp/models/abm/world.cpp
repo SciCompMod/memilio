@@ -56,7 +56,7 @@ PersonId World::add_person(Person&& person)
     assert(person.get_location().index < m_locations.size());
     assert(person.get_age().get() < parameters.get_num_groups());
 
-    PersonId new_id = static_cast<PersonId>(m_persons.size());
+    PersonId new_id{static_cast<uint32_t>(m_persons.size())};
     m_persons.emplace_back(person, new_id);
     auto& new_person = m_persons.back();
     new_person.set_assigned_location(m_cemetery_id);
@@ -78,18 +78,18 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-    const auto num_persons = m_persons.size();
+    const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < num_persons; ++i) {
+    for (uint32_t i = 0; i < num_persons; ++i) {
         interact(i, t, dt);
     }
 }
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    const auto num_persons = m_persons.size();
+    const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < num_persons; ++i) {
+    for (uint32_t i = 0; i < num_persons; ++i) {
         Person& person    = m_persons[i];
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
@@ -163,12 +163,12 @@ void World::build_compute_local_population_cache() const
 {
     PRAGMA_OMP(single)
     {
-        const auto num_locations = m_locations.size();
-        const auto num_persons   = m_persons.size();
+        const size_t num_locations = m_locations.size();
+        const size_t num_persons   = m_persons.size();
         m_local_population_cache.resize(num_locations);
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
-            m_local_population_cache[i] = 0.;
+            m_local_population_cache[i] = 0;
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
