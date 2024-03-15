@@ -130,6 +130,10 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self == py::self)
         .def(py::self != py::self);
 
+    py::class_<mio::abm::PersonId>(m, "PersonId").def(py::init([](uint32_t id) {
+        return mio::abm::PersonId{id};
+    }));
+
     py::class_<mio::abm::Person>(m, "Person")
         .def("set_assigned_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
@@ -169,8 +173,8 @@ PYBIND11_MODULE(_simulation_abm, m)
                       });
 
     //copying and moving of ranges enabled below, see PYMIO_IGNORE_VALUE_TYPE
-    pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
-    pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
+    pymio::bind_Range<decltype(std::declval<const mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
+    pymio::bind_Range<decltype(std::declval<const mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
 
     py::class_<mio::abm::Trip>(m, "Trip")
         .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId,
@@ -196,6 +200,9 @@ PYBIND11_MODULE(_simulation_abm, m)
              static_cast<mio::abm::PersonId (mio::abm::World::*)(mio::abm::LocationId, mio::AgeGroup)>(
                  &mio::abm::World::add_person),
              py::arg("location_id"), py::arg("age_group"))
+        .def("get_person",
+             static_cast<mio::abm::Person& (mio::abm::World::*)(mio::abm::PersonId)>(&mio::abm::World::get_person),
+             py::arg("id"), py::return_value_policy::reference_internal)
         .def_property_readonly(
             "locations",
             static_cast<
