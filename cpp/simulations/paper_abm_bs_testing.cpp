@@ -991,10 +991,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(40); // End time per simulation
-    auto max_num_persons = 100000;
-    // auto ensemble_infection_per_loc_type =
-    //     std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
+    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(120); // End time per simulation
+    auto max_num_persons = 30000;
+    auto ensemble_infection_per_loc_type =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     // ensemble_infection_per_loc_type.reserve(size_t(num_runs));
     // auto ensemble_infection_per_age_group =
     //     std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per age group results
@@ -1052,8 +1052,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         //              mio::abm::LogDataForMovement>
         //     historyPersonInf;
         // mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
-        // mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerLocationType> historyInfectionPerLocationType{
-        //     Eigen::Index(mio::abm::LocationType::Count)};
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerLocationType> historyInfectionPerLocationType{
+            Eigen::Index(mio::abm::LocationType::Count)};
         // mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerAgeGroup> historyInfectionPerAgeGroup{
         //     Eigen::Index(sim.get_world().parameters.get_num_groups())};
         mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
@@ -1070,22 +1070,22 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Advance the world to tmax
         // sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyInfectionPerAgeGroup,
         //             historyPersonInfDelta, historyInfectionStatePerAgeGroup);
-        sim.advance(tmax, historyInfectionStatePerAgeGroup);
+        sim.advance(tmax, historyInfectionStatePerAgeGroup, historyInfectionPerLocationType);
         // Stop the clock after sim.advance and calculate the duration
         auto stop2     = std::chrono::high_resolution_clock::now();
         auto duration2 = std::chrono::duration<double>(stop2 - start2);
         std::cout << "Time taken by sim.advance: " << duration2.count() << " seconds" << std::endl;
 
         // TODO: update result of the simulation to be a vector of location result.
-        // auto temp_sim_infection_per_loc_tpye =
-        //     std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
+        auto temp_sim_infection_per_loc_tpye =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
         // auto temp_sim_infection_per_age_group =
         //     std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerAgeGroup.get_log())};
         auto temp_sim_infection_state_per_age_group =
             std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
 
         // Push result of the simulation back to the result vector
-        // ensemble_infection_per_loc_type.push_back(temp_sim_infection_per_loc_tpye);
+        ensemble_infection_per_loc_type.push_back(temp_sim_infection_per_loc_tpye);
         // ensemble_infection_per_age_group.push_back(temp_sim_infection_per_age_group);
         // ensemble_params.push_back(std::vector<mio::abm::World>{sim.get_world()});
         ensemble_infection_state_per_age_group.emplace_back(temp_sim_infection_state_per_age_group);
@@ -1103,7 +1103,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // write_log_to_file_person_and_location_data(historyPersonInf);
         // write_log_to_file_trip_data(historyPersonInfDelta);
         // write_log_to_file_infection_per_age_group(historyInfectionPerAgeGroup, result_dir);
-        // write_log_to_file_infection_per_location_type(historyInfectionPerLocationType, result_dir);
+        write_log_to_file_infection_per_location_type(historyInfectionPerLocationType, result_dir);
 
         std::cout << "Run " << run_idx + 1 << " of " << num_runs << " finished." << std::endl;
 
@@ -1123,14 +1123,20 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     //gather results
     auto final_ensemble_infection_state_per_age_group =
         gather_results(rank, num_procs, num_runs, ensemble_infection_state_per_age_group);
+    auto final_ensemble_infection_per_loc_type =
+        gather_results(rank, num_procs, num_runs, ensemble_infection_per_loc_type);
     if (rank == 0) {
         BOOST_OUTCOME_TRY(save_results(final_ensemble_infection_state_per_age_group, ensemble_params, {0},
                                        result_dir / "infection_state_per_age_group/", save_single_runs));
+        BOOST_OUTCOME_TRY(save_results(final_ensemble_infection_per_loc_type, ensemble_params, {0},
+                                       result_dir / "infection_per_location_type/", save_single_runs));
     }
 #else
 
     BOOST_OUTCOME_TRY(save_results(ensemble_infection_state_per_age_group, ensemble_params, {0},
                                    result_dir / "infection_state_per_age_group/", save_single_runs));
+    BOOST_OUTCOME_TRY(save_results(ensemble_infection_per_loc_type, ensemble_params, {0},
+                                   result_dir / "infection_per_location_type/", save_single_runs));
 
 #endif
 
@@ -1178,7 +1184,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 124;
+        num_runs = 1;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 

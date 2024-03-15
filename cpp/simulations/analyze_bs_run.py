@@ -104,7 +104,7 @@ def plot_results(path):
     total_75 = group['Total'][()]
     f.close()
 
-    plot_infection_states(time, total_50, total_25, total_75)
+    plot_infection_states_dead(time, total_50, total_25, total_75)
 
 
 def plot_infection_states(x, y50, y25, y75):
@@ -115,6 +115,15 @@ def plot_infection_states(x, y50, y25, y75):
     for i in range(y50.shape[1]):
         plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.1)
         plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.1)
+
+def plot_infection_states_dead(x, y50, y25, y75):
+    plt.figure('Infection_states_dead')
+    plt.plot(x, y50[:,[5,7]])
+    plt.legend(['I_Crit', 'Dead'])
+
+    # for i in [5,7]:
+    #     plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.1)
+    #     plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.1)
 
 
 def plot_infections_per_age_group(path):
@@ -162,7 +171,7 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     #path to results
-    path = "/Users/David/Documents/HZI/memilio/data/results"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
