@@ -86,12 +86,13 @@ TEST(TestOdeSECIRVVS, overflow_vaccinations)
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(num_days));
     model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(num_days));
     for (size_t i = 0; i < num_days; ++i) {
+        auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
         model.parameters.get<mio::osecirvvs::DailyPartialVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-            i * daily_vaccinations;
+            num_vaccinations;
         model.parameters.get<mio::osecirvvs::DailyFullVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-            i * daily_vaccinations;
+            num_vaccinations;
         model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-            i * daily_vaccinations;
+            num_vaccinations;
     }
 
     // simulate one step with explicit Euler
@@ -370,7 +371,7 @@ mio::osecirvvs::Model make_model(int num_age_groups, bool set_invalid_initial_va
     return model;
 }
 
-TEST(TestOdeSECIRVVS, draw_sample)
+TEST(TestOdeSECIRVVS, draw_sample_graph)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
@@ -423,6 +424,35 @@ TEST(TestOdeSECIRVVS, draw_sample)
     ASSERT_NE(parameters1.get<mio::osecirvvs::ICUCapacity>(), parameters0.get<mio::osecirvvs::ICUCapacity>())
         << "Failure might be spurious, check RNG seeds.";
     ASSERT_FALSE((populations1.array() == populations0.array()).all()) << "Failure might be spurious, check RNG seeds.";
+}
+
+TEST(TestOdeSECIRVVS, draw_sample_model)
+{
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
+    auto num_age_groups = 6;
+    auto model          = make_model(num_age_groups, /*set_invalid_initial_value*/ true);
+    mio::osecirvvs::draw_sample(model);
+
+    // spot check for sampling
+    auto& parameters           = model.parameters;
+    auto& populations          = model.populations;
+    auto& timeInfectedCritical = parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(1)];
+    ASSERT_GE(double(timeInfectedCritical), 4.95);
+    ASSERT_LE(double(timeInfectedCritical), 8.95);
+    auto& param_exp_factor = parameters.get<mio::osecirvvs::ReducExposedPartialImmunity>()[mio::AgeGroup(0)];
+    ASSERT_GE(double(param_exp_factor), 0.75);
+    ASSERT_LE(double(param_exp_factor), 0.85);
+    auto& compartment_inf =
+        populations[{mio::AgeGroup(2), mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}];
+    ASSERT_GE(double(compartment_inf), 5.0);
+    ASSERT_LE(double(compartment_inf), 10.0);
+
+    // special cases
+    ASSERT_NEAR(populations.get_total(), 1000 * num_age_groups, 1e-2);
+    ASSERT_TRUE((parameters.get<mio::osecirvvs::InfectiousnessNewVariant>().array(),
+                 parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array() * 1.0)
+                    .all());
 }
 
 TEST(TestOdeSECIRVVS, checkPopulationConservation)
