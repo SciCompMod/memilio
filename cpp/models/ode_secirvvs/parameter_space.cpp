@@ -23,6 +23,10 @@
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/model.h"
 
+#include <numeric>
+#include <algorithm>
+#include <iterator>
+
 namespace mio
 {
 namespace osecirvvs
@@ -33,39 +37,73 @@ void draw_sample_demographics(Model& model)
     model.parameters.get<ICUCapacity>().draw_sample();
     model.parameters.get<TestAndTraceCapacity>().draw_sample();
 
+    std::vector<InfectionState> naive_states = {
+        InfectionState::SusceptibleNaive,
+        InfectionState::ExposedNaive,
+        InfectionState::InfectedNoSymptomsNaive,
+        InfectionState::InfectedNoSymptomsNaiveConfirmed,
+        InfectionState::InfectedSymptomsNaive,
+        InfectionState::InfectedSymptomsNaiveConfirmed,
+        InfectionState::InfectedSevereNaive,
+        InfectionState::InfectedCriticalNaive,
+        InfectionState::DeadNaive,
+    };
+
+    std::vector<InfectionState> partial_states = {
+        InfectionState::SusceptiblePartialImmunity,        InfectionState::ExposedPartialImmunity,
+        InfectionState::InfectedNoSymptomsPartialImmunity, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
+        InfectionState::InfectedSymptomsPartialImmunity,   InfectionState::InfectedSymptomsPartialImmunityConfirmed,
+        InfectionState::InfectedSeverePartialImmunity,     InfectionState::InfectedCriticalPartialImmunity,
+        InfectionState::TemporaryImmunPartialImmunity,     InfectionState::DeadPartialImmunity,
+    };
+
+    std::vector<InfectionState> improved_states = {
+        InfectionState::SusceptibleImprovedImmunity,        InfectionState::ExposedImprovedImmunity,
+        InfectionState::InfectedNoSymptomsImprovedImmunity, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
+        InfectionState::InfectedSymptomsImprovedImmunity,   InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
+        InfectionState::InfectedSevereImprovedImmunity,     InfectionState::InfectedCriticalImprovedImmunity,
+        InfectionState::TemporaryImmunImprovedImmunity,     InfectionState::DeadImprovedImmunity,
+    };
+
+    // helper function to calculate the total population of a layer for a given age group
+    auto calculate_layer_total = [&model](const std::vector<InfectionState>& states, AgeGroup ageGroup) {
+        return std::accumulate(states.begin(), states.end(), 0.0,
+                               [&model, &ageGroup](double sum, const InfectionState& state) {
+                                   return sum + model.populations[{ageGroup, state}];
+                               });
+    };
+
+    // helper function to adjust the susceptible population of a layer for a given age group
+    auto adjust_susceptible_population = [&model](AgeGroup i, double diff, InfectionState susceptibleState) {
+        model.populations[{i, susceptibleState}] += diff;
+        if (model.populations[{i, susceptibleState}] < 0) {
+            mio::log_warning("Negative population in State " + std::to_string(static_cast<size_t>(susceptibleState)) +
+                             " for age group " + std::to_string(static_cast<size_t>(i)) + ". Setting to 0.");
+            model.populations[{i, susceptibleState}] = 0;
+        }
+    };
+
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
-        double group_total = model.populations.get_group_total(i);
+
+        double group_naive_total    = calculate_layer_total(naive_states, i);
+        double group_partial_total  = calculate_layer_total(partial_states, i);
+        double group_improved_total = calculate_layer_total(improved_states, i);
 
         //sample initial compartments (with exceptions)
         for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
-            if (inf_state != InfectionState::SusceptibleNaive && //not sampled, fixed after sampling everything else
-                inf_state != InfectionState::DeadNaive && //not sampled, fixed from data
+            if (inf_state != InfectionState::DeadNaive && //not sampled, fixed from data
                 inf_state != InfectionState::DeadPartialImmunity && //not sampled, fixed from data
                 inf_state != InfectionState::DeadImprovedImmunity) { //not sampled, fixed from data
                 model.populations[{i, inf_state}].draw_sample();
             }
         }
+        double diff_naive    = group_naive_total - calculate_layer_total(naive_states, i);
+        double diff_partial  = group_partial_total - calculate_layer_total(partial_states, i);
+        double diff_improved = group_improved_total - calculate_layer_total(improved_states, i);
 
-        //set susceptibles so the total number stays the same as before sampling.
-        //if the new total without susceptibles is already bigger than the previous total
-        //subtract the overflow from SusceptibleImprovedImmunity, susceptibles will then be approximately zero.
-        model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
-        double diff                                              = model.populations.get_group_total(i) - group_total;
-        if (diff > 0) {
-            if (model.populations[{i, InfectionState::TemporaryImmunImprovedImmunity}] - diff > 0) {
-                model.populations[{i, InfectionState::TemporaryImmunImprovedImmunity}] =
-                    model.populations[{i, InfectionState::TemporaryImmunImprovedImmunity}] - diff - 1e-10;
-            }
-            else {
-                model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
-                    model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] - diff - 1e-10;
-            }
-            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
-                log_error("Compartment SusceptibleImprovedImmunity negative after sampling.");
-            }
-            assert(group_total - model.populations.get_group_total(i) > 1e-10 && "Sanity check.");
-        }
-        model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive}, group_total);
+        adjust_susceptible_population(i, diff_naive, InfectionState::SusceptibleNaive);
+        adjust_susceptible_population(i, diff_partial, InfectionState::SusceptiblePartialImmunity);
+        adjust_susceptible_population(i, diff_improved, InfectionState::SusceptibleImprovedImmunity);
     }
 }
 
