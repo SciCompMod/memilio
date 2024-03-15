@@ -17,16 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h"
 #include "abm/household.h"
-#include <cstdio>
+#include "abm/lockdown_rules.h"
+#include "abm/simulation.h"
 #include "abm/world.h"
-#include "memilio/io/io.h"
 #include "abm/location_type.h"
+#include "memilio/io/history.h"
+
 #include <fstream>
 #include <string>
-#include <iostream>
-#include "memilio/io/history.h"
 
 std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {

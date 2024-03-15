@@ -17,18 +17,21 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/common_abm_loggers.h"
+#include "abm/lockdown_rules.h"
+#include "abm/simulation.h"
+#include "abm/world.h"
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/io/io.h"
+#include "memilio/io/result_io.h"
+#include "memilio/math/interpolation.h"
+#include "memilio/utils/uncertain_value.h"
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
 
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include "abm/abm.h"
-#include "abm/person_id.h"
-#include "memilio/io/result_io.h"
-#include "memilio/utils/uncertain_value.h"
-#include "boost/algorithm/string/split.hpp"
-#include "boost/algorithm/string/classification.hpp"
-#include "abm/vaccine.h"
-#include "abm/common_abm_loggers.h"
 
 namespace fs = boost::filesystem;
 
@@ -1022,7 +1025,7 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
+            BOOST_OUTCOME_TRY(mio::save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);

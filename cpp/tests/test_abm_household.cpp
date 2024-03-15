@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 #include "abm/household.h"
-#include "abm/abm.h"
 #include "abm_helpers.h"
 #include <gtest/gtest.h>
 
