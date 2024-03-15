@@ -36,16 +36,16 @@ from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
 
 
 
-def remove_confirmed_compartments(dataset_entries, num_groups):
-    new_dataset_entries = []
-    for i in dataset_entries : 
-      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
-      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
-      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
-      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
-      dataset_entries_reshaped[:, 4] = sum_inf_symp
-      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
-    return new_dataset_entries
+# def remove_confirmed_compartments(dataset_entries, num_groups):
+#     new_dataset_entries = []
+#     for i in dataset_entries : 
+#       dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+#       sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+#       sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+#       dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+#       dataset_entries_reshaped[:, 4] = sum_inf_symp
+#       new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+#     return new_dataset_entries
 
 
 
@@ -145,9 +145,9 @@ def run_secir_groups_simulation(days, populations):
 
     # Omit first column, as the time points are not of interest here. and remove confirmed compartments
     dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
-    dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
-    return dataset_entires_withut_confirmed
-    #return dataset_entries.tolist(), damped_contact_matrix
+    #dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    #return dataset_entires_withut_confirmed
+    return dataset_entries.tolist()
 
 
 def generate_data(
@@ -222,7 +222,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_30days_nodamp.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_150days_nodamp.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -308,7 +308,7 @@ if __name__ == "__main__":
         r"data//pydata//Germany//county_population.json")
 
     input_width = 5
-    label_width = 30
+    label_width = 150
     num_runs = 10000
     data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width)
