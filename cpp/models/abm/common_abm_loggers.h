@@ -178,9 +178,10 @@ struct LogInfectionState : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         auto curr_time      = sim.get_time();
         auto ids_in_bs      = sim.get_world().parameters.get<mio::abm::LogAgentIds>();
-        PRAGMA_OMP(parallel for)
+
         // If there is no interresting person ids to logged, log all persons.
         if (ids_in_bs.size() == 0) {
+            PRAGMA_OMP(parallel for)
             for (auto&& location : sim.get_world().get_locations()) {
                 for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                     sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
@@ -218,9 +219,9 @@ struct LogInfectionPerLocationType : mio::LogAlways {
         auto prev_time      = sim.get_prev_time();
         auto curr_time      = sim.get_time();
         auto ids_in_bs      = sim.get_world().parameters.get<mio::abm::LogAgentIds>();
-        PRAGMA_OMP(parallel for)
         // If there is no interresting person ids to logged, log all persons.
         if (ids_in_bs.size() == 0) {
+            PRAGMA_OMP(parallel for)
             for (auto&& person : sim.get_world().get_persons()) {
                 if ((person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
                     (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
@@ -258,9 +259,10 @@ struct LogInfectionPerAgeGroup : mio::LogAlways {
         auto prev_time      = sim.get_prev_time();
         auto curr_time      = sim.get_time();
         auto ids_in_bs      = sim.get_world().parameters.get<mio::abm::LogAgentIds>();
-        PRAGMA_OMP(parallel for)
+
         // If there is no interresting person ids to logged, log all persons.
         if (ids_in_bs.size() == 0) {
+            PRAGMA_OMP(parallel for)
             for (auto&& person : sim.get_world().get_persons()) {
                 if ((person.get_infection_state(prev_time) == mio::abm::InfectionState::Exposed) &&
                     (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
