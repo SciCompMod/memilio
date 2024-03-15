@@ -68,15 +68,6 @@ struct Cell {
     * @return The relative cell size for the Cell.
     */
     ScalarType compute_space_per_person_relative() const;
-
-    /**
-    * @brief Get subpopulation of a particular #InfectionState in the Cell.
-    * @param[in] t TimePoint of querry.
-    * @param[in] state #InfectionState of interest.
-    * @return Amount of Person%s of the #InfectionState in the Cell.
-    */
-    // size_t get_subpopulation(TimePoint t, InfectionState state) const;
-
 }; // namespace mio
 
 /**

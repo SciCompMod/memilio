@@ -127,7 +127,7 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
     }
 }
 
-bool migrate(Person& person, const Location& destination, const std::vector<uint32_t>& cells, const TransportMode mode)
+bool migrate(Person& person, const Location& destination, const TransportMode mode, const std::vector<uint32_t>& cells)
 {
     assert(std::all_of(cells.begin(), cells.end(), [&](const auto& cell) {
         return cell < destination.get_cells().size();

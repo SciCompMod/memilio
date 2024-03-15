@@ -21,10 +21,9 @@
 #include "abm/location_type.h"
 #include "abm/migration_rules.h"
 #include "abm/person.h"
-
-#include "abm/person_id.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
+
 #include <gtest/gtest.h>
 
 TEST(TestPerson, init)
@@ -64,17 +63,17 @@ TEST(TestPerson, migrate)
     mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 0, 6, 2);
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
 
-    mio::abm::migrate(person, loc1, {0});
+    mio::abm::migrate(person, loc1, mio::abm::TransportMode::Unknown, {0});
 
     EXPECT_EQ(person.get_location(), loc1.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
-    mio::abm::migrate(person, loc2, {0}, mio::abm::TransportMode::Walking);
+    mio::abm::migrate(person, loc2, mio::abm::TransportMode::Walking, {0});
 
     EXPECT_EQ(person.get_location(), loc2.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
-    mio::abm::migrate(person, loc3, {0, 1}, mio::abm::TransportMode::Bike);
+    mio::abm::migrate(person, loc3, mio::abm::TransportMode::Bike, {0, 1});
 
     EXPECT_EQ(person.get_cells().size(), 2);
     EXPECT_EQ(person.get_cells()[0], 0u);
@@ -193,7 +192,7 @@ TEST(TestPerson, getCells)
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
-    mio::abm::migrate(person, location, {0, 1});
+    mio::abm::migrate(person, location, mio::abm::TransportMode::Unknown, {0, 1});
 
     EXPECT_EQ(person.get_cells().size(), 2); // TODO: is this a meaningfull test?
 }

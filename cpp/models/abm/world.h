@@ -351,11 +351,18 @@ public:
     }
 
     // move a person to another location. this requires that location is part of this world.
+    /**
+     * @brief Let a person move to another location.
+     * @param[in] person PersonId of a person from this world.
+     * @param[in] destination LocationId of the location in this world, which the person should move to.
+     * @param[in] mode The transport mode the person uses to move.
+     * @param[in] cells The cells within the destination the person should be in.
+     */
     inline void migrate(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
                         const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin    = get_location(person).get_id();
-        const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), cells, mode);
+        const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), mode, cells);
         // if the person has moved, invalidate exposure caches but keep population caches valid
         if (has_moved) {
             m_are_exposure_caches_valid = false;
@@ -366,16 +373,13 @@ public:
         }
     }
 
-    // let a person interact with its current location
+    /**
+     * @brief Let a person interact with the population at its current location.
+     * @param[in] person PersonId of a person from this world.
+     * @param[in] t Time step of the simulation.
+     * @param[in] dt Step size of the simulation.
+     */
     inline void interact(PersonId person, TimePoint t, TimeSpan dt)
-    {
-        auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
-        interact(personal_rng, person, t, dt, parameters);
-    }
-
-    // let a person interact with its current location
-    inline void interact(PersonalRandomNumberGenerator& personal_rng, PersonId person, TimePoint t, TimeSpan dt,
-                         const Parameters& global_parameters)
     {
         if (!m_are_exposure_caches_valid) {
             // checking caches is only needed for external calls
@@ -383,9 +387,10 @@ public:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
         mio::abm::interact(personal_rng, get_person(person), get_location(person),
                            m_air_exposure_rates_cache[get_location(person).get_index()],
-                           m_contact_exposure_rates_cache[get_location(person).get_index()], t, dt, global_parameters);
+                           m_contact_exposure_rates_cache[get_location(person).get_index()], t, dt, parameters);
     }
 
     /**
