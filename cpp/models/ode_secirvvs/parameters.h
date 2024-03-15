@@ -798,6 +798,23 @@ public:
                 corrected                            = true;
             }
 
+            if (this->get<TimeTemporaryImmunityPI>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityPI changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeTemporaryImmunityPI>()[i], tol_times);
+                this->get<TimeTemporaryImmunityPI>()[i] = tol_times;
+                corrected                               = true;
+            }
+            if (this->get<TimeTemporaryImmunityII>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityII changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeTemporaryImmunityII>()[i], tol_times);
+                this->get<TimeTemporaryImmunityII>()[i] = tol_times;
+                corrected                               = true;
+            }
+
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
@@ -925,14 +942,6 @@ public:
                 this->get<VaccinationGap>()[i] = 0;
                 corrected                      = true;
             }
-            if (this->get<TimeTemporaryImmunityPI>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter TimeTemporaryImmunityPI changed from {:0.4f} to {:d}",
-                            this->get<TimeTemporaryImmunityPI>()[i], 0);
-            }
-            if (this->get<TimeTemporaryImmunityII>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter TimeTemporaryImmunityII changed from {:0.4f} to {:d}",
-                            this->get<TimeTemporaryImmunityII>()[i], 0);
-            }
         }
         return corrected;
     }
@@ -995,6 +1004,22 @@ public:
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
                           this->get<TimeInfectedCritical>()[i], tol_times);
+                return true;
+            }
+
+            if (this->get<TimeTemporaryImmunityPI>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityPI {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeTemporaryImmunityPI>()[i], tol_times);
+                return true;
+            }
+
+            if (this->get<TimeTemporaryImmunityII>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityII {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeTemporaryImmunityII>()[i], tol_times);
                 return true;
             }
 
