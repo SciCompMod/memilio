@@ -7,6 +7,7 @@ import numpy as np
 from memilio.simulation.secir import InfectionState
 import matplotlib.pyplot as plt
 import pandas as pd 
+import seaborn as sns
 #load data 
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
@@ -667,7 +668,7 @@ def plot_inputs():
         path = os.path.dirname(os.path.realpath(__file__))
         path_data = os.path.join(os.path.dirname(os.path.realpath(
                 os.path.dirname(os.path.realpath(path)))), 'data')
-        filename = "data_secir_simple_90days.pickle"
+        filename = "data_secir_simple_5daysinput_90.pickle"
 
         file = open(os.path.join(path_data,filename), 'rb')
 
@@ -688,25 +689,32 @@ def plot_inputs():
         inputs_reversed = np.expm1(train_inputs)
         
         for comp in inputs_reversed:
-                for day, a  in zip(comp, arrays):
-                        array_ = []
-                        for p in zip( percentiles): 
-                                array_.append(np.percentile(day, p))
-                        a.append(array_)
+                for day in comp:
+                        for a, p in zip(arrays, percentiles):
+                                #array_ = []
+                                #for p in zip( percentiles): 
+                                 
+                                a.append(np.percentile(day, p))
+                                #a.append(array_)
 
         compartment_array = []
         for compartment in InfectionState.values():
                         compartment_array.append(compartment) 
         index=[str(compartment).split('.')[1]
         for compartment in compartment_array]
+
+        #linestyle = [':', '--', '-', '--', ':']
+        #colors = 
        
 
         fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(8,10))
         axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
         
-        for array, label in zip(arrays, labels):
-                array = np.squeeze(array)
-
+        for array, label, in zip(arrays, labels):
+                #array = np.squeeze(array)
+                n_compartments = 8 
+                n_days = 5
+                array = np.asarray(array).reshape([n_compartments,n_days])
                 for ax, c, values in zip(axes, index, array):
                        
        
@@ -717,7 +725,6 @@ def plot_inputs():
                         ax.set_title(c, fontsize = 10)
                                                 
                         fig.tight_layout()
-
                         
                         ax7.set_xlabel('Days')
                         ax8.set_xlabel('Days')
@@ -731,8 +738,72 @@ def plot_inputs():
                 #         line_labels.extend(Label) 
 
         #fig.legend(lines[:(len(days))], line_labels[:len(days)], loc='upper center',  bbox_to_anchor=(0.5, -0.05), shadow=True, ncol=3)
-        fig.legend()
+        #fig.legend()
         plt.savefig("inputs_secir_simple.png")
+
+
+
+
+
+def plot_inputs_withseaborn():
+        path = os.path.dirname(os.path.realpath(__file__))
+        path_data = os.path.join(os.path.dirname(os.path.realpath(
+                os.path.dirname(os.path.realpath(path)))), 'data')
+        filename = "data_secir_simple_30days_widerinput.pickle"
+
+        file = open(os.path.join(path_data,filename), 'rb')
+
+        data = pickle.load(file)
+        data_splitted = split_data(data['inputs'], data['labels'])
+        train_inputs = np.transpose(data_splitted['train_inputs']) # reshape to [n_compartments, n_days, n_samples]
+
+
+        labels = ['percentile p50', 'percentile p25', 'percentile p75', 'percentile p05', 'percentile p95']
+
+        inputs_reversed = np.expm1(train_inputs)
+        
+
+        compartment_array = []
+        for compartment in InfectionState.values():
+                        compartment_array.append(compartment) 
+        index=[str(compartment).split('.')[1]
+        for compartment in compartment_array]
+
+
+        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(8,10))
+        axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
+
+        
+        intervals = [75,95]
+        colors = ['tab:red', 'tab:green', 'tab:blue', 'tab:red', 'tab:green', 'tab:blue', 'tab:red', 'tab:green']
+        
+        
+
+        for ax, c, values, color in zip(axes, index, inputs_reversed, colors):
+                       
+       
+                #for values, label in zip(array, labels): 
+                df_inputs = pd.DataFrame(data =values.transpose())
+                df_inputs.columns = ['1', '2', '3', '4', '5']
+                
+                df2 = pd.melt(df_inputs,  
+                  var_name="Day")                      
+                
+                ax.set_ylabel('Number of individuals')
+                ax.set_xlabel('Days')
+                for interval in intervals:
+                        sns.lineplot(ax = ax, data =df2, x = 'Day', y = 'value',  estimator="median", errorbar=("pi", interval), color=color, legend = 'auto')
+                                
+                ax.set_title(c, fontsize = 10)
+                                                
+                fig.tight_layout()
+                        
+                ax7.set_xlabel('Days')
+                ax8.set_xlabel('Days')
+
+        plt.savefig("inputs_secir_simple_wider.png")
+
+
 
 
 
@@ -758,3 +829,40 @@ def hist_plot_populations():
         axs[1].set_xticks(np.arange(0,3500000,500000))
         plt.savefig("population_hist_and_boxplot.png")
 
+
+
+def plot_input_days():
+        df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe')
+        df= df[['input_days', 'kfold_train', 'kfold_test']]
+
+        df_groups = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe_90days')
+        df_groups= df_groups[['input_days', 'kfold_train', 'kfold_test']]
+
+
+        input_days = [1,2,3,4,5]
+        penguin_means = {
+        'secir simple': df['kfold_test'],
+        'secir groups': df_groups['kfold_test'][:5]}
+
+        x = np.arange(len(input_days))  # the label locations
+        width = 0.25  # the width of the bars
+        multiplier = 0
+
+        fig, ax = plt.subplots(layout='constrained')
+
+        for attribute, measurement in penguin_means.items():
+                offset = width * multiplier
+                rects = ax.bar(x + offset, measurement.round(4), width, label=attribute)
+                ax.bar_label(rects, padding=3)
+                multiplier += 1
+
+                # Add some text for labels, title and custom x-axis tick labels, etc.
+                ax.set_ylabel('Test MAPE')
+                ax.set_xlabel('Number of input days')
+                #ax.set_title('')
+                ax.set_xticks(x + width, input_days)
+                ax.legend(loc='upper left', ncols=3)
+                #ax.set_ylim(0, 250)
+
+        plt.savefig('input_days_simple_groups.png')
+  
