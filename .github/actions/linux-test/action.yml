@@ -23,7 +23,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # taken from https://github.com/actions/runner-images/issues/9524#issuecomment-2002475952
+    # taken from https://github.com/actions/runner-images/issues/9491#issuecomment-1989718917
     - name: Fix kernel mmap rnd bits
       shell: bash
       # Asan in llvm 14 provided in ubuntu 22.04 is incompatible with
