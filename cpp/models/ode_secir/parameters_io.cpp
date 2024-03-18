@@ -242,12 +242,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
 
-            t_InfectedNoSymptoms[node].push_back(
-                static_cast<int>(std::round(2 * (model[node].parameters.get<IncubationTime>()[(AgeGroup)group] -
-                                                 model[node].parameters.get<SerialInterval>()[(AgeGroup)group]))));
             t_Exposed[node].push_back(
-                static_cast<int>(std::round(2 * model[node].parameters.get<SerialInterval>()[(AgeGroup)group] -
-                                            model[node].parameters.get<IncubationTime>()[(AgeGroup)group])));
+                static_cast<int>(std::round(model[node].parameters.get<TimeExposed>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms[node].push_back(
+                static_cast<int>(std::round(model[node].parameters.get<TimeInfectedNoSymptoms>()[(AgeGroup)group])));
             t_InfectedSymptoms[node].push_back(
                 static_cast<int>(std::round(model[node].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group])));
             t_InfectedSevere[node].push_back(
