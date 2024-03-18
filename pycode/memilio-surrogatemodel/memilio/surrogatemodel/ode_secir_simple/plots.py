@@ -739,7 +739,7 @@ def plot_inputs():
 
         #fig.legend(lines[:(len(days))], line_labels[:len(days)], loc='upper center',  bbox_to_anchor=(0.5, -0.05), shadow=True, ncol=3)
         #fig.legend()
-        plt.savefig("inputs_secir_simple.png")
+        plt.savefig("inputs_secir_simple_matplotlib.png")
 
 
 
@@ -749,7 +749,7 @@ def plot_inputs_withseaborn():
         path = os.path.dirname(os.path.realpath(__file__))
         path_data = os.path.join(os.path.dirname(os.path.realpath(
                 os.path.dirname(os.path.realpath(path)))), 'data')
-        filename = "data_secir_simple_30days_widerinput.pickle"
+        filename = "data_secir_simple_30days_widerinput_3.pickle"
 
         file = open(os.path.join(path_data,filename), 'rb')
 
@@ -757,11 +757,10 @@ def plot_inputs_withseaborn():
         data_splitted = split_data(data['inputs'], data['labels'])
         train_inputs = np.transpose(data_splitted['train_inputs']) # reshape to [n_compartments, n_days, n_samples]
 
+        #labels = ['percentile p50', 'percentile p25', 'percentile p75', 'percentile p05', 'percentile p95']
+        labels = ['percentile p50', 'percentile p25/75', 'percentile p05/95']
 
-        labels = ['percentile p50', 'percentile p25', 'percentile p75', 'percentile p05', 'percentile p95']
-
-        inputs_reversed = np.expm1(train_inputs)
-        
+        inputs_reversed = np.expm1(train_inputs)        
 
         compartment_array = []
         for compartment in InfectionState.values():
@@ -775,12 +774,11 @@ def plot_inputs_withseaborn():
 
         
         intervals = [75,95]
-        colors = ['tab:red', 'tab:green', 'tab:blue', 'tab:red', 'tab:green', 'tab:blue', 'tab:red', 'tab:green']
-        
-        
+        colors = ['tab:red', 'tab:green', 'tab:blue', 'tab:red', 'tab:green', 'tab:blue', 'tab:red', 'tab:green']   
 
-        for ax, c, values, color in zip(axes, index, inputs_reversed, colors):
-                       
+        
+        for ax, c, values , color in zip(axes, index, inputs_reversed, colors): 
+                     
        
                 #for values, label in zip(array, labels): 
                 df_inputs = pd.DataFrame(data =values.transpose())
@@ -792,16 +790,20 @@ def plot_inputs_withseaborn():
                 ax.set_ylabel('Number of individuals')
                 ax.set_xlabel('Days')
                 for interval in intervals:
-                        sns.lineplot(ax = ax, data =df2, x = 'Day', y = 'value',  estimator="median", errorbar=("pi", interval), color=color, legend = 'auto')
-                                
+                        sns.lineplot(ax = ax, data =df2, x = 'Day', y = 'value',  estimator="median", errorbar=("pi", interval), 
+                                      color=color, legend = 'auto')
+
+
                 ax.set_title(c, fontsize = 10)
+                #handles, labels = ax.get_legend_handles_labels()
+                #ax.legend(labels=labels, loc='upper right')
                                                 
                 fig.tight_layout()
                         
                 ax7.set_xlabel('Days')
                 ax8.set_xlabel('Days')
 
-        plt.savefig("inputs_secir_simple_wider.png")
+        plt.savefig("inputs_secir_simple_w3.png")
 
 
 
@@ -878,11 +880,11 @@ def boxplot_inputs():
         file_w2 = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_30days_widerinput_2.pickle', 'rb') 
        
         data = pickle.load(file)
-        data = data['inputs']
+        data = np.expm1(data['inputs'])
         data_w = pickle.load(file_w)
-        data_w = data_w['inputs']
+        data_w = np.expm1(data_w['inputs'])
         data_w2 = pickle.load(file_w2)
-        data_w2 = data_w2['inputs']
+        data_w2 = np.expm1(data_w2['inputs'])
 
         compartment_array = []
         for compartment in InfectionState.values():
