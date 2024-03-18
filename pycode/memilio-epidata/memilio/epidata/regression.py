@@ -162,9 +162,9 @@ class NPIRegression():
         # TODO: discuss if this is what we want (in contrast to absolute values)
         # computing proportion of vaccinated individuals by dividing by respective population of county
         counties = self.df_vaccinations['ID_County'].unique()
-        self.vacc_states = self.df_vaccinations.keys()[3:]
+        self.all_vacc_states = self.df_vaccinations.keys()[3:]
         for county in counties:
-            for vacc_state in self.vacc_states:
+            for vacc_state in self.all_vacc_states:
                 self.df_vaccinations.loc[(self.df_vaccinations['ID_County'] == county), vacc_state] = self.df_vaccinations.loc[self.df_vaccinations['ID_County']
                                                                                                                                == county, vacc_state]/df_population.loc[df_population.ID_County == county, 'Population'].iloc[0]
 
@@ -241,12 +241,7 @@ class NPIRegression():
 
 
 
-        # return self.df_r, self.df_vaccinations, self.df_npis, vacc_states
-
     def set_up_model(self):
-
-        # df_r, df_vaccinations, df_npis, vacc_states = self.read_data(
-        #     out_folder=dd.defaultDict['out_folder'])
 
         self.read_data()
 
@@ -255,9 +250,9 @@ class NPIRegression():
 
         # TODO: discuss which vaccination states we want to include
         # for now use Vacc_completed and Vacc_refreshed and use Vacc_partially as reference
-        self.vacc_states = list(self.vacc_states[1:3])
+        self.used_vacc_states = list(self.all_vacc_states[1:3])
         self.X_vaccinations = np.array([self.df_vaccinations[vacc_state]
-                                        for vacc_state in self.vacc_states]).T
+                                        for vacc_state in self.used_vacc_states]).T
         #TODO: discuss which region type we want to use as reference
         # for now use Metropole
         self.reference_region = 'Stadtregion - Metropole'
@@ -303,7 +298,7 @@ class NPIRegression():
         # store pvalues in dataframe
         self.df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
         # add column with column names to df
-        non_npi_variables = ['const'] + self.vacc_states + self.region_types
+        non_npi_variables = ['const'] + self.used_vacc_states + self.region_types
         self.df_pvalues.insert(1, "columns", non_npi_variables + self.column_names)
         # drop rows with pvalue that is NaN
         # TODO: check why we get NaNs here in the first place
@@ -349,7 +344,7 @@ class NPIRegression():
                   self.df_pvalues['columns'][npi_of_interest])
 
             # do new regression and compute AIC and BIC
-            # [1:] because we do only want NPIs as input for regression model, not 'const' or vacc_states
+            # [1:] because we do only want NPIs as input for regression model, not 'const' or used_vacc_states
             num_non_npi_variables = len(non_npi_variables)
             results = self.do_regression(
                 df_view['columns'][num_non_npi_variables:])
