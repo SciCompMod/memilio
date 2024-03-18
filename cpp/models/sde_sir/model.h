@@ -21,12 +21,13 @@
 #ifndef SDESIR_MODEL_H
 #define SDESIR_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "sde_sir/infection_state.h"
 #include "sde_sir/parameters.h"
 #include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/type_list.h"
 #include <iostream>
 namespace mio
 {
@@ -36,19 +37,22 @@ namespace ssir
 /********************
     * define the model *
     ********************/
+using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
+                       Flow<InfectionState::Infected,     InfectionState::Recovered>>;
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
 
 public:
     Model()
         : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
     {   
     }
-
-    void get_derivatives_stoch(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt, double dt) const 
+    void get_flows(Eigen::Ref<const Eigen::VectorXd> , Eigen::Ref<const Eigen::VectorXd> , double , 
+                         Eigen::Ref<Eigen::VectorXd> ) const {}
+    void get_flows_stochastic(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t, double dt,
+                         Eigen::Ref<Eigen::VectorXd> flows) const 
     {
         auto& params     = this->parameters;
         double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
@@ -58,24 +62,22 @@ public:
         RandomNumberGenerator rng = mio::RandomNumberGenerator();
         double si = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
         double ir = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
-        //double w3 = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);                
-        //printf("\n%f\n%f\n%f\n",x, x1, x2);
 
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]
-            - sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) / sqrt(dt) * si;
-        //std::cout << dydt[(size_t)InfectionState::Susceptible];
 
-        //getchar();
-        dydt[(size_t)InfectionState::Infected] =
+
+        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]
-            - (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected] 
-            + sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) / sqrt(dt) * si
-            - sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(dt) * ir; 
-        dydt[(size_t)InfectionState::Recovered] =
+            + sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) / sqrt(dt) * si;
+        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = 
+            std::min(flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()], y[(size_t)InfectionState::Susceptible] / dt);
+
+        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]
-            + sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(dt) * ir; 
+            + sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(dt) * ir;
+        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
+            std::min(flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()], y[(size_t)InfectionState::Infected] / dt);    
     }
+
 
 private:
     

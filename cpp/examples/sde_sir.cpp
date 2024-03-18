@@ -21,7 +21,7 @@
 #include "sde_sir/model.h"
 #include "sde_sir/infection_state.h"
 #include "sde_sir/parameters.h"
-#include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -31,7 +31,7 @@ int main()
 
     double t0   = 0.;
     double tmax = 5.;
-    double dt   = 0.001;
+    double dt   = 0.1;
 
     double total_population = 10000;
 
@@ -50,8 +50,7 @@ int main()
     model.parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::ssir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    mio::EulerMaruyamaIntegratorCore dummy(total_population);
-    auto integrator = std::make_shared<mio::EulerMaruyamaIntegratorCore>(dummy);
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
 
     model.check_constraints();
 
@@ -63,29 +62,12 @@ int main()
       */ 
     //mio::Simulation<model> sim(model, t0, dt, integrator);
     //sim.advance(tmax); 
-    auto sir = simulate_stoch(t0, tmax, dt, model, integrator);
-    getchar();
+    mio::FlowSimulation<mio::ssir::Model> sim(model, t0, dt);
+    sim.set_integrator(integrator);
+    //auto sir = simulate_stoch(t0, tmax, dt, model, integrator);
+    sim.advance_stochastic(tmax);
+    auto sir = sim.get_result();
     bool print_to_terminal = true;
 
-    if (print_to_terminal) {
-        std::vector<std::string> vars = {"S", "I", "R"};
-        printf("\n # t");
-        for (size_t k = 0; k < (size_t)mio::ssir::InfectionState::Count; k++) {
-            printf(" %s", vars[k].c_str());
-        }
-
-        auto num_points = static_cast<size_t>(sir.get_num_time_points());
-        for (size_t i = 0; i < num_points; i++) {
-            printf("\n%.14f ", sir.get_time(i));
-            Eigen::VectorXd res_j = sir.get_value(i);
-            for (size_t j = 0; j < (size_t)mio::ssir::InfectionState::Count; j++) {
-                printf(" %.14f", res_j[j]);
-            }
-        }
-
-        Eigen::VectorXd res_j = sir.get_last_value();
-        printf("\nnumber total: %f", res_j[0] + res_j[1] + res_j[2]);
-    }
-
-    getchar();
+    sir.print_table();
 }
