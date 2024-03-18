@@ -44,8 +44,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-      # copied from https://github.com/actions/runner-images/issues/9524#issuecomment-2002475952
+      # taken from https://github.com/actions/runner-images/issues/9524#issuecomment-2002475952
     - name: Fix kernel mmap rnd bits
+      shell: bash
       # Asan in llvm 14 provided in ubuntu 22.04 is incompatible with
       # high-entropy ASLR in much newer kernels that GitHub runners are
       # using leading to random crashes: https://reviews.llvm.org/D148280
