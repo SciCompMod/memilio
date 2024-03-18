@@ -111,12 +111,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
 
+            t_Exposed[node].push_back(
+                static_cast<int>(std::round(model[node].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group])));
             t_InfectedNoSymptoms[node].push_back(static_cast<int>(
-                std::round(2 * (model[node].parameters.template get<IncubationTime<FP>>()[(AgeGroup)group] -
-                                model[node].parameters.template get<SerialInterval<FP>>()[(AgeGroup)group]))));
-            t_Exposed[node].push_back(static_cast<int>(
-                std::round(2 * model[node].parameters.template get<SerialInterval<FP>>()[(AgeGroup)group] -
-                           model[node].parameters.template get<IncubationTime<FP>>()[(AgeGroup)group])));
+                std::round(model[node].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group])));
             t_InfectedSymptoms[node].push_back(static_cast<int>(
                 std::round(model[node].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group])));
             t_InfectedSevere[node].push_back(static_cast<int>(
@@ -305,25 +303,10 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
 
     for (size_t node = 0; node < model.size(); node++) {
         for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
-
-            t_InfectedNoSymptoms[node].push_back(static_cast<int>(
-                std::round(2 * (model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)] -
-                                model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)]))));
             t_Exposed[node].push_back(static_cast<int>(
-                std::round(2 * model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)] -
-                           model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)])));
-            t_InfectedSymptoms[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSymptoms<double>>()[AgeGroup(group)])));
-            t_InfectedSevere[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSevere<double>>()[AgeGroup(group)])));
-            t_InfectedCritical[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedCritical<double>>()[AgeGroup(group)])));
+                std::round(model[node].parameters.template get<TimeExposed<double>>()[AgeGroup(group)])));
             t_InfectedNoSymptoms[node].push_back(static_cast<int>(
-                std::round(2 * (model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)] -
-                                model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)]))));
-            t_Exposed[node].push_back(static_cast<int>(
-                std::round(2 * model[node].parameters.template get<SerialInterval<double>>()[AgeGroup(group)] -
-                           model[node].parameters.template get<IncubationTime<double>>()[AgeGroup(group)])));
+                std::round(model[node].parameters.template get<TimeInfectedNoSymptoms<double>>()[AgeGroup(group)])));
             t_InfectedSymptoms[node].push_back(static_cast<int>(
                 std::round(model[node].parameters.template get<TimeInfectedSymptoms<double>>()[AgeGroup(group)])));
             t_InfectedSevere[node].push_back(static_cast<int>(

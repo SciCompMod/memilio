@@ -99,11 +99,11 @@ int main()
     params.set<mio::osecir::Seasonality<double>>(0);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::osecir::IncubationTime<double>>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval<double>>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]   = 12;
-        params.get<mio::osecir::TimeInfectedCritical<double>>()[i] = 8;
+        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 12;
+        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;

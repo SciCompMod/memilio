@@ -71,6 +71,7 @@ void draw_sample_demographics(Model<FP>& model)
                                                                              group_total);
     }
 }
+
 /**
      * draws a sample from the specified distributions for all parameters related to the infection.
      * @tparam FP floating point type, e.g., double
@@ -82,8 +83,8 @@ void draw_sample_infection(Model<FP>& model)
     model.parameters.template get<Seasonality<FP>>().draw_sample();
 
     //not age dependent
-    model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<TimeExposed<FP>>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[AgeGroup(0)].draw_sample();
     model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)].draw_sample();
     model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)].draw_sample();
     model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)].draw_sample();
@@ -98,10 +99,10 @@ void draw_sample_infection(Model<FP>& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.template get<IncubationTime<FP>>()[i] =
-            model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
-        model.parameters.template get<SerialInterval<FP>>()[i] =
-            model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
+        model.parameters.template get<TimeExposed<FP>>()[i] =
+            model.parameters.template get<TimeExposed<FP>>()[AgeGroup(0)];
+        model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[i] =
+            model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[AgeGroup(0)];
         model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i] =
             model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)];
         model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i] =

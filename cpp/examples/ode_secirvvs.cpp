@@ -78,11 +78,11 @@ int main()
     contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
 
     //times
-    model.parameters.get<mio::osecirvvs::IncubationTime<double>>()[mio::AgeGroup(0)]       = 5.2;
-    model.parameters.get<mio::osecirvvs::SerialInterval<double>>()[mio::AgeGroup(0)]       = 0.5 * 3.33 + 0.5 * 5.2;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)] = 7;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]   = 6;
-    model.parameters.get<mio::osecirvvs::TimeInfectedCritical<double>>()[mio::AgeGroup(0)] = 7;
+    model.parameters.get<mio::osecirvvs::TimeExposed<double>>()[mio::AgeGroup(0)]            = 3.33;
+    model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)] = 1.87;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]   = 7;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]     = 6;
+    model.parameters.get<mio::osecirvvs::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]   = 7;
 
     //probabilities
     model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)] = 0.15;

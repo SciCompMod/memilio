@@ -93,19 +93,35 @@ struct ICUCapacity {
 };
 
 /**
- * @brief the incubation time in the SECIR model
- * @param tinc incubation time in day unit
+ * @brief the (mean) latent time in day unit
  */
 template <typename FP = double>
-struct IncubationTime {
+struct TimeExposed {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 2.);
+        return Type(size, 1.);
     }
     static std::string name()
     {
-        return "IncubationTime";
+        return "TimeExposed";
+    }
+};
+
+/**
+ * @brief the (mean) time in day unit for asymptomatic cases that are infectious but
+ *        have not yet developed symptoms.
+ */
+template <typename FP = double>
+struct TimeInfectedNoSymptoms {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms";
     }
 };
 
@@ -123,22 +139,6 @@ struct TimeInfectedSymptoms {
     static std::string name()
     {
         return "TimeInfectedSymptoms";
-    }
-};
-
-/**
- * @brief the serial interval in the SECIR model in day unit
- */
-template <typename FP = double>
-struct SerialInterval {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.5);
-    }
-    static std::string name()
-    {
-        return "SerialInterval";
     }
 };
 
@@ -355,7 +355,7 @@ struct TestAndTraceCapacity {
 template <typename FP = double>
 using ParametersBase =
     ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>,
-                 DynamicNPIsInfectedSymptoms<FP>, IncubationTime<FP>, TimeInfectedSymptoms<FP>, SerialInterval<FP>,
+                 DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
                  TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
                  RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
                  RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
@@ -450,31 +450,22 @@ public:
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
-
-            if (this->template get<IncubationTime<FP>>()[i] < 2 * tol_times) {
-                log_warning("Constraint check: Parameter IncubationTime changed from {:.4f} to {:.4f}",
-                            this->template get<IncubationTime<FP>>()[i], tol_times);
-                this->template get<IncubationTime<FP>>()[i] = 2 * tol_times;
-                corrected                                   = true;
+            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeExposed<FP>>()[i], tol_times);
+                this->template get<TimeExposed<FP>>()[i] = tol_times;
+                corrected                   = true;
             }
 
-            if (2 * this->template get<SerialInterval<FP>>()[i] <
-                this->template get<IncubationTime<FP>>()[i] + tol_times) {
-                log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->template get<SerialInterval<FP>>()[i],
-                            0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2);
-                this->template get<SerialInterval<FP>>()[i] =
-                    0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2;
-                corrected = true;
-            }
-            else if (this->template get<SerialInterval<FP>>()[i] >
-                     this->template get<IncubationTime<FP>>()[i] - tol_times / 2) {
-                log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->template get<SerialInterval<FP>>()[i],
-                            this->template get<IncubationTime<FP>>()[i] - tol_times / 2);
-                this->template get<SerialInterval<FP>>()[i] =
-                    this->template get<IncubationTime<FP>>()[i] - tol_times / 2;
-                corrected = true;
+            if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedNoSymptoms changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeInfectedNoSymptoms<FP>>()[i], tol_times);
+                this->template get<TimeInfectedNoSymptoms<FP>>()[i] = tol_times;
+                corrected                              = true;
             }
 
             if (this->template get<TimeInfectedSymptoms<FP>>()[i] < tol_times) {
@@ -583,25 +574,19 @@ public:
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
-
-            if (this->template get<IncubationTime<FP>>()[i] < 2 * tol_times) {
-                log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
-                          this->template get<IncubationTime<FP>>()[i], 2 * tol_times);
+            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeExposed<FP>>()[i], tol_times);
                 return true;
             }
 
-            if (2 * this->template get<SerialInterval<FP>>()[i] <
-                this->template get<IncubationTime<FP>>()[i] + tol_times) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
-                          this->template get<SerialInterval<FP>>()[i],
-                          0.5 * this->template get<IncubationTime<FP>>()[i] + tol_times / 2);
-                return true;
-            }
-            else if (this->template get<SerialInterval<FP>>()[i] >
-                     this->template get<IncubationTime<FP>>()[i] - tol_times / 2) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
-                          this->template get<SerialInterval<FP>>()[i],
-                          this->template get<IncubationTime<FP>>()[i] - tol_times / 2);
+            if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeInfectedNoSymptoms<FP>>()[i], tol_times);
                 return true;
             }
 

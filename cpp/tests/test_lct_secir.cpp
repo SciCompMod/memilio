@@ -128,13 +128,11 @@ TEST(TestLCTSecir, compareWithOdeSecir)
 
     model_ode.parameters.set<mio::osecir::StartDay>(50);
     model_ode.parameters.set<mio::osecir::Seasonality<double>>(0.1);
-    model_ode.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0] =
-        5.2; // TimeExposed = 2 * SerialInterval - IncubationTime.
-    model_ode.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0] =
-        4.2; // TimeInfectedNoSymptoms = 2* (IncubationTime - SerialInterval).
-    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = 5.8;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 9.5;
-    model_ode.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 7.1;
+    model_ode.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
+    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.0;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 5.8;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = 9.5;
+    model_ode.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix_ode = model_ode.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix_ode[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));

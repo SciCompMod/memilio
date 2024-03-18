@@ -49,11 +49,11 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     model.parameters.set<mio::osecir::StartDay>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
-    model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]       = 5.2;
-    model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = 4.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = 5.8;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 7.1;
+    model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 5.8;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -130,11 +130,11 @@ TEST(TestOdeSecir, checkPopulationConservation)
 
     model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 35;
 
-    model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]       = 5.2;
-    model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = 4.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = 5.8;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 7.1;
+    model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 5.8;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -191,11 +191,11 @@ TEST(TestOdeSecir, testParamConstructors)
     model.parameters.set<mio::osecir::StartDay>(start_day);
     model.parameters.set<mio::osecir::Seasonality<double>>(seasonality);
 
-    model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]       = 5.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = 5;
-    model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = 4.2;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 10.;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 8.;
+    model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 5;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = 10.;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = 8.;
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = nb_exp_t0;
@@ -246,10 +246,10 @@ TEST(TestOdeSecir, testParamConstructors)
     EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]),
               (model2.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]));
 
-    EXPECT_EQ(model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0],
-              model2.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0],
-              model2.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0],
+              model2.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0],
+              model2.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0],
               model2.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0],
@@ -302,10 +302,10 @@ TEST(TestOdeSecir, testParamConstructors)
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]),
               (model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]));
 
-    EXPECT_EQ(model3.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0],
-              model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0],
-              model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0],
+              model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0],
+              model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0],
               model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0],
@@ -357,10 +357,10 @@ TEST(TestOdeSecir, testParamConstructors)
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]),
               (model4.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]));
 
-    EXPECT_EQ(model3.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0],
-              model4.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0],
-              model4.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0],
+              model4.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0],
+              model4.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0],
               model4.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0],
@@ -412,10 +412,10 @@ TEST(TestOdeSecir, testParamConstructors)
     EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]),
               (model3.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]));
 
-    EXPECT_EQ(model5.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0],
-              model3.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0],
-              model3.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0],
+              model3.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0],
+              model3.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0],
               model3.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0],
@@ -453,23 +453,16 @@ TEST(TestOdeSecir, testSettersAndGetters)
     }
 
     mio::osecir::Model<double> model(1);
-
-    // alpha = alpha_in; // percentage of asymptomatic cases
-    // beta  = beta_in; // risk of infection from the infected symptomatic patients
-    // rho   = rho_in; // hospitalized per infected
-    // theta = theta_in; // icu per hospitalized
-    // delta = delta_in; // deaths per ICUs
-
-    EXPECT_EQ(model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0].get_distribution().get(),
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0].get_distribution().get(),
               nullptr);
 
     model.parameters.set<mio::osecir::ICUCapacity<double>>(vec[0]);
 
-    model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]       = vec[1];
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = vec[2];
-    model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = vec[3];
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = vec[4];
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = vec[5];
+    model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = vec[1];
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = vec[2];
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = vec[3];
+    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = vec[4];
+    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = vec[5];
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = vec[6];
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = vec[7];
@@ -487,7 +480,7 @@ TEST(TestOdeSecir, testSettersAndGetters)
     model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]                = vec[18];
     model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[(mio::AgeGroup)0]                = vec[19];
 
-    EXPECT_NE(model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0].get_distribution().get(),
+    EXPECT_NE(model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0].get_distribution().get(),
               nullptr);
 
     check_distribution(*vec[0].get_distribution(),
@@ -496,18 +489,14 @@ TEST(TestOdeSecir, testSettersAndGetters)
     model.parameters.set<mio::osecir::StartDay>(vec[20]);
     model.parameters.set<mio::osecir::Seasonality<double>>(vec[21]);
 
-    EXPECT_NE(model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0].get_distribution().get(),
-              nullptr);
-
-    check_distribution(
-        *vec[1].get_distribution(),
-        *model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0].get_distribution());
+    check_distribution(*vec[1].get_distribution(),
+                       *model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(
         *vec[2].get_distribution(),
-        *model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0].get_distribution());
+        *model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(
         *vec[3].get_distribution(),
-        *model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0].get_distribution());
+        *model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(
         *vec[4].get_distribution(),
         *model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0].get_distribution());
@@ -559,9 +548,9 @@ TEST(TestOdeSecir, testSettersAndGetters)
                        *model.parameters.get<mio::osecir::Seasonality<double>>().get_distribution());
 
     EXPECT_EQ(vec[0], model.parameters.get<mio::osecir::ICUCapacity<double>>());
-    EXPECT_EQ(vec[1], model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(vec[2], model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(vec[3], model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(vec[1], model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(vec[2], model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(vec[3], model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[4], model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[5], model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[6], (model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]));
@@ -597,11 +586,11 @@ TEST(TestOdeSecir, testModelConstraints)
 
     mio::osecir::Model<double> model(1);
 
-    model.parameters.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]       = 5.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = 5;
-    model.parameters.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = 3.9;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 10.;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 8.;
+    model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 2.6;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.6;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 5;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = 10.;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = 8.;
 
     model.parameters.get<mio::osecir::Seasonality<double>>()          = 0.0;
     model.parameters.get<mio::osecir::ICUCapacity<double>>()          = 100.0;
@@ -676,8 +665,6 @@ TEST(TestOdeSecir, testModelConstraints)
 
 TEST(Secir, testAndTraceCapacity)
 {
-    double tinc = 5.2, tinf = 6, tserint = 4.2;
-
     double cont_freq = 10;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50;
@@ -685,9 +672,9 @@ TEST(Secir, testAndTraceCapacity)
     mio::osecir::Model<double> model(1);
     auto& params = model.parameters;
 
-    params.get<mio::osecir::IncubationTime<double>>()[(mio::AgeGroup)0]       = tinc;
-    params.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0] = tinf;
-    params.get<mio::osecir::SerialInterval<double>>()[(mio::AgeGroup)0]       = tserint;
+    params.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
+    params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.0;
+    params.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 6.;
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -791,11 +778,11 @@ TEST(Secir, get_reproduction_number)
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Dead}]                        = 0;
 
     for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_groups; i++) {
-        model.parameters.get<mio::osecir::IncubationTime<double>>()[i]       = 5.2;
-        model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[i] = 5.8;
-        model.parameters.get<mio::osecir::SerialInterval<double>>()[i]       = 4.2;
-        model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[i]   = 9.5;
-        model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[i] = 7.1;
+        model.parameters.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
+        model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.0;
+        model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.8;
+        model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 9.5;
+        model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 7.1;
 
         model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
         model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
@@ -914,13 +901,13 @@ TEST(Secir, get_reproduction_number)
 
 TEST(Secir, get_migration_factors)
 {
-    auto beta                                                                           = 0.25;
-    auto max_beta                                                                       = 0.5;
-    auto model                                                                          = mio::osecir::Model<double>(1);
-    model.parameters.get<mio::osecir::IncubationTime<double>>().array()                 = 5.0;
-    model.parameters.get<mio::osecir::SerialInterval<double>>().array()                 = 4.0;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>().array() = 0.1;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>().array() = beta;
+    auto beta                                                                              = 0.25;
+    auto max_beta                                                                          = 0.5;
+    auto model                                                                             = mio::osecir::Model(1);
+    model.parameters.get<mio::osecir::TimeExposed<double>>().array()                       = 3.;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>().array()            = 2.;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>().array()    = 0.1;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>().array()    = beta;
     model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>().array() = max_beta;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 100;
     mio::osecir::Simulation<> sim(model, 0.0);
@@ -990,17 +977,14 @@ TEST(Secir, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::ICUCapacity<double>>(2);
-    model.parameters.set<mio::osecir::IncubationTime<double>>(-2);
+    model.parameters.set<mio::osecir::TimeExposed<double>>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecir::IncubationTime<double>>(2);
-    model.parameters.set<mio::osecir::SerialInterval<double>>(1);
+    model.parameters.set<mio::osecir::TimeExposed<double>>(2);
+    model.parameters.set<mio::osecir::TimeInfectedNoSymptoms<double>>(-1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecir::SerialInterval<double>>(5);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecir::SerialInterval<double>>(1.5);
+    model.parameters.set<mio::osecir::TimeInfectedNoSymptoms<double>>(5);
     model.parameters.set<mio::osecir::TimeInfectedSymptoms<double>>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1059,17 +1043,13 @@ TEST(Secir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::ICUCapacity<double>>(), 0);
 
-    model.parameters.set<mio::osecir::IncubationTime<double>>(-2);
+    model.parameters.set<mio::osecir::TimeExposed<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecir::IncubationTime<double>>()[indx_agegroup], 2 * tol_times);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeExposed<double>>()[indx_agegroup], tol_times);
 
-    model.parameters.set<mio::osecir::SerialInterval<double>>(0);
+    model.parameters.set<mio::osecir::TimeInfectedNoSymptoms<double>>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval<double>>()[indx_agegroup], 0.15, 1e-13);
-
-    model.parameters.set<mio::osecir::SerialInterval<double>>(5);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval<double>>()[indx_agegroup], 0.15, 1e-13);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[indx_agegroup], tol_times);
 
     model.parameters.set<mio::osecir::TimeInfectedSymptoms<double>>(1e-8);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

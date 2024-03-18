@@ -47,11 +47,11 @@ TEST(TestSaveResult, save_result)
     ;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::IncubationTime<double>>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval<double>>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]   = 10.;
-        params.get<mio::osecir::TimeInfectedCritical<double>>()[i] = 8.;
+        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2;
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.;
+        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 10.;
+        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
@@ -127,11 +127,11 @@ TEST(TestSaveResult, save_result_with_params)
 
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
-        params.get<mio::osecir::IncubationTime<double>>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval<double>>()[i]       = 3.9;
-        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]   = 10.;
-        params.get<mio::osecir::TimeInfectedCritical<double>>()[i] = 8.;
+        params.get<mio::osecir::TimeExposed<double>>()[i]            = 2.6;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.6;
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.;
+        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 10.;
+        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
 
         params.get<mio::osecir::Seasonality<double>>()          = 0.0;
         params.get<mio::osecir::ICUCapacity<double>>()          = 0.09;
@@ -218,13 +218,8 @@ TEST(TestSaveResult, save_result_with_params)
 
     EXPECT_EQ(read_graph.value()
                   .nodes()[0]
-                  .property.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::Index<mio::AgeGroup>(0)],
-              params.get<mio::osecir::CriticalPerSevere<double>>()[mio::Index<mio::AgeGroup>(0)]);
-
-    EXPECT_EQ(read_graph.value()
-                  .nodes()[0]
-                  .property.parameters.get<mio::osecir::SerialInterval<double>>()[mio::Index<mio::AgeGroup>(1)],
-              params.get<mio::osecir::SerialInterval<double>>()[mio::Index<mio::AgeGroup>(1)]);
+                  .property.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::Index<mio::AgeGroup>(1)],
+              params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::Index<mio::AgeGroup>(1)]);
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
@@ -242,11 +237,11 @@ TEST(TestSaveResult, save_percentiles_and_sums)
 
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
-        params.get<mio::osecir::IncubationTime<double>>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval<double>>()[i]       = 3.8;
-        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]   = 10.;
-        params.get<mio::osecir::TimeInfectedCritical<double>>()[i] = 8.;
+        params.get<mio::osecir::TimeExposed<double>>()[i]            = 2.4;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.8;
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.;
+        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 10.;
+        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
 
         params.get<mio::osecir::Seasonality<double>>()          = 0.0;
         params.get<mio::osecir::ICUCapacity<double>>()          = 100.0;

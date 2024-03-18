@@ -41,11 +41,11 @@ int main()
     model.parameters.template set<mio::osecir::StartDay>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
-    model.parameters.get<mio::osecir::IncubationTime<double>>()       = 5.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>() = 5.8;
-    model.parameters.get<mio::osecir::SerialInterval<double>>()       = 4.2;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()   = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>() = 7.1;
+    model.parameters.get<mio::osecir::TimeExposed<double>>()            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>() = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()   = 5.8;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()     = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()   = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));

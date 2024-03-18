@@ -126,9 +126,14 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters<double>& params, bool long_time)
 {
     //times
-    const double incubationTime            = 5.2;
-    const double serialIntervalMin         = 0.5 * 2.67 + 0.5 * 5.2;
-    const double serialIntervalMax         = 0.5 * 4.00 + 0.5 * 5.2;
+    // TimeExposed and TimeInfectedNoSymptoms are calculated as described in
+    // Khailaie et al. (https://doi.org/10.1186/s12916-020-01884-4)
+    // given SI_min = 3.935, SI_max = 4.6, INC = 5.2
+    const double timeExposedMin            = 2.67;
+    const double timeExposedMax            = 4.;
+    const double timeInfectedNoSymptomsMin = 1.2;
+    const double timeInfectedNoSymptomsMax = 2.53;
+
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
     const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
     const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
@@ -136,10 +141,10 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters<double>& par
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime<double>>(), incubationTime,
-                                      incubationTime);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval<double>>(), serialIntervalMin,
-                                      serialIntervalMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeExposed<double>>(), timeExposedMin,
+                                      timeExposedMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedNoSymptoms<double>>(),
+                                      timeInfectedNoSymptomsMin, timeInfectedNoSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms<double>>(),
                                       timeInfectedSymptomsMin, timeInfectedSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere<double>>(), timeInfectedSevereMin,

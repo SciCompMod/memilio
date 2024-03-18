@@ -76,14 +76,12 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                     });
             }
             // times
-            param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<IncubationTime<double>>()[i];
-                });
-            param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<SerialInterval<double>>()[i];
-                });
+            param_percentil(node, [i](auto&& model) -> auto& {
+                return model.parameters.template get<TimeExposed<double>>()[i];
+            });
+            param_percentil(node, [i](auto&& model) -> auto& {
+                return model.parameters.template get<TimeInfectedNoSymptoms<double>>()[i];
+            });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
                     return model.parameters.template get<TimeInfectedSymptoms<double>>()[i];
