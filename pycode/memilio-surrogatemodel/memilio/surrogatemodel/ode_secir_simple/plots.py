@@ -866,3 +866,56 @@ def plot_input_days():
 
         plt.savefig('input_days_simple_groups.png')
   
+
+def boxplot_inputs():
+        # path = os.path.dirname(os.path.realpath(__file__))
+        # path_data = os.path.join(os.path.dirname(os.path.realpath(
+        #         os.path.dirname(os.path.realpath(path)))), 'data')
+        # filename = "data_secir_simple_30days_widerinput.pickle"
+
+        file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple.pickle', 'rb')
+        file_w = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_30days_widerinput.pickle', 'rb')
+        file_w2 = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_30days_widerinput_2.pickle', 'rb') 
+       
+        data = pickle.load(file)
+        data = data['inputs']
+        data_w = pickle.load(file_w)
+        data_w = data_w['inputs']
+        data_w2 = pickle.load(file_w2)
+        data_w2 = data_w2['inputs']
+
+        compartment_array = []
+        for compartment in InfectionState.values():
+                compartment_array.append(compartment) 
+        index = [str(compartment).split('.')[1] for compartment in compartment_array]
+
+        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(9, 12))
+        axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
+
+        for ax, compartment, d, dw1, dw2 in zip(axes, index, np.asarray(data).transpose(), np.asarray(data_w).transpose(), np.asarray(data_w2).transpose()):
+      
+                d_df = pd.DataFrame(data = d)
+                d_df = pd.melt(d_df.transpose(),var_name="Day") 
+                d_df['type'] = 'b'  
+
+                dw1_df = pd.DataFrame(data = dw1)
+                dw1_df = pd.melt(dw1_df.transpose(), var_name="Day") 
+                dw1_df['type'] = 'w1'  
+        
+                dw2_df = pd.DataFrame(data = dw2)
+                dw2_df = pd.melt(dw2_df.transpose(), var_name="Day") 
+                dw2_df['type'] = 'w2' 
+                df_all = pd.concat([d_df, dw1_df, dw2_df], ignore_index=True)
+
+                sns.boxplot(ax = ax, x='Day', y='value', data = df_all, hue = 'type', palette = 'Set1', width = 0.8, legend = 'auto')
+                ax.set_title(compartment, fontsize = 10)
+                ax.legend().set_visible(False)
+
+
+                handles, labels = ax.get_legend_handles_labels()
+        fig.legend(handles, labels, loc='upper right', ncol=3, bbox_to_anchor=(0.7, 1), frameon=False)
+        plt.tight_layout()
+                 
+        plt.savefig("boxplot_input_compartments_b_w1_w2.png")
+
+
