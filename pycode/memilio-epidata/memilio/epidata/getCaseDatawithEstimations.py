@@ -80,14 +80,14 @@ WARNING: This file is experimental and has not been tested.
 
         # get case data
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, start_date, end_date,
-            impute_dates, moving_average, make_plot, split_berlin,
-            rep_date)
+            read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw, start_date=start_date, end_date=end_date,
+            impute_dates=impute_dates, moving_average=moving_average, make_plot=make_plot, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         # get data from John Hopkins University
         gjd.get_jh_data(
-            read_data, file_format, out_folder, no_raw, start_date, end_date,
-            impute_dates, moving_average, make_plot)
+            read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw, start_date=start_date, end_date=end_date,
+            impute_dates=impute_dates, moving_average=moving_average, make_plot=make_plot)
 
     # Now we now which data is generated and we can use it
     # read in jh data
