@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Anna Wendler, Lena Ploetzke
+* Authors: Lena Ploetzke, Anna Wendler
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -37,15 +37,9 @@ namespace mio
 {
 namespace isecir
 {
-/* 
-    TODO: add get_mean() function to state_age 
-    Erlärungen zufügen
-    briefs in state age
-    tests!
-    */
 
-// we assume that we start the simulation at time 0 and want to compute the necessary flows
-// in the past for the initialization of the model
+// We assume that we start the simulation at time 0 and want to compute the necessary flows
+// in the past for the initialization of an IDE-SECIR model based on real data.
 IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
                                  ScalarType scale_confirmed_cases)
 {
@@ -65,7 +59,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
     }
 
-    // Get (global) support_max to determine how many flows in the past we have to compute
+    // Get (global) support_max to determine how many flows in the past we have to compute.
     ScalarType global_support_max         = model.get_global_support_max(dt);
     Eigen::Index global_support_max_index = Eigen::Index(std::ceil(global_support_max / dt));
 
@@ -76,7 +70,8 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = -4 * global_support_max_index;
-    // The last time needed is dependent on the mean stay times in the Exposed compartment and in InfectedNoSymptoms before transition to InfectedSymptoms.
+    // The last time needed is dependent on the mean stay times in the Exposed compartment and in InfectedNoSymptoms
+    // before transition to InfectedSymptoms.
     Eigen::Index last_time_index_needed = Eigen::Index(std::ceil(
         (model.parameters.get<TransitionDistributions>()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
              .get_mean(dt) +
@@ -100,7 +95,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
-    // Define variables to store the first and the last index of the TimeSeries where the entry of rki_data is potentially needed.
+    // Define dumy variables to store the first and the last index of the TimeSeries where the considered entry of rki_data is potentially needed.
     Eigen::Index idx_needed_first = 0;
     Eigen::Index idx_needed_last  = 0;
     ScalarType time_idx           = 0;
@@ -141,8 +136,8 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                 max_offset_needed_avail = true;
             }
             if (offset == 0) {
-                model.m_populations[0][(int)InfectionState::Dead] = entry.num_deaths;
-                model.m_total_confirmed_cases                     = scale_confirmed_cases * entry.num_confirmed;
+                model.m_populations[0][Eigen::Index(InfectionState::Dead)] = entry.num_deaths;
+                model.m_total_confirmed_cases = scale_confirmed_cases * entry.num_confirmed;
             }
         }
     }
@@ -153,37 +148,38 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     }
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
-    // I to H for -3 * global_support_max, ..., 0
+    // Compute flow InfectedSymptomsToInfectedSevere for -3 * global_support_max, ..., 0.
     for (Eigen::Index i = -3 * global_support_max_index; i <= 0; i++) {
-        model.compute_flow(int(InfectionTransition::InfectedSymptomsToInfectedSevere),
+        model.compute_flow(Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),
                            Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt,
                            i - start_shift);
     }
-    // H to U for -2 * global_support_max, ..., 0
+    // Compute flow InfectedSevereToInfectedCritical for -2 * global_support_max, ..., 0.
     for (Eigen::Index i = -2 * global_support_max_index; i <= 0; i++) {
-        model.compute_flow((int)InfectionTransition::InfectedSevereToInfectedCritical,
+        model.compute_flow(Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
                            Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, i - start_shift);
     }
-    // I, H, U to R and U to D for -global_support_max, ..., 0
+    // Compute flows from InfectedSymptoms, InfectedSevere and InfectedCritical to Recovered and
+    // flow InfectedCriticalToDead for -global_support_max, ..., 0.
     for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
-        // I to R
-        model.compute_flow((int)InfectionTransition::InfectedSymptomsToRecovered,
+        // Compute flow InfectedSymptomsToRecovered.
+        model.compute_flow(Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered),
                            Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), dt,
                            i - start_shift);
-        // H to R
-        model.compute_flow((int)InfectionTransition::InfectedSevereToRecovered,
+        // Compute flow InfectedSevereToRecovered.
+        model.compute_flow(Eigen::Index(InfectionTransition::InfectedSevereToRecovered),
                            Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), dt, i - start_shift);
-        // U to R
-        model.compute_flow((int)InfectionTransition::InfectedCriticalToRecovered,
+        // Compute flow InfectedCriticalToRecovered.
+        model.compute_flow(Eigen::Index(InfectionTransition::InfectedCriticalToRecovered),
                            Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, i - start_shift);
-        // U to D
-        model.compute_flow((int)InfectionTransition::InfectedCriticalToDead,
+        // Compute flow InfectedCriticalToDead.
+        model.compute_flow(Eigen::Index(InfectionTransition::InfectedCriticalToDead),
                            Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt, i - start_shift);
     }
 
     //--- Calculate the remaining flows. ---
-    // E to C for -global_support_max, ..., 0
-    // Use mean value of the TransitionDistribution C to I for the calculation.
+    // Compute flow InfectedNoSymptomsToInfectedSymptoms for -global_support_max, ..., 0.
+    // Use mean value of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.
     ScalarType mean_InfectedNoSymptomsToInfectedSymptoms =
         model.parameters
             .get<TransitionDistributions>()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
@@ -197,8 +193,8 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                                [Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)];
     }
 
-    // S to E for -global_support_max, ..., 0
-    // Use mean values of the TransitionDistribution E to C and of the TransitionDistribution C to I for the calculation.
+    // Compute flow ExposedToInfectedNoSymptoms for -global_support_max, ..., 0.
+    // Use mean values of the TransitionDistribution ExposedToInfectedNoSymptoms and of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.
     ScalarType mean_ExposedToInfectedNoSymptoms =
         model.parameters.get<TransitionDistributions>()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
             .get_mean(dt);
@@ -212,10 +208,10 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                                [Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)];
     }
 
-    // C to R for -global_support_max, ..., 0
-    // If we previously calculated the transition from E to C, we can calculate this transition using the standard formula.
+    // InfectedNoSymptomsToRecovered for -global_support_max, ..., 0.
+    // If we previously calculated the transition ExposedToInfectedNoSymptoms, we can calculate this transition using the standard formula.
     for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
-        model.compute_flow((int)InfectionTransition::InfectedNoSymptomsToRecovered,
+        model.compute_flow(Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered),
                            Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), dt, i - start_shift);
     }
 

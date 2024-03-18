@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Anna Wendler, Lena Ploetzke
+* Authors: Lena Ploetzke, Anna Wendler
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -38,8 +38,22 @@ namespace isecir
 /**
 * @brief Computes a TimeSeries of flows to provide initial data for an IDE SECIR model with data from RKI.
 *   
-* TODO: describe how this is computed
+* The flows InfectedNoSymptomsToInfectedSymptoms are calculated using the confirmed cases in the RKI data.
+* If necessary, the RKI data are linearly interpolated within one day.
+* The RKI data should contain data for each needed day without division of age groups, the completeness of the dates is not verified.
+* Data can be downloaded e.g. with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py, 
+* which creates a file named cases_all_germany.json or a similar name. One should set impute_dates=True so that missing dates are imputed.
 *
+* The flows InfectedSymptomsToInfectedSevere, InfectedSymptomsToRecovered, InfectedSevereToInfectedCritical,
+* InfectedSevereToRecovered, InfectedCriticalToDead and InfectedCriticalToRecovered can then be calculated using
+* the InfectedNoSymptomsToInfectedSymptoms flow with the standard formula from the IDE model.
+* The ExposedToInfectedNoSymptoms and InfectedNoSymptomsToInfectedSymptoms flows are calculated 
+* using the means of the respective TransitionDistribution. 
+* The flow InfectedNoSymptomsToInfectedSymptoms is calculated with the standard formula from the IDE model
+* using the results for ExposedToInfectedNoSymptoms.
+*
+* The number of death used in the model is also set to the number given in the RKI data.
+* 
 * @param[in, out] Model The model for which the inital flows should be computed.
 * @param[in] dt Time step size.
 * @param[in] path Path to the RKI file.

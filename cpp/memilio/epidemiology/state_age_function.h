@@ -283,6 +283,15 @@ struct ExponentialDecay : public StateAgeFunction {
         return std::exp(-m_parameter * state_age);
     }
 
+    /**
+     * @brief Computes the mean value of the function. 
+     * 
+     * For ExponentialDecay, the mean value is the reciprocal of the function parameter.
+     *
+     * @param[in] dt Time step size used for the numerical integration (unused for ExponentialDecay). 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance (unused for ExponentialDecay). 
+     * @return ScalarType mean value.
+     */
     ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) override
     {
         unused(dt);
@@ -414,6 +423,15 @@ struct ConstantFunction : public StateAgeFunction {
         return m_support_max;
     }
 
+    /**
+     * @brief Computes the mean value of the function. 
+     * 
+     * For ConstantFunction, the mean value is the function parameter.
+     *
+     * @param[in] dt Time step size used for the numerical integration (unused for ConstantFunction). 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance (unused for ConstantFunction). 
+     * @return ScalarType mean value.
+     */
     ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) override
     {
         unused(dt);
@@ -516,7 +534,7 @@ struct StateAgeFunctionWrapper {
     /**
      * @brief Get type of StateAgeFunction, i.e. which derived class is used.
      *
-     * @param[out] string 
+     * @return string 
      */
     std::string get_state_age_function_type() const
     {
@@ -554,11 +572,25 @@ struct StateAgeFunctionWrapper {
         m_function->set_parameter(new_parameter);
     }
 
+    /**
+     * @brief Get the m_support_max object of m_function. 
+     * 
+     * @param[in] dt Time step size at which function will be evaluated. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
+     * @return ScalarType m_support_max
+     */
     ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) const
     {
         return m_function->get_support_max(dt, tol);
     }
 
+    /**
+     * @brief Get the m_mean object of m_function. 
+     * 
+     * @param[in] dt Time step size used for the numerical integration. 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance. 
+     * @return ScalarType m_mean
+     */
     ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) const
     {
         return m_function->get_mean(dt, tol);

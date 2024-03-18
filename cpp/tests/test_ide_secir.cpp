@@ -30,7 +30,6 @@
 #include "memilio/utils/logging.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include <iostream>
 #include <gtest/gtest.h>
 
 class ModelTestIdeSecir : public testing::Test
