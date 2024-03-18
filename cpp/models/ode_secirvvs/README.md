@@ -19,8 +19,8 @@ Below is an overview of the model architecture and its compartments.
 | $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion of asymptomatically infected people who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
 | $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of symptomatically infected people who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
 | $N_j^{D^\perp}$                         | `Nj`   | Sum of all living individuals of age groups j. |
-| $\frac{1}{T_{E}}$                    |  `rateE`               | Time in days an individual stays in the Exposed compartment (Computed from `SerialInterval` and `IncubationPeriod`). |
-| $\frac{1}{T_{I_{NS}}}$                    |  `rateINS`               | Time in days an individual stays in the Infected No Symptoms compartment (Computed from `SerialInterval` and `IncubationPeriod`). |
+| $T_{E}$                    |  `TimeExposed`               | Time in days an individual stays in the Exposed compartment. |
+| $T_{I_{NS}}$                    |  `TimeInfectedNoSymptoms`               | Time in days an individual stays in the InfectedNoSymptoms compartment. |
 | $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Time in days an individual stays in the InfectedSymptoms compartment. |
 | $T_{I_{Sev}}$                       |  `TimeInfectedSevere`               | Time in days an individual stays in the InfectedSevere compartment. |
 | $T_{I_{Cr}}$                       |  `TimeInfectedCritical`               | Time in days an individual stays in the InfectedCritical compartment. |

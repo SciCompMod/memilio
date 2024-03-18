@@ -81,11 +81,11 @@ mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
 
     for (mio::AgeGroup i = 0; i < (mio::AgeGroup)num_agegroups; i++) {
         //times
-        model.parameters.get<mio::osecirvvs::IncubationTime>()[i]       = 5.2;
-        model.parameters.get<mio::osecirvvs::SerialInterval>()[i]       = 0.5 * 3.33 + 0.5 * 5.2;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i] = 7;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i]   = 6;
-        model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[i] = 7;
+        model.parameters.get<mio::osecirvvs::TimeExposed>()[i]            = 3.33;
+        model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i] = 1.87;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i]   = 7;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i]     = 6;
+        model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[i]   = 7;
 
         //probabilities
         model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[i]  = 0.15;
@@ -169,8 +169,8 @@ BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore)->Name("Graph Si
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation - adapt_rk");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("Graph Simulation - rk_ck54 (boost)");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
-    ->Name("Graph Simulation - rk_dopri5 (boost)");
+// BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
+// ->Name("Graph Simulation - rk_dopri5 (boost)"); // TODO: reenable once boost bug is fixed
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>)
     ->Name("Graph Simulation - rkf78 (boost)");
 // run all benchmarks

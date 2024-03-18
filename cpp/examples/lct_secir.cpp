@@ -25,46 +25,89 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/logging.h"
+
 #include <vector>
 
 int main()
 {
-    /** Simple example to demonstrate how to run a simulation using an LCT SECIR model. 
-    Parameters, initial values and subcompartments are not meant to represent a realistic scenario. */
+    // Simple example to demonstrate how to run a simulation using an LCT SECIR model.
+    // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
 
-    // Set vector that specifies the number of subcompartments.
-    std::vector<int> num_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
-    num_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
-    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
-    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
-    mio::lsecir::InfectionState infection_state(num_subcompartments);
+    using Model    = mio::lsecir::Model<2, 3, 1, 1, 5>;
+    using LctState = Model::LctState;
 
     ScalarType tmax = 20;
 
-    // Define initial distribution of the population in the subcompartments.
-    Eigen::VectorXd init(infection_state.get_count());
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 1]            = 20;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)]     = 20;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 1] = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 2] = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms)]       = 50;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere)]         = 50;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical)]       = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 1]   = 10;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 2]   = 5;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 3]   = 3;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 4]   = 2;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
-    init[infection_state.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
+    // Define the initial value vector init with the distribution of the population into subcompartments.
+    // This method of defining the vector using a vector of vectors is a bit of overhead, but should remind you how
+    // the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments.
+    // It is also possible to define the initial value vector directly.
+    std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
+                                                                {50},  {10, 10, 5, 3, 2}, {20},         {10}};
+
+    // Assert that initial_populations has the right shape.
+    if (initial_populations.size() != (int)LctState::InfectionState::Count) {
+        mio::log_error("The number of vectors in initial_populations does not match the number of InfectionStates.");
+        return 1;
+    }
+    if ((initial_populations[(int)LctState::InfectionState::Susceptible].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::Susceptible>()) ||
+        (initial_populations[(int)LctState::InfectionState::Exposed].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::Exposed>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedNoSymptoms].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedSymptoms].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedSevere].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedCritical].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>()) ||
+        (initial_populations[(int)LctState::InfectionState::Recovered].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::Recovered>()) ||
+        (initial_populations[(int)LctState::InfectionState::Dead].size() !=
+         LctState::get_num_subcompartments<LctState::InfectionState::Dead>())) {
+        mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
+                       "subcompartments.");
+        return 1;
+    }
+
+    // Transfer the initial values in initial_populations to the vector init.
+    Eigen::VectorXd init = Eigen::VectorXd::Zero(LctState::Count);
+    init[(int)LctState::get_first_index<LctState::InfectionState::Susceptible>()] =
+        initial_populations[(int)LctState::InfectionState::Susceptible][0];
+    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(); i++) {
+        init[(int)LctState::get_first_index<LctState::InfectionState::Exposed>() + i] =
+            initial_populations[(int)LctState::InfectionState::Exposed][i];
+    }
+    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>();
+         i++) {
+        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + i] =
+            initial_populations[(int)LctState::InfectionState::InfectedNoSymptoms][i];
+    }
+    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>(); i++) {
+        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + i] =
+            initial_populations[(int)LctState::InfectionState::InfectedSymptoms][i];
+    }
+    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>(); i++) {
+        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + i] =
+            initial_populations[(int)LctState::InfectionState::InfectedSevere][i];
+    }
+    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>(); i++) {
+        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + i] =
+            initial_populations[(int)LctState::InfectionState::InfectedCritical][i];
+    }
+    init[(int)LctState::get_first_index<LctState::InfectionState::Recovered>()] =
+        initial_populations[(int)LctState::InfectionState::Recovered][0];
+    init[(int)LctState::get_first_index<LctState::InfectionState::Dead>()] =
+        initial_populations[(int)LctState::InfectionState::Dead][0];
 
     // Initialize model.
-    mio::lsecir::Model model(std::move(init), infection_state);
+    Model model(std::move(init));
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2.;
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
     model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
     // It is also possible to change values with the set function.

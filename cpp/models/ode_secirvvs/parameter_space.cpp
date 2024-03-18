@@ -112,8 +112,8 @@ void draw_sample_infection(Model& model)
     model.parameters.get<Seasonality>().draw_sample();
 
     //not age dependent
-    model.parameters.get<IncubationTime>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<TimeExposed>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<TimeInfectedNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
@@ -130,8 +130,8 @@ void draw_sample_infection(Model& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.get<IncubationTime>()[i] = model.parameters.get<IncubationTime>()[AgeGroup(0)];
-        model.parameters.get<SerialInterval>()[i] = model.parameters.get<SerialInterval>()[AgeGroup(0)];
+        model.parameters.get<TimeExposed>()[i]            = model.parameters.get<TimeExposed>()[AgeGroup(0)];
+        model.parameters.get<TimeInfectedNoSymptoms>()[i] = model.parameters.get<TimeInfectedNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
             model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =
