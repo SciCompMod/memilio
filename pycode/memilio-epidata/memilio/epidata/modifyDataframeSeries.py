@@ -273,9 +273,14 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
 
     @return a dataframe with the extracted dates
     """
-
-    upperdate = datetime.strftime(end_date, '%Y-%m-%d')
-    lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
+    if not isinstance(end_date, str):
+        upperdate = datetime.strftime(end_date, '%Y-%m-%d')
+    else:
+        upperdate = end_date
+    if not isinstance(start_date, str):
+        lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
+    else:
+        lowerdate = start_date
 
     # Removes dates higher than end_date
     df_new = df[df[dd.EngEng['date']] <= upperdate]
