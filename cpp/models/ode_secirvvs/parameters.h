@@ -260,6 +260,37 @@ struct TimeWaningImprovedImmunity {
 };
 
 /**
+ * @brief the time people stays immune after infection or vaccination located in S
+         in the model in day unit
+ */
+struct TimeTemporaryImmunityPI {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityPI";
+    }
+};
+
+/**
+ * @brief the time people stays immune after infection or vaccination located in S_PI or S_II
+        in the model in day unit
+ */
+struct TimeTemporaryImmunityII {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityII";
+    }
+};
+/**
 * @brief probability of getting infected from a contact
 */
 struct TransmissionProbabilityOnContact {
