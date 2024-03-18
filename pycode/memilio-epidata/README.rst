@@ -136,14 +136,14 @@ If a new functionality shall be added please stick to the following instructions
 When you start creating a new script:
 
 - have a look into getDataIntoPandasDataFrame.py there the main functionality which should be used is implemented.
-  - get_file is used to read in data.
-  - the Conf class sets relevant download options.
-  - use write_dataframe of to write the pandas dataframe to file.
-  - use check_dir if you want to create a new folder to write data to
-- use the dictionaries in defaultDict.py to rename the existing columns of you data
-  - add new column names to one of the existing languages; english, german and spanish translation exists at the moment.
-  - for non-english languages always use the EngEng dictionary as the key, thus we can easily change names with just changing one line.
-  - in defaultDict.py a dictionary with id and state and county name, respectivly exists. Please use it.
+    - get_file is used to read in data.
+    - the Conf class sets relevant download options.
+    - use write_dataframe to write the pandas dataframe to file.
+    - use check_dir if you want to create a new folder to write data to
+- use the dictionaries in defaultDict.py to rename the existing columns of your data
+    - add new column names to one of the existing language dictionaries; english, german and spanish translation exists at the moment.
+    - for non-english languages always use the EngEng dictionary as the key, thus we can easily change names with just changing one line.
+    - in defaultDict.py a dictionary with id, state and county name, respectively exists. Please use it.
 - After renaming columns, you should not use pandas dataframe.column but instead use
   dataframe[column] where column is given by the dictionaries in defaultDict.py.
   Example: ID_County = dd.GerEng['IdLandkreis'] or dd.EngEng['idCounty'].
