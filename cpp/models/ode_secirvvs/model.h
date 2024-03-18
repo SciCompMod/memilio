@@ -1,7 +1,7 @@
 /* 
 * * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -550,10 +550,10 @@ public:
 
             // waning
             flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity, InfectionState::SusceptibleNaive>(
-                {i})] = 1 / params.get<WaningPartialImmunity>()[i] * y[SPIi];
+                {i})] = 1 / params.get<TimeWaningPartialImmunity>()[i] * y[SPIi];
             flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
                                       InfectionState::SusceptiblePartialImmunity>({i})] =
-                1 / params.get<WaningImprovedImmunity>()[i] * y[SIIi];
+                1 / params.get<TimeWaningImprovedImmunity>()[i] * y[SIIi];
         }
     }
 

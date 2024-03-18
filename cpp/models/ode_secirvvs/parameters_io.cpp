@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *

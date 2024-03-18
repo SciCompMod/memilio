@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -261,6 +261,36 @@ struct TimeInfectedCritical {
     }
 };
 
+/** 
+ * @brief Time in days to describe waning immunity to get person from S_PI -> S
+ */
+struct TimeWaningPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "TimeWaningPartialImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from SII -> SPI
+ */
+struct TimeWaningImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "TimeWaningImprovedImmunity";
+    }
+};
+
 /**
 * @brief probability of getting infected from a contact
 */
@@ -441,36 +471,6 @@ struct DaysUntilEffectiveBoosterImmunity {
     }
 };
 
-/** 
- * @brief Time in days to describe waning immunity to get person from S_PI -> S
- */
-struct WaningPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 90.0);
-    }
-    static std::string name()
-    {
-        return "WaningPartialImmunity";
-    }
-};
-
-/** 
- * @brief Time in days to describe waning immunity to get person from SII -> SPI
- */
-struct WaningImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 90.0);
-    }
-    static std::string name()
-    {
-        return "WaningImprovedImmunity";
-    }
-};
-
 /**
 * @brief Total number of first vaccinations up to the given day.
 */
@@ -648,8 +648,8 @@ using ParametersBase =
                  ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
                  ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
                  ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, StartDayNewVariant,
-                 InfectiousnessNewVariant, WaningPartialImmunity, WaningImprovedImmunity, TimeTemporaryImmunityPI,
-                 TimeTemporaryImmunityII>;
+                 InfectiousnessNewVariant, TimeWaningPartialImmunity, TimeWaningImprovedImmunity,
+                 TimeTemporaryImmunityPI, TimeTemporaryImmunityII>;
 
 /**
  * @brief Parameters of the age-resolved SECIRS-type model with high temporary immunity upon immunization and waning immunity over
@@ -806,6 +806,7 @@ public:
                 this->get<TimeTemporaryImmunityPI>()[i] = tol_times;
                 corrected                               = true;
             }
+
             if (this->get<TimeTemporaryImmunityII>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeTemporaryImmunityII changed from {} to {}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
@@ -813,6 +814,24 @@ public:
                             this->get<TimeTemporaryImmunityII>()[i], tol_times);
                 this->get<TimeTemporaryImmunityII>()[i] = tol_times;
                 corrected                               = true;
+            }
+
+            if (this->get<TimeWaningPartialImmunity>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeWaningPartialImmunity changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeWaningPartialImmunity>()[i], tol_times);
+                this->get<TimeWaningPartialImmunity>()[i] = tol_times;
+                corrected                                 = true;
+            }
+
+            if (this->get<TimeWaningImprovedImmunity>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeWaningImprovedImmunity changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeWaningImprovedImmunity>()[i], tol_times);
+                this->get<TimeWaningImprovedImmunity>()[i] = tol_times;
+                corrected                                  = true;
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
@@ -873,11 +892,19 @@ public:
                 this->get<DaysUntilEffectivePartialImmunity>()[i] = 0;
                 corrected                                         = true;
             }
+
             if (this->get<DaysUntilEffectiveImprovedImmunity>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity changed from {} to {}",
                             this->get<DaysUntilEffectiveImprovedImmunity>()[i], 0);
                 this->get<DaysUntilEffectiveImprovedImmunity>()[i] = 0;
                 corrected                                          = true;
+            }
+
+            if (this->get<DaysUntilEffectiveBoosterImmunity>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DaysUntilEffectiveBoosterImmunity changed from {} to {}",
+                            this->get<DaysUntilEffectiveBoosterImmunity>()[i], 0);
+                this->get<DaysUntilEffectiveBoosterImmunity>()[i] = 0;
+                corrected                                         = true;
             }
 
             if (this->get<ReducExposedPartialImmunity>()[i] <= 0.0 ||
@@ -1023,6 +1050,22 @@ public:
                 return true;
             }
 
+            if (this->get<TimeWaningPartialImmunity>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeWaningPartialImmunity {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeWaningPartialImmunity>()[i], tol_times);
+                return true;
+            }
+
+            if (this->get<TimeWaningImprovedImmunity>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeWaningImprovedImmunity {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeWaningImprovedImmunity>()[i], tol_times);
+                return true;
+            }
+
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {} or larger {}", 0, 1);
@@ -1070,7 +1113,13 @@ public:
                 log_error("Constraint check: Parameter DaysUntilEffectivePartialImmunity smaller {}", 0);
                 return true;
             }
+
             if (this->get<DaysUntilEffectiveImprovedImmunity>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {}", 0);
+                return true;
+            }
+
+            if (this->get<DaysUntilEffectiveBoosterImmunity>()[i] < 0.0) {
                 log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {}", 0);
                 return true;
             }

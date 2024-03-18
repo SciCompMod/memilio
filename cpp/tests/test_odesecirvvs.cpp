@@ -975,7 +975,23 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::TimeInfectedCritical>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::TimeInfectedCritical>(2);
+    model.parameters.set<mio::osecirvvs::TimeInfectedCritical>(10.);
+    model.parameters.set<mio::osecirvvs::TimeTemporaryImmunityPI>(0.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TimeTemporaryImmunityPI>(90.);
+    model.parameters.set<mio::osecirvvs::TimeTemporaryImmunityII>(-20.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TimeTemporaryImmunityII>(90.);
+    model.parameters.set<mio::osecirvvs::TimeWaningPartialImmunity>(0.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TimeWaningPartialImmunity>(100.);
+    model.parameters.set<mio::osecirvvs::TimeWaningImprovedImmunity>(0.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TimeWaningImprovedImmunity>(200);
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(2.0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1011,11 +1027,15 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(30);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(7);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(-0.2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(30);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(7);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(-2);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(7);
     model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1099,6 +1119,14 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeTemporaryImmunityII>()[indx_agegroup], tol_times);
 
+    model.parameters.set<mio::osecirvvs::TimeWaningPartialImmunity>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeWaningPartialImmunity>()[indx_agegroup], tol_times);
+
+    model.parameters.set<mio::osecirvvs::TimeWaningImprovedImmunity>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeWaningImprovedImmunity>()[indx_agegroup], tol_times);
+
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(2.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_NEAR(model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[indx_agegroup], 0.0, 1e-14);
@@ -1138,6 +1166,10 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(-0.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(-0.2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>()[indx_agegroup], 0);
 
     model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
