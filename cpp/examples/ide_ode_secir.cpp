@@ -50,9 +50,9 @@ int main()
     bool print_to_terminal = false;
     bool save_result       = true;
     bool ide_simulation    = true;
-    int dt_exponent        = 3;
+    int dt_exponent        = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 16;
+    int setting = 18;
 
     // General set up.
     ScalarType t0   = 0;
@@ -225,7 +225,7 @@ int main()
 
         ScalarType total_infections = 0.;
 
-        if (setting == 11 || setting == 13 || setting == 14) {
+        if (setting == 11 || setting == 13 || setting == 14 || setting == 18) {
             total_infections = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
                                            [(int)mio::osecir::InfectionState::InfectedSymptoms] +
                                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
@@ -338,6 +338,12 @@ int main()
             model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] =
                 secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
                             [(int)mio::osecir::InfectionState::Recovered];
+        }
+
+        if (setting == 17) {
+            model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] =
+                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 1]
+                            [(int)mio::osecir::InfectionState::Susceptible];
         }
 
         // Carry out simulation
