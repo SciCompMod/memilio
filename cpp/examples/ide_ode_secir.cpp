@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler
 *
@@ -17,9 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-// #include "Eigen/src/Core/util/Meta.h"
 #include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
-// #include "load_test_data.h"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/model.h"
 #include "memilio/math/adapt_rk.h"
@@ -52,7 +50,7 @@ int main()
     bool ide_simulation    = true;
     int dt_exponent        = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 18;
+    int setting = 14;
 
     // General set up.
     ScalarType t0   = 0;
@@ -82,12 +80,13 @@ int main()
     model_ode.parameters.get<mio::osecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Parameters needed to determine transition rates
-    model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 2.6;
-    model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 2.0;
-
-    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = 0.3;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]   = 0.3;
-    model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 0.3;
+    // model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 2.6;
+    // model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 2.0;
+    model_ode.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]            = 1.4;
+    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0] = 1.2;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]   = 0.3;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]     = 0.3;
+    model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0]   = 0.3;
 
     // Set initial values for compartments
     model_ode.populations.set_total(nb_total_t0);
@@ -256,18 +255,14 @@ int main()
         mio::StateAgeFunctionWrapper delaydistribution(expdecay);
         std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
         // ExposedToInfectedNoSymptoms
-        // see definition of rate_E in model.h of ODE; set parameter to rate_E
-        ScalarType rate_E = 1 / (2 * model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] -
-                                 model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]);
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_parameter(rate_E);
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_parameter(
+            1 / model_ode.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]);
         // InfectedNoSymptomsToInfectedSymptoms
-        // see definition of rate_INS in model.h of ODE; set parameter to rate_INS
-        ScalarType rate_INS = 1 / (2 * (model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] -
-                                        model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]));
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(
-            rate_INS);
+            1 / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]);
         // InfectedNoSymptomsToRecovered
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_parameter(rate_INS);
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_parameter(
+            1 / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]);
         // InfectedSymptomsToInfectedSevere
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_parameter(
             1 / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
