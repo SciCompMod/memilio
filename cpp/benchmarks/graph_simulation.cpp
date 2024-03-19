@@ -81,11 +81,11 @@ mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
 
     for (mio::AgeGroup i = 0; i < (mio::AgeGroup)num_agegroups; i++) {
         //times
-        model.parameters.get<mio::osecirvvs::IncubationTime>()[i]       = 5.2;
-        model.parameters.get<mio::osecirvvs::SerialInterval>()[i]       = 0.5 * 3.33 + 0.5 * 5.2;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i] = 7;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i]   = 6;
-        model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[i] = 7;
+        model.parameters.get<mio::osecirvvs::TimeExposed>()[i]            = 3.33;
+        model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i] = 1.87;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i]   = 7;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i]     = 6;
+        model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[i]   = 7;
 
         //probabilities
         model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[i]  = 0.15;
