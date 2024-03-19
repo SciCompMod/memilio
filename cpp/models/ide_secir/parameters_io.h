@@ -36,7 +36,7 @@ namespace isecir
 {
 
 /**
-* @brief Computes a TimeSeries of flows to provide initial data for an IDE SECIR model with data from RKI.
+* @brief Computes a TimeSeries of flows to provide initial data for an IDE-SECIR model with data from RKI.
 *   
 * The flows InfectedNoSymptomsToInfectedSymptoms are calculated using the confirmed cases in the RKI data.
 * If necessary, the RKI data are linearly interpolated within one day.
@@ -54,7 +54,7 @@ namespace isecir
 *
 * The number of death used in the model is also set to the number given in the RKI data.
 * 
-* @param[in, out] Model The model for which the inital flows should be computed.
+* @param[in, out] model The model for which the inital flows should be computed.
 * @param[in] dt Time step size.
 * @param[in] path Path to the RKI file.
 * @param[in] date The start date of the simulation and the last time point of the TimeSeries used for initialization.

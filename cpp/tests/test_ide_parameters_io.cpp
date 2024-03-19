@@ -85,7 +85,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     }
 }
 
-// Check some cases where computation of initial values for an LCT model based on RKI data should fail.
+// Check some cases where computation of initial values for an IDE model based on RKI data should fail.
 TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 {
     // Define start date and the total population used for the initialization.
@@ -99,21 +99,21 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
-    // Case where start_date is later than maximal provided date in file.
+    // --- Case where start_date is later than maximal provided date in file.
     auto start_date = mio::Date(2020, 6, 9);
     auto status =
         mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
-    // Case where not all needed dates are provided.
+    // --- Case where not all needed dates are provided.
     start_date = mio::Date(2020, 6, 7);
     status =
         mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
-    // Case with empty RKI data file.
+    // --- Case with empty RKI data file.
     status =
         mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "test_empty_file.json"), start_date);
 
