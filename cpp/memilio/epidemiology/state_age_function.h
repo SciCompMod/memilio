@@ -356,6 +356,10 @@ struct SmootherCosine : public StateAgeFunction {
         return m_support_max;
     }
 
+    // TODO: There is also a closed form for the mean value of Smoothercosine: 0.5*m_parameter.
+    // However, an StateAgeFunction that uses the default implementation is required for testing purposes.
+    // Therefore, the closed form is only used for comparison in the tests.
+    // If another StateAgeFunction is implemented that uses the default implementation, the function get_mean() should be overwritten here.
 protected:
     /**
      * @brief Clones unique pointer to a StateAgeFunction.

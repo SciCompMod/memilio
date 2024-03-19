@@ -25,9 +25,9 @@
 #include "lct_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/date.h"
-#include "test_data_dir.h"
 #include "memilio/io/io.h"
-#include <matchers.h>
+#include "test_data_dir.h"
+#include "matchers.h"
 
 #include <gtest/gtest.h>
 
