@@ -9,18 +9,18 @@ import matplotlib.pyplot as plt
 
 
 # We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
-def read_groundtruth(data_dir, setting):
+def read_groundtruth(data_dir, dt_ode, setting):
 
     model = 'ode'
     results = {model: []}
 
-    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt=1e-5_setting{}'.format(
-        model, setting)) + '.h5', 'r')
+    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_setting{}'.format(
+        model, dt_ode, setting)) + '.h5', 'r')
 
-    # if (len(list(h5file.keys())) > 1):
-    #     raise gd.DataError("File should contain one dataset.")
-    # if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-    #     raise gd.DataError("Expected only one group.")
+    if (len(list(h5file.keys())) > 1):
+        raise gd.DataError("File should contain one dataset.")
+    if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+        raise gd.DataError("Expected only one group.")
 
     data = h5file[list(h5file.keys())[0]]
 
@@ -34,26 +34,27 @@ def read_groundtruth(data_dir, setting):
 
     dates = data['Time'][:]
 
-    # if (results[model][-1].shape[1] != 8):
-    #     raise gd.DataError(
-    #         "Expected a different number of compartments.")
+    if (results[model][-1].shape[1] != 8):
+        raise gd.DataError(
+            "Expected a different number of compartments.")
 
     h5file.close()
 
     return results
 
 
-# Read data into a dict, where the keys correspond to ODE and IDE models. There
+# Read data into a dict, where the keys correspond to the respective model.
+# At the moment we are only storing results of the IDE model here. There
 # we have an array that contains all results for SECIHURD for all time points
 # for each time step size that is investigated.
-def read_data(data_dir, timesteps, setting):
+def read_data(data_dir, dt_ode, timesteps_ide, setting):
 
-    models = ['ode', 'ide']
-    results = {models[0]: [], models[1]: []}
+    models = ['ide']
+    results = {models[0]: []}
     for model in models:
-        for timestep in timesteps:
-            h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_setting{}'.format(
-                model, timestep, setting)) + '.h5', 'r')
+        for timestep in timesteps_ide:
+            h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_init_dt_ode={}_setting{}'.format(
+                model, timestep, dt_ode, setting)) + '.h5', 'r')
 
             # if (len(list(h5file.keys())) > 1):
             #     raise gd.DataError("File should contain one dataset.")
@@ -90,20 +91,19 @@ def compute_norm(timeseries, timestep):
     return norm
 
 # Compute norm of the difference between time series for S from ODE and time series for S from IDE
-# TODO: Überlegen, ob wir hier den ersten Zeitschritt rausnehmen, damit
-# besser vergleichbar zwischen verschiedenen Zeitschrittgrößen
 
 
-def compute_error_norm_S_timeseries(results, timesteps):
+def compute_error_norm_S_timeseries(groundtruth, results, dt_ode, timesteps_ide):
     errors = []
 
     # Compute error for S for every time step
-    for i in range(len(results['ode'])):
-        timestep = timesteps[i]
+    for i in range(len(results['ide'])):
+        timestep = timesteps_ide[i]
+        scale_timesteps = timestep/float(dt_ode)
         num_timepoints = len(results['ide'][i])
         # for now, compute only difference for S
-        difference = results['ode'][i][num_timepoints -
-                                       1:][:, 0]-results['ide'][i][:, 0]
+        difference = groundtruth['ode'][0][int(scale_timesteps*(num_timepoints -
+                                                                1))::int(scale_timesteps)][:, 0]-results['ide'][i][:, 0]
         errors.append(compute_norm(difference, timestep))
 
     return errors
@@ -111,17 +111,16 @@ def compute_error_norm_S_timeseries(results, timesteps):
 # Compute norm of the difference between ODE and IDE at tmax for all compartments
 
 
-def compute_error_norm_tmax(groundtruth, results, timesteps):
+def compute_error_norm_tmax(groundtruth, results, timesteps_ide):
     errors = []
 
-    # Compute error for S for every used time step in IDE simulation at tmax
+    # Compute error of compartments in IDE simulation at tmax
     for i in range(len(results['ide'])):
         errors.append([])
         # compute difference for all compartments
         for compartment in range(8):
-            timestep = timesteps[i]
+            timestep = timesteps_ide[i]
             num_timepoints = len(results['ide'][i])
-            # for now, compute only difference for S
             difference = groundtruth['ode'][0][-1][compartment] - \
                 results['ide'][i][-1][compartment]
             errors[i].append(np.sqrt(difference ** 2))
@@ -131,7 +130,7 @@ def compute_error_norm_tmax(groundtruth, results, timesteps):
 # Plot errors against timesteps.
 
 
-def plot_convergence(errors, timesteps, setting, compartment=None, save=False):
+def plot_convergence(errors, timesteps_ide, setting, compartment=None, save=False):
 
     secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                   5: 'ICU', 6: 'Recovered', 7: 'Dead'}
@@ -178,12 +177,12 @@ def plot_convergence(errors, timesteps, setting, compartment=None, save=False):
         for i in range(8):
 
             # plot comparison line for linear convergence
-            comparison = [500 * dt for dt in timesteps]
-            ax[int(i/2), i % 2].plot(timesteps, comparison, color='lightgray',
+            comparison = [500 * dt for dt in timesteps_ide]
+            ax[int(i/2), i % 2].plot(timesteps_ide, comparison, color='lightgray',
                                      label=r"$\mathcal{O}(\Delta t)$")
 
             # plot results
-            ax[int(i/2), i % 2].plot(timesteps,
+            ax[int(i/2), i % 2].plot(timesteps_ide,
                                      errors[:, i], '-o', color=colors[0], label='Results')
 
             # adapt plots
@@ -217,19 +216,19 @@ def plot_convergence(errors, timesteps, setting, compartment=None, save=False):
 # Compute order of convergence between two consecutive time step sizes
 
 
-def compute_order_of_convergence(errors, timesteps):
+def compute_order_of_convergence(errors, timesteps_ide):
     order = []
     for compartment in range(8):
         order.append([])
         for i in range(len(errors)-1):
             order[compartment].append(np.log(errors[i+1][compartment]/errors[i][compartment]) /
-                                      np.log(timesteps[i+1]/timesteps[i]))
+                                      np.log(timesteps_ide[i+1]/timesteps_ide[i]))
     return np.array(order)
 
-# Print relative and absolute results of ODE and IDE simulations
+# Print results of ODE and IDE simulations at tmax
 
 
-def print_results(groundtruth, results, timesteps):
+def print_results(groundtruth, results, timesteps_ide):
 
     compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
 
@@ -240,34 +239,36 @@ def print_results(groundtruth, results, timesteps):
               groundtruth['ode'][0][-1][compartment])
         print('\n')
         print('IDE:')
-        for i in range(len(timesteps)):
-            print('Timestep ', timesteps[i], ':',
+        for i in range(len(timesteps_ide)):
+            print('Timestep ', timesteps_ide[i], ':',
                   results['ide'][i][-1][compartment])
 
+# Print results of ODE and IDE simulations at t0_ide
 
-def print_initial_values(groundtruth, results, timesteps):
+
+def print_initial_values(groundtruth, results, dt_ode, timesteps_ide):
 
     compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
 
     for compartment in range(8):
         print('\n')
         print(f'{compartments[compartment]}: ')
-        # get values of ODE model (computed with dt = 1e-6) at t0_ide = 35
+        # get values of ODE model  at t0_ide = 35
         print('Groundtruth (using ODE): ',
-              groundtruth['ode'][0][35*(10**6)][compartment])
+              groundtruth['ode'][0][int(35/float(dt_ode))][compartment])
         print('\n')
         print('IDE:')
-        for i in range(len(timesteps)):
-            print('Timestep ', timesteps[i], ':',
+        for i in range(len(timesteps_ide)):
+            print('Timestep ', timesteps_ide[i], ':',
                   results['ide'][i][0][compartment])
 
     print(0)
 
 
-def print_total_population(results, timesteps):
+def print_total_population(results, timesteps_ide):
 
-    for i in range(len(timesteps)):
-        print('Timestep ', timesteps[i], ':')
+    for i in range(len(timesteps_ide)):
+        print('Timestep ', timesteps_ide[i], ':')
         total_population = 0
         for compartment in range(8):
             total_population += results['ide'][i][-1][compartment]
@@ -276,7 +277,7 @@ def print_total_population(results, timesteps):
         print('Total population (IDE):', total_population)
 
 
-def print_errors(errors, timesteps):
+def print_errors(errors, timesteps_ide):
 
     compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
 
@@ -285,8 +286,8 @@ def print_errors(errors, timesteps):
         print(f'{compartments[compartment]}: ')
         print('\n')
         print('Errors of IDE (compared to ODE):')
-        for i in range(len(timesteps)):
-            print('Timestep ', timesteps[i], ':',
+        for i in range(len(timesteps_ide)):
+            print('Timestep ', timesteps_ide[i], ':',
                   errors[i][compartment])
 
 
@@ -294,32 +295,35 @@ def main():
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    setting = '16'
+    setting = '2'
 
     print('Setting: ', setting)
 
-    timesteps = ['1e-2', '1e-3']  # , '1e-4'
+    dt_ode = '1e-4'
 
-    groundtruth = read_groundtruth(data_dir, setting)
+    timesteps_ide = ['1e-2', '1e-3']  # , '1e-4'
 
-    results = read_data(data_dir, timesteps, setting)
+    groundtruth = read_groundtruth(data_dir, dt_ode, setting)
 
-    timesteps = [1e-2, 1e-3]  # , 1e-4
-    errors = compute_error_norm_tmax(groundtruth, results, timesteps)
+    results = read_data(data_dir, dt_ode, timesteps_ide, setting)
 
-    plot_convergence(errors, timesteps, setting, save=True)
+    timesteps_ide = [1e-2, 1e-3]  # , 1e-4
 
-    # print_initial_values(groundtruth, results, timesteps)
+    errors = compute_error_norm_tmax(groundtruth, results, timesteps_ide)
 
-    # print_total_population(results, timesteps)
+    plot_convergence(errors, timesteps_ide, setting, save=True)
 
-    order = compute_order_of_convergence(errors, timesteps)
+    print_initial_values(groundtruth, results, dt_ode, timesteps_ide)
+
+    # print_total_population(results, timesteps_ide)
+
+    order = compute_order_of_convergence(errors, timesteps_ide)
 
     print('Orders of convergence: ', order)
 
-    # print_results(groundtruth, results, timesteps)
+    # print_results(groundtruth, results, timesteps_ide)
 
-    # print_errors(errors, timesteps)
+    # print_errors(errors, timesteps_ide)
 
     return
 

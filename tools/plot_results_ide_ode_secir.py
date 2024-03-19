@@ -29,14 +29,14 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# import memilio.epidata.getDataIntoPandasDataFrame as gd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 # Define compartments
 secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
               5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
 
-def compare_results(timestep, setting, legendplot, save=True):
+def compare_results(dt_ode, dt_ide, setting, legendplot, save=True):
     """ Creates a 4x2 Plot with one subplot per compartment and one line per result one wants to compare.
     @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
         Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
@@ -44,8 +44,8 @@ def compare_results(timestep, setting, legendplot, save=True):
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] save: if save is True, the plot is saved in a folder named Plots.
     """
-    files = [os.path.join(data_dir, f"result_ode_dt={timestep}_setting{setting}"), os.path.join(
-        data_dir, f"result_ide_dt={timestep}_setting{setting}")]
+    files = [os.path.join(data_dir, f"result_ode_dt={dt_ode}_setting{setting}"), os.path.join(
+        data_dir, f"result_ide_dt={dt_ide}_init_dt_ode={dt_ode}_setting{setting}")]
 
     fig, axs = plt.subplots(4, 2, sharex='all', num='Compare files')
     # helmholtzdarkblue, helmholtzclaim
@@ -100,7 +100,7 @@ def compare_results(timestep, setting, legendplot, save=True):
     if save:
         if not os.path.isdir('plots'):
             os.makedirs('plots')
-        plt.savefig(f'plots/ide_ode_compare_dt={timestep}_setting{setting}.png',
+        plt.savefig(f'plots/ide_ode_compare_dt_ide={dt_ide}_init_dt_ode={dt_ode}_setting{setting}.png',
                     bbox_inches='tight', dpi=500)
     # plt.show()
 
@@ -110,8 +110,11 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    timestep = '1e-3'
-    setting = 16
+    dt_ode = '1e-4'
+    dt_ide = '1e-3'
+
+    setting = 2
+
     # Plot comparison of ODE and IDE models
-    compare_results(timestep, setting,
+    compare_results(dt_ode, dt_ide, setting,
                     legendplot=list(["ODE", "IDE"]), save=True)
