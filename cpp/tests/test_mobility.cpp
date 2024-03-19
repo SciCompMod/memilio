@@ -169,3 +169,49 @@ TEST(TestMobility, edgeApplyMigration)
     EXPECT_DOUBLE_EQ(node1.get_result().get_last_value().sum(), 900);
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1100);
 }
+
+TEST(TestMobility, condense_m_migrated_with_indices)
+{
+    using Model = mio::osecir::Model;
+
+    //setup nodes
+    Model model(1);
+    auto& params = model.parameters;
+    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns>());
+    cm[0].get_baseline()(0, 0) = 5.0;
+
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 20;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
+    params.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.5;
+    params.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]                      = 1.;
+    params.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]           = 1.;
+    params.apply_constraints();
+
+    //setup different edges
+    double t = 0.;
+    mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
+    mio::MigrationEdge edge1(Eigen::VectorXd::Constant(10, 0.1));
+    edge1.apply_migration(t, 0.0, node1, node2);
+    auto migrated = edge1.get_migrated().get_last_value();
+    EXPECT_NEAR(migrated[0], 1.0, 1e-12);
+    EXPECT_NEAR(migrated[1], 2.0, 1e-12);
+    EXPECT_NEAR(migrated[2], 100.0, 1e-12);
+
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 100;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 30;
+    mio::SimulationNode<mio::osecir::Simulation<>> node3(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node4(model, t);
+    mio::MigrationEdge edge2(Eigen::VectorXd::Constant(10, 0.1));
+    edge2.apply_migration(t, 0.5, node3, node4);
+    migrated = edge2.get_migrated().get_last_value();
+    EXPECT_NEAR(migrated[0], 11.0, 1e-12);
+    EXPECT_NEAR(migrated[1], 5.0, 1e-12);
+    EXPECT_NEAR(migrated[2], 113.0, 1e-12);
+}

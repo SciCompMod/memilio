@@ -252,13 +252,13 @@ using get_indices_of_symptomatic_and_nonsymptomatic_expr_t =
  * @brief Get the indices of symptomatic and non-symptomatic infection states.
  *
  * This function generates two vectors of indices, one for non-symptomatic infection states and one for symptomatic infection states.
- * Each vector contains the flat indices of the corresponding infection states for each age group and compartment in the model.
+ * Each vector contains the flat indices of the corresponding infection states for each age group in the model.
  *
  * @tparam Base The base class for the simulation, defaults to mio::Simulation<Model>.
  * @param[in] sim The simulation object from which we obtain the model.
  *
  * @return A tuple containing two vectors of size_t. The first vector contains the indices of non-symptomatic infection states,
- * and the second vector contains the indices of symptomatic infection states. The indices are ordered first by age group, then by compartment.
+ * and the second vector contains the indices of symptomatic infection states. The indices are ordered first by age group.
  */
 template <class Sim,
           std::enable_if_t<!is_expression_valid<get_indices_of_symptomatic_and_nonsymptomatic_expr_t, Sim>::value,
