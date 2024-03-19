@@ -23,6 +23,7 @@
 
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
+#include "ode_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 
@@ -49,50 +50,33 @@ public:
     * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
+
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
-          const ParameterSet& Parameterset_init = ParameterSet());
+          const ParameterSet& Parameterset_init = ParameterSet(), bool need_flow_initialization = false);
 
     /**
     * @brief Checks constraints on model parameters.
     */
     void check_constraints(ScalarType dt) const
     {
-        if (!(m_populations.get_num_time_points() > 0)) {
-            log_error("Model construction failed. No initial time point for populations.");
-        }
+        // if (!(m_populations.get_num_time_points() > 0)) {
+        //     log_error("Model construction failed. No initial time point for populations.");
+        // }
 
-        for (int i = 0; i < (int)InfectionState::Count; i++) {
-            if (m_populations[0][i] < 0) {
-                log_error("Initialization failed. Initial values for populations are less than zero.");
-            }
-        }
+        // for (int i = 0; i < (int)InfectionState::Count; i++) {
+        //     if (m_populations[0][i] < 0) {
+        //         log_error("Initialization failed. Initial values for populations are less than zero.");
+        //     }
+        // }
 
         if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
             log_error(
                 "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
-        ScalarType support_max = std::max(
-            {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_support_max(dt, m_tol)});
+        ScalarType global_support_max = get_global_support_max(dt);
 
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
+        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(global_support_max / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
@@ -100,13 +84,17 @@ public:
         parameters.check_constraints();
     }
 
+    /***********************
+    * Solver for IDE model *
+    ***********************/
+
     /**
      * @brief Calculate the number of individuals in each compartment for time 0.
      * 
      * Initial transitions are used to calculate the initial compartment sizes.
      * @param[in] dt Time discretization step size.         
      */
-    void initialize(ScalarType dt);
+    void initialize_solver(ScalarType dt);
 
     /**
     * @brief Computes number of Susceptibles for the current last time in m_populations.
@@ -197,6 +185,23 @@ public:
      */
     void compute_recovered();
 
+    void set_populations_before_simulation();
+
+    /*******************
+    * Helper functions *
+    *******************/
+
+    /**
+     * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
+     *
+     * This determines how many inital values we need for the flows.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Global support_max.
+     *
+     */
+    ScalarType get_global_support_max(ScalarType dt) const;
     /**
      * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
      *
@@ -232,11 +237,13 @@ public:
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point - dt.
+    ScalarType m_deaths{0.};
+    ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
     ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{
         0}; ///< Gives the index of the method used for the initialization of the model. See also get_initialization_method() for the number code.
+    bool m_need_flow_init{false};
 };
 
 } // namespace isecir

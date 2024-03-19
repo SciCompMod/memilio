@@ -569,27 +569,21 @@ public:
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < tol_times) {
-                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}. Please "
-                          "note that unreasonably small compartment stays lead to massively increased run time. "
-                          "Consider to cancel and reset parameters.",
-                          this->get<TimeInfectedSymptoms>()[i], tol_times);
-                return true;
+                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
+                          this->get<TimeInfectedSymptoms>()[i], 1.0);
+                return 1;
             }
 
             if (this->get<TimeInfectedSevere>()[i] < tol_times) {
-                log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}. Please "
-                          "note that unreasonably small compartment stays lead to massively increased run time. "
-                          "Consider to cancel and reset parameters.",
-                          this->get<TimeInfectedSevere>()[i], tol_times);
-                return true;
+                log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
+                          this->get<TimeInfectedSevere>()[i], 1.0);
+                return 1;
             }
 
             if (this->get<TimeInfectedCritical>()[i] < tol_times) {
-                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}. Please "
-                          "note that unreasonably small compartment stays lead to massively increased run time. "
-                          "Consider to cancel and reset parameters.",
-                          this->get<TimeInfectedCritical>()[i], tol_times);
-                return true;
+                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
+                          this->get<TimeInfectedCritical>()[i], 1.0);
+                return 1;
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||

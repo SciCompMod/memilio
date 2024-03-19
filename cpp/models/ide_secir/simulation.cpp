@@ -20,7 +20,7 @@
 #include "ide_secir/simulation.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <memory>
@@ -33,13 +33,14 @@ namespace isecir
 void Simulation::advance(ScalarType tmax)
 {
     mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
-    m_model->initialize(m_dt);
+    m_model->initialize_solver(m_dt);
 
     // for every time step:
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
-
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
+
+        std::cout << "Time: " << m_model->m_transitions.get_last_time() << "\n";
 
         // compute_S:
         m_model->compute_susceptibles(m_dt);
