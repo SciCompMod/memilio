@@ -59,12 +59,14 @@ ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVar
                                                    size_t num_agegroups) const
 {
     assert(age_receiver.get() < num_agegroups);
-    ScalarType prob = 0;
+
+    ScalarType transmissions_per_day = 0;
     for (uint32_t age_transmitter = 0; age_transmitter != num_agegroups; ++age_transmitter) {
-        prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
-                m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
+        transmissions_per_day +=
+            m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
+            m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
     }
-    return prob;
+    return transmissions_per_day;
 }
 
 ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
@@ -83,26 +85,46 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
     assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
     for (auto cell_index :
          person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
-        std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
+        std::pair<VirusVariant, ScalarType> local_indiv_expected_trans[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus = static_cast<VirusVariant>(v);
-            ScalarType local_indiv_trans_prob_v =
-                (std::min(
-                     m_parameters.get<MaximumContacts>(),
-                     transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups())) +
+            ScalarType local_indiv_expected_trans_v =
+                (transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups()) +
                  transmission_air_per_day(cell_index, virus, global_params)) *
-                (1 - mask_protection) * dt.days() * (1 - person.get_protection_factor(t, virus, global_params));
+                (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_params));
 
-            local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
+            local_indiv_expected_trans[v] = std::make_pair(virus, local_indiv_expected_trans_v);
         }
         VirusVariant virus =
             random_transition(rng, VirusVariant::Count, dt,
-                              local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
+                              local_indiv_expected_trans); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
             person.add_new_infection(Infection(rng, virus, age_receiver, global_params, t + dt / 2,
                                                mio::abm::InfectionState::Exposed, person.get_latest_protection(),
                                                false)); // Starting time in first approximation
         }
+    }
+}
+
+void Location::adjust_contact_rates(size_t num_agegroups)
+{
+    ScalarType total_contacts = 0.;
+    for (auto contact_from = AgeGroup(0); contact_from < AgeGroup(num_agegroups); contact_from++) {
+        // slizing would be preferred but is problematic since both Tags of ContactRates are AgeGroup
+        for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
+            total_contacts += m_parameters.get<ContactRates>()[{contact_from, contact_to}];
+        }
+        if (total_contacts > m_parameters.get<MaximumContacts>()) {
+            for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
+                m_parameters.get<ContactRates>()[{contact_from, contact_to}] =
+                    m_parameters.get<ContactRates>()[{contact_from, contact_to}] * m_parameters.get<MaximumContacts>() /
+                    total_contacts;
+            }
+        }
+        total_contacts = 0;
+        //auto contact_rates_slice = m_parameters.get<ContactRates>().slice(AgeGroup(contact_from));
+        //auto total_contacts      = std::accumulate(contact_rates_slice.begin(), contact_rates_slice.end(), 0.);
+        //contact_rates_slice = std::min(1., m_parameters.get<MaximumContacts>() / total_contacts) * contact_rates_slice;
     }
 }
 
@@ -119,12 +141,26 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
                 auto virus = inf.get_virus_variant();
                 auto age   = p->get_age();
                 /* average infectivity over the time step 
-                 *  to second order accuracy using midpoint rule
+                 * to second order accuracy using midpoint rule
                 */
                 cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
                 cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2);
             }
         }
+
+        // normalize contact exposure rate by number of people in age groups
+        for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_agegroups); age_group++) {
+            for (auto& v : cell.m_cached_exposure_rate_contacts.slice(AgeGroup(age_group))) {
+                auto number_persons_in_age_group =
+                    std::count_if(cell.m_persons.begin(), cell.m_persons.end(), [age_group](observer_ptr<Person> p) {
+                        return p->get_age() == age_group;
+                    });
+                if (number_persons_in_age_group > 0) {
+                    v = v / number_persons_in_age_group;
+                }
+            }
+        }
+
         if (m_capacity_adapted_transmission_risk) {
             cell.m_cached_exposure_rate_air.array() *= cell.compute_space_per_person_relative();
         }

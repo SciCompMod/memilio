@@ -183,7 +183,7 @@ struct TimeInfectedNoSymptoms {
 
 /**
 * @brief the infectious time for symptomatic cases that are infected but
-*        who do not need to be hsopitalized in the SECIR model in day unit
+*        who do not need to be hospitalized in the SECIR model in day unit
 */
 struct TimeInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
