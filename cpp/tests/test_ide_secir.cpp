@@ -382,21 +382,34 @@ TEST(IdeSecir, testModelConstraints)
     auto constraint_check = model_wrong_size.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- Test with negative number of deaths.
-    deaths = -10;
+    // --- Test if the last time point is not zero.
     // Create TimeSeries with num_transitions elements.
     mio::TimeSeries<ScalarType> init(num_transitions);
     // Add time points for initialization of transitions.
     Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
-    init.add_time_point(-3, vec_init);
+    init.add_time_point(-3., vec_init);
+    // Last time point is not zero.
+    while (init.get_last_time() < -2) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+    // Initialize a model.
+    mio::TimeSeries<ScalarType> init_copy1(init);
+    mio::isecir::Model model_last_not_zero(std::move(init_copy1), N, deaths);
+
+    constraint_check = model_last_not_zero.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- Test with negative number of deaths.
+    deaths = -10;
+    // Correct error from previous test: Last time point should be zero now.
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
     // Initialize a model.
-    mio::TimeSeries<ScalarType> init_copy(init);
-    mio::isecir::Model model_negative_deaths(std::move(init_copy), N, deaths);
+    mio::TimeSeries<ScalarType> init_copy2(init);
+    mio::isecir::Model model_negative_deaths(std::move(init_copy2), N, deaths);
 
     // Return true for negative entry in m_populations.
     constraint_check = model_negative_deaths.check_constraints(dt);
@@ -415,17 +428,32 @@ TEST(IdeSecir, testModelConstraints)
     constraint_check = model_few_timepoints.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
+    // --- Test with negative flows.
+    // Create TimeSeries with num_transitions elements.
+    mio::TimeSeries<ScalarType> init_negative(num_transitions);
+    // Add time points for initialization of transitions with negative flows.
+    Vec vec_init_negative = Vec::Constant(num_transitions, -5.);
+    init_negative.add_time_point(-5., vec_init_negative);
+    while (init_negative.get_last_time() < 0) {
+        init_negative.add_time_point(init_negative.get_last_time() + dt, vec_init_negative);
+    }
+    // Initialize a model.
+    mio::isecir::Model model_negative_flows(std::move(init_negative), N, deaths);
+
+    constraint_check = model_negative_flows.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
     // --- The check_constraints() function of parameters is tested in its own test below. ---
 
     // --- Correct wrong setup so that next check can go through.
-    mio::TimeSeries<ScalarType> init_enough_timepoints(num_transitions);
-    init_enough_timepoints.add_time_point(-5, vec_init);
-    while (init_enough_timepoints.get_last_time() < 0) {
-        init_enough_timepoints.add_time_point(init_enough_timepoints.get_last_time() + dt, vec_init);
+    mio::TimeSeries<ScalarType> init_valid(num_transitions);
+    init_valid.add_time_point(-5, vec_init);
+    while (init_valid.get_last_time() < 0) {
+        init_valid.add_time_point(init_valid.get_last_time() + dt, vec_init);
     }
 
     // Initialize a model.
-    mio::isecir::Model model(std::move(init_enough_timepoints), N, deaths);
+    mio::isecir::Model model(std::move(init_valid), N, deaths);
 
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 

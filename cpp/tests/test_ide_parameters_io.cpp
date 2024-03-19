@@ -39,7 +39,8 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     auto start_date             = mio::Date(2020, 6, 3);
     ScalarType dt               = 0.5;
     // Initialize model.
-    mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
+    mio::isecir::Model model(mio::TimeSeries<ScalarType>(0., mio::TimeSeries<ScalarType>::Vector::Constant(
+                                                                 (int)mio::isecir::InfectionTransition::Count, 1.)),
                              total_population, -1);
 
     // Set the model parameters so that if the default values are changed, the test is still valid.
