@@ -58,7 +58,6 @@ set(TESTSOURCES
     abm_helpers.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
-    test_ide_parameters_io.cpp
     test_state_age_function.cpp
     distributions_helpers.h
     distributions_helpers.cpp
@@ -74,6 +73,7 @@ set(TESTSOURCES ${TESTSOURCES}
 test_json_serializer.cpp
 test_epi_data_io.cpp
 test_lct_parameters_io.cpp
+test_ide_parameters_io.cpp
 )
 endif()
 
