@@ -53,46 +53,47 @@ public:
           const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
-    * @brief Checks constraints on model parameters.
+    * @brief Checks constraints on model parameters and initial data.
+    * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
     */
-    void check_constraints(ScalarType dt) const
+    bool check_constraints(ScalarType dt) const
     {
-        if (!(m_populations.get_num_time_points() > 0)) {
-            log_error("Model construction failed. No initial time point for populations.");
+        if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
+            log_error(
+                "Initialization failed. Number of elements in transition vector does not match the required number.");
+            return true;
         }
 
         for (int i = 0; i < (int)InfectionState::Count; i++) {
             if (m_populations[0][i] < 0) {
                 log_error("Initialization failed. Initial values for populations are less than zero.");
+                return true;
             }
         }
-
-        if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-            log_error(
-                "Initialization failed. Number of elements in transition vector does not match the required number.");
-        }
-
         // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
+            return true;
         }
 
         // We have some things that just work out if the last time point is zero, e.g. the first time point in m_populations is set to zero ion the constructor.
         if (!(m_transitions.get_last_time() == 0)) {
             log_error("A variable given for model construction is not valid. The last time point in the transition "
                       "vector should be zero.");
+            return true;
         }
 
         for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
             for (int j = 0; j < (int)InfectionState::Count; j++) {
                 if (m_transitions[i][j] < 0) {
                     log_error("Initialization failed. One or more initial value for transitions is less than zero.");
+                    return true;
                 }
             }
         }
 
-        parameters.check_constraints();
+        return parameters.check_constraints();
     }
 
     /**
