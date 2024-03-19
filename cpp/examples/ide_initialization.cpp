@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Anna Wendler, Lena Ploetzke
+* Authors:  Lena Ploetzke, Anna Wendler
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,25 +25,67 @@
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/date.h"
+#include "memilio/math/eigen.h"
+#include <string>
+#include <vector>
 #include <iostream>
 
-int main()
+/**
+ * @brief Function to check the parameters provided in the command line.
+ */
+std::string setup(int argc, char** argv)
+{
+    if (argc == 2) {
+        std::cout << "Using file " << argv[1] << "." << std::endl;
+        return (std::string)argv[1];
+    }
+    else {
+        if (argc > 2) {
+            mio::log_warning("Too many arguments given.");
+        }
+        else {
+            mio::log_warning("No arguments given.");
+        }
+        return "";
+    }
+}
+
+int main(int argc, char** argv)
 {
     // This is a simple example to demonstrate how to set initial data for the IDE-SECIR model using real data.
-    // Please note that this example will only work if a file containing the real data has been previously downloaded and saved in the correct folder.
-    // The default parameters of the IDE-SECIR model are used, so the simulation results are not realistic and are for demonstration purposes only.
-    ScalarType N      = 80 * 1e6;
-    ScalarType deaths = -1;
-    ScalarType dt     = 0.5;
+    // A default initialization is used if no filename is provided in the command line.
+    // Have a look at the documentation of the set_initial_flows() function in models/ide_secir/parameters_io.h for a
+    // description of how to download suitable data.
+    // A valid filename could be for example "../../data/pydata/Germany/cases_all_germany_ma7.json" if the functionality to download real data is used.
+    // The default parameters of the IDE-SECIR model are used, so that the simulation results are not realistic and are for demonstration purpose only.
 
     // Initialize model.
+    ScalarType N      = 80 * 1e6;
+    ScalarType deaths = 10;
+    ScalarType dt     = 0.5;
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count), N, deaths);
-    // Attention: This example is only working if the file cases_all_germany_ma7.json is previously downloaded and stored in the right folder.
-    // See also the documentation of set_initial_flows() function for a description of how to download the data.
-    auto status = mio::isecir::set_initial_flows(model, dt, "../../data/pydata/Germany/cases_all_germany_ma7.json",
-                                                 mio::Date(2020, 12, 24));
-    if (!status) {
-        std::cout << "Error: " << status.error().formatted_message();
+
+    // Check provided parameters.
+    std::string filename = setup(argc, argv);
+    if (filename.empty()) {
+        std::cout << "You did not provide a valid filename. A default initialization is used." << std::endl;
+
+        using Vec = mio::TimeSeries<ScalarType>::Vector;
+        mio::TimeSeries<ScalarType> init((int)mio::isecir::InfectionTransition::Count);
+        init.add_time_point<Eigen::VectorXd>(-7., Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1.));
+        while (init.get_last_time() < 0) {
+            init.add_time_point(init.get_last_time() + dt,
+                                Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1.));
+        }
+        model.m_transitions = init;
+    }
+    else {
+        // Use the real data for initialization.
+        auto status = mio::isecir::set_initial_flows(model, dt, filename, mio::Date(2020, 12, 24));
+        if (!status) {
+            std::cout << "Error: " << status.error().formatted_message();
+            return -1;
+        }
     }
 
     // Carry out simulation.
@@ -53,4 +95,6 @@ int main()
     // Print results.
     sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
                                       16, 8);
+
+    return 0;
 }
