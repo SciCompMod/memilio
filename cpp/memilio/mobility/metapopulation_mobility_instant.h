@@ -241,6 +241,41 @@ private:
     DynamicNPIs m_dynamic_npis;
 };
 
+/**
+ * detect a get_indices_of_symptomatic_and_nonsymptomatic function for the Model type.
+ */
+template <class Sim>
+using get_indices_of_symptomatic_and_nonsymptomatic_expr_t =
+    decltype(get_indices_of_symptomatic_and_nonsymptomatic(std::declval<Sim&>()));
+
+/**
+ * @brief Get the indices of symptomatic and non-symptomatic infection states.
+ *
+ * This function generates two vectors of indices, one for non-symptomatic infection states and one for symptomatic infection states.
+ * Each vector contains the flat indices of the corresponding infection states for each age group and compartment in the model.
+ *
+ * @tparam Base The base class for the simulation, defaults to mio::Simulation<Model>.
+ * @param[in] sim The simulation object from which we obtain the model.
+ *
+ * @return A tuple containing two vectors of size_t. The first vector contains the indices of non-symptomatic infection states,
+ * and the second vector contains the indices of symptomatic infection states. The indices are ordered first by age group, then by compartment.
+ */
+template <class Sim,
+          std::enable_if_t<!is_expression_valid<get_indices_of_symptomatic_and_nonsymptomatic_expr_t, Sim>::value,
+                           void*> = nullptr>
+auto get_indices_of_symptomatic_and_nonsymptomatic(SimulationNode<Sim>& /*node*/)
+{
+    return std::make_tuple(std::vector<size_t>{}, std::vector<size_t>{});
+}
+
+template <class Sim,
+          std::enable_if_t<is_expression_valid<get_indices_of_symptomatic_and_nonsymptomatic_expr_t, Sim>::value,
+                           void*> = nullptr>
+auto get_indices_of_symptomatic_and_nonsymptomatic(SimulationNode<Sim>& node)
+{
+    return get_indices_of_symptomatic_and_nonsymptomatic(node.get_simulation());
+}
+
 /** 
  * represents the migration between two nodes.
  */
@@ -256,6 +291,7 @@ public:
         , m_migrated(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
         , m_return_migrated(false)
+        , m_num_migrated(3)
     {
     }
 
@@ -268,6 +304,7 @@ public:
         , m_migrated(coeffs.rows())
         , m_return_times(0)
         , m_return_migrated(false)
+        , m_num_migrated(3)
     {
     }
 
@@ -277,6 +314,19 @@ public:
     const MigrationParameters& get_parameters() const
     {
         return m_parameters;
+    }
+
+    /**
+    * Retrieve the count of commuters in the infection states: InfectedNoSymptoms and InfectedSymptomsNaive, 
+    * along with the total number of commuter.
+    */
+    TimeSeries<ScalarType>& get_migrated()
+    {
+        return m_num_migrated;
+    }
+    const TimeSeries<ScalarType>& get_migrated() const
+    {
+        return m_num_migrated;
     }
 
     /**
@@ -299,6 +349,16 @@ private:
     bool m_return_migrated;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
+    TimeSeries<double> m_num_migrated;
+
+    /**
+     * Computes a condensed version of m_migrated and puts it in m_num_migrated.
+     * m_num_migrated then only contains commuters with infection states InfectedNoSymptoms and InfectedSymptoms.
+     * Additionally, the total number of commuters is stored in the last entry of m_num_migrated.
+     * @param[in] t current time
+     */
+    void condense_m_migrated(const double t, const std::vector<size_t>& indices_non_symptomatic,
+                             const std::vector<size_t>& indices_symptomatic);
 };
 
 /**
@@ -389,8 +449,8 @@ auto get_migration_factors(const SimulationNode<Sim>& node, double t, const Eige
  * detect a get_migration_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(test_commuters(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(
+    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when migrating from their source node.
@@ -484,6 +544,10 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
 
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
+
+        static auto indices_tuple                     = get_indices_of_symptomatic_and_nonsymptomatic(node_from);
+        auto& [indices_no_symptoms, indices_symptoms] = indices_tuple;
+        condense_m_migrated(t, indices_no_symptoms, indices_symptoms);
     }
     m_return_migrated = !m_return_migrated;
 }
