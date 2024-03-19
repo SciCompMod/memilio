@@ -7,14 +7,14 @@ This file explains how to use Score-P with GCC. For other compilers this might l
 Once you have Score-P you can build the abm with: 
 ```
 export SCOREP_WRAPPER=off #disable scorep during cmake configure
-cmake .. -DMEMILIO_ENABLE_OPENMP=ON -DCMAKE_CXX_COMPILER=${Path to scorep}/scorep-mpic++ -DCMAKE_C_COMPILER=${Path to scorep}/scorep-mpicc -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake .. -DMEMILIO_ENABLE_OPENMP=ON -DCMAKE_CXX_COMPILER=${Path to scorep}/scorep-mpic++ -DCMAKE_C_COMPILER=${Path to scorep}/scorep-mpicc -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMEMILIO_ENABLE_WARNINGS_AS_ERRORS=OFF
 export SCOREP_WRAPPER=on #reenable scorep
 export SCOREP_WRAPPER_INSTRUMENTER_FLAGS="--pomp --thread=omp --mpp=none --instrument-filter=${Path to filter}/scorep-filter-abm"
 cmake --build . -j --target abm_simulation
 ```
 
 It is useful to use ```--target``` to set the target to build, because Score-P has difficulties with some of the other targets.
-The [filter file](./scorep-filter-abm) is designed to include only the interesting information about the abm. It filters (i.e. measures) only the basic framework of the abm, that is only the simulation part up to the loop over time. The measurement of small and frequently called functions increases the overhead of the profiling (mainly concerns the runtime but might also result in large trace files or buffer flushes later on). To prevent this, those functions are neglected in the current filter and the profile may give a hint on which part of the abm you should investigate further. To measure additional functions you add ```INCLUDE *Class::myfunction*``` to the [filter](./scorep-filter-abm). 
+The [filter file](./scorep-filter-abm) is designed to include only the interesting information about the abm. It filters (i.e. measures) only the basic framework of the abm, that is only the simulation part up to the loop over time. The measurement of small and frequently called functions increases the overhead of the profiling. This mainly concerns the runtime and makes the profile unreliable, since the time measured by the profiler is not the time that the functions would take in normal operation. To prevent this, those functions are neglected in the current filter and the profile may give a hint on which part of the abm you should investigate further. To measure additional functions you add ```INCLUDE *Class::myfunction*``` to the [filter](./scorep-filter-abm). 
 
 To avoid the build errors about "include style" and "gcc extension" set ```-DMEMILIO_ENABLE_WARNINGS_AS_ERRORS=OFF``` during cmake configuration.
 
