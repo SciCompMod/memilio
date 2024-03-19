@@ -66,6 +66,9 @@ void Model::initialize_solver(ScalarType dt)
     //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = m_deaths;
     // }
 
+    // compute force of infection here, if this is large enoguh it can be used for initialization if the other methods are not available
+    update_forceofinfection(dt, true);
+
     if (m_total_confirmed_cases > 1e-12) {
         m_initialization_method = 1;
         other_compartments_current_timestep(dt);
@@ -119,6 +122,7 @@ void Model::initialize_solver(ScalarType dt)
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] -
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
     }
+
     else if (m_forceofinfection > 1e-12) {
 
         // compute Susceptibles at time 0  and m_forceofinfection at time -dt as initial values for discretization scheme
