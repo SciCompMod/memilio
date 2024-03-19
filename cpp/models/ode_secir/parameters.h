@@ -91,18 +91,33 @@ struct ICUCapacity {
 };
 
 /**
- * @brief the incubation time in the SECIR model
- * @param tinc incubation time in day unit
+ * @brief the (mean) latent time in day unit
  */
-struct IncubationTime {
+struct TimeExposed {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 2.);
+        return Type(size, 1.);
     }
     static std::string name()
     {
-        return "IncubationTime";
+        return "TimeExposed";
+    }
+};
+
+/**
+ * @brief the (mean) time in day unit for asymptomatic cases that are infectious but
+ *        have not yet developed symptoms.
+ */
+struct TimeInfectedNoSymptoms {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms";
     }
 };
 
@@ -119,21 +134,6 @@ struct TimeInfectedSymptoms {
     static std::string name()
     {
         return "TimeInfectedSymptoms";
-    }
-};
-
-/**
- * @brief the serial interval in the SECIR model in day unit
- */
-struct SerialInterval {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.5);
-    }
-    static std::string name()
-    {
-        return "SerialInterval";
     }
 };
 
@@ -336,7 +336,7 @@ struct TestAndTraceCapacity {
 
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
-                 IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
+                 TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical>;
@@ -430,24 +430,22 @@ public:
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < 2 * tol_times) {
-                log_warning("Constraint check: Parameter IncubationTime changed from {:.4f} to {:.4f}",
-                            this->get<IncubationTime>()[i], tol_times);
-                this->get<IncubationTime>()[i] = 2 * tol_times;
-                corrected                      = true;
+            if (this->get<TimeExposed>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeExposed>()[i], tol_times);
+                this->get<TimeExposed>()[i] = tol_times;
+                corrected                   = true;
             }
 
-            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + tol_times) {
-                log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + tol_times / 2);
-                this->get<SerialInterval>()[i] = 0.5 * this->get<IncubationTime>()[i] + tol_times / 2;
-                corrected                      = true;
-            }
-            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - tol_times / 2) {
-                log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - tol_times / 2);
-                this->get<SerialInterval>()[i] = this->get<IncubationTime>()[i] - tol_times / 2;
-                corrected                      = true;
+            if (this->get<TimeInfectedNoSymptoms>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedNoSymptoms changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeInfectedNoSymptoms>()[i], tol_times);
+                this->get<TimeInfectedNoSymptoms>()[i] = tol_times;
+                corrected                              = true;
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < tol_times) {
@@ -554,21 +552,20 @@ public:
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < 2 * tol_times) {
-                log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
-                          this->get<IncubationTime>()[i], 2.0);
-                return 1;
+            if (this->get<TimeExposed>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeExposed>()[i], tol_times);
+                return true;
             }
 
-            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + tol_times) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
-                          this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
-                return 1;
-            }
-            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - tol_times / 2) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
-                          this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
-                return 1;
+            if (this->get<TimeInfectedNoSymptoms>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedNoSymptoms>()[i], tol_times);
+                return true;
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < tol_times) {

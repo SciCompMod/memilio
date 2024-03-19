@@ -34,9 +34,9 @@ def parameter_study():
     for i in range(num_groups):
         group = mio.AgeGroup(i)
 
-        model.parameters.IncubationTime[group] = 5.2
+        model.parameters.TimeExposed[group] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[group] = 2.
         model.parameters.TimeInfectedSymptoms[group] = 6
-        model.parameters.SerialInterval[group] = 4.2
         model.parameters.TimeInfectedSevere[group] = 12
         model.parameters.TimeInfectedCritical[group] = 8
 
