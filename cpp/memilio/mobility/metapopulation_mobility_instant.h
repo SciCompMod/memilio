@@ -291,7 +291,7 @@ public:
         , m_migrated(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
         , m_return_migrated(false)
-        , m_num_migrated(3)
+        , m_mobility_results(3)
     {
     }
 
@@ -304,7 +304,7 @@ public:
         , m_migrated(coeffs.rows())
         , m_return_times(0)
         , m_return_migrated(false)
-        , m_num_migrated(3)
+        , m_mobility_results(3)
     {
     }
 
@@ -322,11 +322,11 @@ public:
     */
     TimeSeries<ScalarType>& get_migrated()
     {
-        return m_num_migrated;
+        return m_mobility_results;
     }
     const TimeSeries<ScalarType>& get_migrated() const
     {
-        return m_num_migrated;
+        return m_mobility_results;
     }
 
     /**
@@ -349,12 +349,12 @@ private:
     bool m_return_migrated;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
-    TimeSeries<double> m_num_migrated;
+    TimeSeries<double> m_mobility_results;
 
     /**
-     * Computes a condensed version of m_migrated and puts it in m_num_migrated.
-     * m_num_migrated then only contains commuters with infection states InfectedNoSymptoms and InfectedSymptoms.
-     * Additionally, the total number of commuters is stored in the last entry of m_num_migrated.
+     * Computes a condensed version of m_migrated and puts it in m_mobility_results.
+     * m_mobility_results then only contains commuters with infection states InfectedNoSymptoms and InfectedSymptoms.
+     * Additionally, the total number of commuters is stored in the last entry of m_mobility_results.
      * @param[in] t current time
      */
     void condense_m_migrated(const double t, const std::vector<size_t>& indices_non_symptomatic,
@@ -498,6 +498,9 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         m_t_last_dynamic_npi_check = t;
     }
 
+    static auto indices_tuple                     = get_indices_of_symptomatic_and_nonsymptomatic(node_from);
+    auto& [indices_no_symptoms, indices_symptoms] = indices_tuple;
+
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
         if (m_return_times.get_time(i) <= t) {
@@ -527,6 +530,7 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
             }
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
+            condense_m_migrated(t, indices_no_symptoms, indices_symptoms);
             m_migrated.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
@@ -545,8 +549,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
 
-        static auto indices_tuple                     = get_indices_of_symptomatic_and_nonsymptomatic(node_from);
-        auto& [indices_no_symptoms, indices_symptoms] = indices_tuple;
         condense_m_migrated(t, indices_no_symptoms, indices_symptoms);
     }
     m_return_migrated = !m_return_migrated;

@@ -670,7 +670,7 @@ auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated,
 }
 
 template <class Base = mio::Simulation<Model>>
-auto get_indices_of_symptomatic_and_nonsymptomatic(Simulation<Base>& sim)
+auto get_indices_of_symptomatic_and_nonsymptomatic(const Simulation<Base>& sim)
 {
     const auto& model     = sim.get_model();
     const auto num_groups = model.parameters.get_num_groups();

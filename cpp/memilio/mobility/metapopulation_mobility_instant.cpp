@@ -39,8 +39,8 @@ void MigrationEdge::condense_m_migrated(const double t, const std::vector<size_t
     double total_commuters = m_migrated.get_last_value().sum();
 
     // as time point t which contains now the carriers, infectious and total over age groups
-    m_num_migrated.add_time_point(t,
-                                  (mio::TimeSeries<double>::Vector(3) << num_INS, num_ISy, total_commuters).finished());
+    m_mobility_results.add_time_point(
+        t, (mio::TimeSeries<double>::Vector(3) << num_INS, num_ISy, total_commuters).finished());
 }
 
 } // namespace mio
