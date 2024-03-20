@@ -150,10 +150,46 @@ struct RiskOfInfectionFromSymptomatic {
     }
 };
 
-// Define Parameterset for IDE SECIR model.
+/**
+ * @brief The start day in the IDE-SECIR model.
+ *
+ * The start day defines in which season the simulation is started.
+ * If the start day is 180 and simulation takes place from t0=0 to
+ * tmax=100 the days 180 to 280 of the year are simulated.
+ */
+struct StartDay {
+    using Type = ScalarType;
+    static Type get_default()
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "StartDay";
+    }
+};
+
+/**
+ * @brief The seasonality in the IDE-SECIR model.
+ * The seasonality is given as (1+k*sin()) where the sine
+ * curve is below one in summer and above one in winter.
+ */
+struct Seasonality {
+    using Type = ScalarType;
+    static Type get_default()
+    {
+        return Type(0.);
+    }
+    static std::string name()
+    {
+        return "Seasonality";
+    }
+};
+
+// Define Parameterset for IDE-SECIR model.
 using ParametersBase =
     ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact,
-                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic, StartDay, Seasonality>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -269,6 +305,7 @@ public:
                       1);
             return true;
         }
+
         /* The first entry of TransitionDistributions is not checked because the distribution S->E is never used 
         (and it makes no sense to use the distribution). The support does not need to be valid.*/
         for (size_t i = 1; i < (int)InfectionTransition::Count; i++) {
@@ -276,6 +313,11 @@ public:
                 log_error("Constraint check: One function in TransitionDistributions has invalid support.");
                 return true;
             }
+        }
+
+        if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
+            log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
+            return true;
         }
 
         return false;

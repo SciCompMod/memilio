@@ -90,6 +90,9 @@ int main()
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+    model.parameters.set<mio::isecir::Seasonality>(0.1);
+    // Start the simulation on the 40th day of a year (i.e. in February).
+    model.parameters.set<mio::isecir::StartDay>(40);
 
     model.check_constraints(dt);
 
