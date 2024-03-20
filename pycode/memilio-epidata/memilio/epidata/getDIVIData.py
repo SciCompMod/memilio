@@ -37,6 +37,7 @@ data explanation:
 
 import os
 from datetime import date
+from typing import Tuple
 
 import pandas as pd
 
@@ -46,40 +47,40 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
-def get_divi_data(read_data=dd.defaultDict['read_data'],
-                  file_format=dd.defaultDict['file_format'],
-                  out_folder=dd.defaultDict['out_folder'],
-                  start_date=date(2020, 4, 24),
-                  end_date=dd.defaultDict['end_date'],
-                  impute_dates=dd.defaultDict['impute_dates'],
-                  moving_average=dd.defaultDict['moving_average'],
-                  **kwargs
-                  ):
-    """! Downloads or reads the DIVI ICU data and writes them in different files.
+def fetch_divi_data(
+    read_data=dd.defaultDict['read_data'],
+    out_folder=dd.defaultDict['out_folder'],
+    file_format=dd.defaultDict['file_format'],
+    start_date=date(2020, 4, 24),
+    **kwargs
+) -> Tuple[pd.DataFrame, date]:
+    """
+    Downloads or reads the DIVI ICU data and writes them in different files.
 
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
-
     The downloaded dataframe is written to the file "FullData_DIVI".
-    After that, the columns are renamed to English and the state and county names are added.
-    Afterwards, three kinds of structuring of the data are done.
-    We obtain the chronological sequence of ICU and ICU_ventilated
-    stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
-    for counties, states and whole Germany, respectively.
 
-    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    Parameters
+    ----------
+    read_data: bool
+        True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    file_format: str
+        File format which is used for writing the data. Default defined in defaultDict.
+    out_folder: str
+        Folder where data is written to. Default defined in defaultDict.
+    start_date: date
+        The first date in dataframe. Default defined in defaultDict.
+    ***kwargs
+
+    Returns
+    -------
+    Tuple[df_raw, start_date]: Tuple
+        Contains the fetched data as well as the adjusted starting date
     """
-
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
@@ -87,7 +88,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
         gd.default_print('Warning', "First data available on 2020-04-24. "
-                         "You asked for " + start_date.strftime("%Y-%m-%d") +
+                                    "You asked for " + start_date.strftime("%Y-%m-%d") +
                          ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
 
@@ -95,19 +96,62 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
 
     filename = "FullData_DIVI"
-    url = "https://raw.githubusercontent.com/robert-koch-institut/"\
-        "Intensivkapazitaeten_und_COVID-19-Intensivbettenbelegung_in_Deutschland/"\
-        "main/Intensivregister_Landkreise_Kapazitaeten.csv"
+    url = "https://raw.githubusercontent.com/robert-koch-institut/" \
+          "Intensivkapazitaeten_und_COVID-19-Intensivbettenbelegung_in_Deutschland/" \
+          "main/Intensivregister_Landkreise_Kapazitaeten.csv"
     path = os.path.join(directory + filename + ".json")
     df_raw = gd.get_file(path, url, read_data, param_dict={},
                          interactive=conf.interactive)
-
     if not df_raw.empty:
         if not no_raw:
             gd.write_dataframe(df_raw, directory, filename, file_format)
     else:
         raise gd.DataError("Something went wrong, dataframe is empty.")
-    if conf.checks == True:
+    if conf.checks is True:
+        divi_data_sanity_checks(df_raw)
+    else:
+        gd.default_print(
+            "Warning", "Sanity checks for DIVI data have not been executed.")
+    return df_raw, start_date
+
+
+def preprocess_divi_data(
+    df_raw: pd.DataFrame,
+    out_folder=dd.defaultDict['out_folder'],
+    start_date=date(2020, 4, 24),
+    end_date=dd.defaultDict['end_date'],
+    impute_dates=dd.defaultDict['impute_dates'],
+    moving_average=dd.defaultDict['moving_average'],
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Processing of the downloaded data
+        * the columns are renamed to English and the state and county names are added.
+
+    Parameters
+    ----------
+    df_raw
+    out_folder: str
+        Folder where data is written to. Default defined in defaultDict.
+    start_date: date
+        The first date in dataframe. Default defined in defaultDict.
+    end_date: date
+       The last date in dataframe. Default defined in defaultDict.
+    impute_dates: bool
+        Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    moving_average: int
+        Integers >=0.Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    kwargs
+
+    Returns
+    -------
+    df: pd.DataFrame
+        processed divi data
+    """
+    conf = gd.Conf(out_folder, **kwargs)
+
+    if conf.checks is True:
         divi_data_sanity_checks(df_raw)
     else:
         gd.default_print(
@@ -128,7 +172,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
     # add missing dates (and compute moving average)
-    if (impute_dates == True) or (moving_average > 0):
+    if (impute_dates is True) or (moving_average > 0):
         df = mdfs.impute_and_reduce_df(
             df, {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
             [dd.EngEng["ICU"],
@@ -138,13 +182,50 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     # add names etc for empty frames (counties where no ICU beds are available)
     countyid_to_stateid = geoger.get_countyid_to_stateid_map()
-    for id in df.loc[df.isna().any(axis=1), dd.EngEng['idCounty']].unique():
-        stateid = countyid_to_stateid[id]
-        df.loc[df[dd.EngEng['idCounty']] == id, dd.EngEng['idState']] = stateid
+    for county_id in df.loc[df.isna().any(axis=1), dd.EngEng['idCounty']].unique():
+        state_id = countyid_to_stateid[county_id]
+        df.loc[df[dd.EngEng['idCounty']] == county_id, dd.EngEng['idState']] = state_id
 
     # extract subframe of dates
     df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
+    return df
+
+
+def write_divi_data(
+    df: pd.DataFrame,
+    file_format=dd.defaultDict['file_format'],
+    out_folder=dd.defaultDict['out_folder'],
+    impute_dates=dd.defaultDict['impute_dates'],
+    moving_average=dd.defaultDict['moving_average'],
+) -> None:
+    """
+    Write the divi data into json files
+    Three kinds of structuring of the data are done.
+    We obtain the chronological sequence of ICU and ICU_ventilated
+    stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
+    for counties, states and whole Germany, respectively.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Dataframe containing processed divi data
+    file_format: str
+        File format which is used for writing the data. Default defined in defaultDict.
+    out_folder: str
+        Folder where data is written to. Default defined in defaultDict.
+    impute_dates: bool
+        True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    moving_average: int
+        Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+
+    Returns
+    -------
+    None
+    """
+
+    directory = os.path.join(out_folder, 'Germany/')
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],
                       dd.EngEng["county"],
@@ -181,10 +262,69 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_ger, directory, filename, file_format)
 
-    return (df_raw, df_counties, df_states, df_ger)
+
+def get_divi_data(
+    read_data=dd.defaultDict['read_data'],
+    file_format=dd.defaultDict['file_format'],
+    out_folder=dd.defaultDict['out_folder'],
+    start_date=date(2020, 4, 24),
+    end_date=dd.defaultDict['end_date'],
+    impute_dates=dd.defaultDict['impute_dates'],
+    moving_average=dd.defaultDict['moving_average'],
+    **kwargs
+):
+    """! Downloads or reads the DIVI ICU data and writes them in different files.
+
+    Available data starts from 2020-04-24.
+    If the given start_date is earlier, it is changed to this date and a warning is printed.
+    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
+
+    The downloaded dataframe is written to the file "FullData_DIVI".
+    After that, the columns are renamed to English and the state and county names are added.
+    Afterwards, three kinds of structuring of the data are done.
+    We obtain the chronological sequence of ICU and ICU_ventilated
+    stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
+    for counties, states and whole Germany, respectively.
+
+    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    """
+    raw_df, updated_start_date = fetch_divi_data(
+        read_data=read_data,
+        out_folder=out_folder,
+        file_format=file_format,
+        start_date=start_date,
+        **kwargs
+    )
+
+    preprocess_df = preprocess_divi_data(
+        df_raw=raw_df,
+        out_folder=out_folder,
+        start_date=updated_start_date,
+        end_date=end_date,
+        impute_dates=impute_dates,
+        moving_average=moving_average,
+        **kwargs
+    )
+    write_divi_data(
+        df=preprocess_df,
+        file_format=file_format,
+        out_folder=out_folder,
+        impute_dates=impute_dates,
+        moving_average=moving_average
+    )
+    pass
 
 
-def divi_data_sanity_checks(df=pd.DataFrame()):
+def divi_data_sanity_checks(df: pd.DataFrame) -> None:
     """! Checks the sanity of the divi_data dataframe
 
     Checks if type of the given data is a dataframe
@@ -209,7 +349,7 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
 
     # check if headers are those we want
     for name in test_strings:
-        if (name not in actual_strings_list):
+        if name not in actual_strings_list:
             raise gd.DataError("Error: Data categories have changed.")
     # check if size of dataframe is not unusal
     # data colletion starts at 24.04.2020
