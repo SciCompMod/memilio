@@ -106,7 +106,7 @@ public:
      * Initial transitions are used to calculate the initial compartment sizes.
      * @param[in] dt Time discretization step size.         
      */
-    void initialize_solver(ScalarType dt);
+    void initialize(ScalarType dt);
 
     /**
     * @brief Computes number of Susceptibles for the current last time in m_populations.
@@ -141,14 +141,6 @@ public:
     void flows_current_timestep(ScalarType dt);
 
     /**
-     * @brief Computes total number of Deaths for the current last time in m_populations.
-     * 
-     * Number is stored in m_populations.
-     *
-     */
-    void compute_deaths();
-
-    /**
      * @brief Computes force of infection for the current last time in m_transitions.
      * 
      * Computed value is stored in m_forceofinfection.
@@ -164,6 +156,7 @@ public:
      * 
      * Calculation is reasonable for all compartments except S, R, D. 
      * Therefore, we have alternative functions for those compartments.
+     * Function is currently just used to calculate the compartment sizes at time t_0=0. It could also be used for other time steps.
      *
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
@@ -177,33 +170,29 @@ public:
      *              just use an arbitrary legal index.
      * @param[in] dt Time discretization step size.
      */
-    void compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                             int idx_TransitionDistribution1, int idx_TransitionDistribution2, ScalarType dt);
+    void compute_compartment_initialization(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
+                                            int idx_TransitionDistribution1, int idx_TransitionDistribution2,
+                                            ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments (compartments apart from S) for the time 0 in m_populations during initialization.
+     * @brief Sets the values of the compartments listed below for  time zero in m_populations during initialization.
      *
-     * New values are stored in m_populations. Most values are computed via the function get_size_of_compartments().
+     * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical
+     * for time zero are calculated using the initial data in form of flows.
+     * Calculated values are stored in m_populations. The values are computed via the function compute_compartment_initialization().
      * 
      * @param[in] dt Time discretization step size.
      */
-    void other_compartments_current_timestep_initialization(ScalarType dt);
+    void other_compartments_initialization(ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments (all compartments apart from S) for the current last timestep in m_populations via sum of flows.
+     * @brief Sets all values of remaining compartments (all compartments apart from S) for the current last timestep in m_populations.
      *
-     * New values are stored in m_populations. Most values are computed via the function get_size_of_compartments().
+     * New values are stored in m_populations. The values are calculated using the compartment size in the previous time step and ths related flows of the current time step. 
+     * Therefore the flows of the current time step should be calculated before using this function.
      * 
      */
-    void other_compartments_current_timestep_direct();
-
-    /**
-     * @brief Computes total number of Recovered for the current last time in m_populations.
-     * 
-     * Number is stored in m_populations.
-     *
-     */
-    void compute_recovered();
+    void other_compartments_current_timestep();
 
     /**
      * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
