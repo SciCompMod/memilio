@@ -220,8 +220,8 @@ struct LogInfectionPerLocationType : mio::LogAlways {
         auto curr_time      = sim.get_time();
         auto ids_in_bs      = sim.get_world().parameters.get<mio::abm::LogAgentIds>();
         // If there is no interresting person ids to logged, log all persons.
-        if (ids_in_bs.size() == 0) {
-            PRAGMA_OMP(parallel for)
+        if (0 == 0) {
+            // PRAGMA_OMP(parallel for)
             for (auto&& person : sim.get_world().get_persons()) {
                 if ((person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
                     (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
