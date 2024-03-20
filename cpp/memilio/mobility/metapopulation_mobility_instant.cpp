@@ -28,11 +28,11 @@ void MigrationEdge::condense_m_migrated(const double t, const std::vector<size_t
     const auto& last_value = m_migrated.get_last_value();
 
     auto num_INS =
-        std::accumulate(indices_non_symptomatic.begin(), indices_non_symptomatic.end(), 0, [&](auto sum, auto i) {
+        std::accumulate(indices_non_symptomatic.begin(), indices_non_symptomatic.end(), 0., [&](auto sum, auto i) {
             return sum + last_value[i];
         });
 
-    auto num_ISy = std::accumulate(indices_symptomatic.begin(), indices_symptomatic.end(), 0, [&](auto sum, auto i) {
+    auto num_ISy = std::accumulate(indices_symptomatic.begin(), indices_symptomatic.end(), 0., [&](auto sum, auto i) {
         return sum + last_value[i];
     });
 
