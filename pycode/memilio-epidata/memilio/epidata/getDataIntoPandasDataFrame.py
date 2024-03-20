@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack
 #
@@ -28,21 +28,112 @@ This tool contains
 - check if directory exists and if not creates it
 - writes pandas dataframe to file of three different formats
 """
-
+import sys
 import os
 import argparse
+import configparser
 import datetime
 import requests
 import magic
 import urllib3
+import warnings
+import matplotlib
 from io import BytesIO
 from zipfile import ZipFile
-from warnings import warn
+from enum import Enum
 
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import progress_indicator
+
+
+class VerbosityLevel(Enum):
+    Off = 0
+    Critical = 1
+    Error = 2
+    Warning = 3
+    Info = 4
+    Debug = 5
+    Trace = 6
+
+
+class Conf:
+    """Configures all relevant download outputs etc."""
+
+    v_level = 'Info'
+    show_progr = False
+
+    def __init__(self, out_folder, **kwargs):
+
+        # change v_level from int to str
+        if 'verbosity_level' in kwargs.keys():
+            if isinstance(kwargs['verbosity_level'], int):
+                kwargs['verbosity_level'] = VerbosityLevel(
+                    kwargs['verbosity_level']).name
+
+        path = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), 'download_config.conf')
+
+        # activate CoW for more predictable behaviour of pandas DataFrames
+        pd.options.mode.copy_on_write = True
+
+        # read in config file
+        # if no config file is given, use default values
+        if os.path.exists(path):
+            parser = configparser.ConfigParser()
+            parser.read(path)
+            # all values will be read in as string
+
+            if parser['SETTINGS']['path_to_use'] == 'default':
+                self.path_to_use = out_folder
+            else:
+                self.path_to_use = parser['SETTINGS']['path_to_use']
+
+            matplotlib.use(str(parser['SETTINGS']['mpl_backend']))
+
+            # merge kwargs with config data
+            # Do not overwrite kwargs, just add from parser
+            for key in parser['SETTINGS']:
+                if key not in kwargs:
+                    kwargs.update({key: parser['SETTINGS'][key]})
+
+            Conf.show_progr = True if kwargs['show_progress'] == 'True' else False
+            Conf.v_level = str(kwargs['verbosity_level'])
+            self.checks = True if kwargs['run_checks'] == 'True' else False
+            self.interactive = True if kwargs['interactive'] == 'True' else False
+            self.plot = True if kwargs['make_plot'] == 'True' else False
+            self.no_raw = True if kwargs['no_raw'] == 'True' else False
+        else:
+            # default values:
+            Conf.show_progr = kwargs['show_progress'] if 'show_progress' in kwargs.keys(
+            ) else Conf.show_progr
+            Conf.v_level = kwargs['verbosity_level'] if 'verbosity_level' in kwargs.keys(
+            ) else Conf.v_level
+            self.checks = kwargs['run_checks'] if 'run_checks' in kwargs.keys(
+            ) else True
+            self.interactive = kwargs['interactive'] if 'interactive' in kwargs.keys(
+            ) else False
+            self.plot = kwargs['make_plot'] if 'make_plot' in kwargs.keys(
+            ) else dd.defaultDict['make_plot']
+            self.no_raw = kwargs['no_raw'] if 'no_raw' in kwargs.keys(
+            ) else dd.defaultDict['no_raw']
+            self.path_to_use = out_folder
+
+        # suppress Future & DepricationWarnings
+        if VerbosityLevel[Conf.v_level].value <= 2:
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+            warnings.simplefilter(action='ignore', category=DeprecationWarning)
+        # deactivate (or activate progress indicator)
+        if Conf.show_progr == True:
+            progress_indicator.ProgressIndicator.disable_indicators(False)
+        else:
+            progress_indicator.ProgressIndicator.disable_indicators(True)
+
+
+def default_print(verbosity_level, message):
+    if VerbosityLevel[verbosity_level].value <= VerbosityLevel[Conf.v_level].value:
+        print(verbosity_level + ": " + message)
 
 
 def user_choice(message, default=False):
@@ -77,9 +168,9 @@ def download_file(
     @return File as BytesIO
     """
     if verify not in [True, False, "interactive"]:
-        warn('Invalid input for argument verify. Expected True, False, or'
-             ' "interactive", got ' + str(verify) + '.'
-             ' Proceeding with "verify=True".', category=RuntimeWarning)
+        warnings.warn('Invalid input for argument verify. Expected True, False, or'
+                      ' "interactive", got ' + str(verify) + '.'
+                      ' Proceeding with "verify=True".', category=RuntimeWarning)
         verify = True
     # send GET request as stream so the content is not downloaded at once
     try:
@@ -173,10 +264,7 @@ def get_file(
 
     if read_data:
         try:
-            if filepath.endswith('xlsx'):
-                df = pd.read_excel(filepath, **param_dict)
-            else:
-                df = pd.read_json(filepath)
+            df = pd.read_json(filepath)
         except FileNotFoundError:
             if interactive and user_choice(
                 "Warning: The file: " + filepath +
@@ -217,9 +305,12 @@ def get_file(
         if df.empty:
             raise DataError("Error: Dataframe is empty.")
     except AttributeError:
-        for i in range(len(df)):
-            if df[i].empty:
-                raise DataError("Error: Dataframe is empty.")
+        if isinstance(df, list) or isinstance(df, dict):
+            for i in df:
+                if df[i].empty:
+                    raise DataError("Error: Dataframe is empty.")
+        else:
+            raise DataError("Could not catch type of df: " + str(type(df)))
     return df
 
 
@@ -234,11 +325,9 @@ def cli(what):
     If the key is not part of the dictionary the program is stopped.
 
     The following default arguments are added to the parser:
-    - read-from-disk
+    - read-file
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
-    - no_raw
-    - no_progress_indicators (excluded from dict)
     The default values are defined in default dict.
 
     Depending on what following parser can be added:
@@ -250,6 +339,13 @@ def cli(what):
     - split_berlin
     - rep_date
     - sanitize_data
+    - no_progress_indicator
+    - interactive
+    - verbose
+    - skip_checks
+    - no_raw
+    - username
+    - password
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -260,16 +356,16 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources'],
-                "commuter_official": ['Download commuter data from official sources', 'make_plot'],
-                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
-                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "hospitalization": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date', 'sanitize_data']}
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
+                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
+                "population": ['Download population data from official sources', 'username'],
+                "commuter_official": ['Download commuter data from official sources'],
+                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],
+                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "hospitalization": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'sanitize_data']}
 
     try:
         what_list = cli_dict[what]
@@ -297,67 +393,96 @@ def cli(what):
     parser.add_argument('-o', '--out-folder', type=str,
                         default=out_path_default,
                         help='Defines folder for output.')
-    parser.add_argument(
-        '-n', '--no-raw', default=dd.defaultDict['no_raw'],
-        help='Defines if raw data will be stored for further use.',
-        action='store_true')
 
     if 'start_date' in what_list:
+        if what == 'divi':
+            start_date_default = datetime.date(2020, 4, 24)
+        elif what == 'jh':
+            start_date_default = datetime.date(2020, 1, 22)
+        else:
+            start_date_default = dd.defaultDict['start_date']
         parser.add_argument(
-            '-s', '--start-date',
+            '-s', '--start-date', default=start_date_default,
             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is 2020-04-24',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['start_date'])
+            'Default is ' +
+            str(dd.defaultDict['start_date']) +
+            ' (2020-04-24 for divi and 2020-01-22 for jh)',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'end_date' in what_list:
         parser.add_argument(
-            '-e', '--end-date',
+            '-e', '--end-date', default=dd.defaultDict['end_date'],
             help='Defines date after which data download is stopped.'
             'Should have form: YYYY-mm-dd. Default is today',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['end_date'])
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'impute_dates' in what_list:
         parser.add_argument(
-            '-i', '--impute-dates',
+            '-i', '--impute-dates', default=dd.defaultDict['impute_dates'],
             help='the resulting dfs contain all dates instead of'
             ' omitting dates where no data was reported', action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument(
-            '-m', '--moving-average', type=int, default=0,
-            help='Compute a moving average of N days over the time series')
-    if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', help='Plots the data.',
-                            action='store_true')
+            '-m', '--moving-average', type=int, default=dd.defaultDict['moving_average'],
+            help='Compute a moving average of N days over the time series. Default is ' + str(dd.defaultDict['moving_average']))
     if 'split_berlin' in what_list:
         parser.add_argument(
-            '-b', '--split-berlin',
+            '-b', '--split-berlin', default=dd.defaultDict['split_berlin'],
             help='Berlin data is split into different counties,'
             ' instead of having only one county for Berlin.',
             action='store_true')
     if 'rep_date' in what_list:
         parser.add_argument(
-            '--rep-date', default=False,
+            '--rep-date', default=dd.defaultDict['rep_date'],
             help='If reporting date is activated, the reporting date'
             'will be prefered over possibly given dates of disease onset.',
             action='store_true')
     if 'sanitize_data' in what_list:
         parser.add_argument(
-            '-sd', '--sanitize_data', type=int, default=1,
+            '-sd', '--sanitize-data', type=int, default=dd.defaultDict['sanitize_data'], dest='sanitize_data',
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
 
-    parser.add_argument(
-        '--no-progress-indicators',
-        help='Disables all progress indicators (used for downloads etc.).',
-        action='store_true')
+    # add optional download options
+    if '--no-progress-indicators' in sys.argv:
+        parser.add_argument(
+            '--no-progress-indicators', dest='show_progress',
+            help='Disables all progress indicators (used for downloads etc.).',
+            action='store_false')
 
+    if not {'--no-raw', '-n'}.isdisjoint(sys.argv):
+        parser.add_argument(
+            '-n', '--no-raw',
+            help='Defines if raw data will be stored for further use.',
+            action='store_true')
+
+    if not {'--make_plot', '-p'}.isdisjoint(sys.argv):
+        parser.add_argument('-p', '--make-plot',
+                            help='Plots the data.', action='store_true')
+
+    if '--interactive' in sys.argv:
+        parser.add_argument(
+            '--interactive',
+            help='Interactive download (Handle warnings, passwords etc.).', action='store_true')
+
+    if not {'--verbose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(sys.argv):
+        parser.add_argument(
+            '-v', '--verbose', dest='verbosity_level',
+            help='Increases verbosity level (Trace, Debug, Info, Warning, Error, Critical, Off).',
+            action='count', default=0)
+
+    if '--skip-checks' in sys.argv:
+        parser.add_argument(
+            '--skip-checks', dest='run_checks', action='store_false',
+            help='Skips sanity checks etc.')
+
+    if 'username' in what_list:
+        parser.add_argument(
+            '--username', type=str
+        )
+
+        parser.add_argument(
+            '--password', type=str
+        )
     args = vars(parser.parse_args())
-    # disable progress indicators globally, if the argument --no-progress-indicators was specified
-    progress_indicator.ProgressIndicator.disable_indicators(
-        args["no_progress_indicators"])
-    # remove the no_progress_indicators entry from the dict
-    # (after disabling indicators, its value is no longer usefull)
-    args.pop("no_progress_indicators")
 
     return args
 
@@ -404,9 +529,10 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     - json
     - json_timeasstring [Default]
     - hdf5
+    - csv
     - txt
     The file_type defines the file format and thus also the file ending.
-    The file format can be json, hdf5 or txt.
+    The file format can be json, hdf5, csv or txt.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
@@ -420,6 +546,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
                'hdf5': [".h5", {"key": "data"}],
+               'csv': [".csv", {}],
                'txt': [".txt", param_dict]}
 
     try:
@@ -428,7 +555,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring, hdf5 or txt.")
+            " does not exist. Use json, json_timeasstring, hdf5, csv or txt.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -441,10 +568,12 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
+    elif file_type == 'csv':
+        df.to_csv(out_path)
     elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 
-    print("Information: Data has been written to", out_path)
+    default_print('Info', "Data has been written to " + out_path)
 
 
 class DataError(Exception):

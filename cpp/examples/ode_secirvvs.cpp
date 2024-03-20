@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin J. Kuehn
 *
@@ -78,11 +78,11 @@ int main()
     contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
 
     //times
-    model.parameters.get<mio::osecirvvs::IncubationTime>()[mio::AgeGroup(0)]       = 5.2;
-    model.parameters.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(0)]       = 0.5 * 3.33 + 0.5 * 5.2;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)] = 7;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]   = 6;
-    model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)] = 7;
+    model.parameters.get<mio::osecirvvs::TimeExposed>()[mio::AgeGroup(0)]            = 3.33;
+    model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[mio::AgeGroup(0)] = 1.87;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)]   = 7;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]     = 6;
+    model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)]   = 7;
 
     //probabilities
     model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.15;

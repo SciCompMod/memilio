@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -89,10 +89,10 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-using TestTypes = ::testing::Types<mio::RKIntegratorCore,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>,
-                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
+using TestTypes = ::testing::Types<
+    mio::RKIntegratorCore, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
+    // mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>, // TODO: reenable once boost bug is fixed
+    mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
 
 TYPED_TEST_SUITE(TestVerifyNumericalIntegrator, TestTypes);
 
@@ -139,6 +139,88 @@ TYPED_TEST(TestVerifyNumericalIntegrator, sine)
     EXPECT_NEAR(this->err, 0.0, 1e-7);
 }
 
+TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
+{
+    // this test checks all requirements on adaptive step sizing for IntegratorCore::step
+    // set fixed tolarances to control when a integration step fails
+    const double tol    = 1;
+    const double dt_min = 1, dt_max = 2 * dt_min;
+
+    this->y   = {Eigen::VectorXd::Zero(3)};
+    this->sol = {Eigen::VectorXd::Zero(3)};
+
+    TypeParam integrator;
+    integrator.set_abs_tolerance(tol);
+    integrator.set_rel_tolerance(tol);
+    integrator.set_dt_min(dt_min);
+    integrator.set_dt_max(dt_max);
+
+    double t_eval;
+    bool step_okay;
+
+    // this deriv function is supposed to (not guaranteed to!) break any integrator
+    double c        = 1;
+    auto deriv_fail = [&c, tol](const auto&&, auto&&, auto&& dxds) {
+        c /= -10 * tol;
+        dxds.array() = 1 / c; // increasing oscillation with each evaluation (indep. of t and dt)
+    };
+    // this deriv function is trivially integrable
+    auto deriv_success = [](const auto&&, auto&&, auto&& dxds) {
+        dxds.setZero(); // const f
+    };
+
+    // check that on a failed step, dt does decrease, but not below dt_min
+
+    t_eval    = 0;
+    this->dt  = dt_max;
+    step_okay = integrator.step(deriv_fail, this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, false); // step sizing should fail
+    EXPECT_EQ(this->dt, dt_min); // new step size should fall back to dt_min
+    EXPECT_EQ(t_eval, dt_min); // a step must be made with no less than dt_min
+
+    // check that on a successful step, dt increases from dt_min
+
+    t_eval    = 0;
+    this->dt  = dt_min;
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_GE(this->dt, dt_min); // new step size may be larger
+    EXPECT_LE(this->dt, dt_max); // but not too large
+    EXPECT_EQ(t_eval, dt_min); // used step size should still be dt_min
+
+    // check that on a successful step, dt does not increase from dt_max
+
+    t_eval    = 0;
+    this->dt  = dt_max;
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_EQ(this->dt, dt_max); // new step size must not increase from dt_max
+    EXPECT_EQ(t_eval, dt_max); // used step size should be dt_max
+
+    // check that the integrator does not make time steps for dt not in [dt_min, dt_max]
+
+    t_eval    = 0;
+    this->dt  = 0.5 * dt_min;
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_GE(this->dt, dt_min); // new step size must be bounded from below
+    EXPECT_LE(this->dt, dt_max); // and above
+    EXPECT_EQ(t_eval, dt_min); // step size should fall back to dt_min
+
+    t_eval    = 0;
+    this->dt  = 2.0 * dt_max;
+    step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
+
+    EXPECT_EQ(step_okay, true); // step sizing must be okay
+    EXPECT_GE(this->dt, dt_min); // new step size must be bounded
+    EXPECT_LE(this->dt, dt_max); // and above
+    EXPECT_EQ(t_eval, dt_max); // step size should fall back to dt_max
+}
+
 auto DoStep()
 {
     return testing::DoAll(testing::WithArgs<2, 3>(AddAssign()), testing::WithArgs<4, 1>(AssignUnsafe()),
@@ -165,18 +247,21 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     EXPECT_CALL(*mock_core, step).Times(100);
 
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 1e-2, mock_core);
-    integrator.advance(1);
-    EXPECT_EQ(integrator.get_result().get_num_time_points(), 101);
+    auto integrator = mio::OdeIntegrator(mock_core);
+    mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
+    double dt = 1e-2;
+    integrator.advance(f, 1, dt, result);
+    EXPECT_EQ(result.get_num_time_points(), 101);
 }
 
 TEST(TestOdeIntegrator, integratorStopsAtTMax)
 {
-    auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 0.137,
-                                         std::make_shared<testing::NiceMock<MockIntegratorCore>>());
-    integrator.advance(2.34);
-    EXPECT_DOUBLE_EQ(integrator.get_result().get_last_time(), 2.34);
+    auto f = [](auto&&, auto&&, auto&&) {};
+    mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
+    double dt       = 0.137;
+    auto integrator = mio::OdeIntegrator(std::make_shared<testing::NiceMock<MockIntegratorCore>>());
+    integrator.advance(f, 2.34, dt, result);
+    EXPECT_DOUBLE_EQ(result.get_last_time(), 2.34);
 }
 
 auto DoStepAndIncreaseStepsize(double new_dt)
@@ -215,10 +300,12 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(6), _)).Times(1);
     }
 
-    auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0), 1.0, mock_core);
-    integrator.advance(10.0);
-    integrator.advance(23.0);
+    auto f = [](auto&&, auto&&, auto&&) {};
+    mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
+    double dt       = 1.0;
+    auto integrator = mio::OdeIntegrator(mock_core);
+    integrator.advance(f, 10.0, dt, result);
+    integrator.advance(f, 23.0, dt, result);
 }
 
 auto DoStepAndIncreaseY(const Eigen::VectorXd& dy)
@@ -232,12 +319,14 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     using testing::_;
     using testing::Eq;
 
-    double dt       = 0.25;
+    double dt0      = 0.25;
+    double dt       = dt0;
     auto dy         = Eigen::VectorXd::Constant(1, 1);
     auto y0         = Eigen::VectorXd::Constant(1, 0);
     auto mock_core  = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator(f, 0, y0, dt, mock_core);
+    auto integrator = mio::OdeIntegrator(mock_core);
+    mio::TimeSeries<double> result(0, y0);
 
     {
         testing::InSequence seq;
@@ -248,6 +337,6 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
         EXPECT_CALL(*mock_core, step(_, Eq(y0 + 4 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
     }
 
-    integrator.advance(4 * dt);
-    integrator.advance(5 * dt);
+    integrator.advance(f, 4 * dt0, dt, result);
+    integrator.advance(f, 5 * dt0, dt, result);
 }

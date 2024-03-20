@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -91,18 +91,33 @@ struct ICUCapacity {
 };
 
 /**
- * @brief the incubation time in the SECIR model
- * @param tinc incubation time in day unit
+ * @brief the (mean) latent time in day unit
  */
-struct IncubationTime {
+struct TimeExposed {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 2.);
+        return Type(size, 1.);
     }
     static std::string name()
     {
-        return "IncubationTime";
+        return "TimeExposed";
+    }
+};
+
+/**
+ * @brief the (mean) time in day unit for asymptomatic cases that are infectious but
+ *        have not yet developed symptoms.
+ */
+struct TimeInfectedNoSymptoms {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms";
     }
 };
 
@@ -119,21 +134,6 @@ struct TimeInfectedSymptoms {
     static std::string name()
     {
         return "TimeInfectedSymptoms";
-    }
-};
-
-/**
- * @brief the serial interval in the SECIR model in day unit
- */
-struct SerialInterval {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.5);
-    }
-    static std::string name()
-    {
-        return "SerialInterval";
     }
 };
 
@@ -336,7 +336,7 @@ struct TestAndTraceCapacity {
 
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
-                 IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
+                 TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical>;
@@ -359,70 +359,136 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not
+     * Percentage of infected commuters that are not detected.
      */
-    void apply_constraints()
+    double& get_commuter_nondetection()
     {
+        return m_commuter_nondetection;
+    }
+    double get_commuter_nondetection() const
+    {
+        return m_commuter_nondetection;
+    }
+
+    /**
+     * Time in simulation before which no infected commuters are detected.
+     */
+    double& get_start_commuter_detection()
+    {
+        return m_start_commuter_detection;
+    }
+
+    double get_start_commuter_detection() const
+    {
+        return m_start_commuter_detection;
+    }
+
+    /**
+     * Time in simulation after which no infected commuters are detected.
+     */
+    double& get_end_commuter_detection()
+    {
+        return m_end_commuter_detection;
+    }
+
+    double get_end_commuter_detection() const
+    {
+        return m_end_commuter_detection;
+    }
+
+    /**
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
+     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
+     *
+     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
+     *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
+     *            function can and will not set Parameters to meaningful values in an epidemiological or virological context,
+     *            as all models are designed to be transferable to multiple diseases. Consequently, only acceptable
+     *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
+     *            may often be necessary to have set meaningful values.
+     *
+     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     */
+    bool apply_constraints()
+    {
+        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+
+        int corrected = false;
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
             log_warning("Constraint check: Parameter Seasonality changed from {:0.4f} to {:d}",
                         this->get<Seasonality>(), 0);
             this->set<Seasonality>(0);
+            corrected = true;
         }
 
         if (this->get<ICUCapacity>() < 0.0) {
             log_warning("Constraint check: Parameter ICUCapacity changed from {:0.4f} to {:d}",
                         this->get<ICUCapacity>(), 0);
             this->set<ICUCapacity>(0);
+            corrected = true;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < 2.0) {
-                log_warning("Constraint check: Parameter IncubationTime changed from {:.4f} to {:.4f}",
-                            this->get<IncubationTime>()[i], 2.0);
-                this->get<IncubationTime>()[i] = 2.0;
+            if (this->get<TimeExposed>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeExposed>()[i], tol_times);
+                this->get<TimeExposed>()[i] = tol_times;
+                corrected                   = true;
             }
 
-            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
-                log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
-                this->get<SerialInterval>()[i] = 0.5 * this->get<IncubationTime>()[i] + 0.5;
-            }
-            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
-                log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
-                this->get<SerialInterval>()[i] = this->get<IncubationTime>()[i] - 0.5;
+            if (this->get<TimeInfectedNoSymptoms>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedNoSymptoms changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeInfectedNoSymptoms>()[i], tol_times);
+                this->get<TimeInfectedNoSymptoms>()[i] = tol_times;
+                corrected                              = true;
             }
 
-            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}",
-                            this->get<TimeInfectedSymptoms>()[i], 1.0);
-                this->get<TimeInfectedSymptoms>()[i] = 1.0;
+            if (this->get<TimeInfectedSymptoms>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeInfectedSymptoms>()[i], tol_times);
+                this->get<TimeInfectedSymptoms>()[i] = tol_times;
+                corrected                            = true;
             }
 
-            if (this->get<TimeInfectedSevere>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter TimeInfectedSevere changed from {:.4f} to {:.4f}",
-                            this->get<TimeInfectedSevere>()[i], 1.0);
-                this->get<TimeInfectedSevere>()[i] = 1.0;
+            if (this->get<TimeInfectedSevere>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedSevere changed from {:.4f} to {:.4f}. Please note "
+                            "that unreasonably small compartment stays lead to massively increased run time. Consider "
+                            "to cancel and reset parameters.",
+                            this->get<TimeInfectedSevere>()[i], tol_times);
+                this->get<TimeInfectedSevere>()[i] = tol_times;
+                corrected                          = true;
             }
 
-            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}",
-                            this->get<TimeInfectedCritical>()[i], 1.0);
-                this->get<TimeInfectedCritical>()[i] = 1.0;
+            if (this->get<TimeInfectedCritical>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeInfectedCritical>()[i], tol_times);
+                this->get<TimeInfectedCritical>()[i] = tol_times;
+                corrected                            = true;
             }
 
-            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0) {
+            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_warning(
                     "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                    this->get<TransmissionProbabilityOnContact>()[i], 0);
-                this->get<TransmissionProbabilityOnContact>()[i] = 0;
+                    this->get<TransmissionProbabilityOnContact>()[i], 0.0);
+                this->get<TransmissionProbabilityOnContact>()[i] = 0.0;
+                corrected                                        = true;
             }
 
             if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms changed from {:0.4f} to {:d} ",
                             this->get<RelativeTransmissionNoSymptoms>()[i], 0);
                 this->get<RelativeTransmissionNoSymptoms>()[i] = 0;
+                corrected                                      = true;
             }
 
             if (this->get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
@@ -430,6 +496,7 @@ public:
                 log_warning("Constraint check: Parameter RecoveredPerInfectedNoSymptoms changed from {:0.4f} to {:d} ",
                             this->get<RecoveredPerInfectedNoSymptoms>()[i], 0);
                 this->get<RecoveredPerInfectedNoSymptoms>()[i] = 0;
+                corrected                                      = true;
             }
 
             if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
@@ -437,124 +504,136 @@ public:
                 log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic changed from {:0.4f} to {:d}",
                             this->get<RiskOfInfectionFromSymptomatic>()[i], 0);
                 this->get<RiskOfInfectionFromSymptomatic>()[i] = 0;
+                corrected                                      = true;
             }
 
             if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter SeverePerInfectedSymptoms changed from {:0.4f} to {:d}",
                             this->get<SeverePerInfectedSymptoms>()[i], 0);
                 this->get<SeverePerInfectedSymptoms>()[i] = 0;
+                corrected                                 = true;
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter CriticalPerSevere changed from {:0.4f} to {:d}",
                             this->get<CriticalPerSevere>()[i], 0);
                 this->get<CriticalPerSevere>()[i] = 0;
+                corrected                         = true;
             }
 
             if (this->get<DeathsPerCritical>()[i] < 0.0 || this->get<DeathsPerCritical>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {:0.4f} to {:d}",
                             this->get<DeathsPerCritical>()[i], 0);
                 this->get<DeathsPerCritical>()[i] = 0;
+                corrected                         = true;
             }
         }
+        return corrected;
     }
 
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
      * if constraints are not satisfied.
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
+     * @return Returns true if one constraint is not satisfied, otherwise false.   
      */
-    int check_constraints() const
+    bool check_constraints() const
     {
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
             log_error("Constraint check: Parameter Seasonality smaller {:d} or larger {:d}", 0, 0.5);
-            return 1;
+            return true;
         }
 
         if (this->get<ICUCapacity>() < 0.0) {
             log_error("Constraint check: Parameter ICUCapacity smaller {:d}", 0);
-            return 1;
+            return true;
         }
+
+        const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < 2.0) {
-                log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
-                          this->get<IncubationTime>()[i], 2.0);
-                return 1;
+            if (this->get<TimeExposed>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeExposed>()[i], tol_times);
+                return true;
             }
 
-            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
-                          this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
-                return 1;
-            }
-            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
-                          this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
-                return 1;
+            if (this->get<TimeInfectedNoSymptoms>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedNoSymptoms>()[i], tol_times);
+                return true;
             }
 
-            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedSymptoms>()[i], 1.0);
-                return 1;
+            if (this->get<TimeInfectedSymptoms>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedSymptoms>()[i], tol_times);
+                return true;
             }
 
-            if (this->get<TimeInfectedSevere>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedSevere>()[i], 1.0);
-                return 1;
+            if (this->get<TimeInfectedSevere>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedSevere>()[i], tol_times);
+                return true;
             }
 
-            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedCritical>()[i], 1.0);
-                return 1;
+            if (this->get<TimeInfectedCritical>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedCritical>()[i], tol_times);
+                return true;
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
                           1);
-                return 1;
+                return true;
             }
 
             if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
                 log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
-                return 1;
+                return true;
             }
 
             if (this->get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
                 this->get<RecoveredPerInfectedNoSymptoms>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
                           1);
-                return 1;
+                return true;
             }
 
             if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
                 this->get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
                           1);
-                return 1;
+                return true;
             }
 
             if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
                 log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
 
             if (this->get<DeathsPerCritical>()[i] < 0.0 || this->get<DeathsPerCritical>()[i] > 1.0) {
                 log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
         }
-        return 0;
+        return false;
     }
 
 private:
@@ -578,6 +657,9 @@ public:
 
 private:
     AgeGroup m_num_groups;
+    double m_commuter_nondetection    = 0.0;
+    double m_start_commuter_detection = 0.0;
+    double m_end_commuter_detection   = 0.0;
 };
 
 /**

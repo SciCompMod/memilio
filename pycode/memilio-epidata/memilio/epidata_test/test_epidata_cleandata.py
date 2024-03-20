@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -910,8 +910,6 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
                 testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
-
-            print([all_data, cases, jh, popul, hdf5, out_path])
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)

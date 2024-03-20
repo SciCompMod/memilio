@@ -1,30 +1,35 @@
-## Changes
+# Changes and Information
 
-Please briefly list the changes made:
+Please **briefly list the changes** (main added features, changed items, or corrected bugs) made:
 
-[Describe here in 2-3 lines. For details, reference to issues to avoid redundant information.]
+-
+-
+-
 
-## Merge Request - GuideLine Checklist
 
-- *Check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) before opening a Pull request/Merge request.*
-- *Request a reviewer when your work is ready to review, before this please use the draft feature.*
+If need be, add additional information and what the reviewer should look out for in particular:
+
+-
+-
+
+## Merge Request - Guideline Checklist
+
+Please check our [git workflow](https://github.com/SciCompMod/memilio/wiki/git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
 
 ### Checks by code author
 
 - [ ] Every addressed issue is linked (use the "Closes #ISSUE" keyword below)
-- [ ] New code adheres to [coding guidelines](https://github.com/DLR-SC/memilio/wiki/Coding-guidelines)
+- [ ] New code adheres to [coding guidelines](https://github.com/SciCompMod/memilio/wiki/Coding-guidelines)
 - [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
-- [ ] Tests are added for new functionality and a local test run was successful
+- [ ] Tests are added for new functionality and a local test run was successful (with and without OpenMP)
 - [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and Markdown files if necessary)
 - [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
+- [ ] (For ABM development) Checked [benchmark results](https://github.com/SciCompMod/memilio/wiki/Agent-Based-Model-Development) and ran and posted a local test above from before and after development to ensure performance is monitored.
 
 ### Checks by code reviewer(s)
 
 - [ ] Corresponding issue(s) is/are linked and addressed
 - [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.)
-- [ ] Appropriate **unit tests** have been added, CI passes and code coverage is acceptable (did not decrease)
+- [ ] Appropriate **unit tests** have been added, CI passes, code coverage and performance is acceptable (did not decrease)
 - [ ] No large data files added in the whole history of commits(files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
-
-### Additional context
-
-Please list additional information or things a reviewer should look out for.
+- [ ] On merge, add 2-5 lines with the changes (main added features, changed items, or corrected bugs) to the merge-commit-message. This can be taken from the **briefly-list-the-changes** above (best case) or the separate commit messages (worst case).

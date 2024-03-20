@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,6 +23,8 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/populations.h"
 #include "memilio/io/history.h"
 
 namespace mio
@@ -35,7 +37,6 @@ namespace abm
  */
 class Simulation
 {
-    using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
 
 public:
     /**
@@ -51,43 +52,25 @@ public:
      * @see Simulation::get_world
      * @param[in] t0 The starting time of the Simulation.
      */
-    Simulation(TimePoint t0)
-        : Simulation(t0, World())
+    Simulation(TimePoint t0, size_t num_agegroups)
+        : Simulation(t0, World(num_agegroups))
     {
     }
-
-    /** 
-     * @brief Run the Simulation from the current time to tmax.
-     * @param[in] tmax Time to stop.
-     */
-    void advance(TimePoint tmax);
 
     /** 
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
      * @param[in] history History object to log data of the Simulation.
      */
-    template <typename History>
-    void advance(TimePoint tmax, History& history)
+    template <typename... History>
+    void advance(TimePoint tmax, History&... history)
     {
         //log initial system state
-        initialize_locations(m_t);
-        store_result_at(m_t);
-        history.log(*this);
+        (history.log(*this), ...);
         while (m_t < tmax) {
             evolve_world(tmax);
-            store_result_at(m_t);
-            history.log(*this);
+            (history.log(*this), ...);
         }
-    }
-
-    /**
-     * @brief Get the result of the Simulation.
-     * Sum over all Location%s of the number of Person%s in an #InfectionState.
-     */
-    const TimeSeries<ScalarType>& get_result() const
-    {
-        return m_result;
     }
 
     /**
@@ -111,12 +94,10 @@ public:
     }
 
 private:
-    void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
     void evolve_world(TimePoint tmax);
 
     World m_world; ///< The World to simulate.
-    TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

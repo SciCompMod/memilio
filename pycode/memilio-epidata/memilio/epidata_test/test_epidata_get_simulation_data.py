@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -24,11 +24,13 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getSimulationData as gsd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     # construct fake directory for testing
     maxDiff = None
+    gd.Conf.v_level = 'Debug'
 
     path = '/home/SumlationData'
 
@@ -131,7 +133,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             ' of the source material. Please report this as an issue. ' +
             'vaccination' + ' data could not be stored correctly.')
 
-        exceptionprint = call('Exception: ')
+        exceptionprint = call('Error: Exception: ')
         expected_calls = [
             exceptionprint, casesprint, exceptionprint, populprint,
             exceptionprint, diviprint, exceptionprint, vaccprint]

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -55,7 +55,6 @@ int main(int argc, char** argv)
 
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 1.; //time step of migration, not integration
 
     double cont_freq = 10; // see Polymod study
 
@@ -73,19 +72,21 @@ int main(int argc, char** argv)
     params.set<mio::osecir::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.0;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 12;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * nb_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * nb_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * nb_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * nb_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * nb_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * nb_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * nb_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * nb_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * nb_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * nb_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
@@ -123,7 +124,7 @@ int main(int argc, char** argv)
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
             graph.add_edge(row, col,
-                           Eigen::VectorXd::Constant(8 * (size_t)nb_groups,
+                           Eigen::VectorXd::Constant(10 * (size_t)nb_groups,
                                                      twitter_migration_2018(row, col) /
                                                          graph.nodes()[row].property.populations.get_total()));
         }

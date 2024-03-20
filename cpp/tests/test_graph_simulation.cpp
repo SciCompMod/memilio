@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -17,12 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm_helpers.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
 #include "memilio/compartments/simulation.h"
 #include "ode_seir/model.h"
 #include "gtest/gtest.h"
+#include "load_test_data.h"
 #include "gmock/gmock.h"
 
 class MockNodeFunc
@@ -186,11 +189,8 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     using testing::_;
     using testing::Eq;
 
-    //set seeds
-    mio::thread_local_rng().seed({114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203});
-
     const auto t0   = 0.0;
-    const auto tmax = 20.;
+    const auto tmax = 10.;
     const auto dt   = 0.076;
 
     mio::oseir::Model model;
@@ -205,18 +205,127 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<ScalarType>>>>
+        mock_exponential_dist;
+    // use pregenerated exp(1) random values
+    // all values are used to set normalized_waiting_time in GraphSimulationStochastic<...>::advance,
+    // the first value is used at the function start, all others later during the while loop
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
+        .Times(testing::Exactly(10))
+        .WillOnce(testing::Return(0.446415))
+        .WillOnce(testing::Return(1.04048))
+        .WillOnce(testing::Return(0.136687))
+        .WillOnce(testing::Return(2.50697))
+        .WillOnce(testing::Return(1.61943))
+        .WillOnce(testing::Return(0.267578))
+        .WillOnce(testing::Return(1.03696))
+        .WillOnce(testing::Return(0.58395))
+        .WillOnce(testing::Return(0.113943))
+        .WillOnce(testing::Return(1.204045));
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    // these values determine which transition event should occur in GraphSimulationStochastic<...>::advance
+    // during this short sim, the chance of event==0 is ~70% every time
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke)
+        .Times(testing::Exactly(9))
+        .WillOnce(testing::Return(0))
+        .WillOnce(testing::Return(1))
+        .WillRepeatedly(testing::Return(0));
+
     sim.advance(tmax);
 
     auto result_n0 = sim.get_graph().nodes()[0].property.get_result().get_last_value();
     auto result_n1 = sim.get_graph().nodes()[1].property.get_result().get_last_value();
 
-    auto expected_values_n0 = std::vector<double>{691.0, 6.3518514260209971, 31.303976182729517, 257.34417239124963};
+    auto expected_values_n0 = std::vector<double>{692.0, 43.630772796677256, 95.750528156188381, 159.61869904713436};
     auto actual_values_n0   = std::vector<double>{result_n0[0], result_n0[1], result_n0[2], result_n0[3]};
-    auto expected_values_n1 = std::vector<double>{709.0, 6.4651647420642382, 33.101208735481720, 265.43362652245412};
+    auto expected_values_n1 = std::vector<double>{708.0, 44.063147085799322, 96.485223892060375, 160.45162902214025};
     auto actual_values_n1   = std::vector<double>{result_n1[0], result_n1[1], result_n1[2], result_n1[3]};
 
-    EXPECT_THAT(actual_values_n0, testing::ElementsAreArray(expected_values_n0));
-    EXPECT_THAT(actual_values_n1, testing::ElementsAreArray(expected_values_n1));
+    for (size_t i = 0; i < expected_values_n0.size(); ++i) {
+        EXPECT_THAT(expected_values_n0[i], testing::DoubleNear(actual_values_n0[i], 1e-8));
+        EXPECT_THAT(expected_values_n1[i], testing::DoubleNear(actual_values_n1[i], 1e-8));
+    }
+}
+
+template <typename Graph>
+mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& model, double t0, double tmax, double dt)
+{
+    g.add_node(0, model, t0);
+    g.add_node(1, model, t0);
+    g.add_node(2, model, t0);
+    for (size_t county_idx_i = 0; county_idx_i < g.nodes().size(); ++county_idx_i) {
+        for (size_t county_idx_j = 0; county_idx_j < g.nodes().size(); ++county_idx_j) {
+            if (county_idx_i == county_idx_j)
+                continue;
+            g.add_edge(county_idx_i, county_idx_j, Eigen::VectorXd::Constant(4, 0.001));
+        }
+    }
+
+    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+
+    sim.advance(tmax);
+
+    return sim;
+}
+
+TEST(TestGraphSimulation, consistencyFlowMobility)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.001;
+
+    mio::oseir::Model model;
+    double total_population                                                                            = 10000;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+        total_population -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+
+    model.check_constraints();
+
+    auto sim_no_flows = create_simulation(
+        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax, dt);
+
+    auto sim_flows =
+        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::oseir::Model>>, mio::MigrationEdge>(),
+                          model, t0, tmax, dt);
+
+    //test if all results of both simulations are equal for all nodes
+    for (size_t node_id = 0; node_id < sim_no_flows.get_graph().nodes().size(); ++node_id) {
+        auto& results_no_flows = sim_no_flows.get_graph().nodes()[node_id].property.get_result();
+        auto& results_flows    = sim_flows.get_graph().nodes()[node_id].property.get_result();
+        EXPECT_EQ((size_t)results_no_flows.get_num_time_points(), (size_t)results_flows.get_num_time_points());
+        for (size_t t_indx = 0; t_indx < (size_t)results_no_flows.get_num_time_points(); t_indx++) {
+            EXPECT_NEAR(results_no_flows.get_time((Eigen::Index)t_indx), results_flows.get_time((Eigen::Index)t_indx),
+                        1e-10);
+            auto tmp_sol_no_flows = results_no_flows.get_value((Eigen::Index)t_indx);
+            auto tmp_sol_flows    = results_flows.get_value((Eigen::Index)t_indx);
+            EXPECT_NEAR(tmp_sol_no_flows[0], tmp_sol_flows[0], 1e-10);
+            EXPECT_NEAR(tmp_sol_no_flows[1], tmp_sol_flows[1], 1e-10);
+            EXPECT_NEAR(tmp_sol_no_flows[2], tmp_sol_flows[2], 1e-10);
+        }
+    }
+
+    // test all values from one node to the provided reference data for both simulations
+    const auto& res_sim = sim_flows.get_graph().nodes()[0].property.get_result();
+    const auto compare  = load_test_data_csv<ScalarType>("graphsimulation-compare.csv");
+    EXPECT_EQ((size_t)compare.size(), (size_t)res_sim.get_num_time_points());
+    for (size_t t_indx = 0; t_indx < (size_t)res_sim.get_num_time_points(); t_indx++) {
+        EXPECT_NEAR(compare[t_indx][0], res_sim.get_time((Eigen::Index)t_indx), 1e-10);
+        auto temp_sol = res_sim.get_value((Eigen::Index)t_indx);
+        EXPECT_NEAR(compare[t_indx][1], temp_sol[0], 1e-10);
+        EXPECT_NEAR(compare[t_indx][2], temp_sol[1], 1e-10);
+        EXPECT_NEAR(compare[t_indx][3], temp_sol[2], 1e-10);
+    }
 }
 
 namespace

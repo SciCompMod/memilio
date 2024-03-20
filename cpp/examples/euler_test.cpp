@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -38,7 +38,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
 
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
-    auto f        = [](auto&& y, auto&& t, auto&& dydt) {
+    auto f        = [](auto&& /*y*/, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
 

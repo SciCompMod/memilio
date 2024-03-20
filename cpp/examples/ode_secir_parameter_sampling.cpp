@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -80,9 +80,6 @@ int main()
     mio::ContactMatrixGroup cm_group{
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
     params.get<mio::osecir::ContactPatterns>() = cm_group;
-
-    double t0   = 0;
-    double tmax = 100;
 
     params.get<mio::osecir::ContactPatterns>().get_dampings().push_back(mio::DampingSampling(
         mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(30.),

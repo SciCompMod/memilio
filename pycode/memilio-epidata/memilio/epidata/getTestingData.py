@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -29,6 +29,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 # Downloads testing data from RKI
 
@@ -84,8 +87,8 @@ def transform_weeks_to_dates(df_test):
     @return test data data frames with calender weeks replaced by dates.
     """
     # country-wide data
-    df_test[0] = df_test[0].rename(
-        columns={df_test[0].columns[0]: dd.EngEng['date']})
+    df_test[0].rename(
+        columns={df_test[0].columns[0]: dd.EngEng['date']}, inplace=True)
     for i in range(len(df_test[0])):
         # use %G insteaf of %Y (for year) and %V instead of %W (for month)
         # to get ISO week definition
@@ -93,8 +96,7 @@ def transform_weeks_to_dates(df_test):
             df_test[0].loc[i, dd.EngEng['date']] + '-4', "%V/%G-%w"), "%Y-%m-%d")
 
     # federal state-based data
-    df_test[1] = df_test[1].rename(
-        columns={df_test[1].columns[1]: dd.EngEng['date']})
+    df_test[1].rename(columns={df_test[1].columns[1]: dd.EngEng['date']}, inplace=True)
     for i in range(len(df_test[1])):
         datestr = str(df_test[1].loc[i, df_test[1].columns[2]]) + \
             "/" + str(df_test[1].loc[i, dd.EngEng['date']]) + '-4'
@@ -103,7 +105,7 @@ def transform_weeks_to_dates(df_test):
         df_test[1].loc[i, dd.EngEng['date']] = datetime.strftime(
             datetime.strptime(datestr, "%V/%G-%w"), "%Y-%m-%d")
     # drop specific column on week after merge in year/date column
-    df_test[1] = df_test[1].drop(columns=df_test[1].columns[2])
+    df_test[1].drop(columns=df_test[1].columns[2], inplace=True)
 
     return df_test
 
@@ -115,12 +117,11 @@ def transform_weeks_to_dates(df_test):
 def get_testing_data(read_data=dd.defaultDict['read_data'],
                      file_format=dd.defaultDict['file_format'],
                      out_folder=dd.defaultDict['out_folder'],
-                     no_raw=dd.defaultDict['no_raw'],
                      start_date=dd.defaultDict['start_date'],
                      end_date=dd.defaultDict['end_date'],
                      impute_dates=dd.defaultDict['impute_dates'],
                      moving_average=dd.defaultDict['moving_average'],
-                     make_plot=dd.defaultDict['make_plot']):
+                     **kwargs):
     """! Downloads the RKI testing data and provides positive rates of 
     testing data in different ways. Since positive rates also implicitly 
     provide information on testing numbers while the opposite is
@@ -154,15 +155,17 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     @param read_data True or False. Defines if data is read from file or downloaded.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         At the moment they are always imputed.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+
     # data for all dates is automatically added
     impute_dates = True
 
@@ -229,23 +232,22 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
                 "Time data can't be transformed to intended format")
 
     # drop columns
-    df_test[0] = df_test[0].drop(
+    df_test[0].drop(
         columns=['Anzahl Testungen', 'Positiv getestet',
-                 'Anzahl übermittelnder Labore'])
-    df_test[1] = df_test[1].drop(columns='Anzahl Gesamt')
+                 'Anzahl übermittelnder Labore'], inplace=True)
+    df_test[1].drop(columns='Anzahl Gesamt', inplace=True)
 
     # remove unknown locations
     df_test[1] = df_test[1][df_test[1].State != 'unbekannt']
-    df_test[1] = df_test[1].reset_index()
-    df_test[1] = df_test[1].drop(columns='index')
+    df_test[1].reset_index(drop=True, inplace=True)
 
     # correct positive rate to percentage
     df_test[0][dd.EngEng['positiveRate']
                ] = df_test[0][dd.EngEng['positiveRate']]/100
 
     # replace state names with IDs
-    df_test[1] = df_test[1].rename(
-        columns={dd.EngEng['state']: dd.EngEng['idState']})
+    df_test[1].rename(
+        columns={dd.EngEng['state']: dd.EngEng['idState']}, inplace=True)
     for stateName, stateID in geoger.get_state_names_and_ids():
         df_test[1].loc[df_test[1][dd.EngEng['idState']]
                        == stateName, dd.EngEng['idState']] = stateID
@@ -264,7 +266,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_test[0], directory, filename, file_format)
 
     # plot country-wide positive rates
-    if make_plot:
+    if conf.plot:
         # make plot
         customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
@@ -286,7 +288,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_test[1], directory, filename, file_format)
 
     # plot positive rates of federal states
-    if make_plot:
+    if conf.plot:
         # make plot
         customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
@@ -301,7 +303,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # get county ids
     unique_geo_entities = geoger.get_county_ids()
 
-    df_test_counties = pd.DataFrame()
+    # create list of DataFrames, later to be merged
+    df_test_counties = []
     states_str = dict(zip((geoger.get_state_ids(zfill=True)), range(1,
                                                                     1+len(geoger.get_state_ids()))))
     for county in unique_geo_entities:
@@ -309,14 +312,16 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         state_index = states_str[county_str[0:2]]
         df_local = pd.DataFrame(
             df_test[1].loc[df_test[1][dd.EngEng['idState']]
-                           == state_index].copy())
+                           == state_index])
         df_local.rename(
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties = pd.concat([df_test_counties, df_local.copy()])
+        df_test_counties.append(df_test_counties, df_local)
 
-     # store positive rates for the all federal states
+    df_test_counties = pd.concat(df_test_counties)
+
+    # store positive rates for the all federal states
     filename = 'germany_counties_from_states_testpos'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_test_counties, directory, filename, file_format)

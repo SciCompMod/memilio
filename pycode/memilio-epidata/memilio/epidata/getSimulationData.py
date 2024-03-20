@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow
 #
@@ -37,24 +37,23 @@ from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData
 
 
 def print_error(text):
-    print('Error: Something went wrong while getting ' + text +
-          ' data. This was likely caused by a changed file format'
-          ' of the source material. Please report this as an issue. ' + text +
-          ' data could not be stored correctly.')
+    gd.default_print('Error', 'Something went wrong while getting ' + text +
+                     ' data. This was likely caused by a changed file format'
+                     ' of the source material. Please report this as an issue. ' + text +
+                     ' data could not be stored correctly.')
 
 
 def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
-                        no_raw=dd.defaultDict['no_raw'],
                         start_date=dd.defaultDict['start_date'],
                         end_date=dd.defaultDict['end_date'],
                         impute_dates=dd.defaultDict['impute_dates'],
                         moving_average=dd.defaultDict['moving_average'],
-                        make_plot=dd.defaultDict['make_plot'],
                         split_berlin=dd.defaultDict['split_berlin'],
                         rep_date=dd.defaultDict['rep_date'],
-                        sanitize_data=dd.defaultDict['sanitize_data']
+                        sanitize_data=dd.defaultDict['sanitize_data'],
+                        **kwargs
                         ):
     """! Downloads all data from external sources
 
@@ -68,17 +67,19 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default 2020-01-01.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param sanitize_data Value in {0,1,2,3}. Redistributes cases of every county either based on regions' ratios or on thresholds and population.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+    make_plot = conf.plot
 
     arg_dict_all = {
         "read_data": read_data, "file_format": file_format,
@@ -99,25 +100,25 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     try:
         getCaseData.get_case_data(**arg_dict_cases)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('case')
 
     try:
         getPopulationData.get_population_data(**arg_dict_all)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('population')
 
     try:
         getDIVIData.get_divi_data(**arg_dict_divi)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('DIVI')
 
     try:
         getVaccinationData.get_vaccination_data(**arg_dict_vacc)
     except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
 
 

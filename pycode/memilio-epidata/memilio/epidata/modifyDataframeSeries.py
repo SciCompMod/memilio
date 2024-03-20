@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -29,6 +29,10 @@ import numpy as np
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 
 def impute_and_reduce_df(
@@ -38,7 +42,7 @@ def impute_and_reduce_df(
     Extracts Dates between min and max date.
 
     @param df_old old pandas dataframe
-    @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county oder federal state IDs)
+    @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county or federal state IDs)
     @param mod_cols List of columns for which the imputation and/or moving average is conducted (e.g., Confirmed or ICU)
     @param impute [Default: 'forward'] imputes either based on older values ('forward') or zeros ('zeros')
     @param moving_average [Default: 0, no averaging] Number of days over which to compute the moving average
@@ -55,53 +59,73 @@ def impute_and_reduce_df(
         df_old[dd.EngEng['date']] = pd.to_datetime(df_old[dd.EngEng['date']])
         df_old.Date = df_old.Date.dt.date.astype(df_old.dtypes.Date)
 
-    # create empty copy of the df
-    df_new = pd.DataFrame(columns=df_old.columns)
-    # make pandas use the same data types....
-    df_new = df_new.astype(dtype=dict(zip(df_old.columns, df_old.dtypes)))
-
-    # remove 'index' column if available
-    try:
-        df_new = df_new.drop(columns='index')
-    except KeyError:
-        pass
-
     # range of dates which should be filled
-    if min_date == '':
-        min_date = min(df_old[dd.EngEng['date']])
-    if max_date == '':
-        max_date = max(df_old[dd.EngEng['date']])
+    # to prevent inconsistent data with different start dates, all dates are filled
+    # TODO: find a better method, to prevent unnecessary computation of dates before start date
+    first_date = min(df_old[dd.EngEng['date']])
+    last_date = max(df_old[dd.EngEng['date']])
 
     # Transform dates to datetime
-    if isinstance(min_date, str) == True:
+    if isinstance(first_date, str) == True:
+        first_date = datetime.strptime(first_date, "%Y-%m-%d")
+    if isinstance(last_date, str) == True:
+        last_date = datetime.strptime(last_date, "%Y-%m-%d")
+
+    # Transform timestamp to date
+    try:
+        first_date = first_date.date()
+        last_date = last_date.date()
+    except:
+        pass
+
+    # range of dates which should be in output
+    # Transform dates to datetime
+    if (min_date is None) or (min_date == ''):
+        min_date = first_date
+    elif isinstance(min_date, str) == True:
         min_date = datetime.strptime(min_date, "%Y-%m-%d")
-    if isinstance(max_date, str) == True:
+    if (max_date is None) or (max_date == ''):
+        max_date = last_date
+    elif isinstance(max_date, str) == True:
         max_date = datetime.strptime(max_date, "%Y-%m-%d")
 
-    start_date = min_date
-    end_date = max_date
+    try:
+        min_date = min_date.date()
+        max_date = max_date.date()
+    except:
+        pass
+
     # shift start and end date for relevant dates to compute moving average.
     # if moving average is odd, both dates are shifted equaly.
     # if moving average is even, start date is shifted one day more than end date.
     if moving_average > 0:
-        end_date = end_date + timedelta(int(np.floor((moving_average-1)/2)))
-        start_date = start_date - timedelta(int(np.ceil((moving_average-1)/2)))
+        first_date = first_date - timedelta(int(np.ceil((moving_average-1)/2)))
+        last_date = last_date + timedelta(int(np.floor((moving_average-1)/2)))
+        min_date_to_use = min_date - \
+            timedelta(int(np.ceil((moving_average-1)/2)))
+        max_date_to_use = max_date + \
+            timedelta(int(np.floor((moving_average-1)/2)))
+        if first_date > min_date_to_use:
+            first_date = min_date_to_use
+        if last_date < max_date_to_use:
+            last_date = max_date_to_use
 
-    idx = pd.date_range(start_date, end_date)
+    idx = pd.date_range(first_date, last_date)
 
     # create list of all possible groupby columns combinations
-    unique_ids = []
-    for group_key in group_by_cols.keys():
-        unique_ids.append(group_by_cols[group_key])
+    unique_ids = [group_by_cols[group_key]
+                  for group_key in group_by_cols.keys()]
     unique_ids_comb = list(itertools.product(*unique_ids))
     # create list of keys/group_by column names
     group_by = list(group_by_cols.keys())
-
+    # create list to store DataFrames in to be concatenated.
+    # pd.concat is not called inside the loop for performance reasons.
+    df_list = []
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
+        # filter df
         df_local = df_old.copy()
         counter = 0
-        # filter df
         while counter < len(ids):
             df_local = df_local[df_local[group_by[counter]] == ids[counter]]
             counter += 1
@@ -114,9 +138,8 @@ def impute_and_reduce_df(
 
         if len(df_local) > 0:
             # create values for first date
-            values = {}
-            for column in df_local.columns:
-                values[column] = df_local[column][0]
+            values = {column: df_local[column].iloc[0]
+                      for column in df_local.columns}
             # depending on 'start_w_firstval', missing values at the beginning
             # of the frame will either be set to zero or to the first available
             # value in the data frame
@@ -126,22 +149,23 @@ def impute_and_reduce_df(
 
             if impute == 'zeros':
                 # impute zeros at missing dates
-                for keys, vals in values.items():
-                    df_local_new[keys].fillna(vals, inplace=True)
-            else:
+                df_local_new.fillna(values, inplace=True)
+            elif impute == 'forward':
                 # fill values of missing dates based on last entry
-                df_local_new.fillna(method='ffill', inplace=True)
+                df_local_new.ffill(inplace=True)
                 # fill value of the first date, if it doesn't exist yet
-                # has to be conducted in second step to not impute 'value'
-                # at first missing value if start is present
-                for keys, vals in values.items():
-                    df_local_new[keys].fillna(vals, limit=1, inplace=True)
-                # fill remaining values (between first date and first
+                # and remaining values (between first date and first
                 # reported date of the df_local)
-                df_local_new.fillna(method='ffill', inplace=True)
+                df_local_new.fillna(values, inplace=True)
+            else:
+                raise ValueError(
+                    'Invalid imputation method. Expected zeros or forward. Got ' + str(impute) + '.')
 
             # compute 'moving average'-days moving average
             if moving_average > 0:
+                # extract subframe to prevent unnecessary computation
+                df_local_new = extract_subframe_based_on_dates(
+                    df_local_new, min_date_to_use, max_date_to_use)
                 for avg in mod_cols:
                     # compute moving average in new column
                     df_local_new['MA' + avg] = df_local_new[avg].rolling(
@@ -160,7 +184,7 @@ def impute_and_reduce_df(
             # at all (e.g., many counties do not have had any kind of
             # refreshing vaccinations so far.) Then, the following warning
             # is misleading.
-            # print('Warning: Tuple ' + str(ids) + ' not found in local data frame. Imputing zeros.')
+            # gd.deafult_print('Warning', 'Tuple ' + str(ids) + ' not found in local data frame. Imputing zeros.')
             # create zero values for non-existent time series
             values = {}
             counter = 0
@@ -172,13 +196,11 @@ def impute_and_reduce_df(
             # TODO: by this the corresponding columns will be zero-filled
             #       other entries such as names etc will get lost here
             #       any idea to introduce these names has to be found.
-            for keys, vals in values.items():
-                df_local_new[keys].fillna(vals, inplace=True)
-
+            df_local_new.fillna(values, inplace=True)
         # append current local entity (i.e., county or state)
-        df_new = pd.concat([df_new, df_local_new])
-        # rearrange indices from 0 to N
-        df_new.index = (range(len(df_new)))
+        df_list.append(df_local_new)
+
+    df_new = pd.concat(df_list, ignore_index=True)
 
     # extract min and max date
     df_new = extract_subframe_based_on_dates(df_new, min_date, max_date)
@@ -225,7 +247,7 @@ def split_column_based_on_values(
         df_reduced = df_to_split[df_to_split[column_to_split] == column_identifiers[i]].rename(
             columns={column_vals_name: new_column_labels[i]}).drop(columns=column_to_split)
         df_reduced = df_reduced.groupby(
-            groupby_list).agg({new_column_labels[i]: sum})
+            groupby_list).agg({new_column_labels[i]: "sum"})
         if compute_cumsum:
             # compute cummulative sum over level index of ID_County and level
             # index of Age_RKI
@@ -278,7 +300,7 @@ def insert_column_by_map(df, col_to_map, new_col_name, map):
     @param map List of tuples of values in the column to be added and values in the given column
     @return dataframe df with column of state names correspomding to state ids
     """
-    df_new = df.copy()
+    df_new = df[:]
     loc_new_col = df_new.columns.get_loc(col_to_map)+1
     df_new.insert(loc=loc_new_col, column=new_col_name,
                   value=df_new[col_to_map])
@@ -309,8 +331,8 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     """
     if (from_lower_bounds[0] != to_lower_bounds[0] or
             from_lower_bounds[-1] != to_lower_bounds[-1]):
-        print("Range of intervals mapped from is different than range of " +
-              "intervals mapped to. Therefore, empty entries are possible.")
+        gd.default_print("Warning", "Range of intervals mapped from is different than range of " +
+                         "intervals mapped to. Therefore, empty entries are possible.")
 
     extended_begin = False
     extended_end = False
@@ -430,8 +452,8 @@ def fit_age_group_intervals(
         else:
             raise ValueError("Undefined entry for one age group in age_out")
     if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
-        print(
-            "Data from input data frame does not fit to desired output. Required data that is missing is interpreted as zero.")
+        gd.default_print("Warning",
+                         "Data from input data frame does not fit to desired output. Required data that is missing is interpreted as zero.")
     if max_entry_in not in age_out_min:
         age_out_min.append(max_entry_in)
 
@@ -476,8 +498,8 @@ def fit_age_group_intervals(
                 raise ValueError(
                     "Undefined entry for one age group in population data")
         if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
-            print(
-                "Data from input data frame does not fit to population data. Required data that is missing is interpreted as zero.")
+            gd.default_print("Warning",
+                             "Data from input data frame does not fit to population data. Required data that is missing is interpreted as zero.")
         if max_entry_in not in age_pop_min:
             age_pop_min.append(max_entry_in)
 

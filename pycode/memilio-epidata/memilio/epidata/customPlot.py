@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -89,4 +89,4 @@ def plot_multiple_series(
 
     gd.check_dir(path_rel)
     plt.savefig(path_rel + fig_name + '.png', bbox_inches='tight', dpi=dpi)
-    print('Plot saved to ' + path_rel + fig_name + '.png')
+    gd.default_print("Info", 'Plot saved to ' + path_rel + fig_name + '.png')

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -49,7 +49,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 
     std::vector<double> single_element_ensemble(num_runs);
 
-    // lamda function that calculates the percentile of a single paramter
+    // lambda function that calculates the percentile of a single parameter
     std::vector<Model> percentile(num_nodes, Model((int)num_groups));
     auto param_percentil = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
         std::vector<double> single_element(num_runs);
@@ -76,9 +76,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             }
             // times
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<IncubationTime>()[i]; });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeExposed>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<SerialInterval>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedNoSymptoms>()[i];
+                });
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSymptoms>()[i]; });
             param_percentil(
@@ -165,11 +167,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             //virus variants
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<BaseInfectiousnessB161>()[i];
-                });
-            param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<BaseInfectiousnessB117>()[i];
+                    return model.parameters.template get<InfectiousnessNewVariant>()[i];
                 });
         }
         // group independent params

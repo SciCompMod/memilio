@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -23,7 +23,7 @@
 
 MSVC_WARNING_DISABLE_PUSH(4268)
 #include <boost/filesystem.hpp>
-MSVC_WARNING_POP
+MSVC_WARNING_POP()
 
 namespace mio
 {

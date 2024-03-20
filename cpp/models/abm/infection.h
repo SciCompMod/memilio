@@ -1,7 +1,7 @@
 /*
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: David Kerkmann, Sascha Korf
+* Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -24,6 +24,7 @@
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
 #include "abm/parameters.h"
+#include "abm/person.h"
 
 #include <vector>
 
@@ -34,6 +35,8 @@ namespace abm
 
 /**
  * @brief Models the ViralLoad for an Infection, modelled on a log_10 scale.
+ * Based on https://www.science.org/doi/full/10.1126/science.abi5273
+ * Examplary ViralLoad courses can be seen for example in Fig. 4 B.
  */
 struct ViralLoad {
     TimePoint start_date; ///< Start date of the ViralLoad concentration in the Person.
@@ -49,14 +52,20 @@ class Infection
 public:
     /**
      * @brief Create an Infection for a single Person.
+     * Draws a random infection course.
+     * @param[inout] rng Person::RandomNumberGenerator for the Person.
      * @param[in] virus Virus type of the Infection.
      * @param[in] age AgeGroup to determine the ViralLoad course.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
-     * @param[in] detected [Default: false] If the Infection is detected.
+     * @param[in] latest_exposure [Default: {ExposureType::NoProtection, TimePoint(0)}] The pair value of last ExposureType (previous Infection/Vaccination) and TimePoint of that protection.
+     * @param[in] detected [Default: false] If the Infection is detected.     
      */
-    Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
-              InfectionState start_state = InfectionState::Exposed, bool detected = false);
+    Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
+              TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
+              std::pair<ExposureType, TimePoint> latest_exposure = {ExposureType::NoProtection, TimePoint(0)},
+              bool detected                                      = false);
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -68,6 +77,10 @@ public:
      * @brief Get infectivity at a given time.
      * Computed depending on current ViralLoad and individual invlogit function of each Person
      * corresponding to https://www.science.org/doi/full/10.1126/science.abi5273
+     * The mapping corresponds to Fig. 2 C.
+     * Formula of invlogit function can be found here:
+     * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+     * in ExtendedMethods.html, Section 3.1.2.1.
      * @param[in] t TimePoint of the querry.
      * @return Infectivity at given TimePoint.
      */
@@ -96,40 +109,50 @@ public:
      */
     bool is_detected() const;
 
+    /**
+     * @returns Get the start date of the infection.
+    */
+    TimePoint get_start_date() const;
+
 private:
     /**
      * @brief Determine ViralLoad course and Infection course based on init_state.
      * Calls draw_infection_course_backward for all #InfectionState%s prior and draw_infection_course_forward for all
      * subsequent #InfectionState%s.
+     * @param[inout] rng Person::RandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
-     * @param[in] params GlobalInfectionParameters.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      * @return The starting date of the Infection.
      */
-    TimePoint draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                                    InfectionState init_state);
+    TimePoint draw_infection_course(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                    TimePoint init_date, InfectionState start_state,
+                                    std::pair<ExposureType, TimePoint> latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
+     * @param[inout] rng Person::RandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
-     * @param[in] params GlobalInfectionParameters.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      */
-    void draw_infection_course_forward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                                       InfectionState init_state);
+    void draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                       TimePoint init_date, InfectionState start_state,
+                                       std::pair<ExposureType, TimePoint> latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.
+     * @param[inout] rng Person::RandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the person.
-     * @param[in] params GlobalInfectionParameters.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state InfectionState at time of initializing the Infection.
      * @return The starting date of the Infection.
      */
-    TimePoint draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                                             InfectionState init_state);
+    TimePoint draw_infection_course_backward(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                             TimePoint init_date, InfectionState init_state);
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.
     VirusVariant m_virus_variant; ///< Variant of the Infection.

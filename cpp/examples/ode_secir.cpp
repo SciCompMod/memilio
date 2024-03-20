@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -41,24 +41,26 @@ int main()
     model.parameters.set<mio::osecir::StartDay>(60);
     model.parameters.set<mio::osecir::Seasonality>(0.2);
 
-    model.parameters.get<mio::osecir::IncubationTime>()       = 5.2;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms>() = 5.8;
-    model.parameters.get<mio::osecir::SerialInterval>()       = 4.2;
-    model.parameters.get<mio::osecir::TimeInfectedSevere>()   = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical>() = 7.1;
+    model.parameters.get<mio::osecir::TimeExposed>()            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>() = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms>()   = 5.8;
+    model.parameters.get<mio::osecir::TimeInfectedSevere>()     = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical>()   = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]   = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]     = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]   = nb_icu_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = nb_rec_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = nb_dead_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]              = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]            = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = nb_rec_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 nb_total_t0);
 
@@ -74,21 +76,30 @@ int main()
 
     model.apply_constraints();
 
+    // Using default Integrator
+    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+
+    /*
+    Example of using a different integrator
+   All available integrators are listed in cpp/memilio/math/README.md
+
     auto integrator = std::make_shared<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
+    */
 
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
-        char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
+        std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
         printf("\n # t");
         for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
-            printf(" %c", vars[k]);
+            printf(" %s", vars[k].c_str());
         }
+
         auto num_points = static_cast<size_t>(secir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
             printf("\n%.14f ", secir.get_time(i));
