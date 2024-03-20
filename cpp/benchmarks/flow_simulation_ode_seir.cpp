@@ -32,16 +32,16 @@ namespace mio
 namespace benchmark
 {
 
-using FlowModel = ::mio::oseir::Model;
+using FlowModel = ::mio::oseir::Model<ScalarType>;
 
 using namespace oseir;
 
 // For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
 // For more details see the original implementation in:
 // https://github.com/SciCompMod/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_seir/model.h
-class FlowlessModel : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+class FlowlessModel : public CompartmentalModel<ScalarType,InfectionState, Populations<ScalarType, InfectionState>, Parameters<ScalarType>>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = CompartmentalModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters<ScalarType>>;
 
 public:
     FlowlessModel()
@@ -54,18 +54,18 @@ public:
     {
         auto& params     = this->parameters;
         double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+                           params.get<TransmissionProbabilityOnContact<ScalarType>>() / populations.get_total();
 
         dydt[(size_t)InfectionState::Susceptible] =
             -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Exposed] =
             coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
+            (1.0 / params.get<TimeExposed<ScalarType>>()) * y[(size_t)InfectionState::Exposed];
         dydt[(size_t)InfectionState::Infected] =
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.get<TimeExposed<ScalarType>>()) * y[(size_t)InfectionState::Exposed] -
+            (1.0 / params.get<TimeInfected<ScalarType>>()) * y[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.get<TimeInfected<ScalarType>>()) * y[(size_t)InfectionState::Infected];
     }
 };
 
@@ -83,9 +83,9 @@ void setup_model(Model& model)
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.template set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.template set<mio::oseir::TimeInfected>(6);
-    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.template set<mio::oseir::TimeExposed<ScalarType>>(5.2);
+    model.parameters.template set<mio::oseir::TimeInfected<ScalarType>>(6);
+    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
     model.parameters.template get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
 }
 
@@ -104,8 +104,8 @@ void flowless_sim(::benchmark::State& state)
     Model model;
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::IntegratorCore> I =
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
@@ -127,8 +127,8 @@ void flow_sim_comp_only(::benchmark::State& state)
     Model model;
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::IntegratorCore> I =
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
@@ -150,8 +150,8 @@ void flow_sim(::benchmark::State& state)
     Model model;
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::IntegratorCore> I =
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark

@@ -26,21 +26,22 @@
 
 TEST(TestDampingSampling, apply)
 {
-    auto ds  = std::vector<mio::DampingSampling>{mio::DampingSampling{mio::UncertainValue(0.5),
-                                                                     mio::DampingLevel(0),
-                                                                     mio::DampingType(0),
-                                                                     mio::SimulationTime(0.0),
-                                                                     {0},
-                                                                     Eigen::VectorXd::Constant(2, 1.0)},
-                                                mio::DampingSampling{mio::UncertainValue(0.25),
-                                                                     mio::DampingLevel(1),
-                                                                     mio::DampingType(0),
-                                                                     mio::SimulationTime(1.0),
-                                                                     {
-                                                                         0,
-                                                                         1,
-                                                                     },
-                                                                     Eigen::VectorXd::Constant(2, 1.0)}};
+    auto ds =
+        std::vector<mio::DampingSampling<double>>{mio::DampingSampling<double>{mio::UncertainValue<double>(0.5),
+                                                                               mio::DampingLevel(0),
+                                                                               mio::DampingType(0),
+                                                                               mio::SimulationTime(0.0),
+                                                                               {0},
+                                                                               Eigen::VectorXd::Constant(2, 1.0)},
+                                                  mio::DampingSampling<double>{mio::UncertainValue<double>(0.25),
+                                                                               mio::DampingLevel(1),
+                                                                               mio::DampingType(0),
+                                                                               mio::SimulationTime(1.0),
+                                                                               {
+                                                                                   0,
+                                                                                   1,
+                                                                               },
+                                                                               Eigen::VectorXd::Constant(2, 1.0)}};
     auto cmg = mio::ContactMatrixGroup(2, 2);
 
     mio::apply_dampings(cmg, ds, [](auto&& v) {

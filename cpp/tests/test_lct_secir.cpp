@@ -97,7 +97,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     // Simulate.
     mio::TimeSeries<ScalarType> result_lct = mio::lsecir::simulate(
         t0, tmax, dt, model_lct,
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Initialize ODE model with one age group.
     mio::osecir::Model model_ode(1);
@@ -123,33 +123,33 @@ TEST(TestLCTSecir, compareWithOdeSecir)
 
     // Set parameters according to the parameters of the LCT model.
     // No restrictions by additional parameters.
-    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<double>::max();
-    model_ode.parameters.get<mio::osecir::ICUCapacity>()          = std::numeric_limits<double>::max();
+    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = std::numeric_limits<double>::max();
+    model_ode.parameters.get<mio::osecir::ICUCapacity<double>>()          = std::numeric_limits<double>::max();
 
     model_ode.parameters.set<mio::osecir::StartDay>(50);
-    model_ode.parameters.set<mio::osecir::Seasonality>(0.1);
-    model_ode.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]            = 3.2;
-    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0] = 2.0;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]   = 5.8;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]     = 9.5;
-    model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0]   = 7.1;
+    model_ode.parameters.set<mio::osecir::Seasonality<double>>(0.1);
+    model_ode.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
+    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.0;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 5.8;
+    model_ode.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = 9.5;
+    model_ode.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = 7.1;
 
-    mio::ContactMatrixGroup& contact_matrix_ode = model_ode.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix_ode = model_ode.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix_ode[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
     contact_matrix_ode[0].add_damping(0.7, mio::SimulationTime(2.));
 
-    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 0.05;
-    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 0.7;
-    model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]   = 0.09;
-    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 0.25;
-    model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.2;
-    model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                = 0.25;
-    model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]                = 0.3;
+    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[(mio::AgeGroup)0] = 0.05;
+    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[(mio::AgeGroup)0]   = 0.7;
+    model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]   = 0.09;
+    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[(mio::AgeGroup)0]   = 0.25;
+    model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)0]        = 0.2;
+    model_ode.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]                = 0.25;
+    model_ode.parameters.get<mio::osecir::DeathsPerCritical<double>>()[(mio::AgeGroup)0]                = 0.3;
 
     // Simulate.
-    mio::TimeSeries<double> result_ode =
-        simulate(t0, tmax, dt, model_ode,
-                 std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<double> result_ode = mio::osecir::simulate<double>(
+        t0, tmax, dt, model_ode,
+        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Simulation results should be equal.
     ASSERT_EQ(result_lct.get_num_time_points(), result_ode.get_num_time_points());
@@ -303,7 +303,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     ScalarType tmax                    = 3;
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(
         0, tmax, 0.5, *model,
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Compare subcompartments.
     auto compare = load_test_data_csv<ScalarType>("lct-secir-subcompartments-compare.csv");

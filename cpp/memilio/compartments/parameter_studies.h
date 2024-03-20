@@ -55,12 +55,12 @@ public:
     * The Graph type that stores the parametes of the simulation.
     * This is the input of ParameterStudies.
     */
-    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MigrationParameters>;
+    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>;
     /**
     * The Graph type that stores simulations and their results of each run.
     * This is the output of ParameterStudies for each run.
     */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>;
 
     /**
      * create study for graph of compartment models.
@@ -140,8 +140,8 @@ public:
 #else
         num_procs = 1;
         rank      = 0;
-#endif  
-        
+#endif
+
         //The ParameterDistributions used for sampling parameters use thread_local_rng()
         //So we set our own RNG to be used.
         //Assume that sampling uses the thread_local_rng() and isn't multithreaded
@@ -149,7 +149,8 @@ public:
         thread_local_rng() = m_rng;
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+        auto start_run_idx =
+            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
         std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>> ensemble_result;
@@ -167,7 +168,8 @@ public:
 
             //sample
             auto sim = create_sampled_simulation(sample_graph);
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (thread_local_rng().get_counter() - run_rng_counter).get());
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
+                (thread_local_rng().get_counter() - run_rng_counter).get());
 
             //perform run
             sim.advance(m_tmax);
@@ -328,7 +330,8 @@ public:
     }
     /** @} */
 
-    RandomNumberGenerator& get_rng() {
+    RandomNumberGenerator& get_rng()
+    {
         return m_rng;
     }
 
@@ -355,7 +358,7 @@ private:
         //evenly distribute runs
         //lower processes do one more run if runs are not evenly distributable
         auto num_runs_local = num_runs / num_procs; //integer division!
-        auto remainder = num_runs % num_procs;
+        auto remainder      = num_runs % num_procs;
 
         std::vector<size_t> run_distribution(num_procs);
         std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);

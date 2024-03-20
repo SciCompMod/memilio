@@ -22,6 +22,7 @@
 #define ODESIR_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "ode_sir/infection_state.h"
@@ -35,31 +36,32 @@ namespace osir
 /********************
     * define the model *
     ********************/
-
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+template <typename FP = ScalarType>
+class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
 
 public:
     Model()
-        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
+        : Base(mio::Populations<FP, InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
+                         Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
+                         Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt) const override
     {
         auto& params     = this->parameters;
-        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        double coeffStoI = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                           params.template get<TransmissionProbabilityOnContact<FP>>() / this->populations.get_total();
 
         dydt[(size_t)InfectionState::Susceptible] =
             -coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Infected] =
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
     }
 };
 

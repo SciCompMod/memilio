@@ -22,6 +22,7 @@
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/time_series.h"
 
 int main()
 {
@@ -33,7 +34,7 @@ int main()
 
     mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::oseir::Model model;
+    mio::oseir::Model<double> model;
 
     double total_population                                                                            = 1061000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
@@ -45,9 +46,9 @@ int main()
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
 
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(2);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
+    model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected<double>>(2);
 
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
@@ -55,8 +56,7 @@ int main()
     model.check_constraints();
 
     mio::TimeSeries<double> seir = simulate(t0, tmax, dt, model);
-
-    bool print_to_terminal = true;
+    bool print_to_terminal       = true;
 
     if (print_to_terminal) {
         seir.print_table({"S", "E", "I", "R"});

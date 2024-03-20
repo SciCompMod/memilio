@@ -181,8 +181,8 @@ public:
 
                     //perform transition
                     Base::m_edge_func(event_edge.property, flat_index,
-                                Base::m_graph.nodes()[event_edge.start_node_idx].property,
-                                Base::m_graph.nodes()[event_edge.end_node_idx].property);
+                                      Base::m_graph.nodes()[event_edge.start_node_idx].property,
+                                      Base::m_graph.nodes()[event_edge.end_node_idx].property);
 
                     //calculate new cumulative rate
                     cumulative_rate = get_cumulative_transition_rate();
@@ -247,15 +247,15 @@ private:
     RandomNumberGenerator m_rng;
 };
 
-template <class Graph, class NodeF, class EdgeF>
-auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+template <typename FP, class Graph, class NodeF, class EdgeF>
+auto make_graph_sim(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
     return GraphSimulation<std::decay_t<Graph>>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func),
                                                 std::forward<EdgeF>(edge_func));
 }
 
-template <class Graph, class NodeF, class EdgeF>
-auto make_graph_sim_stochastic(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+template <typename FP, class Graph, class NodeF, class EdgeF>
+auto make_graph_sim_stochastic(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
     return GraphSimulationStochastic<std::decay_t<Graph>>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));

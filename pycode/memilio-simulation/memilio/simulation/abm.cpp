@@ -67,7 +67,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
     pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
     py::class_<mio::abm::Parameters, mio::abm::ParametersBase>(m, "Parameters")

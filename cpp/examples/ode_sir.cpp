@@ -23,6 +23,7 @@
 #include "ode_sir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/euler.h"
 
 int main()
 {
@@ -36,7 +37,7 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::osir::Model model;
+    mio::osir::Model<double> model;
 
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
     model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
@@ -44,16 +45,16 @@ int main()
         total_population -
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
-    model.parameters.set<mio::osir::TimeInfected>(2);
-    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.set<mio::osir::TimeInfected<double>>(2);
+    model.parameters.set<mio::osir::TransmissionProbabilityOnContact<double>>(0.04);
     model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
 
     model.check_constraints();
 
-    auto sir = simulate(t0, tmax, dt, model, integrator);
+    auto sir = mio::simulate<double, mio::osir::Model<double>>(t0, tmax, dt, model, integrator);
 
     bool print_to_terminal = true;
 

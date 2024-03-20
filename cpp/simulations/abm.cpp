@@ -43,9 +43,9 @@ const auto age_group_80_plus  = mio::AgeGroup(5);
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarType max)
+void assign_uniform_distribution(mio::UncertainValue<>& p, ScalarType min, ScalarType max)
 {
-    p = mio::UncertainValue(0.5 * (max + min));
+    p = mio::UncertainValue<>(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -327,7 +327,7 @@ void create_assign_locations(mio::abm::World& world)
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
 
-    auto probability = mio::UncertainValue();
+    auto probability = mio:: UncertainValue<>();
     assign_uniform_distribution(probability, 0.5, 1.0);
 
     auto test_type      = mio::abm::AntigenTest();

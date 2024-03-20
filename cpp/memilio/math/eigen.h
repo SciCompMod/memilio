@@ -24,12 +24,13 @@
 
 /* this file wraps includes from eigen3 library to disable warnings. */
 
-//C4996: some std functions that have been deprecated in c++17; maybe fixed in new eigen versions? 
+//C4996: some std functions that have been deprecated in c++17; maybe fixed in new eigen versions?
 MSVC_WARNING_DISABLE_PUSH(4996)
 
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wint-in-bool-context")
 GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
+GCC_CLANG_DIAGNOSTIC(ignored "-Wdeprecated-declarations")
 
 #include <Eigen/Core>
 

@@ -19,7 +19,6 @@
 */
 
 #include "ide_seir/model.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 
@@ -50,7 +49,7 @@ int main()
     }
 
     // Initialize model.
-    mio::iseir::Model model(std::move(init), dt, N);
+    mio::iseir::Model<double> model(std::move(init), dt, N);
 
     // Set working parameters.
     model.parameters.set<mio::iseir::LatencyTime>(3.3);
@@ -60,7 +59,7 @@ int main()
     contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     // Add damping.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
-    model.parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.get<mio::iseir::ContactFrequency<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
     // Carry out simulation.
     model.simulate(tmax);

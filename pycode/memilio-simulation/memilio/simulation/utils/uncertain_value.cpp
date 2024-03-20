@@ -28,31 +28,31 @@ namespace pymio
 
 void bind_uncertain_value(py::module_& m, std::string const& name)
 {
-    pymio::pybind_pickle_class<mio::UncertainValue>(m, name.c_str())
+    pymio::pybind_pickle_class<mio::UncertainValue<double>>(m, name.c_str())
         .def(py::init<ScalarType>(), py::arg("value") = 0.0)
         .def_property(
             "value",
-            [](mio::UncertainValue& self) {
+            [](mio::UncertainValue<double>& self) {
                 return ScalarType(self);
             },
-            [](mio::UncertainValue& self, ScalarType v) {
+            [](mio::UncertainValue<double>& self, ScalarType v) {
                 self = v;
             })
         .def("set_distribution", //a property would be nicer but getter and setter use a different type
-             &mio::UncertainValue::set_distribution)
+             &mio::UncertainValue<double>::set_distribution)
         .def(
             "get_distribution",
-            [](const mio::UncertainValue& self) {
+            [](const mio::UncertainValue<double>& self) {
                 return self.get_distribution().get();
             },
             py::return_value_policy::reference_internal)
         .def(
             "get_distribution",
-            [](mio::UncertainValue& self) {
+            [](mio::UncertainValue<double>& self) {
                 return self.get_distribution().get();
             },
             py::return_value_policy::reference_internal)
-        .def("draw_sample", &mio::UncertainValue::draw_sample);
+        .def("draw_sample", &mio::UncertainValue<double>::draw_sample);
 }
 
 } // namespace pymio

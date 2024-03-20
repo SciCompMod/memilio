@@ -30,15 +30,15 @@ namespace pymio
 template <class Model>
 void bind_Flow_Simulation(pybind11::module_& m)
 {
-    pybind11::class_<mio::FlowSimulation<Model>>(m, "FlowSimulation")
+    pybind11::class_<mio::FlowSimulation<double, Model>>(m, "FlowSimulation")
         .def(pybind11::init<const Model&, double, double>(), pybind11::arg("model"), pybind11::arg("t0") = 0,
              pybind11::arg("dt") = 0.1)
         .def_property_readonly("result",
-                               pybind11::overload_cast<>(&mio::FlowSimulation<Model>::get_result, pybind11::const_),
+                               pybind11::overload_cast<>(&mio::FlowSimulation<double, Model>::get_result, pybind11::const_),
                                pybind11::return_value_policy::reference_internal)
-        .def_property_readonly("flows", &mio::FlowSimulation<Model>::get_flows,
+        .def_property_readonly("flows", &mio::FlowSimulation<double,Model>::get_flows,
                                pybind11::return_value_policy::reference_internal)
-        .def("advance", &mio::FlowSimulation<Model>::advance, pybind11::arg("tmax"));
+        .def("advance", &mio::FlowSimulation<double, Model>::advance, pybind11::arg("tmax"));
 }
 
 } // namespace pymio

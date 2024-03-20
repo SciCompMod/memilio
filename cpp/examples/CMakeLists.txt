@@ -21,6 +21,23 @@ target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 
+add_executable(ode_seair_example ode_seair.cpp)
+target_link_libraries(ode_seair_example PRIVATE memilio ode_seair AD::AD)
+
+if(MEMILIO_ENABLE_OPTIMIZATION)
+    add_executable(ode_seair_optimization ode_seair_optimization.cpp)
+    target_link_libraries(ode_seair_optimization PRIVATE memilio ode_seair AD::AD Ipopt::Ipopt)
+endif()
+
+add_executable(ad_square_example ad_square_example.cpp)
+target_link_libraries(ad_square_example PRIVATE AD::AD)
+set_target_properties(ad_square_example PROPERTIES CXX_STANDARD 14)
+
+add_executable(ad_odeint_example ad_odeint_example.cpp)
+target_link_libraries(ad_odeint_example PRIVATE AD::AD Boost::boost memilio)
+set_target_properties(ad_odeint_example PROPERTIES CXX_STANDARD 14)
+
+
 add_executable(seir_flows_example ode_seir_flows.cpp)
 target_link_libraries(seir_flows_example PRIVATE memilio ode_seir)
 
@@ -73,32 +90,32 @@ target_link_libraries(history_example PRIVATE memilio)
 target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if(MEMILIO_HAS_JSONCPP)
-  add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
-  target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
-  target_include_directories(ode_secir_read_graph_example PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # configured headers
-  target_compile_options(ode_secir_read_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
+    target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
+    target_include_directories(ode_secir_read_graph_example PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # configured headers
+    target_compile_options(ode_secir_read_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 if(MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
-  add_executable(ode_secir_parameter_study_example ode_secir_parameter_study.cpp)
-  target_link_libraries(ode_secir_parameter_study_example PRIVATE memilio ode_secir)
-  target_compile_options(ode_secir_parameter_study_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ode_secir_parameter_study_example ode_secir_parameter_study.cpp)
+    target_link_libraries(ode_secir_parameter_study_example PRIVATE memilio ode_secir)
+    target_compile_options(ode_secir_parameter_study_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
-  add_executable(cli_example cli.cpp)
-  target_link_libraries(cli_example PRIVATE memilio)
-  target_compile_options(cli_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(cli_example cli.cpp)
+    target_link_libraries(cli_example PRIVATE memilio)
+    target_compile_options(cli_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
-  add_executable(serialize_example serialize.cpp)
-  target_link_libraries(serialize_example PRIVATE memilio)
-  target_compile_options(serialize_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(serialize_example serialize.cpp)
+    target_link_libraries(serialize_example PRIVATE memilio)
+    target_compile_options(serialize_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 if(MEMILIO_HAS_HDF5)
-  add_executable(ode_secir_save_results_example ode_secir_save_results.cpp)
-  target_link_libraries(ode_secir_save_results_example PRIVATE memilio ode_secir)
-  target_compile_options(ode_secir_save_results_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ode_secir_save_results_example ode_secir_save_results.cpp)
+    target_link_libraries(ode_secir_save_results_example PRIVATE memilio ode_secir)
+    target_compile_options(ode_secir_save_results_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
