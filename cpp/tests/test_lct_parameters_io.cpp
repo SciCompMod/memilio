@@ -25,13 +25,13 @@
 #include "lct_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/date.h"
-#include "memilio/io/io.h"
 #include "test_data_dir.h"
-#include "matchers.h"
+#include "memilio/io/io.h"
+#include <matchers.h>
 
 #include <gtest/gtest.h>
 
-// Check that Initialization based on synthetic RKI data match previous result.
+// Check that initialization based on synthetic RKI data match previous result.
 TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 {
     // Define start date and the total population used for the initialization.
@@ -63,7 +63,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
-    // Previous result.
+    // Result of a previous simulation.
     Eigen::VectorXd compare(LctState::Count);
     compare << 863.05, 14.30625, 8.53125, 30.1125, 36.1875, 3.8125, 9.88, 3.52, 0.09, 0.25, 0.6888, 27.8712, 1.7;
 
