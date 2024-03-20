@@ -55,8 +55,19 @@ def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=Tr
    If data is incomplete the data is downloaded from another source.
    Note: There is no check if data for every day and every county is available (which can happen).
 
-   @param df pandas dataframe to check
-   @return Boolean to say if data is complete or not
+    Parameters
+    ----------
+    df: pd.Dataframe
+        Dataframe to check
+    merge_berlin: bool
+        True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    merge_eisenach: bool
+        True or False. Defines if Eisenbach districts are kept separated or get merged. Default defined in defaultDict.
+    run_checks: bool
+
+    Returns
+    -------
+        Boolean to say if data is complete or not
    """
     if run_checks:
         if not df.empty:
@@ -78,6 +89,27 @@ def fetch_case_data(
     out_folder=dd.defaultDict['out_folder'],
     **kwargs
 ) -> pd.DataFrame:
+    """! Downloads the case data
+
+    The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
+    If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
+    If data should be downloaded, it is checked if data contains all counties.
+    If not a different source is tried.
+    The file is read in or stored at the folder "out_folder"/Germany/.
+    To store and change the data we use pandas.
+
+    Parameters
+    ----------
+    read_data: bool
+        Defines if data is read from file or downloaded. Default defined in defaultDict.
+    out_folder: bool
+        Folder where data is written to. Default defined in defaultDict.
+
+    Returns
+    -------
+    df: pd.Dataframe
+        Dataframe containing the downloaded case data
+    """
     logger = logging.getLogger(__name__)
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -141,7 +173,6 @@ def fetch_case_data(
         df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
                  "Bundesland", "Landkreis"], axis=1, inplace=True)
 
-    print(f"Num cols: {df.shape[0]}")
     return df
 
 
@@ -150,8 +181,35 @@ def preprocess_case_data(
     split_berlin=dd.defaultDict['split_berlin'],
     rep_date=dd.defaultDict['rep_date'],
 ) -> pd.DataFrame:
+    """ Preprocessing of the case data
+
+    While working with the data
+    - the column names are changed to english depending on defaultDict
+    - a new column "Date" is defined.
+    - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
+    The values, when these parameters are negative are just useful,
+    if one would want to get the difference to the previous day.
+    For details we refer to the above mentioned webpage.
+    - For all different parameters and different columns the values are added up for whole germany for every date
+    and the cumulative sum is calculated. Unless something else is mentioned.
+    - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
+        different file names are used.
+
+    Parameters
+    ----------
+    raw_df: pd.Dataframe.
+        Contains the downloaded or read raw case data
+    split_berlin: bool
+        Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    rep_date: bool
+        Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+
+    Returns
+    -------
+    df: pd.Dataframe
+    """
     logger = logging.getLogger(__name__)
-    print(f'The cols are: {raw_df.columns}')
+    logger.info("Pre-processing the Case data.")
 
     with progress_indicator.Spinner(message='Preparing DataFrame'):
         df = raw_df.convert_dtypes()
@@ -171,7 +229,6 @@ def preprocess_case_data(
 
         # change names of columns
         df = df.rename(dd.GerEng, axis=1)
-        print(f'The cols are: {df.columns}')
 
         # Add column 'Date' with Date
         # = reporting date if rep_date is set
@@ -236,11 +293,54 @@ def write_case_data(
     files='All',
     **kwargs,
 ) -> None:
+    """
+    Writing the different case data file.
+    Following data is generated and written to the mentioned filename
+        - All infected (current and past) for whole germany are stored in "cases_infected"
+        - All deaths whole germany are stored in "cases_deaths"
+        - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
+        - Infected split for states are stored in "cases_infected_state"
+        - Infected, deaths and recovered split for states are stored in "cases_all_state"
+        - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
+        - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
+        - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
+        - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
+        - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
+        - Infected, deaths and recovered split for age are stored in "cases_all_age"
+        - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
+        - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Processed dataframe
+    file_format: str
+        File format which is used for writing the data. Default defined in defaultDict.
+    out_folder: str
+        Folder where data is written to. Default defined in defaultDict.
+    start_date: date
+        Date of first date in dataframe. Default 2020-01-01.
+    end_date: date
+        Date of last date in dataframe. Default defined in defaultDict.
+    impute_dates: bool
+        True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    moving_average: int
+        Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict.
+    split_berlin: bool
+        True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    rep_date: bool
+        True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+    files: list
+        List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
+    """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
+
+    logger = logging.getLogger(__name__)
+    logger.info("Writing the Case data.")
 
     if files == 'All':
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
