@@ -21,6 +21,7 @@
 #include "abm/household.h"
 #include "abm/infection_state.h"
 #include "abm/location.h"
+#include "abm/simulation.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/io/io.h"
@@ -31,6 +32,15 @@
 #include <sstream>
 
 namespace fs = boost::filesystem;
+
+// Assign the name to general age group.
+size_t num_age_groups         = 6;
+const auto age_group_0_to_4   = mio::AgeGroup(0);
+const auto age_group_5_to_14  = mio::AgeGroup(1);
+const auto age_group_15_to_34 = mio::AgeGroup(2);
+const auto age_group_35_to_59 = mio::AgeGroup(3);
+const auto age_group_60_to_79 = mio::AgeGroup(4);
+const auto age_group_80_plus  = mio::AgeGroup(5);
 
 struct LocationMapping {
     std::string inputId;
@@ -118,7 +128,7 @@ mio::abm::LocationId add_location(mio::abm::World& world, mio::abm::LocationType
  * @param[in, out] locationIds vector that maps every input area id to the corresponding abm location ids
  * @param[in] inputId input area id that is added to mapping vector
  * @param[in] locations abm locations that correspond to inputId
- * @return mapping vector 
+ * @return mapping vector
 */
 void insert_locations_to_map(std::vector<LocationMapping>& locationIds, std::string& inputId,
                              std::vector<mio::abm::LocationId>& locations)
@@ -150,7 +160,7 @@ void insert_locations_to_map(std::vector<LocationMapping>& locationIds, std::str
  * @param[in] member household member
  * @param[in] number_of_households number of one-person households in the household group
  * @return household_group The one-person household group
- * 
+ *
 */
 mio::abm::HouseholdGroup make_one_person_households(const mio::abm::HouseholdMember& member, int number_of_households)
 {
@@ -222,18 +232,18 @@ std::vector<mio::abm::LocationId> add_households(mio::abm::World& world, std::ve
     size_t new_index = world.get_locations().size();
     while (num_inhabitants > 0) {
         //draw household size from the given distribution
-        household_size = mio::DiscreteDistribution<size_t>::get_instance()(distribution);
+        household_size = mio::DiscreteDistribution<size_t>::get_instance()(world.get_rng(), distribution);
         //increase the number of households of the drawn household size
         households[household_size] += 1;
         num_inhabitants -= (int)(household_size + 1);
     }
 
     //One-Person Households
-    auto one_person_household_member = mio::abm::HouseholdMember();
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age15to34, 5);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age35to59, 6);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age60to79, 4);
-    one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age80plus, 2);
+    auto one_person_household_member = mio::abm::HouseholdMember(num_age_groups);
+    one_person_household_member.set_age_weight(age_group_15_to_34, 5);
+    one_person_household_member.set_age_weight(age_group_35_to_59, 6);
+    one_person_household_member.set_age_weight(age_group_60_to_79, 4);
+    one_person_household_member.set_age_weight(age_group_80_plus, 2);
     int number_of_one_person_households = households[0];
 
     auto one_person_household_group =
@@ -241,22 +251,22 @@ std::vector<mio::abm::LocationId> add_households(mio::abm::World& world, std::ve
     add_household_group_to_world(world, one_person_household_group);
 
     //Members for multiple person households
-    auto child = mio::abm::HouseholdMember();
-    child.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
-    child.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
+    auto child = mio::abm::HouseholdMember(num_age_groups);
+    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_5_to_14, 1);
 
-    auto parent = mio::abm::HouseholdMember();
-    parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 2);
-    parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 2);
-    parent.set_age_weight(mio::abm::AgeGroup::Age60to79, 1);
+    auto parent = mio::abm::HouseholdMember(num_age_groups);
+    parent.set_age_weight(age_group_15_to_34, 2);
+    parent.set_age_weight(age_group_35_to_59, 2);
+    parent.set_age_weight(age_group_60_to_79, 1);
 
-    auto other = mio::abm::HouseholdMember();
-    other.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
-    other.set_age_weight(mio::abm::AgeGroup::Age5to14, 2);
-    other.set_age_weight(mio::abm::AgeGroup::Age15to34, 3);
-    other.set_age_weight(mio::abm::AgeGroup::Age35to59, 3);
-    other.set_age_weight(mio::abm::AgeGroup::Age60to79, 2);
-    other.set_age_weight(mio::abm::AgeGroup::Age80plus, 2);
+    auto other = mio::abm::HouseholdMember(num_age_groups);
+    other.set_age_weight(age_group_0_to_4, 1);
+    other.set_age_weight(age_group_5_to_14, 2);
+    other.set_age_weight(age_group_15_to_34, 3);
+    other.set_age_weight(age_group_35_to_59, 3);
+    other.set_age_weight(age_group_60_to_79, 2);
+    other.set_age_weight(age_group_80_plus, 2);
 
     //Two-Person Households
     int two_person_two_parents = (int)(0.4 * households[1]);
@@ -340,7 +350,8 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
         }
         else if (areas[loc].second == "mixed" || areas[loc].second == "mixed\r") {
             //areas of type "mixed" are equally distributed to  of location of type Home amd type Work
-            size_t location_type = mio::DiscreteDistribution<size_t>::get_instance()(std::vector<double>{1, 1});
+            size_t location_type =
+                mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), std::vector<double>{1., 1.});
             if (location_type) {
                 locations.emplace_back(add_location(world, mio::abm::LocationType::Work, 40., 100, 2000));
             }
@@ -367,7 +378,8 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
                 }
                 else {
                     //the other areas of type 'shopping_business' are equally distributed to locations of type BasicsShop and type Work
-                    size_t location_type = mio::DiscreteDistribution<size_t>::get_instance()(std::vector<double>{1, 1});
+                    size_t location_type = mio::DiscreteDistribution<size_t>::get_instance()(
+                        mio::thread_local_rng(), std::vector<double>{1., 1.});
                     if (location_type) {
                         locations.emplace_back(add_location(world, mio::abm::LocationType::BasicsShop, 20., 100, 1000));
                     }
@@ -391,138 +403,98 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
 
 /**
  * Set infection parameters
- * @param[in, out] infection_params infection parameters 
+ * @param[in, out] infection_params infection parameters
 */
-void set_infection_parameters(mio::abm::GlobalInfectionParameters& infection_params)
+void set_infection_parameters(mio::abm::Parameters& infection_params)
 {
     infection_params.set<mio::abm::IncubationPeriod>(
-        {{mio::abm::VirusVariant::Count, mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 3.});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 3.});
 
     //0-4
-    infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4, mio::abm::VaccinationState::Unvaccinated}] = 2.2;
-    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4, mio::abm::VaccinationState::Unvaccinated}] = 9.2;
-    infection_params.get<mio::abm::InfectedSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4, mio::abm::VaccinationState::Unvaccinated}] =
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 2.2;
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 9.2;
+    infection_params
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 7;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         10.5;
-    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4,
-                                                         mio::abm::VaccinationState::Unvaccinated}]               = 5;
-    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4,
-                                                        mio::abm::VaccinationState::Unvaccinated}]                = 5;
-    infection_params.get<mio::abm::CriticalToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4,
-                                                      mio::abm::VaccinationState::Unvaccinated}]                  = 6;
+    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 5;
+    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = 5;
+    infection_params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 7;
+    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 6;
 
     //5-14
-    infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14, mio::abm::VaccinationState::Unvaccinated}] =
-        2.2;
-    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14, mio::abm::VaccinationState::Unvaccinated}] =
-        9.2;
-    infection_params.get<mio::abm::InfectedSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14, mio::abm::VaccinationState::Unvaccinated}] =
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 2.2;
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 9.2;
+    infection_params
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 7;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
         10.5;
-    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
-                                                         mio::abm::VaccinationState::Unvaccinated}]                = 5;
-    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
-                                                        mio::abm::VaccinationState::Unvaccinated}]                 = 5;
-    infection_params.get<mio::abm::CriticalToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
-                                                      mio::abm::VaccinationState::Unvaccinated}]                   = 6;
+    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]   = 5;
+    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]    = 5;
+    infection_params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 7;
+    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 6;
 
     //15-34
-    infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
-        2.2;
-    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
-        9.2;
-    infection_params.get<mio::abm::InfectedSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 2.2;
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 9.2;
+    infection_params
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 7;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         10.5;
-    infection_params.get<mio::abm::SevereToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] = 6;
-    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                        mio::abm::VaccinationState::Unvaccinated}]                  = 5;
-    infection_params.get<mio::abm::CriticalToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                      mio::abm::VaccinationState::Unvaccinated}]                    = 6;
+    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]   = 6;
+    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]    = 5;
+    infection_params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 7;
+    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]      = 6;
 
     //35-59
-    infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
-        2.2;
-    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
-        9.2;
-    infection_params.get<mio::abm::InfectedSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] = 6;
-    infection_params.get<mio::abm::SevereToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] = 8;
-    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
-                                                        mio::abm::VaccinationState::Unvaccinated}]                  = 5;
-    infection_params.get<mio::abm::CriticalToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 2.2;
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 9.2;
+    infection_params
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 7;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        6;
+    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 8;
+    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]  = 5;
+    infection_params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
         17.5;
-    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
-                                                      mio::abm::VaccinationState::Unvaccinated}] = 16.5;
+    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 16.5;
 
     //60-79
-    infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, mio::abm::VaccinationState::Unvaccinated}] =
-        2.2;
-    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, mio::abm::VaccinationState::Unvaccinated}] =
-        9.2;
-    infection_params.get<mio::abm::InfectedSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, mio::abm::VaccinationState::Unvaccinated}] = 6;
-    infection_params.get<mio::abm::SevereToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, mio::abm::VaccinationState::Unvaccinated}] =
-        10;
-    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
-                                                        mio::abm::VaccinationState::Unvaccinated}] = 5;
-    infection_params.get<mio::abm::CriticalToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, mio::abm::VaccinationState::Unvaccinated}] =
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 2.2;
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 9.2;
+    infection_params
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 7;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        6;
+    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 10;
+    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]  = 5;
+    infection_params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
         17.5;
-    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
-                                                      mio::abm::VaccinationState::Unvaccinated}] = 16.5;
+    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 16.5;
 
     //80+
-    infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus, mio::abm::VaccinationState::Unvaccinated}] =
-        2.2;
-    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus, mio::abm::VaccinationState::Unvaccinated}] =
-        9.2;
-    infection_params.get<mio::abm::InfectedSymptomsToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus, mio::abm::VaccinationState::Unvaccinated}] = 7;
-    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus, mio::abm::VaccinationState::Unvaccinated}] = 6;
-    infection_params.get<mio::abm::SevereToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus, mio::abm::VaccinationState::Unvaccinated}] =
-        15;
-    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus,
-                                                        mio::abm::VaccinationState::Unvaccinated}] = 5;
-    infection_params.get<mio::abm::CriticalToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus, mio::abm::VaccinationState::Unvaccinated}] =
-        12.5;
-    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus,
-                                                      mio::abm::VaccinationState::Unvaccinated}] = 11;
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 2.2;
+    infection_params
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 9.2;
+    infection_params
+        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 7;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        6;
+    infection_params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]   = 15;
+    infection_params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]    = 5;
+    infection_params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 12.5;
+    infection_params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 11;
 }
 
 /**
@@ -536,9 +508,10 @@ void set_infection_parameters(mio::abm::GlobalInfectionParameters& infection_par
  * @param[in] recovered_infected percentage of infection state 'recovered of other infection state'
  * @return state drawn infection state
 */
-mio::abm::InfectionState get_infection_state(ScalarType exposed, ScalarType infected_no_symptoms,
-                                             ScalarType infected_symptoms, ScalarType infected_severe,
-                                             ScalarType infected_critical, ScalarType recovered)
+mio::abm::InfectionState get_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
+                                             ScalarType infected_no_symptoms, ScalarType infected_symptoms,
+                                             ScalarType infected_severe, ScalarType infected_critical,
+                                             ScalarType recovered)
 {
     ScalarType susceptible =
         1 - exposed - infected_no_symptoms - infected_symptoms - infected_severe - infected_critical - recovered;
@@ -547,7 +520,7 @@ mio::abm::InfectionState get_infection_state(ScalarType exposed, ScalarType infe
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    size_t state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    size_t state = mio::DiscreteDistribution<size_t>::get_instance()(rng, weights);
     return (mio::abm::InfectionState)state;
 }
 
@@ -568,11 +541,13 @@ void assign_infection_states(mio::abm::World& world, mio::abm::TimePoint t0, Sca
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto infection_state = get_infection_state(exposed, infected_no_symptoms, infected_symptoms, infected_severe,
-                                                   infected_critical, recovered);
+        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto infection_state = get_infection_state(rng, exposed, infected_no_symptoms, infected_symptoms,
+                                                   infected_severe, infected_critical, recovered);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), t0, infection_state),
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.parameters, t0, infection_state,
+                                                         person.get_latest_protection(), false),
                                      t0);
         }
     }
@@ -620,24 +595,24 @@ void assign_locations(mio::abm::World& world)
     auto persons = world.get_persons();
     for (auto& person : persons) {
         //assign shop
-        size_t shop = mio::DiscreteDistribution<size_t>::get_instance()(basic_shops_weights);
+        size_t shop = mio::DiscreteDistribution<size_t>::get_instance()(world.get_rng(), basic_shops_weights);
         person.set_assigned_location(basic_shops[shop]);
         //assign hospital
-        size_t hospital = mio::DiscreteDistribution<size_t>::get_instance()(hospital_weights);
+        size_t hospital = mio::DiscreteDistribution<size_t>::get_instance()(world.get_rng(), hospital_weights);
         person.set_assigned_location(hospitals[hospital]);
         //assign icu
-        size_t icu = mio::DiscreteDistribution<size_t>::get_instance()(icu_weights);
+        size_t icu = mio::DiscreteDistribution<size_t>::get_instance()(world.get_rng(), icu_weights);
         person.set_assigned_location(icus[icu]);
         //assign event
-        size_t event = mio::DiscreteDistribution<size_t>::get_instance()(social_event_weights);
+        size_t event = mio::DiscreteDistribution<size_t>::get_instance()(world.get_rng(), social_event_weights);
         person.set_assigned_location(social_events[event]);
         //assign work and school
-        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
-            size_t school = mio::DiscreteDistribution<size_t>::get_instance()(school_weights);
+        if (person.get_age() == age_group_5_to_14) {
+            size_t school = mio::DiscreteDistribution<size_t>::get_instance()(world.get_rng(), school_weights);
             person.set_assigned_location(schools[school]);
         }
-        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
-            size_t work = mio::DiscreteDistribution<size_t>::get_instance()(workplaces_weights);
+        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
+            size_t work = mio::DiscreteDistribution<size_t>::get_instance()(world.get_rng(), workplaces_weights);
             person.set_assigned_location(workplaces[work]);
         }
     }
@@ -655,6 +630,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0, co
 {
     std::vector<std::pair<std::string, std::string>> areas;
     std::vector<int> inhabitants;
+    mio::unused(locationIds);
+    mio::unused(input_dir);
     // Read input file containing the locations and the number of inhabitants per location
     read_txt(areas, inhabitants, input_dir);
 
@@ -665,11 +642,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0, co
     ScalarType exposed_pct = 0.005, infected_no_symptoms_pct = 0.001, infected_symptoms_pct = 0.001,
                infected_severe_pct = 0.0001, infected_critical_pct = 0.0, recovered_pct = 0.0;
     //Set global infection parameters
-    mio::abm::GlobalInfectionParameters infection_params;
-    set_infection_parameters(infection_params);
-
-    // Create the world with infection parameters.
-    auto world = mio::abm::World(infection_params);
+    auto world = mio::abm::World(num_age_groups);
+    set_infection_parameters(world.parameters);
 
     //Transform the input location to correspondin abm location
     create_locations_from_input(areas, inhabitants, world, locationIds, one_person_hh_pct, two_person_hh_pct,
@@ -678,7 +652,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0, co
     //Assign an infection state to every person
     assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
                             infected_severe_pct, infected_critical_pct, recovered_pct);
-    //Assign the locations to persons
+    // //Assign the locations to persons
     assign_locations(world);
 
     auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -773,6 +747,7 @@ void write_location_mapping_to_file(std::string path, std::vector<LocationMappin
 
 mio::IOResult<void> run(const fs::path& input_dir)
 {
+    mio::unused(input_dir);
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(14); // End time per simulation
 
@@ -787,25 +762,25 @@ mio::IOResult<void> run(const fs::path& input_dir)
     //advance until tmax
     sim.advance(tmax, history);
 
-    //output
-    auto logg = history.get_log();
-    write_results_to_file("output_abm_demonstrator.txt", logg);
-    write_location_mapping_to_file("location_mapping.txt", LocationIds);
+    // //output
+    // auto logg = history.get_log();
+    // write_results_to_file("output_abm_demonstrator.txt", logg);
+    // write_location_mapping_to_file("location_mapping.txt", LocationIds);
 
-    std::cout << "# t S E C I I_s I_c R_C R_I D\n";
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        std::cout << sim.get_result().get_time(i) << " ";
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            std::cout << v[j] << " ";
-            if (j < v.size() - 1) {
-                std::cout << " ";
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            std::cout << "\n";
-        }
-    }
+    // std::cout << "# t S E C I I_s I_c R_C R_I D\n";
+    // for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
+    //     std::cout << sim.get_result().get_time(i) << " ";
+    //     auto v = sim.get_result().get_value(i);
+    //     for (auto j = 0; j < v.size(); ++j) {
+    //         std::cout << v[j] << " ";
+    //         if (j < v.size() - 1) {
+    //             std::cout << " ";
+    //         }
+    //     }
+    //     if (i < sim.get_result().get_num_time_points() - 1) {
+    //         std::cout << "\n";
+    //     }
+    // }
 
     return mio::success();
 }

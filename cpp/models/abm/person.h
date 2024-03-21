@@ -503,11 +503,7 @@ public:
                 return Person{mio::RandomNumberGenerator(), loc_, AgeGroup(age_), id_};
             },
             loc, age, id);
-
-    TimeSpan get_time_since_transmission()
-    {
-        return m_time_since_transmission;
-    };
+    }
 
     TimeSpan get_time_since_transmission()
     {

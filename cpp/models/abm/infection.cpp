@@ -166,9 +166,9 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
             // roll out next infection step
             v = uniform_dist(rng);
             if (v < 0.79) { // TODO: subject to change
-                time_period = days(params.get<InfectedNoSymptomsToSymptoms>()[{
-                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
-                next_state  = InfectionState::InfectedSymptoms;
+                time_period =
+                    days(params.get<InfectedNoSymptomsToSymptoms>()[{m_virus_variant, age}]); // TODO: subject to change
+                next_state = InfectionState::InfectedSymptoms;
             }
             else {
                 time_period = days(
@@ -179,24 +179,32 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
             break;
         case InfectionState::InfectedSymptoms:
             // roll out next infection step
-            v = uniform_dist(rng);
-            if (v < 0.08) { // TODO: subject to change
-                time_period = days(params.get<InfectedSymptomsToSevere>()[{
-                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
-                next_state  = InfectionState::InfectedSevere;
+            {
+                ScalarType severity_protection_factor = 0.5;
+                if (latest_exposure.first != ExposureType::NoProtection) {
+                    severity_protection_factor =
+                        params.get<SeverityProtectionFactor>()[{latest_exposure.first, age, m_virus_variant}](
+                            t.days() - latest_exposure.second.days());
+                }
+                // roll out next infection step
+                v = uniform_dist(rng);
+                if (v < (1 - severity_protection_factor) * 0.08) { // TODO: subject to change
+                    time_period =
+                        days(params.get<InfectedSymptomsToSevere>()[{m_virus_variant, age}]); // TODO: subject to change
+                    next_state = InfectionState::InfectedSevere;
+                }
+                else {
+                    time_period = days(
+                        params.get<InfectedSymptomsToRecovered>()[{m_virus_variant, age}]); // TODO: subject to change
+                    next_state = InfectionState::Recovered;
+                }
+                break;
             }
-            else {
-                time_period = days(params.get<InfectedSymptomsToRecovered>()[{
-                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
-                next_state  = InfectionState::Recovered;
-            }
-            break;
         case InfectionState::InfectedSevere:
             // roll out next infection step
             v = uniform_dist(rng);
             if (v < 0.18) { // TODO: subject to change
-                time_period = days(params.get<SevereToCritical>()[{
-                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+                time_period = days(params.get<SevereToCritical>()[{m_virus_variant, age}]); // TODO: subject to change
                 next_state  = InfectionState::InfectedCritical;
             }
             else {
@@ -208,8 +216,7 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
             // roll out next infection step
             v = uniform_dist(rng);
             if (v < 0.22) { // TODO: subject to change
-                time_period = days(params.get<CriticalToDead>()[{
-                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+                time_period = days(params.get<CriticalToDead>()[{m_virus_variant, age}]); // TODO: subject to change
                 next_state  = InfectionState::Dead;
             }
             else {
