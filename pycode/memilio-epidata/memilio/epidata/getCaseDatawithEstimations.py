@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow
 #
@@ -29,26 +29,27 @@ from datetime import date
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import requests
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getJHData as gjd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def get_case_data_with_estimations(
         read_data=dd.defaultDict['read_data'],
         file_format=dd.defaultDict['file_format'],
         out_folder=dd.defaultDict['out_folder'],
-        no_raw=dd.defaultDict['no_raw'],
-        start_date=date(2020, 1, 1),
+        start_date=dd.defaultDict['start_date'],
         end_date=dd.defaultDict['end_date'],
         impute_dates=dd.defaultDict['impute_dates'],
         moving_average=dd.defaultDict['moving_average'],
-        make_plot=dd.defaultDict['make_plot'],
         split_berlin=dd.defaultDict['split_berlin'],
-        rep_date=dd.defaultDict['rep_date']
+        rep_date=dd.defaultDict['rep_date'],
+        **kwargs
 ):
     """! Function to estimate recovered and deaths from combination of case data from RKI and JH data
 WARNING: This file is experimental and has not been tested.
@@ -60,33 +61,33 @@ WARNING: This file is experimental and has not been tested.
     @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default 2020-01-01.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.data_path
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.    
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+    make_plot = conf.plot
 
     data_path = os.path.join(out_folder, 'Germany/')
 
     if not read_data:
-        make_plot_cases = False
-        make_plot_jh = False
 
         # get case data
         gcd.get_case_data(
             read_data, file_format, out_folder, no_raw, start_date, end_date,
-            impute_dates, moving_average, make_plot_cases, split_berlin,
+            impute_dates, moving_average, make_plot, split_berlin,
             rep_date)
 
         # get data from John Hopkins University
         gjd.get_jh_data(
             read_data, file_format, out_folder, no_raw, start_date, end_date,
-            impute_dates, moving_average, make_plot_jh)
+            impute_dates, moving_average, make_plot)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -130,7 +131,8 @@ WARNING: This file is experimental and has not been tested.
             df_cases = pd.read_json(case_data_file)
         # pandas>1.5 raise FileNotFoundError instead of ValueError
         except (ValueError, FileNotFoundError):
-            print("WARNING: The file ", file_to_change + ".json does not exist.")
+            gd.default_print("Warning", "The file " +
+                             file_to_change + ".json does not exist.")
             continue
 
         # generate new columns to store estimated values
@@ -160,13 +162,13 @@ WARNING: This file is experimental and has not been tested.
             df_cases.loc[(df_cases[dstr] == date_jh), deaths_estimated] = np.round(
                 fraction_deaths_conf * df_cases.loc[(df_cases[dstr] == date_jh), confirmed])
 
-        df_cases = df_cases.drop([dstr], axis=1)
+        df_cases.drop([dstr], axis=1, inplace=True)
         gd.write_dataframe(df_cases, data_path,
                            file_to_change + "_estimated", file_format)
 
         # check if calculation is meaningful
         # TODO Add jh data to whole germany plot
-        if make_plot:
+        if conf.plot:
             df_cases.plot(
                 x=date, y=[recovered, recovered_estimated],
                 title='COVID-19 check recovered for ' + file_to_change,
@@ -234,8 +236,9 @@ def compare_estimated_and_rki_deathsnumbers(
     df_cases["deaths_estimated_daily"] = df_cases['Deaths_estimated'] - \
         df_cases['Deaths_estimated'].shift(periods=1, fill_value=0)
     df_cases_week = df_cases.groupby("week").agg(
-        {"deaths_daily": sum, "deaths_estimated_daily": sum}).reset_index()
-    df_jh_week = df_jh.groupby("week").agg({"deaths_daily": sum}).reset_index()
+        {"deaths_daily": "sum", "deaths_estimated_daily": "sum"}).reset_index()
+    df_jh_week = df_jh.groupby("week").agg(
+        {"deaths_daily": "sum"}).reset_index()
     df_cases_week.rename(
         columns={'deaths_daily': 'Deaths_weekly',
                  'deaths_estimated_daily': 'Deaths_estimated_weekly'},
@@ -243,13 +246,10 @@ def compare_estimated_and_rki_deathsnumbers(
     df_jh_week.rename(
         columns={'deaths_daily': 'Deaths_weekly'}, inplace=True)
 
-    # download weekly deaths numbers from rki
-    if not read_data:
-        download_weekly_deaths_numbers(data_path)
+    df_dict = download_weekly_deaths_numbers(
+        sheet_names=['COVID_Todesfälle'], data_path=data_path)
 
-    df_real_deaths_per_week = pd.read_excel(
-        data_path + "Cases_deaths_weekly.xlsx", sheet_name='COVID_Todesfälle',
-        header=0, engine='openpyxl')
+    df_real_deaths_per_week = df_dict['COVID_Todesfälle']
     df_real_deaths_per_week.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
@@ -321,15 +321,11 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
     @param read_data False or True. Defines if data is read from file or downloaded.
     """
 
-    if not read_data:
-        download_weekly_deaths_numbers(data_path)
+    df_dict = download_weekly_deaths_numbers(sheet_names=[
+                                             'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], data_path=data_path)
 
-    df_real_deaths_per_week_age = pd.read_excel(
-        data_path + 'Cases_deaths_weekly.xlsx',
-        sheet_name='COVID_Todesfälle_KW_AG10', header=0, engine='openpyxl')
-    df_real_deaths_per_week_gender = pd.read_excel(
-        data_path + 'Cases_deaths_weekly.xlsx',
-        sheet_name='COVID_Todesfälle_KW_AG20_G', header=0, engine='openpyxl')
+    df_real_deaths_per_week_age = df_dict['COVID_Todesfälle_KW_AG10']
+    df_real_deaths_per_week_gender = df_dict['COVID_Todesfälle_KW_AG20_G']
     df_real_deaths_per_week_age.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'AG 0-9 Jahre': 'age 0-9 years',
@@ -381,21 +377,25 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
         'cases_weekly_deaths_gender_resolved', 'json')
 
 
-def download_weekly_deaths_numbers(data_path):
+def download_weekly_deaths_numbers(sheet_names, data_path):
     """!Downloads excel file from RKI webpage
-
+    @param sheet_names List. Sheet names to be returned.
     @param data_path Path where to store the file.
+
+    @return dict of dataframes with sheetnames as keys.
     """
 
-    name_file = "Cases_deaths_weekly.xlsx"
+    name_file = "Cases_deaths_weekly"
     url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/" \
           "COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
 
-    # data_path: path where to safe Excel-file
-    r = requests.get(url)
-    filename = os.path.join(data_path, name_file)
-    with open(filename, 'wb') as output_file:
-        output_file.write(r.content)
+    # Either download excel file from url or read json file from filepath.
+    # Since sheet_names is a list of names get file returns a dict
+    # with sheet_names as keys and their corresponding dataframes as values.
+    df_dict = gd.get_file(filepath=data_path + name_file + '.json', url=url, read_data=False,
+                          param_dict={'sheet_name': sheet_names, 'header': 0, 'engine': 'openpyxl'})
+
+    return df_dict
 
 
 def main():

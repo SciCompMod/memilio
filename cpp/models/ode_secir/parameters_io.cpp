@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn, Lena Ploetzke
 *
@@ -76,17 +76,17 @@ int get_region_id(int id)
 }
 
 IOResult<void> read_confirmed_cases_data(
-    std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_Exposed,
-    std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
-    std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
-    std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec,
-    const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
+    std::string const& path, std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
+    std::vector<std::vector<double>>& vnum_Exposed, std::vector<std::vector<double>>& vnum_InfectedNoSymptoms,
+    std::vector<std::vector<double>>& vnum_InfectedSymptoms, std::vector<std::vector<double>>& vnum_InfectedSevere,
+    std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
+    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_Exposed,
+    const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
     const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
     const std::vector<double>& scaling_factor_inf)
 {
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
@@ -223,9 +223,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
 {
-
-    std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
-    assert(scaling_factor_inf.size() == age_ranges.size());
+    const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
+    assert(scaling_factor_inf.size() == num_age_groups);
 
     std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
     std::vector<std::vector<int>> t_Exposed{model.size()};
@@ -238,60 +237,61 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<double>> mu_H_U{model.size()};
     std::vector<std::vector<double>> mu_U_D{model.size()};
 
-    for (size_t county = 0; county < model.size(); county++) {
-        for (size_t group = 0; group < age_ranges.size(); group++) {
+    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(path));
 
-            t_InfectedNoSymptoms[county].push_back(
-                static_cast<int>(std::round(2 * (model[county].parameters.get<IncubationTime>()[(AgeGroup)group] -
-                                                 model[county].parameters.get<SerialInterval>()[(AgeGroup)group]))));
-            t_Exposed[county].push_back(
-                static_cast<int>(std::round(2 * model[county].parameters.get<SerialInterval>()[(AgeGroup)group] -
-                                            model[county].parameters.get<IncubationTime>()[(AgeGroup)group])));
-            t_InfectedSymptoms[county].push_back(
-                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group])));
-            t_InfectedSevere[county].push_back(
-                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSevere>()[(AgeGroup)group])));
-            t_InfectedCritical[county].push_back(static_cast<int>(
-                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
+    for (size_t node = 0; node < model.size(); ++node) {
+        for (size_t group = 0; group < num_age_groups; group++) {
 
-            mu_C_R[county].push_back(model[county].parameters.get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
-            mu_I_H[county].push_back(model[county].parameters.get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
-            mu_H_U[county].push_back(model[county].parameters.get<CriticalPerSevere>()[(AgeGroup)group]);
-            mu_U_D[county].push_back(model[county].parameters.template get<DeathsPerCritical>()[(AgeGroup)group]);
+            t_Exposed[node].push_back(
+                static_cast<int>(std::round(model[node].parameters.get<TimeExposed>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms[node].push_back(
+                static_cast<int>(std::round(model[node].parameters.get<TimeInfectedNoSymptoms>()[(AgeGroup)group])));
+            t_InfectedSymptoms[node].push_back(
+                static_cast<int>(std::round(model[node].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group])));
+            t_InfectedSevere[node].push_back(
+                static_cast<int>(std::round(model[node].parameters.get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical[node].push_back(static_cast<int>(
+                std::round(model[node].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
+
+            mu_C_R[node].push_back(model[node].parameters.get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
+            mu_I_H[node].push_back(model[node].parameters.get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
+            mu_H_U[node].push_back(model[node].parameters.get<CriticalPerSevere>()[(AgeGroup)group]);
+            mu_U_D[node].push_back(model[node].parameters.template get<DeathsPerCritical>()[(AgeGroup)group]);
         }
     }
-    std::vector<std::vector<double>> num_InfectedSymptoms(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-    std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-    std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-    std::vector<std::vector<double>> num_Exposed(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-    std::vector<std::vector<double>> num_InfectedNoSymptoms(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-    std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-    std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+    std::vector<std::vector<double>> num_InfectedSymptoms(model.size(), std::vector<double>(num_age_groups, 0.0));
+    std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(num_age_groups, 0.0));
+    std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
+    std::vector<std::vector<double>> num_Exposed(model.size(), std::vector<double>(num_age_groups, 0.0));
+    std::vector<std::vector<double>> num_InfectedNoSymptoms(model.size(), std::vector<double>(num_age_groups, 0.0));
+    std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(num_age_groups, 0.0));
+    std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(num_age_groups, 0.0));
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data(path, region, date, num_Exposed, num_InfectedNoSymptoms,
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(path, case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
                                                 num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
                                                 t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
-    for (size_t county = 0; county < model.size(); county++) {
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
-            size_t num_groups = (size_t)model[county].parameters.get_num_groups();
+    for (size_t node = 0; node < model.size(); node++) {
+        if (std::accumulate(num_InfectedSymptoms[node].begin(), num_InfectedSymptoms[node].end(), 0.0) > 0) {
+            size_t num_groups = (size_t)model[node].parameters.get_num_groups();
             for (size_t i = 0; i < num_groups; i++) {
-                model[county].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[county][i];
-                model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
-                    num_InfectedNoSymptoms[county][i];
-                model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
-                    num_InfectedSymptoms[county][i];
-                model[county].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
-                    num_InfectedSevere[county][i];
-                model[county].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[county][i];
-                model[county].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[county][i];
+                model[node].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
+                    num_InfectedNoSymptoms[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+                model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
+                    num_InfectedSymptoms[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
+                model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] = num_InfectedSevere[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::Dead}]           = num_death[node][i];
+                model[node].populations[{AgeGroup(i), InfectionState::Recovered}]      = num_rec[node][i];
             }
         }
         else {
             log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
                         std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
-                        std::to_string(region[county]) + ". Population data has not been set.");
+                        std::to_string(region[node]) + ". Population data has not been set.");
         }
     }
     return success();
@@ -329,13 +329,16 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
     return success();
 }
 
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion)
+IOResult<std::vector<std::vector<double>>>
+read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups)
 {
-    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
-
-    std::vector<std::vector<double>> vnum_population(
-        vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path, !accumulate_age_groups));
+    //if we set up the model for one age group, the population data should be read in with the
+    //age groups given in the population data json file and are accumulated later
+    //otherwise the populations are directly saved for the correct model age groups
+    size_t age_group_size = accumulate_age_groups ? PopulationDataEntry::age_group_names.size()
+                                                  : ConfirmedCasesDataEntry::age_group_names.size();
+    std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_group_size, 0.0));
 
     for (auto&& entry : population_data) {
         auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
@@ -351,13 +354,23 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
             }
         }
     }
-
-    return success(vnum_population);
+    if (accumulate_age_groups) {
+        std::vector<std::vector<double>> vnum_pop_acc(vregion.size(), std::vector<double>(1, 0));
+        for (size_t region = 0; region < vregion.size(); ++region) {
+            vnum_pop_acc[region][0] =
+                std::accumulate(vnum_population[region].begin(), vnum_population[region].end(), 0.0);
+        }
+        return success(vnum_pop_acc);
+    }
+    else {
+        return success(vnum_population);
+    }
 }
 
-IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion)
+IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
+                                   bool accumulate_age_groups)
 {
-    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion, accumulate_age_groups));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {

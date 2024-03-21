@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -28,7 +28,7 @@ namespace pymio
 {
 
 template <class ParameterSet>
-auto bind_ParameterSet(pybind11::module& m, std::string const& name)
+auto bind_ParameterSet(pybind11::module_& m, std::string const& name)
 {
     pybind11::class_<ParameterSet> c(m, name.c_str());
     mio::foreach_tag<ParameterSet>([&c](auto t) {

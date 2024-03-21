@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
-# Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
+# Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele, Khoa Nguyen
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,8 +24,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import (Model, Simulation,
                                       interpolate_simulation_result, simulate)
@@ -60,17 +60,18 @@ def run_secir_simulation(show_plot=True):
     # Set parameters
 
     # Compartment transition duration
-    model.parameters.IncubationTime[A0] = 5.2
+    model.parameters.TimeExposed[A0] = 3.2
+    model.parameters.TimeInfectedNoSymptoms[A0] = 2.
     model.parameters.TimeInfectedSymptoms[A0] = 6.
-    # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-    model.parameters.SerialInterval[A0] = 4.2
-    model.parameters.TimeInfectedSevere[A0] = 12.  # 7-16 (=R5^(-1))
+    model.parameters.TimeInfectedSevere[A0] = 12.
     model.parameters.TimeInfectedCritical[A0] = 8.
 
     # Initial number of people in each compartment
     model.populations[A0, State.Exposed] = 100
     model.populations[A0, State.InfectedNoSymptoms] = 50
+    model.populations[A0, State.InfectedNoSymptomsConfirmed] = 0
     model.populations[A0, State.InfectedSymptoms] = 50
+    model.populations[A0, State.InfectedSymptomsConfirmed] = 0
     model.populations[A0, State.InfectedSevere] = 20
     model.populations[A0, State.InfectedCritical] = 10
     model.populations[A0, State.Recovered] = 10

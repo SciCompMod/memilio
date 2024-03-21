@@ -1,8 +1,7 @@
 /*
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Sascha Korf
+* Authors: Daniel Abele, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -22,8 +21,8 @@
 #ifndef EPI_ABM_HOUSEHOLD_H
 #define EPI_ABM_HOUSEHOLD_H
 
-#include "abm/abm.h"
-#include "abm/age.h"
+#include "abm/world.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
 #include <numeric>
 #include <vector>
@@ -54,9 +53,10 @@ class HouseholdMember
 public:
     /**
      * @brief Constructs a new HouseholdMember.
+     * @param[in] agegroups the age groups in the model. 
      */
-    HouseholdMember()
-        : m_age_weights({AgeGroup::Count}, 0)
+    HouseholdMember(size_t num_agegroups)
+        : m_age_weights({AgeGroup(num_agegroups)}, 0)
     {
     }
 
@@ -66,21 +66,22 @@ public:
      * @param[in] age_group The AgeGroup.
      * @param[in] weight The weight of the AgeGroup.
      */
-    void set_age_weight(AgeGroup age_group, int weight)
+    void set_age_weight(mio::AgeGroup age_group, int weight)
     {
-        m_age_weights[{age_group}] = weight;
+        assert(age_group < m_age_weights.size<mio::AgeGroup>());
+        m_age_weights[age_group] = weight;
     }
 
     /**
      * @brief Returns the CustomIndexArray with the weights of each AgeGroup.
      */
-    const CustomIndexArray<int, AgeGroup>& get_age_weights() const
+    const CustomIndexArray<int, mio::AgeGroup>& get_age_weights() const
     {
         return m_age_weights;
     }
 
 private:
-    CustomIndexArray<int, AgeGroup> m_age_weights; ///< Weights of every AgeGroup.
+    CustomIndexArray<int, mio::AgeGroup> m_age_weights; ///< Weights of every AgeGroup.
 };
 
 /**

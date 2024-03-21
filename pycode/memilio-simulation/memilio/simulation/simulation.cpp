@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,12 +23,15 @@
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
+#include "epidemiology/dynamic_npis.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
 #include "utils/uncertain_value.h"
+#include "utils/index.h"
+#include "utils/custom_index_array.h"
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
@@ -37,8 +40,22 @@
 
 namespace py = pybind11;
 
+namespace pymio
+{
+
+template <>
+std::string pretty_name<mio::AgeGroup>()
+{
+    return "AgeGroup";
+}
+
+} // namespace pymio
+
 PYBIND11_MODULE(_simulation, m)
 {
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
+    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+
     pymio::bind_date(m, "Date");
 
     auto damping_class = py::class_<mio::SquareDamping>(m, "Damping");
@@ -78,6 +95,8 @@ PYBIND11_MODULE(_simulation, m)
 
     auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
     pymio::bind_damping_expression_group_members(migration_coeff_group_class);
+
+    pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
 
     pymio::bind_migration_parameters(m, "MigrationParameters");
     pymio::bind_migration_parameter_edge(m, "MigrationParameterEdge");

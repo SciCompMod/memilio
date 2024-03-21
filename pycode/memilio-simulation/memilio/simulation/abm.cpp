@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
@@ -80,23 +80,16 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("InfectedSymptoms", mio::abm::InfectionState::InfectedSymptoms)
         .value("InfectedSevere", mio::abm::InfectionState::InfectedSevere)
         .value("InfectedCritical", mio::abm::InfectionState::InfectedCritical)
-        .value("Recovered", mio::abm::InfectionState::Recovered)
+        .value("Recovered", mio::abm::InfectionState::Recovered)        
         .value("Dead", mio::abm::InfectionState::Dead)
         .value("Count", mio::abm::InfectionState::Count);
 
-    pymio::iterable_enum<mio::abm::AgeGroup>(m, "AgeGroup")
-        .value("Age0to4", mio::abm::AgeGroup::Age0to4)
-        .value("Age5to14", mio::abm::AgeGroup::Age5to14)
-        .value("Age15to34", mio::abm::AgeGroup::Age15to34)
-        .value("Age35to59", mio::abm::AgeGroup::Age35to59)
-        .value("Age60to79", mio::abm::AgeGroup::Age60to79)
-        .value("Age80plus", mio::abm::AgeGroup::Age80plus);
+    pymio::iterable_enum<mio::abm::ExposureType>(m, "ExposureType")
+        .value("NoProtection", mio::abm::ExposureType::NoProtection)
+        .value("NaturalInfection", mio::abm::ExposureType::NaturalInfection)
+        .value("GenericVaccine", mio::abm::ExposureType::GenericVaccine);
 
     pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
-
-    pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
-        .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
-        .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
 
     pymio::iterable_enum<mio::abm::LocationType>(m, "LocationType")
         .value("Home", mio::abm::LocationType::Home)
@@ -116,13 +109,14 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
-    pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::abm::AgeGroup,
-                                 mio::abm::VaccinationState>(m, "_AgeVaccinationParameterArray");
-    pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
-    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
-    pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
+    pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
+    pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
+    py::class_<mio::abm::Parameters, mio::abm::ParametersBase>(m, "Parameters")
+        .def(py::init<int>())
+        .def("check_constraints", &mio::abm::Parameters::check_constraints);
+
+    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<size_t>());
 
     py::class_<mio::abm::TimeSpan>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -203,23 +197,31 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_households", &mio::abm::HouseholdGroup::add_households);
 
     py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
-        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
-                      const std::vector<mio::abm::InfectionState>&>(),
-             py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
+        .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
+             py::arg("age_groups"), py::arg("infection_states"));
 
     py::class_<mio::abm::GenericTest>(m, "GenericTest").def(py::init<>());
     py::class_<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
     py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
 
     py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
-        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint,
-                      mio::abm::TimePoint, const mio::abm::GenericTest&, double>(),
+        .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
+                      const mio::abm::GenericTest&, double>(),
              py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"),
              py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
+    py::class_<mio::abm::Vaccination>(m, "Vaccination")
+        .def(py::init<mio::abm::ExposureType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
+        .def_readwrite("exposure_type", &mio::abm::Vaccination::exposure_type)
+        .def_readwrite("time", &mio::abm::Vaccination::time);
+
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
-        .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
+                .def(py::init<const std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
+
+    py::class_<mio::abm::Infection>(m, "Infection")
+        .def(py::init<mio::abm::VirusVariant, mio::abm::AgeGroup, const mio::abm::GlobalInfectionParameters&,
+                      mio::abm::TimePoint, mio::abm::InfectionState, bool>());
 
     py::class_<mio::abm::Infection>(m, "Infection")
         .def(py::init<mio::abm::VirusVariant, mio::abm::AgeGroup, const mio::abm::GlobalInfectionParameters&,
@@ -237,6 +239,7 @@ PYBIND11_MODULE(_simulation_abm, m)
                           self.get_infection_parameters() = params;
                       });
 
+    //copying and moving of ranges enabled below, see PYMIO_IGNORE_VALUE_TYPE
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
 
@@ -253,13 +256,12 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::TripList>(m, "TripList")
         .def(py::init<>())
-        .def("add_trip", &mio::abm::TripList::add_trip)
-        .def_property_readonly("next_trip", &mio::abm::TripList::get_next_trip)
-        .def_property_readonly("num_trips", &mio::abm::TripList::num_trips);
+        .def("add_trip", &mio::abm::TripList::add_trip, py::arg("trip"), py::arg("weekend") = false)
+        .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
+        .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
 
     py::class_<mio::abm::World>(m, "World")
-        .def(py::init<mio::abm::GlobalInfectionParameters>(),
-             py::arg("infection_parameters") = mio::abm::GlobalInfectionParameters{})
+        .def(py::init<int32_t>())
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
         .def("add_person", &mio::abm::World::add_person, py::arg("location_id"), py::arg("age_group"),
              py::return_value_policy::reference_internal)
@@ -277,18 +279,7 @@ PYBIND11_MODULE(_simulation_abm, m)
             py::return_value_policy::reference_internal)
         .def_property("use_migration_rules", py::overload_cast<>(&mio::abm::World::use_migration_rules, py::const_),
                       py::overload_cast<bool>(&mio::abm::World::use_migration_rules))
-        .def_property(
-            "infection_parameters", py::overload_cast<>(&mio::abm::World::get_global_infection_parameters, py::const_),
-            [](mio::abm::World& self, mio::abm::GlobalInfectionParameters params) {
-                self.get_global_infection_parameters() = params;
-            },
-            py::return_value_policy::reference_internal)
-        .def_property(
-            "migration_parameters", py::overload_cast<>(&mio::abm::World::get_migration_parameters, py::const_),
-            [](mio::abm::World& self, mio::abm::MigrationParameters params) {
-                self.get_migration_parameters() = params;
-            },
-            py::return_value_policy::reference_internal)
+        .def_readwrite("parameters", &mio::abm::World::parameters)
         .def_property(
             "testing_strategy", py::overload_cast<>(&mio::abm::World::get_testing_strategy, py::const_),
             [](mio::abm::World& self, mio::abm::TestingStrategy strategy) {
@@ -323,7 +314,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     // });
 
     py::class_<mio::abm::Simulation>(m, "Simulation")
-        .def(py::init<mio::abm::TimePoint>())
+        .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
              &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
                                                          LogPersonsPerLocationAndInfectionTime>>)
@@ -341,3 +332,6 @@ PYBIND11_MODULE(_simulation_abm, m)
             return self.get_log();
         });
 }
+
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_persons()))

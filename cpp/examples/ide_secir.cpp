@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
 *
@@ -20,6 +20,7 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
+#include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
@@ -31,10 +32,10 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax        = 10;
-    ScalarType N           = 10000;
-    ScalarType Dead_before = 12;
-    ScalarType dt          = 1;
+    ScalarType tmax   = 10;
+    ScalarType N      = 10000;
+    ScalarType deaths = 13.10462213;
+    ScalarType dt     = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -62,20 +63,17 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, Dead_before);
+    mio::isecir::Model model(std::move(init), N, deaths);
 
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Set working parameters
-    // Set max_support for all Delay Distributions
-    std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
-    vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]                 = 3;
-    vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 4;
-    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
-    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
-        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
-    }
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(3.0);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(4.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
@@ -87,9 +85,11 @@ int main()
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
+    mio::ExponentialDecay expdecay(0.5);
+    mio::StateAgeFunctionWrapper prob(expdecay);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
     model.check_constraints(dt);
 
@@ -97,7 +97,7 @@ int main()
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);
 
-    sim.print_transitions();
-
-    sim.print_compartments();
+    sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
+                                      16, 8);
 }

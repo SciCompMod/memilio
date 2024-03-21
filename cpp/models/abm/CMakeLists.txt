@@ -27,6 +27,7 @@ add_library(abm
     vaccine.h
     mask.h
     mask.cpp
+    common_abm_loggers.h
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC

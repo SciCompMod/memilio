@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Martin Siggel
 *
@@ -26,7 +26,6 @@ int main(int argc, char** argv)
 {
     mio::mpi::init();
     mio::set_log_level(mio::LogLevel::warn);
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
     ::testing::InitGoogleTest(&argc, argv);
     int retval = RUN_ALL_TESTS();

@@ -1,11 +1,15 @@
 # MEmilio - a high performance Modular EpideMIcs simuLatIOn software #
 
-[![CI](https://github.com/DLR-SC/memilio/actions/workflows/main.yml/badge.svg)](https://github.com/DLR-SC/memilio/actions/workflows/main.yml)
-[![codecov](https://codecov.io/gh/DLR-SC/memilio/branch/main/graph/badge.svg?token=DVQXIQJHBM)](https://codecov.io/gh/DLR-SC/memilio)
+![memilio_logo](docs/memilio-small.png)
 
-MEmilio is a common project between the Institute for Software Technology of the German Aerospace Center (DLR) and the department of Systems Immunology (SIMM) of the Helmholtz Center for Infection Research (HZI). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries. MEmilio is still under developement but it is available as Open Source and we encourage everyone to make use of it. If you use it, please cite:
+[![CI](https://github.com/SciCompMod/memilio/actions/workflows/main.yml/badge.svg)](https://github.com/SciCompMod/memilio/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/SciCompMod/memilio/branch/main/graph/badge.svg?token=DVQXIQJHBM)](https://codecov.io/gh/SciCompMod/memilio)
 
-- Kühn, Martin Joachim und Abele, Daniel und Kerkmann, David und Korf, Sascha Alexander und Zunker, Henrik und Wendler, Anna Clara und Bicker, Julia und Nguyen, Dang Khoa und Klitz, Margrit und Koslow, Wadim und Siggel, Martin und Kleinert, Jan und Rack, Kathrin und Binder, Sebastian und Plötzke, Lena und Schmieding, René und Lenz, Patrick und Betz, Maximilian Franz und Lutz, Annette und Gerstein, Carlotta und Schmidt, Agatha und Meyer-Hermann, Michael und Basermann, Achim  (2022) MEmilio - a high performance Modular EpideMIcs simuLatIOn software (2022). https://github.com/DLR-SC/memilio, https://elib.dlr.de/192140/.
+MEmilio implements various models for infectious disease dynamics, from simple compartmental models through Integro-Differential equation-based models to agent- or individual-based models. Its modular design allows the combination of different models with different mobility patterns. Through efficient implementation and parallelization, MEmilio brings cutting edge and compute intensive epidemiological models to a large scale, enabling a precise and high-resolution spatiotemporal infectious disease dynamics. MEmilio will be extended continuously. It is available open-source and we encourage everyone to make use of it.
+
+If you use MEmilio, please cite our works:
+
+- Kühn, Martin Joachim und Abele, Daniel und Kerkmann, David und Korf, Sascha Alexander und Zunker, Henrik und Wendler, Anna Clara und Bicker, Julia und Nguyen, Dang Khoa und Klitz, Margrit und Koslow, Wadim und Siggel, Martin und Kleinert, Jan und Rack, Kathrin und Binder, Sebastian und Plötzke, Lena und Schmieding, René und Lenz, Patrick und Betz, Maximilian Franz und Lutz, Annette und Gerstein, Carlotta und Schmidt, Agatha und Meyer-Hermann, Michael und Basermann, Achim  (2022) MEmilio - a high performance Modular EpideMIcs simuLatIOn software (2022). https://github.com/SciCompMod/memilio, https://elib.dlr.de/192140/.
 
 - Koslow W, Kühn MJ, Binder S, Klitz M, Abele D, et al. (2022) Appropriate relaxation of non-pharmaceutical interventions minimizes the risk of a resurgence in SARS-CoV-2 infections in spite of the Delta variant. PLOS Computational Biology 18(5): e1010054. https://doi.org/10.1371/journal.pcbi.1010054
 
@@ -26,7 +30,7 @@ Each important part of the project described above is described in detail in the
 Also, the code is documented with doxygen and instructions on how to obtain it can be found in the docs folder.
 The documentation of the code of the main branch can be found at the following URL:
 
-https://dlr-sc.github.io/memilio/documentation/index.html
+https://scicompmod.github.io/memilio/documentation/index.html
 
 **Installation, Usage and Requirements**
 
@@ -34,5 +38,5 @@ Each part has different requirements and usage. Detailed instruction can be foun
 
 **Development**
 
-* [Git workflow and change process](https://github.com/DLR-SC/memilio/wiki/git-workflow)
-* [Coding Guidelines](https://github.com/DLR-SC/memilio/wiki/coding-guidelines)
+* [Git workflow and change process](https://github.com/SciCompMod/memilio/wiki/git-workflow)
+* [Coding Guidelines](https://github.com/SciCompMod/memilio/wiki/coding-guidelines)

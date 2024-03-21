@@ -13,16 +13,27 @@ except ImportError:
         [sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
 
-__version__ = '0.7.0'
+__version__ = '1.0.0'
 
 setup(
     name='memilio-simulation', version=__version__, author='DLR-SC',
     author_email='daniel.abele@dlr.de', maintainer_email='Martin.Kuehn@DLR.de',
-    url='https://github.com/DLR-SC/memilio',
+    url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
-    install_requires=[],
-    extras_require={'dev': ['numpy >= 1.22'], },
+    # need shared libs so there is one shared log level
+    cmake_args=['-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON'],
+    install_requires=[
+        # smaller pandas versions contain a bug that sometimes prevents reading
+        # some excel files (e.g. population or twitter data)
+        'pandas>=2.0.0',
+    ],
+    extras_require={
+        'dev': [
+            # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+            'numpy>=1.22,<1.25',
+        ],
+    },
     long_description='', test_suite='memilio.simulation_test',)

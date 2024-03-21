@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -54,11 +54,11 @@ mio::osecir::Model make_model(int num)
     params.set<mio::osecir::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 12;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -22,11 +22,8 @@
 
 #include "memilio/utils/time_series.h"
 
-#include "memilio/math/eigen.h"
 #include <memory>
-#include <vector>
 #include <functional>
-#include <algorithm>
 
 namespace mio
 {
@@ -43,13 +40,27 @@ public:
     virtual ~IntegratorCore(){};
 
     /**
-     * @brief Step of the integration with possible adaptive with
+     * @brief Make a single integration step.
      *
-     * @param[in] f Right hand side of ODE
-     * @param[in] yt value of y at t, y(t)
-     * @param[in,out] t current time step h=dt
-     * @param[in,out] dt current time step h=dt
-     * @param[out] ytp1 approximated value y(t+1)
+     * The behaviour of this method changes when the integration scheme has adaptive step sizing. 
+     * These changes are noted in the parentheses (...) below.
+     * Adaptive integrators must have bounds dt_min and dt_max for dt.
+     * The adaptive step sizing is considered to be successful, if a step of at least size dt_min sufficed tolerances.
+     * Tolerances are defined in each implementation, usually using a criterion with absolute and relative tolerances.
+     * Even if the step sizing failed, the integrator will make a step of at least size dt_min.
+     *
+     * @param[in] f Right hand side of the ODE. May be called multiple times with different arguments.
+     * @param[in] yt The known value of y at time t.
+     * @param[in,out] t The current time. It will be increased by dt.
+     *     (If adaptive, the increment is instead within [dt_min, dt].)
+     * @param[in,out] dt The current step size h=dt. Will not be changed.
+     *     (If adaptive, the given dt is used as the maximum step size, and must be within [dt_min, dt_max].
+     *      During integration, dt is adjusted in [dt_min, dt_max] to have an optimal size for the next step.)
+     * @param[out] ytp1 Set to the approximated value of y at time t + dt.
+     *     (If adaptive, this time may be smaller, but it is at least t + dt_min, at most t + dt_max.
+     *      Note that the increment on t may be different from the returned value of dt.)
+     * @return Always true for nonadaptive methods.
+     *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
     virtual bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                       Eigen::Ref<Eigen::VectorXd> ytp1) const = 0;
@@ -63,45 +74,24 @@ class OdeIntegrator
 public:
     /**
      * @brief create an integrator for a specific IVP
-     * @param f rhs of the ODE
-     * @param t0 initial point of independent variable t
-     * @param y0 value of y at t0
-     * @param dt_init initial integration step size
-     * @param core implements the solution method
+     * @param[in] core implements the solution method
      */
-    template <class F, class Vector>
-    OdeIntegrator(F&& f, double t0, Vector&& y0, double dt_init, std::shared_ptr<IntegratorCore> core)
-        : m_f(std::forward<F>(f))
-        , m_result(t0, y0)
-        , m_dt(dt_init)
-        , m_next_dt(dt_init)
-        , m_core(core)
+    OdeIntegrator(std::shared_ptr<IntegratorCore> core)
+        : m_core(core)
     {
     }
 
     /**
-     * @brief advance the integrator.
-     * @param tmax end point. must be greater than get_t().back()
+     * @brief Advance the integrator.
+     * @param[in] f The rhs of the ODE.
+     * @param[in] tmax Time end point. Must be greater than results.get_last_time().
+     * @param[in, out] dt Initial integration step size. May be changed by the IntegratorCore.
+     * @param[in, out] results List of results. Must contain at least one time point. The last entry is used as
+     * intitial time and value. A new entry is added for each integration step.
+     * @return A reference to the last value in the results time series.
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
-
-    TimeSeries<double>& get_result()
-    {
-        return m_result;
-    }
-
-    const TimeSeries<double>& get_result() const
-    {
-        return m_result;
-    }
-
-    /**
-     * @brief returns the time step width determined by the IntegratorCore for the next integration step
-    */
-    double get_dt() const
-    {
-        return m_next_dt;
-    }
+    Eigen::Ref<Eigen::VectorXd> advance(const DerivFunction& f, const double tmax, double& dt,
+                                        TimeSeries<double>& results);
 
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
@@ -109,10 +99,6 @@ public:
     }
 
 private:
-    DerivFunction m_f;
-    TimeSeries<double> m_result;
-    double m_dt;
-    double m_next_dt;
     std::shared_ptr<IntegratorCore> m_core;
 };
 

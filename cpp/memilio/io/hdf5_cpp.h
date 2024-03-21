@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -30,7 +30,7 @@ MSVC_WARNING_DISABLE_PUSH(4268 4251)
 
 #include "hdf5.h"
 
-MSVC_WARNING_POP
+MSVC_WARNING_POP()
 
 namespace mio
 {

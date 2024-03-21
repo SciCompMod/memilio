@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -77,7 +77,7 @@ namespace
 {
 
 struct Foo {
-    int i;
+    int i = 0;
     template <class IOContext>
     void serialize(IOContext& io) const
     {

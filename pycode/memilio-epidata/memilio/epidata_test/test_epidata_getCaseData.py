@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors:
 #
@@ -29,9 +29,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import progress_indicator
-
-progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
@@ -48,7 +45,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     # load test data for read
     filename = os.path.join(
-        here, 'test_data', 'test_epidata_getCaseData_data_read.json')
+        here, 'test_data', 'TestSetCaseRead.json')
     # Load JSON file data to a python dict object.
     with open(filename) as file_object:
         dict_object = json.load(file_object)
@@ -114,7 +111,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     # load test data for download formatted as data from github
     # (https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland)
     filename = os.path.join(
-        here, 'test_data', 'test_epidata_getCaseData_data_github.json')
+        here, 'test_data', 'TestSetCaseGithub.json')
     # Load JSON file data to a python dict object.
     with open(filename) as file_object:
         dict_object_github = json.load(file_object)
@@ -125,7 +122,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     # load test data for download formatted as data from arcgis
     # (https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/66876b81065340a4a48710b062319336/about)
     filename = os.path.join(
-        here, 'test_data', 'test_epidata_getCaseData_data_arcgis.json')
+        here, 'test_data', 'TestSetCaseArcgis.json')
     # Load JSON file data to a python dict object.
     with open(filename) as file_object:
         dict_object_arcgis = json.load(file_object)
@@ -619,8 +616,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         make_plot = False
         split_berlin = True
         rep_date = False
-        files = ['infected_county', 'all_county',
-                 'all_county_age', 'all_county_gender']
+        files = ['infected_county']
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -637,13 +633,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             moving_average=moving_average, make_plot=make_plot,
             split_berlin=split_berlin, rep_date=rep_date, files=files)
 
-        self.assertEqual(len(os.listdir(directory)), 5)
+        self.assertEqual(len(os.listdir(directory)), 2)
         # many files are tested before, don't test them again
         files = [
-            "cases_all_county_split_berlin_all_dates.json",
-            "cases_infected_county_split_berlin_all_dates.json",
-            "cases_all_county_gender_split_berlin_all_dates.json",
-            "cases_all_county_age_split_berlin_all_dates.json"]
+            "CaseDataFull.json",
+            "cases_infected_county_split_berlin_all_dates.json"]
         for file in files:
             self.assertTrue(file in os.listdir(directory))
 
@@ -717,7 +711,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def test_check_for_completeness(self):
         empty_df = pd.DataFrame()
-        self.assertEqual(gcd.check_for_completeness(empty_df), False)
+        self.assertEqual(gcd.check_for_completeness(empty_df, True), False)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_rep_date(self, mock_file):
