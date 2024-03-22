@@ -25,6 +25,7 @@
 //#include "memilio/utils/history.h"
 #include "abm/abm.h"
 #include "abm/household.h"
+#include "abm/vaccine.h"
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"
@@ -80,7 +81,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("InfectedSymptoms", mio::abm::InfectionState::InfectedSymptoms)
         .value("InfectedSevere", mio::abm::InfectionState::InfectedSevere)
         .value("InfectedCritical", mio::abm::InfectionState::InfectedCritical)
-        .value("Recovered", mio::abm::InfectionState::Recovered)        
+        .value("Recovered", mio::abm::InfectionState::Recovered)
         .value("Dead", mio::abm::InfectionState::Dead)
         .value("Count", mio::abm::InfectionState::Count);
 
@@ -183,7 +184,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
     py::class_<mio::abm::HouseholdMember>(m, "HouseholdMember")
-        .def(py::init<>())
+        .def(py::init<int>())
         .def("set_age_weight", &mio::abm::HouseholdMember::set_age_weight);
 
     py::class_<mio::abm::Household>(m, "Household")
@@ -217,22 +218,18 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::Vaccination::time);
 
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
-                .def(py::init<const std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
+        .def(py::init<const std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
 
     py::class_<mio::abm::Infection>(m, "Infection")
-        .def(py::init<mio::abm::VirusVariant, mio::abm::AgeGroup, const mio::abm::GlobalInfectionParameters&,
-                      mio::abm::TimePoint, mio::abm::InfectionState, bool>());
-
-    py::class_<mio::abm::Infection>(m, "Infection")
-        .def(py::init<mio::abm::VirusVariant, mio::abm::AgeGroup, const mio::abm::GlobalInfectionParameters&,
-                      mio::abm::TimePoint, mio::abm::InfectionState, bool>());
+        .def(py::init<mio::abm::Person::RandomNumberGenerator&, mio::abm::VirusVariant, mio::AgeGroup,
+                      const mio::abm::Parameters&, mio::abm::TimePoint, mio::abm::InfectionState,
+                      std::pair<mio::abm::ExposureType, mio::abm::TimePoint>, bool>());
 
     py::class_<mio::abm::Location>(m, "Location")
         .def("set_capacity", &mio::abm::Location::set_capacity)
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("index", &mio::abm::Location::get_index)
-        .def_property_readonly("population", &mio::abm::Location::get_subpopulations,
-                               py::return_value_policy::reference_internal)
+        .def_property_readonly("population", &mio::abm::Location::get_subpopulation)
         .def_property("infection_parameters",
                       py::overload_cast<>(&mio::abm::Location::get_infection_parameters, py::const_),
                       [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
@@ -289,10 +286,9 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     m.def(
         "set_viral_load_parameters",
-        [](mio::abm::GlobalInfectionParameters& infection_params, mio::abm::VirusVariant variant,
-           mio::abm::AgeGroup age, mio::abm::VaccinationState state, double min_peak, double max_peak,
-           double min_incline, double max_incline, double min_decline, double max_decline) {
-            infection_params.get<mio::abm::ViralLoadDistributions>()[{variant, age, state}] =
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double min_peak,
+           double max_peak, double min_incline, double max_incline, double min_decline, double max_decline) {
+            infection_params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] =
                 mio::abm::ViralLoadDistributionsParameters{
                     {min_peak, max_peak}, {min_incline, max_incline}, {min_decline, max_decline}};
         },
@@ -300,8 +296,8 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     m.def(
         "set_infectivity_parameters",
-        [](mio::abm::GlobalInfectionParameters& infection_params, mio::abm::VirusVariant variant,
-           mio::abm::AgeGroup age, double min_alpha, double max_alpha, double min_beta, double max_beta) {
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double min_alpha,
+           double max_alpha, double min_beta, double max_beta) {
             infection_params.get<mio::abm::InfectivityDistributions>()[{variant, age}] =
                 mio::abm::InfectivityDistributionsParameters{{min_alpha, max_alpha}, {min_beta, max_beta}};
         },
@@ -319,7 +315,7 @@ PYBIND11_MODULE(_simulation_abm, m)
              &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
                                                          LogPersonsPerLocationAndInfectionTime>>)
         //.def("advance", &mio::abm::Simulation::advance)
-        .def_property_readonly("result", &mio::abm::Simulation::get_result)
+        //.def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world),
                                py::return_value_policy::reference_internal);
 
@@ -333,5 +329,5 @@ PYBIND11_MODULE(_simulation_abm, m)
         });
 }
 
-PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
-PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_persons()))
+// PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
+// PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_persons()))
