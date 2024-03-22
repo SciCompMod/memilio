@@ -29,7 +29,7 @@ int main()
 
     double t0   = 0;
     double tmax = 50.;
-    double dt   = 0.1;
+    double dt   = 1.0;
 
     mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
@@ -50,7 +50,9 @@ int main()
     model.parameters.set<mio::oseir::TimeInfected>(2);
 
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+
+    // contacts increase by 100% after 12.5 days
+    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(-1., mio::SimulationTime(12.5));
 
     model.check_constraints();
 
