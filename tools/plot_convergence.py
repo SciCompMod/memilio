@@ -9,13 +9,17 @@ import matplotlib.pyplot as plt
 
 
 # We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
-def read_groundtruth(data_dir, dt_ode, setting):
+def read_groundtruth(data_dir, dt_ode, setting, flows=False):
 
     model = 'ode'
     results = {model: []}
 
-    h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_setting{}'.format(
-        model, dt_ode, setting)) + '.h5', 'r')
+    if flows:
+        h5file = h5py.File(os.path.join(data_dir, 'result_{}_flows_dt={}_setting{}'.format(
+            model, dt_ode, setting)) + '.h5', 'r')
+    else:
+        h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_setting{}'.format(
+            model, dt_ode, setting)) + '.h5', 'r')
 
     if (len(list(h5file.keys())) > 1):
         raise gd.DataError("File should contain one dataset.")
@@ -24,19 +28,23 @@ def read_groundtruth(data_dir, dt_ode, setting):
 
     data = h5file[list(h5file.keys())[0]]
 
-    if len(data['Total'][0]) == 8:
-        # As there should be only one Group, total is the simulation result
-        results[model].append(data['Total'][:, :])
-    elif len(data['Total'][0]) == 10:
-        # in ODE there are two compartments we don't use, throw these out
-        results[model].append(
-            data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]])
+    if flows:
+        # For flows we divide the values by dt_ode to go from \tilde{\sigma} to \hat{\sigma} and make results comparable
+        results[model].append(data['Total'][:, :]/float(dt_ode))
+    else:
+        if len(data['Total'][0]) == 8:
+            # As there should be only one Group, total is the simulation result
+            results[model].append(data['Total'][:, :])
+        elif len(data['Total'][0]) == 10:
+            # in ODE there are two compartments we don't use, throw these out
+            results[model].append(
+                data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]])
 
     dates = data['Time'][:]
 
-    if (results[model][-1].shape[1] != 8):
-        raise gd.DataError(
-            "Expected a different number of compartments.")
+    # if (results[model][-1].shape[1] != 8):
+    #     raise gd.DataError(
+    #         "Expected a different number of compartments.")
 
     h5file.close()
 
@@ -47,14 +55,18 @@ def read_groundtruth(data_dir, dt_ode, setting):
 # At the moment we are only storing results of the IDE model here. There
 # we have an array that contains all results for SECIHURD for all time points
 # for each time step size that is investigated.
-def read_data(data_dir, dt_ode, timesteps_ide, setting):
+def read_data(data_dir, dt_ode, timesteps_ide, setting, flows=False):
 
     models = ['ide']
     results = {models[0]: []}
     for model in models:
         for timestep in timesteps_ide:
-            h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_init_dt_ode={}_setting{}'.format(
-                model, timestep, dt_ode, setting)) + '.h5', 'r')
+            if flows:
+                h5file = h5py.File(os.path.join(data_dir, 'result_{}_flows_dt={}_init_dt_ode={}_setting{}'.format(
+                    model, timestep, dt_ode, setting)) + '.h5', 'r')
+            else:
+                h5file = h5py.File(os.path.join(data_dir, 'result_{}_dt={}_init_dt_ode={}_setting{}'.format(
+                    model, timestep, dt_ode, setting)) + '.h5', 'r')
 
             # if (len(list(h5file.keys())) > 1):
             #     raise gd.DataError("File should contain one dataset.")
@@ -63,13 +75,17 @@ def read_data(data_dir, dt_ode, timesteps_ide, setting):
 
             data = h5file[list(h5file.keys())[0]]
 
-            if len(data['Total'][0]) == 8:
-                # As there should be only one Group, total is the simulation result
-                results[model].append(data['Total'][:, :])
-            elif len(data['Total'][0]) == 10:
-                # in ODE there are two compartments we don't use, throw these out
-                results[model].append(
-                    data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]])
+            if flows:
+                # For flows we divide the values by dt_ode to go from \tilde{\sigma} to \hat{\sigma} and make results comparable
+                results[model].append(data['Total'][:, :]/float(timestep))
+            else:
+                if len(data['Total'][0]) == 8:
+                    # As there should be only one Group, total is the simulation result
+                    results[model].append(data['Total'][:, :])
+                elif len(data['Total'][0]) == 10:
+                    # in ODE there are two compartments we don't use, throw these out
+                    results[model].append(
+                        data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]])
 
             dates = data['Time'][:]
 
@@ -111,14 +127,19 @@ def compute_error_norm_S_timeseries(groundtruth, results, dt_ode, timesteps_ide)
 # Compute norm of the difference between ODE and IDE at tmax for all compartments
 
 
-def compute_error_norm_tmax(groundtruth, results, timesteps_ide):
+def compute_error_norm_tmax(groundtruth, results, timesteps_ide, flows=False):
+
+    if flows:
+        num_errors = 10
+    else:
+        num_errors = 8
     errors = []
 
     # Compute error of compartments in IDE simulation at tmax
     for i in range(len(results['ide'])):
         errors.append([])
         # compute difference for all compartments
-        for compartment in range(8):
+        for compartment in range(num_errors):
             timestep = timesteps_ide[i]
             num_timepoints = len(results['ide'][i])
             difference = groundtruth['ode'][0][-1][compartment] - \
@@ -130,11 +151,17 @@ def compute_error_norm_tmax(groundtruth, results, timesteps_ide):
 # Plot errors against timesteps.
 
 
-def plot_convergence(errors, timesteps_ide, setting, compartment=None, save=False):
+def plot_convergence(errors, timesteps_ide, setting, flows=False, compartment=None, save=False):
 
-    secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
-                  5: 'ICU', 6: 'Recovered', 7: 'Dead'}
-    compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
+    if flows:
+        secir_dict = {0: 'S->E', 1: 'E->C', 2: 'C->I', 3: 'C->R', 4: 'I->H',
+                      5: 'I->R', 6: 'H->U', 7: 'H->R', 8: 'U->D', 9: 'U->R'}
+        compartments = ['S->E', 'E->C', 'C->I', 'C->R', 'I->H',
+                        'I->R', 'H->U', 'H->R',  'U->D',  'U->R']
+    else:
+        secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
+                      5: 'ICU', 6: 'Recovered', 7: 'Dead'}
+        compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
 
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
@@ -172,9 +199,14 @@ def plot_convergence(errors, timesteps_ide, setting, compartment=None, save=Fals
         #     plt.show()
 
     else:
-        fig, ax = plt.subplots(4, 2, sharex=True)
+        if flows:
+            fig, ax = plt.subplots(5, 2, sharex=True)
+            num_plots = 10
+        else:
+            fig, ax = plt.subplots(4, 2, sharex=True)
+            num_plots = 8
 
-        for i in range(8):
+        for i in range(num_plots):
 
             # plot comparison line for linear convergence
             comparison = [500 * dt for dt in timesteps_ide]
@@ -205,10 +237,16 @@ def plot_convergence(errors, timesteps_ide, setting, compartment=None, save=Fals
         plt.tight_layout(rect=[0, 0, 0.83, 1])
 
         if save:
-            if not os.path.isdir('plots'):
-                os.makedirs('plots')
-            plt.savefig(f'plots/convergence_all_setting={setting}.png', format='png',
-                        dpi=500)  # bbox_inches='tight',
+            if flows:
+                if not os.path.isdir('plots/flows'):
+                    os.makedirs('plots/flows')
+                plt.savefig(f'plots/flows/convergence_all_flows_setting={setting}.png', format='png',
+                            dpi=500)
+            else:
+                if not os.path.isdir('plots/compartments'):
+                    os.makedirs('plots/compartments')
+                plt.savefig(f'plots/compartments/convergence_all_setting={setting}.png', format='png',
+                            dpi=500)
 
         # plt.show()
 
@@ -216,9 +254,14 @@ def plot_convergence(errors, timesteps_ide, setting, compartment=None, save=Fals
 # Compute order of convergence between two consecutive time step sizes
 
 
-def compute_order_of_convergence(errors, timesteps_ide):
+def compute_order_of_convergence(errors, timesteps_ide, flows=False):
+    if flows:
+        num_orders = 10
+    else:
+        num_orders = 8
+
     order = []
-    for compartment in range(8):
+    for compartment in range(num_orders):
         order.append([])
         for i in range(len(errors)-1):
             order[compartment].append(np.log(errors[i+1][compartment]/errors[i][compartment]) /
@@ -303,17 +346,20 @@ def main():
 
     timesteps_ide = ['1e-2', '1e-3']  # , '1e-4'
 
-    groundtruth = read_groundtruth(data_dir, dt_ode, setting)
+    flows = True
 
-    results = read_data(data_dir, dt_ode, timesteps_ide, setting)
+    groundtruth = read_groundtruth(data_dir, dt_ode, setting, flows=flows)
+
+    results = read_data(data_dir, dt_ode, timesteps_ide, setting, flows=flows)
 
     timesteps_ide = [1e-2, 1e-3]  # , 1e-4
 
-    errors = compute_error_norm_tmax(groundtruth, results, timesteps_ide)
+    errors = compute_error_norm_tmax(
+        groundtruth, results, timesteps_ide, flows=flows)
 
-    plot_convergence(errors, timesteps_ide, setting, save=True)
+    plot_convergence(errors, timesteps_ide, setting, flows=flows, save=True)
 
-    print_initial_values(groundtruth, results, dt_ode, timesteps_ide)
+    # print_initial_values(groundtruth, results, dt_ode, timesteps_ide)
 
     # print_total_population(results, timesteps_ide)
 

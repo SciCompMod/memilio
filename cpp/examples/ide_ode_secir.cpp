@@ -44,21 +44,21 @@
 int main()
 {
 
-    // Here we decide what exactly we want to in the example below
+    // Here we decide what exactly we want to do in the example below
     bool print_to_terminal = false;
     bool save_result       = true;
     bool ide_simulation    = true;
     int dt_ode_exponent    = 4;
     int dt_ide_exponent    = 3;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 5;
+    int setting = 2;
 
     // General set up.
-    ScalarType t0     = 0;
-    ScalarType tmax   = 70.00;
-    ScalarType dt_ode = pow(10, -dt_ode_exponent);
-    ScalarType dt_ide = pow(10, -dt_ide_exponent);
-    std::cout << "dt_ide: " << dt_ide << std::endl;
+    ScalarType t0       = 0;
+    ScalarType tmax     = 70.00;
+    ScalarType dt_ode   = pow(10, -dt_ode_exponent);
+    ScalarType dt_ide   = pow(10, -dt_ide_exponent);
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     /**********************************
     *         ODE simulation          *
@@ -67,8 +67,21 @@ int main()
     ScalarType nb_total_t0 = 10000, nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1,
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    if (setting == 10 || setting == 12 || setting == 13 || setting == 14) {
+    if (setting == 10 || setting == 12 || setting == 13 || setting == 14 || setting == 19 || setting == 25 ||
+        setting == 26 || setting == 28 || setting == 29 || setting == 30 || setting == 31) {
         nb_rec_t0 = 0.;
+    }
+
+    if (setting == 20) {
+        nb_rec_t0 = 1000.;
+    }
+
+    if (setting == 24) {
+        nb_rec_t0 = 1.;
+    }
+
+    if (setting == 27) {
+        nb_rec_t0 = 0.1;
     }
 
     mio::osecir::Model model_ode(1);
@@ -119,12 +132,29 @@ int main()
         model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.5;
     }
 
-    if (setting == 5 || setting == 12 || setting == 13 || setting == 15) {
+    if (setting == 5 || setting == 12 || setting == 13 || setting == 15 || setting == 20 || setting == 21 ||
+        setting == 23 || setting == 25 || setting == 26 || setting == 28 || setting == 29) {
         // Set probabilities that determine proportion between compartments
         model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.;
         model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
         model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 1.;
         model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 1.;
+    }
+
+    if (setting == 30) {
+        // Set probabilities that determine proportion between compartments
+        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.;
+        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
+        model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 1.;
+        model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.99;
+    }
+
+    if (setting == 31) {
+        // Set probabilities that determine proportion between compartments
+        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.;
+        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 1.;
+        model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 1.;
+        model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.95;
     }
 
     if (setting == 6 || setting == 11 || setting == 14) {
@@ -173,24 +203,15 @@ int main()
 
     mio::TimeSeries<ScalarType> secihurd_ode = simulate(t0, tmax, dt_ode, model_ode, integrator);
 
+    // Compute flows from ODE result.
+    // Note that we are computing \tilde{\sigma} here. To be able to compare flows between different timetspes (of ODE and IDE)
+    // we need to divide by dt to get \hat{\sigma}. This is not done here but in the python scripts for the analysis of results.
+    mio::TimeSeries<ScalarType> secihurd_ode_flows(num_transitions);
+    mio::isecir::get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax - t0, tmax, dt_ode,
+                                                 dt_ode);
+
     if (print_to_terminal) {
-        char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-        printf("\n # t");
-        for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
-            printf(" %c", vars[k]);
-        }
-        auto num_points = static_cast<size_t>(secihurd_ode.get_num_time_points());
-        for (size_t i = 0; i < num_points; i++) {
-            printf("\n%.14f ", secihurd_ode.get_time(i));
-            Eigen::VectorXd res_j = secihurd_ode.get_value(i);
-            for (size_t j = 0; j < (size_t)mio::osecir::InfectionState::Count; j++) {
-                printf(" %.14f", res_j[j]);
-            }
-        }
-        std::cout << "\n";
-        Eigen::VectorXd res_j = secihurd_ode.get_last_value();
-        printf("number total: %f",
-               res_j[0] + res_j[1] + res_j[2] + res_j[4] + res_j[6] + res_j[7] + res_j[8] + res_j[9]);
+        secihurd_ode.print_table();
     }
 
     std::cout << "\n";
@@ -199,6 +220,10 @@ int main()
         auto save_result_status_ode =
             mio::save_result({secihurd_ode}, {0}, 1,
                              "../../results/result_ode_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
+                                 std::to_string(setting) + ".h5");
+        auto save_result_status_ode_flows =
+            mio::save_result({secihurd_ode_flows}, {0}, 1,
+                             "../../results/result_ode_flows_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
                                  std::to_string(setting) + ".h5");
     }
 
@@ -216,19 +241,11 @@ int main()
         ScalarType deaths = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode -
                                          1][(int)mio::osecir::InfectionState::Dead];
 
-        int num_transitions = (int)mio::isecir::InfectionTransition::Count;
-
         mio::TimeSeries<ScalarType> init_transitions(num_transitions);
-        Vec vec_init(num_transitions);
-        // Add dummy time point so that model initialization works
-        // Attention: here we need to initilaize with a time series that last time point is t0_ide so that m_populations is set correctly
-        // TODO: check if it is possible to initialize with an empty time series for init_transitions
-        // TODO: check if there is an easier/cleaner way to initialize
-        init_transitions.add_time_point(t0_ide, vec_init);
 
         ScalarType total_infections = 0.;
 
-        if (setting == 11 || setting == 13 || setting == 14 || setting == 18) {
+        if (setting == 11 || setting == 13 || setting == 14 || setting == 18 || setting == 21) {
             // Compute total_infections by getting number of individuals that currently are or have been infected at time t0_ide
             total_infections =
                 secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
@@ -329,19 +346,19 @@ int main()
         model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
 
         // Compute initial flows from results of ODE simulation
-        compute_initial_flows_from_ode_compartments(model_ode, model_ide, secihurd_ode, t0_ide, dt_ode, dt_ide);
+        mio::isecir::compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ode, dt_ide);
 
         model_ide.check_constraints(dt_ide);
 
         model_ide.set_populations_before_simulation();
 
-        if (setting == 15 || setting == 16) {
+        if (setting == 15 || setting == 16 || setting == 25) {
             model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] =
                 secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
                             [(int)mio::osecir::InfectionState::Recovered];
         }
 
-        if (setting == 17) {
+        if (setting == 17 || setting == 26) {
             model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] =
                 secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
                             [(int)mio::osecir::InfectionState::Susceptible];
@@ -381,10 +398,10 @@ int main()
                 {secihurd_ide}, {0}, 1,
                 "../../results/result_ide_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
                     std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
-            // auto save_result_status_ide_flows =
-            //     mio::save_result({secihurd_ide_flows}, {0}, 1,
-            //                      "../../results/result_ide_flows_dt=1e-" + std::to_string(dt_ide_exponent) + "_setting" +
-            //                          std::to_string(setting) + ".h5");
+            auto save_result_status_ide_flows = mio::save_result(
+                {secihurd_ide_flows}, {0}, 1,
+                "../../results/result_ide_flows_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
+                    std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
         }
     }
 }

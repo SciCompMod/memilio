@@ -36,7 +36,7 @@ secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'H
               5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
 
-def compare_results(dt_ode, dt_ide, setting, legendplot, save=True):
+def compare_results(dt_ode, dt_ide, setting, legendplot, flows=True, save=True):
     """ Creates a 4x2 Plot with one subplot per compartment and one line per result one wants to compare.
     @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
         Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
@@ -44,10 +44,27 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, save=True):
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] save: if save is True, the plot is saved in a folder named Plots.
     """
-    files = [os.path.join(data_dir, f"result_ode_dt={dt_ode}_setting{setting}"), os.path.join(
-        data_dir, f"result_ide_dt={dt_ide}_init_dt_ode={dt_ode}_setting{setting}")]
+    if flows:
+        files = [os.path.join(data_dir, f"result_ode_flows_dt={dt_ode}_setting{setting}"), os.path.join(
+            data_dir, f"result_ide_flows_dt={dt_ide}_init_dt_ode={dt_ode}_setting{setting}")]
 
-    fig, axs = plt.subplots(4, 2, sharex='all', num='Compare files')
+        secir_dict = {0: 'S->E', 1: 'E->C', 2: 'C->I', 3: 'C->R', 4: 'I->H',
+                      5: 'I->R', 6: 'H->U', 7: 'H->R', 8: 'U->D', 9: 'U->R'}
+
+        fig, axs = plt.subplots(5, 2, sharex='all', num='Compare files')
+        num_plots = 10
+
+    else:
+        files = [os.path.join(data_dir, f"result_ode_dt={dt_ode}_setting{setting}"), os.path.join(
+            data_dir, f"result_ide_dt={dt_ide}_init_dt_ode={dt_ode}_setting{setting}")]
+
+        # Define compartments
+        secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
+                      5: 'ICU', 6: 'Recovered', 7: 'Dead'}
+
+        fig, axs = plt.subplots(4, 2, sharex='all', num='Compare files')
+        num_plots = 8
+
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
     linestyles = ['-', '--']
@@ -63,27 +80,32 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, save=True):
 
         data = h5file[list(h5file.keys())[0]]
 
-        if len(data['Total'][0]) == 8:
-            # As there should be only one Group, total is the simulation result
+        if flows:
             total = data['Total'][:, :]
-        elif len(data['Total'][0]) == 10:
-            # in ODE there are two compartments we don't use, throw these out
-            total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
+        else:
+            if len(data['Total'][0]) == 8:
+                # As there should be only one Group, total is the simulation result
+                total = data['Total'][:, :]
+            elif len(data['Total'][0]) == 10:
+                # in ODE there are two compartments we don't use, throw these out
+                total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
 
         dates = data['Time'][:]
 
-        if (total.shape[1] != 8):
-            raise gd.DataError(
-                "Expected a different number of compartments.")
         # plot data
-        for i in range(8):
-            axs[int(i/2), i % 2].plot(dates,
-                                      total[:, i], label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+        if file == 0:
+            for i in range(num_plots):
+                axs[int(i/2), i % 2].plot(dates,
+                                          total[:, i]/float(dt_ode), label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+        if file == 1:
+            for i in range(num_plots):
+                axs[int(i/2), i % 2].plot(dates,
+                                          total[:, i]/float(dt_ide), label=legendplot[file], color=colors[file], linestyle=linestyles[file])
 
         h5file.close()
 
     # define some characteristics of the plot
-    for i in range(8):
+    for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
         # axs[int(i/2), i % 2].set_ylim(bottom=0)
         axs[int(i/2), i % 2].set_xlim(left=0)
@@ -98,11 +120,17 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, save=True):
 
     # save result
     if save:
-        if not os.path.isdir('plots'):
-            os.makedirs('plots')
-        plt.savefig(f'plots/ide_ode_compare_dt_ide={dt_ide}_init_dt_ode={dt_ode}_setting{setting}.png',
-                    bbox_inches='tight', dpi=500)
-    # plt.show()
+
+        if flows:
+            if not os.path.isdir('plots/flows'):
+                os.makedirs('plots/flows')
+            plt.savefig(f'plots/flows/ide_ode_compare_flows_dt_ide={dt_ide}_init_dt_ode={dt_ode}_setting{setting}.png',
+                        bbox_inches='tight', dpi=500)
+        else:
+            if not os.path.isdir('plots/compartments'):
+                os.makedirs('plots/compartments')
+            plt.savefig(f'plots/compartments/ide_ode_compare_dt_ide={dt_ide}_init_dt_ode={dt_ode}_setting{setting}.png',
+                        bbox_inches='tight', dpi=500)
 
 
 if __name__ == '__main__':
@@ -115,6 +143,8 @@ if __name__ == '__main__':
 
     setting = 2
 
+    flows = True
+
     # Plot comparison of ODE and IDE models
     compare_results(dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), save=True)
+                    legendplot=list(["ODE", "IDE"]), flows=flows, save=True)

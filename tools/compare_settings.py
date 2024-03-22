@@ -12,10 +12,10 @@ def read_data_for_comparison(data_dir, timesteps, settings, ide=True):
     for setting in settings:
         for timestep in timesteps:
             if ide:
-                h5file = h5py.File(os.path.join(data_dir, 'result_ide_dt={}_setting{}'.format(
+                h5file = h5py.File(os.path.join(data_dir, 'result_ide_dt={}_init_dt_ode=1e-4_setting{}'.format(
                     timestep, setting)) + '.h5', 'r')
             else:
-                h5file = h5py.File(os.path.join(data_dir, 'result_ode_dt={}_setting{}'.format(
+                h5file = h5py.File(os.path.join(data_dir, 'result_ide_dt={}_init_dt_ode=1e-4_setting{}_new'.format(
                     timestep, setting)) + '.h5', 'r')
 
             data = h5file[list(h5file.keys())[0]]
@@ -93,7 +93,7 @@ def main():
 
     timesteps = ['1e-2']
 
-    settings = ['5', '6']
+    settings = ['2', '2']
 
     results = read_data_for_comparison(
         data_dir, timesteps, settings, ide=False)
