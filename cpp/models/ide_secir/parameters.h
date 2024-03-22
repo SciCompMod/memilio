@@ -151,11 +151,12 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
- * @brief The start day in the IDE-SECIR model.
+ * @brief The day of the year of the start day 0 of a simulation with a IDE-SECIR model.
  *
  * The start day defines in which season the simulation is started.
  * If the start day is 180 and simulation takes place from t0=0 to
  * tmax=100 the days 180 to 280 of the year are simulated.
+ * The parameter is used in the formula of the seasonality in the model.
  */
 struct StartDay {
     using Type = ScalarType;
