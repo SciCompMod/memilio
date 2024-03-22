@@ -1,17 +1,25 @@
 name: "Linux Test"
 description: "Run the C++ unit tests on linux."
 inputs:
-  build-artifact:
-    description: "Name of the build artifact that contains the unit test binary."
+  artifact-pattern:
+    description: "Name of the build artifact that contains the unit test binary, and coverage artifacts that will be uploaded."
     required: true
   coverage:
     description: "Create coverage report (ON or OFF)"
     required: false
     default: "OFF"
+  optional-deps:
+    description: "Optional dependencies of unit test binary (ON or OFF, default ON). If OFF, adds `-nodep` to the artifact name."
+    required: false
+    default: "ON"
   num-repeat:
     description: "Repeat tests, e.g. to catch random failures like race conditions."
     required: false
     default: "1"
+  openmp: 
+    description: "Enabled Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
+    required: false
+    default: "OFF"
 runs:
   using: "composite"
   steps:
@@ -22,9 +30,9 @@ runs:
         sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
         sudo apt-get -qq update
     - name: Download built test directory
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.build-artifact }}
+        name: build-cpp-linux-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp
     - name: extract build archive
       shell: bash
@@ -48,16 +56,16 @@ runs:
           cmake --build . --target coverage/fast
         fi
     - name: Upload test report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-linux-report
+        name: test-cpp-linux-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build/bin/report.xml
         if-no-files-found: error
         retention-days: 1
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-coverage-reports
+        name: test-cpp-coverage-reports-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: |
           cpp/build/coverage.info
           cpp/build/coverage

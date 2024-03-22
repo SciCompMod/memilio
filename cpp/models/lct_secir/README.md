@@ -2,8 +2,8 @@
 
 This model is based on the Linear Chain Trick. 
 
-The Linear Chain Trick provides the option to use Erlang-distributed sojourn times in the compartments through the use of subcompartments. 
-The normal ODE models have (possibly unrealistic) exponentially distributed sojourn times.
+The Linear Chain Trick provides the option to use Erlang-distributed stay times in the compartments through the use of subcompartments. 
+The normal ODE models have (possibly unrealistic) exponentially distributed stay times.
 The LCT model can still be described by an ordinary differential equation system.
 
 For the concept see 
@@ -59,8 +59,6 @@ A simple example can be found at [LCT minimal example](../../examples/lct_secir.
 
 ## Initialization
 
+- The file [parameters_io](parameters_io.h) provides functionality to compute an initial value vector for the LCT-SECIR model based on real data.
 
-
--The file [initializer_flows](initializer_flows.h) provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a TimeSeries of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the real data is in the form of flows.
-
-
+- The file [initializer_flows](initializer_flows.h) provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a TimeSeries of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the real data is in the form of flows.
