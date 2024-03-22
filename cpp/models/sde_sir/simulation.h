@@ -77,12 +77,12 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance_stochastic(double tmax)
     {
-        assert(m_flow_result.get_num_time_points() == this->get_result().get_num_time_points());
+        assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
             // see the general mio::FlowSimulation for more details on this DerifFunktion
             [this](auto&& flows, auto&& t, auto&& dflows_dt) {
-                auto pop_result = this->get_result();
-                auto model      = this->get_model();
+                auto pop_result = get_result();
+                auto model      = get_model();
                 // compute current population
                 model.get_derivatives(flows - get_flows().get_value(pop_result.get_num_time_points() - 1), m_pop);
                 m_pop += pop_result.get_last_value();
@@ -91,8 +91,8 @@ public:
                 model.step_size = get_dt(); // set the current step size
                 model.get_flows(m_pop, m_pop, t, dflows_dt);
             },
-            tmax, this->get_dt(), get_flows());
-        this->compute_population_results();
+            tmax, get_dt(), get_flows());
+        compute_population_results();
         return result;
     }
 };
