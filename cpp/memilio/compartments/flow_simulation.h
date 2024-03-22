@@ -60,8 +60,8 @@ public:
         assert(m_flow_result.get_num_time_points() == this->get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
             [this](auto&& flows, auto&& t, auto&& dflows_dt) {
-                auto pop_result = this->get_result();
-                auto model      = this->get_model();
+                const auto& pop_result = this->get_result();
+                const auto& model      = this->get_model();
                 // compute current population
                 //   flows contains the accumulated outflows of each compartment for each target compartment at time t.
                 //   Using that the ODEs are linear expressions of the flows, get_derivatives can compute the total change
