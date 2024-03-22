@@ -84,7 +84,7 @@ public:
             y[(size_t)InfectionState::Recovered] / step_size);
     }
 
-    ScalarType step_size = 0.1;
+    ScalarType step_size = 0.1; ///< A step size of the model with which the stochastic process is realized.
     mutable RandomNumberGenerator rng;
 
 private:

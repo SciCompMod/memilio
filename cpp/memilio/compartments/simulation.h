@@ -188,14 +188,14 @@ using is_compartment_model_simulation =
                                   is_compartment_model<typename Sim::Model>::value)>;
 
 /**
- * @brief Run a Simulation of a compartmental model.
+ * @brief Run a Simulation of a CompartmentalModel.
  * @param[in] t0 Start time.
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
- * @param[in] model An instance of a compartmental model.
+ * @param[in] model An instance of a CompartmentalModel.
  * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
- * @return A TimeSeries to represent the final simulation result
- * @tparam Model The type of the compartment model to simulate.
+ * @return A TimeSeries to represent the final Simulation result
+ * @tparam Model The particular Model derived from CompartmentModel to simulate.
  * @tparam Sim A Simulation that can simulate the model.
  */
 template <class Model, class Sim = Simulation<Model>>

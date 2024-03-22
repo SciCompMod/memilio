@@ -30,9 +30,9 @@ namespace mio
 namespace ssirs
 {
 
-/**************************************
- * Define Parameters of the SIR model *
- **************************************/
+/***************************************
+ * Define Parameters of the SIRS model *
+ ***************************************/
 
 /**
  * @brief probability of getting infected from a contact

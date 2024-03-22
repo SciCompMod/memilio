@@ -134,15 +134,15 @@ private:
 };
 
 /**
- * @brief Run a FlowSimulation of a flow model.
+ * @brief Run a FlowSimulation of a FlowModel.
  * @param[in] t0 Start time.
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
- * @param[in] model An instance of a flow model.
+ * @param[in] model An instance of a FlowModel.
  * @param[in] integrator Optionally override the IntegratorCore used by the FlowSimulation.
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
- * @tparam Model The type of the flow model to simulate.
+ * @tparam Model The particular Model derived from FlowModel to simulate.
  * @tparam Sim A FlowSimulation that can simulate the model.
  */
 template <class Model, class Sim = FlowSimulation<Model>>
