@@ -125,31 +125,32 @@ def add_school_ids(pd):
     start_or_end_loc = ''
     start_or_end_zone = ''
     for index, row in pd.iterrows():
-        if (((row['loc_id_start'] == -2) | (row['loc_id_end'] == -2)) & (not row['puid'] in person_to_school_dict.keys())):
-            if row['loc_id_start'] == -2:
-                start_or_end_loc = 'loc_id_start'
-                start_or_end_zone = 'start_zone'
-            else:
-                start_or_end_loc = 'loc_id_end'
-                start_or_end_zone = 'end_zone'
+        if ((row['loc_id_start'] == -2) | (row['loc_id_end'] == -2)):
+            if (not row['puid'] in person_to_school_dict.keys()):
+                if row['loc_id_start'] == -2:
+                    start_or_end_loc = 'loc_id_start'
+                    start_or_end_zone = 'start_zone'
+                else:
+                    start_or_end_loc = 'loc_id_end'
+                    start_or_end_zone = 'end_zone'
 
-            found = False
-            # check if a school is already available and not full
-            if (row[start_or_end_zone] in schools_dict.keys()):
-                if (schools_dict[row[start_or_end_zone]][1] < max_persons_per_school):
-                    # add persons to existing school
+                found = False
+                # check if a school is already available and not full
+                if (row[start_or_end_zone] in schools_dict.keys()):
+                    if (schools_dict[row[start_or_end_zone]][1] < max_persons_per_school):
+                        # add persons to existing school
+                        person_to_school_dict[row['puid']
+                                              ] = schools_dict[row[start_or_end_zone]][0]
+                        schools_dict[row[start_or_end_zone]][1] += 1
+                        found = True
+                if (not found):
+                    # make new school
+                    schools_dict[row[start_or_end_zone]] = [school_ids, 1]
+                    school_ids -= 1
                     person_to_school_dict[row['puid']
                                           ] = schools_dict[row[start_or_end_zone]][0]
-                    schools_dict[row[start_or_end_zone]][1] += 1
-                    found = True
-            if (not found):
-                # make new school
-                schools_dict[row[start_or_end_zone]] = [school_ids, 1]
-                school_ids -= 1
-                person_to_school_dict[row['puid']
-                                      ] = schools_dict[row[start_or_end_zone]][0]
-        # overwrite "-2" in location_id
-        pd.at[index, start_or_end_loc] = person_to_school_dict[row['puid']]
+            # overwrite "-2" in location_id
+            pd.at[index, start_or_end_loc] = person_to_school_dict[row['puid']]
 
     return pd
 
