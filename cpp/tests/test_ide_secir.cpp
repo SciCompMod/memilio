@@ -280,17 +280,6 @@ TEST(IdeSecir, checkInitializations)
     // Verify that the expected initialization method was used.
     EXPECT_EQ(1, sim1.get_model().get_initialization_method());
 
-    // --- Case with forceofinfection.
-    mio::TimeSeries<ScalarType> init_copy2(init);
-    mio::isecir::Model model2(std::move(init_copy2), N, deaths, 0);
-
-    // Carry out simulation.
-    mio::isecir::Simulation sim2(model2, 0, dt);
-    sim2.advance(tmax);
-
-    // Verify that the expected initialization method was used.
-    EXPECT_EQ(2, sim2.get_model().get_initialization_method());
-
     // --- Case with S.
     /* !! For the other tests, the contact rate is set to 0 so that the force of infection is zero.
      The forceofinfection initialization method is therefore not used for these tests.*/
@@ -299,11 +288,25 @@ TEST(IdeSecir, checkInitializations)
     contact_matrix[0]                              = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
     parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
+    mio::TimeSeries<ScalarType> init_copy2(init);
+    mio::isecir::Model model2(std::move(init_copy2), N, deaths, 0, std::move(parameters));
+
+    model2.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 5000;
+    model2.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim2(model2, 0, dt);
+    sim2.advance(tmax);
+
+    // Verify that the expected initialization method was used.
+    EXPECT_EQ(2, sim2.get_model().get_initialization_method());
+
+    // --- Case with R.
     mio::TimeSeries<ScalarType> init_copy3(init);
     mio::isecir::Model model3(std::move(init_copy3), N, deaths, 0, std::move(parameters));
 
-    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 5000;
-    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
+    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 1000;
 
     // Carry out simulation.
     mio::isecir::Simulation sim3(model3, 0, dt);
@@ -312,12 +315,9 @@ TEST(IdeSecir, checkInitializations)
     // Verify that the expected initialization method was used.
     EXPECT_EQ(3, sim3.get_model().get_initialization_method());
 
-    // --- Case with R.
+    // --- Case with forceofinfection.
     mio::TimeSeries<ScalarType> init_copy4(init);
-    mio::isecir::Model model4(std::move(init_copy4), N, deaths, 0, std::move(parameters));
-
-    model4.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
-    model4.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 1000;
+    mio::isecir::Model model4(std::move(init_copy4), N, deaths, 0);
 
     // Carry out simulation.
     mio::isecir::Simulation sim4(model4, 0, dt);
@@ -327,11 +327,11 @@ TEST(IdeSecir, checkInitializations)
     EXPECT_EQ(4, sim4.get_model().get_initialization_method());
 
     // --- Case without fitting initialization method.
-    // Deactivate temporarily log output for next test. Error is expected here.
+    // Deactivate temporarily log output for next tests. Errors are expected here.
     mio::set_log_level(mio::LogLevel::off);
 
-    // Here we do not need a copy of init as this is the last use of the vector. We can apply move directly.
-    mio::isecir::Model model5(std::move(init), N, deaths, 0, std::move(parameters));
+    mio::TimeSeries<ScalarType> init_copy5(init);
+    mio::isecir::Model model5(std::move(init_copy5), N, deaths, 0, std::move(parameters));
 
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
@@ -342,6 +342,22 @@ TEST(IdeSecir, checkInitializations)
 
     // Verify that initialization was not possible with one of the models methods.
     EXPECT_EQ(-1, sim5.get_model().get_initialization_method());
+
+    // --- Test with negative number of deaths.
+    deaths = -10;
+
+    // Here we do not need a copy of init as this is the last use of the vector. We can apply move directly.
+    mio::isecir::Model model6(std::move(init), N, deaths, 0, std::move(parameters));
+
+    model6.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
+    model6.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim6(model6, 0, dt);
+    sim6.advance(tmax);
+
+    // Verify that initialization was possible but the result is not appropriate.
+    EXPECT_EQ(-2, sim6.get_model().get_initialization_method());
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
