@@ -25,7 +25,6 @@
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/euler.h"
 
 namespace mio
 {
@@ -98,20 +97,6 @@ public:
             },
             tmax, m_dt, m_result);
     }
-
-    /**
-     * @brief advance simulation to tmax
-     * tmax must be greater than get_result().get_last_time_point()
-     * @param tmax next stopping point of simulation
-     */
-    Eigen::Ref<Eigen::VectorXd> advance_stoch(double tmax)
-    {
-        return m_integrator.advance(
-            [this](auto&& y, auto&& t, auto&& dydt) {
-                get_model().get_derivatives_stoch(y, y, t, dydt, m_dt);
-            },
-            tmax, m_dt, m_result);
-    }    
 
     /**
      * @brief Returns the simulation result describing the model population in each time step.
@@ -203,14 +188,15 @@ using is_compartment_model_simulation =
                                   is_compartment_model<typename Sim::Model>::value)>;
 
 /**
- * @brief simulate simulates a compartmental model
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model: An instance of a compartmental model
- * @return a TimeSeries to represent the final simulation result
- * @tparam Model a compartment model type
- * @tparam Sim a simulation type that can simulate the model.
+ * @brief Run a Simulation of a compartmental model.
+ * @param[in] t0 Start time.
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of a compartmental model.
+ * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
+ * @return A TimeSeries to represent the final simulation result
+ * @tparam Model The type of the compartment model to simulate.
+ * @tparam Sim A Simulation that can simulate the model.
  */
 template <class Model, class Sim = Simulation<Model>>
 TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
@@ -222,29 +208,6 @@ TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& 
         sim.set_integrator(integrator);
     }
     sim.advance(tmax);
-    return sim.get_result();
-}
-
-/**
- * @brief simulate simulates a compartmental model
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model: An instance of a compartmental model
- * @return a TimeSeries to represent the final simulation result
- * @tparam Model a compartment model type
- * @tparam Sim a simulation type that can simulate the model.
- */
-template <class Model, class Sim = Simulation<Model>>
-TimeSeries<ScalarType> simulate_stoch(double t0, double tmax, double dt, Model const& model,
-                                std::shared_ptr<IntegratorCore> integrator = nullptr)
-{
-    model.check_constraints();
-    Sim sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(integrator);
-    }
-    sim.advance_stoch(tmax);
     return sim.get_result();
 }
 

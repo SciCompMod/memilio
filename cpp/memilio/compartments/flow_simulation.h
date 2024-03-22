@@ -83,42 +83,6 @@ public:
         compute_population_results();
         return result;
     }
-    
-    /**
-     * @brief Advance the simulation to tmax.
-     * tmax must be greater than get_result().get_last_time_point().
-     * @param[in] tmax Next stopping time of the simulation.
-     */
-    Eigen::Ref<Eigen::VectorXd> advance_stochastic(double tmax)
-    {
-        // the derivfunktion (i.e. the lambda passed to m_integrator.advance below) requires that there are at least
-        // as many entries in m_flow_result as in Base::m_result
-        assert(m_flow_result.get_num_time_points() == this->get_result().get_num_time_points());
-        auto result = this->get_ode_integrator().advance(
-            [this](auto&& flows, auto&& t, auto&& dflows_dt) {
-                auto pop_result = this->get_result();
-                auto model      = this->get_model();
-                // compute current population
-                //   flows contains the accumulated outflows of each compartment for each target compartment at time t.
-                //   Using that the ODEs are linear expressions of the flows, get_derivatives can compute the total change
-                //   in population from t0 to t.
-                //   To incorporate external changes to the last values of pop_result (e.g. by applying mobility), we only
-                //   calculate the change in population starting from the last available time point in m_result, instead
-                //   of starting at t0. To do that, the following difference of flows is used.
-                model.get_derivatives(flows - m_flow_result.get_value(pop_result.get_num_time_points() - 1),
-                                      m_pop); // note: overwrites values in pop
-                //   add the "initial" value of the ODEs (using last available time point in pop_result)
-                //     If no changes were made to the last value in m_result outside of FlowSimulation, the following
-                //     line computes the same as `model.get_derivatives(flows, x); x += model.get_initial_values();`.
-                m_pop += pop_result.get_last_value();
-                // compute the current change in flows with respect to the current population
-                dflows_dt.setZero();
-                model.get_flows_stochastic(m_pop, m_pop, t, this->get_dt(), dflows_dt); // this result is used by the integrator
-            },
-            tmax, this->get_dt(), m_flow_result);
-        compute_population_results();
-        return result;
-    }
 
     /**
      * @brief Returns the simulation result describing the transitions between compartments for each time step.
@@ -141,7 +105,7 @@ public:
     }
     /** @} */
 
-private:
+protected:
     /**
      * @brief Computes the distribution of the Population to the InfectionState%s based on the simulated flows.
      * Uses the same method as the DerivFunction used in advance to compute the population given the flows and initial
@@ -164,18 +128,22 @@ private:
     }
 
     Eigen::VectorXd m_pop; ///< pre-allocated temporary, used in right_hand_side()
+
+private:
     mio::TimeSeries<ScalarType> m_flow_result; ///< flow result of the simulation
 };
 
 /**
- * @brief simulate simulates a compartmental model and returns the same results as simulate and also the flows.
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model: An instance of a compartmental model
- * @return a Tuple of two TimeSeries to represent the final simulation result and flows
- * @tparam Model a compartment model type
- * @tparam Sim a simulation type that can simulate the model.
+ * @brief Run a FlowSimulation of a flow model.
+ * @param[in] t0 Start time.
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of a flow model.
+ * @param[in] integrator Optionally override the IntegratorCore used by the FlowSimulation.
+ * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
+ *         the second gives the corresponding flows that lead from t0 to each time point.
+ * @tparam Model The type of the flow model to simulate.
+ * @tparam Sim A FlowSimulation that can simulate the model.
  */
 template <class Model, class Sim = FlowSimulation<Model>>
 std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model,

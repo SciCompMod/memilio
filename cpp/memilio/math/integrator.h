@@ -22,11 +22,8 @@
 
 #include "memilio/utils/time_series.h"
 
-#include "memilio/math/eigen.h"
 #include <memory>
-#include <vector>
 #include <functional>
-#include <algorithm>
 
 namespace mio
 {
@@ -36,7 +33,6 @@ namespace mio
  */
 using DerivFunction =
     std::function<void(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)>;
-
 
 class IntegratorCore
 {
