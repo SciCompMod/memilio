@@ -18,11 +18,12 @@
 * limitations under the License.
 */
 
-#include "ode_sir/model.h"
-#include "ode_sir/infection_state.h"
-#include "ode_sir/parameters.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/math/euler.h"
 #include "memilio/utils/logging.h"
+#include "ode_sir/infection_state.h"
+#include "ode_sir/model.h"
+#include "ode_sir/parameters.h"
 
 int main()
 {
