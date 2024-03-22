@@ -75,7 +75,7 @@ public:
             y[(size_t)InfectionState::Infected] / step_size);
     }
 
-    ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.
+    ScalarType step_size = 0.1; ///< A step size of the model with which the stochastic process is realized.
     mutable RandomNumberGenerator rng;
 
 private:
