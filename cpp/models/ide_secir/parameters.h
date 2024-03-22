@@ -170,8 +170,8 @@ struct StartDay {
 };
 
 /**
- * @brief The seasonality in the IDE-SECIR model.
- * The seasonality is given as (1+k*sin()) where the sine
+ * @brief The seasonality parameter k in the IDE-SECIR model.
+ * The formula for the seasonality used in the model is given as (1+k*sin()) where the sine
  * curve is below one in summer and above one in winter.
  */
 struct Seasonality {

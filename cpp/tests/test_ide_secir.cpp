@@ -359,7 +359,7 @@ TEST(IdeSecir, testParametersConstraints)
     // Create an object from the class Parameters.
     mio::isecir::Parameters parameters;
 
-    // Deactivate temporarily log output for next tests as exceptions are expected.
+    // Deactivate temporarily log output for next tests as warnings are expected.
     mio::set_log_level(mio::LogLevel::off);
 
     // Set wrong parameters and test if check_constraints() reports them correctly.
