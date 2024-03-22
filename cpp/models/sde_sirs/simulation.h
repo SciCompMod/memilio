@@ -75,14 +75,14 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::VectorXd> advance_stochastic(double tmax)
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
         assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
             // see the general mio::FlowSimulation for more details on this DerivFunction
             [this](auto&& flows, auto&& t, auto&& dflows_dt) {
-                auto pop_result = get_result();
-                auto model      = get_model();
+                const auto& pop_result = get_result();
+                auto& model            = get_model();
                 // compute current population
                 model.get_derivatives(flows - get_flows().get_value(pop_result.get_num_time_points() - 1), m_pop);
                 m_pop += pop_result.get_last_value();
