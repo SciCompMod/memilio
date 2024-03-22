@@ -79,7 +79,7 @@ public:
     {
         assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
-            // see the general mio::FlowSimulation for more details on this DerifFunktion
+            // see the general mio::FlowSimulation for more details on this DerivFunction
             [this](auto&& flows, auto&& t, auto&& dflows_dt) {
                 auto pop_result = get_result();
                 auto model      = get_model();
