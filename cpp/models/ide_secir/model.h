@@ -94,11 +94,18 @@ public:
     }
 
     /**
-     * @brief Calculate the number of individuals in each compartment for time 0.
-     * 
-     * Initial transitions are used to calculate the initial compartment sizes.
-     * @param[in] dt Time discretization step size.         
-     */
+    * @brief Initializes the model and sets compartment values at time zero.
+    *
+    * The initialization method is selected automatically based on the different values that need to be set beforehand.
+    * Infection compartments are always computed through historic flow.
+    * Initialization methods for susceptibles and recovered are tested in the following order:
+    * 1.) If a positive number for the total number of confirmed cases is set, recovered is set according to that value and #Susceptible%s are derived.
+    * 2.) If #Susceptible%s are set, recovered will be derived.
+    * 3.) If #Recovered are set directly, #Susceptible%s are derived.
+    * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to set the #Susceptible%s.
+    *
+    * @param[in] dt Time discretization step size.         
+    */
     void initialize(ScalarType dt);
 
     /**
@@ -201,12 +208,12 @@ public:
     }
 
     /**
-     * @brief Specifies a number associated with the method used for initialization.
+     * @brief Returns the number associated with the method selected automatically for initialization.
      *
-     * @returns 0 if the initialization method has not yet been selected,
+    * @returns 0 if the model has not yet been initialized and the method has not yet been selected,
      *      1 if the method using the total number of confirmed cases at time 0 is used,
-     *      2 if the initialization is calculated using a prior set value for S,
-     *      3 if the initialization is calculated using a prior set value for R,
+     *      2 if the initialization is calculated using a beforehand set value for S,
+     *      3 if the initialization is calculated using a beforehand set value for R,
      *      4 if the force of infection method is used, 
      *      -1 if the initialization was not possible using any of the methods and
      *      -2 if the initialization was possible using one of the provided methods but the result is not appropriate.
