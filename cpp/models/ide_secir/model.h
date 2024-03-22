@@ -153,23 +153,15 @@ public:
 
     // ---- Additional functionality such as constraint checking, setters and getters, etc. ----
     /**
-    * @brief Checks constraints on model parameters.
+    * @brief Checks constraints on model parameters and initial data.
+    * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
     */
-    void check_constraints(ScalarType dt) const
+    bool check_constraints(ScalarType dt) const
     {
-        if (!(m_populations.get_num_time_points() > 0)) {
-            log_error("Model construction failed. No initial time point for populations.");
-        }
-
-        for (int i = 0; i < (int)InfectionState::Count; i++) {
-            if (m_populations[0][i] < 0) {
-                log_error("Initialization failed. Initial values for populations are less than zero.");
-            }
-        }
-
         if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-            log_error(
-                "Initialization failed. Number of elements in transition vector does not match the required number.");
+            log_error("A variable given for model construction is not valid. Number of elements in transition vector "
+                      "does not match the required number.");
+            return true;
         }
 
         ScalarType support_max = std::max(
@@ -195,9 +187,10 @@ public:
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
+            return true;
         }
 
-        parameters.check_constraints();
+        return parameters.check_constraints();
     }
 
     /**
@@ -211,15 +204,18 @@ public:
     }
 
     /**
-     * @brief Specifies a number associated with the method used for initialization.
-     *
-     * @returns 0 if the initialization method has not yet been selected,
-     *      1 if the method using the total number of confirmed cases at time 0 is used,
-     *      2 if the force of infection method is used,
-     *      3 if the initialization is calculated using a prior set value for S,
-     *      4 if the initialization is calculated using a prior set value for R and
-     *      -1 if the initialization was not possible using any of the methods.
-     */
+    * @brief Initializes the model and sets compartment values at time zero.
+    *
+    * The initialization method is selected automatically based on the different values that need to be set beforehand.
+    * Infection compartments are always computed through historic flow.
+    * Initialization methods for susceptibles and recovered are tested in the following order:
+    * 1.) If a positive number for the total number of confirmed cases is set, recovered is set according to that value and #Susceptible%s are derived.
+    * 2.) If #Susceptible%s are set, recovered will be derived.
+    * 3.) If #Recovered are set directly, #Susceptible%s are derived.
+    * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to set the #Susceptible%s.
+    *
+    * @param[in] dt Time discretization step size.         
+    */
     int get_initialization_method_compartments()
     {
         return m_initialization_method;
