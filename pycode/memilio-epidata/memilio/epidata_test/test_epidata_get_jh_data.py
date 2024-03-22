@@ -85,7 +85,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_FullData_JohnHopkins)
 
-    @patch('builtins.input', return_value='n')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=False)
     def test_get_JH_Data(self, mockin):
         # Test without downloading data
         [read_data, file_format, out_folder, no_raw] \

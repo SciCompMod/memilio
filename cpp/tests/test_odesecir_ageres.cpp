@@ -24,8 +24,12 @@
 #include "memilio/math/stepper_wrapper.h"
 #include <gtest/gtest.h>
 
-TEST(TestSecir, compareAgeResWithSingleRun)
+TEST(TestOdeSecir, compareAgeResWithPreviousRun)
 {
+    /*
+    A similar test is implemented in python (without custom integrator) to compare the results of both simulations.
+    If this test is change the corresponding python test needs to be changed aswell (also updating the data file).
+    */
     double t0   = 0;
     double tmax = 50;
     double dt   = 0.1;
@@ -46,11 +50,11 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     params.get<mio::osecir::TestAndTraceCapacity>() = 35;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.8;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 9.5;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 7.1;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.0;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.8;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 9.5;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 7.1;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
@@ -102,7 +106,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     }
 }
 
-TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
+TEST(TestOdeSecir, compareAgeResWithPreviousRunCashKarp)
 {
     double t0   = 0;
     double tmax = 50;
@@ -122,11 +126,11 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
 
     auto& params = model.parameters;
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.8;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 9.5;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 7.1;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.0;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.8;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 9.5;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 7.1;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;

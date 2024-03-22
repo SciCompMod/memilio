@@ -36,21 +36,21 @@ int main()
     int tmax  = 15;
     int N     = 810000;
     double dt = 0.1;
-    mio::TimeSeries<double> result(1);
+    mio::TimeSeries<double> init(1);
 
     /**
     * Construction of the initial TimeSeries with point of times and the corresponding number of susceptibles.  
     * The smallest time should be small enough. See the documentation of the IdeSeirModel constructor for 
     * detailed information. Initial data are chosen randomly.
     */
-    result.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
-    while (result.get_last_time() < 0) {
-        result.add_time_point(result.get_last_time() + dt,
-                              Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time()));
+    init.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt,
+                            Vec::Constant(1, (double)init.get_last_value()[0] + init.get_last_time()));
     }
 
     // Initialize model.
-    mio::iseir::Model model(std::move(result), dt, N);
+    mio::iseir::Model model(std::move(init), dt, N);
 
     // Set working parameters.
     model.parameters.set<mio::iseir::LatencyTime>(3.3);
@@ -65,7 +65,7 @@ int main()
     // Carry out simulation.
     model.simulate(tmax);
     // Calculate values for compartments EIR.
-    model.calculate_EIR();
+    auto result = model.calculate_EIR();
     //Print results.
-    model.print_result(true);
+    result.print_table({"S", "E", "I", "R"});
 }

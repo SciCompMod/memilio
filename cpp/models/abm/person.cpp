@@ -24,6 +24,7 @@
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
+#include "abm/time.h"
 #include <vector>
 
 namespace mio
@@ -34,10 +35,10 @@ namespace abm
 Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t person_id)
     : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
-    , m_quarantine(false)
+    , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
-    , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
+    , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
@@ -174,45 +175,35 @@ bool Person::goes_to_school(TimePoint t, const Parameters& params) const
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
 
-void Person::detect_infection(TimePoint t)
-{
-    if (is_infected(t)) {
-        m_infections.back().set_detected();
-        m_quarantine = true;
-    }
-}
-
 void Person::remove_quarantine()
 {
-    m_quarantine = false;
+    m_quarantine_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
 }
 
 bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
-    ScalarType random = UniformDistribution<double>::get_instance()(rng);
+    ScalarType random   = UniformDistribution<double>::get_instance()(rng);
+    m_time_of_last_test = t;
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
-            m_quarantine = true;
+            m_quarantine_start = t;
+            m_infections.back().set_detected();
             return true;
         }
         // false negative
         else {
-            m_quarantine               = false;
-            m_time_since_negative_test = days(0);
             return false;
         }
     }
     else {
         // true negative
         if (random < params.specificity) {
-            m_quarantine               = false;
-            m_time_since_negative_test = days(0);
             return false;
         }
         // false positive
         else {
-            m_quarantine = true;
+            m_quarantine_start = t;
             return true;
         }
     }

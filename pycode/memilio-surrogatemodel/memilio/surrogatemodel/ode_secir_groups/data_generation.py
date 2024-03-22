@@ -100,9 +100,9 @@ def run_secir_groups_simulation(days, damping_day, populations):
     # Set parameters
     for i in range(num_groups):
         # Compartment transition duration
-        model.parameters.IncubationTime[AgeGroup(i)] = 5.2
+        model.parameters.TimeExposed[AgeGroup(i)] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[AgeGroup(i)] = 2.
         model.parameters.TimeInfectedSymptoms[AgeGroup(i)] = 6.
-        model.parameters.SerialInterval[AgeGroup(i)] = 4.2
         model.parameters.TimeInfectedSevere[AgeGroup(i)] = 12.
         model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
 

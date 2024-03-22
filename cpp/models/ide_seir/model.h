@@ -76,18 +76,6 @@ public:
         */
     TimeSeries<double> const& calculate_EIR();
 
-    /**
-        * @brief Displays the results of the simulation.
-        *
-        * You can either output only the simulation times with the simulated values for S, or additionally the 
-        * calculated numbers for E, I and R. In any case, the function simulate() should have been called before. 
-        * If the values for E, I and R are to be displayed, the function calculate_EIR() must be executed beforehand.
-        *
-        * @param[in] calculated_SEIR If true, the calculated numbers for E, I and R are displayed 
-        *    in addition to the results for S.
-        */
-    void print_result(bool calculated_SEIR = false) const;
-
     // Used Parameters for the simulation.
     Pa parameters{};
 
