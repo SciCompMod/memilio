@@ -52,7 +52,9 @@ namespace isecir
 * The flow InfectedNoSymptomsToInfectedSymptoms is calculated with the standard formula from the IDE model
 * using the results for ExposedToInfectedNoSymptoms.
 *
-* The number of death used in the model is also set to the number given in the RKI data.
+* The number of death used in the model is set to the number given in the RKI data.
+* We also set the number of confirmed cases in the model. 
+* Therefore the initialization method using the total confirmed cases is used in the model. See also the documentation of the model class.
 * 
 * @param[in, out] model The model for which the inital flows should be computed.
 * @param[in] dt Time step size.

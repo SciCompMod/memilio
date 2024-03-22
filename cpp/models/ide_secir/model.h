@@ -46,7 +46,7 @@ public:
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init The population of the considered region.
     * @param[in] deaths The total number of deaths at the time zero.
-    * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
+    * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialization.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
