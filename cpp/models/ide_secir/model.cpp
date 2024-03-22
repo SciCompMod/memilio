@@ -159,7 +159,7 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
         // Compute Susceptibles at time 0 and m_forceofinfection at time -dt as initial values for discretization scheme.
         // Use m_forceofinfection at -dt to be consistent with further calculations of S (see compute_susceptibles()),
         // where also the value of m_forceofinfection for the previous timestep is used.
-        update_forceofinfection(dt, true);
+        compute_forceofinfection(dt, true);
         if (m_forceofinfection > 1e-12) {
             m_initialization_method = 4;
 
@@ -203,7 +203,7 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
     }
 
     // Compute m_forceofinfection at time 0 needed for further simulation.
-    update_forceofinfection(dt);
+    compute_forceofinfection(dt);
 }
 
 // ---- Functionality for the iterations of a simulation. ----
