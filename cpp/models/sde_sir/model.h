@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,27 +18,26 @@
 * limitations under the License.
 */
 
-#ifndef SDESIR_MODEL_H
-#define SDESIR_MODEL_H
+#ifndef MIO_SDE_SIR_MODEL_H
+#define MIO_SDE_SIR_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/utils/random_number_generator.h"
 #include "sde_sir/infection_state.h"
 #include "sde_sir/parameters.h"
-#include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/type_list.h"
-#include <iostream>
+
 namespace mio
 {
 namespace ssir
 {
 
 /********************
-    * define the model *
-    ********************/
+ * define the model *
+ ********************/
+
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
-                       Flow<InfectionState::Infected,     InfectionState::Recovered>>;
+                       Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
 class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
 {
@@ -47,43 +46,42 @@ class Model : public FlowModel<InfectionState, Populations<InfectionState>, Para
 public:
     Model()
         : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
-    {   
+    {
     }
-    void get_flows(Eigen::Ref<const Eigen::VectorXd> , Eigen::Ref<const Eigen::VectorXd> , double , 
-                         Eigen::Ref<Eigen::VectorXd> ) const {}
-    void get_flows_stochastic(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t, double dt,
-                         Eigen::Ref<Eigen::VectorXd> flows) const 
+
+    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                   Eigen::Ref<Eigen::VectorXd> flows) const
     {
         auto& params     = this->parameters;
         double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
-        
 
-        RandomNumberGenerator rng = mio::RandomNumberGenerator();
         double si = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
         double ir = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
 
+        // Assuming that no person can change its InfectionState twice in a single time step,
+        // take the minimum of the calculated flow and the source compartment, to ensure that
+        // no compartment attains negative values.
 
+        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = std::min(
+            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
+                sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) /
+                    sqrt(step_size) * si,
+            y[(size_t)InfectionState::Susceptible] / step_size);
 
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
-            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]
-            + sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) / sqrt(dt) * si;
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = 
-            std::min(flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()], y[(size_t)InfectionState::Susceptible] / dt);
-
-        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]
-            + sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(dt) * ir;
-        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
-            std::min(flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()], y[(size_t)InfectionState::Infected] / dt);    
+        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] = std::min(
+            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected] +
+                sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(step_size) * ir,
+            y[(size_t)InfectionState::Infected] / step_size);
     }
 
+    ScalarType step_size;
+    mutable RandomNumberGenerator rng;
 
 private:
-    
 };
 
 } // namespace ssir
 } // namespace mio
 
-#endif // ODESIR_MODEL_H
+#endif // MIO_SDE_SIR_MODEL_H

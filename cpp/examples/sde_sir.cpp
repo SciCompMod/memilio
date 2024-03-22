@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,12 +18,10 @@
 * limitations under the License.
 */
 
-#include "sde_sir/model.h"
-#include "sde_sir/infection_state.h"
-#include "sde_sir/parameters.h"
-#include "memilio/compartments/flow_simulation.h"
+#include "memilio/math/euler.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/random_number_generator.h"
+#include "sde_sir/model.h"
+#include "sde_sir/simulation.h"
 
 int main()
 {
@@ -54,20 +52,7 @@ int main()
 
     model.check_constraints();
 
-
-    //auto sir = simulate(t0, tmax, dt, model, integrator);
-    /*auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    
-    sim.set_integrator(integrator);
-      */ 
-    //mio::Simulation<model> sim(model, t0, dt, integrator);
-    //sim.advance(tmax); 
-    mio::FlowSimulation<mio::ssir::Model> sim(model, t0, dt);
-    sim.set_integrator(integrator);
-    //auto sir = simulate_stoch(t0, tmax, dt, model, integrator);
-    sim.advance_stochastic(tmax);
-    auto sir = sim.get_result();
-    bool print_to_terminal = true;
+    auto sir = mio::ssir::simulate(t0, tmax, dt, model, integrator);
 
     sir.print_table();
 }

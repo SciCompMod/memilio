@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef SDESIR_INFECTIONSTATE_H
-#define SDESIR_INFECTIONSTATE_H
+#ifndef MIO_SDE_SIR_INFECTIONSTATE_H
+#define MIO_SDE_SIR_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -27,9 +27,9 @@ namespace ssir
 {
 
 /**
-     * @brief The InfectionState enum describes the possible
-     * categories for the infectious state of persons
-     */
+ * @brief The InfectionState enum describes the possible
+ * categories for the infectious state of persons
+ */
 enum class InfectionState
 {
     Susceptible,
@@ -41,4 +41,4 @@ enum class InfectionState
 } // namespace ssir
 } // namespace mio
 
-#endif // SDESIR_INFECTIONSTATE_H
+#endif // MIO_SDE_SIR_INFECTIONSTATE_H

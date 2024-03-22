@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,14 +18,12 @@
 * limitations under the License.
 */
 
-#ifndef SDE_SIR_PARAMETERS_H
-#define SDE_SIR_PARAMETERS_H
+#ifndef MIO_SDE_SIR_PARAMETERS_H
+#define MIO_SDE_SIR_PARAMETERS_H
 
-#include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
-
-#include <vector>
+#include "memilio/utils/uncertain_value.h"
 
 namespace mio
 {
@@ -33,12 +31,12 @@ namespace ssir
 {
 
 /*******************************************
-      * Define Parameters of the SIR model *
-    *******************************************/
+ * Define Parameters of the SIR model *
+ *******************************************/
 
 /**
-     * @brief probability of getting infected from a contact
-     */
+ * @brief probability of getting infected from a contact
+ */
 struct TransmissionProbabilityOnContact {
     using Type = UncertainValue;
     static Type get_default()
@@ -52,8 +50,8 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-     * @brief the infectious time in day unit
-     */
+ * @brief the infectious time in day unit
+ */
 struct TimeInfected {
     using Type = UncertainValue;
     static Type get_default()
@@ -67,8 +65,8 @@ struct TimeInfected {
 };
 
 /**
-     * @brief the contact patterns within the society are modelled using a ContactMatrix
-     */
+ * @brief the contact patterns within the society are modelled using a ContactMatrix
+ */
 struct ContactPatterns {
     using Type = ContactMatrix;
     static Type get_default()
@@ -178,4 +176,4 @@ public:
 } // namespace ssir
 } // namespace mio
 
-#endif // SIR_PARAMETERS_H
+#endif // MIO_SDE_SIR_PARAMETERS_H

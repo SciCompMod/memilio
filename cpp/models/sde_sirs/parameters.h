@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,27 +18,25 @@
 * limitations under the License.
 */
 
-#ifndef SDE_SIRS_PARAMETERS_H
-#define SDE_SIRS_PARAMETERS_H
+#ifndef MIO_SDE_SIRS_PARAMETERS_H
+#define MIO_SDE_SIRS_PARAMETERS_H
 
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
-
-#include <vector>
 
 namespace mio
 {
 namespace ssirs
 {
 
-/*******************************************
-      * Define Parameters of the SIR model *
-    *******************************************/
+/**************************************
+ * Define Parameters of the SIR model *
+ **************************************/
 
 /**
-     * @brief probability of getting infected from a contact
-     */
+ * @brief probability of getting infected from a contact
+ */
 struct TransmissionProbabilityOnContact {
     using Type = UncertainValue;
     static Type get_default()
@@ -52,8 +50,8 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-     * @brief the infectious time in day unit
-     */
+ * @brief the infectious time in day unit
+ */
 struct TimeInfected {
     using Type = UncertainValue;
     static Type get_default()
@@ -67,8 +65,8 @@ struct TimeInfected {
 };
 
 /**
-     * @brief the infectious time in day unit
-     */
+ * @brief the infectious time in day unit
+ */
 struct TimeImmune {
     using Type = UncertainValue;
     static Type get_default()
@@ -82,8 +80,8 @@ struct TimeImmune {
 };
 
 /**
-     * @brief the contact patterns within the society are modelled using a ContactMatrix
-     */
+ * @brief the contact patterns within the society are modelled using a ContactMatrix
+ */
 struct ContactPatterns {
     using Type = ContactMatrix;
     static Type get_default()
@@ -141,7 +139,7 @@ public:
                         "and reset parameters.",
                         this->get<TimeImmune>(), tol_times);
             this->get<TimeImmune>() = tol_times;
-            corrected                 = true;
+            corrected               = true;
         }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
@@ -175,7 +173,7 @@ public:
                       "and reset parameters.",
                       this->get<TimeImmune>(), 0.0);
             return true;
-        }        
+        }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_error(
@@ -205,7 +203,7 @@ public:
     }
 };
 
-} // namespace ssir
+} // namespace ssirs
 } // namespace mio
 
-#endif // SIR_PARAMETERS_H
+#endif // MIO_SDE_SIRS_PARAMETERS_H
