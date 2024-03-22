@@ -105,7 +105,7 @@ public:
 // Check if population stays constant over course of simulation.
 TEST_F(ModelTestIdeSecir, checkPopulationConservation)
 {
-    mio::TimeSeries<ScalarType> compartments = simulate(0, 15, dt, *model);
+    mio::TimeSeries<ScalarType> compartments = simulate(15, dt, *model);
 
     ScalarType num_persons_before = 0.0;
     ScalarType num_persons_after  = 0.0;
@@ -122,7 +122,7 @@ TEST_F(ModelTestIdeSecir, checkPopulationConservation)
 TEST_F(ModelTestIdeSecir, compareWithPreviousRun)
 {
     auto compare                             = load_test_data_csv<ScalarType>("ide-secir-compare.csv");
-    mio::TimeSeries<ScalarType> compartments = simulate(0, 5, dt, *model);
+    mio::TimeSeries<ScalarType> compartments = simulate(5, dt, *model);
 
     ASSERT_EQ(compare.size(), static_cast<size_t>(compartments.get_num_time_points()));
     for (size_t i = 0; i < compare.size(); i++) {
@@ -139,7 +139,7 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
 {
     auto compare = load_test_data_csv<ScalarType>("ide-secir-transitions-compare.csv");
 
-    mio::isecir::Simulation sim(*model, 0, dt);
+    mio::isecir::Simulation sim(*model, dt);
     sim.advance(5);
 
     auto transitions = sim.get_transitions();
@@ -222,7 +222,7 @@ TEST(IdeSecir, checkSimulationFunctions)
     model.parameters.set<mio::isecir::StartDay>(0);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated    = sim.get_result();
     mio::TimeSeries<ScalarType> transitions_simulated = sim.get_transitions();
@@ -279,7 +279,7 @@ TEST(IdeSecir, checkInitializations)
     EXPECT_EQ(0, model1.get_initialization_method());
 
     // Carry out simulation.
-    mio::isecir::Simulation sim1(model1, 0, dt);
+    mio::isecir::Simulation sim1(model1, dt);
     sim1.advance(tmax);
 
     // Verify that the expected initialization method was used.
@@ -300,7 +300,7 @@ TEST(IdeSecir, checkInitializations)
     model2.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Carry out simulation.
-    mio::isecir::Simulation sim2(model2, 0, dt);
+    mio::isecir::Simulation sim2(model2, dt);
     sim2.advance(tmax);
 
     // Verify that the expected initialization method was used.
@@ -314,7 +314,7 @@ TEST(IdeSecir, checkInitializations)
     model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 1000;
 
     // Carry out simulation.
-    mio::isecir::Simulation sim3(model3, 0, dt);
+    mio::isecir::Simulation sim3(model3, dt);
     sim3.advance(tmax);
 
     // Verify that the expected initialization method was used.
@@ -325,7 +325,7 @@ TEST(IdeSecir, checkInitializations)
     mio::isecir::Model model4(std::move(init_copy4), N, deaths, 0);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim4(model4, 0, dt);
+    mio::isecir::Simulation sim4(model4, dt);
     sim4.advance(tmax);
 
     // Verify that the expected initialization method was used.
@@ -342,7 +342,7 @@ TEST(IdeSecir, checkInitializations)
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Carry out simulation.
-    mio::isecir::Simulation sim5(model5, 0, dt);
+    mio::isecir::Simulation sim5(model5, dt);
     sim5.advance(tmax);
 
     // Verify that initialization was not possible with one of the models methods.
@@ -358,7 +358,7 @@ TEST(IdeSecir, checkInitializations)
     model6.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Carry out simulation.
-    mio::isecir::Simulation sim6(model6, 0, dt);
+    mio::isecir::Simulation sim6(model6, dt);
     sim6.advance(tmax);
 
     // Verify that initialization was possible but the result is not appropriate.
@@ -649,7 +649,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated = sim.get_result();
 
@@ -757,11 +757,11 @@ TEST(IdeSecir, compareEquilibria)
     model2.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated = sim.get_result();
 
-    mio::isecir::Simulation sim2(model2, 0, dt);
+    mio::isecir::Simulation sim2(model2, dt);
     sim2.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated2 = sim2.get_result();
 

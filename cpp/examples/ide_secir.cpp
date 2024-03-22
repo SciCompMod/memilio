@@ -97,7 +97,7 @@ int main()
     model.check_constraints(dt);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
 
     sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
