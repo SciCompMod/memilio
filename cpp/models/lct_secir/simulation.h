@@ -160,7 +160,7 @@ public:
 
 private:
     std::shared_ptr<IntegratorCore> m_integratorCore; ///< InteratorCore used for Simulation.
-    std::unique_ptr<Model> m_model; ///< LCT-model the simulation should be performed with.
+    std::unique_ptr<Model> m_model; ///< Unique pointer to the LCT-model the simulation should be performed with.
     OdeIntegrator m_integrator; ///< OdeIntegrator used to perform simulation.
     TimeSeries<ScalarType> m_result; ///< The simulation results.
     ScalarType m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
