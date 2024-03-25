@@ -45,6 +45,9 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
+    , m_test_results({TestingTypeIndex::Count}, TestResult())
+    , m_migration_planning()
+    , m_planned_time(TimePoint(-1))
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -290,6 +293,39 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
     }
     return params.get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
         t.days() - latest_protection.second.days());
+}
+
+void Person::add_test_result(TimePoint t, TestingTypeIndex type_index, bool result)
+{
+    TestResult test_result;
+    test_result.time_of_testing = t;
+    test_result.type            = type_index;
+    test_result.result          = result;
+    // Remove outdated test results or replace the old result of the same type
+    m_test_results[{type_index}] = test_result;
+}
+
+const Person::TestResult Person::get_test_result(TestingTypeIndex type_index) const
+{
+    return m_test_results[{type_index}];
+}
+
+void Person::add_migration_plan(TimePoint t, Location& location)
+{
+    std::pair<TimePoint, Location&> new_plan = {t, location};
+    m_migration_planning.push_back(new_plan);
+    m_planned_time = t;
+}
+
+std::vector<std::pair<TimePoint, Location&>> Person::get_migration_plan(TimePoint from_time, TimePoint to_time)
+{
+    std::vector<std::pair<TimePoint, Location&>> result;
+    for (auto plan : m_migration_planning) {
+        if (plan.first >= from_time && plan.first < to_time) {
+            result.push_back(plan);
+        }
+    }
+    return result;
 }
 
 } // namespace abm

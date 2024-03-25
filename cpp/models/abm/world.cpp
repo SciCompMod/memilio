@@ -60,6 +60,14 @@ void World::evolve(TimePoint t, TimeSpan dt)
     log_info("ABM World interaction.");
     interaction(t, dt);
     log_info("ABM World migration.");
+    // Pass though dt time until the PlanAheadTime and make planning for the agents.
+    auto time_counter = t;
+    std::unordered_map<uint32_t, Location*> personId_to_loc_map;
+    while (time_counter.seconds() <= (t + parameters.get<mio::abm::PlanAheadTime>()).seconds()) {
+        planning(time_counter, dt, personId_to_loc_map);
+        time_counter += dt;
+    }
+    // Execute the plan for the agents
     migration(t, dt);
 }
 
@@ -73,56 +81,65 @@ void World::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::migration(TimePoint t, TimeSpan dt)
+void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Location*>& personId_to_loc_map)
 {
     PRAGMA_OMP(parallel for)
+    bool weekend = t.is_weekend();
+
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person     = m_persons[i];
-        auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-
-        auto try_migration_rule = [&](auto rule) -> bool {
-            //run migration rule and check if migration can actually happen
-            auto target_type       = rule(personal_rng, *person, t, dt, parameters);
-            auto& target_location  = find_location(target_type, *person);
-            auto& current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
-                    if (wears_mask) {
-                        person->migrate_to(target_location);
-                    }
-                    return true;
+        auto&& person = m_persons[i];
+        if ((person->get_planned_time() < t) ||
+            (person->get_infection_state(t) != person->get_infection_state(t - dt))) {
+            auto personal_rng       = Person::RandomNumberGenerator(m_rng, *person);
+            auto try_migration_rule = [&](auto rule) -> bool {
+                //run migration rule and check if migration can actually happen
+                auto target_type           = rule(personal_rng, *person, t, dt, parameters);
+                auto& target_location      = find_location(target_type, *person);
+                Location* current_location = &(person->get_location());
+                if (personId_to_loc_map.find(person->get_person_id()) != personId_to_loc_map.end()) {
+                    current_location = personId_to_loc_map[person->get_person_id()];
                 }
-            }
-            return false;
-        };
+                if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                    if (target_location != *current_location &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
+                        if (wears_mask) {
+                            person->add_migration_plan(t, target_location);
+                            personId_to_loc_map[person->get_person_id()] = &target_location;
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
 
-        //run migration rules one after the other if the corresponding location type exists
-        //shortcutting of bool operators ensures the rules stop after the first rule is applied
-        if (m_use_migration_rules) {
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
-                (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_migration_rule(&go_to_shop)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_migration_rule(&go_to_event)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
-        }
-        else {
-            //no daily routine migration, just infection related
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            //run migration rules one after the other if the corresponding location type exists
+            //shortcutting of bool operators ensures the rules stop after the first rule is applied
+            if (m_use_migration_rules) {
+                (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
+                    (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
+                    (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
+                    (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
+                    (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
+                    (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
+                     try_migration_rule(&go_to_shop)) ||
+                    (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
+                     try_migration_rule(&go_to_event)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            }
+            else {
+                //no daily routine migration, just infection related
+                (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
+                    (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
+                    (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            }
         }
     }
 
     // check if a person makes a trip
-    bool weekend     = t.is_weekend();
     size_t num_trips = m_trip_list.num_trips(weekend);
 
     if (num_trips != 0) {
@@ -134,8 +151,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location, trip.trip_mode);
+                    person->add_migration_plan(t, target_location);
                 }
             }
             m_trip_list.increase_index();
@@ -143,6 +159,20 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
+    }
+}
+
+void World::migration(TimePoint t, TimeSpan dt)
+{
+    PRAGMA_OMP(parallel for)
+    for (auto i = size_t(0); i < m_persons.size(); ++i) {
+        auto&& person           = m_persons[i];
+        auto personal_rng       = Person::RandomNumberGenerator(m_rng, *person);
+        auto migration_planning = person->get_migration_plan(t, t + dt);
+        for (auto plan : migration_planning) {
+            person->apply_mask_intervention(personal_rng, plan.second);
+            person->migrate_to(plan.second);
+        }
     }
 }
 

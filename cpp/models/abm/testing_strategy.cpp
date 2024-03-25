@@ -172,7 +172,6 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
     if (location.get_type() == mio::abm::LocationType::Home) {
         return true;
     }
-
     //lookup schemes for this specific location as well as the location type
     //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
     for (auto loc_key : {LocationId{location.get_index(), location.get_type()},
@@ -185,7 +184,17 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
             //apply all testing schemes that are found
             auto& schemes = iter_schemes->second;
             if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
-                    return !ts.is_active() || ts.run_scheme(rng, person, t);
+                    auto test_result = person.get_test_result(ts.get_type().get_default().test_type);
+                    // If the agent has a test result valid until now, use the result directly
+                    if ((test_result.type != TestingTypeIndex::Count) &&
+                        (test_result.time_of_testing + ts.get_type().get_default().validity_period >= t)) {
+                        return test_result.result;
+                    }
+                    // If not, perform the test and save result
+                    auto result = !ts.is_active() || ts.run_scheme(rng, person, t);
+                    person.add_test_result(t + ts.get_type().get_default().required_time,
+                                           ts.get_type().get_default().test_type, result);
+                    return result;
                 })) {
                 return false;
             }

@@ -123,10 +123,16 @@ public:
     bool operator==(const TestingScheme& other) const;
 
     /**
-     * @brief Get the activity status of the scheme.
+     * @brief Gets the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
      */
     bool is_active() const;
+
+    /**
+     * @brief Gets the activity status of the scheme at a given TimePoint.
+     * @return Whether the TestingScheme is active at a given TimePoint.
+     */
+    bool is_active_at_time(TimePoint t) const;
 
     /**
      * @brief Checks if the scheme is active at a given time and updates activity status.
@@ -142,6 +148,24 @@ public:
      * @return If the person is allowed to enter the Location by the scheme.
      */
     bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const;
+
+    /**
+     * @brief Checks if the TestScheme is applicable for the given Person, trip TimePoint and current TimePoint
+     * @param[in] person Person to check.
+     * @param[in] trip_time TimePoint when the trip is schedules. 
+     * @param[in] curr_time TimePoint of the current time.
+     * @return If the TestScheme is applicable for the given Person, trip TimePoint and current TimePoint
+     */
+    bool is_applicable(const Person& person, TimePoint trip_time, TimePoint curr_time) const;
+
+    /**
+     * @brief Gets the type of the TestingScheme.
+     * @return The type of the TestingScheme.
+     */
+    GenericTest get_type() const
+    {
+        return m_test_type;
+    }
 
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.

@@ -145,6 +145,15 @@ public:
         return (m_person_id == other.m_person_id);
     }
 
+    /**
+     * @brief The TestResult of a Person.
+     */
+    struct TestResult {
+        TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
+        TestingTypeIndex type = TestingTypeIndex::Count; ///< The TestingTypeIndex of the test.
+        bool result; ///< The result of the test.
+    };
+
     /** 
      * @brief Time passes and the Person interacts with the population at its current Location.
      * The Person might become infected.
@@ -474,6 +483,11 @@ public:
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
     /**
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+    */
+    bool has_valid_test(TimePoint t) const;
+
+    /**
      * serialize this. 
      * @see mio::serialize
      */
@@ -505,6 +519,43 @@ public:
             loc, age, id);
     }
 
+    /**
+     * @brief Add TestResult to the Person
+     * @param[in] t The TimePoint of the result.
+     * @param[in] type The TestingTypeIndex of the result.
+     * @param[in] result The result of the test.
+    */
+    void add_test_result(TimePoint t, TestingTypeIndex type, bool result);
+
+    /**
+     * @brief Get the most recent TestResult performed from the Person based on the TestType.
+     * @param[in] type The TestingTypeIndex of the result.
+    */
+    const TestResult get_test_result(TestingTypeIndex type) const;
+
+    /**
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+     * @param[in] t TimePoint of the migration plan.
+     * @param[in] location Location of the destination of the migration plan.
+    */
+    void add_migration_plan(TimePoint t, Location& location);
+
+    /**
+     * @brief Get all the migration plans between a certain time interval.
+     * @param[in] from_time TimePoint of the migration plan.
+     * @param[in] to_time TimePoint of the migration plan.
+     * @return The vector of all the migration plans between mentioned time period.
+    */
+    std::vector<std::pair<TimePoint, Location&>> get_migration_plan(TimePoint from_time, TimePoint to_time);
+
+    /**
+     * @brief Get the agent's lastest TimePoint of its planning.
+     * @return The agent's lastest TimePoint of its planning.
+    */
+    TimePoint get_planned_time() {
+        return m_planned_time;
+    }
+
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
@@ -525,7 +576,11 @@ private:
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    CustomIndexArray<TestResult, TestingTypeIndex> m_test_results; ///< CustomIndexArray for TestResults.
+    std::vector<std::pair<TimePoint, Location&>>
+        m_migration_planning; ///< Vector to store all migration plans (pairs of TimePoint and Location).
+    TimePoint m_planned_time; ///< TimePoint of the last recored planning.
 };
 
 } // namespace abm

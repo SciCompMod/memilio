@@ -102,8 +102,9 @@ TEST(TestPerson, setGetAssignedLocation)
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
-    auto test_params = mio::abm::TestParameters{1.01,1.01}; //100% safe test
+    auto rng         = mio::RandomNumberGenerator();
+    auto test_params = mio::abm::TestParameters{1.01, 1.01, mio::abm::minutes(30), mio::abm::hours(24),
+                                                mio::abm::TestingTypeIndex::GenericTest}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -128,7 +129,7 @@ TEST(TestPerson, quarantine)
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
                                        infection_parameters);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
-    
+
     person.get_tested(rng_person, t_morning, test_params);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
@@ -327,4 +328,31 @@ TEST(Person, rng)
     p_rng();
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
     ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
+}
+
+TEST(Person, addAndGetTestResult)
+{
+    mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person = make_test_person(location);
+    auto t      = mio::abm::TimePoint(0);
+
+    person.add_test_result(t, mio::abm::TestingTypeIndex::GenericTest, true);
+    ASSERT_TRUE(person.get_test_result(mio::abm::TestingTypeIndex::GenericTest).result);
+}
+
+TEST(Person, addAndGetMigrationPlanning)
+{
+    mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person = make_test_person(location);
+    auto t0     = mio::abm::TimePoint(0);
+    auto t1     = mio::abm::TimePoint(60 * 60);
+    auto t2     = mio::abm::TimePoint(60 * 60 * 2);
+
+    person.add_migration_plan(t0, location);
+    person.add_migration_plan(t1, location);
+    person.add_migration_plan(t2, location);
+    auto migration_plan = person.get_migration_plan(t0, t0 + mio::abm::hours(2));
+    ASSERT_EQ(migration_plan.size(), 2);
+    ASSERT_EQ(migration_plan[0].first, t0);
+    ASSERT_EQ(migration_plan[1].first, t1);
 }

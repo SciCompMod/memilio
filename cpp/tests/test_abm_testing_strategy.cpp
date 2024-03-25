@@ -110,12 +110,12 @@ TEST(TestTestingScheme, runScheme)
 
 TEST(TestTestingScheme, initAndRunTestingStrategy)
 {
-    auto rng                    = mio::RandomNumberGenerator();
-    const auto testing_min_time = mio::abm::days(1);
-    const auto start_date       = mio::abm::TimePoint(0);
-    const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability      = 0.8;
-    const auto test_type        = mio::abm::PCRTest();
+    auto rng                                = mio::RandomNumberGenerator();
+    const auto testing_min_time             = mio::abm::days(1);
+    const auto start_date                   = mio::abm::TimePoint(0);
+    const auto end_date                     = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability                  = 0.8;
+    const auto test_type                    = mio::abm::PCRTest();
 
     std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
@@ -148,5 +148,6 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
               false); // Person tests and tests positive
     ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
-    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
+    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+              false); // Person doesn't test
 }

@@ -428,11 +428,12 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
 
-    const auto testing_frequency = mio::abm::days(1);
-    const auto start_date        = mio::abm::TimePoint(20);
-    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability       = 1.0;
-    const auto test_type         = mio::abm::PCRTest();
+    const auto testing_frequency            = mio::abm::days(1);
+    const auto start_date                   = mio::abm::TimePoint(20);
+    const auto end_date                     = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability                  = 1.0;
+    const auto test_type                    = mio::abm::AntigenTest();
+    test_type.get_default().validity_period = mio::abm::seconds(1);
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
@@ -447,7 +448,9 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
+    current_time = mio::abm::TimePoint(60 * 60 * 24 * 2);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time + mio::abm::hours(1)),
+              false);
 
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
                                                     testing_scheme); //doesn't get added because of == operator
@@ -481,6 +484,7 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
+    params.get<mio::abm::PlanAheadTime>()                                 = mio::abm::hours(1);
     ASSERT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;
@@ -541,6 +545,10 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
+    ASSERT_EQ(params.check_constraints(), true);
+    params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(2);
+
+    params.get<mio::abm::PlanAheadTime>() = mio::abm::hours(-1);
     ASSERT_EQ(params.check_constraints(), true);
 }
 
@@ -718,4 +726,67 @@ TEST(TestWorld, copyWorld)
               world.get_persons()[0].get_location().get_type());
     ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(),
               world.get_persons()[1].get_location().get_type());
+}
+
+TEST(TestWorld, personPlanning)
+{
+    using testing::Return;
+    auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
+    auto dt    = mio::abm::hours(1);
+    auto world = mio::abm::World(num_age_groups);
+    //setup so the person doesn't do transition
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        2 * dt.days();
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        2 * dt.days();
+    //setup so the person look 2 hours ahead.
+    world.parameters.get<mio::abm::PlanAheadTime>() = mio::abm::hours(2);
+
+    auto home_id   = world.add_location(mio::abm::LocationType::Home);
+    auto school_id = world.add_location(mio::abm::LocationType::School);
+    auto work_id   = world.add_location(mio::abm::LocationType::Work);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillRepeatedly(testing::Return(1.0));
+
+    auto& p2 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
+    auto& p1 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+
+    p1.set_assigned_location(school_id);
+    p2.set_assigned_location(school_id);
+    p1.set_assigned_location(work_id);
+    p2.set_assigned_location(work_id);
+    p1.set_assigned_location(home_id);
+    p2.set_assigned_location(home_id);
+
+    auto& school = world.get_individualized_location(school_id);
+    auto& work   = world.get_individualized_location(work_id);
+    auto& home   = world.get_individualized_location(home_id);
+
+    world.evolve(t, dt);
+    // Check whether the 2 people migrate correctly.
+    EXPECT_EQ(p1.get_location(), work);
+    EXPECT_EQ(p2.get_location(), school);
+    EXPECT_EQ(school.get_number_persons(), 1);
+    EXPECT_EQ(work.get_number_persons(), 1);
+
+    // Check whether the 2 people plan to go home after.
+    auto p1_migration_plan = p1.get_migration_plan(t, t + mio::abm::hours(3));
+    auto p2_migration_plan = p2.get_migration_plan(t, t + mio::abm::hours(3));
+    EXPECT_EQ(p1_migration_plan.size(), 2);
+    EXPECT_EQ(p2_migration_plan.size(), 2);
+    EXPECT_EQ(p1_migration_plan[1].second, home);
+    EXPECT_EQ(p2_migration_plan[1].second, home);
 }

@@ -308,19 +308,34 @@ struct HighViralLoadProtectionFactor {
     }
 };
 
+/** 
+ * @brief The index for all the testing types.
+ * Can be used as 0-based index.
+ */
+enum class TestingTypeIndex : std::uint32_t
+{
+    GenericTest = 0,
+    AntigenTest = 1,
+    PCRTest     = 2,
+    Count //last!!
+};
+
 /**
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
     UncertainValue sensitivity;
     UncertainValue specificity;
+    TimeSpan required_time;
+    TimeSpan validity_period;
+    TestingTypeIndex test_type;
 };
 
 struct GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.9, 0.99};
+        return Type{0.9, 0.99, hours(24), hours(24), TestingTypeIndex::GenericTest};
     }
     static std::string name()
     {
@@ -329,13 +344,13 @@ struct GenericTest {
 };
 
 /**
- * @brief Reliability of an AntigenTest.
+ * @brief Parameters of an AntigenTest.
  */
 struct AntigenTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.8, 0.88};
+        return Type{0.8, 0.88, minutes(30), hours(24), TestingTypeIndex::AntigenTest};
     }
     static std::string name()
     {
@@ -350,7 +365,7 @@ struct PCRTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
     {
-        return Type{0.9, 0.99};
+        return Type{0.9, 0.99, days(1), days(3), TestingTypeIndex::PCRTest};
     }
     static std::string name()
     {
@@ -543,6 +558,21 @@ struct AgeGroupGotoWork {
     }
 };
 
+/**
+ * @brief The TimeSpan agents plan forward to take tests.  
+ */
+struct PlanAheadTime {
+    using Type = TimeSpan;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return TimeSpan(seconds(0));
+    }
+    static std::string name()
+    {
+        return "PlanAheadTime";
+    }
+};
+
 using ParametersBase =
     ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
@@ -550,7 +580,8 @@ using ParametersBase =
                  InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
-                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
+                 PlanAheadTime>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -744,6 +775,11 @@ public:
 
         if (this->get<LockdownDate>().seconds() < 0.0) {
             log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->get<PlanAheadTime>().seconds() < 0.0) {
+            log_error("Constraint check: Parameter PlanAheadTime smaller {:d}", 0);
             return true;
         }
 
