@@ -383,10 +383,11 @@ IOResult<void> read_divi_data(const std::vector<DiviEntry>& divi_data, const std
         * @param vregion vector of keys of the regions of interest
         * @param date Date for which the arrays are initialized
         * @param scaling_factor_icu factor by which to scale the icu cases of divi data
+        * @param num_days The number of days for which the simulation will run.
         */
 template <class Model>
 IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                             Date date, double scaling_factor_icu)
+                             Date date, double scaling_factor_icu, int num_days = 0)
 {
     std::vector<double> sum_mu_I_U(vregion.size(), 0);
     std::vector<std::vector<double>> mu_I_U{model.size()};
@@ -400,6 +401,25 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
         }
     }
     std::vector<double> num_icu(model.size(), 0.0);
+
+    auto first_date_icu = Date(2020, 4, 23);
+    // wenn date < first_date_icu, dann error werfen. Am besten eine assertion mit erorr message
+    assert(date >= first_date_icu);
+
+    // nutze die funktion offset_days um die tage zu zählen zwischen first_date_icu und date
+    auto num_days_icu = std::abs(get_offset_in_days(first_date_icu, date));
+    for (size_t region = 0; region < vregion.size(); region++) {
+        model[region].parameters.template get<DailyICUOccupancy>().reserve(num_days_icu + num_days);
+    }
+
+    for (auto d = 0; d < num_days_icu; d++) {
+        auto current_date = offset_date_by_days(first_date_icu, d);
+        BOOST_OUTCOME_TRY(read_divi_data(path, vregion, current_date, num_icu));
+        for (size_t region = 0; region < vregion.size(); region++) {
+            model[region].parameters.template get<DailyICUOccupancy>().emplace_back(num_icu[region]);
+        }
+    }
+
     BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date, num_icu));
 
     for (size_t region = 0; region < vregion.size(); region++) {
@@ -1254,7 +1274,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
-                                                 county, date, scaling_factor_icu));
+                                                 county, date, scaling_factor_icu, num_days));
     }
     else {
         log_warning("No DIVI data available for this date");
@@ -1309,7 +1329,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date,
-                                                 scaling_factor_icu));
+                                                 scaling_factor_icu, num_days));
     }
     else {
         log_warning("No DIVI data available for this date");

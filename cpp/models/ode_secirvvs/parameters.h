@@ -545,6 +545,21 @@ struct InfectiousnessNewVariant {
     }
 };
 
+/**
+* @brief Daily ICU occupancy aggregated over all age groups.
+*/
+struct DailyICUOccupancy {
+    using Type = std::vector<double>;
+    static Type get_default()
+    {
+        return {};
+    }
+    static std::string name()
+    {
+        return "DailyICUOccupancy";
+    }
+};
+
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
                  TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
@@ -555,7 +570,7 @@ using ParametersBase =
                  ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
                  ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
                  ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, InfectiousnessNewVariant,
-                 StartDayNewVariant>;
+                 StartDayNewVariant, DailyICUOccupancy>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.

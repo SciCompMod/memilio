@@ -390,7 +390,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 }
 
 IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                             Date date, double scaling_factor_icu)
+                             Date date, double scaling_factor_icu, int /*num_days*/)
 {
     std::vector<double> sum_mu_I_U(vregion.size(), 0);
     std::vector<std::vector<double>> mu_I_U{model.size()};

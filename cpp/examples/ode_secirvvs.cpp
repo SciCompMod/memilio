@@ -71,6 +71,12 @@ int main()
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
 
+    model.parameters.template get<mio::osecirvvs::DailyICUOccupancy>().reserve(100);
+
+    for (auto d = 0; d < 70; d++) {
+        model.parameters.template get<mio::osecirvvs::DailyICUOccupancy>().emplace_back(rand() % 20);
+    }
+
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);

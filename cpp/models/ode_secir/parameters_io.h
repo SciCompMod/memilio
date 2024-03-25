@@ -113,7 +113,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
      * @param scaling_factor_icu factor by which to scale the icu cases of divi data
      */
 IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                             Date date, double scaling_factor_icu);
+                             Date date, double scaling_factor_icu, int num_days = 0);
 
 /**
      * @brief Reads population data from census data

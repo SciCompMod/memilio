@@ -628,6 +628,24 @@ public:
         }
     }
 
+    void add_icu_occupancy()
+    {
+        auto& params         = this->get_model().parameters;
+        size_t num_groups    = (size_t)params.get_num_groups();
+        auto last_value      = this->get_result().get_last_value();
+        double icu_occupancy = 0.0;
+        for (size_t age = 0; age < num_groups; ++age) {
+            auto indx_icu_naive =
+                this->get_model().populations.get_flat_index({(AgeGroup)age, InfectionState::InfectedCriticalNaive});
+            auto indx_icu_partial = this->get_model().populations.get_flat_index(
+                {(AgeGroup)age, InfectionState::InfectedCriticalPartialImmunity});
+            auto indx_icu_improved = this->get_model().populations.get_flat_index(
+                {(AgeGroup)age, InfectionState::InfectedCriticalImprovedImmunity});
+            icu_occupancy += last_value[indx_icu_naive] + last_value[indx_icu_partial] + last_value[indx_icu_improved];
+        }
+        params.template get<DailyICUOccupancy>().push_back(icu_occupancy);
+    }
+
     /**
      * @brief advance simulation to tmax.
      * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.
@@ -664,6 +682,8 @@ public:
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
                 this->apply_variant(t, base_infectiousness);
+                if (t > 0)
+                    this->add_icu_occupancy();
             }
 
             if (t > 0) {
