@@ -34,7 +34,7 @@ import statsmodels.api as sm
 import matplotlib as mpl
 
 
-mpl.use('TkAgg')
+# mpl.use('TkAgg')
 pd.options.mode.copy_on_write = True
 
 
@@ -58,7 +58,8 @@ def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
     # TODO: discuss if we want to include age groups
 
     df_cases = pd.read_json(filepath)
-    df_cases = df_cases[df_cases.ID_County.isin(counties)].reset_index(drop=True)
+    df_cases = df_cases[df_cases.ID_County.isin(
+        counties)].reset_index(drop=True)
 
     # create df for effective reproduction number
     # use Date and ID_County from case data df, add column for R_eff where initially all values are 0
@@ -111,13 +112,18 @@ def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
     print('Ratio low cases: ', num_low_cases/num_total)
 
     if True:
-        gd.write_dataframe(df_r_eff, directory, "r_eff_county_multiple_c", "json")
+        gd.write_dataframe(df_r_eff, directory,
+                           "r_eff_county_multiple_c", "json")
 
     return df_r_eff
 
 
 class NPIRegression():
 
+    def __init__(self, counties):
+        self.counties = counties
+
+    # read data that is relevant for regression and store in dataframes
     def read_data(self, out_folder=dd.defaultDict['out_folder']):
         # for now, all data is only read for county 1001 to make testing easier
         directory = out_folder
@@ -133,8 +139,7 @@ class NPIRegression():
                                             fine_resolution=0, file_format='csv')
         else:
             self.df_npis = pd.read_csv(filepath)
-        # 4 randomly chosen counties of each regioStar7 type
-        self.counties = [6412, 5913, 8111, 2000, 9761, 5515, 9562, 3101, 12065, 5162, 12061, 10045, 14730, 7311, 3155, 8317, 9762, 16056, 9263, 8211, 9180, 16072, 7316, 9181, 7141, 7331, 9372, 9277]
+
         self.df_npis = self.df_npis[self.df_npis.ID_County.isin(self.counties)]
 
         # read population data
@@ -146,7 +151,8 @@ class NPIRegression():
                 start_date=date(2020, 1, 1), file_format='json')
         else:
             df_population = pd.read_json(filepath)
-        df_population = df_population[df_population.ID_County.isin(self.counties)]
+        df_population = df_population[df_population.ID_County.isin(
+            self.counties)]
 
         # read vaccination data
         filepath = os.path.join(
@@ -157,10 +163,12 @@ class NPIRegression():
                 start_date=date(2020, 1, 1), file_format='json')
         else:
             self.df_vaccinations = pd.read_json(filepath)
-        self.df_vaccinations = self.df_vaccinations[self.df_vaccinations.ID_County.isin(self.counties)]
+        self.df_vaccinations = self.df_vaccinations[self.df_vaccinations.ID_County.isin(
+            self.counties)]
 
-        # TODO: discuss if this is what we want (in contrast to absolute values)
         # computing proportion of vaccinated individuals by dividing by respective population of county
+        # TODO: discuss if this is what we want (in contrast to absolute values)
+        # TODO: discuss if we should save this in some file as well
         counties = self.df_vaccinations['ID_County'].unique()
         self.all_vacc_states = self.df_vaccinations.keys()[3:]
         for county in counties:
@@ -169,30 +177,53 @@ class NPIRegression():
                                                                                                                                == county, vacc_state]/df_population.loc[df_population.ID_County == county, 'Population'].iloc[0]
 
         # variable for seasonality
-        # tbd
+        self.df_seasonality = self.df_vaccinations.loc[:, [
+            dd.EngEng['idCounty'], dd.EngEng['date']]]
+        self.df_seasonality.insert(2, "sin", np.sin(
+            2*np.pi*self.df_seasonality['Date'].dt.dayofyear/365))
+        self.df_seasonality.insert(3, "cos", np.cos(
+            2*np.pi*self.df_seasonality['Date'].dt.dayofyear/365))
 
         # variable for virus variant
         # tbd
 
         # variables for age structure
-        # tbd
+        # TODO: Which year do we want to use for INKAR data?
+        filepath = os.path.join(
+            directory, 'inkar_2022.xls')
+
+        self.df_inkar = pd.read_excel(filepath)
+        self.df_agestructure = self.df_vaccinations.loc[:, [
+            dd.EngEng['idCounty'], dd.EngEng['date']]]
+
+        self.age_categories = ['Unter 18', 'Über 65', 'Altersdurchschnitt']
+        for county in self.counties:
+            self.df_agestructure.loc[self.df_agestructure['ID_County'] == county,
+                                     self.age_categories[0]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Einwohner unter 6 Jahre'].values[0] + self.df_inkar.loc[self.df_inkar['Kennziffer'] ==
+                                                                                                                                                                                 county]['Einwohner von 6 bis unter 18 Jahren'].values[0]
+            self.df_agestructure.loc[self.df_agestructure['ID_County'] == county,
+                                     self.age_categories[1]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Einwohner 65 Jahre und älter'].values[0]
+            self.df_agestructure.loc[self.df_agestructure['ID_County'] == county,
+                                     self.age_categories[2]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Durchschnittsalter der Bevölkerung'].values[0]
 
         # variables for region types
         # create dataframe with len of df_vaccination to assign region type for every date and countyID
-        self.df_regions = self.df_vaccinations.loc[:,[dd.EngEng['idCounty'], dd.EngEng['date']]]
-        #create column for every region type
+        self.df_regions = self.df_vaccinations.loc[:, [
+            dd.EngEng['idCounty'], dd.EngEng['date']]]
+        # create column for every region type
         self.region_types = ['Stadtregion - Metropole', 'Stadtregion - Regiopole und Großstadt', 'Stadtregion - Mittelstadt, städtischer Raum',
                              'Stadtregion - Kleinstädtischer, dörflicher Raum', 'Ländliche Region - Zentrale Stadt', 'Ländliche Region - Städtischer Raum',
                              'Ländliche Region - Kleinstädtischer, dörflicher Raum']
         for r_id in range(7):
-            self.df_regions[self.region_types[r_id]]=[1 if self.df_regions.iloc[_id,0] in dd.RegioStaR7ToCountyID[r_id + 1] else 0 for _id in range(len(self.df_regions))]
-        
+            self.df_regions[self.region_types[r_id]] = [1 if self.df_regions.iloc[_id, 0]
+                                                        in dd.RegioStaR7ToCountyID[r_id + 1] else 0 for _id in range(len(self.df_regions))]
+
         # read values for effective reproduction number
         filepath = os.path.join(
             directory, "r_eff_county_multiple_c.json")
 
-        if True:# not os.path.exists(filepath):
-            self.df_r = compute_R_eff(counties = self.counties)
+        if True:  # not os.path.exists(filepath):
+            self.df_r = compute_R_eff(counties=self.counties)
         else:
             self.df_r = pd.read_json(filepath)
 
@@ -211,35 +242,55 @@ class NPIRegression():
         max_date_npis = max(self.df_npis.Date)
         max_date = min(max_date_npis, max_date_vacc.strftime("%Y-%m-%d"))
 
-        self.df_r = mdfs.extract_subframe_based_on_dates(self.df_r, min_date, max_date)
-        self.df_vaccinations = mdfs.extract_subframe_based_on_dates(self.df_vaccinations, min_date, max_date)
-        self.df_npis = mdfs.extract_subframe_based_on_dates(self.df_npis, min_date, max_date)
-        self.df_regions = mdfs.extract_subframe_based_on_dates(self.df_regions, min_date, max_date)
+        self.df_r = mdfs.extract_subframe_based_on_dates(
+            self.df_r, min_date, max_date)
+        self.df_vaccinations = mdfs.extract_subframe_based_on_dates(
+            self.df_vaccinations, min_date, max_date)
+        self.df_npis = mdfs.extract_subframe_based_on_dates(
+            self.df_npis, min_date, max_date)
+        self.df_regions = mdfs.extract_subframe_based_on_dates(
+            self.df_regions, min_date, max_date)
+        self.df_seasonality = mdfs.extract_subframe_based_on_dates(
+            self.df_seasonality, min_date, max_date)
+        self.df_agestructure = mdfs.extract_subframe_based_on_dates(
+            self.df_agestructure, min_date, max_date)
 
         self.df_npis['Date'] = pd.to_datetime(self.df_npis['Date'])
-        self.df_vaccinations['Date'] = pd.to_datetime(self.df_vaccinations['Date'])
+        self.df_vaccinations['Date'] = pd.to_datetime(
+            self.df_vaccinations['Date'])
         self.df_regions['Date'] = pd.to_datetime(self.df_regions['Date'])
-        
-        # remove all dates where the r-value could not be comupted
+        self.df_seasonality['Date'] = pd.to_datetime(
+            self.df_seasonality['Date'])
+        self.df_agestructure['Date'] = pd.to_datetime(
+            self.df_agestructure['Date'])
+
+        # remove all dates where the r-value could not be computed
         for county in self.counties:
             df_r_c = self.df_r[self.df_r.ID_County == county]
-            #use region dataframe for reference (smallest of other dfs)
+            # use region dataframe for reference (smallest of other dfs)
             df_region_c = self.df_regions[self.df_regions.ID_County == county]
             missing_dates = set(df_region_c.Date)-set(df_r_c.Date)
-            self.df_npis = self.df_npis.drop(self.df_npis[(self.df_npis.Date.isin(missing_dates)) & (self.df_npis.ID_County==county)].index)
-            self.df_vaccinations = self.df_vaccinations.drop(self.df_vaccinations[(self.df_vaccinations.Date.isin(missing_dates)) & (self.df_vaccinations.ID_County==county)].index)
-            self.df_regions = self.df_regions.drop(self.df_regions[(self.df_regions.Date.isin(missing_dates)) & (self.df_regions.ID_County==county)].index)
+            self.df_npis = self.df_npis.drop(self.df_npis[(self.df_npis.Date.isin(
+                missing_dates)) & (self.df_npis.ID_County == county)].index)
+            self.df_vaccinations = self.df_vaccinations.drop(self.df_vaccinations[(
+                self.df_vaccinations.Date.isin(missing_dates)) & (self.df_vaccinations.ID_County == county)].index)
+            self.df_regions = self.df_regions.drop(self.df_regions[(self.df_regions.Date.isin(
+                missing_dates)) & (self.df_regions.ID_County == county)].index)
+            self.df_seasonality = self.df_seasonality.drop(self.df_seasonality[(self.df_seasonality.Date.isin(
+                missing_dates)) & (self.df_seasonality.ID_County == county)].index)
+            self.df_agestructure = self.df_agestructure.drop(self.df_agestructure[(self.df_agestructure.Date.isin(
+                missing_dates)) & (self.df_agestructure.ID_County == county)].index)
 
         # drop columns where no NPIs are assigned
         num_dropped = 0
-        null_idx = np.where(self.df_npis[self.column_names].sum()==0)[0]
+        null_idx = np.where(self.df_npis[self.column_names].sum() == 0)[0]
         for null_item in null_idx:
             dropped = self.column_names.pop(null_item-num_dropped)
-            print('No Data for NPI: '+ str(dropped))
+            print('No Data for NPI: ' + str(dropped))
             self.df_npis = self.df_npis.drop(dropped, axis=1)
-            num_dropped +=1
+            num_dropped += 1
 
-
+    # define variables that will be used in every regression
 
     def set_up_model(self):
 
@@ -249,25 +300,34 @@ class NPIRegression():
         self.Y = self.df_r['R_eff']
 
         # TODO: discuss which vaccination states we want to include
-        # for now use Vacc_completed and Vacc_refreshed and use Vacc_partially as reference
         self.used_vacc_states = list(self.all_vacc_states[1:3])
         self.X_vaccinations = np.array([self.df_vaccinations[vacc_state]
                                         for vacc_state in self.used_vacc_states]).T
-        #TODO: discuss which region type we want to use as reference
+        # TODO: discuss which region type we want to use as reference
         # for now use Metropole
         self.reference_region = 'Stadtregion - Metropole'
         self.region_types.remove(self.reference_region)
-        self.regions = np.array([self.df_regions[region_type] for region_type in self.region_types]).T
+        self.X_regions = np.array([self.df_regions[region_type]
+                                   for region_type in self.region_types]).T
 
-        # return df_npis, Y, X_vaccinations, list(vacc_states)
+        # set up array with variables for seasonality
+        self.X_seasonality = np.array(
+            [self.df_seasonality['sin'], self.df_seasonality['cos']]).T
+
+        # set up array with variables for agestructure
+        self.X_agestructure = np.array([self.df_agestructure[age_category]
+                                        for age_category in self.age_categories]).T
 
     # TODO: Discuss which variables should go in backward selection, also vaccination states?
+
+    # define variables for NPIs according to input and fit model
 
     def do_regression(self, columns):
         # create array that contains current set of NPIs
         X_npis = np.array([self.df_npis[column] for column in columns]).T
 
-        X = np.concatenate((self.X_vaccinations, self.regions, X_npis), axis=1)
+        X = np.concatenate(
+            (self.X_vaccinations, self.X_regions, self.X_seasonality, self.X_agestructure, X_npis), axis=1)
         # TODO: check why there is not always a constant added automatically, do we have linear dependence somewhere?
         # with has_constant = 'add' we force it to add a constant but can this lead to issues?
         X = sm.add_constant(X, has_constant='add')
@@ -282,13 +342,14 @@ class NPIRegression():
 
         return results
 
+    # do backward selection to find out which NPIs have significant impact on R value
     def backward_selection(self, plot=False):
 
         # initial set of NPIs
         # use fine_resolution=0 for now for simplicity
         self.column_names = ['M01a', 'M01b', 'M02a', 'M02b',
-                        'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
-                        'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
+                             'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
+                             'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
         # set up regression model
         self.set_up_model()
@@ -298,8 +359,11 @@ class NPIRegression():
         # store pvalues in dataframe
         self.df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
         # add column with column names to df
-        non_npi_variables = ['const'] + self.used_vacc_states + self.region_types
-        self.df_pvalues.insert(1, "columns", non_npi_variables + self.column_names)
+        non_npi_variables = ['const'] + \
+            self.used_vacc_states + self.region_types + \
+            list(self.df_seasonality.columns[2:4]) + self.age_categories
+        self.df_pvalues.insert(
+            1, "columns", non_npi_variables + self.column_names)
         # drop rows with pvalue that is NaN
         # TODO: check why we get NaNs here in the first place
         self.df_pvalues.dropna(inplace=True)
@@ -332,7 +396,7 @@ class NPIRegression():
                 # if npi_of_interest in non_npi_variables:
                 npi_of_interest = self.df_pvalues.sort_values(
                     'pvalues', ascending=False).iloc[counter_not_removed + counter_non_npi_var].name
-                # adjust counter_not_removed in case the new npi_of_interest doesn't get removed
+            # adjust counter_not_removed in case the new npi_of_interest doesn't get removed
             counter_not_removed += counter_non_npi_var
 
             # plot_pvalues(df_pvalues, iteration, npi_of_interest)
@@ -344,7 +408,7 @@ class NPIRegression():
                   self.df_pvalues['columns'][npi_of_interest])
 
             # do new regression and compute AIC and BIC
-            # [1:] because we do only want NPIs as input for regression model, not 'const' or used_vacc_states
+            # [num_non_npi_variables:] because we do only want NPIs as input for regression model, not 'const' or used_vacc_states
             num_non_npi_variables = len(non_npi_variables)
             results = self.do_regression(
                 df_view['columns'][num_non_npi_variables:])
@@ -397,7 +461,7 @@ class NPIRegression():
                 # increase counter_not_removed , we select npi_of_interest by taking the NPI with the next highest pvalue
                 counter_not_removed += 1
 
-        print(removed_list)
+        print('Removed NPIs: ', removed_list)
 
         # do one last regression here to make sure that df_pvalues and results are matching
         # (i.e. also if in last loop no NPI was removed)
@@ -411,9 +475,9 @@ class NPIRegression():
 
         return self.df_pvalues, results
 
+    # plot coefficients and confidence intervals per independent variable
     def plot_confidence_intervals(self):
 
-        # plot coefficients and confidence intervals per NPI
         fig, ax = plt.subplots()
         for i in range(len(self.df_pvalues)):
             ax.plot((self.df_pvalues['conf_int_min'][i],
@@ -436,6 +500,7 @@ class NPIRegression():
 
         plt.close()
 
+    # plot pvalues and npi_of_interest for iteration in backward selection
     def plot_pvalues(self, iteration, npi_of_interest, removed):
         # plot pvalues
         fig, ax = plt.subplots()
@@ -475,7 +540,11 @@ class NPIRegression():
 
 def main():
 
-    npi_regression = NPIRegression()
+    # 4 randomly chosen counties of each regioStar7 type
+    counties = [6412, 5913, 8111, 2000, 9761, 5515, 9562, 3101, 12065, 5162, 12061, 10045, 14730,
+                7311, 3155, 8317, 9762, 9263, 8211, 9180, 16072, 7316, 9181, 7141, 7331, 9372, 9277]
+
+    npi_regression = NPIRegression(counties)
 
     df_pvalues, results = npi_regression.backward_selection(plot=True)
     npi_regression.plot_confidence_intervals()
