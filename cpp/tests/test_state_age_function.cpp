@@ -127,6 +127,37 @@ TEST(TestStateAgeFunction, testGetSupportMax)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
+TEST(TestStateAgeFunction, testEvalDerivative)
+{
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
+    ScalarType dt        = 0.5;
+    ScalarType state_age = 1.0;
+
+    // Test eval_derivative for all derived classes as this method can be overridden.
+    // Check that eval_derivative is correct after setting the parameter object of StateAgeFunction.
+    mio::ExponentialDecay expdecay(1.0);
+    EXPECT_NEAR(expdecay.eval_derivative(dt, state_age), -std::exp(-state_age), 1e-14);
+    expdecay.set_parameter(2.0);
+    EXPECT_NEAR(expdecay.eval_derivative(dt, state_age), -2.0 * std::exp(-2.0 * state_age), 1e-14);
+
+    mio::SmootherCosine smoothcos(1.0);
+    EXPECT_NEAR(smoothcos.eval_derivative(dt, state_age),
+                -0.5 * std::sin(3.14159265358979323846 / 1.0 * state_age) * (3.14159265358979323846 / 1.0), 1e-14);
+    smoothcos.set_parameter(2.0);
+    EXPECT_NEAR(smoothcos.eval_derivative(dt, state_age),
+                -0.5 * std::sin(3.14159265358979323846 / 2.0 * state_age) * (3.14159265358979323846 / 2.0), 1e-14);
+
+    mio::ConstantFunction constfunc(1.0);
+    EXPECT_NEAR(constfunc.eval_derivative(dt, state_age), 0, 1e-14);
+    constfunc.set_parameter(2.0);
+    EXPECT_NEAR(constfunc.eval_derivative(dt, state_age), 0, 1e-14);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
 TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
 {
     // Deactivate temporarily log output for next tests.

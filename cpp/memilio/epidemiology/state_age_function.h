@@ -177,11 +177,16 @@ struct StateAgeFunction {
     }
 
     /**
-    *@brief Computes the backwards differences 
+    * @brief Computes or approximates the derivative of the function.
     *
-    * @param[in] dt time step
-    * @param[in] state_age Time at which the function is evaluated
-    * @return ScalarType backwards difference 
+    * Here we use a backwards difference to approximate the derivative. 
+    * 
+    * For analytic functions we can compute the derivative exactly. 
+    * This is why this member function is virtual and can be overridden.
+    *
+    * @param[in] dt Time step size.
+    * @param[in] state_age Time at which the function is evaluated.
+    * @return ScalarType backwards difference. 
     */
     virtual ScalarType eval_derivative(ScalarType dt, ScalarType state_age)
     {
@@ -253,11 +258,11 @@ struct ExponentialDecay : public StateAgeFunction {
         return std::exp(-m_parameter * state_age);
     }
     /**
-    * @brief computes the derivative of the exponential decay function
+    * @brief Computes the derivative of the exponential decay function.
     *
-    * @param[in] dt Time step
-    * @param[in] state_age Time at which the function is evaluated 
-    * @return Evaluation of the derivative of the exponential decay function
+    * @param[in] dt Time step size.
+    * @param[in] state_age Time at which the function is evaluated.
+    * @return Evaluation of the derivative of the exponential decay function at state_age.
     */
 
     ScalarType eval_derivative(ScalarType dt, ScalarType state_age) override
@@ -325,17 +330,18 @@ struct SmootherCosine : public StateAgeFunction {
     }
 
     /**
-    * @brief computes the derivative of the smoother cosine function
+    * @brief Computes the derivative of the smoother cosine function.
     *
-    * @param[in] dt Time step
-    * @param[in] state_age Time at which the function is evaluated 
-    * @return Evaluation of the derivative of the smoother cosine function 
+    * @param[in] dt Time step size.
+    * @param[in] state_age Time at which the function is evaluated.
+    * @return Evaluation of the derivative of the smoother cosine function at state_age. 
     */
     ScalarType eval_derivative(ScalarType dt, ScalarType state_age) override
     {
         unused(dt);
-        return 0.5 * (-m_parameter) * std::sin(3.14159265358979323846 / (m_parameter * state_age)) * m_parameter *
-               (3.14159265358979323846 / (std::pow(m_parameter, 2) * std::pow(state_age, 2)));
+
+        return -0.5 * std::sin(3.14159265358979323846 / m_parameter * state_age) *
+               (3.14159265358979323846 / m_parameter);
     }
 
 protected:
@@ -406,16 +412,16 @@ struct ConstantFunction : public StateAgeFunction {
     }
 
     /**
-    * @brief computes the derivative of the smoother cosine function
+    * @brief Computes the derivative of a constant function.
     *
-    * @param[in] dt Time step
-    * @param[in] state_age Time at which the function is evaluated 
-    * @return Evaluation of the derivative of the smoother cosine function 
+    * The derivative of a constant function is always zero. 
+    *
+    * @param[in] dt Time step size.
+    * @param[in] state_age Time at which the function is evaluated.
+    * @return Evaluation of the derivative of a constant function.
     */
     ScalarType eval_derivative(ScalarType dt, ScalarType state_age) override
     {
-        // In case of a constant function the derivative is zero
-
         unused(dt);
         unused(state_age);
 
@@ -534,6 +540,14 @@ struct StateAgeFunctionWrapper {
     {
         return m_function->eval(state_age);
     }
+
+    /**
+    * @brief Accesses eval_derivative of m_function.
+    *
+    * @param[in] dt Time step size.
+    * @param[in] state_age Time at which the function is evaluated.
+    * @return Evalution of the derivative of the function at state_age.
+    */
 
     ScalarType eval_derivative(ScalarType dt, ScalarType state_age) const
     {

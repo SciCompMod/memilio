@@ -23,6 +23,7 @@
 #include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
+#include "memilio/epidemiology/state_age_function.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -35,7 +36,7 @@ int main()
     ScalarType tmax   = 10;
     ScalarType N      = 10000;
     ScalarType deaths = 13.10462213;
-    ScalarType dt     = 1;
+    ScalarType dt     = 1.0;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -63,14 +64,14 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, deaths);
+    mio::isecir::Model model(std::move(init), N, deaths, 1000);
 
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
-    // Set working parameters
-    mio::ExponentialDecay expdecay_test(11.0);
-    mio::StateAgeFunctionWrapper delaydistribution(expdecay_test);
+    // Set working parameters.
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(3.0);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(4.0);
@@ -100,4 +101,30 @@ int main()
     sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
                                       16, 8);
+    /*
+    mio::TimeSeries<ScalarType> result = sim.get_result();
+    
+    std::cout << "Compartments at first time step of IDE:\n";
+    std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
+    for (Eigen::Index j = 0; j < result.get_num_elements(); ++j) {
+        std::cout << "  |  " << std::fixed << std::setprecision(8) << result[0][j];
+    }
+    std::cout << "\n";
+    ScalarType sum = 0;
+    for (Eigen::Index j = 0; j < result.get_num_elements(); ++j) {
+        sum += result[0][j];
+    }
+    std::cout << "Sum of Compartments at first time step of IDE: " << sum << "\n";
+    std::cout << "Compartments at last time step of IDE:\n";
+    std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
+    for (Eigen::Index j = 0; j < result.get_num_elements(); ++j) {
+        std::cout << "  |  " << std::fixed << std::setprecision(8) << result.get_last_value()[j];
+    }
+    std::cout << "\n";
+    sum = 0;
+    for (Eigen::Index j = 0; j < result.get_num_elements(); ++j) {
+        sum += result.get_last_value()[j];
+    }
+    std::cout << "Sum of Compartments at last time step of IDE: " << sum << "\n";
+    */
 }

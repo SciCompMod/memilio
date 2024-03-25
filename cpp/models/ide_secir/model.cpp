@@ -81,7 +81,7 @@ void Model::initialize(ScalarType dt)
             //calculate other compartment sizes for t=0
             other_compartments_current_timestep(dt);
 
-            //R; need an initial value for R, therefore do not calculate via compute_recovered()
+            //R; needs an initial value for R, therefore do not calculate via compute_recovered()
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] =
                 m_N - m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] -
                 m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)] -
@@ -163,7 +163,6 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
 
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
-        // backward difference scheme to approximate first derivative
         sum += parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval_derivative(dt, state_age) *
                m_transitions[i + 1][idx_IncomingFlow];
     }
