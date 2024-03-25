@@ -17,7 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/functions.h"
+#include "abm/location_type.h"
+#include "abm/model_functions.h"
 #include "abm/migration_rules.h"
 #include "abm/person.h"
 #include "abm_helpers.h"

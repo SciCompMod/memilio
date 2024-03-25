@@ -1,9 +1,4 @@
 add_library(abm
-    functions.cpp
-    functions.h
-    person_id.h
-    personal_rng.cpp
-    personal_rng.h
     location.cpp
     location.h
     household.cpp
@@ -12,6 +7,9 @@ add_library(abm
     simulation.h
     person.cpp
     person.h
+    person_id.h
+    personal_rng.cpp
+    personal_rng.h
     testing_strategy.cpp
     testing_strategy.h
     world.cpp
@@ -21,6 +19,8 @@ add_library(abm
     parameters.cpp
     migration_rules.cpp
     migration_rules.h
+    model_functions.cpp
+    model_functions.h
     trip_list.cpp
     trip_list.h
     lockdown_rules.cpp

@@ -20,7 +20,7 @@
 #ifndef MIO_ABM_WORLD_H
 #define MIO_ABM_WORLD_H
 
-#include "abm/functions.h"
+#include "abm/model_functions.h"
 #include "abm/location_type.h"
 #include "abm/movement_data.h"
 #include "abm/parameters.h"
@@ -80,7 +80,6 @@ public:
         parameters = params;
     }
 
-    //type is move-only for stable references of persons/locations
     World(const World& other)
         : parameters(other.parameters)
         , m_local_population_cache()

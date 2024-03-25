@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "abm/functions.h"
+#include "abm/model_functions.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/random_events.h"

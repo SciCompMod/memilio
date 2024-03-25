@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef FUNCTIONS_H_
-#define FUNCTIONS_H_
+#ifndef MIO_ABM_MODEL_FUNCTIONS_H_
+#define MIO_ABM_MODEL_FUNCTIONS_H_
 
 #include "abm/location.h"
 #include "abm/person.h"
@@ -96,4 +96,4 @@ bool migrate(Person& person, const Location& destination, const TransportMode mo
 } // namespace abm
 } // namespace mio
 
-#endif
+#endif // MIO_ABM_MODEL_FUNCTIONS_H_
