@@ -300,7 +300,7 @@ class NPIRegression():
         self.Y = self.df_r['R_eff']
 
         # TODO: discuss which vaccination states we want to include
-        self.used_vacc_states = list(self.all_vacc_states[1:3])
+        self.used_vacc_states = list(self.all_vacc_states[0:3])
         self.X_vaccinations = np.array([self.df_vaccinations[vacc_state]
                                         for vacc_state in self.used_vacc_states]).T
         # TODO: discuss which region type we want to use as reference
