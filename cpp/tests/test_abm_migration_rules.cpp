@@ -26,6 +26,13 @@
 
 TEST(TestMigrationRules, random_migration)
 {
+    int t = 0, dt = 1;
+    auto rng          = mio::RandomNumberGenerator();
+    auto default_type = mio::abm::LocationType::Cemetery;
+    auto person       = mio::abm::Person(rng, {0, default_type}, age_group_15_to_34);
+    auto p_rng        = mio::abm::PersonalRandomNumberGenerator(rng, person);
+    auto params       = mio::abm::Parameters(num_age_groups);
+
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>> mock_exp_dist;
     EXPECT_CALL(mock_exp_dist.get_mock(), invoke)
         .Times(testing::Exactly(2))
@@ -38,13 +45,6 @@ TEST(TestMigrationRules, random_migration)
         .Times(testing::Exactly(1))
         // arbitrary value for random_idx in mio::abm::random_transition
         .WillOnce(testing::Return(2));
-
-    int t = 0, dt = 1;
-    auto rng          = mio::RandomNumberGenerator();
-    auto default_type = mio::abm::LocationType::Cemetery;
-    auto person       = mio::abm::Person(rng, {0, default_type}, age_group_15_to_34);
-    auto p_rng        = mio::abm::PersonalRandomNumberGenerator(rng, person);
-    auto params       = mio::abm::Parameters(num_age_groups);
 
     const auto random_migration = [&]() {
         return mio::abm::random_migration(p_rng, person, mio::abm::TimePoint{t}, mio::abm::days(dt), params);
