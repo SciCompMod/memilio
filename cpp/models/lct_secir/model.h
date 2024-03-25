@@ -283,6 +283,17 @@ public:
         return m_initial_values;
     }
 
+    /**
+     * @brief Sets the initial values for the model.
+     *
+     * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
+     */
+    void set_initial_values(Eigen::VectorXd init)
+    {
+        m_initial_values = init;
+        m_N0 = m_initial_values.sum();
+    }
+
     Parameters parameters{}; ///< Parameters of the model.
 
 private:
