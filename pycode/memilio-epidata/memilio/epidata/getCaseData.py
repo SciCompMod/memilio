@@ -136,12 +136,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     no_raw = conf.no_raw
     run_checks = conf.checks
 
-    if files == 'All':
+    if (files == 'All') or (files == ['All']):
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
                  'all_state', 'infected_county', 'all_county', 'all_gender',
                  'all_state_gender', 'all_county_gender', 'all_age',
                  'all_state_age', 'all_county_age']
-    if files == 'Plot':
+    if (files == 'Plot') or (files == ['Plot']):
         # only consider plotable files
         files = ['infected', 'deaths', 'all_gender', 'all_age']
     # handle error of passing a string of one file instead of a list
@@ -287,14 +287,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                      [IdBundesland], {dd.EngEng["idState"]
-                          : geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                       [IdLandkreis], {dd.EngEng["idCounty"]
-                           : df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(
@@ -313,8 +311,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                               ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                    [Altersgruppe], {dd.EngEng["ageRKI"]
-                        : df[dd.EngEng["ageRKI"]].unique()},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
                           {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [

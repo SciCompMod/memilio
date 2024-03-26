@@ -465,7 +465,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         arg_dict_cases = {
             **arg_dict_all, **arg_dict_data_download,
             "rep_date": dd.defaultDict['rep_date'],
-            "split_berlin": dd.defaultDict['split_berlin']}
+            "split_berlin": dd.defaultDict['split_berlin'], 'files': 'All'}
 
         arg_dict_divi = {
             **arg_dict_all, **arg_dict_data_download}
@@ -477,6 +477,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             "sanitize_data": dd.defaultDict['sanitize_data']}
 
         arg_dict_cases_est = {**arg_dict_cases}
+        arg_dict_cases_est.pop('files')
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
         # change start-date of jh to 2020-01-22
