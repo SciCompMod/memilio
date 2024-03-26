@@ -52,40 +52,63 @@ def run_secir_groups_simulation(show_plot=True):
     # set parameters
     for i in range(num_groups):
         # Initial number of peaople in each compartment
-        model.populations[AgeGroup(i), InfectionState.ExposedNaive]                                = 10
-        model.populations[AgeGroup(i), InfectionState.ExposedImprovedImmunity]                     = 11
-        model.populations[AgeGroup(i), InfectionState.ExposedPartialImmunity]                      = 12
-        model.populations[AgeGroup(i), InfectionState.InfectedNoSymptomsNaive]                     = 13
-        model.populations[AgeGroup(i), InfectionState.InfectedNoSymptomsNaiveConfirmed]            = 13
-        model.populations[AgeGroup(i), InfectionState.InfectedNoSymptomsPartialImmunity]           = 14
-        model.populations[AgeGroup(i), InfectionState.InfectedNoSymptomsPartialImmunityConfirmed]  = 14
-        model.populations[AgeGroup(i), InfectionState.InfectedNoSymptomsImprovedImmunity]          = 15
-        model.populations[AgeGroup(i), InfectionState.InfectedNoSymptomsImprovedImmunityConfirmed] = 15
-        model.populations[AgeGroup(i), InfectionState.InfectedSymptomsNaive]                       = 5
-        model.populations[AgeGroup(i), InfectionState.InfectedSymptomsNaiveConfirmed]              = 5
-        model.populations[AgeGroup(i), InfectionState.InfectedSymptomsPartialImmunity]             = 6
-        model.populations[AgeGroup(i), InfectionState.InfectedSymptomsPartialImmunityConfirmed]    = 6
-        model.populations[AgeGroup(i), InfectionState.InfectedSymptomsImprovedImmunity]            = 7
-        model.populations[AgeGroup(i), InfectionState.InfectedSymptomsImprovedImmunityConfirmed]   = 7
-        model.populations[AgeGroup(i), InfectionState.InfectedSevereNaive]                         = 8
-        model.populations[AgeGroup(i), InfectionState.InfectedSevereImprovedImmunity]              = 1
-        model.populations[AgeGroup(i), InfectionState.InfectedSeverePartialImmunity]               = 2
-        model.populations[AgeGroup(i), InfectionState.InfectedCriticalNaive]                       = 3
-        model.populations[AgeGroup(i), InfectionState.InfectedCriticalPartialImmunity]             = 4
-        model.populations[AgeGroup(i), InfectionState.InfectedCriticalImprovedImmunity]            = 5
-        model.populations[AgeGroup(i), InfectionState.SusceptibleImprovedImmunity]                 = 6
-        model.populations[AgeGroup(i), InfectionState.SusceptiblePartialImmunity]                  = 7
-        model.populations[AgeGroup(i), InfectionState.DeadNaive]                                   = 0
-        model.populations[AgeGroup(i), InfectionState.DeadPartialImmunity]                         = 0
-        model.populations[AgeGroup(i), InfectionState.DeadImprovedImmunity]                        = 0
+        model.populations[AgeGroup(i), InfectionState.ExposedNaive] = 10
+        model.populations[AgeGroup(
+            i), InfectionState.ExposedImprovedImmunity] = 11
+        model.populations[AgeGroup(
+            i), InfectionState.ExposedPartialImmunity] = 12
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedNoSymptomsNaive] = 13
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedNoSymptomsNaiveConfirmed] = 13
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedNoSymptomsPartialImmunity] = 14
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedNoSymptomsPartialImmunityConfirmed] = 14
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedNoSymptomsImprovedImmunity] = 15
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedNoSymptomsImprovedImmunityConfirmed] = 15
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSymptomsNaive] = 5
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSymptomsNaiveConfirmed] = 5
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSymptomsPartialImmunity] = 6
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSymptomsPartialImmunityConfirmed] = 6
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSymptomsImprovedImmunity] = 7
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSymptomsImprovedImmunityConfirmed] = 7
+        model.populations[AgeGroup(i), InfectionState.InfectedSevereNaive] = 8
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSevereImprovedImmunity] = 1
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedSeverePartialImmunity] = 2
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedCriticalNaive] = 3
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedCriticalPartialImmunity] = 4
+        model.populations[AgeGroup(
+            i), InfectionState.InfectedCriticalImprovedImmunity] = 5
+        model.populations[AgeGroup(
+            i), InfectionState.SusceptibleImprovedImmunity] = 6
+        model.populations[AgeGroup(
+            i), InfectionState.SusceptiblePartialImmunity] = 7
+        model.populations[AgeGroup(i), InfectionState.DeadNaive] = 0
+        model.populations[AgeGroup(i), InfectionState.DeadPartialImmunity] = 0
+        model.populations[AgeGroup(i), InfectionState.DeadImprovedImmunity] = 0
         model.populations.set_difference_from_group_total_AgeGroup(
             (AgeGroup(i), InfectionState.SusceptibleNaive), 1000)
 
-    model.parameters.ICUCapacity.value          = 100
+    model.parameters.ICUCapacity.value = 100
     model.parameters.TestAndTraceCapacity.value = 0.0143
-    model.parameters.DailyFirstVaccination.resize_SimulationDay(SimulationDay(1000))
+    model.parameters.DailyFirstVaccination.resize_SimulationDay(
+        SimulationDay(1000))
     model.parameters.DailyFirstVaccination[:, :] = 5
-    model.parameters.DailyFullVaccination.resize_SimulationDay(SimulationDay(1000))
+    model.parameters.DailyFullVaccination.resize_SimulationDay(
+        SimulationDay(1000))
     model.parameters.DailyFullVaccination[:, :] = 3
 
     # contact patterns
@@ -96,31 +119,31 @@ def run_secir_groups_simulation(show_plot=True):
         coeffs=np.ones((num_groups, num_groups)) * 0.3, t=5.0, level=0, type=0))
 
     # times
-    model.parameters.IncubationTime[AgeGroup(0)]       = 5.2
-    model.parameters.SerialInterval[AgeGroup(0)]       = 0.5 * 3.33 + 0.5 * 5.2
     model.parameters.TimeInfectedSymptoms[AgeGroup(0)] = 7
-    model.parameters.TimeInfectedSevere[AgeGroup(0)]   = 6
+    model.parameters.TimeInfectedSevere[AgeGroup(0)] = 6
     model.parameters.TimeInfectedCritical[AgeGroup(0)] = 7
 
     # probabilities
     model.parameters.TransmissionProbabilityOnContact[AgeGroup(0)] = 0.15
-    model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(0)]   = 0.5
+    model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(0)] = 0.5
     # The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     # depends on incidence and test and trace capacity
-    model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(0)]    = 0.0
+    model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(0)] = 0.0
     model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(0)] = 0.4
-    model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(0)]    = 0.2
-    model.parameters.SeverePerInfectedSymptoms[AgeGroup(0)]         = 0.1
-    model.parameters.CriticalPerSevere[AgeGroup(0)]                 = 0.1
-    model.parameters.DeathsPerCritical[AgeGroup(0)]                 = 0.1
+    model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(0)] = 0.2
+    model.parameters.SeverePerInfectedSymptoms[AgeGroup(0)] = 0.1
+    model.parameters.CriticalPerSevere[AgeGroup(0)] = 0.1
+    model.parameters.DeathsPerCritical[AgeGroup(0)] = 0.1
 
-    model.parameters.ReducExposedPartialImmunity[AgeGroup(0)]                     = 0.8
-    model.parameters.ReducExposedImprovedImmunity[AgeGroup(0)]                    = 0.331
-    model.parameters.ReducInfectedSymptomsPartialImmunity[AgeGroup(0)]            = 0.65
-    model.parameters.ReducInfectedSymptomsImprovedImmunity[AgeGroup(0)]           = 0.243
-    model.parameters.ReducInfectedSevereCriticalDeadPartialImmunity[AgeGroup(0)]  = 0.1
-    model.parameters.ReducInfectedSevereCriticalDeadImprovedImmunity[AgeGroup(0)] = 0.091
-    model.parameters.ReducTimeInfectedMild[AgeGroup(0)]                           = 0.9
+    model.parameters.ReducExposedPartialImmunity[AgeGroup(0)] = 0.8
+    model.parameters.ReducExposedImprovedImmunity[AgeGroup(0)] = 0.331
+    model.parameters.ReducInfectedSymptomsPartialImmunity[AgeGroup(0)] = 0.65
+    model.parameters.ReducInfectedSymptomsImprovedImmunity[AgeGroup(0)] = 0.243
+    model.parameters.ReducInfectedSevereCriticalDeadPartialImmunity[AgeGroup(
+        0)] = 0.1
+    model.parameters.ReducInfectedSevereCriticalDeadImprovedImmunity[AgeGroup(
+        0)] = 0.091
+    model.parameters.ReducTimeInfectedMild[AgeGroup(0)] = 0.9
 
     model.parameters.Seasonality.value = 0.2
 

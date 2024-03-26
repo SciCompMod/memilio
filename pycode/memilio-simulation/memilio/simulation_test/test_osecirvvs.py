@@ -99,8 +99,8 @@ class Test_osecir_integration(unittest.TestCase):
             SimulationDay(1000))
         model.parameters.DailyFullVaccination[:, :] = 0
 
-        model.parameters.IncubationTime[A0] = 5.2
-        model.parameters.SerialInterval[A0] = 4.2
+        model.parameters.TimeExposed[A0] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[A0] = 2.0
         model.parameters.TimeInfectedSymptoms[A0] = 5.0
         model.parameters.TimeInfectedSevere[A0] = 10.0
         model.parameters.TimeInfectedCritical[A0] = 8.0
