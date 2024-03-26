@@ -31,23 +31,28 @@ namespace isecir
 {
 void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSeries<ScalarType> compartments,
                                      mio::TimeSeries<ScalarType>& flows, ScalarType t_window, ScalarType t_max,
-                                     ScalarType dt_small, ScalarType dt_big)
+                                     ScalarType dt_reference, ScalarType dt_comparison)
 {
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     // use scale_timesteps to get from index wrt ODE timestep to index wrt IDE timestep
     // here we assume that we solve the ODE model on a finer scale (or equal scale) than the IDE model
-    ScalarType scale_timesteps = dt_big / dt_small;
+
+    if (dt_comparison < 1e-10) {
+        dt_comparison = dt_reference;
+    }
+
+    ScalarType scale_timesteps = dt_comparison / dt_reference;
 
     // compute index variables with respect to dt_big
-    Eigen::Index t_window_index = Eigen::Index(std::ceil(t_window / dt_big));
-    Eigen::Index t_max_index    = Eigen::Index(std::ceil(t_max / dt_big));
+    Eigen::Index t_window_index = Eigen::Index(std::ceil(t_window / dt_comparison));
+    Eigen::Index t_max_index    = Eigen::Index(std::ceil(t_max / dt_comparison));
 
     Eigen::Index flows_start_index = t_max_index - t_window_index + 1;
 
     // add time points to TimeSeries containing flows
     for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
-        flows.add_time_point(i * dt_big, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
+        flows.add_time_point(i * dt_comparison, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
         flows.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] +=
             compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::Susceptible)] -
             compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::Susceptible)];

@@ -363,7 +363,7 @@ def main():
 
     # print_total_population(results, timesteps_ide)
 
-    order = compute_order_of_convergence(errors, timesteps_ide)
+    order = compute_order_of_convergence(errors, timesteps_ide, flows=flows)
 
     print('Orders of convergence: ', order)
 

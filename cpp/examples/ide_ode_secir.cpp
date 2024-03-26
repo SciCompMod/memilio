@@ -49,9 +49,9 @@ int main()
     bool save_result       = true;
     bool ide_simulation    = true;
     int dt_ode_exponent    = 4;
-    int dt_ide_exponent    = 3;
+    int dt_ide_exponent    = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
-    int setting = 2;
+    int setting = 5;
 
     // General set up.
     ScalarType t0       = 0;
@@ -207,8 +207,7 @@ int main()
     // Note that we are computing \tilde{\sigma} here. To be able to compare flows between different timetspes (of ODE and IDE)
     // we need to divide by dt to get \hat{\sigma}. This is not done here but in the python scripts for the analysis of results.
     mio::TimeSeries<ScalarType> secihurd_ode_flows(num_transitions);
-    mio::isecir::get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax - t0, tmax, dt_ode,
-                                                 dt_ode);
+    mio::isecir::get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax - t0, tmax, dt_ode);
 
     if (print_to_terminal) {
         secihurd_ode.print_table();

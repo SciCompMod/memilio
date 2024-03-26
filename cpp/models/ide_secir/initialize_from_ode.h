@@ -36,7 +36,7 @@ namespace isecir
 
 void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSeries<ScalarType> compartments,
                                      mio::TimeSeries<ScalarType>& flows, ScalarType t_window, ScalarType t_max,
-                                     ScalarType dt_small, ScalarType dt_big);
+                                     ScalarType dt_reference, ScalarType dt_comparison = 0.);
 
 void compute_initial_flows_for_ide_from_ode(mio::osecir::Model& model_ode, mio::isecir::Model& model_ide,
                                             mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
