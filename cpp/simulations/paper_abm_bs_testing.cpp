@@ -226,13 +226,10 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
     std::map<uint32_t, mio::abm::LocationId> locations = {};
     std::map<uint32_t, mio::abm::Person&> persons      = {};
-    std::vector<std::tuple<int, uint32_t, uint32_t, uint32_t>> schools =
-        {}; //schools need to save the id, the zone it is in and the amount of persons who will be assigned to it, we need it double when we actually assign persons
+
     std::map<uint32_t, uint32_t> person_ids = {};
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
-
-    uint32_t max_number_of_persons_in_school = 600;
 
     // For the world we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
 
@@ -267,7 +264,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         // The starting location of a person is the end location of the last trip he made, either on the same day or on
         // the day before
-        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t target_location_id = row[index["loc_id_end"]];
         int trip_start              = row[index["start_time"]];
         if (trip_start < t0.hour_of_day()) {
             auto it_person = locations_before.find(person_id);
@@ -300,8 +297,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     std::getline(fin, line); // Skip header row
 
     // Add all locations to the world
-    int school_id_counter   = -100;
-    uint32_t last_person_id = 0;
     while (std::getline(fin, line)) {
         row.clear();
 
@@ -315,7 +310,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         uint32_t home_id                                 = row[index["huid"]];
         int target_location_id                           = row[index["loc_id_end"]];
-        uint32_t end_zone                                = row[index["end_zone"]];
         uint32_t activity_end                            = row[index["activity_end"]];
         mio::abm::GeographicalLocation location_long_lat = {(double)row[index["lon_end"]] / 1e+5,
                                                             (double)row[index["lat_end"]] / 1e+5};
@@ -330,32 +324,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         }
 
         mio::abm::LocationId location;
-
-        switch (target_location_id) {
-        case -1: //home has to be anonymized
-            target_location_id = home_id;
-        case -2: //schools have to be anonymized we place them into a general school and every 600 persons into a new school
-        {
-            if (last_person_id != person_id) {
-                bool found_school = false;
-                for (auto& school : schools) {
-                    if (std::get<1>(school) == end_zone && std::get<2>(school) < max_number_of_persons_in_school) {
-                        target_location_id = std::get<0>(school);
-                        std::get<2>(school)++;
-                        last_person_id = person_id;
-                        found_school   = true;
-                        break;
-                    }
-                }
-                if (!found_school) {
-                    target_location_id = school_id_counter--;
-                    schools.push_back(std::make_tuple(target_location_id, end_zone, 1, 0));
-                }
-            }
-        }
-        default:
-            break;
-        }
 
         auto it_location = locations.find(
             target_location_id); // Check if location already exists also for home which have the same id (home_id = target_location_id)
@@ -373,7 +341,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     std::unordered_set<uint32_t> ids_in_bs;
 
     // Add the persons and trips
-    last_person_id = 0;
     while (std::getline(fin, line)) {
         row.clear();
 
@@ -385,33 +352,15 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         if (person_ids.find(person_id) == person_ids.end())
             break;
 
-        uint32_t age            = row[index["age"]];
-        uint32_t home_id        = row[index["huid"]];
-        int target_location_id  = row[index["loc_id_end"]];
-        int start_location_id   = row[index["loc_id_start"]];
-        uint32_t end_zone       = row[index["end_zone"]];
+        uint32_t age           = row[index["age"]];
+        uint32_t home_id       = row[index["huid"]];
+        int target_location_id = row[index["loc_id_end"]];
+        int start_location_id  = row[index["loc_id_start"]];
+
         uint32_t trip_start     = row[index["start_time"]];
         uint32_t transport_mode = row[index["travel_mode"]];
         uint32_t acticity_end   = row[index["activity_end"]];
         bool home_in_bs         = true;
-
-        switch (target_location_id) {
-        case -1: //home has to be anonymized
-            target_location_id = home_id;
-        case -2: //schools have to be anonymized we place them into a general school and every 600 persons into a new school
-            for (auto& school : schools) {
-                if (std::get<1>(school) == end_zone && std::get<3>(school) < max_number_of_persons_in_school) {
-                    if (last_person_id != person_id) {
-                        last_person_id = person_id;
-                        std::get<3>(school)++;
-                    }
-                    target_location_id = std::get<0>(school);
-                    break;
-                }
-            }
-        default:
-            break;
-        }
 
         // Add the trip to the trip list person and location must exist at this point
         auto target_location = locations.find(target_location_id)->second;
@@ -821,7 +770,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     set_local_parameters(world);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, (input_dir / "mobility/braunschweig_result.csv").generic_string(), t0,
+    create_world_from_data(world, (input_dir / "mobility/modified_braunschweig_result.csv").generic_string(), t0,
                            max_num_persons);
     world.use_migration_rules(false);
 
@@ -1058,8 +1007,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(120); // End time per simulation
-    auto max_num_persons = 50000;
+    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(50); // End time per simulation
+    auto max_num_persons = 23000;
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     // ensemble_infection_per_loc_type.reserve(size_t(num_runs));
