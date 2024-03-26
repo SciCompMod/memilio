@@ -119,7 +119,7 @@ def compute_hierarch_clustering(corr_pairwdist,
 
     # Based on the distances, we compute an hierarchical clustering for
     # different methods
-    max_coph_corr_dist = -1
+    max_coph_corr_coeff = -1
     scores = dict()
     # allow single entry
     if not isinstance(methods, list):
@@ -127,12 +127,12 @@ def compute_hierarch_clustering(corr_pairwdist,
     # iterate over list
     for method in methods:
         cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=method)
-        # compute cophenetic correlation distance and cophenetic distance matrix
-        coph_corr_dist, coph_dist_mat = hierarchy.cophenet(
+        # compute cophenetic correlation distance/coefficient and cophenetic distance matrix
+        coph_corr_coeff, coph_dist_mat = hierarchy.cophenet(
             cluster_hierarch, corr_pairwdist)
-        scores[method] = coph_corr_dist
-        if coph_corr_dist > max_coph_corr_dist:
-            max_coph_corr_dist = coph_corr_dist
+        scores[method] = coph_corr_coeff
+        if coph_corr_coeff > max_coph_corr_coeff:
+            max_coph_corr_coeff = coph_corr_coeff
             max_method = method
             max_coph_dist_mat = coph_dist_mat
 
@@ -141,7 +141,7 @@ def compute_hierarch_clustering(corr_pairwdist,
 
     print(
         "Cophenetic correlation distance for method " + max_method + ": " +
-        str(max_coph_corr_dist))
+        str(max_coph_corr_coeff))
 
     return cluster_hierarch, max_coph_dist_mat
 
@@ -176,6 +176,7 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
         # use the given weight to flatten the dendrogram
         npi_idx_to_cluster_idx = hierarchy.fcluster(
             cluster_hierarch, weight, criterion='distance')
+        npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
 
         # evaluate clustering
         # clusters, total_eval_number[n] = evaluate_clustering(
@@ -185,15 +186,16 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
         # npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
         # n += 1
         # get around 55 clusters
-        if npi_idx_to_cluster_idx.max() > 45:
-            if npi_idx_to_cluster_idx.max() < 65:
-                print(npi_idx_to_cluster_idx.max())
-                return npi_idx_to_cluster_idx
+        # if npi_idx_to_cluster_idx.max() > 45:
+        #     if npi_idx_to_cluster_idx.max() < 65:
+        #         print(npi_idx_to_cluster_idx.max())
+        #         return npi_idx_to_cluster_idx
 
     # print scores on clustering
     # print("Number of clusters: " + str(int(np.nanmin(np.array(total_eval_number)))))
 
-    return npi_idx_to_cluster_idx_list[total_eval_number.index(np.nanmin(np.array(total_eval_number)))]
+    # [total_eval_number.index(np.nanmin(np.array(total_eval_number)))]
+    return npi_idx_to_cluster_idx_list[0]
 
 
 def silhouette(X, cluster_sizes, cluster_labels, label):
@@ -587,7 +589,7 @@ def main():
     npis_final = []
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
     file_format = 'json'
-    npi_codes_considered = ['M01a_010', 'M01a_020']
+    npi_codes_considered = ['M01a_010', 'M01a_020', 'M01a_100']
     analyze_npi_data(True, True, fine_resolution, npis_final,
                      directory, file_format, npi_codes_considered)
 
