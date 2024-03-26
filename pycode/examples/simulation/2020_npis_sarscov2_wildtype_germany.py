@@ -61,9 +61,10 @@ class Simulation:
                 param[mio.AgeGroup(i)].set_distribution(
                     mio.ParameterDistributionUniform(min[i], max[i]))
 
-        t_incubation = 5.2
-        t_serial_interval_min = 0.5 * 2.67 + 0.5 * 5.2
-        t_serial_interval_max = 0.5 * 4.00 + 0.5 * 5.2
+        timeExposedMin = 2.67
+        timeExposedMax = 4.
+        timeInfectedNoSymptomsMin = 1.2
+        timeInfectedNoSymptomsMax = 2.53
         timeInfectedSymptomsMin = [
             5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465]
         timeInfectedSymptomsMax = [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]
@@ -73,11 +74,11 @@ class Simulation:
         timeInfectedCriticalMax = [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]
 
         array_assign_uniform_distribution(
-            model.parameters.IncubationTime, t_incubation, t_incubation)
+            model.parameters.TimeExposed, timeExposedMin, timeExposedMax)
 
         array_assign_uniform_distribution(
-            model.parameters.SerialInterval, t_serial_interval_min,
-            t_serial_interval_max)
+            model.parameters.TimeInfectedNoSymptoms, timeInfectedNoSymptomsMin,
+            timeInfectedNoSymptomsMax)
 
         array_assign_uniform_distribution(
             model.parameters.TimeInfectedSymptoms, timeInfectedSymptomsMin,

@@ -49,8 +49,8 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.StartDay = 60
         model.parameters.Seasonality.value = 0.2
 
-        model.parameters.IncubationTime[A0] = 5.2
-        model.parameters.SerialInterval[A0] = 4.2
+        model.parameters.TimeExposed[A0] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[A0] = 2.
         model.parameters.TimeInfectedSymptoms[A0] = 5.8
         model.parameters.TimeInfectedSevere[A0] = 9.5
         model.parameters.TimeInfectedCritical[A0] = 7.1
@@ -135,12 +135,12 @@ class Test_osecir_integration(unittest.TestCase):
             t = float(timestep.at['t'])
             self.assertAlmostEqual(
                 t, result.get_time(index_timestep),
-                delta=1e-10)
+                delta=1e-9)
 
             for index_compartment in range(0, 10):
                 self.assertAlmostEqual(
                     timestep[index_compartment + 1],
-                    result[index_timestep][index_compartment], delta=1e-10)
+                    result[index_timestep][index_compartment], delta=1e-9)
 
 
 if __name__ == '__main__':

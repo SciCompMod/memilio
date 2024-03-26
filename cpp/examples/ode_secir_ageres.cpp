@@ -55,11 +55,11 @@ int main()
     params.get<mio::osecir::TestAndTraceCapacity>() = 35;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.8;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 9.5;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 7.1;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.8;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 9.5;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 7.1;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;
@@ -106,7 +106,7 @@ int main()
 
             for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
                 printf("\t %s[%d]: %.0f", vars[k].c_str(), (int)i,
-                    secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i]);
+                       secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i]);
                 dummy += secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i];
             }
 
