@@ -113,29 +113,15 @@ if(MEMILIO_ENABLE_WARNINGS)
         set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
             "/W4")
     endif()
-    if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
-        if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-            string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-                "/WX")
-        else()
-            string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-                "--pedantic-errors")
-        endif()
-    else()
-        if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-                "--pedantic")
-        endif()
-    endif()
 endif()
 
 if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
             "/WX")
     else()
-        set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-            "-Werror;--pedantic-errors")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Werror")
     endif()
 endif()
 
