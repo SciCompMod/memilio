@@ -39,8 +39,10 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
 {
     m_deaths_before =
         deaths - m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
+    // Add first time point in m_populations according to last time point in m_transitions which is where we start the simulation.
     m_populations.add_time_point<Eigen::VectorXd>(
-        0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+        m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    // Set deaths at simulation start time t0.
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = deaths;
 }
 
@@ -99,9 +101,9 @@ void Model::initialize(ScalarType dt)
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
     }
     else {
-        // compute Susceptibles at time 0  and m_forceofinfection at time -dt as initial values for discretization scheme
-        // use m_forceofinfection at -dt to be consistent with further calculations of S (see compute_susceptibles()),
-        // where also the value of m_forceofinfection for the previous timestep is used
+        // Compute Susceptibles at t0 and m_forceofinfection at time t0-dt as initial values for discretization scheme.
+        // Use m_forceofinfection at t0-dt to be consistent with further calculations of S (see compute_susceptibles()),
+        // where also the value of m_forceofinfection for the previous timestep is used.
         update_forceofinfection(dt, true);
         if (m_forceofinfection > 1e-12) {
             m_initialization_method = 4;
@@ -148,15 +150,15 @@ void Model::initialize(ScalarType dt)
         }
     }
 
-    // Compute m_forceofinfection at time 0 needed for further simulation.
+    // Compute m_forceofinfection at time t0 needed for further simulation.
     update_forceofinfection(dt);
 }
 
 void Model::compute_susceptibles(ScalarType dt)
 {
     Eigen::Index num_time_points = m_populations.get_num_time_points();
-    // using number of susceptibles from previous time step and force of infection from previous time step:
-    // compute current number of susceptibles and store susceptibles in m_populations
+    // Using number of Susceptibles from previous time step and force of infection from previous time step:
+    // compute current number of Susceptibles and store Susceptibles in m_populations
     m_populations.get_last_value()[Eigen::Index(InfectionState::Susceptible)] =
         m_populations[num_time_points - 2][Eigen::Index(InfectionState::Susceptible)] / (1 + dt * m_forceofinfection);
 }
@@ -260,10 +262,11 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
     ScalarType deaths;
 
     if (initialization) {
-        // determine m_forceofinfection at time -dt which is the penultimate timepoint in m_transitions
+        // Determine m_forceofinfection at time t0-dt which is the penultimate timepoint in m_transitions.
         num_time_points = m_transitions.get_num_time_points() - 1;
-        current_time    = -dt;
-        deaths          = m_deaths_before;
+        // Get time of penultimate timepoint in m_transitions.
+        current_time = m_transitions.get_time(num_time_points - 1);
+        deaths       = m_deaths_before;
     }
     else {
         // determine m_forceofinfection for current last time in m_transitions.
