@@ -67,6 +67,58 @@ public:
 
 /**
  * Represents the entries of a confirmed cases data file, e.g., from RKI.
+ * Number of confirmed, recovered and deceased in Germany on a specific date.
+ * ConfirmedCasesNoAgeEntry is a simplified version of ConfirmedCasesDataEntry without agegroups.
+ */
+class ConfirmedCasesNoAgeEntry
+{
+public:
+    double num_confirmed;
+    double num_recovered;
+    double num_deaths;
+    Date date;
+
+    template <class IOContext>
+    static IOResult<ConfirmedCasesNoAgeEntry> deserialize(IOContext& io)
+    {
+        auto obj           = io.expect_object("ConfirmedCasesNoAgeEntry");
+        auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
+        auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
+        auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
+        auto date          = obj.expect_element("Date", Tag<StringDate>{});
+        return apply(
+            io,
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d) {
+                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d};
+            },
+            num_confirmed, num_recovered, num_deaths, date);
+    }
+};
+
+/**
+ * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
+ * @param jsvalue json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Accordingly, there should be one entry per date with the values for Confirmed, Recovered and Deaths. In addition, no age groups should be specified.
+ * @return List of ConfirmedCasesNoAgeEntry.
+ */
+inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> deserialize_confirmed_cases_noage(const Json::Value& jsvalue)
+{
+    return deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesNoAgeEntry>>{});
+}
+
+/**
+ * Read list of ConfirmedCasesNoAgeEntry from a json file.
+ * @param filename name of the json file. File content must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Accordingly, there should be one entry per date with the values for Confirmed, Recovered and Deaths. In addition, no age groups should be specified.
+ * @return List of ConfirmedCasesNoAgeEntry.
+ */
+inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> read_confirmed_cases_noage(const std::string& filename)
+{
+    return read_json(filename, Tag<std::vector<ConfirmedCasesNoAgeEntry>>{});
+}
+
+/**
+ * Represents the entries of a confirmed cases data file, e.g., from RKI.
  * Number of confirmed, recovered and deceased in a region on a specific date.
  * Region can be a county, a state, or a country. If it is a country, both
  * state_id and county_id will be empty.

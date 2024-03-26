@@ -47,11 +47,11 @@ enum class RunMode
  */
 mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
 {
-    params.get<mio::osecir::IncubationTime>()       = 5.2;
-    params.get<mio::osecir::TimeInfectedSymptoms>() = 5.8;
-    params.get<mio::osecir::SerialInterval>()       = 4.2;
-    params.get<mio::osecir::TimeInfectedSevere>()   = 9.5;
-    params.get<mio::osecir::TimeInfectedCritical>() = 7.1;
+    params.get<mio::osecir::TimeExposed>()            = 3.2;
+    params.get<mio::osecir::TimeInfectedNoSymptoms>() = 2.0;
+    params.get<mio::osecir::TimeInfectedSymptoms>()   = 5.8;
+    params.get<mio::osecir::TimeInfectedSevere>()     = 9.5;
+    params.get<mio::osecir::TimeInfectedCritical>()   = 7.1;
 
     params.get<mio::osecir::TransmissionProbabilityOnContact>()  = 0.05;
     params.get<mio::osecir::RelativeTransmissionNoSymptoms>()    = 0.7;

@@ -117,12 +117,11 @@ def transform_weeks_to_dates(df_test):
 def get_testing_data(read_data=dd.defaultDict['read_data'],
                      file_format=dd.defaultDict['file_format'],
                      out_folder=dd.defaultDict['out_folder'],
-                     no_raw=dd.defaultDict['no_raw'],
                      start_date=dd.defaultDict['start_date'],
                      end_date=dd.defaultDict['end_date'],
                      impute_dates=dd.defaultDict['impute_dates'],
                      moving_average=dd.defaultDict['moving_average'],
-                     make_plot=dd.defaultDict['make_plot']):
+                     **kwargs):
     """! Downloads the RKI testing data and provides positive rates of 
     testing data in different ways. Since positive rates also implicitly 
     provide information on testing numbers while the opposite is
@@ -156,15 +155,17 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     @param read_data True or False. Defines if data is read from file or downloaded.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         At the moment they are always imputed.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+
     # data for all dates is automatically added
     impute_dates = True
 
@@ -265,7 +266,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_test[0], directory, filename, file_format)
 
     # plot country-wide positive rates
-    if make_plot:
+    if conf.plot:
         # make plot
         customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
@@ -287,7 +288,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_test[1], directory, filename, file_format)
 
     # plot positive rates of federal states
-    if make_plot:
+    if conf.plot:
         # make plot
         customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
