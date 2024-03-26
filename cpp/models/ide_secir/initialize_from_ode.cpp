@@ -30,7 +30,7 @@ namespace mio
 namespace isecir
 {
 void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSeries<ScalarType> compartments,
-                                     mio::TimeSeries<ScalarType>& flows, ScalarType t_window, ScalarType t_max,
+                                     mio::TimeSeries<ScalarType>& flows, ScalarType t_max, ScalarType t_window,
                                      ScalarType dt_reference, ScalarType dt_comparison)
 {
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
@@ -142,7 +142,7 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model& model_ode, mio::
     // get (global) support_max to determine how many flows in the past we have to compute
     ScalarType global_support_max = model_ide.get_global_support_max(dt_ide);
 
-    get_flows_from_ode_compartments(model_ode, secihurd_ode, model_ide.m_transitions, global_support_max, t0_ide,
+    get_flows_from_ode_compartments(model_ode, secihurd_ode, model_ide.m_transitions, t0_ide, global_support_max,
                                     dt_ode, dt_ide);
 }
 
