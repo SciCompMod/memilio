@@ -76,6 +76,13 @@ def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
         date_counter = 5
         # for every date from then on compute incidence and incidence from 4 days ago
         # TODO: can we compute incidence more effectively by shifting date by 1 day in another dataframe and then subtract dataframes from each other?
+
+        # TODO: check if we can use the below code from getNPIData here
+        # from NPI data:
+        # df_infec_local['Incidence'] = (pd.Series(
+        #         df_infec_local_repeat_first_entry).diff(periods=7) /
+        #         pop_local * 100000)[7:].values
+
         while date_counter < df_cases.loc[df_cases['ID_County'] == county].shape[0]:
             incidence_today = df_cases.loc[(df_cases['ID_County'] == county) & (df_cases['Date'] == start_date +
                                                                                 pd.Timedelta(date_counter, 'd')), 'Confirmed'].item() - df_cases.loc[(df_cases['ID_County'] == county) & (df_cases['Date'] == start_date +
@@ -480,13 +487,15 @@ class NPIRegression():
 
         fig, ax = plt.subplots()
         for i in range(len(self.df_pvalues)):
-            ax.plot((self.df_pvalues['conf_int_min'][i],
-                    self.df_pvalues['conf_int_max'][i]), (i, i), '-o', color='teal', markersize=3)
-            ax.scatter(self.df_pvalues['coeffs'][i],
+            ax.plot((self.df_pvalues['conf_int_min'].iloc[i],
+                    self.df_pvalues['conf_int_max'].iloc[i]), (i, i), '-o', color='teal', markersize=3)
+            ax.scatter(self.df_pvalues['coeffs'].iloc[i],
                        i, color='teal', marker='x')
 
+        ax.axvline(color='gray')
+
         ax.set_yticks(range(0, len(self.df_pvalues)),
-                      list(self.df_pvalues['columns']))
+                      list(self.df_pvalues['columns']), fontsize=5)
         ax.invert_yaxis()
 
         ax.set_xlabel('Values of coefficients')
