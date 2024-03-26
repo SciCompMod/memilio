@@ -1243,7 +1243,7 @@ export_input_data_county_timeseries(std::vector<Model>&& model, const std::strin
 }
 #else
 template <class Model>
-IOResult<void> export_input_data_county_timeseries(std::vector<Model>&&, const std::string&, std::vector<int> const&,
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&, const std::string&, std::vector<int> const&,
                                                    Date, const std::vector<double>&, double, int, const std::string&,
                                                    const std::string&, const std::string&)
 {
