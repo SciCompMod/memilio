@@ -105,13 +105,13 @@ endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERS
 if(MEMILIO_ENABLE_WARNINGS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-            "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Wshadow;--pedantic;-Wno-deprecated-copy;-Wno-expansion-to-defined")
+            "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Wshadow;--pedantic;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-            "-Wno-unknown-warning-option;-Wall;-Wextra;-Wshadow;--pedantic;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments")
+            "-Wno-unknown-warning-option;-Wall;-Wextra;-Wshadow;--pedantic;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-            "/W4")
+            "/W4;")
     endif()
 endif()
 
