@@ -30,9 +30,9 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(const DerivFunction& f, const
     assert(tmax > t0);
     assert(dt > 0);
 
-    const size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
+    const size_t num_steps = ceil((tmax - t0) / dt); // estimated number of time steps (if equidistant)
 
-    results.reserve(results.get_num_time_points() + nb_steps);
+    results.reserve(results.get_num_time_points() + num_steps);
 
     bool step_okay = true;
 
@@ -54,7 +54,7 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(const DerivFunction& f, const
 
         ++i;
     }
-    // if dt was decreased to reach tmax in the last step,
+    // if dt was decreased to reach tmax in the last time iteration,
     // we restore it as it is now probably smaller than required for tolerances
     dt = std::max(dt, dt_restore);
 
