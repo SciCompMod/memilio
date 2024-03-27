@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 
-#include "memilio/math/euler.h"
 #include "memilio/utils/logging.h"
 #include "sde_sirs/model.h"
 #include "sde_sirs/simulation.h"
@@ -49,11 +48,9 @@ int main()
     model.parameters.get<mio::ssirs::ContactPatterns>().get_baseline()(0, 0) = 20.7;
     model.parameters.get<mio::ssirs::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-
     model.check_constraints();
 
-    auto ssirs = mio::ssirs::simulate(t0, tmax, dt, model, integrator);
+    auto ssirs = mio::ssirs::simulate(t0, tmax, dt, model);
 
     ssirs.print_table({"Susceptible", "Infected", "Recovered"});
 }

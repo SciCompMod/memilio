@@ -22,6 +22,7 @@
 
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/math/euler.h"
 #include "sde_sirs/model.h"
 
 namespace mio
@@ -32,7 +33,23 @@ namespace ssirs
 /// @brief A specialized Simulation for mio::ssirs::Model.
 class Simulation : public mio::Simulation<Model>
 {
+protected:
+    using mio::Simulation<Model>::set_integrator;
+
 public:
+    /**
+     * @brief Set up the simulation with an ODE solver.
+     * @param[in] model An instance of mio::ssirs::Model.
+     * @param[in] t0 Start time.
+     * @param[in] dt Initial step size of integration.
+     */
+    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
+        : mio::Simulation<Model>(model, t0, dt)
+    {
+        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        set_integrator(integrator);
+    }
+
     using mio::Simulation<Model>::Simulation;
     /**
      * @brief advance simulation to tmax
@@ -56,20 +73,36 @@ public:
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
  * @param[in] model An instance of mio::ssirs::Model.
- * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
  * @return A TimeSeries to represent the final simulation result
  */
-inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
-                                       std::shared_ptr<IntegratorCore> integrator = nullptr)
+inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model)
 {
-    return mio::simulate<Model, Simulation>(t0, tmax, dt, model, integrator);
+    model.check_constraints();
+    Simulation sim(model, t0, dt);
+    sim.advance(tmax);
+    return sim.get_result();
 }
 
 /// @brief A specialized FlowSimulation for mio::ssirs::Model.
 class FlowSimulation : public mio::FlowSimulation<Model>
 {
+protected:
+    using mio::FlowSimulation<Model>::set_integrator;
+
 public:
-    using mio::FlowSimulation<Model>::FlowSimulation;
+    /**
+     * @brief Set up the simulation with an ODE solver.
+     * @param[in] model An instance of mio::ssirs::Model.
+     * @param[in] t0 Start time.
+     * @param[in] dt Initial step size of integration.
+     */
+    FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
+        : mio::FlowSimulation<Model>(model, t0, dt)
+    {
+        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        set_integrator(integrator);
+    }
+
     /**
      * @brief Advance the simulation to tmax.
      * tmax must be greater than get_result().get_last_time_point().
@@ -103,14 +136,15 @@ public:
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
  * @param[in] model An instance of mio::ssirs::Model.
- * @param[in] integrator Optionally override the IntegratorCore used by the FlowSimulation.
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
  */
-inline std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model,
-                                                          std::shared_ptr<IntegratorCore> integrator = nullptr)
+inline std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model)
 {
-    return mio::simulate_flows<Model, FlowSimulation>(t0, tmax, dt, model, integrator);
+    model.check_constraints();
+    FlowSimulation sim(model, t0, dt);
+    sim.advance(tmax);
+    return {sim.get_result(), sim.get_flows()};
 }
 
 } // namespace ssirs

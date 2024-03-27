@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
-#include "memilio/math/euler.h"
 #include "sde_sirs/model.h"
 #include "sde_sirs/simulation.h"
 
@@ -78,14 +77,11 @@ TEST(TestSdeSirs, Simulation)
         normal_dist_mock;
 
     EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(3))
-        .WillOnce(testing::Return(.5))
-        .WillOnce(testing::Return(.5))
-        .WillOnce(testing::Return(.5));
+        .Times(testing::Exactly(6))
+        // 3 calls for each advance, as each call get_derivatives exactly once
+        .WillRepeatedly(testing::Return(.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto sim        = mio::ssirs::Simulation(ssirs_testing_model(), 0, 1);
-    sim.set_integrator(integrator);
+    auto sim = mio::ssirs::Simulation(ssirs_testing_model(), 0, 1);
     sim.advance(1);
 
     EXPECT_EQ(sim.get_model().step_size, 1.0); // set by simulation
@@ -94,6 +90,9 @@ TEST(TestSdeSirs, Simulation)
 
     auto expected_result = Eigen::Vector3d{0.5, 1.0, 1.5};
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
+
+    sim.advance(1.5);
+    EXPECT_EQ(sim.get_model().step_size, 0.5); // set by simulation
 }
 
 TEST(TestSdeSirs, FlowSimulation)
@@ -105,14 +104,11 @@ TEST(TestSdeSirs, FlowSimulation)
         normal_dist_mock;
 
     EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(3))
-        .WillOnce(testing::Return(.5))
-        .WillOnce(testing::Return(.5))
-        .WillOnce(testing::Return(.5));
+        .Times(testing::Exactly(6))
+        // 3 calls for each advance, as each call get_derivatives exactly once
+        .WillRepeatedly(testing::Return(.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto sim        = mio::ssirs::FlowSimulation(ssirs_testing_model(), 0, 1);
-    sim.set_integrator(integrator);
+    auto sim = mio::ssirs::FlowSimulation(ssirs_testing_model(), 0, 1);
     sim.advance(1);
 
     EXPECT_EQ(sim.get_model().step_size, 1.0); // set by simulation
@@ -124,6 +120,9 @@ TEST(TestSdeSirs, FlowSimulation)
 
     auto expected_flows = Eigen::Vector3d{1.0, 1.0, 0.5};
     EXPECT_EQ(sim.get_flows().get_last_value(), expected_flows);
+
+    sim.advance(1.5);
+    EXPECT_EQ(sim.get_model().step_size, 0.5); // set by simulation
 }
 
 TEST(TestSdeSirs, check_constraints_parameters)

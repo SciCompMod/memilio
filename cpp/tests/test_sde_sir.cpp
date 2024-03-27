@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
-#include "memilio/math/euler.h"
 #include "sde_sir/model.h"
 #include "sde_sir/simulation.h"
 
@@ -58,11 +57,11 @@ TEST(TestSdeSir, get_flows)
     // results contain two parts : deterministic + stochastic
 
     ssir_testing_model().get_flows(y, y, 0, flows);
-    auto expected_result = Eigen::Vector2d{1 + 2, 1};
+    auto expected_result = Eigen::Vector2d{1 + 2, 1 + 0};
     EXPECT_EQ(flows, expected_result);
 
     ssir_testing_model().get_flows(y, y, 0, flows);
-    expected_result = Eigen::Vector2d{1, 1 + 2};
+    expected_result = Eigen::Vector2d{1 + 0, 1 + 2};
     EXPECT_EQ(flows, expected_result);
 }
 
@@ -75,14 +74,12 @@ TEST(TestSdeSir, Simulation)
         normal_dist_mock;
 
     EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(2))
-        .WillOnce(testing::Return(.5))
-        .WillOnce(testing::Return(.5));
+        .Times(testing::Exactly(4))
+        // 2 calls for each advance, as each call get_derivatives exactly once
+        .WillRepeatedly(testing::Return(.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto sim        = mio::ssir::Simulation(ssir_testing_model(), 0, 1);
-    sim.set_integrator(integrator);
-    sim.advance(1);
+    auto sim = mio::ssir::Simulation(ssir_testing_model(), 0.0, 1.0);
+    sim.advance(1.0);
 
     EXPECT_EQ(sim.get_model().step_size, 1.0); // set by simulation
 
@@ -90,6 +87,9 @@ TEST(TestSdeSir, Simulation)
 
     auto expected_result = Eigen::Vector3d{0, 1, 2}; // flows each get capped to y[i]/step_size == 1/1
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
+
+    sim.advance(1.5);
+    EXPECT_EQ(sim.get_model().step_size, 0.5); // set by simulation
 }
 
 TEST(TestSdeSir, FlowSimulation)
@@ -101,14 +101,12 @@ TEST(TestSdeSir, FlowSimulation)
         normal_dist_mock;
 
     EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(2))
-        .WillOnce(testing::Return(.5))
-        .WillOnce(testing::Return(.5));
+        .Times(testing::Exactly(4))
+        // 2 calls for each advance, as each call get_derivatives exactly once
+        .WillRepeatedly(testing::Return(.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto sim        = mio::ssir::FlowSimulation(ssir_testing_model(), 0, 1);
-    sim.set_integrator(integrator);
-    sim.advance(1);
+    auto sim = mio::ssir::FlowSimulation(ssir_testing_model(), 0.0, 1.0);
+    sim.advance(1.0);
 
     EXPECT_EQ(sim.get_model().step_size, 1.0); // set by simulation
 
@@ -119,6 +117,9 @@ TEST(TestSdeSir, FlowSimulation)
 
     auto expected_flows = Eigen::Vector2d{1, 1}; // flows each get capped to y[i]/step_size == 1/1
     EXPECT_EQ(sim.get_flows().get_last_value(), expected_flows);
+
+    sim.advance(1.5);
+    EXPECT_EQ(sim.get_model().step_size, 0.5); // set by simulation
 }
 
 TEST(TestSdeSir, check_constraints_parameters)

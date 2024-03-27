@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 
-#include "memilio/math/euler.h"
 #include "memilio/utils/logging.h"
 #include "sde_sir/model.h"
 #include "sde_sir/simulation.h"
@@ -48,11 +47,9 @@ int main()
     model.parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::ssir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-
     model.check_constraints();
 
-    auto sir = mio::ssir::simulate(t0, tmax, dt, model, integrator);
+    auto sir = mio::ssir::simulate(t0, tmax, dt, model);
 
     sir.print_table();
 }
