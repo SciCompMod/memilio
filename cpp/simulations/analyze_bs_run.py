@@ -105,6 +105,8 @@ def plot_results(path):
     f.close()
 
     plot_infection_states_dead(time, total_50, total_25, total_75)
+    plot_infection_states(time, total_50, total_25, total_75)
+    
 
 
 def plot_infection_states(x, y50, y25, y75):
