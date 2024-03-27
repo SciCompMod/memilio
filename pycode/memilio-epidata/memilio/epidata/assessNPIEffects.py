@@ -28,7 +28,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getNPIData as gnpi
 from scipy.cluster import hierarchy
 from scipy.spatial import distance
-from sklearn.metrics import silhouette_samples
+from sklearn.metrics import silhouette_samples, silhouette_score
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
@@ -48,7 +48,7 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
 
     @return Scores for the provided clustering.
     """
-
+    # TODO: Why?
     if idx_to_cluster_idx.min() == 1:
         idx_to_cluster_idx -= 1
 
@@ -83,17 +83,25 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
     return clusters, p_diag.sum()+p_offdiag.sum()
     '''
     # new method
-    if idx_to_cluster_idx.max() > 0:
+    # do this only if len(np.unique(idx_to_cluster_idx)) < len(indices_all), which checks that we do not have
+    # only clusters with one element, this is a requirement for silhouette_samples
+    # TODO: check here that not all clusters are in their own cluster?
+    # TODO: ask why it is checked that maximum is greater than 0?
+    if idx_to_cluster_idx.max() > 0 and len(np.unique(idx_to_cluster_idx)) < len(indices_all):
+        # TODO: this is just a dummy that needs to be removed later
+        # idx_to_cluster_idx = np.array([0, 1, 1])
         sample_silhouette_values = silhouette_samples(
             corr_mat, idx_to_cluster_idx)
     else:
         return clusters, np.nan
 
     # get minimal cluster size with at least weak structuring (silhouette value 0 or greater than 0.25) in all clusters
+    # TODO: this would be easier without negation?
     if not ((sample_silhouette_values > 0.25) | (sample_silhouette_values == 0)).all():
         return clusters, np.nan
     else:
-        return clusters, idx_to_cluster_idx.max()+1
+        # return clusters and mean silhouette coefficient
+        return clusters, silhouette_score(corr_mat, idx_to_cluster_idx)
 
 
 def compute_hierarch_clustering(corr_pairwdist,
@@ -146,7 +154,7 @@ def compute_hierarch_clustering(corr_pairwdist,
     return cluster_hierarch, max_coph_dist_mat
 
 
-def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
+def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights, method):
     # TODO: Adapt comment on cophenetic distance and weights
     """! Flattens a hierarchical clustering for a (list of) maximum cophenetic
     distance(s) in the flat clusters and evaluates the resulting clustering with
@@ -169,7 +177,8 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
     if not isinstance(weights, list):
         weights = [weights]
 
-    total_eval_number = [[] for weight in weights]
+    # set total_eval_number to -1 for each weight because this is the minimal possible silhouette coefficient
+    total_eval_number = -1*np.ones(len(weights))
     n = 0
     # iterate over weights
     for weight in weights:
@@ -179,8 +188,8 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
         npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
 
         # evaluate clustering
-        # clusters, total_eval_number[n] = evaluate_clustering(
-        #    corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
+        clusters, total_eval_number[n] = evaluate_clustering(
+            corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
 
         # append new npi_idx to cluster_idx assignment to list of assignments
         # npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
@@ -195,62 +204,70 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
     # print("Number of clusters: " + str(int(np.nanmin(np.array(total_eval_number)))))
 
     # [total_eval_number.index(np.nanmin(np.array(total_eval_number)))]
-    return npi_idx_to_cluster_idx_list[0]
+
+    # return npi_idx_to_cluster_idx with highest mean silhouette coefficient
+    # if we get same value for multiple weights, take smallest weight
+    # TODO: Discuss if this is a good metric
+    return npi_idx_to_cluster_idx_list[np.where(total_eval_number == np.nanmax(np.array(total_eval_number)))[0][0]]
 
 
 def silhouette(X, cluster_sizes, cluster_labels, label):
+
+    # TODO: check for clusterings where every sample is in their own cluster
+    # in that case we cannot use silhouette_samples because we need 'Valid values are 2 to n_samples - 1 (inclusive)'
 
     if not isinstance(cluster_sizes, list):
         cluster_sizes = [cluster_sizes]
 
     plt.figure()
 
-    for n_clusters in cluster_sizes:
+    if len(np.unique(cluster_labels)) < X.shape[0]:
+        for n_clusters in cluster_sizes:
+            sample_silhouette_values = silhouette_samples(X, cluster_labels)
 
-        sample_silhouette_values = silhouette_samples(X, cluster_labels)
+            y_lower = 10
+            for i in range(n_clusters):
+                ith_cluster_silhouette_values = sample_silhouette_values[cluster_labels == i]
 
-        y_lower = 10
-        for i in range(n_clusters):
-            ith_cluster_silhouette_values = sample_silhouette_values[cluster_labels == i]
+                ith_cluster_silhouette_values.sort()
 
-            ith_cluster_silhouette_values.sort()
+                size_cluster_i = ith_cluster_silhouette_values.shape[0]
+                y_upper = y_lower + size_cluster_i
 
-            size_cluster_i = ith_cluster_silhouette_values.shape[0]
-            y_upper = y_lower + size_cluster_i
+                color = cm.hsv(float(i) / n_clusters)
+                plt.fill_betweenx(
+                    np.arange(y_lower, y_upper),
+                    0,
+                    ith_cluster_silhouette_values,
+                    facecolor=color,
+                    edgecolor=color,
+                    alpha=0.7,
+                )
 
-            color = cm.hsv(float(i) / n_clusters)
-            plt.fill_betweenx(
-                np.arange(y_lower, y_upper),
-                0,
-                ith_cluster_silhouette_values,
-                facecolor=color,
-                edgecolor=color,
-                alpha=0.7,
+                plt.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+                y_lower = y_upper + 10
+
+            plt.xlabel("The silhouette coefficient values")
+            plt.ylabel("Cluster label")
+
+            plt.axvline(x=0, c='black', alpha=0.3)
+            plt.axvline(x=0.25, c='black', alpha=0.3)
+            plt.axvline(x=0.5, c='black', alpha=0.3)
+            plt.axvline(x=0.75, c='black', alpha=0.3)
+
+            plt.yticks([])  # Clear the yaxis labels / ticks
+            plt.xticks([-0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
+
+            plt.title(
+                "Silhouette analysis for " + label +
+                " clustering with n_clusters = " + str(n_clusters),
             )
+            plt.tight_layout()
+            plt.savefig('figures/silhouette_plot.png')
+            plt.show()
 
-            plt.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
-
-            y_lower = y_upper + 10
-
-        plt.xlabel("The silhouette coefficient values")
-        plt.ylabel("Cluster label")
-
-        plt.axvline(x=0, c='black', alpha=0.3)
-        plt.axvline(x=0.25, c='black', alpha=0.3)
-        plt.axvline(x=0.5, c='black', alpha=0.3)
-        plt.axvline(x=0.75, c='black', alpha=0.3)
-
-        plt.yticks([])  # Clear the yaxis labels / ticks
-        plt.xticks([-0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
-
-        plt.title(
-            "Silhouette analysis for " + label +
-            " clustering with n_clusters = " + str(n_clusters),
-        )
-        plt.tight_layout()
-        plt.show()
-
-        return sample_silhouette_values
+            return sample_silhouette_values
 
 
 def analyze_npi_data(
@@ -476,16 +493,18 @@ def analyze_npi_data(
         plt.figure()
         plt.title(method)
         hierarchy.dendrogram(cluster_hierarch)
+        plt.savefig('figures/dendrogram.png')
         plt.show()
         max_coph_dist = coph_dist_mat.max()
         # TODO: Discuss why abs(npis_corr) is used as input and not corr_pairwdist
         npi_idx_to_cluster_idx = flatten_hierarch_clustering(
             abs(npis_corr), cluster_hierarch,
             [wg * max_coph_dist
-             for wg in np.linspace(0.01, 1, 100)])
+             for wg in np.linspace(0.01, 1, 10)], method)
 
-        silhouette(npis_corr, npi_idx_to_cluster_idx.max(
-        )+1, npi_idx_to_cluster_idx, label=method)
+        # # TODO: ask why there was used npi_idx_to_cluster_idx.max()+1 before
+        silhouette(npis_corr, npi_idx_to_cluster_idx.max(),
+                   npi_idx_to_cluster_idx, label=method)
 
         cluster_dict = dict()
         cluster_codes = [[] for i in range(npi_idx_to_cluster_idx.max())]
@@ -570,6 +589,7 @@ def analyze_npi_data(
                         (i + 1),
                         len(npis_used))) for i in range(
                     num_images + 1)]:
+                # TODO: plotList doesn't work
                 customPlot.plotList(df_npis_aggregated.index,
                                     [df_npis_aggregated[code]
                                      for code in npi_codes_used[i]],
@@ -589,7 +609,8 @@ def main():
     npis_final = []
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
     file_format = 'json'
-    npi_codes_considered = ['M01a_010', 'M01a_020', 'M01a_100']
+    npi_codes_considered = ['M01a_010', 'M01a_020',
+                            'M01a_100', 'M01a_110', 'M01a_120']
     analyze_npi_data(True, True, fine_resolution, npis_final,
                      directory, file_format, npi_codes_considered)
 
