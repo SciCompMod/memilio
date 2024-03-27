@@ -19,6 +19,7 @@
 */
 #include "memilio/math/integrator.h"
 #include "memilio/utils/logging.h"
+#include <cstddef>
 
 namespace mio
 {
@@ -30,7 +31,8 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(const DerivFunction& f, const
     assert(tmax > t0);
     assert(dt > 0);
 
-    const size_t num_steps = ceil((tmax - t0) / dt); // estimated number of time steps (if equidistant)
+    const size_t num_steps =
+        static_cast<size_t>(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
     results.reserve(results.get_num_time_points() + num_steps);
 
