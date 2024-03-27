@@ -29,6 +29,10 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 
+#include <math.h>
+#include <numeric>
+#include <fstream>
+
 namespace mio
 {
 namespace osecirvvs
@@ -123,6 +127,11 @@ public:
                              this->populations.get_from(pop, {i, InfectionState::InfectedCriticalPartialImmunity}) +
                              this->populations.get_from(pop, {i, InfectionState::InfectedCriticalImprovedImmunity});
         }
+
+        double risk_h_partial = calc_risk_perceived(4., 0.7); // R_t
+        double risk_h_full    = calc_risk_perceived(6., 0.4); // vacc
+
+        mio::unused(risk_h_partial, risk_h_full);
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
@@ -483,6 +492,37 @@ public:
         }
     }
 
+    double calc_risk_perceived(const double a, const double b) const
+    {
+        const auto& icu_occupancy = this->parameters.template get<DailyICUOccupancy>();
+
+        std::vector<int> days(icu_occupancy.size());
+        std::iota(days.begin(), days.end(), 0);
+        std::reverse(days.begin(), days.end());
+
+        std::vector<double> perceived_risk(icu_occupancy.size());
+        for (size_t i = 0; i < icu_occupancy.size(); ++i) {
+            double gamma      = std::pow(b, a) * std::pow(days[i], a - 1) * std::exp(-b * days[i]) / std::tgamma(a);
+            perceived_risk[i] = icu_occupancy[i] * gamma;
+        }
+
+        // schreibe die werte von gamma_dist(days) in einen vector und speichere diesen als txt datei
+        std::ofstream file("/localdata1/code_2024/memilio/gamma_dist_a_" + std::to_string(a) + "_b_" +
+                           std::to_string(b) + ".txt");
+        for (size_t i = 0; i < icu_occupancy.size(); ++i) {
+            file << std::pow(b, a) * std::pow(days[i], a - 1) * std::exp(-b * days[i]) / std::tgamma(a) << std::endl;
+        }
+        file.close();
+
+        std::ofstream file_icu("/localdata1/code_2024/memilio/icu.txt");
+        for (size_t i = 0; i < icu_occupancy.size(); ++i) {
+            file_icu << icu_occupancy[i] << std::endl;
+        }
+        file_icu.close();
+
+        return std::accumulate(perceived_risk.begin(), perceived_risk.end(), 0.0);
+    }
+
     /**
     * serialize this. 
     * @see mio::serialize
@@ -643,7 +683,7 @@ public:
                 {(AgeGroup)age, InfectionState::InfectedCriticalImprovedImmunity});
             icu_occupancy += last_value[indx_icu_naive] + last_value[indx_icu_partial] + last_value[indx_icu_improved];
         }
-        params.template get<DailyICUOccupancy>().push_back(icu_occupancy);
+        params.template get<DailyICUOccupancy>().push_back(int(icu_occupancy));
     }
 
     /**
