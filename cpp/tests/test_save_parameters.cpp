@@ -572,7 +572,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                 *graph_model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[group]
                      .get_distribution()
                      .get(),
-                *graph_read_model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[group]
+                *graph_read_model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[group]
                      .get_distribution()
                      .get());
             check_distribution(

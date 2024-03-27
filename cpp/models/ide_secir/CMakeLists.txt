@@ -3,7 +3,7 @@ add_library(ide_secir
     model.h
     model.cpp
     simulation.h
-    simulation.cpp
+    simulation.cpp    
     parameters.h
 )
 target_link_libraries(ide_secir PUBLIC memilio)
