@@ -23,6 +23,8 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 
+#include "memilio/utils/time_series.h"
+
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
@@ -35,23 +37,22 @@ int main()
 
     mio::oseir::Model model(1);
 
-    double total_population                                                                            = 10000;
-    //model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    double total_population                                                      = 10000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
-        total_population -
-        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        total_population - model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
-    // suscetible now set with every other update
-    // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
+
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
-    contact_matrix[0].get_baseline().setConstant(10);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.1);
+
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant(1, 1, 0.7), mio::SimulationTime(30.));
 
     model.check_constraints();
 

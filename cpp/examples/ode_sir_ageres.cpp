@@ -1,9 +1,11 @@
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
 #include "ode_sir/model.h"
 
-int main(){
+int main()
+{
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
@@ -16,35 +18,26 @@ int main(){
 
     double nb_total_t0 = 10000, nb_inf_t0 = 50, nb_rec_t0 = 10;
 
-    // alpha = alpha_in; // percentage of asymptomatic cases
-    // beta  = beta_in; // risk of infection from the infected symptomatic patients
-    // rho   = rho_in; // hospitalized per infected
-    // theta = theta_in; // icu per hospitalized
-    // delta = delta_in; // deaths per ICUs
+    const size_t num_groups = 3;
+    mio::osir::Model model(num_groups);
 
-    mio::osir::Model model(3);
-    auto nb_groups = model.parameters.get_num_groups();
-
-    double fact    = 1.0 / (double)(size_t)nb_groups;
+    double fact = 1.0 / num_groups;
 
     auto& params = model.parameters;
 
-    for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        model.populations[{i, mio::osir::InfectionState::Infected}]  = fact*nb_inf_t0;
-        model.populations[{i, mio::osir::InfectionState::Recovered}] = fact*nb_rec_t0;
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); i++) {
+        model.populations[{i, mio::osir::InfectionState::Infected}]  = fact * nb_inf_t0;
+        model.populations[{i, mio::osir::InfectionState::Recovered}] = fact * nb_rec_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        model.parameters.get<mio::osir::TimeInfected>()[i] = 2.0;
+        model.parameters.get<mio::osir::TimeInfected>()[i]                     = 2.0;
         model.parameters.get<mio::osir::TransmissionProbabilityOnContact>()[i] = 0.3;
-
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osir::ContactPatterns>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(30.));
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7), mio::SimulationTime(30.));
 
     model.apply_constraints();
 

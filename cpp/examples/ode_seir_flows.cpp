@@ -40,13 +40,12 @@ int main()
 
     mio::oseir::Model model(1);
 
-    double total_population                                                                            = 10000;
+    double total_population                                                      = 10000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
-        total_population -
-        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        total_population - model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
     // suscetible now set with every other update
@@ -54,10 +53,12 @@ int main()
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
+
     auto seir = simulate_flows(t0, tmax, dt, model);
 
     printf("Compartments: \n");

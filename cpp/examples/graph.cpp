@@ -32,18 +32,26 @@ int main()
     const auto dt   = 0.5; //time step of migration, daily migration every second step
 
     mio::oseir::Model model(1);
+
+    // set population
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 10000;
+
+    // set transition times
     model.parameters.set<mio::oseir::TimeExposed>(1);
+    model.parameters.set<mio::oseir::TimeInfected>(1);
+
+    // set contact matrix
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(2.7);
-    model.parameters.set<mio::oseir::TimeInfected>(1);
 
     //two mostly identical groups
     auto model_group1 = model;
     auto model_group2 = model;
+
     //some contact restrictions in group 1
     mio::ContactMatrixGroup& contact_matrix1 = model_group1.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
     contact_matrix1[0].add_damping(0.5, mio::SimulationTime(5));
+    
     //infection starts in group 1
     model_group1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 9990;
     model_group1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 10;
