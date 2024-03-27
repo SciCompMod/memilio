@@ -21,9 +21,9 @@ import argparse
 import numpy as np
 import os
 
+import memilio.simulation as mio
 from memilio.simulation import abm
-from memilio.simulation.abm import AgeGroup
-from memilio.simulation.abm import VaccinationState
+from memilio.simulation import AgeGroup
 from memilio.simulation.abm import VirusVariant
 from memilio.simulation.abm import History
 from memilio.simulation.abm import Infection
@@ -38,231 +38,185 @@ class LocationMapping:
         self.inputId = None
         self.modelId = []
 
-# infection parameters are dependent on age group and vaccination state
+
+# number of age groups
+num_age_groups = 6
+age_group_0_to_4 = AgeGroup(0)
+age_group_5_to_14 = AgeGroup(1)
+age_group_15_to_34 = AgeGroup(2)
+age_group_35_to_59 = AgeGroup(3)
+age_group_60_to_79 = AgeGroup(4)
+age_group_80_plus = AgeGroup(5)
 
 
 def set_infection_parameters(parameters):
-    infection_params = abm.GlobalInfectionParameters()
+    infection_params = abm.Parameters(num_age_groups)
 
     # AgeGroup 0-4
-    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                      VaccinationState.Unvaccinated] = parameters.loc["Age0to4_IncubationPeriod"].value
-    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                  VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_InfectedNoSymptomsToSymptoms"].value)
-    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                   VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_InfectedNoSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                 VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_InfectedSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                              VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_InfectedSymptomsToSevere"].value)
-    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                       VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_SevereToRecovered"].value)
-    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                      VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_SevereToCritical"].value)
-    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                         VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_CriticalToRecovered"].value)
-    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                    VaccinationState.Unvaccinated] = (
-        parameters.loc["Age0to4_CriticalToDead"].value)
-    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                  VaccinationState.Unvaccinated,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype,
+                                      age_group_0_to_4] = parameters.loc["Age0to4_IncubationPeriod"].value
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype,
+                                                  age_group_0_to_4] = parameters.loc["Age0to4_InfectedNoSymptomsToSymptoms"].value
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype,
+                                                   age_group_0_to_4] = parameters.loc["Age0to4_InfectedNoSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype,
+                                                 age_group_0_to_4] = parameters.loc["Age0to4_InfectedSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype,
+                                              age_group_0_to_4] = parameters.loc["Age0to4_InfectedSymptomsToSevere"].value
+    infection_params.SevereToRecovered[VirusVariant.Wildtype,
+                                       age_group_0_to_4] = parameters.loc["Age0to4_SevereToRecovered"].value
+    infection_params.SevereToCritical[VirusVariant.Wildtype,
+                                      age_group_0_to_4] = parameters.loc["Age0to4_SevereToCritical"].value
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype,
+                                         age_group_0_to_4] = parameters.loc["Age0to4_CriticalToRecovered"].value
+    infection_params.CriticalToDead[VirusVariant.Wildtype,
+                                    age_group_0_to_4] = parameters.loc["Age0to4_CriticalToDead"].value
+    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, age_group_0_to_4,
                                   parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
                                   parameters.loc["incline"].value, parameters.loc["incline"].value,
                                   parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4,
+        infection_params, VirusVariant.Wildtype, age_group_0_to_4,
         parameters.loc["alpha"].value, parameters.loc["alpha"].value,
         parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 5-14
-    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                      VaccinationState.Unvaccinated] = parameters.loc["Age5to14_IncubationPeriod"].value
-    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                  VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_InfectedNoSymptomsToSymptoms"].value)
-    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                   VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_InfectedNoSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                 VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_InfectedSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                              VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_InfectedSymptomsToSevere"].value)
-    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                       VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_SevereToRecovered"].value)
-    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                      VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_SevereToCritical"].value)
-    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                         VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_CriticalToRecovered"].value)
-    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                    VaccinationState.Unvaccinated] = (
-        parameters.loc["Age5to14_CriticalToDead"].value)
-    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                  VaccinationState.Unvaccinated,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype,
+                                      age_group_5_to_14] = parameters.loc["Age5to14_IncubationPeriod"].value
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype,
+                                                  age_group_5_to_14] = parameters.loc["Age5to14_InfectedNoSymptomsToSymptoms"].value
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype,
+                                                   age_group_5_to_14] = parameters.loc["Age5to14_InfectedNoSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype,
+                                                 age_group_5_to_14] = parameters.loc["Age5to14_InfectedSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype,
+                                              age_group_5_to_14] = parameters.loc["Age5to14_InfectedSymptomsToSevere"].value
+    infection_params.SevereToRecovered[VirusVariant.Wildtype,
+                                       age_group_5_to_14] = parameters.loc["Age5to14_SevereToRecovered"].value
+    infection_params.SevereToCritical[VirusVariant.Wildtype,
+                                      age_group_5_to_14] = parameters.loc["Age5to14_SevereToCritical"].value
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype,
+                                         age_group_5_to_14] = parameters.loc["Age5to14_CriticalToRecovered"].value
+    infection_params.CriticalToDead[VirusVariant.Wildtype,
+                                    age_group_5_to_14] = parameters.loc["Age5to14_CriticalToDead"].value
+    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, age_group_5_to_14,
                                   parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
                                   parameters.loc["incline"].value, parameters.loc["incline"].value,
                                   parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14,
+        infection_params, VirusVariant.Wildtype, age_group_5_to_14,
         parameters.loc["alpha"].value, parameters.loc["alpha"].value,
         parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 15-34
-    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                      VaccinationState.Unvaccinated] = parameters.loc["Age15to34_IncubationPeriod"].value
-    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                  VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_InfectedNoSymptomsToSymptoms"].value)
-    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                   VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_InfectedNoSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                 VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_InfectedSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                              VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_InfectedSymptomsToSevere"].value)
-    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                       VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_SevereToRecovered"].value)
-    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                      VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_SevereToCritical"].value)
-    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                         VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_CriticalToRecovered"].value)
-    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                    VaccinationState.Unvaccinated] = (
-        parameters.loc["Age15to34_CriticalToDead"].value)
-    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                  VaccinationState.Unvaccinated,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype,
+                                      age_group_15_to_34] = parameters.loc["Age15to34_IncubationPeriod"].value
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype,
+                                                  age_group_15_to_34] = parameters.loc["Age15to34_InfectedNoSymptomsToSymptoms"].value
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype,
+                                                   age_group_15_to_34] = parameters.loc["Age15to34_InfectedNoSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype,
+                                                 age_group_15_to_34] = parameters.loc["Age15to34_InfectedSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype,
+                                              age_group_15_to_34] = parameters.loc["Age15to34_InfectedSymptomsToSevere"].value
+    infection_params.SevereToRecovered[VirusVariant.Wildtype,
+                                       age_group_15_to_34] = parameters.loc["Age15to34_SevereToRecovered"].value
+    infection_params.SevereToCritical[VirusVariant.Wildtype,
+                                      age_group_15_to_34] = parameters.loc["Age15to34_SevereToCritical"].value
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype,
+                                         age_group_15_to_34] = parameters.loc["Age15to34_CriticalToRecovered"].value
+    infection_params.CriticalToDead[VirusVariant.Wildtype,
+                                    age_group_15_to_34] = parameters.loc["Age15to34_CriticalToDead"].value
+    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, age_group_15_to_34,
                                   parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
                                   parameters.loc["incline"].value, parameters.loc["incline"].value,
                                   parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34,
+        infection_params, VirusVariant.Wildtype, age_group_15_to_34,
         parameters.loc["alpha"].value, parameters.loc["alpha"].value,
         parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 35-59
-    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                      VaccinationState.Unvaccinated] = parameters.loc["Age35to59_IncubationPeriod"].value
-    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                  VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_InfectedNoSymptomsToSymptoms"].value)
-    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                   VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_InfectedNoSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                 VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_InfectedSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                              VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_InfectedSymptomsToSevere"].value)
-    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                       VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_SevereToRecovered"].value)
-    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                      VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_SevereToCritical"].value)
-    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                         VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_CriticalToRecovered"].value)
-    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                    VaccinationState.Unvaccinated] = (
-        parameters.loc["Age35to59_CriticalToDead"].value)
-    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                  VaccinationState.Unvaccinated,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype,
+                                      age_group_35_to_59] = parameters.loc["Age35to59_IncubationPeriod"].value
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype,
+                                                  age_group_35_to_59] = parameters.loc["Age35to59_InfectedNoSymptomsToSymptoms"].value
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype,
+                                                   age_group_35_to_59] = parameters.loc["Age35to59_InfectedNoSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype,
+                                                 age_group_35_to_59] = parameters.loc["Age35to59_InfectedSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype,
+                                              age_group_35_to_59] = parameters.loc["Age35to59_InfectedSymptomsToSevere"].value
+    infection_params.SevereToRecovered[VirusVariant.Wildtype,
+                                       age_group_35_to_59] = parameters.loc["Age35to59_SevereToRecovered"].value
+    infection_params.SevereToCritical[VirusVariant.Wildtype,
+                                      age_group_35_to_59] = parameters.loc["Age35to59_SevereToCritical"].value
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype,
+                                         age_group_35_to_59] = parameters.loc["Age35to59_CriticalToRecovered"].value
+    infection_params.CriticalToDead[VirusVariant.Wildtype,
+                                    age_group_35_to_59] = parameters.loc["Age35to59_CriticalToDead"].value
+    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, age_group_35_to_59,
                                   parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
                                   parameters.loc["incline"].value, parameters.loc["incline"].value,
                                   parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59,
+        infection_params, VirusVariant.Wildtype, age_group_35_to_59,
         parameters.loc["alpha"].value, parameters.loc["alpha"].value,
         parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 60-79
-    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                      VaccinationState.Unvaccinated] = parameters.loc["Age60to79_IncubationPeriod"].value
-    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                  VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_InfectedNoSymptomsToSymptoms"].value)
-    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                   VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_InfectedNoSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                 VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_InfectedSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                              VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_InfectedSymptomsToSevere"].value)
-    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                       VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_SevereToRecovered"].value)
-    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                      VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_SevereToCritical"].value)
-    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                         VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_CriticalToRecovered"].value)
-    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                    VaccinationState.Unvaccinated] = (
-        parameters.loc["Age60to79_CriticalToDead"].value)
-    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                  VaccinationState.Unvaccinated,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype,
+                                      age_group_60_to_79] = parameters.loc["Age60to79_IncubationPeriod"].value
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype,
+                                                  age_group_60_to_79] = parameters.loc["Age60to79_InfectedNoSymptomsToSymptoms"].value
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype,
+                                                   age_group_60_to_79] = parameters.loc["Age60to79_InfectedNoSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype,
+                                                 age_group_60_to_79] = parameters.loc["Age60to79_InfectedSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype,
+                                              age_group_60_to_79] = parameters.loc["Age60to79_InfectedSymptomsToSevere"].value
+    infection_params.SevereToRecovered[VirusVariant.Wildtype,
+                                       age_group_60_to_79] = parameters.loc["Age60to79_SevereToRecovered"].value
+    infection_params.SevereToCritical[VirusVariant.Wildtype,
+                                      age_group_60_to_79] = parameters.loc["Age60to79_SevereToCritical"].value
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype,
+                                         age_group_60_to_79] = parameters.loc["Age60to79_CriticalToRecovered"].value
+    infection_params.CriticalToDead[VirusVariant.Wildtype,
+                                    age_group_60_to_79] = parameters.loc["Age60to79_CriticalToDead"].value
+    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, age_group_60_to_79,
                                   parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
                                   parameters.loc["incline"].value, parameters.loc["incline"].value,
                                   parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79,
+        infection_params, VirusVariant.Wildtype, age_group_60_to_79,
         parameters.loc["alpha"].value, parameters.loc["alpha"].value,
         parameters.loc["beta"].value, parameters.loc["beta"].value)
 
     # AgeGroup 80+
-    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                      VaccinationState.Unvaccinated] = parameters.loc["Age80plus_IncubationPeriod"].value
-    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                  VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_InfectedNoSymptomsToSymptoms"].value)
-    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                   VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_InfectedNoSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                 VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_InfectedSymptomsToRecovered"].value)
-    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                              VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_InfectedSymptomsToSevere"].value)
-    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                       VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_SevereToRecovered"].value)
-    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                      VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_SevereToCritical"].value)
-    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                         VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_CriticalToRecovered"].value)
-    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                    VaccinationState.Unvaccinated] = (
-        parameters.loc["Age80plus_CriticalToDead"].value)
-    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                  VaccinationState.Unvaccinated,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype,
+                                      age_group_80_plus] = parameters.loc["Age80plus_IncubationPeriod"].value
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype,
+                                                  age_group_80_plus] = parameters.loc["Age80plus_InfectedNoSymptomsToSymptoms"].value
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype,
+                                                   age_group_80_plus] = parameters.loc["Age80plus_InfectedNoSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype,
+                                                 age_group_80_plus] = parameters.loc["Age80plus_InfectedSymptomsToRecovered"].value
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype,
+                                              age_group_80_plus] = parameters.loc["Age80plus_InfectedSymptomsToSevere"].value
+    infection_params.SevereToRecovered[VirusVariant.Wildtype,
+                                       age_group_80_plus] = parameters.loc["Age80plus_SevereToRecovered"].value
+    infection_params.SevereToCritical[VirusVariant.Wildtype,
+                                      age_group_80_plus] = parameters.loc["Age80plus_SevereToCritical"].value
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype,
+                                         age_group_80_plus] = parameters.loc["Age80plus_CriticalToRecovered"].value
+    infection_params.CriticalToDead[VirusVariant.Wildtype,
+                                    age_group_80_plus] = parameters.loc["Age80plus_CriticalToDead"].value
+    abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, age_group_80_plus,
                                   parameters.loc["peak_max"].value, parameters.loc["peak_max"].value,
                                   parameters.loc["incline"].value, parameters.loc["incline"].value,
                                   parameters.loc["decline"].value, parameters.loc["decline"].value)
     abm.set_infectivity_parameters(
-        infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus,
+        infection_params, VirusVariant.Wildtype, age_group_80_plus,
         parameters.loc["alpha"].value, parameters.loc["alpha"].value,
         parameters.loc["beta"].value, parameters.loc["beta"].value)
 
@@ -276,12 +230,12 @@ def read_txt(path):
 
 def make_one_person_households(number_of_households):
     # one-person household member
-    one_person_household_member = abm.HouseholdMember()
+    one_person_household_member = abm.HouseholdMember(num_age_groups)
     # set weights for household member
-    one_person_household_member.set_age_weight(AgeGroup.Age15to34, 4364)
-    one_person_household_member.set_age_weight(AgeGroup.Age35to59, 7283)
-    one_person_household_member.set_age_weight(AgeGroup.Age60to79, 4100)
-    one_person_household_member.set_age_weight(AgeGroup.Age80plus, 1800)
+    one_person_household_member.set_age_weight(age_group_15_to_34, 4364)
+    one_person_household_member.set_age_weight(age_group_35_to_59, 7283)
+    one_person_household_member.set_age_weight(age_group_60_to_79, 4100)
+    one_person_household_member.set_age_weight(age_group_80_plus, 1800)
 
     # create one-person household group
     household_group = abm.HouseholdGroup()
@@ -298,22 +252,22 @@ def make_multiple_person_households(household_size,
                                     number_of_other_households):
 
     # members for multiple person households
-    child = abm.HouseholdMember()
-    child.set_age_weight(AgeGroup.Age0to4, 1)
-    child.set_age_weight(AgeGroup.Age5to14, 1)
+    child = abm.HouseholdMember(num_age_groups)
+    child.set_age_weight(age_group_0_to_4, 1)
+    child.set_age_weight(age_group_5_to_14, 1)
 
-    parent = abm.HouseholdMember()
-    parent.set_age_weight(AgeGroup.Age15to34, 2)
-    parent.set_age_weight(AgeGroup.Age35to59, 2)
-    parent.set_age_weight(AgeGroup.Age60to79, 1)
+    parent = abm.HouseholdMember(num_age_groups)
+    parent.set_age_weight(age_group_15_to_34, 2)
+    parent.set_age_weight(age_group_35_to_59, 2)
+    parent.set_age_weight(age_group_60_to_79, 1)
 
-    other = abm.HouseholdMember()
-    other.set_age_weight(AgeGroup.Age0to4, 5000)
-    other.set_age_weight(AgeGroup.Age5to14, 6000)
-    other.set_age_weight(AgeGroup.Age15to34, 14943)
-    other.set_age_weight(AgeGroup.Age35to59, 22259)
-    other.set_age_weight(AgeGroup.Age60to79, 11998)
-    other.set_age_weight(AgeGroup.Age80plus, 5038)
+    other = abm.HouseholdMember(num_age_groups)
+    other.set_age_weight(age_group_0_to_4, 5000)
+    other.set_age_weight(age_group_5_to_14, 6000)
+    other.set_age_weight(age_group_15_to_34, 14943)
+    other.set_age_weight(age_group_35_to_59, 22259)
+    other.set_age_weight(age_group_60_to_79, 11998)
+    other.set_age_weight(age_group_80_plus, 5038)
 
     household_group = abm.HouseholdGroup()
     # add two parent households
@@ -519,8 +473,8 @@ def assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, in
                                            p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
                                                infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
         if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
-            person.add_new_infection(Infection(VirusVariant.Wildtype, person.age,
-                                     world.infection_parameters, t0, abm.InfectionState(infection_state), False), t0)
+            person.add_new_infection(Infection(
+                world, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
 
 
 def find_all_locations_of_type(world, type):
@@ -569,13 +523,13 @@ def assign_locations(world):
             social_events[int(event)].index, social_events[int(event)].type))
 
         # assign school to agents between 5 and 14 years
-        if (person.age == AgeGroup.Age5to14):
+        if (person.age == age_group_5_to_14):
             school = np.random.choice(
                 np.arange(0, len(schools)), p=school_weights)
             person.set_assigned_location(abm.LocationId(
                 schools[int(school)].index, schools[int(school)].type))
         # assign work to agents between 15 and 59
-        if (person.age == AgeGroup.Age15to34 or person.age == AgeGroup.Age35to59):
+        if (person.age == age_group_15_to_34 or person.age == age_group_35_to_59):
             work = np.random.choice(
                 np.arange(0, len(workplaces)), p=workplace_weights)
             person.set_assigned_location(abm.LocationId(
@@ -695,8 +649,9 @@ def set_sim_result_at_start(sim):
 
 
 def run_abm_simulation():
-    input_path = 'input'
-    output_path = 'output'
+    mio.set_log_level(mio.LogLevel.Warning)
+    input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
+    output_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -710,11 +665,11 @@ def run_abm_simulation():
         input_path, 'INSIDe_Demonstrator_AreaList_modified.txt'))
     parameters = pd.read_csv(os.path.join(
         input_path, 'parameter_table.csv'), index_col=0)
-    # create simulation
-    sim = abm.Simulation(t0)
+    # create simulation with starting timepoint and number of age groups
+    sim = abm.Simulation(t0, num_age_groups)
     # set infection parameters
-    sim.world.infection_parameters = set_infection_parameters(parameters)
-    # as input areas do fit one-to-one to abm location types they have there has to be a mapping
+    sim.world.parameters = set_infection_parameters(parameters)
+    # as input areas do not fit one-to-one to abm location types, there has to be a mapping
     mapping = create_locations_from_input(
         sim.world, areas, household_distribution)
     # assign initial infection states according to distribution
@@ -737,16 +692,6 @@ def run_abm_simulation():
     write_infection_paths_to_file(os.path.join(
         output_path, 'infection_paths.txt'), log)
 
-    # print compartment values to csv
-    # only used for validation purposes
-    with open(os.path.join(output_path, 'console_output.csv'), 'w') as f:
-        f.write("t S E C I I_s I_c R D\n")
-        for t in range(sim.result.get_num_time_points()):
-            line = str(sim.result.get_time(t)) + " "
-            comps = sim.result.get_value(t)
-            for c in range(len(comps)):
-                line += str(comps[c]) + " "
-            f.write(line + "\n")
     print('done')
 
 
@@ -755,4 +700,6 @@ if __name__ == "__main__":
         'abm demonstrator',
         description='Example demonstrating the agent-based model for a synthetic population.')
     args = arg_parser.parse_args()
+    # set LogLevel
+    mio.set_log_level(mio.LogLevel.Warning)
     run_abm_simulation(**args.__dict__)

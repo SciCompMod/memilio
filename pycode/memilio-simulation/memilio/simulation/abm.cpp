@@ -30,6 +30,7 @@
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
+#include "utils/logging.h"
 #include <type_traits>
 
 namespace py = pybind11;
@@ -74,6 +75,8 @@ struct LogPersonsPerLocationAndInfectionTime : mio::LogAlways {
 
 PYBIND11_MODULE(_simulation_abm, m)
 {
+    //pymio::bind_logging(m, "LogLevel");
+
     pymio::iterable_enum<mio::abm::InfectionState>(m, "InfectionState", py::module_local{})
         .value("Susceptible", mio::abm::InfectionState::Susceptible)
         .value("Exposed", mio::abm::InfectionState::Exposed)
@@ -221,9 +224,13 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<const std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
 
     py::class_<mio::abm::Infection>(m, "Infection")
-        .def(py::init<mio::abm::Person::RandomNumberGenerator&, mio::abm::VirusVariant, mio::AgeGroup,
-                      const mio::abm::Parameters&, mio::abm::TimePoint, mio::abm::InfectionState,
-                      std::pair<mio::abm::ExposureType, mio::abm::TimePoint>, bool>());
+        .def(py::init([](mio::abm::World& world, mio::abm::Person& person, mio::abm::VirusVariant variant,
+                         mio::abm::TimePoint start_date, mio::abm::InfectionState start_state, bool detected) {
+            mio::abm::Person::RandomNumberGenerator& rng =
+                mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+            return mio::abm::Infection(rng, variant, person.get_age(), world.parameters, start_date, start_state,
+                                       person.get_latest_protection(), detected);
+        }));
 
     py::class_<mio::abm::Location>(m, "Location")
         .def("set_capacity", &mio::abm::Location::set_capacity)
@@ -265,6 +272,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("get_individualized_location",
              py::overload_cast<mio::abm::LocationId>(&mio::abm::World::get_individualized_location, py::const_),
              py::return_value_policy::reference_internal)
+        .def("get_rng", &mio::abm::World::get_rng, py::return_value_policy::reference_internal)
         .def_property_readonly("locations", &mio::abm::World::get_locations,
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
         .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})
@@ -327,6 +335,9 @@ PYBIND11_MODULE(_simulation_abm, m)
                                                       LogPersonsPerLocationAndInfectionTime>& self) {
             return self.get_log();
         });
+
+    py::class_<mio::abm::Person::RandomNumberGenerator>(m, "RandomNumberGenerator")
+        .def(py::init<mio::RandomNumberGenerator, mio::abm::Person>());
 }
 
 // PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))

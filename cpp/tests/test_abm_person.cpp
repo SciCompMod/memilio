@@ -102,8 +102,8 @@ TEST(TestPerson, setGetAssignedLocation)
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
-    auto test_params = mio::abm::TestParameters{1.01,1.01}; //100% safe test
+    auto rng         = mio::RandomNumberGenerator();
+    auto test_params = mio::abm::TestParameters{1.01, 1.01}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -122,13 +122,13 @@ TEST(TestPerson, quarantine)
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto dt        = mio::abm::hours(1);
     infection_parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
         0.5 * dt.days();
 
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
                                        infection_parameters);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
-    
+
     person.get_tested(rng_person, t_morning, test_params);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);

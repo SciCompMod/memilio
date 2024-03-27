@@ -182,7 +182,9 @@ static_assert(sizeof(Key<uint32_t>) == sizeof(uint32_t), "Empty Base Optimizatio
 * @tparam an unsigned integer type that determines the size of the counter, i.e., the length of the random sequence.
 */
 template <class T>
-struct MEMILIO_ENABLE_EBO Counter : TypeSafe<T, Counter<T>>, OperatorComparison<Counter<T>>, OperatorAdditionSubtraction<Counter<T>> {
+struct MEMILIO_ENABLE_EBO Counter : TypeSafe<T, Counter<T>>,
+                                    OperatorComparison<Counter<T>>,
+                                    OperatorAdditionSubtraction<Counter<T>> {
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
     using TypeSafe<T, Counter<T>>::TypeSafe;
 };
@@ -243,12 +245,13 @@ Counter<UIntC> rng_totalsequence_counter(UIntN subsequence_idx, CounterS counter
     static_assert(N_BITS <= C_BITS, "Subsequence index must not be bigger than total sequence counter.");
     static_assert(N_BITS <= sizeof(UIntN) * BITS_PER_BYTE, "Subsequence index must be at least N bits");
 
-    assert(UIntC(subsequence_idx) <= (UIntC(1) << N_BITS) && "Subsequence index is too large."); //(1 << N) is the same as (2^N)
+    assert(UIntC(subsequence_idx) <= (UIntC(1) << N_BITS) &&
+           "Subsequence index is too large."); //(1 << N) is the same as (2^N)
 
     //N high bits: subsequence idx
     //S low bits: subsequence counter
     //=> C = N + S bits: total sequence counter
-    //example: 
+    //example:
     //subsequence index uint32_t(181) = 0x000000B5
     //subsequence counter uint32_t(41309) = 0x0000A15D
     //total sequence counter = 0x000000B50000A15D
@@ -271,7 +274,7 @@ Counter<UIntC> rng_totalsequence_counter(UIntN subsequence_idx, CounterS counter
 template <class UIntS, class CounterC>
 Counter<UIntS> rng_subsequence_counter(CounterC counter)
 {
-    using UIntC = typename CounterC::ValueType;
+    using UIntC                = typename CounterC::ValueType;
     static const UIntC C_BYTES = sizeof(UIntC);
     static const UIntC S_BYTES = sizeof(UIntS);
 
@@ -672,6 +675,13 @@ using UniformDistribution = DistributionAdapter<std::uniform_real_distribution<R
  */
 template <class Int>
 using PoissonDistribution = DistributionAdapter<std::poisson_distribution<Int>>;
+
+/**
+ * adapted lognormal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using LogNormalDistribution = DistributionAdapter<std::lognormal_distribution<Real>>;
 
 } // namespace mio
 
