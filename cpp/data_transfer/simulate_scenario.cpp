@@ -31,6 +31,7 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
+#include <cstddef>
 #include <cstdio>
 #include <iomanip>
 
@@ -243,6 +244,35 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
 }
 
 /**
+ * @brief Get the initial number deaths from the RKI data.
+ * 
+ * @param data_dir data directory used to get the cases data.
+ * @param start_date start date of the simulation.
+ * @param vregion vector of regions to get the initial deaths for.
+ * @return ScalarType initial number of deaths stratified by age group and region.
+ */
+std::vector<std::vector<ScalarType>> get_initial_deaths(const fs::path& data_dir, mio::Date start_date,
+                                                        std::vector<int> const& vregion)
+{
+    // read simple casedata file to obtain the inital number of deaths
+    auto path_cases      = mio::path_join(data_dir.string(), "pydata", "Germany", "cases_all_county_age_ma7.json");
+    auto rki_data_status = mio::read_confirmed_cases_data(path_cases);
+    auto rki_data        = rki_data_status.value();
+
+    std::vector<std::vector<ScalarType>> initial_deaths(400, std::vector<ScalarType>(6, 0.0));
+    for (auto& entry : rki_data) {
+        if (entry.date == start_date) {
+            auto it         = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
+                return r == 0 || entry.county_id->get() == r;
+            });
+            auto region_idx = size_t(it - vregion.begin());
+            initial_deaths[region_idx][static_cast<size_t>(entry.age_group)] += entry.num_deaths;
+        }
+    }
+    return initial_deaths;
+}
+
+/**
  * Create the input graph for the parameter study.
  * Reads files from the data directory.
  * @param start_date start date of the simulation.
@@ -311,6 +341,18 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
+    // add initial deaths to the DeadNaive compartment
+    auto initial_deaths_cases = get_initial_deaths(data_dir, start_date, node_ids);
+    std::cout << "Initial deaths (sum): "
+              << std::accumulate(initial_deaths_cases[0].begin(), initial_deaths_cases[0].end(), 0.0) << std::endl;
+
+    for (size_t node_indx = 0; node_indx < node_ids.size(); ++node_indx) {
+        for (auto age = 0; age < num_groups; ++age) {
+            params_graph.nodes()[node_indx]
+                .property.populations[{(mio::AgeGroup)age, mio::osecirvvs::InfectionState::DeadNaive}] =
+                initial_deaths_cases[node_indx][age];
+        }
+    }
     return mio::success(params_graph);
 }
 

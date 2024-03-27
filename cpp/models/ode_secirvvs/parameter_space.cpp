@@ -156,7 +156,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         auto& node_model = params_node.property;
 
         //sample local parameters
-        draw_sample_demographics(params_node.property);
+        // draw_sample_demographics(params_node.property);
 
         //copy global parameters
         //save demographic parameters so they aren't overwritten
