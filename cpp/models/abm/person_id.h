@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,26 +17,35 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-/** single include header for ABM */
 
-#ifndef EPI_ABM_H
-#define EPI_ABM_H
+#ifndef MIO_ABM_PERSON_ID_H_
+#define MIO_ABM_PERSON_ID_H_
 
-#include "abm/parameters.h"
-#include "abm/simulation.h"
-#include "abm/world.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/location_type.h"
-#include "memilio/math/interpolation.h"
-#include "memilio/utils/random_number_generator.h"
-#include "abm/migration_rules.h"
-#include "abm/testing_strategy.h"
-#include "abm/infection.h"
-#include "abm/infection_state.h"
-#include "abm/virus_variant.h"
-#include "abm/vaccine.h"
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
+#include "memilio/utils/type_safe.h"
+#include <limits>
 
-#endif
+namespace mio
+{
+namespace abm
+{
+
+struct PersonId : mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<PersonId> {
+    PersonId(uint32_t id)
+        : mio::TypeSafe<uint32_t, PersonId>(id)
+    {
+    }
+    PersonId()
+        : mio::TypeSafe<uint32_t, PersonId>(std::numeric_limits<uint32_t>::max())
+    {
+    }
+
+    const static PersonId invalid_id()
+    {
+        return PersonId();
+    }
+};
+
+} // namespace abm
+} // namespace mio
+
+#endif // MIO_ABM_PERSON_ID_H_

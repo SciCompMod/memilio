@@ -22,12 +22,12 @@
 #define ABM_MOVEMENT_DATA_H
 
 #include "abm/time.h"
+#include <cstdint>
 
 namespace mio
 {
 namespace abm
 {
-
 
 /**
  * @brief Mode of Transport.
@@ -42,7 +42,6 @@ enum class TransportMode : uint32_t
     Other,
     Unknown
 };
-
 
 /**
  * @brief Type of the activity.

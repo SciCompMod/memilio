@@ -17,10 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/analyze_result.h"
+#include "abm/world.h"
+#include "matchers.h"
 #include "memilio/compartments/simulation.h"
 #include "ode_secir/analyze_result.h"
-#include "abm/analyze_result.h"
-#include "matchers.h"
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 

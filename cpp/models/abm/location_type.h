@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_LOCATION_TYPE_H
-#define EPI_ABM_LOCATION_TYPE_H
+#ifndef MIO_ABM_LOCATION_TYPE_H
+#define MIO_ABM_LOCATION_TYPE_H
 
+#include "memilio/io/io.h"
 #include <cstdint>
 #include <limits>
 #include <functional>
@@ -57,7 +58,7 @@ static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>
  */
 struct LocationId {
     uint32_t index;
-    LocationType type;
+    LocationType type; // TODO: move to location
 
     bool operator==(const LocationId& rhs) const
     {
@@ -75,6 +76,48 @@ struct LocationId {
             return index < rhs.index;
         }
         return (type < rhs.type);
+    }
+
+    // same interface as location
+    uint32_t get_index() const
+    {
+        return index;
+    }
+
+    // same interface as location
+    LocationType get_type() const
+    {
+        return type;
+    }
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("LocationId");
+        obj.add_element("index", index);
+        obj.add_element("type", type);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<LocationId> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("LocationId");
+        auto i   = obj.expect_element("index", mio::Tag<uint32_t>{});
+        auto t   = obj.expect_element("type", mio::Tag<LocationType>{});
+        return apply(
+            io,
+            [](auto&& index_, auto&& type_) {
+                return LocationId{index_, type_};
+            },
+            i, t);
     }
 };
 
