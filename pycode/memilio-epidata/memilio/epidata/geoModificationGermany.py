@@ -320,7 +320,7 @@ def get_official_county_table():
         file = gd.download_file(url_counties, 1024, None,
                                 p.set_progress, verify=False)
     county_table = pd.read_excel(
-        file, sheet_name=1, header=5, engine='openpyxl')
+        file, sheet_name=1, header=5, engine=gd.Conf.excel_engine)
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
         '2': "type",  # name not important, column not used so far

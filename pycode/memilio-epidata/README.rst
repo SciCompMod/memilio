@@ -50,6 +50,7 @@ Required python packages:
 - matplotlib
 - tables
 - numpy>=1.22,<1.25
+- pyarrow
 - openpyxl
 - xlrd
 - requests
