@@ -111,9 +111,8 @@ public:
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            auto rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
             test_and_trace_required +=
-                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) / params.get<TimeInfectedNoSymptoms>()[i] *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunity}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunity}) +
@@ -160,9 +159,7 @@ public:
             size_t ISyIICi =
                 this->populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
-            size_t SIIi    = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
-            double rateE   = 1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]);
-            double rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+            size_t SIIi = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
 
             double reducExposedPartialImmunity           = params.get<ReducExposedPartialImmunity>()[i];
             double reducExposedImprovedImmunity          = params.get<ReducExposedImprovedImmunity>()[i];
@@ -267,20 +264,22 @@ public:
             /**** path of immune-naive ***/
             // Exposed
             flows[get_flat_flow_index<InfectionState::ExposedNaive, InfectionState::InfectedNoSymptomsNaive>({i})] +=
-                rateE * y[ENi];
+                y[ENi] / params.get<TimeExposed>()[i];
 
             // InfectedNoSymptoms
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsNaive,
                                       InfectionState::SusceptibleImprovedImmunity>({i})] =
-                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSNi];
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] / params.get<TimeInfectedNoSymptoms>()[i] * y[INSNi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsNaive, InfectionState::InfectedSymptomsNaive>(
-                {i})] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNi];
+                {i})] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) /
+                        params.get<TimeInfectedNoSymptoms>()[i] * y[INSNi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsNaiveConfirmed,
                                       InfectionState::InfectedSymptomsNaiveConfirmed>({i})] =
-                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNCi];
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) / params.get<TimeInfectedNoSymptoms>()[i] *
+                y[INSNCi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsNaiveConfirmed,
                                       InfectionState::SusceptibleImprovedImmunity>({i})] =
-                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSNCi];
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] / params.get<TimeInfectedNoSymptoms>()[i] * y[INSNCi];
 
             // InfectedSymptoms
             flows[get_flat_flow_index<InfectionState::InfectedSymptomsNaive, InfectionState::InfectedSevereNaive>(
@@ -319,27 +318,30 @@ public:
             // /**** path of partially immune (e.g., one dose of vaccination) ***/
             // Exposed
             flows[get_flat_flow_index<InfectionState::ExposedPartialImmunity,
-                                      InfectionState::InfectedNoSymptomsPartialImmunity>({i})] += rateE * y[EPIi];
+                                      InfectionState::InfectedNoSymptomsPartialImmunity>({i})] +=
+                y[EPIi] / params.get<TimeExposed>()[i];
 
             // InfectedNoSymptoms
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsPartialImmunity,
                                       InfectionState::SusceptibleImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
-                rateINS / reducTimeInfectedMild * y[INSPIi];
+                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSPIi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsPartialImmunity,
                                       InfectionState::InfectedSymptomsPartialImmunity>({i})] =
                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * (rateINS / reducTimeInfectedMild) * y[INSPIi];
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSPIi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
                                       InfectionState::InfectedSymptomsPartialImmunityConfirmed>({i})] =
                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * (rateINS / reducTimeInfectedMild) * y[INSPICi];
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSPICi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
                                       InfectionState::SusceptibleImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
-                rateINS / reducTimeInfectedMild * y[INSPICi];
+                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSPICi];
 
             // InfectedSymptoms
             flows[get_flat_flow_index<InfectionState::InfectedSymptomsPartialImmunity,
@@ -398,27 +400,30 @@ public:
             // /**** path of twice vaccinated, here called immune although reinfection is possible now ***/
             // Exposed
             flows[get_flat_flow_index<InfectionState::ExposedImprovedImmunity,
-                                      InfectionState::InfectedNoSymptomsImprovedImmunity>({i})] += rateE * y[EIIi];
+                                      InfectionState::InfectedNoSymptomsImprovedImmunity>({i})] +=
+                y[EIIi] / params.get<TimeExposed>()[i];
 
             // InfectedNoSymptoms
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunity,
                                       InfectionState::SusceptibleImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
-                rateINS / reducTimeInfectedMild * y[INSIIi];
+                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSIIi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunity,
                                       InfectionState::InfectedSymptomsImprovedImmunity>({i})] =
                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * (rateINS / reducTimeInfectedMild) * y[INSIIi];
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSIIi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
                                       InfectionState::InfectedSymptomsImprovedImmunityConfirmed>({i})] =
                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * (rateINS / reducTimeInfectedMild) * y[INSIICi];
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSIICi];
             flows[get_flat_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
                                       InfectionState::SusceptibleImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
-                rateINS / reducTimeInfectedMild * y[INSIICi];
+                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) /
+                (params.get<TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) * y[INSIICi];
 
             // InfectedSymptoms
             flows[get_flat_flow_index<InfectionState::InfectedSymptomsImprovedImmunity,
@@ -543,21 +548,34 @@ public:
     {
     }
 
-    void apply_b161(double t)
-    {
+    /**
+    * @brief Applies the effect of a new variant of a disease to the transmission probability of the model.
+    * 
+    * This function adjusts the transmission probability of the disease for each age group based on the share of the new variant.
+    * The share of the new variant is calculated based on the time `t` and the start day of the new variant.
+    * The transmission probability is then updated for each age group in the model.
+    * 
+    * Based on Equation (35) and (36) in doi.org/10.1371/journal.pcbi.1010054
+    * 
+    * @param [in] t The current time.
+    * @param [in] base_infectiousness The base infectiousness of the old variant for each age group.
+    */
 
-        auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-        // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-        size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; ++i) {
-            double new_transmission =
-                (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
-            this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
-                new_transmission;
+    void apply_variant(const double t, const CustomIndexArray<UncertainValue, AgeGroup> base_infectiousness)
+    {
+        auto start_day             = this->get_model().parameters.template get<StartDay>();
+        auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
+
+        if (start_day + t >= start_day_new_variant - 1e-10) {
+            const double days_variant      = t - (start_day_new_variant - start_day);
+            const double share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
+            const auto num_groups          = this->get_model().parameters.get_num_groups();
+            for (auto i = AgeGroup(0); i < num_groups; ++i) {
+                double new_transmission = (1 - share_new_variant) * base_infectiousness[i] +
+                                          share_new_variant * base_infectiousness[i] *
+                                              this->get_model().parameters.template get<InfectiousnessNewVariant>()[i];
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[i] = new_transmission;
+            }
         }
     }
 
@@ -622,6 +640,11 @@ public:
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
+        // const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
+
+        // in the apply_variant function, we adjust the TransmissionProbabilityOnContact parameter. We need to store
+        // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
+        auto base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact>();
 
         double delay_lockdown;
         auto t        = BaseT::get_result().get_last_time();
@@ -635,12 +658,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_b161(t);
+                this->apply_variant(t, base_infectiousness);
             }
             BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_b161(t);
+                this->apply_variant(t, base_infectiousness);
             }
 
             if (t > 0) {
@@ -679,6 +702,10 @@ public:
                 m_t_last_npi_check = t;
             }
         }
+        // reset TransmissionProbabilityOnContact. This is important for the graph simulation where the advance
+        // function is called multiple times for the same model.
+        this->get_model().parameters.template get<TransmissionProbabilityOnContact>() = base_infectiousness;
+
         return this->get_result().get_last_value();
     }
 
@@ -756,13 +783,11 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
-    auto& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
-    auto& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
     auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
     auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
     //slice of InfectedNoSymptoms
-    auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
+    auto y_INS = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
                  slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsPartialImmunity),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
@@ -770,8 +795,9 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)});
 
     //compute isolation, same as infection risk from main model
-    auto R3                      = 0.5 / (t_inc - t_ser);
-    auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
+    auto test_and_trace_required =
+        ((1 - p_asymp) / params.template get<TimeInfectedNoSymptoms>().array().template cast<double>() * y_INS.array())
+            .sum();
     auto riskFromInfectedSymptomatic =
         smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity>()),
                         params.template get<TestAndTraceCapacity>() * 5, p_inf.matrix(), p_inf_max.matrix());

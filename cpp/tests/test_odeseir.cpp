@@ -29,7 +29,7 @@
 #include <iomanip>
 #include <vector>
 
-TEST(TestSeir, simulateDefault)
+TEST(TestOdeSeir, simulateDefault)
 {
     double t0   = 0;
     double tmax = 1;
@@ -41,14 +41,16 @@ TEST(TestSeir, simulateDefault)
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
 
-TEST(TestSeir, CompareSeirWithJS)
+class ModelTestOdeSeir : public testing::Test
 {
-    // initialization
-    double t0   = 0.;
-    double tmax = 50.;
-    double dt   = 0.1002004008016032;
+protected:
+    void SetUp() override
+    {
+        t0   = 0.;
+        tmax = 50.;
+        dt   = 0.1002004008016032;
 
-    double total_population = 1061000;
+        total_population = 1061000;
 
     mio::oseir::Model model(1);
 
@@ -99,7 +101,7 @@ TEST(TestSeir, CompareSeirWithJS)
     }
 }
 
-TEST(TestSeir, checkPopulationConservation)
+TEST_F(ModelTestOdeSeir, checkPopulationConservation)
 {
     // initialization
     double t0   = 0.;
@@ -134,7 +136,7 @@ TEST(TestSeir, checkPopulationConservation)
     EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
 
-TEST(TestSeir, check_constraints_parameters)
+TEST_F(ModelTestOdeSeir, check_constraints_parameters)
 {
     mio::oseir::Model model(1);
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
@@ -161,7 +163,7 @@ TEST(TestSeir, check_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(TestSeir, apply_constraints_parameters)
+TEST(TestOdeSeir, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
     mio::oseir::Model model(1);
@@ -188,7 +190,7 @@ TEST(TestSeir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(TestSeir, get_reproduction_numbers)
+TEST(TestOdeSeir, get_reproduction_numbers)
 {
     mio::oseir::Model model(1);
 
@@ -272,7 +274,7 @@ TEST(TestSeir, get_reproduction_numbers)
                                                result)); //Test for an index that is out of range
 }
 
-TEST(TestSeir, get_reproduction_number)
+TEST(TestOdeSeir, get_reproduction_number)
 {
     mio::oseir::Model model(1);
 

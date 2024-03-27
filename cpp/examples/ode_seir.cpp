@@ -28,10 +28,10 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 1;
-    double dt   = 0.001;
+    double tmax = 50.;
+    double dt   = 0.1;
 
-    mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+    mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::oseir::Model model(1);
 
@@ -54,10 +54,15 @@ int main()
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
-    // print_seir_params(model);
 
-    auto seir = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<double> seir = simulate(t0, tmax, dt, model);
 
-    printf("\n number total: %f\n",
-           seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
+    bool print_to_terminal = true;
+
+    if (print_to_terminal) {
+        seir.print_table({"S", "E", "I", "R"});
+
+        Eigen::VectorXd res_j = seir.get_last_value();
+        printf("\nnumber total: %f\n", res_j[0] + res_j[1] + res_j[2] + res_j[3]);
+    }
 }

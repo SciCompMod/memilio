@@ -95,8 +95,8 @@ TEST(TestMobility, nodeEvolve)
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] = 100;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
-    params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
-    params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 2.;
+    params.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]            = 1.;
+    params.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0] = 1.;
     params.apply_constraints();
 
     double t0 = 2.835;
@@ -126,8 +126,8 @@ TEST(TestMobility, edgeApplyMigration)
     params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.;
     params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.;
     params.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.5;
-    params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]                   = 1.5;
-    params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]                   = 2.;
+    params.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]                      = 1.;
+    params.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]           = 1.;
     params.apply_constraints();
     double t = 3.125;
     mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);

@@ -72,6 +72,10 @@ add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(lct_secir_example lct_secir.cpp)
+target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
+target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(history_example history.cpp)
 target_link_libraries(history_example PRIVATE memilio)
 target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

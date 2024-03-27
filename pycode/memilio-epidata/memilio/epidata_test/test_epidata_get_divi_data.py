@@ -52,15 +52,15 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def gdd_calls(self, text=''):
         directory = os.path.join(self.path, 'Germany/')
         gdd_calls = [
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'FullData_DIVI.json')),
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'county_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'state_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
 
@@ -70,7 +70,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_get_divi_data_prints(self, mock_print, mock_file, mock_san):
         mock_file.return_value = self.df_test
         # case with start_date before 2020-04-24
-        gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
+        gdd.get_divi_data(out_folder=self.path, start_date=date(
+            2020, 1, 1), verbosity_level='Info')
         expected_call = [
             call(
                 'Warning: First data available on 2020-04-24. You asked for 2020-01-01. Changed it to 2020-04-24.')]

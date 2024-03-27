@@ -32,7 +32,7 @@ int main()
 
     double t0   = 0.;
     double tmax = 50.;
-    double dt   = 0.1002004008016032;
+    double dt   = 0.1;
 
     double total_population = 1061000;
 

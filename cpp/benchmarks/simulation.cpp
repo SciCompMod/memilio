@@ -49,8 +49,8 @@ BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore)->Name("Dummy 3/3");
 BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore)->Name("simulate SecirModel adapt_rk");
 BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("simulate SecirModel boost rk_ck54");
-BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
-    ->Name("simulate SecirModel boost rk_dopri5");
+// BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
+//     ->Name("simulate SecirModel boost rk_dopri5"); // TODO: reenable once boost bug is fixed
 BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>)
     ->Name("simulate SecirModel boost rkf78");
 // run all benchmarks

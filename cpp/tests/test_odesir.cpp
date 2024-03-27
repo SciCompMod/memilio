@@ -30,7 +30,7 @@
 #include <vector>
 #include <sstream>
 
-TEST(Testsir, simulateDefault)
+TEST(TestOdeSir, simulateDefault)
 {
     double t0   = 0;
     double tmax = 1;
@@ -42,7 +42,7 @@ TEST(Testsir, simulateDefault)
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
 
-TEST(Testsir, ComparesirWithJS)
+TEST(TestOdeSir, compareWithPreviousRun)
 {
     // initialization
     double t0   = 0.;
@@ -65,7 +65,7 @@ TEST(Testsir, ComparesirWithJS)
     model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
     model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6, mio::SimulationTime(12.5));
 
-    std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-sir-js-compare.csv");
+    std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-sir-compare.csv");
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
     auto result                              = mio::simulate<mio::osir::Model>(t0, tmax, dt, model, integrator);
 
@@ -97,7 +97,7 @@ TEST(Testsir, ComparesirWithJS)
     }
 }
 
-TEST(Testsir, checkPopulationConservation)
+TEST(TestOdeSir, checkPopulationConservation)
 {
     // initialization
     double t0   = 0.;
@@ -128,7 +128,7 @@ TEST(Testsir, checkPopulationConservation)
     EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
 
-TEST(Testsir, check_constraints_parameters)
+TEST(TestOdeSir, check_constraints_parameters)
 {
     mio::osir::Model model(1);
     model.parameters.set<mio::osir::TimeInfected>(6);
@@ -150,7 +150,7 @@ TEST(Testsir, check_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(Testsir, apply_constraints_parameters)
+TEST(TestOdeSir, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
     mio::osir::Model model(1);
