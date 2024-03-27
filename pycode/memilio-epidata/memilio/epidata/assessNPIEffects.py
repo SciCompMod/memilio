@@ -48,10 +48,6 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
 
     @return Scores for the provided clustering.
     """
-    # TODO: Why?
-    if idx_to_cluster_idx.min() == 1:
-        idx_to_cluster_idx -= 1
-
     # store indices of clusters
     clusters = [[] for i in range(idx_to_cluster_idx.max()+1)]
     for ii in range(len(idx_to_cluster_idx)):
@@ -185,21 +181,17 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights, method):
         # use the given weight to flatten the dendrogram
         npi_idx_to_cluster_idx = hierarchy.fcluster(
             cluster_hierarch, weight, criterion='distance')
+        
+        # start clustering labels with zero
+        if npi_idx_to_cluster_idx.min() == 1:
+            npi_idx_to_cluster_idx -= 1
+
         npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
 
         # evaluate clustering
-        clusters, total_eval_number[n] = evaluate_clustering(
-            corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
-
-        # append new npi_idx to cluster_idx assignment to list of assignments
-        # npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
-        # n += 1
-        # get around 55 clusters
-        # if npi_idx_to_cluster_idx.max() > 45:
-        #     if npi_idx_to_cluster_idx.max() < 65:
-        #         print(npi_idx_to_cluster_idx.max())
-        #         return npi_idx_to_cluster_idx
-
+        # clusters, total_eval_number[n] = evaluate_clustering(
+        #     corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
+        
     # print scores on clustering
     # print("Number of clusters: " + str(int(np.nanmin(np.array(total_eval_number)))))
 
@@ -208,22 +200,25 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights, method):
     # return npi_idx_to_cluster_idx with highest mean silhouette coefficient
     # if we get same value for multiple weights, take smallest weight
     # TODO: Discuss if this is a good metric
-    return npi_idx_to_cluster_idx_list[np.where(total_eval_number == np.nanmax(np.array(total_eval_number)))[0][0]]
+    return npi_idx_to_cluster_idx_list #[np.where(total_eval_number == np.nanmax(np.array(total_eval_number)))[0][0]]
 
 
-def silhouette(X, cluster_sizes, cluster_labels, label):
+def silhouette(pairw_dist_mat, cluster_labels, method):
 
-    # TODO: check for clusterings where every sample is in their own cluster
-    # in that case we cannot use silhouette_samples because we need 'Valid values are 2 to n_samples - 1 (inclusive)'
-
-    if not isinstance(cluster_sizes, list):
-        cluster_sizes = [cluster_sizes]
+    # if only one clustering is given, surround it by a list to make loop work.
+    if isinstance(cluster_labels, list) and ((isinstance(cluster_labels[0], int)) or (isinstance(cluster_labels[0], np.intc))):
+        cluster_labels = [cluster_labels]
 
     plt.figure()
 
-    if len(np.unique(cluster_labels)) < X.shape[0]:
-        for n_clusters in cluster_sizes:
-            sample_silhouette_values = silhouette_samples(X, cluster_labels)
+    for clustering in cluster_labels:
+
+        # Check for clusterings where every sample is in their own cluster or where all samples are in one cluster.
+        # In that case we cannot use silhouette_samples because we need 'Valid values are 2 to n_samples - 1 (inclusive)'
+        if (len(np.unique(clustering)) < len(clustering)) and (len(clustering) == pairw_dist_mat.shape[0]) and \
+                    (len(np.unique(clustering)) > 1):
+
+            sample_silhouette_values = silhouette_samples(pairw_dist_mat, clustering, metric="precomputed")
 
             y_lower = 10
             for i in range(n_clusters):
@@ -267,7 +262,10 @@ def silhouette(X, cluster_sizes, cluster_labels, label):
             plt.savefig('figures/silhouette_plot.png')
             plt.show()
 
-            return sample_silhouette_values
+        else:
+            print("Dimension mismatch.") 
+
+    return sample_silhouette_values
 
 
 def analyze_npi_data(
@@ -446,8 +444,7 @@ def analyze_npi_data(
                 [wg * max_coph_dist
                  for wg in np.linspace(0.01, 1, 500)])
 
-            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max(
-            )+1, npi_idx_to_cluster_idx, label=method)
+            samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, label=method)
 
             # ward
             method = 'ward'
@@ -463,8 +460,7 @@ def analyze_npi_data(
                 abs(npis_corr), cluster_hierarch,
                 [wg * max_coph_dist for wg in np.linspace(0.01, 1, 500)])
 
-            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max(
-            )+1, npi_idx_to_cluster_idx, label=method)
+            samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, label=method)
 
             # average
             method = 'average'
@@ -481,8 +477,7 @@ def analyze_npi_data(
                 [wg * max_coph_dist
                  for wg in np.linspace(0.01, 1, 500)])
 
-            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max(
-            )+1, npi_idx_to_cluster_idx, label=method)
+            samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, method=method)
 
         # centroid has less clusters
         method = 'centroid'
@@ -502,9 +497,7 @@ def analyze_npi_data(
             [wg * max_coph_dist
              for wg in np.linspace(0.01, 1, 10)], method)
 
-        # # TODO: ask why there was used npi_idx_to_cluster_idx.max()+1 before
-        silhouette(npis_corr, npi_idx_to_cluster_idx.max(),
-                   npi_idx_to_cluster_idx, label=method)
+        silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, method=method)
 
         cluster_dict = dict()
         cluster_codes = [[] for i in range(npi_idx_to_cluster_idx.max())]
@@ -610,7 +603,7 @@ def main():
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
     file_format = 'json'
     npi_codes_considered = ['M01a_010', 'M01a_020',
-                            'M01a_100', 'M01a_110', 'M01a_120']
+                            'M01a_100']#, 'M01a_110', 'M01a_120']
     analyze_npi_data(True, True, fine_resolution, npis_final,
                      directory, file_format, npi_codes_considered)
 
