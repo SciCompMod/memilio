@@ -33,24 +33,25 @@ int main()
 
     mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::oseir::Model model;
+    mio::oseir::Model model(1);
 
-    double total_population                                                                            = 1061000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    double total_population                                                                            = 10000;
+    //model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
         total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
-
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
+    // suscetible now set with every other update
+    // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(2);
-
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
 
