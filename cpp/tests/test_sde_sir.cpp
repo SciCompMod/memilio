@@ -31,8 +31,8 @@ const mio::ssir::Model& ssir_testing_model()
     model.populations.array().setConstant(1);
     { // set parameters s.t. coeffStoI is 1
         model.parameters.set<mio::ssir::TimeInfected>(1);
-        model.parameters.set<mio::ssir::TransmissionProbabilityOnContact>(3);
-        model.parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 1;
+        model.parameters.set<mio::ssir::TransmissionProbabilityOnContact>(1);
+        model.parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 3;
     }
     return model;
 }

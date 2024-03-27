@@ -8,6 +8,8 @@ This model is a simple stochastic SDE model with only three compartments and few
 
 We assume simulations over short periods of time, so that the population size can be considered constant and birth as well as (natural) mortality rates can be ignored. 
 
+Important note on the solution: The numerical integration method is a Euler-Maruyama which reuses the EulerIntegratorCore of MEmilio accordingly. The (re)use of other implemented integrators for ODEs is neither considered nor suggested at the moment.
+
 Below is an overview of the model architecture and its compartments.
 
 ![SIR_model](https://github.com/SciCompMod/memilio/assets/69154294/8da7f468-4561-45ae-8034-4b54ebf8efa5)
