@@ -72,11 +72,13 @@ int main()
     mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(3.0);
+    // TransitionDistribution for SusceptibleToExposed is not used.
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(-1.);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(4.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
-    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
+    std::vector<ScalarType> vec_prob(num_transitions, 0.5);
+    // The following probabilities must be 1, as there is no other way to go.
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
