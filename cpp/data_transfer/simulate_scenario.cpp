@@ -269,6 +269,13 @@ std::vector<std::vector<ScalarType>> get_initial_deaths(const fs::path& data_dir
             initial_deaths[region_idx][static_cast<size_t>(entry.age_group)] += entry.num_deaths;
         }
     }
+
+    double sum = 0.0;
+    std::for_each(initial_deaths.begin(), initial_deaths.end(), [&](const std::vector<ScalarType>& v) {
+        sum += std::accumulate(v.begin(), v.end(), 0.0);
+    });
+    std::cout << "Initial deaths (sum): " << sum << std::endl;
+
     return initial_deaths;
 }
 
@@ -343,8 +350,6 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
 
     // add initial deaths to the DeadNaive compartment
     auto initial_deaths_cases = get_initial_deaths(data_dir, start_date, node_ids);
-    std::cout << "Initial deaths (sum): "
-              << std::accumulate(initial_deaths_cases[0].begin(), initial_deaths_cases[0].end(), 0.0) << std::endl;
 
     for (size_t node_indx = 0; node_indx < node_ids.size(); ++node_indx) {
         for (auto age = 0; age < num_groups; ++age) {
