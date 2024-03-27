@@ -240,6 +240,20 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
     params.get<mio::osecirvvs::TimeTemporaryImmunityPI>()    = std::numeric_limits<double>::max();
     params.get<mio::osecirvvs::TimeTemporaryImmunityII>()    = std::numeric_limits<double>::max();
 
+    // set vaccinations to zero
+    params.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(1000));
+    params.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(1000));
+    params.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(1000));
+    for (size_t i = 0; i < 1000; ++i) {
+        for (auto age_group = mio::AgeGroup(0); age_group < mio::AgeGroup(6); ++age_group) {
+            params.get<mio::osecirvvs::DailyPartialVaccination>()[{(mio::AgeGroup)age_group, mio::SimulationDay(i)}] =
+                0.;
+            params.get<mio::osecirvvs::DailyFullVaccination>()[{(mio::AgeGroup)age_group, mio::SimulationDay(i)}] = 0.;
+            params.get<mio::osecirvvs::DailyBoosterVaccination>()[{(mio::AgeGroup)age_group, mio::SimulationDay(i)}] =
+                0.;
+        }
+    }
+
     return mio::success();
 }
 
