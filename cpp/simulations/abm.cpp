@@ -461,6 +461,11 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 
 void set_parameters(mio::abm::Parameters params)
 {
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
+    params.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+
     params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
