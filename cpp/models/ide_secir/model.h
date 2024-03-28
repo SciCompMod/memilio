@@ -41,7 +41,7 @@ public:
     * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt from one compartment to another.
     *   Possible transitions are specified in as #InfectionTransition%s.
-    *   Considered points of times should have the distance dt and the last time point should be 0. 
+    *   Considered points of times should have the distance dt. The last time point determines the start time t0 of the simulation. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init The population of the considered region.
@@ -98,8 +98,8 @@ public:
     *
     * The initialization method is selected automatically based on the different values that need to be set beforehand.
     * Infection compartments are always computed through historic flow.
-    * Initialization methods for susceptibles and recovered are tested in the following order:
-    * 1.) If a positive number for the total number of confirmed cases is set, recovered is set according to that value and #Susceptible%s are derived.
+    * Initialization methods for #Susceptible%s and recovered are tested in the following order:
+    * 1.) If a positive number for the total number of confirmed cases is set, #Recovered is set according to that value and #Susceptible%s are derived.
     * 2.) If #Susceptible%s are set, recovered will be derived.
     * 3.) If #Recovered are set directly, #Susceptible%s are derived.
     * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to set the #Susceptible%s.
@@ -111,7 +111,7 @@ public:
     /**
     * @brief Computes number of Susceptibles for the current last time in m_populations.
     *
-    * Number is computed using previous number of Susceptibles and the force of infection (also from previous timestep).
+    * Number is computed using previous number of #Susceptible%s and the force of infection (also from previous timestep).
     * Number is stored at the matching index in m_populations.
     * @param[in] dt Time discretization step size.    
     */
@@ -141,7 +141,7 @@ public:
     void flows_current_timestep(ScalarType dt);
 
     /**
-     * @brief Computes total number of Deaths for the current last time in m_populations.
+     * @brief Computes total number of #Death%s for the current last time in m_populations.
      * 
      * Number is stored in m_populations.
      *
@@ -171,7 +171,7 @@ public:
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
-     *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases to Recovered). 
+     *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases to #Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
      *              If the second index is not needed, eg if probability[idx_TransitionDistribution1]=1, 
      *              just use an arbitrary legal index.
@@ -190,7 +190,7 @@ public:
     void other_compartments_current_timestep(ScalarType dt);
 
     /**
-     * @brief Computes total number of Recovered for the current last time in m_populations.
+     * @brief Computes total number of #Recovered for the current last time in m_populations.
      * 
      * Number is stored in m_populations.
      *
@@ -233,7 +233,7 @@ public:
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point - dt.
+    ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point t0 - dt.
     ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{

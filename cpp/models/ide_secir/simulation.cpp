@@ -59,10 +59,10 @@ void Simulation::advance(ScalarType tmax)
     }
 }
 
-TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& m_model)
+TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& m_model)
 {
     m_model.check_constraints(dt);
-    Simulation sim(m_model, t0, dt);
+    Simulation sim(m_model, dt);
     sim.advance(tmax);
     return sim.get_result();
 }
