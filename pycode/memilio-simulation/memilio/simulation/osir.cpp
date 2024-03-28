@@ -61,16 +61,16 @@ PYBIND11_MODULE(_simulation_osir, m)
         .value("Infected", mio::osir::InfectionState::Infected)
         .value("Recovered", mio::osir::InfectionState::Recovered);
 
-    pymio::bind_ParameterSet<mio::osir::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osir::ParametersBase, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    py::class_<mio::osir::Parameters, mio::osir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::osir::Parameters, pymio::EnablePickling::Required, mio::osir::ParametersBase>(m, "Parameters")
         .def(py::init<>())
         .def("check_constraints", &mio::osir::Parameters::check_constraints);
 
     using Populations = mio::Populations<mio::osir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::osir::Model::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters>(m, "ModelBase");
-    py::class_<mio::osir::Model,
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters, pymio::EnablePickling::Never>(m, "ModelBase");
+    pymio::bind_class<mio::osir::Model, pymio::EnablePickling::Required,
                mio::CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters>>(m, "Model")
         .def(py::init<>());
 
