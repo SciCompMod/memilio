@@ -14,6 +14,8 @@ set(TESTSOURCES
     test_damping.cpp
     test_odesecir.cpp
     test_odesecirvvs.cpp
+    test_sde_sir.cpp
+    test_sde_sirs.cpp
     test_mobility.cpp
     test_date.cpp
     test_eigen_util.cpp
@@ -72,6 +74,7 @@ if(MEMILIO_HAS_JSONCPP)
 set(TESTSOURCES ${TESTSOURCES}
 test_json_serializer.cpp
 test_epi_data_io.cpp
+test_lct_parameters_io.cpp
 )
 endif()
 
