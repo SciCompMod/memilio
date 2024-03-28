@@ -177,8 +177,8 @@ class Simulation:
             minimum_file = os.path.join(
                 self.data_dir, "contacts", "minimum_" + location + ".txt")
             contact_matrices[i] = mio.ContactMatrix(
-                mio.secir.read_mobility_plain(baseline_file),
-                mio.secir.read_mobility_plain(minimum_file)
+                mio.read_mobility_plain(baseline_file),
+                mio.read_mobility_plain(minimum_file)
             )
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
@@ -203,7 +203,7 @@ class Simulation:
 
         typ_home = Intervention.Home.value
         typ_school = Intervention.SchoolClosure.value
-        typ_home = Intervention.HomeOffice.value
+        typ_homeoffice = Intervention.HomeOffice.value
         typ_gathering = Intervention.GatheringBanFacilitiesClosure.value
         typ_distance = Intervention.PhysicalDistanceAndMasks.value
         typ_senior = Intervention.SeniorAwareness.value
@@ -231,7 +231,7 @@ class Simulation:
 
         def home_office(t, min, max):
             return damping_helper(
-                t, min, max, lvl_main, typ_home, [loc_work])
+                t, min, max, lvl_main, typ_homeoffice, [loc_work])
 
         def social_events(t, min, max):
             return damping_helper(
