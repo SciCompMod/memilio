@@ -362,10 +362,8 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
 }
 
 mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std::string& data_dir,
-                        const std::string& result_dir, bool save_single_runs)
+                        const std::string& result_dir, bool save_single_runs, const int num_runs)
 {
-    const auto num_runs = 5;
-
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     BOOST_OUTCOME_TRY(created, get_graph(start_date, num_days_sim, data_dir));
@@ -438,8 +436,9 @@ int main(int argc, char** argv)
 
     std::string data_dir;
 
-    mio::Date start_date = mio::Date(2022, 6, 1);
-    int num_days_sim     = 5;
+    mio::Date start_date    = mio::Date(2022, 6, 1);
+    int num_days_sim        = 5;
+    int num_simulation_runs = 5;
 
     if (argc == 1) {
         data_dir = "../../data";
@@ -451,6 +450,12 @@ int main(int argc, char** argv)
         data_dir     = argv[1];
         start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
         num_days_sim = std::atoi(argv[5]);
+    }
+    else if (argc == 7) {
+        data_dir            = argv[1];
+        start_date          = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+        num_days_sim        = std::atoi(argv[5]);
+        num_simulation_runs = std::atoi(argv[6]);
     }
     else {
         mio::mpi::finalize();
@@ -478,7 +483,7 @@ int main(int argc, char** argv)
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-    auto result = run(num_days_sim, start_date, data_dir, result_dir, false);
+    auto result = run(num_days_sim, start_date, data_dir, result_dir, false, num_simulation_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();
