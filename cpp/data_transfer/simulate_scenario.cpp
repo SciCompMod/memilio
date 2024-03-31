@@ -376,7 +376,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
 
     //run parameter study
     auto parameter_study = mio::ParameterStudy<mio::osecirvvs::Simulation<>>{
-        params_graph, 0.0, static_cast<double>(num_days_sim), 0.5, num_runs};
+        params_graph, 0.0, static_cast<double>(num_days_sim), 0.5, static_cast<size_t>(num_runs)};
 
     if (mio::mpi::is_root()) {
         printf("Seeds: ");
