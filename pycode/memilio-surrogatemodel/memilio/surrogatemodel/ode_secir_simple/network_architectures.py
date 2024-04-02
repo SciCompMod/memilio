@@ -103,9 +103,9 @@ def cnn_multi_input_multi_output_best(label_width, conv_size=3):
     num_outputs = 8
     model = tf.keras.Sequential([
         tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
-        tf.keras.layers.Conv1D(32, activation='relu',
+        tf.keras.layers.Conv1D(62, activation='relu',
                                kernel_size=(conv_size)),
-        tf.keras.layers.Dense(units=32, activation='relu'),
+        #tf.keras.layers.Dense(units=, activation='relu'),
         tf.keras.layers.Dense(label_width*num_outputs,
                               kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, num_outputs])
