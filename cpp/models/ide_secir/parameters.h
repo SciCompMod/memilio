@@ -151,8 +151,9 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
- * @brief The day of the year of the start day 0 of a simulation with a IDE-SECIR model.
+ * @brief Sets the day in a year at which a simulation with an IDE-SECIR model is started.
  *
+ * The value 0.0 corresponds to the 1st of January at 0:00 am, 31.25 is the 1st of February at 6:00 am, and so on.
  * The start day defines in which season the simulation is started.
  * If the start day is 180 and simulation takes place from t0=0 to
  * tmax=100 the days 180 to 280 of the year are simulated.
