@@ -305,7 +305,7 @@ struct ContactPatterns {
 };
 
 /**
- * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
+ * @brief the NPIs that are enforced if certain infection thresholds are exceeded.
  */
 struct DynamicNPIsInfectedSymptoms {
     using Type = DynamicNPIs;
@@ -316,6 +316,21 @@ struct DynamicNPIsInfectedSymptoms {
     static std::string name()
     {
         return "DynamicNPIsInfectedSymptoms";
+    }
+};
+
+/**
+ * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
+ */
+struct DynamicNPIsImplementationDelay {
+    using Type = UncertainValue;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "DynamicNPIsImplementationDelay";
     }
 };
 
@@ -336,10 +351,10 @@ struct TestAndTraceCapacity {
 
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
-                 TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
-                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
-                 RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical>;
+                 DynamicNPIsImplementationDelay, TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms,
+                 TimeInfectedSevere, TimeInfectedCritical, TransmissionProbabilityOnContact,
+                 RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms, RiskOfInfectionFromSymptomatic,
+                 MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms, CriticalPerSevere, DeathsPerCritical>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -427,6 +442,12 @@ public:
             this->set<ICUCapacity>(0);
             corrected = true;
         }
+
+        if (this->get<DynamicNPIsImplementationDelay>() < 0.0) {
+            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}", this->get<DynamicNPIsImplementationDelay>(), 0);
+            this->set<DynamicNPIsImplementationDelay>(0);
+            corrected = true;
+        }                
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
@@ -548,6 +569,11 @@ public:
             return true;
         }
 
+        if (this->get<DynamicNPIsImplementationDelay>() < 0.0) {
+            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
+            return true;
+        }
+      
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {

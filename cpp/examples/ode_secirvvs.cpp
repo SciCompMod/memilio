@@ -70,6 +70,7 @@ int main()
     model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
+    model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay>() = 7;
 
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns>();
     auto& contact_matrix = contacts.get_cont_freq_mat();

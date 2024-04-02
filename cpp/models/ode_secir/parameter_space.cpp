@@ -30,7 +30,7 @@ void set_params_distributions_normal(Model& model, double t0, double tmax, doubl
 {
     auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001) {
         v.set_distribution(ParameterDistributionNormal(
-            //add add limits for nonsense big values. Also mscv has a problem with a few doubles so this fixes it
+            // add limits for nonsense big values. Also mscv has a problem with a few doubles so this fixes it
             std::min(std::max(min_val, (1 - dev_rel * 2.6) * v), 0.1 * std::numeric_limits<double>::max()),
             std::min(std::max(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<double>::max()),
             std::min(std::max(min_val, double(v)), 0.3 * std::numeric_limits<double>::max()),
@@ -40,6 +40,8 @@ void set_params_distributions_normal(Model& model, double t0, double tmax, doubl
     set_distribution(model.parameters.get<Seasonality>(), 0.0);
     set_distribution(model.parameters.get<ICUCapacity>());
     set_distribution(model.parameters.get<TestAndTraceCapacity>());
+    model.parameters.get<DynamicNPIsImplementationDelay>().set_distribution(
+        ParameterDistributionNormal(0.0, 0.0, 0.0, 0.0)); // Variable was not used here before
 
     // populations
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
@@ -165,6 +167,8 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
+    auto& shared_dynamic_npis_delay = shared_params_model.parameters.template get<DynamicNPIsImplementationDelay>();
+    shared_dynamic_npis_delay.draw_sample();    
 
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;

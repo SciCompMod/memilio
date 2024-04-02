@@ -446,6 +446,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
 
     narrow = 0.0;
     //local dynamic NPIs
+    params.get<mio::osecirvvs::DynamicNPIsImplementationDelay>() = 7;
     auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
 

@@ -116,9 +116,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         }
         // group independent params
         param_percentil(
+            node, [](auto&& model) -> auto& { return model.parameters.template get<DynamicNPIsImplementationDelay>(); });        
+        param_percentil(
             node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality>(); });
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity>(); });      
 
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params = ensemble_params[run][node];
