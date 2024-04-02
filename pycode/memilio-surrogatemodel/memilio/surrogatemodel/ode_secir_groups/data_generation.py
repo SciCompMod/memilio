@@ -35,16 +35,16 @@ from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
                                       interpolate_simulation_result, simulate)
 
 
-def remove_confirmed_compartments(dataset_entries, num_groups):
-    new_dataset_entries = []
-    for i in dataset_entries : 
-      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
-      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
-      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
-      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
-      dataset_entries_reshaped[:, 4] = sum_inf_symp
-      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
-    return new_dataset_entries
+# def remove_confirmed_compartments(dataset_entries, num_groups):
+#     new_dataset_entries = []
+#     for i in dataset_entries : 
+#       dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+#       sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+#       sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+#       dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+#       dataset_entries_reshaped[:, 4] = sum_inf_symp
+#       new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+#     return new_dataset_entries
 
 
 def run_secir_groups_simulation(days, damping_day, populations):
@@ -155,10 +155,10 @@ def run_secir_groups_simulation(days, damping_day, populations):
 
     # delete the confirmed compartments 
 
-    dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    #dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
     #return dataset_entries.tolist()
-    #return dataset_entries.tolist(), damped_contact_matrix
-    return dataset_entires_withut_confirmed, damped_contact_matrix
+    return dataset_entries.tolist(), damped_contact_matrix
+    #return dataset_entires_withut_confirmed, damped_contact_matrix
 
 
 def generate_data(
@@ -198,11 +198,14 @@ def generate_data(
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
-    for _ in range(0, num_runs):
+
+    
+    for i in range(0, num_runs):
 
         # Generate a random damping day
         damping_day = random.randrange(
             input_width, input_width+label_width)
+        
 
         data_run, damped_contact_matrix = run_secir_groups_simulation(
             days, damping_day, population[random.randint(0, len(population) - 1)])
@@ -238,7 +241,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_30days_onevardamp.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_100days_twodamp.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -285,6 +288,11 @@ def getMinimumMatrix():
     return minimum
 
 
+
+
+
+
+
 def get_population(path):
     """! read population data in list from dataset
     @param path Path to the dataset containing the population data
@@ -324,7 +332,7 @@ if __name__ == "__main__":
         r"data//pydata//Germany//county_population.json")
 
     input_width = 5
-    label_width = 30
-    num_runs = 100
+    label_width = 100
+    num_runs = 10000
     data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width)
