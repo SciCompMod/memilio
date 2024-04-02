@@ -1,6 +1,7 @@
 import os
 import pickle
 import spektral
+import json
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import FunctionTransformer
@@ -45,7 +46,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data_GNN_nodamp_400pop_1k_90days_24')
+    'data_GNN_nodamp_4000pop_1k_90days_24')
 
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
@@ -401,6 +402,11 @@ def train_and_evaluate_model(
         save_name)
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
+
+    model_json = model.to_json()
+    # Store the JSON data in a file
+    with open("GNN_90days.json", "w") as file:
+        json.dump(model_json, file)
 
     #model.save(path_models, save_name +'h5')
     model.save_weights(path_models+'.h5')
