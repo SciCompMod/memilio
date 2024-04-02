@@ -199,6 +199,16 @@ def network_fit(
                         validation_data=(valid_inputs, valid_labels),
                         batch_size=batch_size,
                         callbacks=[early_stopping])
+    
+
+    #save the model
+    path = os.path.dirname(os.path.realpath(__file__))
+
+
+    if not os.path.isdir(path_models):
+        os.mkdir(path_models)
+
+    model.save(path_models, 'model_400pop_150day_bestmodel_secirgroups.h5')
 
     if (plot):
         plot_losses(history)
