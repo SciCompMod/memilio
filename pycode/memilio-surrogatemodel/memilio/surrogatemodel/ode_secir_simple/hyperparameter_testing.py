@@ -9,36 +9,35 @@ from sklearn.model_selection import KFold
 import numpy as np
 
 
-# grid serach of activation and optimizer for our best model: the CNN 
+# grid serach of activation and optimizer for our best model: the LSTM 
 
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
 filename = "data_secir_simple.pickle"
-filename_df = "dataframe"
+filename_df = "dataframe_optimizer_run2"
 
 label_width = 30 
 early_stop = 100
 
-activations= ['relu', 'elu', 'softmax',  'sigmoid', 'linear', 'tanh']
+#activations= ['relu', 'elu', 'softmax',  'sigmoid', 'linear', 'tanh']
 optimizers = ['Adam', 'Nadam', 'SGD', 'Adagrad', 'RMSProp']
 
 
 label_width = 30
 
 
-parameters = []
-for a in activations:
-    for o in optimizers:
+# parameters = []
+# for a in activations:
+#     for o in optimizers:
         
-        parameters.append((a, o))
-
+#         parameters.append((a, o))
 
 modelname = 'LSTM'
 
 df_results  = pd.DataFrame(
-    columns=['model', 'activation', 'optimizer',
+    columns=['model', 'optimizer',
              'mean_test_MAPE', 'kfold_train',
              'kfold_val', 'kfold_test', 'training_time',
              'train_losses', 'val_losses'])            
@@ -47,8 +46,8 @@ df_results  = pd.DataFrame(
 #for param in parameters: 
 
 def train_and_evaluate_model(param, max_epochs):
-    activation =param[0]
-    optimizer = param[1]
+    #activation =param[0]
+    optimizer = param
     
     
 
@@ -88,8 +87,6 @@ def train_and_evaluate_model(param, max_epochs):
         num_outputs = 8
         model = tf.keras.Sequential([
         tf.keras.layers.LSTM(32, return_sequences=False)])
-            
-           
             
         model.add(tf.keras.layers.Dense(label_width*num_outputs,
                                     kernel_initializer=tf.initializers.zeros()))
@@ -156,7 +153,7 @@ def train_and_evaluate_model(param, max_epochs):
     print("Time for training: {:.4f} seconds".format(elapsed))
     print("Time for training: {:.4f} minutes".format(elapsed/60))
 
-    df_results.loc[len(df_results.index)] = [modelname, activation, optimizer,  df.mean()[0] , np.mean(train_losses),
+    df_results.loc[len(df_results.index)] = [modelname, optimizer,  df.mean()[0] , np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
                              (elapsed / 60),
@@ -167,7 +164,7 @@ def train_and_evaluate_model(param, max_epochs):
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'LSTM_hyper_activation_optimizer')
+        'LSTM_hyper_activation_optimizer_run2')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path,filename_df)
@@ -179,7 +176,7 @@ def train_and_evaluate_model(param, max_epochs):
 start_hyper = time.perf_counter()
 max_epochs = 1500
 
-for param in parameters:
+for param in optimizers:
      train_and_evaluate_model(param, max_epochs)
 
 elapsed_hyper = time.perf_counter() - start_hyper
