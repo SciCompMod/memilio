@@ -412,6 +412,18 @@ public:
     }
 
     /**
+     * Time in simulation after which no dynamic NPIs are applied.
+     */
+    double& get_end_dynamic_npis()
+    {
+        return m_end_dynamic_npis;
+    }
+    double get_end_dynamic_npis() const
+    {
+        return m_end_dynamic_npis;
+    }
+
+    /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
      * Time spans cannot be negative and probabilities can only take values between [0,1]. 
      *
@@ -444,10 +456,11 @@ public:
         }
 
         if (this->get<DynamicNPIsImplementationDelay>() < 0.0) {
-            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}", this->get<DynamicNPIsImplementationDelay>(), 0);
+            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
+                        this->get<DynamicNPIsImplementationDelay>(), 0);
             this->set<DynamicNPIsImplementationDelay>(0);
             corrected = true;
-        }                
+        }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
@@ -573,7 +586,7 @@ public:
             log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
             return true;
         }
-      
+
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -686,6 +699,7 @@ private:
     double m_commuter_nondetection    = 0.0;
     double m_start_commuter_detection = 0.0;
     double m_end_commuter_detection   = 0.0;
+    double m_end_dynamic_npis         = 0.0;
 };
 
 /**
