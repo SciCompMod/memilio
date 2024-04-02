@@ -347,22 +347,39 @@ def get_input_dim_lstm(path, filename):
     return input_dim
 
 
+
+
+def get_output_dim_lstm(path, filename):
+    """! Extract the dimensiond of the input data
+
+   @param path path to the data 
+
+   """
+    file = open(os.path.join(path, filename), 'rb')
+
+    data = pickle.load(file)
+    output_dim = data['labels'].shape[2] * data['labels'].shape[1]
+
+    return output_dim
+
+
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     filename = 'data_secir_groups_30days_nodamp.pickle'
-    max_epochs = 1500
+    max_epochs = 10
     label_width = 30
 
     input_dim = get_input_dim_lstm(path_data, filename)
+    output_dim = get_output_dim_lstm(path_data, filename)
     #df_save = pd.DataFrame(columns = ['MAPE'])
 
 
 
 
 
-    model = "CNN"
+    model = "CNN_LSTM"
     if model == "Dense_Single":
             model = network_architectures.mlp_multi_input_single_output()
             modeltype = 'classic'
@@ -379,6 +396,10 @@ if __name__ == "__main__":
     elif model == "CNN":
             model = network_architectures.cnn_multi_input_multi_output_simple(label_width)
             modeltype = 'timeseries'
+
+    elif model == "CNN_LSTM":
+            model = network_architectures.cnn_lstm_hybrid(input_dim, output_dim)
+            modeltype = 'classic'
     
     model_output = network_fit(
             path_data, filename, model=model, modeltype=modeltype,
