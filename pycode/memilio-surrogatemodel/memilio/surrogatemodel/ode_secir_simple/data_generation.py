@@ -24,15 +24,15 @@ import random
 from datetime import date
 
 import numpy as np
-import pandas as pd
-import tensorflow as tf
-from progress.bar import Bar
-from sklearn.preprocessing import FunctionTransformer
+#import pandas as pd
+#import tensorflow as tf
+#from progress.bar import Bar
+#from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (ContactMatrix, Damping, LogLevel,
-                                UncertainContactMatrix, set_log_level)
-from memilio.simulation.secir import (AgeGroup,Index_InfectionState,
-                                      InfectionState, Model, Simulation,
+                                UncertainContactMatrix, set_log_level, AgeGroup)
+from memilio.simulation.secir import (Index_InfectionState,
+                                      InfectionState, Model,
                                       interpolate_simulation_result, simulate)
 
 
@@ -73,20 +73,37 @@ def run_secir_simulation(days):
     model.parameters.TimeInfectedSevere[A0] = 12.
     model.parameters.TimeInfectedCritical[A0] = 8.
 
-    # Initial number of people in each compartment with random numbers
+    # #Initial number of people in each compartment with random numbers
+    # model.populations[A0, Index_InfectionState(
+    #     InfectionState.Exposed)] = 60 * random.uniform(0.2, 1)
+    # model.populations[A0, Index_InfectionState(
+    #     InfectionState.InfectedNoSymptoms)] = 55 * random.uniform(0.2, 1)
+    # model.populations[A0, Index_InfectionState(
+    #     InfectionState.InfectedSymptoms)] = 50 * random.uniform(0.2, 1)
+    # model.populations[A0, Index_InfectionState(
+    #     InfectionState.InfectedSevere)] = 12 * random.uniform(0.2, 1)
+    # model.populations[A0, Index_InfectionState(
+    #     InfectionState.InfectedCritical)] = 3 * random.uniform(0.2, 1)
+    # model.populations[A0, Index_InfectionState(
+    #     InfectionState.Recovered)] = 50 * random.random()
+    # model.populations[A0, Index_InfectionState(InfectionState.Dead)] = 0
+    # model.populations.set_difference_from_total(
+    #     (A0, Index_InfectionState(InfectionState.Susceptible)), populations[0])
+
+
     model.populations[A0, Index_InfectionState(
-        InfectionState.Exposed)] = 60 * random.uniform(0.2, 1)
+        InfectionState.Exposed)] = 1800 * random.uniform(0.002, 1)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedNoSymptoms)] = 55 * random.uniform(0.2, 1)
+        InfectionState.InfectedNoSymptoms)] = 1650 * random.uniform(0.02, 1)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedSymptoms)] = 50 * random.uniform(0.2, 1)
+        InfectionState.InfectedSymptoms)] = 1500 * random.uniform(0.002, 1)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedSevere)] = 12 * random.uniform(0.2, 1)
+        InfectionState.InfectedSevere)] = 360 * random.uniform(0.002, 1)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedCritical)] = 3 * random.uniform(0.2, 1)
+        InfectionState.InfectedCritical)] = 90 * random.uniform(0.002, 1)
     model.populations[A0, Index_InfectionState(
-        InfectionState.Recovered)] = 50 * random.random()
-    model.populations[A0, Index_InfectionState(InfectionState.Dead)] = 0
+        InfectionState.Recovered)] = 1500 * random.random()
+    model.populations[A0, Index_InfectionState(InfectionState.Dead)] = 30* random.uniform(0.002, 1)
     model.populations.set_difference_from_total(
         (A0, Index_InfectionState(InfectionState.Susceptible)), populations[0])
 
@@ -166,13 +183,13 @@ def generate_data(
 
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
-    bar = Bar('Number of Runs done', max=num_runs)
+    #bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
         data_run = run_secir_simulation(days)
         data['inputs'].append(np.asarray(data_run).transpose()[:input_width])
         data['labels'].append(np.asarray(data_run).transpose()[input_width:])
-        bar.next()
-    bar.finish()
+        #bar.next()
+    #bar.finish()
 
     if normalize:
         # logarithmic normalization
@@ -197,7 +214,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_simple_120days.pickle'), 'wb') as f:
+        with open(os.path.join(path, 'data_secir_simple_60days_w2.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -209,7 +226,7 @@ if __name__ == "__main__":
         os.path.dirname(os.path.realpath(path)))), 'data')
 
     input_width = 5
-    label_width = 120
+    label_width = 60
     num_runs = 10000
     data = generate_data(num_runs, path_data, input_width,
                          label_width)
