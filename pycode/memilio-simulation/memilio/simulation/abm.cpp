@@ -73,6 +73,13 @@ struct LogPersonsPerLocationAndInfectionTime : mio::LogAlways {
     }
 };
 
+std::pair<double, double> get_my_and_sigma(double mean, double std)
+{
+    double my    = log(mean * mean / sqrt(mean * mean + std * std));
+    double sigma = sqrt(log(1 + std * std / (mean * mean)));
+    return {my, sigma};
+}
+
 PYBIND11_MODULE(_simulation_abm, m)
 {
     //pymio::bind_logging(m, "LogLevel");
@@ -114,6 +121,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
+    // pymio::bind_CustomIndexArray<LogNormalDistribution<double>::ParamType, mio::abm::VirusVariant, mio::AgeGroup>(
+    //     m, "_AgeParameterDist");
     pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
     py::class_<mio::abm::Parameters, mio::abm::ParametersBase>(m, "Parameters")
@@ -299,6 +308,96 @@ PYBIND11_MODULE(_simulation_abm, m)
             infection_params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] =
                 mio::abm::ViralLoadDistributionsParameters{
                     {min_peak, max_peak}, {min_incline, max_incline}, {min_decline, max_decline}};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_incubationPeriod",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto incubation_period_params                                      = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::IncubationPeriod>()[{variant, age}] = {incubation_period_params.first,
+                                                                                  incubation_period_params.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedNoSymptomsToSymptoms",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedNoSymptomsToSymptoms = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{variant, age}] = {
+                TimeInfectedNoSymptomsToSymptoms.first, TimeInfectedNoSymptomsToSymptoms.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedNoSymptomsToRecovered",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedNoSymptomsToRecovered = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{variant, age}] = {
+                TimeInfectedNoSymptomsToRecovered.first, TimeInfectedNoSymptomsToRecovered.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedSymptomsToSevere",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedSymptomsToSevere = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{variant, age}] = {
+                TimeInfectedSymptomsToSevere.first, TimeInfectedSymptomsToSevere.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedSymptomsToRecovered",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedSymptomsToRecovered = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{variant, age}] = {
+                TimeInfectedSymptomsToRecovered.first, TimeInfectedSymptomsToRecovered.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedSevereToRecovered",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedSevereToRecovered = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedSevereToRecovered>()[{variant, age}] = {
+                TimeInfectedSevereToRecovered.first, TimeInfectedSevereToRecovered.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedSevereToCritical",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedSevereToCritical = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedSevereToCritical>()[{variant, age}] = {
+                TimeInfectedSevereToCritical.first, TimeInfectedSevereToCritical.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedCriticalToRecovered",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedCriticalToRecovered = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{variant, age}] = {
+                TimeInfectedCriticalToRecovered.first, TimeInfectedCriticalToRecovered.second};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_TimeInfectedCriticalToDead",
+        [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double mean,
+           double std) {
+            auto TimeInfectedCriticalToDead                                              = get_my_and_sigma(mean, std);
+            infection_params.get<mio::abm::TimeInfectedCriticalToDead>()[{variant, age}] = {
+                TimeInfectedCriticalToDead.first, TimeInfectedCriticalToDead.second};
         },
         py::return_value_policy::reference_internal);
 

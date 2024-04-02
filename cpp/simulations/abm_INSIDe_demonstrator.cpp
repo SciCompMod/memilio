@@ -402,131 +402,279 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
 }
 
 /**
+* Returns parameters for LogNormalDistributiom given desired expected value and standard deviation.
+* @param[in] mean desired expected value
+* @param[in] std desired standard deviation
+* @return pair with parameters for LogNormalDistribtuion
+*/
+std::pair<double, double> get_my_and_sigma(double mean, double std)
+{
+    double my    = log(mean * mean / sqrt(mean * mean + std * std));
+    double sigma = sqrt(log(1 + std * std / (mean * mean)));
+    return {my, sigma};
+}
+
+/**
  * Set infection parameters
  * @param[in, out] infection_params infection parameters
 */
 void set_infection_parameters(mio::abm::Parameters& infection_params)
 {
-    infection_params.set<mio::abm::IncubationPeriod>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 3.});
+    //set parameters for every agegroup
+    auto incubation_period_params                      = get_my_and_sigma(3, 1.2);
+    infection_params.get<mio::abm::IncubationPeriod>() = {incubation_period_params.first,
+                                                          incubation_period_params.second};
 
     //0-4
+    auto TimeInfectedNoSymptomsToSymptoms = get_my_and_sigma(2.2, 0.5);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 2.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = {
+        TimeInfectedNoSymptomsToSymptoms.first, TimeInfectedNoSymptomsToSymptoms.second};
+
+    auto TimeInfectedNoSymptomsToRecovered = get_my_and_sigma(9.2, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 9.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = {
+        TimeInfectedNoSymptomsToRecovered.first, TimeInfectedNoSymptomsToRecovered.second};
+
+    auto TimeInfectedSymptomsToSevere = get_my_and_sigma(10.5, 1.1);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 7;
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = {
+        TimeInfectedSymptomsToSevere.first, TimeInfectedSymptomsToSevere.second};
+
+    auto TimeInfectedSymptomsToRecovered = get_my_and_sigma(7.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 10.5;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = {
+        TimeInfectedSymptomsToRecovered.first, TimeInfectedSymptomsToRecovered.second};
+
+    auto TimeInfectedSevereToRecovered = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 5;
+        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = {
+        TimeInfectedSevereToRecovered.first, TimeInfectedSevereToRecovered.second};
+
+    auto TimeInfectedSevereToCritical = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 5;
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = {
+        TimeInfectedSevereToCritical.first, TimeInfectedSevereToCritical.second};
+
+    auto TimeInfectedCriticalToRecovered = get_my_and_sigma(7.0, 3.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 7;
+        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = {
+        TimeInfectedCriticalToRecovered.first, TimeInfectedCriticalToRecovered.second};
+
+    auto TimeInfectedCriticalToDead = get_my_and_sigma(6.0, 2.0);
     infection_params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        6;
+        {TimeInfectedCriticalToDead.first, TimeInfectedCriticalToDead.second};
 
     //5-14
+    TimeInfectedNoSymptomsToSymptoms = get_my_and_sigma(2.2, 0.5);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 2.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedNoSymptomsToSymptoms.first, TimeInfectedNoSymptomsToSymptoms.second};
+
+    TimeInfectedNoSymptomsToRecovered = get_my_and_sigma(9.2, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        9.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedNoSymptomsToRecovered.first, TimeInfectedNoSymptomsToRecovered.second};
+
+    TimeInfectedSymptomsToSevere = get_my_and_sigma(10.5, 1.1);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 7;
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedSymptomsToSevere.first, TimeInfectedSymptomsToSevere.second};
+
+    TimeInfectedSymptomsToRecovered = get_my_and_sigma(7.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 10.5;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedSymptomsToRecovered.first, TimeInfectedSymptomsToRecovered.second};
+
+    TimeInfectedSevereToRecovered = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 5;
+        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedSevereToRecovered.first, TimeInfectedSevereToRecovered.second};
+
+    TimeInfectedSevereToCritical = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 5;
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedSevereToCritical.first, TimeInfectedSevereToCritical.second};
+
+    TimeInfectedCriticalToRecovered = get_my_and_sigma(7.0, 3.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 7;
+        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedCriticalToRecovered.first, TimeInfectedCriticalToRecovered.second};
+
+    TimeInfectedCriticalToDead = get_my_and_sigma(6.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 6;
+        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = {
+        TimeInfectedCriticalToDead.first, TimeInfectedCriticalToDead.second};
 
     //15-34
+    TimeInfectedNoSymptomsToSymptoms = get_my_and_sigma(2.2, 0.5);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        2.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedNoSymptomsToSymptoms.first, TimeInfectedNoSymptomsToSymptoms.second};
+
+    TimeInfectedNoSymptomsToRecovered = get_my_and_sigma(9.2, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        9.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedNoSymptomsToRecovered.first, TimeInfectedNoSymptomsToRecovered.second};
+
+    TimeInfectedSymptomsToSevere = get_my_and_sigma(10.5, 1.1);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 7;
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedSymptomsToSevere.first, TimeInfectedSymptomsToSevere.second};
+
+    TimeInfectedSymptomsToRecovered = get_my_and_sigma(7.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 10.5;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedSymptomsToRecovered.first, TimeInfectedSymptomsToRecovered.second};
+
+    TimeInfectedSevereToRecovered = get_my_and_sigma(6.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 6;
+        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedSevereToRecovered.first, TimeInfectedSevereToRecovered.second};
+
+    TimeInfectedSevereToCritical = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 5;
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedSevereToCritical.first, TimeInfectedSevereToCritical.second};
+
+    TimeInfectedCriticalToRecovered = get_my_and_sigma(7.0, 3.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 7;
+        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedCriticalToRecovered.first, TimeInfectedCriticalToRecovered.second};
+
+    TimeInfectedCriticalToDead = get_my_and_sigma(6.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 6;
+        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = {
+        TimeInfectedCriticalToDead.first, TimeInfectedCriticalToDead.second};
 
     //35-59
+    TimeInfectedNoSymptomsToSymptoms = get_my_and_sigma(2.2, 0.5);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        2.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedNoSymptomsToSymptoms.first, TimeInfectedNoSymptomsToSymptoms.second};
+
+    TimeInfectedNoSymptomsToRecovered = get_my_and_sigma(9.2, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        9.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedNoSymptomsToRecovered.first, TimeInfectedNoSymptomsToRecovered.second};
+
+    TimeInfectedSymptomsToSevere = get_my_and_sigma(6.0, 1.1);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 7;
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedSymptomsToSevere.first, TimeInfectedSymptomsToSevere.second};
+
+    TimeInfectedSymptomsToRecovered = get_my_and_sigma(7.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 6;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedSymptomsToRecovered.first, TimeInfectedSymptomsToRecovered.second};
+
+    TimeInfectedSevereToRecovered = get_my_and_sigma(8.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 8;
+        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedSevereToRecovered.first, TimeInfectedSevereToRecovered.second};
+
+    TimeInfectedSevereToCritical = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 5;
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedSevereToCritical.first, TimeInfectedSevereToCritical.second};
+
+    TimeInfectedCriticalToRecovered = get_my_and_sigma(17.5, 3.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        17.5;
+        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedCriticalToRecovered.first, TimeInfectedCriticalToRecovered.second};
+
+    TimeInfectedCriticalToDead = get_my_and_sigma(16.5, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 16.5;
+        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = {
+        TimeInfectedCriticalToDead.first, TimeInfectedCriticalToDead.second};
 
     //60-79
+    TimeInfectedNoSymptomsToSymptoms = get_my_and_sigma(2.2, 0.5);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        2.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedNoSymptomsToSymptoms.first, TimeInfectedNoSymptomsToSymptoms.second};
+
+    TimeInfectedNoSymptomsToRecovered = get_my_and_sigma(9.2, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        9.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedNoSymptomsToRecovered.first, TimeInfectedNoSymptomsToRecovered.second};
+
+    TimeInfectedSymptomsToSevere = get_my_and_sigma(6.0, 1.1);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 7;
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedSymptomsToSevere.first, TimeInfectedSymptomsToSevere.second};
+
+    TimeInfectedSymptomsToRecovered = get_my_and_sigma(7.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 6;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedSymptomsToRecovered.first, TimeInfectedSymptomsToRecovered.second};
+
+    TimeInfectedSevereToRecovered = get_my_and_sigma(10.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 10;
+        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedSevereToRecovered.first, TimeInfectedSevereToRecovered.second};
+
+    TimeInfectedSevereToCritical = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 5;
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedSevereToCritical.first, TimeInfectedSevereToCritical.second};
+
+    TimeInfectedCriticalToRecovered = get_my_and_sigma(17.5, 3.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        17.5;
+        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedCriticalToRecovered.first, TimeInfectedCriticalToRecovered.second};
+
+    TimeInfectedCriticalToDead = get_my_and_sigma(16.5, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 16.5;
+        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = {
+        TimeInfectedCriticalToDead.first, TimeInfectedCriticalToDead.second};
 
     //80+
+    TimeInfectedNoSymptomsToSymptoms = get_my_and_sigma(2.2, 0.5);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 2.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedNoSymptomsToSymptoms.first, TimeInfectedNoSymptomsToSymptoms.second};
+
+    TimeInfectedNoSymptomsToRecovered = get_my_and_sigma(9.2, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        9.2;
+        .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedNoSymptomsToRecovered.first, TimeInfectedNoSymptomsToRecovered.second};
+
+    TimeInfectedSymptomsToSevere = get_my_and_sigma(6.0, 1.1);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 7;
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedSymptomsToSevere.first, TimeInfectedSymptomsToSevere.second};
+
+    TimeInfectedSymptomsToRecovered = get_my_and_sigma(7.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 6;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedSymptomsToRecovered.first, TimeInfectedSymptomsToRecovered.second};
+
+    TimeInfectedSevereToRecovered = get_my_and_sigma(15.0, 3.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 15;
+        .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedSevereToRecovered.first, TimeInfectedSevereToRecovered.second};
+
+    TimeInfectedSevereToCritical = get_my_and_sigma(5.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 5;
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedSevereToCritical.first, TimeInfectedSevereToCritical.second};
+
+    TimeInfectedCriticalToRecovered = get_my_and_sigma(12.5, 3.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 12.5;
+        .get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedCriticalToRecovered.first, TimeInfectedCriticalToRecovered.second};
+
+    TimeInfectedCriticalToDead = get_my_and_sigma(11.0, 2.0);
     infection_params
-        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 11;
+        .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = {
+        TimeInfectedCriticalToDead.first, TimeInfectedCriticalToDead.second};
+
+    // Set percentage parameters
+    infection_params.get<mio::abm::SymptomsPerInfectedNoSymptoms>() = 0.79;
+    infection_params.get<mio::abm::SeverePerInfectedSymptoms>()     = 0.08;
+    infection_params.get<mio::abm::CriticalPerInfectedSevere>()     = 0.18;
+    infection_params.get<mio::abm::DeathsPerInfectedCritical>()     = 0.1;
 }
 
 /**
