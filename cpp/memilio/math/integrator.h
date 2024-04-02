@@ -98,6 +98,10 @@ public:
     Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
                                                              TimeSeries<FP>& results)
     {
+        // hint at std functions for ADL
+        using std::fabs;
+        using std::max;
+
         const FP t0 = results.get_last_time();
         assert(tmax > t0);
         assert(dt > 0);
@@ -129,7 +133,7 @@ public:
         }
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
-        dt = max<FP>(dt, dt_restore);
+        dt = max(dt, dt_restore);
 
         if (!step_okay) {
             log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
