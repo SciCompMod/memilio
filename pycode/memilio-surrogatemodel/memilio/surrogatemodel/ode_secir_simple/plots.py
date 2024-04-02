@@ -834,10 +834,10 @@ def hist_plot_populations():
 
 
 def plot_input_days():
-        df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe')
+        df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe_simple_30days')
         df= df[['input_days', 'kfold_train', 'kfold_test']]
 
-        df_groups = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe_90days')
+        df_groups = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe_groups30_test')
         df_groups= df_groups[['input_days', 'kfold_train', 'kfold_test']]
 
 
@@ -877,7 +877,7 @@ def boxplot_inputs():
 
         file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple.pickle', 'rb')
         file_w = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_30days_widerinput.pickle', 'rb')
-        file_w2 = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_30days_widerinput_2.pickle', 'rb') 
+        file_w2 = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_30days_widerinput_3.pickle', 'rb') 
        
         data = pickle.load(file)
         data = np.expm1(data['inputs'])
@@ -891,7 +891,7 @@ def boxplot_inputs():
                 compartment_array.append(compartment) 
         index = [str(compartment).split('.')[1] for compartment in compartment_array]
 
-        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(9, 12))
+        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(8, 10))
         axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
 
         for ax, compartment, d, dw1, dw2 in zip(axes, index, np.asarray(data).transpose(), np.asarray(data_w).transpose(), np.asarray(data_w2).transpose()):
@@ -918,6 +918,48 @@ def boxplot_inputs():
         fig.legend(handles, labels, loc='upper right', ncol=3, bbox_to_anchor=(0.7, 1), frameon=False)
         plt.tight_layout()
                  
-        plt.savefig("boxplot_input_compartments_b_w1_w2.png")
+        plt.savefig("boxplot_input_compartments_b_w1_w3.png")
 
 
+def plot_results_on_b_w1_w3():
+        df_b = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_dataframessecir_simple_baselineLSTM_30')
+        df_w1 = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_dataframessecir_simple_w1LSTM_30_w1')
+        #df_w2 = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_dataframessecir_simple_w2LSTM_30_w2')
+        df_w3 = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_dataframessecir_simple_w3LSTM_30_w3')
+
+        df_all = pd.concat([df_b, df_w1, df_w3])
+
+
+        #df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe')
+        #df= df[['input_days', 'kfold_train', 'kfold_test']]
+
+        #df_groups = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_input_width/dataframe_90days')
+        #df_groups= df_groups[['input_days', 'kfold_train', 'kfold_test']]
+
+
+        input_days = ['b', 'w1', 'w2']
+        penguin_means = {
+        'train': df_all['kfold_train'],
+        'test': df_all['kfold_test']}
+
+        x = np.arange(len(input_days))  # the label locations
+        width = 0.25  # the width of the bars
+        multiplier = 0
+
+        fig, ax = plt.subplots(layout='constrained')
+
+        for attribute, measurement in penguin_means.items():
+                offset = width * multiplier
+                rects = ax.bar(x + offset, measurement.round(4), width, label=attribute)
+                ax.bar_label(rects, padding=3)
+                multiplier += 1
+
+                # Add some text for labels, title and custom x-axis tick labels, etc.
+                ax.set_ylabel('Test MAPE')
+                #ax.set_xlabel('')
+                #ax.set_title('')
+                ax.set_xticks(x + width, input_days)
+                ax.legend(loc='upper left', ncols=3)
+                #ax.set_ylim(0, 250)
+
+        plt.savefig('train_test_secir_simple_v_w1_w2.png')
