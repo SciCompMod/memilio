@@ -98,38 +98,38 @@ public:
     Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
                                                              TimeSeries<FP>& results)
     {
-        using std::fabs;
-        using std::min;
-        const auto t0 = results.get_last_time();
+        const FP t0 = results.get_last_time();
         assert(tmax > t0);
         assert(dt > 0);
 
-        const size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
+        const size_t num_steps =
+            static_cast<size_t>(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
-        results.reserve(results.get_num_time_points() + nb_steps);
+        results.reserve(results.get_num_time_points() + num_steps);
 
         bool step_okay = true;
 
-        auto t   = t0;
-        size_t i = results.get_num_time_points() - 1;
+        FP dt_restore = 0; // used to restore dt if dt was decreased to reach tmax
+        FP t          = t0;
+        size_t i      = results.get_num_time_points() - 1;
         while (fabs((tmax - t) / (tmax - t0)) > 1e-10) {
             //we don't make timesteps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
             //but also unlikely to happen. may need to be reevaluated
 
-            auto dt_eff = min(dt, tmax - t);
+            if (dt > tmax - t) {
+                dt_restore = dt;
+                dt         = tmax - t;
+            }
             results.add_time_point();
-            step_okay &= m_core->step(f, results[i], t, dt_eff, results[i + 1]);
+            step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
             ++i;
-
-            if (fabs((tmax - t) / (tmax - t0)) > 1e-10 || dt_eff > dt) {
-                //store dt only if it's not the last step as it is probably smaller than required for tolerances
-                //except if the step function returns a bigger step size so as to not lose efficiency
-                dt = dt_eff;
-            }
         }
+        // if dt was decreased to reach tmax in the last time iteration,
+        // we restore it as it is now probably smaller than required for tolerances
+        dt = max<FP>(dt, dt_restore);
 
         if (!step_okay) {
             log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
