@@ -131,11 +131,11 @@ def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100,
     path_models = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'saved_models_secir_simple')
+        'saved_models_secir_simple_bestLSTM_2024_150days')
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
 
-    model.save(path_models, 'model_400pop_30day_bestmodel_secirsimple.h5')
+    model.save(path_models, 'LSTM_150days_secirsimple.h5')
 
     if (plot):
         plot_losses(history)
@@ -260,9 +260,9 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-    filename = "data_secir_simple.pickle"
+    filename = "data_secir_simple_150days.pickle"
     max_epochs = 1500
-    label_width = 30 
+    label_width = 150 
 
 
 
@@ -299,5 +299,5 @@ if __name__ == "__main__":
         model = network_architectures.cnn_multi_input_multi_output(label_width)
 
     model_output = network_fit(
-        path_data, filename, model=model,
+        path_data, filename, model=model, modelname  = 'LSTM_150',
         max_epochs=max_epochs)
