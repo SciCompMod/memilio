@@ -110,9 +110,9 @@ public:
 
         auto const& params = this->parameters;
 
-        const size_t num_groups                  = (size_t)params.get_num_groups();
-        const size_t num_infected_compartments   = 2;
-        const size_t total_infected_compartments = num_infected_compartments * num_groups;
+        const size_t num_groups                    = (size_t)params.get_num_groups();
+        constexpr size_t num_infected_compartments = 2;
+        const size_t total_infected_compartments   = num_infected_compartments * num_groups;
 
         ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
 
@@ -123,14 +123,7 @@ public:
             size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             for (auto j = AgeGroup(0); j < AgeGroup(num_groups); j++) {
 
-                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
-
-                std::cout << " y = " << y.get_value(t_idx) << std::endl;
-                double Nj =
-                    y.get_value(t_idx)[Sj] + y.get_value(t_idx)[Ej] + y.get_value(t_idx)[Ij] + y.get_value(t_idx)[Rj];
+                double Nj    = this->populations.get_group_total(j);
                 double divNj = 1.0 / Nj;
 
                 double coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(

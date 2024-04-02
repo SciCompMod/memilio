@@ -53,17 +53,23 @@ TEST(TestOdeSir, compareWithPreviousRun)
 
     mio::osir::Model model(1);
 
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),
+                       mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),
+                       mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),
+                       mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),
+                           mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),
+                           mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::osir::TimeInfected>(2);
 
     model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
-    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6,
+                                                                                          mio::SimulationTime(12.5));
 
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-sir-compare.csv");
     auto integrator                          = std::make_shared<mio::EulerIntegratorCore>();
@@ -108,18 +114,23 @@ TEST(TestOdeSir, checkPopulationConservation)
 
     mio::osir::Model model(1);
 
-
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] = 1000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::AgeGroup>(0),
+                       mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),
+                       mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::AgeGroup>(0),
+                       mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::AgeGroup>(0),mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::AgeGroup>(0),
+                           mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::AgeGroup>(0),
+                           mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::osir::TimeInfected>(2);
 
     model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
-    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat()[0].add_damping(0.6,
+                                                                                          mio::SimulationTime(12.5));
     auto result        = mio::simulate<mio::osir::Model>(t0, tmax, dt, model);
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {
@@ -172,52 +183,10 @@ TEST(TestOdeSir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(Testsir, test_age_groups)
-{
-    // Test, that in the case of one agegroup, the simulation is the same as before the implementation of agegroups
-    double t0   = 0.;
-    double tmax = 50.;
-    double dt   = 0.1002004008016032;
-
-    double total_population = 1061000;
-
-    mio::osir::Model model(1);
-
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 1000;
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 1000;
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] =
-        total_population -
-        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
-        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
-    model.parameters.set<mio::osir::TimeInfected>(2);
-    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat();
-    contact_matrix[0].get_baseline().setConstant(2.7);
-    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
-
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-
-    model.check_constraints();
-
-    auto sir = simulate(t0, tmax, dt, model, integrator);
-
-    const auto compare  = load_test_data_csv<ScalarType>("sir-agegrp-compare.csv");
-
-    ASSERT_EQ(compare.size(), static_cast<size_t>(sir.get_num_time_points()));
-    for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size(), static_cast<size_t>(sir.get_num_elements()) + 1) << "at row " << i;
-        EXPECT_NEAR(sir.get_time(i), compare[i][0], 1e-10) << "at row " << i;
-        for (size_t j = 1; j < compare[i].size(); j++) {
-            EXPECT_NEAR(sir.get_value(i)[j - 1], compare[i][j], 1e-9) << " at row " << i;
-        }
-    }
-}
-
 TEST(Testsir, get_derivatives_agegrp_compare)
 {
-    // Test, that in the case of one agegroup, the simulation is the same as before the implementation of agegroups
+    // Test, that in the case of one age group, the simulation is the same as before the implementation of agegroups
     // This test is independent of the integrator used.
-    // Test, that in the case of one agegroup, the simulation is the same as before the implementation of agegroups
     double t0   = 0.;
     double tmax = 50.;
     double dt   = 0.1002004008016032;
@@ -229,8 +198,7 @@ TEST(Testsir, get_derivatives_agegrp_compare)
     model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 1000;
     model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 1000;
     model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] =
-        total_population -
-        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
+        total_population - model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
     model.parameters.set<mio::osir::TimeInfected>(2);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
@@ -244,11 +212,11 @@ TEST(Testsir, get_derivatives_agegrp_compare)
 
     auto sir = simulate(t0, tmax, dt, model, integrator);
 
-    auto dydt_default = Eigen::VectorXd(Eigen::Index(mio::osir::InfectionState::Count));
+    auto dydt_default  = Eigen::VectorXd(Eigen::Index(mio::osir::InfectionState::Count));
     Eigen::VectorXd y0 = sir.get_value(0);
     model.get_derivatives(y0, y0, 0, dydt_default);
 
-    EXPECT_NEAR(dydt_default[0],-2694.9104618284641,1e-12);
-    EXPECT_NEAR(dydt_default[1],2194.9104618284641,1e-12);
-    EXPECT_NEAR(dydt_default[2],500,1e-10);
+    EXPECT_NEAR(dydt_default[0], -2694.9104618284641, 1e-12);
+    EXPECT_NEAR(dydt_default[1], 2194.9104618284641, 1e-12);
+    EXPECT_NEAR(dydt_default[2], 500, 1e-12);
 }
