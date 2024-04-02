@@ -75,7 +75,7 @@ def heatmaps(df):
 
 
 
-    fig, axs = plt.subplots(nrows = 3, ncols = 2, sharex=False, figsize = (10,20), constrained_layout = True)
+    fig, axs = plt.subplots(nrows = 3, ncols = 2, sharex=False, figsize = (7,9), constrained_layout = True)
 
 
 
@@ -225,3 +225,44 @@ def plot_binary_vs_nonbinary_adjacency(df_binary, df_nonbinary):
 
 #for i in df.columns[1:5]:
 #    print('Mean Test MAPE by ' + i ,':',  pd.DataFrame(data = df[[i, 'kfold_test']]).groupby([i]).mean())
+
+
+def boxplot_layers(df_combined):
+    df = df_combined
+    plt.figure().clf()   
+
+    df_1 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GCNConv')][['number_of_layers', 'channels', 'kfold_test']])
+    df_1= df_1.pivot(index='number_of_layers', columns='channels', values='kfold_test')
+    
+    df_2 = pd.DataFrame(data =  df.loc[(df['layer'] == 'ARMAConv')][['number_of_layers', 'channels', 'kfold_test']])
+    df_2= df_2.pivot(index='number_of_layers', columns='channels', values='kfold_test')
+    
+    df_3 = pd.DataFrame(data =  df.loc[(df['layer'] == 'APPNPConv')][['number_of_layers', 'channels', 'kfold_test']])
+    df_3= df_3.pivot(index='number_of_layers', columns='channels', values='kfold_test')
+    
+    df_4 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GATConv')][['number_of_layers', 'channels', 'kfold_test']])
+    df_4= df_4.pivot(index='number_of_layers', columns='channels', values='kfold_test')
+        
+    df_5 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GCSConv')][['number_of_layers', 'channels', 'kfold_test']])
+    df_5= df_5.pivot(index='number_of_layers', columns='channels', values='kfold_test')
+
+    dataframes = [df_1, df_2, df_3, df_4, df_5]
+    models = ['GCNConv', 'ARMAConv', 'APPNPConv', 'GATConv' ,'GCSConv']
+    
+    fig, ((ax1, ax2, ax3),(ax4, ax5, ax6)) = plt.subplots(nrows=2, ncols=3, figsize=(9, 4), sharex=False, sharey=False,)
+    axs = [ax1, ax2, ax3, ax4, ax5, ax6]
+
+    for ax, model, df in zip(axs, models, dataframes):
+
+        ax.boxplot(df)
+        ax.set_title(model)
+        ax.yaxis.grid(True)
+        ax.set_xticks([y + 1 for y in range(len(df))],
+                        labels=['1', '2', '3'])
+        ax.set_xlabel('number of layers')
+        ax.set_ylabel('test MAPE') 
+    
+    fig.tight_layout()
+    fig.delaxes(ax6)
+
+    plt.savefig("boxplot_GNN_layers.png")
