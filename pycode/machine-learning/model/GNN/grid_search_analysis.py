@@ -7,7 +7,7 @@ import re
 
 df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_hyperparameters/dataframe_frid_search_GNN_noedges_full_concat.csv')
 df_GSC = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_gridsearch_2024/baseline_GSCConv.csv')
-
+#df_new = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_hyperparameters/dataframe_hyperparameter_tuning_all_concatenated_new.csv')
 # saving the array of losses in the df was a little bit problematic, and I made some mistakes
 # this is why I have to go through some preparation steps in order to get the values in form of an array
 
@@ -23,6 +23,10 @@ for i in df['optimizer']:
 
 df['layer'] = layers
 df['optimizer'] = optimizer
+
+
+df_ARMA =  df.loc[df['layer'] == 'ARMAConv']
+df_ARMA = df_ARMA[['number_of_layers', 'activation', 'optimizer', 'kfold_test']].loc[df['number_of_layers'] == '2']
 
 
 # we do k forld cross validation in the grid search ( 5 folds) with early stop
@@ -133,9 +137,10 @@ def barplot(df):
 
 
 
-def heatmap():
-    df_heatmap1 = pd.DataFrame(data = df.loc[(df['layer'] == 'GCNConv') & (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
-    df_heatmap1= df_heatmap1.pivot(index='activation', columns='optimizer', values='kfold_test')
+def heatmap(df):
+    #df_heatmap1 = pd.DataFrame(data = df.loc[(df['layer'] == 'GCNConv') & (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df['kfold_test'] = df['kfold_test'].astype(float)
+    df_heatmap1= df.pivot(index='activation', columns='optimizer', values='kfold_test')
 
     fig, ax = plt.subplots()
     im = ax.imshow(df_heatmap1.values)
