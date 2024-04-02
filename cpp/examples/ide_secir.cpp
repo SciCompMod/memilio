@@ -91,11 +91,14 @@ int main()
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+    model.parameters.set<mio::isecir::Seasonality>(0.1);
+    // Start the simulation on the 40th day of a year (i.e. in February).
+    model.parameters.set<mio::isecir::StartDay>(40);
 
     model.check_constraints(dt);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
 
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
