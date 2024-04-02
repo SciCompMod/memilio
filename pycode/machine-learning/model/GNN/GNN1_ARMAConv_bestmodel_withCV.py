@@ -24,8 +24,8 @@ from keras.layers import Dense
 from keras.losses import MeanAbsolutePercentageError
 from keras.metrics import mean_absolute_percentage_error
 from keras.models import Model
-#from keras.optimizers.legacy import Adam, Nadam, RMSprop, SGD, Adagrad
-from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
+from keras.optimizers.legacy import Adam, Nadam, RMSprop, SGD, Adagrad
+#from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
 
 from sklearn.model_selection import KFold
 
@@ -34,19 +34,20 @@ from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMACon
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
 
-#from memilio.simulation.secir import InfectionState
+
 
 
 
 # load and prepare data
-path = os.path.dirname(os.path.realpath(__file__))
-path_data = os.path.join(
-    os.path.dirname(
-        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data_GNN_nodamp_400pop_1k_90days_24')
+# path = os.path.dirname(os.path.realpath(__file__))
+# path_data = os.path.join(
+#     os.path.dirname(
+#         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+#     'data_GNN_400pop_one_var_damp_100days_1k_withmatrix')
 
 
-file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+#file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_400pop_one_var_damp_100days_1k_withmatrix/data_secir_age_groups.pickle', 'rb')
 data_secir = pickle.load(file)
 
 
@@ -396,15 +397,15 @@ def train_and_evaluate_model(
     print("Time for training: {:.4f} minutes".format(elapsed/60))
 
     #save the model
-    #path = os.path.dirname(os.path.realpath(__file__))
-    #path_models = os.path.join(
-    #    os.path.dirname(
-    #        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    #    save_name)
-    #if not os.path.isdir(path_models):
-    #    os.mkdir(path_models)
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_models = os.path.join(
+       os.path.dirname(
+           os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+       save_name)
+    if not os.path.isdir(path_models):
+       os.mkdir(path_models)
 
-    #model.save(path_models, save_name +'h5')
+    model.save_weights(os.path.join(path_models, save_name ))
 
     # save df 
 
@@ -420,21 +421,21 @@ def train_and_evaluate_model(
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
-    path = os.path.dirname(os.path.realpath(__file__))
-    file_path = os.path.join(
-       os.path.dirname(
-           os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-       'dataframe_gridsearch_2024')
-    if not os.path.isdir(file_path):
-       os.mkdir(file_path)
-    file_path = file_path+filename
-    df.to_csv(file_path)
+    # path = os.path.dirname(os.path.realpath(__file__))
+    # file_path = os.path.join(
+    #    os.path.dirname(
+    #        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+    #    'dataframes_dampingexperiments')
+    # if not os.path.isdir(file_path):
+    #    os.mkdir(file_path)
+    # file_path = file_path+filename
+    # df.to_csv(file_path)
 
 
 start_hyper = time.perf_counter()
-epochs = 1500
-filename = '/GNNtype1_ARMA_90days.csv'
-save_name = 'ARMAConv_90days_saved_model'
+epochs = 2
+filename = '/GNNtype1_ARMA_1damp_noinfo.csv'
+save_name = 'ARMAConv_1damp_saved_model_test'
 #for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
