@@ -96,7 +96,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters<FP>>& graph, c
     //one file for the model (parameters and population)
     for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
         //node
-        auto& node = graph.nodes()[inode];
+        const auto node = graph.nodes()[inode];
         BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property, ioflags));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"]  = node.id;

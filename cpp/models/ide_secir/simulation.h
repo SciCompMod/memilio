@@ -44,12 +44,10 @@ public:
     /**
      * @brief setup the Simulation for an IDE model.
      * @param[in] model An instance of the IDE model.
-     * @param[in] t0 Start time.
      * @param[in] dt Step size of numerical solver.
      */
-    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+    Simulation(Model const& model, ScalarType dt = 0.1)
         : m_model(std::make_unique<Model>(model))
-        , m_t0(t0)
         , m_dt(dt)
     {
     }
@@ -107,15 +105,6 @@ public:
     }
 
     /**
-     * @brief get the starting time of the simulation.
-     * 
-     */
-    ScalarType get_t0()
-    {
-        return m_t0;
-    }
-
-    /**
      * @brief get the time step of the simulation.
      * 
      */
@@ -126,19 +115,18 @@ public:
 
 private:
     std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.
-    ScalarType m_t0; ///< Start time used for simulation.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
 };
 
 /**
- * @brief simulates a compartmental model
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model an instance of a compartmental model
- * @return a TimeSeries to represent the final simulation result
+ * @brief Run a Simulation of an IDE-SECIR model.
+ *
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of an IDE-SECIR model.
+ * @return A TimeSeries to represent the final simulation result.
  */
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model);
+TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
 
 } // namespace isecir
 } // namespace mio
