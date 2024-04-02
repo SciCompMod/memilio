@@ -24,8 +24,8 @@ from keras.layers import Dense
 from keras.losses import MeanAbsolutePercentageError
 from keras.metrics import mean_absolute_percentage_error
 from keras.models import Model
-from keras.optimizers.legacy import Adam, Nadam, RMSprop, SGD, Adagrad
-# from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
+#from keras.optimizers.legacy import Adam, Nadam, RMSprop, SGD, Adagrad
+from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
 
 from sklearn.model_selection import KFold
 
@@ -34,7 +34,8 @@ from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMACon
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
 
-from memilio.simulation.secir import InfectionState
+#from memilio.simulation.secir import InfectionState
+
 
 
 # load and prepare data
@@ -42,7 +43,8 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data/data_GNN_nodamp_400pop_1k_30days_1_24')
+    'data_GNN_nodamp_400pop_1k_30days_1_24')
+
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
 data_secir = pickle.load(file)
@@ -76,7 +78,7 @@ sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
 
 adjacency_matrix = np.asarray(sub_matrix)
 
-# adjacency_matrix[adjacency_matrix > 0] = 1
+adjacency_matrix[adjacency_matrix > 0] = 1
 node_features = new_inputs
 
 node_labels = new_labels
@@ -84,10 +86,13 @@ node_labels = new_labels
 
 layers = ['GCNConv', 'ARMAConv', 'APPNPConv', 'GATConv', 'GCSConv']
 #activations = ['relu', 'elu', 'sigmoid']
+#layers = [ 'GATConv']
 number_of_layers = [1, 2, 3]
+#number_of_layers = [1]
 #learning_rates = [0.01, 0.001, 0.0001]
 #optimizers = [Adam, Nadam, SGD]
 number_of_channels = [32,128,512,1024]
+#number_of_channels = [32]
 
 parameters = []
 for l in layers:
@@ -96,7 +101,7 @@ for l in layers:
                 parameters.append((l, n,c ))
 
 
-
+parameters = parameters[46:]
 
 
 df = pd.DataFrame(
@@ -268,13 +273,16 @@ def train_and_evaluate_model(
                 MAPE_v.append(relative_err_means_percentage)
 
             mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
-
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
         mean_percentage = pd.DataFrame(
             data=np.asarray(mean_per_batch).transpose().mean(axis=1),
             # index=[str(compartment).split('.')[1]
             #        for compartment in states_array[:8]],
             index=[str(compartment).split('.')[1]
-                   for compartment in InfectionState.values()],
+                   for compartment in infectionstates],
+            
+            # index=[str(compartment).split('.')[1]
+            #        for compartment in InfectionState.values()],
             columns=['Percentage Error'])
 
         return mean_percentage
@@ -418,7 +426,7 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/dataframe_grid_search_networkarchitecture_GNN_type1.csv'
+filename = '/dataframe_grid_searc_networkarchitecture_GNN_type1_part2.csv'
 for param in parameters:
     train_and_evaluate_model(epochs, 0.001, param)
 
