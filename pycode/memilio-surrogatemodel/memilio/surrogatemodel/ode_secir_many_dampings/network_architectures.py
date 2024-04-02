@@ -57,21 +57,32 @@ def cnn_model(input_dim, output_dim):
     return model
 
 
+# def lstm_multi_output(input_dim, output_dim):
+    
+#     model = tf.keras.Sequential(
+#         [tf.keras.layers.LSTM(
+#             64, kernel_initializer=tf.keras.initializers.GlorotUniform(
+#                 seed=42),
+#             input_shape=(input_dim),
+#             return_sequences=False, recurrent_activation='relu',
+#             go_backwards=True),
+#          tf.keras.layers.Dense(
+#              output_dim, kernel_initializer=tf.initializers.zeros())])
+
+#     return model
+
+
+
 def lstm_multi_output(input_dim, output_dim):
     
     model = tf.keras.Sequential(
         [tf.keras.layers.LSTM(
-            64, kernel_initializer=tf.keras.initializers.GlorotUniform(
-                seed=42),
-            input_shape=(input_dim),
-            return_sequences=False, recurrent_activation='relu',
-            go_backwards=True),
+            512, input_shape=(input_dim)),
+
          tf.keras.layers.Dense(
              output_dim, kernel_initializer=tf.initializers.zeros())])
 
     return model
-
-
 
 
 # def cnn_lstm_hybrid(input_dim, output_dim):
@@ -113,11 +124,11 @@ def cnn_lstm_hybrid_2(input_dim, output_dim):
     # model.add((Flatten()))
     model.add(GaussianNoise(0.35))
 
-    model.add(LSTM(512, activation='relu'))
+    model.add(LSTM(512))
     model.add(BatchNormalization()),
-    model.add(Dense(512, activation='relu'))
-    # model.add(BatchNormalization()),
-    # model.add(Dense(512, activation='relu'))
+    model.add(Dense(1024, activation='relu'))
+    model.add(BatchNormalization()),
+    model.add(Dense(1024, activation='relu'))
     # model.add(BatchNormalization()),
     # model.add(Dense(512, activation='relu'))
     model.add(BatchNormalization()),
