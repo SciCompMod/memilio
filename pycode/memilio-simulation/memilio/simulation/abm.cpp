@@ -235,8 +235,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::Infection>(m, "Infection")
         .def(py::init([](mio::abm::World& world, mio::abm::Person& person, mio::abm::VirusVariant variant,
                          mio::abm::TimePoint start_date, mio::abm::InfectionState start_state, bool detected) {
-            auto rng =
-                mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+            auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
             return mio::abm::Infection(rng, variant, person.get_age(), world.parameters, start_date, start_state,
                                        person.get_latest_protection(), detected);
         }));
@@ -413,7 +412,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     // m.def("get_instance", [](mio::abm::GlobalInfectionParameters& params) {
     //     auto inf_params = params.get<mio::abm::InfectivityDistributions>()[{mio::abm::VirusVariant::Wildtype,
     //                                                                         mio::abm::AgeGroup::Age80plus}];
-    //     return inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha.params);
+    //      return inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha.params);
     // });
 
     py::class_<mio::abm::Simulation>(m, "Simulation")
@@ -434,7 +433,6 @@ PYBIND11_MODULE(_simulation_abm, m)
                                                       LogPersonsPerLocationAndInfectionTime>& self) {
             return self.get_log();
         });
-
 }
 
 // PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
