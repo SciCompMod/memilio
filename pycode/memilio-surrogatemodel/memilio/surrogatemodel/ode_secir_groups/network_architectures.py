@@ -110,3 +110,29 @@ def lstm_multi_input_multi_output(label_width, num_age_groups=6):
                               kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, 8 * num_age_groups])])
     return model
+
+
+
+def cnn_lstm_hybrid(input_dim, output_dim):
+    
+    model = tf.keras.Sequential()
+    conv_size = 3
+    model.add(tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]))
+    model.add(
+        (tf.keras.layers.Conv1D(
+            1024, kernel_size=3, activation='relu')))
+    #model.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
+    # model.add(Dropout(0.5))
+    model.add(((tf.keras.layers.MaxPooling1D(pool_size=2))))
+    # model.add((Flatten()))
+    #model.add(GaussianNoise(0.35))
+
+    model.add(tf.keras.layers.LSTM(512, activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization()),
+    model.add(tf.keras.layers.Dense(1024, activation='relu')),
+    model.add(tf.keras.layers.BatchNormalization()),
+    model.add(tf.keras.layers.Dense(1024, activation='relu'))
+    #model.add(Dense(512, activation='relu'))
+
+    model.add(tf.keras.layers.Dense(output_dim, activation='linear'))  # 1440
+    return model
