@@ -119,11 +119,12 @@ private:
 };
 
 /**
- * @brief simulates a compartmental model
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model an instance of a compartmental model
- * @return a TimeSeries to represent the final simulation result
+ * @brief Run a Simulation of an IDE-SECIR model.
+ *
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of an IDE-SECIR model.
+ * @return A TimeSeries to represent the final simulation result.
  */
 TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
 
