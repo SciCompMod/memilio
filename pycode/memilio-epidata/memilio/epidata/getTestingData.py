@@ -69,6 +69,8 @@ def download_testing_data():
     url = 'https://ars.rki.de/Docs/SARS_CoV2/Daten/data_wochenbericht.xlsx'
     header = {'User-Agent': 'Mozilla/5.0'}
     r = requests.get(url, headers=header)
+    if r.status_code != 200:  # e.g. 404
+        raise requests.exceptions.HTTPError("HTTPError: "+str(r.status_code))
     with io.BytesIO(r.content) as fh:
         df = pd.io.excel.ExcelFile(fh, engine=gd.Conf.excel_engine)
         sheet_names = df.sheet_names
