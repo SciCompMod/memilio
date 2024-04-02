@@ -22,6 +22,7 @@ from keras.losses import MeanAbsolutePercentageError
 from keras.metrics import mean_absolute_percentage_error
 from keras.models import Model
 from keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
+from keras import mixed_precision
 #from keras.optimizers.legacy import Adam, Nadam, RMSprop, SGD, Adagrad
 
 from sklearn.model_selection import KFold
@@ -30,6 +31,10 @@ from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, M
 from spektral.layers import   XENetConv, CensNetConv, ECCConv, XENetConvBatch
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency, incidence_matrix, line_graph
+
+# GPU settings 
+#mixed_precision.set_global_policy('mixed_float16')
+
 
 #from memilio.simulation.secir import InfectionState
 
@@ -42,7 +47,7 @@ path_data = os.path.join(
     'data_GNN_nodamp_400pop_1k_30days_1_24')
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
-#file = open('', 'rb')
+#file = open('/home/schm_a45/Documents/code3/memilio/pycode/machine-learning/data_GNN_nodamp_400pop_1k_30days_1_24/data_secir_age_groups.pickle', 'rb')
 data_secir = pickle.load(file)
 
 
