@@ -29,6 +29,8 @@ import tensorflow as tf
 from memilio.simulation.secir import InfectionState
 from memilio.surrogatemodel.ode_secir_many_dampings import network_architectures
 
+from keras.models import Sequential
+
 
 def plot_compartment_prediction_model(
         inputs, labels, modeltype,  label_width, input_width, model=None,
@@ -313,10 +315,13 @@ def network_fit(
     print('mean MAPE for all compartments: ', mean_percentage.mean())
 
     if (plot):
-        plot_losses(history)
+        #plot_losses(history)
         plot_compartment_prediction_model(
             test_inputs, test_labels, modeltype,label_width_days, input_width_days,  model=model,
             plot_compartment='InfectedSymptoms', max_subplots=3)
+        df = get_test_statistic(test_inputs, test_labels, model)
+        print(df)
+        print('mean: ',  df.mean())
 
     return history
 
@@ -369,7 +374,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
         index=[str(compartment).split('.')[1]
-               for compartment in compartments_cleaned],
+               for compartment in compartment_array],
         columns=['Percentage Error'])
 
     # mean_percentage = pd.DataFrame(
@@ -535,23 +540,38 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    file_name = 'data_secir_groups_30days_10k_3damp.pickle'
-    
-    max_epochs = 1000
-    label_width = 30
+    file_name = 'data_secir_groups_100days_2damp.pickle'
+    modelname = 'LSTM'
+    max_epochs = 1500
+    label_width = 100
 
     input_dim_lstm, output_dim_lstm = get_dim_lstm(path_data,file_name)
     input_dim_classic, output_dim_classic = get_dim_classic(path_data,file_name)
 
+    def cnn_model_tests(input_dim, output_dim):
+        
+        conv_size = 3
+        model = Sequential()
+        tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
+        tf.keras.layers.Conv1D(1024, activation='relu',
+                                        kernel_size=(conv_size), input_shape = (input_dim, 1)),
+        tf.keras.layers.MaxPooling1D(pool_size=2)
+        tf.keras.layers.Dense(units=1024, activation='relu'),
+        tf.keras.layers.Dense(units=1024, activation='relu'),
+        tf.keras.layers.Dense(output_dim, activation='linear')  # 1440
+        return model
 
-    model = "CNN"
+
+
+    model = "LSTM"
     if model == "Dense":
         model = network_architectures.mlp_model(input_dim_classic, output_dim_classic)
         modeltype = 'classic'
 
     
     elif model == "CNN":
-        model = network_architectures.cnn_model(input_dim_classic, output_dim_classic)
+        #model = network_architectures.cnn_model_tests(input_dim_classic, output_dim_classic)
+        model = cnn_model_tests(input_dim_classic, output_dim_classic)
         modeltype = 'classic'
 
     elif model == "LSTM":
