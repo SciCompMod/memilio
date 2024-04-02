@@ -15,13 +15,13 @@ path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
 filename = "data_secir_groups_30days_nodamp.pickle"
-filename_df = "dataframe_0_1024_LSTM_opt"
+filename_df = "dataframe_0_512_LSTM_opt"
 
 label_width = 30 
 early_stop = 100
 
 hidden_layers = 0
-neurons_in_hidden_layer = 1024
+neurons_in_hidden_layer = 512
 optimizer = ['Adam', 'Nadam','SGD', 'RMSProp', 'Adagrad']
 #activations = ['relu', 'elu', 'sigmoid', 'leaky_relu', 'tanh', 'linear', 'softmax']
 model= "LSTM"
