@@ -41,6 +41,7 @@ import matplotlib
 from io import BytesIO
 from zipfile import ZipFile
 from enum import Enum
+from pkg_resources import parse_version
 
 import pandas as pd
 
@@ -63,6 +64,12 @@ class Conf:
 
     v_level = 'Info'
     show_progr = False
+    if parse_version(pd.__version__) < parse_version('2.2'):
+        excel_engine = 'openpyxl'
+    else:
+        # calamine is faster, but cannot be used for pandas < 2.2
+        # also there are issues with pd >= 2.2 and openpyxl engine
+        excel_engine = 'calamine'
 
     def __init__(self, out_folder, **kwargs):
 
@@ -250,7 +257,8 @@ def get_file(
 
     @return pandas dataframe
     """
-    param_dict_excel = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
+    param_dict_excel = {"sheet_name": 0,
+                        "header": 0, "engine": Conf.excel_engine}
     param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
     param_dict_zip = {}
 
