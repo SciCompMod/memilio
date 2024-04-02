@@ -286,6 +286,18 @@ def network_fit(
                         validation_data=(valid_inputs, valid_labels),
                         batch_size=batch_size,
                         callbacks=[early_stopping])
+    
+
+    #save the model
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_models = os.path.join(
+        os.path.dirname(
+            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        'saved_models/saved_models_secir_groups_onedamp_best_LSTM__30days')
+    if not os.path.isdir(path_models):
+        os.mkdir(path_models)
+
+    model.save(path_models, 'onedamp_30days.h5')
 
     if (plot):
         plot_losses(history)
@@ -297,18 +309,18 @@ def network_fit(
         print('mean: ',  df.mean())
         
         
-        filename_df = 'datarame_secirgroups_onedamp_noinfo_sametestset'
-        df_save.loc[len(df_save.index)] = [df.mean()[0], model_name]
+        # filename_df = 'datarame_secirgroups_onedamp_noinfo_sametestset'
+        # df_save.loc[len(df_save.index)] = [df.mean()[0], model_name]
         
-        path = os.path.dirname(os.path.realpath(__file__))
-        file_path = os.path.join(
-            os.path.dirname(
-                os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-            'secir_groups_onedamp_noinfo')
-        if not os.path.isdir(file_path):
-            os.mkdir(file_path)
-        file_path = os.path.join(file_path,filename_df)
-        df_save.to_csv(file_path)
+        # path = os.path.dirname(os.path.realpath(__file__))
+        # file_path = os.path.join(
+        #     os.path.dirname(
+        #         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        #     'secir_groups_onedamp_noinfo')
+        # if not os.path.isdir(file_path):
+        #     os.mkdir(file_path)
+        # file_path = os.path.join(file_path,filename_df)
+        # df_save.to_csv(file_path)
 
 
     return history
@@ -522,9 +534,9 @@ if __name__ == "__main__":
 
     input_dim = get_input_dim_lstm(path_data, filename)
 
-    models = ['Dense','LSTM', 'CNN']
+    #models = ['Dense','LSTM', 'CNN']
 
-    #model = "LSTM"
+    models = ["LSTM"]
     for model_name in models:
         model = model_name
         if model == "Dense_Single":
