@@ -38,7 +38,7 @@ namespace ssir
  * @brief probability of getting infected from a contact
  */
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue;
+    using Type = UncertainValue<>;
     static Type get_default()
     {
         return Type(1.0);
@@ -53,7 +53,7 @@ struct TransmissionProbabilityOnContact {
  * @brief the infectious time in day unit
  */
 struct TimeInfected {
-    using Type = UncertainValue;
+    using Type = UncertainValue<>;
     static Type get_default()
     {
         return Type(6.0);

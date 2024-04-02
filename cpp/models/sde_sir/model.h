@@ -39,9 +39,9 @@ namespace ssir
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
-class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
+class Model : public FlowModel<double, InfectionState, mio::Populations<double, InfectionState>, Parameters, Flows>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
+    using Base = FlowModel<double, InfectionState, mio::Populations<double, InfectionState>, Parameters, Flows>;
 
 public:
     Model()

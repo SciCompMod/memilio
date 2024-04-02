@@ -31,10 +31,10 @@ namespace ssir
 {
 
 /// @brief A specialized Simulation for mio::ssir::Model.
-class Simulation : public mio::Simulation<Model>
+class Simulation : public mio::Simulation<double, Model>
 {
 protected:
-    using mio::Simulation<Model>::set_integrator;
+    using mio::Simulation<double, Model>::set_integrator;
 
 public:
     /**
@@ -44,13 +44,12 @@ public:
      * @param[in] dt Initial step size of integration.
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : mio::Simulation<Model>(model, t0, dt)
+        : mio::Simulation<double, Model>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
         set_integrator(integrator);
     }
 
-    using mio::Simulation<Model>::Simulation;
     /**
      * @brief advance simulation to tmax
      * tmax must be greater than get_result().get_last_time_point()
@@ -84,10 +83,10 @@ inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model 
 }
 
 /// @brief A specialized FlowSimulation for mio::ssir::Model.
-class FlowSimulation : public mio::FlowSimulation<Model>
+class FlowSimulation : public mio::FlowSimulation<double, Model>
 {
 protected:
-    using mio::FlowSimulation<Model>::set_integrator;
+    using mio::FlowSimulation<double, Model>::set_integrator;
 
 public:
     /**
@@ -97,9 +96,9 @@ public:
      * @param[in] dt Initial step size of integration.
      */
     FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : mio::FlowSimulation<Model>(model, t0, dt)
+        : mio::FlowSimulation<double, Model>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
         set_integrator(integrator);
     }
 
