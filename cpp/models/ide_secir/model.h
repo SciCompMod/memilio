@@ -45,7 +45,7 @@ public:
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init The population of the considered region.
-    * @param[in] deaths The total number of deaths at the time zero.
+    * @param[in] deaths The total number of deaths at time t0.
     * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */

@@ -156,6 +156,57 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
     }
 }
 
+// Check that the start time of the simulation is determined by the given time points for the transitions.
+TEST(IdeSecir, checkStartTime)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType tmax   = 3.0;
+    ScalarType N      = 10000.;
+    ScalarType deaths = 10.;
+    ScalarType dt     = 1.;
+    ScalarType t0     = 2.;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
+    mio::TimeSeries<ScalarType> init(num_transitions);
+
+    // Define transitions that will be used for initialization.
+    Vec vec_init(num_transitions);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    // Add initial time point to TimeSeries.
+    init.add_time_point(0.0, vec_init);
+    // Add further time points until t0.
+    while (init.get_last_time() < t0) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    // Initialize model.
+    mio::isecir::Model model(std::move(init), N, deaths);
+
+    // Create class for simulation.
+    mio::isecir::Simulation sim(model, dt);
+
+    // Check that the last time point of transitions is equal to t0.
+    mio::TimeSeries<ScalarType> transitions = sim.get_transitions();
+    EXPECT_NEAR(t0, transitions.get_last_time(), 1e-8);
+
+    // Carry out simulation and check that first time point of resulting compartments is equal to t0.
+    sim.advance(tmax);
+    mio::TimeSeries<ScalarType> compartments = sim.get_result();
+    EXPECT_NEAR(t0, compartments.get_time(0), 1e-8);
+}
+
 // Check results of our simulation with an example calculated by hand,
 // for calculations see internal Overleaf document.
 // TODO: Add link to material when published.
