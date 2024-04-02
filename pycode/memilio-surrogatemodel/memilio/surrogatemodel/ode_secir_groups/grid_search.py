@@ -1,5 +1,5 @@
-from memilio.surrogatemodel.ode_secir_groups import network_architectures
-from memilio.surrogatemodel.ode_secir_groups.model import split_data, get_test_statistic
+#from memilio.surrogatemodel.ode_secir_groups import network_architectures
+#from memilio.surrogatemodel.ode_secir_groups.model import split_data, get_test_statistic
 import os 
 import tensorflow as tf
 import pickle
@@ -15,14 +15,19 @@ path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
 filename = "data_secir_groups_30days_nodamp.pickle"
-filename_df = "dataframe"
+filename_df = "dataframe_a4"
 
 label_width = 30 
 early_stop = 100
 
-hidden_layers = [0,1,2,3,4]
-neurons_in_hidden_layer = [32, 62, 128, 512, 1024]
-models = ["Dense", "CNN", "LSTM"]
+# hidden_layers = [0,1,2,3,4]
+# neurons_in_hidden_layer = [32, 62, 128, 512, 1024]
+# models = ["Dense", "CNN", "LSTM"]
+
+hidden_layers = [3]
+neurons_in_hidden_layer = [1024]
+models = ["CNN-LSTM"]
+
 
 label_width = 30
 
@@ -39,7 +44,39 @@ df_results  = pd.DataFrame(
     columns=['model', 'number_of_hidden_layers', 'number_of_neurons',
              'mean_test_MAPE', 'kfold_train',
              'kfold_val', 'kfold_test', 'training_time',
-             'train_losses', 'val_losses'])            
+             'train_losses', 'val_losses'])     
+
+
+
+def get_test_statistic(test_inputs, test_labels, model):
+    """! Calculates the mean absolute percentage error based on the test dataset.   
+
+    @param test_inputs inputs from test data.
+    @param test_labels labels (output) from test data.
+    @param model trained model. 
+
+    """
+
+    pred = model(test_inputs)
+    pred = pred.numpy()
+    test_labels = np.array(test_labels)
+
+    diff = pred - test_labels
+    relative_err = (abs(diff))/abs(test_labels)
+    # reshape [batch, time, features] -> [features, time * batch]
+    relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
+    relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
+
+    InfectionState = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+
+    mean_percentage = pd.DataFrame(
+         data=relative_err_means_percentage,
+         index=[compartment
+                for compartment in InfectionState],
+         columns=['Percentage Error'])
+
+    return mean_percentage
+
 
 
 #for param in parameters: 
@@ -120,6 +157,30 @@ def train_and_evaluate_model(param, max_epochs):
             model.add(tf.keras.layers.Dense(label_width*num_outputs,
                                     kernel_initializer=tf.initializers.zeros()))
             model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
+
+
+        elif modelname == 'CNN-LSTM':
+            conv_size=3
+            num_outputs = 8*6
+            model = tf.keras.Sequential([
+            #tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
+            tf.keras.layers.Conv1D(neuron_number, activation='relu',
+                                    kernel_size=(conv_size)),
+            tf.keras.layers.Dropout(0.5),
+            tf.keras.layers.MaxPooling1D(pool_size=2),
+            tf.keras.layers.GaussianNoise(0.3),
+            tf.keras.layers.LSTM(512, return_sequences=False)])
+
+            for i in range(layer):
+                        model.add(tf.keras.layers.BatchNormalization())
+                        model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
+
+            model.add(tf.keras.layers.Dense(label_width*num_outputs,
+                                    kernel_initializer=tf.initializers.zeros()))
+            model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
+
+            
+            
         #import torch
         #x = torch.take(data['inputs'], torch.tensor(train_idx[:(int(0.8*len(train_idx)))]))
          
@@ -135,7 +196,7 @@ def train_and_evaluate_model(param, max_epochs):
         model.compile(
             loss=tf.keras.losses.MeanAbsolutePercentageError(),
             optimizer=tf.keras.optimizers.Adam(),
-            metrics=[tf.keras.metrics.MeanAbsoluteError()])
+            metrics=[tf.keras.metrics.MeanAbsolutePercentageError()])
 
         history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                             validation_data=(valid_inputs, valid_labels),
@@ -176,7 +237,7 @@ def train_and_evaluate_model(param, max_epochs):
     file_path = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'secir_groups_grid_search')
+        'secir_groups_grid_search_CNN_LSTM')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path,filename_df)
@@ -186,7 +247,7 @@ def train_and_evaluate_model(param, max_epochs):
 
 
 start_hyper = time.perf_counter()
-max_epochs = 2
+max_epochs = 1500
 
 for param in parameters:
      train_and_evaluate_model(param, max_epochs)
