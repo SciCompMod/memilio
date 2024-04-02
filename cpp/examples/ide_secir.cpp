@@ -20,12 +20,13 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/state_age_function.h"
+#include "memilio/data/analyze_result.h"
 
 int main()
 {
@@ -34,7 +35,7 @@ int main()
     ScalarType tmax   = 10;
     ScalarType N      = 10000;
     ScalarType deaths = 13.10462213;
-    ScalarType dt     = 0.01;
+    ScalarType dt     = 1e-2;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -57,7 +58,7 @@ int main()
     // Add initial time point to time series.
     init.add_time_point(-10, vec_init);
     // Add further time points until time 0.
-    while (init.get_last_time() < 0) {
+    while (init.get_last_time() < -dt / 2) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
@@ -97,7 +98,8 @@ int main()
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);
 
-    sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     // Uncomment this line to print the transitions.
     // sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"}, 16, 8);
 }
