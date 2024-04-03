@@ -229,7 +229,7 @@ class NPIRegression():
         filepath = os.path.join(
             directory, "r_eff_county_multiple_c.json")
 
-        if True:  # not os.path.exists(filepath):
+        if not os.path.exists(filepath):
             self.df_r = compute_R_eff(counties=self.counties)
         else:
             self.df_r = pd.read_json(filepath)
@@ -290,12 +290,33 @@ class NPIRegression():
 
         # drop columns where no NPIs are assigned
         num_dropped = 0
-        null_idx = np.where(self.df_npis[self.column_names].sum() == 0)[0]
+        null_idx = np.where(self.df_npis[self.used_npis].sum() == 0)[0]
         for null_item in null_idx:
-            dropped = self.column_names.pop(null_item-num_dropped)
+            dropped = self.used_npis.pop(null_item-num_dropped)
             print('No Data for NPI: ' + str(dropped))
             self.df_npis = self.df_npis.drop(dropped, axis=1)
             num_dropped += 1
+
+        # sort all dataframes first by county and then by date so that all dataframes are aligned
+        self.df_r.sort_values(['ID_County', 'Date']).reset_index(inplace=True)
+        self.df_npis.sort_values(
+            ['ID_County', 'Date']).reset_index(inplace=True)
+        self.df_vaccinations.sort_values(
+            ['ID_County', 'Date']).reset_index(inplace=True)
+        self.df_regions.sort_values(
+            ['ID_County', 'Date']).reset_index(inplace=True)
+        self.df_seasonality.sort_values(
+            ['ID_County', 'Date']).reset_index(inplace=True)
+        self.df_agestructure.sort_values(
+            ['ID_County', 'Date']).reset_index(inplace=True)
+
+        # reset index so that we can concatenate dataframes without problems
+        self.df_r.reset_index(inplace=True)
+        self.df_npis.reset_index(inplace=True)
+        self.df_vaccinations.reset_index(inplace=True)
+        self.df_regions.reset_index(inplace=True)
+        self.df_seasonality.reset_index(inplace=True)
+        self.df_agestructure.reset_index(inplace=True)
 
     # define variables that will be used in every regression
 
@@ -303,38 +324,34 @@ class NPIRegression():
 
         self.read_data()
 
-        # set up regression model
+        # set up endogenous variable
         self.Y = self.df_r['R_eff']
 
         # TODO: discuss which vaccination states we want to include
         self.used_vacc_states = list(self.all_vacc_states[0:3])
-        self.X_vaccinations = np.array([self.df_vaccinations[vacc_state]
-                                        for vacc_state in self.used_vacc_states]).T
+
         # TODO: discuss which region type we want to use as reference
         # for now use Metropole
         self.reference_region = 'Stadtregion - Metropole'
         self.region_types.remove(self.reference_region)
-        self.X_regions = np.array([self.df_regions[region_type]
-                                   for region_type in self.region_types]).T
 
-        # set up array with variables for seasonality
-        self.X_seasonality = np.array(
-            [self.df_seasonality['sin'], self.df_seasonality['cos']]).T
+        # define df with all variables that go into the model
+        self.df_allvariables = pd.DataFrame([self.df_vaccinations[vacc_state]
+                                             for vacc_state in self.used_vacc_states] +
+                                            [self.df_regions[region_type]
+                                             for region_type in self.region_types] +
+                                            [self.df_seasonality['sin'], self.df_seasonality['cos']] +
+                                            [self.df_agestructure[age_category]
+                                             for age_category in self.age_categories] +
+                                            [self.df_npis[npi] for npi in self.used_npis]).transpose()
 
-        # set up array with variables for agestructure
-        self.X_agestructure = np.array([self.df_agestructure[age_category]
-                                        for age_category in self.age_categories]).T
+    # define variables for regression according to input and fit model
 
-    # TODO: Discuss which variables should go in backward selection, also vaccination states?
+    def do_regression(self, variables):
 
-    # define variables for NPIs according to input and fit model
+        X = np.array([self.df_allvariables[variable]
+                     for variable in variables]).T
 
-    def do_regression(self, columns):
-        # create array that contains current set of NPIs
-        X_npis = np.array([self.df_npis[column] for column in columns]).T
-
-        X = np.concatenate(
-            (self.X_vaccinations, self.X_regions, self.X_seasonality, self.X_agestructure, X_npis), axis=1)
         # TODO: check why there is not always a constant added automatically, do we have linear dependence somewhere?
         # with has_constant = 'add' we force it to add a constant but can this lead to issues?
         X = sm.add_constant(X, has_constant='add')
@@ -354,26 +371,31 @@ class NPIRegression():
 
         # initial set of NPIs
         # use fine_resolution=0 for now for simplicity
-        self.column_names = ['M01a', 'M01b', 'M02a', 'M02b',
-                             'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
-                             'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
+        # TODO: move this to constructor?
+        self.used_npis = ['M01a', 'M01b', 'M02a', 'M02b',
+                          'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
+                          'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
         # set up regression model
         self.set_up_model()
 
+        # define variables that will be used in backward selection
+        regression_variables = self.used_vacc_states + self.region_types + \
+            ['sin', 'cos'] + \
+            self.age_categories + self.used_npis
+
         # do regression with all NPIs
-        results = self.do_regression(self.column_names)
+        results = self.do_regression(regression_variables)
         # store pvalues in dataframe
         self.df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
+        # always keep variable 'const' in regression model
+        fixed_variables = ['const']
         # add column with column names to df
-        non_npi_variables = ['const'] + \
-            self.used_vacc_states + self.region_types + \
-            list(self.df_seasonality.columns[2:4]) + self.age_categories
         self.df_pvalues.insert(
-            1, "columns", non_npi_variables + self.column_names)
+            1, "columns", fixed_variables + regression_variables)
+        # this shouldn't be needed anymore because we check before if there is an NPI that is never active
         # drop rows with pvalue that is NaN
-        # TODO: check why we get NaNs here in the first place
-        self.df_pvalues.dropna(inplace=True)
+        # self.df_pvalues.dropna(inplace=True)
 
         # compute AIC and BIC as reference for later
         aic_min = results.aic
@@ -388,37 +410,30 @@ class NPIRegression():
         removed_list = []
         iteration = 0
         # TODO: think about how to decide when backwards selection is "done"
-        while (counter_not_removed < 7) and (len(self.df_pvalues) > 5+len(non_npi_variables)):
+        while (counter_not_removed < 7) and (len(self.df_pvalues) > 5+len(fixed_variables)):
             iteration += 1
 
             # choose NPI of interest which is chosen according to the n-th highest pvalue
             # n is determined by the counter_not_removed which is set accordingly if a NPI was removed or not in the previous iteration, see below
-            npi_of_interest = self.df_pvalues.sort_values(
+            variable_of_interest = self.df_pvalues.sort_values(
                 'pvalues', ascending=False).iloc[counter_not_removed].name
 
-            # if npi_of_interest is in non_npi_variables, take variable with next higher pvalue
-            counter_non_npi_var = 0
-            while self.df_pvalues['columns'][npi_of_interest] in non_npi_variables:
-                counter_non_npi_var += 1
-                # if npi_of_interest in non_npi_variables:
-                npi_of_interest = self.df_pvalues.sort_values(
-                    'pvalues', ascending=False).iloc[counter_not_removed + counter_non_npi_var].name
-            # adjust counter_not_removed in case the new npi_of_interest doesn't get removed
-            counter_not_removed += counter_non_npi_var
+            # if variable_of_interest is 'const' use variable with next highest pvalue
+            if self.df_pvalues['columns'][variable_of_interest] == 'const':
+                variable_of_interest = self.df_pvalues.sort_values(
+                    'pvalues', ascending=False).iloc[counter_not_removed+1].name
 
-            # plot_pvalues(df_pvalues, iteration, npi_of_interest)
-
-            # create view of df_pvalues where we remove npi_of_interest and that will be used for regression_model
+            # create view of df_pvalues where we remove variable_of_interest and that will be used for regression_model
             df_view = self.df_pvalues[~self.df_pvalues.index.isin(
-                [npi_of_interest])]
+                [variable_of_interest])]
             print("NPI of interest: ",
-                  self.df_pvalues['columns'][npi_of_interest])
+                  self.df_pvalues['columns'][variable_of_interest])
 
             # do new regression and compute AIC and BIC
-            # [num_non_npi_variables:] because we do only want NPIs as input for regression model, not 'const' or used_vacc_states
-            num_non_npi_variables = len(non_npi_variables)
-            results = self.do_regression(
-                df_view['columns'][num_non_npi_variables:])
+            # [num_fixed_variables:] because we do want to keep 'const' in regression model
+            num_fixed_variables = len(fixed_variables)
+            results = self.do_regression(list(
+                df_view['columns'][num_fixed_variables:]))
 
             # compute AIC and BIC
             aic = results.aic
@@ -431,49 +446,50 @@ class NPIRegression():
                 if plot:
                     # plot pvalues
                     self.plot_pvalues(iteration,
-                                      npi_of_interest, removed=True)
+                                      variable_of_interest, removed=True)
 
                 # set new reference values for AIC and BIC
                 aic_min = aic
                 bic_min = bic
 
-                # add npi_of_interest to removed_list
+                # add variable_of_interest to removed_list
                 removed_list.append(
-                    self.df_pvalues['columns'][npi_of_interest])
-                print('Removed ', self.df_pvalues['columns'][npi_of_interest])
-                # change df_pvalues to df_view because we actually want to remove npi_of_interest
+                    self.df_pvalues['columns'][variable_of_interest])
+                print('Removed ',
+                      self.df_pvalues['columns'][variable_of_interest])
+                # change df_pvalues to df_view because we actually want to remove variable_of_interest
                 self.df_pvalues = df_view[:]
 
                 # set counter_not_removed  = 0 because we want to count how many times in a row a selected NPI was not removed
                 # due to unclear AIC and BIC
-                # also, in this case we want to select npi_of_interest by taking the NPI with the highest pvalue of remaining NPIs
+                # also, in this case we want to select variable_of_interest by taking the NPI with the highest pvalue of remaining NPIs
                 counter_not_removed = 0
 
             else:
                 if plot:
                     # plot pvalues
                     self.plot_pvalues(iteration,
-                                      npi_of_interest, removed=False)
+                                      variable_of_interest, removed=False)
 
                 if aic < aic_min:
                     print("BIC didn't decrease, don't remove {}".format(
-                        self.df_pvalues['columns'][npi_of_interest]))
+                        self.df_pvalues['columns'][variable_of_interest]))
                 elif bic < bic_min:
                     print("AIC didn't decrease, don't remove {}".format(
-                        self.df_pvalues['columns'][npi_of_interest]))
+                        self.df_pvalues['columns'][variable_of_interest]))
                 else:
                     print("AIC and BIC didn't decrease, don't remove {}".format(
-                        self.df_pvalues['columns'][npi_of_interest]))
+                        self.df_pvalues['columns'][variable_of_interest]))
 
-                # increase counter_not_removed , we select npi_of_interest by taking the NPI with the next highest pvalue
+                # increase counter_not_removed , we select variable_of_interest by taking the NPI with the next highest pvalue
                 counter_not_removed += 1
 
         print('Removed NPIs: ', removed_list)
 
         # do one last regression here to make sure that df_pvalues and results are matching
-        # (i.e. also if in last loop no NPI was removed)
+        # (i.e. also if in last loop no variable was removed)
         results = self.do_regression(
-            self.df_pvalues['columns'][num_non_npi_variables:])
+            self.df_pvalues['columns'][num_fixed_variables:])
 
         # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
         self.df_pvalues.insert(2, "coeffs", list(results.params))
@@ -509,24 +525,24 @@ class NPIRegression():
 
         plt.close()
 
-    # plot pvalues and npi_of_interest for iteration in backward selection
-    def plot_pvalues(self, iteration, npi_of_interest, removed):
+    # plot pvalues and variable_of_interest for iteration in backward selection
+    def plot_pvalues(self, iteration, variable_of_interest, removed):
         # plot pvalues
         fig, ax = plt.subplots()
         ax.barh(range(len(self.df_pvalues)), self.df_pvalues['pvalues'])
         # get index of npi_of interest and change color of that bar
-        index = self.df_pvalues.index.get_loc(npi_of_interest)
+        index = self.df_pvalues.index.get_loc(variable_of_interest)
 
-        # if npi_of_interest was removed change color to green
+        # if variable_of_interest was removed change color to green
         if removed:
             ax.get_children()[index].set_color('g')
-            labels = ['NPI of interest was removed']
+            labels = ['Variable of interest was removed']
             handles = [plt.Rectangle((0, 0), 1, 1, color='g')]
 
-        # if npi_of_interest was not removed change color to red
+        # if variable_of_interest was not removed change color to red
         else:
             ax.get_children()[index].set_color('r')
-            labels = ['NPI of interest was not removed']
+            labels = ['Variable of interest was not removed']
             handles = [plt.Rectangle((0, 0), 1, 1, color='r')]
 
         plt.legend(handles, labels, loc='lower right')
