@@ -213,6 +213,7 @@ TEST(Testsir, get_derivatives_agegrp_compare)
     auto sir = simulate(t0, tmax, dt, model, integrator);
 
     auto dydt_default  = Eigen::VectorXd(Eigen::Index(mio::osir::InfectionState::Count));
+    dydt_default.setZero();
     Eigen::VectorXd y0 = sir.get_value(0);
     model.get_derivatives(y0, y0, 0, dydt_default);
 

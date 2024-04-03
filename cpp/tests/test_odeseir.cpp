@@ -329,6 +329,7 @@ TEST(TestSeir, get_derivatives)
     auto seir = simulate(t0, tmax, dt, model);
 
     auto dydt_default  = Eigen::VectorXd(Eigen::Index(mio::oseir::InfectionState::Count));
+    dydt_default.setZero();
     Eigen::VectorXd y0 = seir.get_value(0);
     model.get_derivatives(y0, y0, 0, dydt_default);
 
