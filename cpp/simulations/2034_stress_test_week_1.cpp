@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <iomanip>
 #include <limits>
+#include <string>
 
 namespace fs = boost::filesystem;
 
@@ -290,7 +291,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
 }
 
 //TODO: start initialization?
-mio::IOResult<void> set_population(std::vector<mio::osecirvvs::Model> nodes, const std::string& path_pop,
+mio::IOResult<void> set_population(std::vector<mio::osecirvvs::Model>& nodes, const std::string& path_pop,
                                    const std::vector<int>& node_ids)
 {
     BOOST_OUTCOME_TRY(num_population, mio::osecirvvs::details::read_population_data(path_pop, node_ids));
@@ -339,19 +340,19 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_g
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                   mio::osecirvvs::InfectionState::ExposedNaive,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                       mio::osecirvvs::InfectionState::ExposedNaive,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -371,6 +372,48 @@ enum class RunMode
     Save,
 };
 
+/* 1: "Metropole, Regiopole und Großstädte"
+   2: "Mittelstädte, städtischer Raum und kleinstädtischer, dörflicher Raum einer Ländlichen Region"
+*/
+static const std::map<std::string, std::vector<int>> region_mapping = {
+    {"Metropolis",
+     {2000, 4011, 5111,  5112,  5113,  5315,  5913,  6412,  8111,  8222,  9162,  9564, 11000, 14612, 14713,
+      1002, 1003, 3101,  3102,  3103,  3403,  3404,  4012,  5114,  5116,  5117,  5119, 5120,  5122,  5124,
+      5314, 5316, 5334,  5512,  5513,  5515,  5711,  5911,  5914,  5915,  5916,  6411, 6413,  6414,  6611,
+      7111, 7211, 7312,  7314,  7315,  8121,  8212,  8221,  8231,  8311,  8421,  9161, 9362,  9562,  9563,
+      9663, 9761, 10041, 12052, 12054, 13003, 13004, 14511, 15002, 15003, 16051, 16053}},
+    {"Rural area",
+     {1055,  3153,  3251,  3252,  3257,  3351,  3358,  3452,  3453,  3454,  3455,  3457,  3460,  5366,  5374,
+      5554,  5570,  5770,  5958,  5966,  5974,  6437,  6531,  6532,  6533,  6534,  6631,  6632,  6634,  7316,
+      7320,  8117,  8126,  8127,  8128,  8135,  8136,  8235,  8237,  8325,  8327,  8426,  8435,  8436,  9171,
+      9173,  9180,  9181,  9182,  9187,  9190,  9271,  9373,  9376,  9473,  9475,  9478,  9479,  9671,  9676,
+      9677,  9774,  9776,  9780,  10042, 10046, 12066, 14521, 14523, 14625, 14626, 15001, 15081, 15084, 15087,
+      15090, 16062, 16064, 16065, 16066, 16070, 16072, 16073, 16076, 16077, 15082, 1051,  1054,  1058,  1059,
+      1061,  3255,  3256,  3354,  3357,  3360,  3462,  5762,  6535,  6635,  6636,  7131,  7133,  7134,  7135,
+      7140,  7141,  7143,  7231,  7232,  7233,  7331,  7333,  7336,  7337,  7340,  8225,  8337,  8417,  8437,
+      9183,  9189,  9272,  9274,  9275,  9276,  9277,  9278,  9279,  9371,  9372,  9374,  9377,  9471,  9472,
+      9476,  9477,  9571,  9575,  9577,  9672,  9673,  9674,  9678,  9773,  9777,  9778,  9779,  12062, 12068,
+      12070, 12073, 13071, 13073, 13076, 16061, 16063, 16069, 16075, 13075, 15085, 15091}},
+};
+
+static const std::map<int, std::string> intervention_mapping = {{-1, "No_intervention"}};
+
+mio::IOResult<void> apply_interventions(mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& graph,
+                                        int intervention)
+{
+    mio::unused(graph);
+    switch (intervention) {
+    case 0:
+        mio::log_info("An intervention is applied.");
+    case 1:
+        mio::log_info("Another intervention is applied.");
+    default:
+        mio::log_info("No intervention is applied.");
+    }
+
+    return mio::success();
+}
+
 /**
  * Run the parameter study.
  * Load a previously stored graph or create a new one from data. 
@@ -383,11 +426,15 @@ enum class RunMode
  * @param save_single_runs [Default: true] Defines if single run results are written to the disk. 
  * @returns any io error that occurs during reading or writing of files.
  */
-mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
+mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
 {
-    const auto start_date   = mio::Date(2034, 3, 1);
-    const auto num_days_sim = 30.0;
-    const auto num_runs     = 1;
+    const auto start_date               = mio::Date(2034, 3, 1);
+    const auto num_days_sim             = 30.0;
+    const auto num_runs_per_scenario    = 5;
+    const auto num_runs_per_param_study = 1;
+    int interventions                   = -1;
+
+    result_dir += "/" + intervention_mapping.at(interventions);
 
     //create or load graph
     BOOST_OUTCOME_TRY(params_graph, get_graph(start_date, data_dir));
@@ -397,89 +444,110 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
         return n.id;
     });
 
-    //run parameter study
-    auto parameter_study =
-        mio::ParameterStudy<mio::osecirvvs::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
+    std::vector<double> num_infected_range = {1.0, 10.0};
 
-    // parameter_study.get_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    if (mio::mpi::is_root()) {
-        printf("Seeds: ");
-        for (auto s : parameter_study.get_rng().get_seeds()) {
-            printf("%u, ", s);
+    for (const auto& region : region_mapping) {
+        for (double num_infected : num_infected_range) {
+            auto rng = mio::RandomNumberGenerator();
+            for (size_t run_per_scenario = 0; run_per_scenario < num_runs_per_scenario; run_per_scenario++) {
+                int region_id = region.second[mio::UniformIntDistribution<size_t>::get_instance()(
+                    rng, size_t(0), region.second.size())];
+
+                std::string result_dir_run = result_dir + "/" + region.first;
+                result_dir_run += "/" + std::to_string((int)num_infected) + "_Infected";
+
+                result_dir_run += "/" + std::to_string(region_id);
+                //find correct node and set number of infected
+                for (auto& node : params_graph.nodes()) {
+                    if (node.id == region_id) {
+                        node.property
+                            .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] =
+                            num_infected;
+                        node.property
+                            .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}] -=
+                            num_infected;
+                        break;
+                    }
+                }
+
+                //apply interventions
+                BOOST_OUTCOME_TRY(apply_interventions(params_graph, interventions));
+
+                //run parameter study
+                auto parameter_study = mio::ParameterStudy<mio::osecirvvs::Simulation<>>{
+                    params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
+
+                // parameter_study.get_rng().seed(
+                //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+                if (mio::mpi::is_root()) {
+                    printf("Seeds: ");
+                    for (auto s : parameter_study.get_rng().get_seeds()) {
+                        printf("%u, ", s);
+                    }
+                    printf("\n");
+                }
+
+                auto save_single_run_result = mio::IOResult<void>(mio::success());
+                auto ensemble               = parameter_study.run(
+                    [&](auto&& graph) {
+                        return draw_sample(graph);
+                    },
+                    [&](auto results_graph, auto&& run_idx) {
+                        auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+                        auto params              = std::vector<mio::osecirvvs::Model>();
+                        params.reserve(results_graph.nodes().size());
+                        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                                                     std::back_inserter(params), [](auto&& node) {
+                                           return node.property.get_simulation().get_model();
+                                       });
+                        // auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
+                        // auto results_berlin     = interpolated_result[324];
+                        // for (auto t_indx = 0; t_indx < results_berlin.get_num_time_points(); t_indx++) {
+                        //     double timm_pi = 0.0;
+                        //     double timm_ii = 0.0;
+                        //     for (mio::AgeGroup i = 0; i < mio::AgeGroup(6); i++) {
+                        //         timm_pi += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
+                        //             {i, mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity})];
+                        //         timm_ii += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
+                        //             {i, mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity})];
+                        //     }
+                        //     printf("t=%i, timm_pi=%f, timm_ii=%f\n", int(results_berlin.get_time(t_indx)), timm_pi, timm_ii);
+                        // }
+
+                        std::cout << "run " << run_idx << " complete." << std::endl;
+                        return std::make_pair(interpolated_result, params);
+                    });
+
+                if (mio::mpi::is_root()) {
+                    boost::filesystem::path dir(result_dir_run);
+                    bool created = boost::filesystem::create_directories(dir);
+
+                    if (created) {
+                        mio::log_info("Directory '{:s}' was created.", dir.string());
+                    }
+                    printf("Saving results to \"%s\".\n", result_dir_run.c_str());
+                }
+
+                if (ensemble.size() > 0) {
+                    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+                    ensemble_results.reserve(ensemble.size());
+                    auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
+                    ensemble_params.reserve(ensemble.size());
+                    for (auto&& run : ensemble) {
+                        ensemble_results.emplace_back(std::move(run.first));
+                        ensemble_params.emplace_back(std::move(run.second));
+                    }
+
+                    BOOST_OUTCOME_TRY(save_single_run_result);
+                    BOOST_OUTCOME_TRY(
+                        save_results(ensemble_results, ensemble_params, county_ids, result_dir_run, false));
+                }
+            }
         }
-        printf("\n");
-    }
-
-    auto save_single_run_result = mio::IOResult<void>(mio::success());
-    auto ensemble               = parameter_study.run(
-        [&](auto&& graph) {
-            return draw_sample(graph);
-        },
-        [&](auto results_graph, auto&& run_idx) {
-            auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-            auto params              = std::vector<mio::osecirvvs::Model>();
-            params.reserve(results_graph.nodes().size());
-            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
-                               return node.property.get_simulation().get_model();
-                           });
-            // auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
-            // auto results_berlin     = interpolated_result[324];
-            // for (auto t_indx = 0; t_indx < results_berlin.get_num_time_points(); t_indx++) {
-            //     double timm_pi = 0.0;
-            //     double timm_ii = 0.0;
-            //     for (mio::AgeGroup i = 0; i < mio::AgeGroup(6); i++) {
-            //         timm_pi += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
-            //             {i, mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity})];
-            //         timm_ii += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
-            //             {i, mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity})];
-            //     }
-            //     printf("t=%i, timm_pi=%f, timm_ii=%f\n", int(results_berlin.get_time(t_indx)), timm_pi, timm_ii);
-            // }
-
-            std::cout << "run " << run_idx << " complete." << std::endl;
-            return std::make_pair(interpolated_result, params);
-        });
-
-    if (ensemble.size() > 0) {
-        auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-        ensemble_results.reserve(ensemble.size());
-        auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
-        ensemble_params.reserve(ensemble.size());
-        for (auto&& run : ensemble) {
-            ensemble_results.emplace_back(std::move(run.first));
-            ensemble_params.emplace_back(std::move(run.second));
-        }
-
-        BOOST_OUTCOME_TRY(save_single_run_result);
-        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, false));
     }
 
     return mio::success();
 }
-
-/* 1: "Metropole, Regiopole und Großstädte"
-   2: "Mittelstädte, städtischer Raum und kleinstädtischer, dörflicher Raum einer Ländlichen Region"
-*/
-static const std::map<int, std::vector<int>> region_mapping = {
-    {1, {2000, 4011, 5111,  5112,  5113,  5315,  5913,  6412,  8111,  8222,  9162,  9564, 11000, 14612, 14713,
-         1002, 1003, 3101,  3102,  3103,  3403,  3404,  4012,  5114,  5116,  5117,  5119, 5120,  5122,  5124,
-         5314, 5316, 5334,  5512,  5513,  5515,  5711,  5911,  5914,  5915,  5916,  6411, 6413,  6414,  6611,
-         7111, 7211, 7312,  7314,  7315,  8121,  8212,  8221,  8231,  8311,  8421,  9161, 9362,  9562,  9563,
-         9663, 9761, 10041, 12052, 12054, 13003, 13004, 14511, 15002, 15003, 16051, 16053}},
-    {2, {1055,  3153,  3251,  3252,  3257,  3351,  3358,  3452,  3453,  3454,  3455,  3457,  3460,  5366,  5374,
-         5554,  5570,  5770,  5958,  5966,  5974,  6437,  6531,  6532,  6533,  6534,  6631,  6632,  6634,  7316,
-         7320,  8117,  8126,  8127,  8128,  8135,  8136,  8235,  8237,  8325,  8327,  8426,  8435,  8436,  9171,
-         9173,  9180,  9181,  9182,  9187,  9190,  9271,  9373,  9376,  9473,  9475,  9478,  9479,  9671,  9676,
-         9677,  9774,  9776,  9780,  10042, 10046, 12066, 14521, 14523, 14625, 14626, 15001, 15081, 15084, 15087,
-         15090, 16062, 16064, 16065, 16066, 16070, 16072, 16073, 16076, 16077, 15082, 1051,  1054,  1058,  1059,
-         1061,  3255,  3256,  3354,  3357,  3360,  3462,  5762,  6535,  6635,  6636,  7131,  7133,  7134,  7135,
-         7140,  7141,  7143,  7231,  7232,  7233,  7331,  7333,  7336,  7337,  7340,  8225,  8337,  8417,  8437,
-         9183,  9189,  9272,  9274,  9275,  9276,  9277,  9278,  9279,  9371,  9372,  9374,  9377,  9471,  9472,
-         9476,  9477,  9571,  9575,  9577,  9672,  9673,  9674,  9678,  9773,  9777,  9778,  9779,  12062, 12068,
-         12070, 12073, 13071, 13073, 13076, 16061, 16063, 16069, 16075, 13075, 15085, 15091}},
-};
 
 int main(int argc, char** argv)
 {
@@ -496,9 +564,9 @@ int main(int argc, char** argv)
     }
 
     else if (argc == 1) {
-        data_dir   = "/localdata1/code_2024/memilio/data";
-        save_dir   = "/localdata1/code_2024/memilio/test";
-        result_dir = "/localdata1/code_2024/memilio/test";
+        data_dir   = "C:/Users/bick_ju/Documents/repos/memilio/data";
+        save_dir   = "C:/Users/bick_ju/Documents/repos/memilio/data/graph";
+        result_dir = "C:/Users/bick_ju/Documents/repos/memilio/data/results";
     }
     else {
         if (mio::mpi::is_root()) {
