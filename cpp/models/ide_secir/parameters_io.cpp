@@ -95,7 +95,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
-    // Define dumy variables to store the first and the last index of the TimeSeries where the considered entry of rki_data is potentially needed.
+    // Define dummy variables to store the first and the last index of the TimeSeries where the considered entry of rki_data is potentially needed.
     Eigen::Index idx_needed_first = 0;
     Eigen::Index idx_needed_last  = 0;
     ScalarType time_idx           = 0;
@@ -178,7 +178,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     }
 
     //--- Calculate the remaining flows. ---
-    // Compute flow InfectedNoSymptomsToInfectedSymptoms for -global_support_max, ..., 0.
+    // Compute flow ExposedToInfectedNoSymptoms for -global_support_max, ..., 0.
     // Use mean value of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.
     ScalarType mean_InfectedNoSymptomsToInfectedSymptoms =
         model.parameters
@@ -193,7 +193,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                                [Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)];
     }
 
-    // Compute flow ExposedToInfectedNoSymptoms for -global_support_max, ..., 0.
+    // Compute flow SusceptibleToExposed for -global_support_max, ..., 0.
     // Use mean values of the TransitionDistribution ExposedToInfectedNoSymptoms and of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.
     ScalarType mean_ExposedToInfectedNoSymptoms =
         model.parameters.get<TransitionDistributions>()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]

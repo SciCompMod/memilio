@@ -76,9 +76,9 @@ struct StateAgeFunction {
     StateAgeFunction(ScalarType init_parameter)
         : m_parameter{init_parameter}
         , m_mean{-1.} // Initialize mean as not set.
-        , m_mean_tol{-1.} // Initialize mean as not set.
-        , m_support_max{-1.} // initialize support maximum as not set
-        , m_support_tol{-1.} // initialize support tolerance as not set
+        , m_mean_tol{-1.} // Initialize tolerance for computation of mean as not set.
+        , m_support_max{-1.} // Initialize support maximum as not set.
+        , m_support_tol{-1.} // Initialize tolerance for computation of support as not set.
     {
     }
 
@@ -357,7 +357,7 @@ struct SmootherCosine : public StateAgeFunction {
     }
 
     // TODO: There is also a closed form for the mean value of Smoothercosine: 0.5*m_parameter.
-    // However, an StateAgeFunction that uses the default implementation is required for testing purposes.
+    // However, a StateAgeFunction that uses the default implementation is required for testing purposes.
     // Therefore, the closed form is only used for comparison in the tests.
     // If another StateAgeFunction is implemented that uses the default implementation, the function get_mean() should be overwritten here.
 protected:

@@ -180,7 +180,7 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
         parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_support_max(dt, m_tol) / dt);
 
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
-        // (current_time_index - i) * dt is the time, the individuals has already spent in this state.
+        // (current_time_index - i) * dt is the time the individuals have already spent in this state.
         ScalarType state_age = (current_time_index - i) * dt;
 
         // Backward difference scheme to approximate first derivative.

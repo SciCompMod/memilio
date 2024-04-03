@@ -126,7 +126,7 @@ public:
      * 
      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
      * last time value in m_transitions. 
-     * The function compute_flow with one parameter more is called with the specification of current_time_index as 
+     * The function compute_flow with an additional parameter is called with the specification of current_time_index as 
      * the last index of m_transitions.
      * See also compute_flow for a description of the parameters.
      */
@@ -135,7 +135,7 @@ public:
     /**
      * @brief Computes size of a flow.
      * 
-     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the ctime index current_time_index.
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the time index current_time_index.
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
