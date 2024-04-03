@@ -64,6 +64,13 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         FetchContent_Populate(boost)
     endif()
 
+    execute_process(COMMAND ./bootstrap.sh
+        WORKING_DIRECTORY ${boost_SOURCE_DIR}
+        )
+    execute_process(COMMAND ./b2 headers
+        WORKING_DIRECTORY ${boost_SOURCE_DIR}
+        )
+
     add_library(boost INTERFACE)
     add_library(Boost::boost ALIAS boost)
     target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}> 
