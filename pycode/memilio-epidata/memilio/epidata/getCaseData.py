@@ -47,7 +47,7 @@ from memilio.epidata import progress_indicator
 pd.options.mode.copy_on_write = True
 
 
-def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=True):
+def check_for_completeness(df: pd.DataFrame, run_checks: bool, merge_berlin: bool = False, merge_eisenach: bool = True):
     """! Checks if all counties are mentioned in the case data set
 
    This check had to be added due to incomplete data downloads
@@ -85,8 +85,8 @@ def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=Tr
 
 
 def fetch_case_data(
-    read_data=dd.defaultDict['read_data'],
-    out_folder=dd.defaultDict['out_folder'],
+    read_data: bool = dd.defaultDict['read_data'],
+    out_folder: str = dd.defaultDict['out_folder'],
     **kwargs
 ) -> pd.DataFrame:
     """! Downloads the case data
@@ -102,7 +102,7 @@ def fetch_case_data(
     ----------
     read_data: bool
         Defines if data is read from file or downloaded. Default defined in defaultDict.
-    out_folder: bool
+    out_folder: str
         Folder where data is written to. Default defined in defaultDict.
 
     Returns
@@ -178,8 +178,8 @@ def fetch_case_data(
 
 def preprocess_case_data(
     raw_df: pd.DataFrame,
-    split_berlin=dd.defaultDict['split_berlin'],
-    rep_date=dd.defaultDict['rep_date'],
+    split_berlin: bool = dd.defaultDict['split_berlin'],
+    rep_date: bool = dd.defaultDict['rep_date'],
 ) -> pd.DataFrame:
     """ Preprocessing of the case data
 
@@ -282,15 +282,15 @@ def preprocess_case_data(
 
 def write_case_data(
     df: pd.DataFrame,
-    file_format=dd.defaultDict['file_format'],
-    out_folder=dd.defaultDict['out_folder'],
-    start_date=dd.defaultDict['start_date'],
-    end_date=dd.defaultDict['end_date'],
-    impute_dates=dd.defaultDict['impute_dates'],
-    moving_average=dd.defaultDict['moving_average'],
-    split_berlin=dd.defaultDict['split_berlin'],
-    rep_date=dd.defaultDict['rep_date'],
-    files='All',
+    file_format: str = dd.defaultDict['file_format'],
+    out_folder: str = dd.defaultDict['out_folder'],
+    start_date: date = dd.defaultDict['start_date'],
+    end_date: date = dd.defaultDict['end_date'],
+    impute_dates: bool = dd.defaultDict['impute_dates'],
+    moving_average: int = dd.defaultDict['moving_average'],
+    split_berlin: bool = dd.defaultDict['split_berlin'],
+    rep_date: bool = dd.defaultDict['rep_date'],
+    files: str or list = 'All',
     **kwargs,
 ) -> None:
     """
@@ -455,16 +455,16 @@ def write_case_data(
 
 
 def get_case_data(
-    read_data=dd.defaultDict['read_data'],
-    file_format=dd.defaultDict['file_format'],
-    out_folder=dd.defaultDict['out_folder'],
-    start_date=dd.defaultDict['start_date'],
-    end_date=dd.defaultDict['end_date'],
-    impute_dates=dd.defaultDict['impute_dates'],
-    moving_average=dd.defaultDict['moving_average'],
-    split_berlin=dd.defaultDict['split_berlin'],
-    rep_date=dd.defaultDict['rep_date'],
-    files='All',
+    read_data: bool = dd.defaultDict['read_data'],
+    out_folder: str = dd.defaultDict['out_folder'],
+    file_format: str = dd.defaultDict['file_format'],
+    start_date: date = dd.defaultDict['start_date'],
+    end_date: date = dd.defaultDict['end_date'],
+    impute_dates: bool = dd.defaultDict['impute_dates'],
+    moving_average: int = dd.defaultDict['moving_average'],
+    split_berlin: bool = dd.defaultDict['split_berlin'],
+    rep_date: bool = dd.defaultDict['rep_date'],
+    files: str or list = 'All',
     **kwargs
 ):
     """! Downloads the case data and provides different kind of structured data
