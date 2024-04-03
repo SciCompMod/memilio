@@ -209,6 +209,7 @@ using is_compartment_model_simulation =
  * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
  * @tparam FP floating point type, e.g., double
  * @return A TimeSeries to represent the final Simulation result
+ * @tparam FP floating point type, e.g., double
  * @tparam Model The particular Model derived from CompartmentModel to simulate.
  * @tparam Sim A Simulation that can simulate the model.
  */

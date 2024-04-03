@@ -98,6 +98,7 @@ public:
     Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
                                                              TimeSeries<FP>& results)
     {
+        // hint at std functions for ADL
         using std::fabs;
         using std::max;
         const FP t0 = results.get_last_time();

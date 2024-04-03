@@ -38,7 +38,7 @@ namespace ssir
  * @brief probability of getting infected from a contact
  */
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue<ScalarType>;
+    using Type = UncertainValue<>;
     static Type get_default()
     {
         return Type(1.0);
