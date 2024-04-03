@@ -82,7 +82,6 @@ class TestOseirGeneration(unittest.TestCase):
         with open(os.path.join(irdata.target_folder, "test_oseir.py")) as result:
             self.assertEqual(result.read(), self.expected_test_oseir_py)
         with open(os.path.join(irdata.target_folder, "test_oseir.cpp")) as result:
-            print(result.read())
             self.assertEqual(result.read(), self.expected_test_oseir_cpp)
 
     def test_wrong_model_name(self):
