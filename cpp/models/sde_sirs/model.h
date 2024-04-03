@@ -50,18 +50,19 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                   Eigen::Ref<Eigen::VectorXd> flows) const
+    void get_flows(Eigen::Ref<const Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>> pop,
+                   Eigen::Ref<const Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>> y, ScalarType t,
+                   Eigen::Ref<Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>> flows) const
     {
-        auto& params     = this->parameters;
-        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        auto& params         = this->parameters;
+        ScalarType coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                               params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        double si = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
-        double ir = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
-        double rs = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType si = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType ir = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType rs = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
 
-        const double inv_sqrt_dt = 1 / sqrt(step_size);
+        const ScalarType inv_sqrt_dt = 1 / sqrt(step_size);
 
         // Assuming that no person can change its InfectionState twice in a single time step,
         // take the minimum of the calculated flow and the source compartment, to ensure that
