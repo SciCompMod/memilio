@@ -201,15 +201,16 @@ using is_compartment_model_simulation =
                                   is_compartment_model<FP, typename Sim::Model>::value)>;
 
 /**
- * @brief simulate simulates a compartmental model
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model: An instance of a compartmental model
- * @return a TimeSeries to represent the final simulation result
+ * @brief Run a Simulation of a CompartmentalModel.
+ * @param[in] t0 Start time.
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of a CompartmentalModel.
+ * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
  * @tparam FP floating point type, e.g., double
- * @tparam Model a compartment model type
- * @tparam Sim a simulation type that can simulate the model.
+ * @return A TimeSeries to represent the final Simulation result
+ * @tparam Model The particular Model derived from CompartmentModel to simulate.
+ * @tparam Sim A Simulation that can simulate the model.
  */
 template <typename FP, class Model, class Sim = Simulation<FP, Model>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,

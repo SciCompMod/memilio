@@ -260,7 +260,8 @@ TEST(TestSaveParameters, read_graph_without_edges)
     auto write_status = mio::write_graph(graph_no_edges, tmp_results_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
-    auto read_graph = mio::read_graph<mio::osecir::Model<double>>(tmp_results_dir, mio::IOF_OmitDistributions, false);
+    auto read_graph =
+        mio::read_graph<double, mio::osecir::Model<double>>(tmp_results_dir, mio::IOF_OmitDistributions, false);
 
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
         EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeExposed<double>>()[i],
@@ -436,7 +437,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     auto write_status = mio::write_graph(graph, graph_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
-    auto read_result = mio::read_graph<mio::osecir::Model<double>>(graph_dir);
+    auto read_result = mio::read_graph<double, mio::osecir::Model<double>>(graph_dir);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     auto& graph_read = read_result.value();

@@ -541,7 +541,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecir::Model<double>>(save_dir.string()));
+        BOOST_OUTCOME_TRY(loaded, mio::read_graph<double, mio::osecir::Model<double>>(save_dir.string()));
         params_graph = loaded;
     }
 

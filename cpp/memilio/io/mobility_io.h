@@ -96,7 +96,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters<FP>>& graph, c
     //one file for the model (parameters and population)
     for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
         //node
-        auto& node = graph.nodes()[inode];
+        const auto node = graph.nodes()[inode];
         BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property, ioflags));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"]  = node.id;
@@ -132,7 +132,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters<FP>>& graph, c
  * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  * @param read_edges boolean value that decides whether the edges of the graph should also be read in.
  */
-template <class Model, typename FP = double>
+template <typename FP, class Model>
 IOResult<Graph<Model, MigrationParameters<FP>>> read_graph(const std::string& directory, int ioflags = IOF_None,
                                                            bool read_edges = true)
 {

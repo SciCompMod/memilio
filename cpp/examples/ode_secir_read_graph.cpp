@@ -140,7 +140,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading Json Files..." << std::flush;
-    auto graph_read_result = mio::read_graph<mio::osecir::Model<FP>,FP>("graph_parameters");
+    auto graph_read_result = mio::read_graph<FP, mio::osecir::Model<FP>>("graph_parameters");
 
     if (!graph_read_result) {
         std::cout << "Error: " << graph_read_result.error().formatted_message();
