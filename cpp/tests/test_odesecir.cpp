@@ -555,6 +555,77 @@ TEST(TestOdeSecir, testSettersAndGetters)
     EXPECT_EQ(vec[21], model.parameters.get<mio::osecir::Seasonality>());
 }
 
+TEST(TestOdeSecir, testDamping)
+{
+    // test functionality of dampings.
+    // As contact matrices with dampings are smoothed in decline/increase, no direct relationship between
+    // old and new transmission can be given only including damping, contact, and transmission probability values.
+    double t0   = 0;
+    double dt   = 1;
+    double tmax = dt;
+
+    double cont_freq = 10;
+
+    double nb_total_t0 = 1000, nb_inf_t0 = 10;
+
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+
+    mio::osecir::Model model_a(1);
+    model_a.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
+    model_a.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
+                                                  nb_total_t0);
+    auto result_a = simulate_flows(t0, tmax, dt, model_a, integrator);
+    result_a[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
+                             "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
+                             "I_Crit->D", "I_Crit->R"},
+                            16, 8);
+
+    // reduced transmission
+    mio::osecir::Model model_b{model_a};
+    model_b.populations.set_total(nb_total_t0);
+    model_b.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
+    model_b.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
+                                                  nb_total_t0);
+    mio::ContactMatrixGroup& contact_matrix_b = model_b.parameters.get<mio::osecir::ContactPatterns>();
+    contact_matrix_b[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix_b[0].add_damping(0.5, mio::SimulationTime(0.));
+    auto result_b = simulate_flows(t0, tmax, dt, model_b, integrator);
+    result_b[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
+                             "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
+                             "I_Crit->D", "I_Crit->R"},
+                            16, 8);
+
+    // no transmission
+    mio::osecir::Model model_c{model_a};
+    model_c.populations.set_total(nb_total_t0);
+    model_c.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
+    model_c.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
+                                                  nb_total_t0);
+    mio::ContactMatrixGroup& contact_matrix_c = model_c.parameters.get<mio::osecir::ContactPatterns>();
+    contact_matrix_c[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix_c[0].add_damping(0., mio::SimulationTime(0.));
+    auto result_c = simulate_flows(t0, tmax, dt, model_c, integrator);
+    result_c[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
+                             "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
+                             "I_Crit->D", "I_Crit->R"},
+                            16, 8);
+
+    // increased transmission
+    mio::osecir::Model model_d{model_a};
+    model_d.populations.set_total(nb_total_t0);
+    model_d.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
+    model_d.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
+                                                  nb_total_t0);
+    mio::ContactMatrixGroup& contact_matrix_d = model_d.parameters.get<mio::osecir::ContactPatterns>();
+    contact_matrix_d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix_d[0].add_damping(-1., mio::SimulationTime(0.));
+    auto result_d = simulate_flows(t0, tmax, dt, model_d, integrator);
+    result_d[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
+                             "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
+                             "I_Crit->D", "I_Crit->R"},
+                            16, 8);
+}
+
 TEST(TestOdeSecir, testModelConstraints)
 {
     mio::set_log_level(
@@ -614,6 +685,7 @@ TEST(TestOdeSecir, testModelConstraints)
 
     mio::TimeSeries<double> secihurd_interp = mio::interpolate_simulation_result(secihurd);
 
+    // Tests that infection numbers are higher in Winter season
     model.parameters.set<mio::osecir::StartDay>(100);
     model.parameters.set<mio::osecir::Seasonality>(0.5);
 
@@ -634,7 +706,6 @@ TEST(TestOdeSecir, testModelConstraints)
     }
 
     // temporary test for random variables
-
     set_params_distributions_normal(model, t0, tmax, 0.2);
     model.parameters.set<mio::osecir::Seasonality>(mio::UncertainValue(0.0));
     model.parameters.set<mio::osecir::ICUCapacity>(mio::UncertainValue(8000));
