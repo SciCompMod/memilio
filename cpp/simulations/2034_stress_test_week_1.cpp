@@ -156,13 +156,16 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
 
     //probabilities
     double fac_variant                                 = 1.0;
-    const double transmissionProbabilityOnContactMin[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
-                                                          0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
+    const auto transmission_prob                       = 3 / 80.85552683191771;
+    const double transmissionProbabilityOnContactMin[] = {
+        transmission_prob * fac_variant, transmission_prob * fac_variant, transmission_prob * fac_variant,
+        transmission_prob * fac_variant, transmission_prob * fac_variant, transmission_prob * fac_variant};
 
-    const double transmissionProbabilityOnContactMax[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
-                                                          0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
-    const double relativeTransmissionNoSymptomsMin     = 1.0;
-    const double relativeTransmissionNoSymptomsMax     = 1.0;
+    const double transmissionProbabilityOnContactMax[] = {
+        transmission_prob * fac_variant, transmission_prob * fac_variant, transmission_prob * fac_variant,
+        transmission_prob * fac_variant, transmission_prob * fac_variant, transmission_prob * fac_variant};
+    const double relativeTransmissionNoSymptomsMin = 1.0;
+    const double relativeTransmissionNoSymptomsMax = 1.0;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     // depends on incidence and test and trace capacity
     const double riskOfInfectionFromSymptomaticMin    = 1.0;
@@ -336,19 +339,19 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_g
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                       mio::osecirvvs::InfectionState::ExposedNaive,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -418,7 +421,7 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
             auto params              = std::vector<mio::osecirvvs::Model>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
             // auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
