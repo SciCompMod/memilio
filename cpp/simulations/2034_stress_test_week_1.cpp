@@ -128,20 +128,21 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
+//TODO: set parameters according to information from Andre
 mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
 {
     //times
-    const double timeExposedMin            = 2.67;
+    const double timeExposedMin            = 2.;
     const double timeExposedMax            = 4.;
-    const double timeInfectedNoSymptomsMin = 1.2;
-    const double timeInfectedNoSymptomsMax = 2.53;
+    const double timeInfectedNoSymptomsMin = 1.;
+    const double timeInfectedNoSymptomsMax = 1.;
 
-    const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
-    const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
-    const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
-    const double timeInfectedSevereMax[]   = {6.075, 6.075, 7., 8.7, 9.8, 13.};
-    const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
-    const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
+    const double timeInfectedSymptomsMin[] = {7.0, 7.0, 7.0, 7.0, 7.0, 7.0};
+    const double timeInfectedSymptomsMax[] = {7.0, 7.0, 7.0, 7.0, 7.0, 7.0};
+    const double timeInfectedSevereMin[]   = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    const double timeInfectedSevereMax[]   = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    const double timeInfectedCriticalMin[] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0};
+    const double timeInfectedCriticalMax[] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0};
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeExposed>(), timeExposedMin, timeExposedMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedNoSymptoms>(), timeInfectedNoSymptomsMin,
@@ -154,44 +155,43 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
                                       timeInfectedCriticalMax);
 
     //probabilities
-    double fac_variant                                 = 1.4;
+    double fac_variant                                 = 1.0;
     const double transmissionProbabilityOnContactMin[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
                                                           0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
 
     const double transmissionProbabilityOnContactMax[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
                                                           0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
-    const double relativeTransmissionNoSymptomsMin     = 0.5;
-    const double relativeTransmissionNoSymptomsMax     = 0.5;
+    const double relativeTransmissionNoSymptomsMin     = 1.0;
+    const double relativeTransmissionNoSymptomsMax     = 1.0;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     // depends on incidence and test and trace capacity
-    const double riskOfInfectionFromSymptomaticMin    = 0.0;
-    const double riskOfInfectionFromSymptomaticMax    = 0.2;
-    const double maxRiskOfInfectionFromSymptomaticMin = 0.4;
-    const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
-    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
-    const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
-    const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
-    const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
-    const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+    const double riskOfInfectionFromSymptomaticMin    = 1.0;
+    const double riskOfInfectionFromSymptomaticMax    = 1.0;
+    const double maxRiskOfInfectionFromSymptomaticMin = 1.0;
+    const double maxRiskOfInfectionFromSymptomaticMax = 1.0;
+    const double recoveredPerInfectedNoSymptomsMin[]  = {0., 0., 0., 0., 0., 0.};
+    const double recoveredPerInfectedNoSymptomsMax[]  = {0., 0., 0., 0., 0., 0.};
+    const double severePerInfectedSymptomsMin[]       = {0.25, 0.1, 0.1, 0.1, 0.1, 0.3};
+    const double severePerInfectedSymptomsMax[]       = {0.25, 0.1, 0.1, 0.1, 0.1, 0.3};
+    const double criticalPerSevereMin[]               = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+    const double criticalPerSevereMax[]               = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+    const double deathsPerCriticalMin[]               = {0.5, 0.5, 0.5, 0.5, 0.5, 1.};
+    const double deathsPerCriticalMax[]               = {0.5, 0.5, 0.5, 0.5, 0.5, 1.};
 
-    const double reducExposedPartialImmunityMin                     = 0.75;
-    const double reducExposedPartialImmunityMax                     = 0.85;
-    const double reducExposedImprovedImmunityMin                    = 0.281;
-    const double reducExposedImprovedImmunityMax                    = 0.381;
-    const double reducInfectedSymptomsPartialImmunityMin            = 0.6;
-    const double reducInfectedSymptomsPartialImmunityMax            = 0.7;
-    const double reducInfectedSymptomsImprovedImmunityMin           = 0.193;
-    const double reducInfectedSymptomsImprovedImmunityMax           = 0.293;
-    const double reducInfectedSevereCriticalDeadPartialImmunityMin  = 0.05;
-    const double reducInfectedSevereCriticalDeadPartialImmunityMax  = 0.15;
-    const double reducInfectedSevereCriticalDeadImprovedImmunityMin = 0.041;
-    const double reducInfectedSevereCriticalDeadImprovedImmunityMax = 0.141;
+    const double reducExposedPartialImmunityMin                     = 1.0;
+    const double reducExposedPartialImmunityMax                     = 1.0;
+    const double reducExposedImprovedImmunityMin                    = 1.0;
+    const double reducExposedImprovedImmunityMax                    = 1.0;
+    const double reducInfectedSymptomsPartialImmunityMin            = 1.0;
+    const double reducInfectedSymptomsPartialImmunityMax            = 1.0;
+    const double reducInfectedSymptomsImprovedImmunityMin           = 1.0;
+    const double reducInfectedSymptomsImprovedImmunityMax           = 1.0;
+    const double reducInfectedSevereCriticalDeadPartialImmunityMin  = 1.0;
+    const double reducInfectedSevereCriticalDeadPartialImmunityMax  = 1.0;
+    const double reducInfectedSevereCriticalDeadImprovedImmunityMin = 1.0;
+    const double reducInfectedSevereCriticalDeadImprovedImmunityMax = 1.0;
 
-    double temp_reducTimeInfectedMild  = 0.5;
-    const double reducTimeInfectedMild = temp_reducTimeInfectedMild;
+    const double reducTimeInfectedMild = 1.0;
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TransmissionProbabilityOnContact>(),
                                       transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
@@ -286,6 +286,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
     return mio::success();
 }
 
+//TODO: start initialization?
 mio::IOResult<void> set_population(std::vector<mio::osecirvvs::Model> nodes, const std::string& path_pop,
                                    const std::vector<int>& node_ids)
 {
@@ -335,19 +336,19 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_g
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                   mio::osecirvvs::InfectionState::ExposedNaive,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                       mio::osecirvvs::InfectionState::ExposedNaive,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -417,22 +418,22 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
             auto params              = std::vector<mio::osecirvvs::Model>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
-            auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
-            auto results_berlin     = interpolated_result[324];
-            for (auto t_indx = 0; t_indx < results_berlin.get_num_time_points(); t_indx++) {
-                double timm_pi = 0.0;
-                double timm_ii = 0.0;
-                for (mio::AgeGroup i = 0; i < mio::AgeGroup(6); i++) {
-                    timm_pi += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
-                        {i, mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity})];
-                    timm_ii += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
-                        {i, mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity})];
-                }
-                printf("t=%i, timm_pi=%f, timm_ii=%f\n", int(results_berlin.get_time(t_indx)), timm_pi, timm_ii);
-            }
+            // auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
+            // auto results_berlin     = interpolated_result[324];
+            // for (auto t_indx = 0; t_indx < results_berlin.get_num_time_points(); t_indx++) {
+            //     double timm_pi = 0.0;
+            //     double timm_ii = 0.0;
+            //     for (mio::AgeGroup i = 0; i < mio::AgeGroup(6); i++) {
+            //         timm_pi += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
+            //             {i, mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity})];
+            //         timm_ii += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
+            //             {i, mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity})];
+            //     }
+            //     printf("t=%i, timm_pi=%f, timm_ii=%f\n", int(results_berlin.get_time(t_indx)), timm_pi, timm_ii);
+            // }
 
             std::cout << "run " << run_idx << " complete." << std::endl;
             return std::make_pair(interpolated_result, params);
@@ -454,6 +455,28 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
     return mio::success();
 }
+
+/* 1: "Metropole, Regiopole und Großstädte"
+   2: "Mittelstädte, städtischer Raum und kleinstädtischer, dörflicher Raum einer Ländlichen Region"
+*/
+static const std::map<int, std::vector<int>> region_mapping = {
+    {1, {2000, 4011, 5111,  5112,  5113,  5315,  5913,  6412,  8111,  8222,  9162,  9564, 11000, 14612, 14713,
+         1002, 1003, 3101,  3102,  3103,  3403,  3404,  4012,  5114,  5116,  5117,  5119, 5120,  5122,  5124,
+         5314, 5316, 5334,  5512,  5513,  5515,  5711,  5911,  5914,  5915,  5916,  6411, 6413,  6414,  6611,
+         7111, 7211, 7312,  7314,  7315,  8121,  8212,  8221,  8231,  8311,  8421,  9161, 9362,  9562,  9563,
+         9663, 9761, 10041, 12052, 12054, 13003, 13004, 14511, 15002, 15003, 16051, 16053}},
+    {2, {1055,  3153,  3251,  3252,  3257,  3351,  3358,  3452,  3453,  3454,  3455,  3457,  3460,  5366,  5374,
+         5554,  5570,  5770,  5958,  5966,  5974,  6437,  6531,  6532,  6533,  6534,  6631,  6632,  6634,  7316,
+         7320,  8117,  8126,  8127,  8128,  8135,  8136,  8235,  8237,  8325,  8327,  8426,  8435,  8436,  9171,
+         9173,  9180,  9181,  9182,  9187,  9190,  9271,  9373,  9376,  9473,  9475,  9478,  9479,  9671,  9676,
+         9677,  9774,  9776,  9780,  10042, 10046, 12066, 14521, 14523, 14625, 14626, 15001, 15081, 15084, 15087,
+         15090, 16062, 16064, 16065, 16066, 16070, 16072, 16073, 16076, 16077, 15082, 1051,  1054,  1058,  1059,
+         1061,  3255,  3256,  3354,  3357,  3360,  3462,  5762,  6535,  6635,  6636,  7131,  7133,  7134,  7135,
+         7140,  7141,  7143,  7231,  7232,  7233,  7331,  7333,  7336,  7337,  7340,  8225,  8337,  8417,  8437,
+         9183,  9189,  9272,  9274,  9275,  9276,  9277,  9278,  9279,  9371,  9372,  9374,  9377,  9471,  9472,
+         9476,  9477,  9571,  9575,  9577,  9672,  9673,  9674,  9678,  9773,  9777,  9778,  9779,  12062, 12068,
+         12070, 12073, 13071, 13073, 13076, 16061, 16063, 16069, 16075, 13075, 15085, 15091}},
+};
 
 int main(int argc, char** argv)
 {
