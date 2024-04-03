@@ -28,6 +28,10 @@ add_executable(ode_secir_example ode_secir.cpp)
 target_link_libraries(ode_secir_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_secir_contact_changes ode_secir_contact_changes.cpp)
+target_link_libraries(ode_secir_contact_changes PRIVATE memilio ode_secir)
+target_compile_options(ode_secir_contact_changes PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secirvvs_example ode_secirvvs.cpp)
 target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs)
 target_compile_options(ode_secirvvs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
