@@ -54,12 +54,12 @@ def run_oseir_simulation():
     # Initial number of people in each compartment
     model.populations[A0, State.Exposed] = 100
     model.populations[A0, State.Infected] = 50
-    model.populations[A0, State.Recovered]  = 10
+    model.populations[A0, State.Recovered] = 10
     model.populations.set_difference_from_total(
         (A0, State.Susceptible), populations[0])
-    
+
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
-        (num_groups, num_groups)) 
+        (num_groups, num_groups))
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
         (num_groups, num_groups)) * 0
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(

@@ -45,7 +45,7 @@ class Test_oseir_integration(unittest.TestCase):
 
         model.populations[A0, State.Exposed] = 10000
         model.populations[A0, State.Infected] = 1000
-        model.populations[A0, State.Recovered]  = 1000
+        model.populations[A0, State.Recovered] = 1000
         model.populations.set_difference_from_total(
             (A0, State.Susceptible), total_population)
 
@@ -54,9 +54,9 @@ class Test_oseir_integration(unittest.TestCase):
         model.parameters.TimeInfected[A0] = 2.
 
         model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
-        (1, 1)) * 2.7
+            (1, 1)) * 2.7
         model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
-            (1, 1)) 
+            (1, 1))
         model.parameters.ContactPatterns.cont_freq_mat.add_damping(
             Damping(coeffs=np.r_[0.6], t=12.5, level=0, type=0))
 
@@ -128,23 +128,23 @@ class Test_oseir_integration(unittest.TestCase):
         A0 = AgeGroup(0)
 
         model.parameters.TimeExposed[A0] = 5.2
-        model.parameters.TimeInfected[A0]  = 6.
-        model.parameters.TransmissionProbabilityOnContact[A0]  = 1.
+        model.parameters.TimeInfected[A0] = 6.
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.
 
-        model.parameters.TimeExposed[A0]  = 5.2
-        model.parameters.TimeInfected[A0]  = 6.
-        model.parameters.TransmissionProbabilityOnContact[A0]  = 1.
+        model.parameters.TimeExposed[A0] = 5.2
+        model.parameters.TimeInfected[A0] = 6.
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.
         self.assertEqual(model.parameters.check_constraints(), 0)
 
-        model.parameters.TimeExposed[A0]  = -1.
+        model.parameters.TimeExposed[A0] = -1.
         self.assertEqual(model.parameters.check_constraints(), 1)
 
-        model.parameters.TimeExposed[A0]  = 5.2
-        model.parameters.TimeInfected[A0]  = 0
+        model.parameters.TimeExposed[A0] = 5.2
+        model.parameters.TimeInfected[A0] = 0
         self.assertEqual(model.parameters.check_constraints(), 1)
 
-        model.parameters.TimeInfected[A0]  = 6.
-        model.parameters.TransmissionProbabilityOnContact[A0]  = -1.
+        model.parameters.TimeInfected[A0] = 6.
+        model.parameters.TransmissionProbabilityOnContact[A0] = -1.
         self.assertEqual(model.parameters.check_constraints(), 1)
 
 

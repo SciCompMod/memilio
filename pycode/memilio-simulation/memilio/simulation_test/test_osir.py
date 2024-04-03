@@ -39,14 +39,14 @@ class Test_osir_integration(unittest.TestCase):
 
         model.populations[A0, State.Susceptible] = 4800
         model.populations[A0, State.Infected] = 50
-        model.populations[A0, State.Recovered]  = 50
-    
+        model.populations[A0, State.Recovered] = 50
+
         model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
             (1, 1))
         model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
             (1, 1))
         model.parameters.ContactPatterns.cont_freq_mat.add_damping(
-        Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
+            Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
         model.check_constraints()
 
