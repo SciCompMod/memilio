@@ -31,14 +31,84 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-import matplotlib as mpl
 
-
-# mpl.use('TkAgg')
 pd.options.mode.copy_on_write = True
 
-
 def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
+    # TODO: discuss how we want to compute R value
+
+    start_date_npis = date(2020, 3, 1)
+    end_date_npis = date(2022, 2, 15)
+
+    directory = out_folder
+    directory = os.path.join(directory, 'Germany/')
+    gd.check_dir(directory)
+    filepath = os.path.join(
+        directory, 'cases_all_county.json')
+
+    if not os.path.exists(filepath):
+        # use moving average to avoid influence of reporting delay
+        # we use (by default) rep_date = False, so we consider cases by reference date
+        # TODO: discuss if ma should be used here (we use ref_date and not rep_date)
+        arg_dict = {'files': 'all_county'}
+        gcd.get_case_data(**arg_dict)
+
+    # get case data per county
+    # TODO: discuss if we want to include age groups
+    df_cases = pd.read_json(filepath)
+    df_cases = df_cases[df_cases.ID_County.isin(
+        counties)].reset_index(drop=True)
+    df_cases.drop(['Deaths', 'Recovered'], inplace = True, axis=1)
+    df_cases = mdfs.impute_and_reduce_df(
+                    df_cases, group_by_cols={dd.EngEng['idCounty']: df_cases[dd.EngEng['idCounty']].unique()},
+                    mod_cols=["Confirmed"])
+    
+
+    filepath = os.path.join(directory, 'county_current_population.json')
+    if not os.path.exists(filepath):
+        df_pop = gpd.get_population_data()
+    else:
+        df_pop = pd.read_json(filepath)
+
+
+
+    # create df for effective reproduction number
+    # use Date and ID_County from case data df, add column for R_eff where initially all values are 0
+    df_r_eff = df_cases.iloc[:, :2]
+    df_r_eff.insert(len(df_r_eff.columns), 'R_eff', 0)
+
+    
+    for county in counties:
+        # This is a copy of a subframe
+        df_cases_county = df_cases[df_cases[dd.EngEng['idCounty']]==county]
+        pop_county = df_pop[df_pop[dd.EngEng['idCounty']]==county]["Population"].values[0]
+        # get confirmed infections of last 7 days
+        df_cases_county["Incidence"] = df_cases_county["Confirmed"].diff(periods = 7)/pop_county*100000
+        r_local =  (df_cases_county["Incidence"]/(df_cases_county["Incidence"].shift(4))).replace([np.nan, np.inf], 0)
+        df_r_eff.loc[df_r_eff.ID_County==county, "R_eff"] += r_local
+        
+        
+    # drop all rows where R_eff = 0
+    # TODO: to dicuss if this is what we want
+    df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
+    df_r_eff.reset_index(inplace=True, drop=True)
+    df_r_eff = mdfs.extract_subframe_based_on_dates(
+        df_r_eff, date(2020, 3, 1), date(2022, 2, 15))
+
+    # get number of days and counties where incidence < 1.0
+    # only useful results if we compute R for all counties
+    num_low_cases = len(np.where(df_r_eff.R_eff<1)[0])
+    num_total = df_cases.shape[0]-1
+    print('Ratio low cases: ', num_low_cases/num_total)
+
+    if True:
+        gd.write_dataframe(df_r_eff, directory,
+                           "r_eff_county_multiple_c", "json")
+
+    return df_r_eff
+
+
+def compute_R_eff_old(counties, out_folder=dd.defaultDict['out_folder']):
     # TODO: discuss how we want to compute R value
 
     directory = out_folder
@@ -227,7 +297,7 @@ class NPIRegression():
 
         # read values for effective reproduction number
         filepath = os.path.join(
-            directory, "r_eff_county_multiple_c.json")
+            directory, "r_efsadsdasdf_county_multiple_c.json")
 
         if not os.path.exists(filepath):
             self.df_r = compute_R_eff(counties=self.counties)
