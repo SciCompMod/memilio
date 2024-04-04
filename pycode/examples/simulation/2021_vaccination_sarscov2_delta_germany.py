@@ -510,38 +510,39 @@ class Simulation:
         return graph
 
     def run(self, num_days_sim, num_runs=10, save_graph=True, create_gif=True):
-        # mio.set_log_level(mio.LogLevel.Warning)
-        # end_date = self.start_date + datetime.timedelta(days=num_days_sim)
+        mio.set_log_level(mio.LogLevel.Warning)
+        end_date = self.start_date + datetime.timedelta(days=num_days_sim)
 
-        # graph = self.get_graph(end_date)
+        graph = self.get_graph(end_date)
 
-        # if save_graph:
-        #     path_graph = os.path.join(self.results_dir, "graph")
-        #     if not os.path.exists(path_graph):
-        #         os.makedirs(path_graph)
-        #     osecirvvs.write_graph(graph, path_graph)
+        if save_graph:
+            path_graph = os.path.join(self.results_dir, "graph")
+            if not os.path.exists(path_graph):
+                os.makedirs(path_graph)
+            osecirvvs.write_graph(graph, path_graph)
 
-        # study = osecirvvs.ParameterStudy(
-        #     graph, 0., num_days_sim, 0.5, num_runs)
-        # ensemble = study.run(self.high)
+        study = osecirvvs.ParameterStudy(
+            graph, 0., num_days_sim, 0.5, num_runs)
+        ensemble = study.run(self.high)
 
-        # ensemble_results = []
-        # ensemble_params = []
-        # for run in range(num_runs):
-        #     graph_run = ensemble[run]
-        #     ensemble_results.append(osecirvvs.interpolate_simulation_result(graph_run))
-        #     ensemble_params.append(
-        #         [graph_run.get_node(node_indx).property.model
-        #          for node_indx in range(graph.num_nodes)])
+        ensemble_results = []
+        ensemble_params = []
+        for run in range(num_runs):
+            graph_run = ensemble[run]
+            ensemble_results.append(
+                osecirvvs.interpolate_simulation_result(graph_run))
+            ensemble_params.append(
+                [graph_run.get_node(node_indx).property.model
+                 for node_indx in range(graph.num_nodes)])
 
-        # node_ids = [graph.get_node(i).id for i in range(graph.num_nodes)]
+        node_ids = [graph.get_node(i).id for i in range(graph.num_nodes)]
 
-        # save_percentiles = True
-        # save_single_runs = False
+        save_percentiles = True
+        save_single_runs = False
 
-        # osecirvvs.save_results(
-        #     ensemble_results, ensemble_params, node_ids, self.results_dir,
-        #     save_single_runs, save_percentiles)
+        osecirvvs.save_results(
+            ensemble_results, ensemble_params, node_ids, self.results_dir,
+            save_single_runs, save_percentiles)
         if create_gif:
             # any compartments in the model (see InfectionStates)
             compartments = [c for c in range(2, 22)]
