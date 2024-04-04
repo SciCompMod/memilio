@@ -29,9 +29,16 @@ from memilio.epidata import getNPIData as gnpi
 from scipy.cluster import hierarchy
 from scipy.spatial import distance
 from sklearn.metrics import silhouette_samples, silhouette_score
+from dataclasses import dataclass
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
+
+@dataclass
+class scored_cluster:
+    sc1: float # correlation-based cluster
+    sc2: float # silhouette score
+    clustering: np.ndarray # index to clustering array
 
 
 def evaluate_clustering(corr_mat, corr_mat_pairw_dist, idx_to_cluster_idx, indices_all):
@@ -164,7 +171,7 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
 
     # all indices in npis_corr from 0 to n-1
     npi_indices_all = set(range(corr_mat.shape[0]))
-    npi_idx_to_cluster_idx_list = []
+    scored_clusterings = []
     # allow single entries
     if not isinstance(weights, list):
         weights = [weights]
@@ -183,20 +190,16 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
             npi_idx_to_cluster_idx -= 1
 
         # evaluate clustering
-        clusters, total_eval_number[n] = evaluate_clustering(
+        scores = evaluate_clustering(
             corr_mat, corr_mat_pairw_dist, npi_idx_to_cluster_idx, npi_indices_all)
         
-        npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
-        
-    # print scores on clustering
-    print("Number of clusters: " + str(int(np.nanmin(np.array(total_eval_number)))))
+        scored_clusterings.append(scored_cluster(scores[0], scores[1], npi_idx_to_cluster_idx))
 
-    # [total_eval_number.index(np.nanmin(np.array(total_eval_number)))]
-
-    # return npi_idx_to_cluster_idx with highest mean silhouette coefficient
-    # if we get same value for multiple weights, take smallest weight
-    # TODO: Discuss if this is a good metric
-    return npi_idx_to_cluster_idx_list #[np.where(total_eval_number == np.nanmax(np.array(total_eval_number)))[0][0]]
+    # TODO: get best clustering
+    pos_best_clustering_1 = np.nanargmax([s.sc1 for s in scored_clusterings])
+    pos_best_clustering_2 = np.nanargmax([s.sc2 for s in scored_clusterings])
+    pos_best_clustering_12 = np.nanargmax([s.sc1+s.sc2 for s in scored_clusterings])
+    return scored_clusterings[pos_best_clustering_1].clustering
 
 
 def silhouette(pairw_dist_mat, cluster_labels, method):
