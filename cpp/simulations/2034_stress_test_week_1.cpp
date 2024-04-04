@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/geography/regions.h"
@@ -27,6 +28,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
+#include "ode_secirvvs/model.h"
 #include "ode_secirvvs/parameters.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
@@ -340,19 +342,19 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_g
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                       mio::osecirvvs::InfectionState::ExposedNaive,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -405,8 +407,10 @@ mio::IOResult<void> apply_interventions(mio::Graph<mio::osecirvvs::Model, mio::M
     switch (intervention) {
     case 0:
         mio::log_info("An intervention is applied.");
+        break;
     case 1:
         mio::log_info("Another intervention is applied.");
+        break;
     default:
         mio::log_info("No intervention is applied.");
     }
@@ -474,7 +478,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                 BOOST_OUTCOME_TRY(apply_interventions(params_graph, interventions));
 
                 //run parameter study
-                auto parameter_study = mio::ParameterStudy<mio::osecirvvs::Simulation<>>{
+                auto parameter_study = mio::ParameterStudy<mio::FlowSimulation<mio::osecirvvs::Model>>{
                     params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
 
                 // parameter_study.get_rng().seed(
@@ -497,9 +501,19 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         auto params              = std::vector<mio::osecirvvs::Model>();
                         params.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                                     std::back_inserter(params), [](auto&& node) {
+                                       std::back_inserter(params), [](auto&& node) {
                                            return node.property.get_simulation().get_model();
                                        });
+
+                        auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
+                        flows.reserve(results_graph.nodes().size());
+                        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                                       std::back_inserter(flows), [](auto&& node) {
+                                           auto& flow_node         = node.property.get_simulation().get_flows();
+                                           auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
+                                           return interpolated_flows;
+                                       });
+
                         // auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
                         // auto results_berlin     = interpolated_result[324];
                         // for (auto t_indx = 0; t_indx < results_berlin.get_num_time_points(); t_indx++) {
@@ -515,7 +529,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         // }
 
                         std::cout << "run " << run_idx << " complete." << std::endl;
-                        return std::make_pair(interpolated_result, params);
+                        return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows));
                     });
 
                 if (mio::mpi::is_root()) {
@@ -533,14 +547,30 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                     ensemble_results.reserve(ensemble.size());
                     auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
                     ensemble_params.reserve(ensemble.size());
+                    auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
+                    ensemble_flows.reserve(ensemble.size());
                     for (auto&& run : ensemble) {
-                        ensemble_results.emplace_back(std::move(run.first));
-                        ensemble_params.emplace_back(std::move(run.second));
+                        ensemble_results.emplace_back(std::move(std::get<0>(run)));
+                        ensemble_params.emplace_back(std::move(std::get<1>(run)));
+                        ensemble_flows.emplace_back(std::move(std::get<2>(run)));
                     }
 
                     BOOST_OUTCOME_TRY(save_single_run_result);
                     BOOST_OUTCOME_TRY(
                         save_results(ensemble_results, ensemble_params, county_ids, result_dir_run, false));
+
+                    auto result_dir_run_flows = result_dir_run + "/flows";
+                    if (mio::mpi::is_root()) {
+                        boost::filesystem::path dir(result_dir_run_flows);
+                        bool created = boost::filesystem::create_directories(dir);
+
+                        if (created) {
+                            mio::log_info("Directory '{:s}' was created.", dir.string());
+                        }
+                        printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
+                    }
+                    BOOST_OUTCOME_TRY(
+                        save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
                 }
             }
         }
@@ -564,9 +594,9 @@ int main(int argc, char** argv)
     }
 
     else if (argc == 1) {
-        data_dir   = "C:/Users/bick_ju/Documents/repos/memilio/data";
-        save_dir   = "C:/Users/bick_ju/Documents/repos/memilio/data/graph";
-        result_dir = "C:/Users/bick_ju/Documents/repos/memilio/data/results";
+        data_dir   = "/localdata1/test/memilio/data";
+        save_dir   = "/localdata1/test/memilio/test";
+        result_dir = "/localdata1/test/memilio/test";
     }
     else {
         if (mio::mpi::is_root()) {
