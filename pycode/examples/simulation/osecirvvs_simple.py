@@ -100,11 +100,15 @@ def run_secirvvs_simulation(show_plot=True):
     model.parameters.ICUCapacity.value = 100
     model.parameters.TestAndTraceCapacity.value = 0.0143
     model.parameters.DailyFirstVaccination.resize_SimulationDay(
-        SimulationDay(1000))
-    model.parameters.DailyFirstVaccination[:, :] = 5
+        SimulationDay(tmax + 1))
     model.parameters.DailyFullVaccination.resize_SimulationDay(
-        SimulationDay(1000))
-    model.parameters.DailyFullVaccination[:, :] = 3
+        SimulationDay(tmax + 1))
+    daily_vaccinations = 10
+    for i, num_vaccinations in enumerate(range(0, daily_vaccinations * (tmax + 1), daily_vaccinations)):
+        model.parameters.DailyFirstVaccination[AgeGroup(
+            0), SimulationDay(i)] = num_vaccinations
+        model.parameters.DailyFullVaccination[AgeGroup(
+            0), SimulationDay(i)] = num_vaccinations
 
     # contact patterns
     baseline = np.ones((num_groups, num_groups)) * 0.5
