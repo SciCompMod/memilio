@@ -20,6 +20,7 @@
 #include "ode_secir/model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/euler.h"
 
 /* 
  * This example demonstrates how to realize contact behavior changes with any of our ordinary differential
