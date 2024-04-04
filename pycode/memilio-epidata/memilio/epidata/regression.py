@@ -19,6 +19,7 @@
 #############################################################################
 
 from memilio.epidata import modifyDataframeSeries as mdfs
+from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getNPIData as gnd
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getPopulationData as gpd
@@ -93,7 +94,7 @@ def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
     df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
     df_r_eff.reset_index(inplace=True, drop=True)
     df_r_eff = mdfs.extract_subframe_based_on_dates(
-        df_r_eff, date(2020, 3, 1), date(2022, 2, 15))
+        df_r_eff, start_date_npis, end_date_npis)
 
     # get number of days and counties where incidence < 1.0
     # only useful results if we compute R for all counties
@@ -297,7 +298,7 @@ class NPIRegression():
 
         # read values for effective reproduction number
         filepath = os.path.join(
-            directory, "r_efsadsdasdf_county_multiple_c.json")
+            directory, "r_eff_county_multiple_c.json")
 
         if not os.path.exists(filepath):
             self.df_r = compute_R_eff(counties=self.counties)
@@ -634,10 +635,8 @@ class NPIRegression():
 
 
 def main():
-
     # 4 randomly chosen counties of each regioStar7 type
-    counties = [6412, 5913, 8111, 2000, 9761, 5515, 9562, 3101, 12065, 5162, 12061, 10045, 14730,
-                7311, 3155, 8317, 9762, 9263, 8211, 9180, 16072, 7316, 9181, 7141, 7331, 9372, 9277]
+    counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
     npi_regression = NPIRegression(counties)
 
