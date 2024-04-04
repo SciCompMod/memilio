@@ -155,7 +155,6 @@ void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m, p
     c.def("resize", [](C& self, mio::Index<Tag> new_dims) {
         self.resize(new_dims); //tuple of single indices
     });
-    // c.def("resize", pybind11::overload_cast<mio::Index<Tag>>(&C::resize));
 }
 template <class C, class... Tags>
 std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m,

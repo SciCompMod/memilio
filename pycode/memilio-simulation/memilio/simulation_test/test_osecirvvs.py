@@ -127,7 +127,6 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.ReducInfectedSevereCriticalDeadImprovedImmunity[A0] = 0
         model.parameters.ReducTimeInfectedMild[A0] = 1
 
-        #model.parameters.StartDay = 60
         model.parameters.Seasonality.value = 0.2
 
         model.apply_constraints()

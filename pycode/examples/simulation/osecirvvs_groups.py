@@ -25,26 +25,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix, SimulationDay
-from memilio.simulation.osecirvvs import Index_InfectionState
+from memilio.simulation import AgeGroup, Damping, SimulationDay
 from memilio.simulation.osecirvvs import InfectionState
-from memilio.simulation.osecirvvs import Model, Simulation, simulate
+from memilio.simulation.osecirvvs import Model, simulate
 
 
 def run_secir_groups_simulation(show_plot=True):
     """
-    Runs the c++ secir model using mulitple age groups 
+    Runs the c++ SECIRVVS model using mulitple age groups 
     and plots the results
     """
 
-    # Define Comartment names
-    compartments = list(InfectionState.__members__.keys())
 
     t0 = 0
     tmax = 30  # number of days to simulate
     dt = 0.1
     num_groups = 1
-    num_compartments = len(compartments)
 
     # Initialize Parameters
     model = Model(num_groups)
