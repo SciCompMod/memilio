@@ -4,7 +4,7 @@ The MEmilio C++ library contains the implementation of the epidemiological model
 
 Directory structure:
 - memilio: framework for developing epidemiological models with, e.g., interregional mobility implementations, nonpharmaceutical interventions (NPIs), and  mathematical, programming, and IO utilities.
-- models: implementation of concrete models (ODE and ABM)
+- models: implementation of concrete models (ODE, IDE, LCT and ABM)
 - simulations: simulation applications that were used to generate the scenarios and data for publications
 - examples: small applications that help with using the framework and models
 - tests: unit tests for framework and models.
