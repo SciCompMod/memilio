@@ -238,12 +238,12 @@ def read_files(directory, fine_resolution, run_checks):
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=2, engine='openpyxl')
+                sheet_name=2, engine=gd.Conf.excel_engine)
         else:
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=3, engine='openpyxl')
+                sheet_name=3, engine=gd.Conf.excel_engine)
     except FileNotFoundError:
         print_manual_download(
             'datensatzbeschreibung_massnahmen.xlsx',
@@ -256,7 +256,7 @@ def read_files(directory, fine_resolution, run_checks):
         if fine_resolution > 0:
             df_npis_combinations_pre = pd.read_excel(
                 os.path.join(
-                    directory, fname), engine='openpyxl')
+                    directory, fname), engine=gd.Conf.excel_engine)
     except FileNotFoundError:
         raise FileNotFoundError('File ' + fname + ' not found.')
 
@@ -693,7 +693,7 @@ def get_npi_data(fine_resolution=2,
                 df_in_valid = pd.read_excel(
                     os.path.join(
                         directory, 'combinations_npis_cleanoutput.xlsx'),
-                    sheet_name=i, engine='openpyxl')
+                    sheet_name=i, engine=gd.Conf.excel_engine)
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
                     gd.default_print('Error', 'Error in combination matrix.')
                 del df_in_valid
@@ -1400,7 +1400,7 @@ def plot_interaction_matrix(filename, directory):
 
     try:
         codelist = pd.ExcelFile(os.path.join(
-            directory, filename + '.xlsx'), engine='openpyxl').sheet_names
+            directory, filename + '.xlsx'), engine=gd.Conf.excel_engine).sheet_names
     except FileNotFoundError:
         raise FileNotFoundError('File ' + filename + ' not found.')
 
@@ -1419,7 +1419,7 @@ def plot_interaction_matrix(filename, directory):
     for code in codelist:
         df = pd.read_excel(
             os.path.join(directory, filename + '.xlsx'),
-            sheet_name=code, engine='openpyxl')
+            sheet_name=code, engine=gd.Conf.excel_engine)
 
         # remove first column and convert to numpy array
         array_exclusion = df.iloc[:, 1:].to_numpy()
