@@ -44,6 +44,10 @@ int main()
 
     // default model run to be compared against
     mio::osecir::Model model_a(1);
+    const auto indx_flow_SE =
+        model_a.get_flat_flow_index<mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed>(
+            {mio::AgeGroup(0)});
+
     model_a.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_a.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                   nb_total_t0);
@@ -58,7 +62,7 @@ int main()
                              "I_Crit->D", "I_Crit->R"},
                             4, 4);
     std::cout << "With default contacts, the number of new transmissions (flow from S->E) in first time step is: "
-              << result_a[1].get_value(1)[0] << ".";
+              << result_a[1].get_value(1)[indx_flow_SE] << ".\n";
 
     // The contacts are halfed: reduced transmission through damping with value 0.5
     mio::osecir::Model model_b{model_a};
@@ -76,7 +80,7 @@ int main()
                             4, 4);
     std::cout << "With contacts reduced to a half of the original example, the number of new transmissions (flow from "
                  "S->E) in first time step is: "
-              << result_b[1].get_value(1)[0] << ".";
+              << result_b[1].get_value(1)[indx_flow_SE] << ".\n";
 
     // No contacts at all: no transmission through damping with value 1.
     mio::osecir::Model model_c{model_a};
@@ -94,7 +98,7 @@ int main()
                             4, 4);
     std::cout
         << "With contacts reduced to zero, the number of new transmissions (flow from S->E) in first time step is: "
-        << result_c[1].get_value(1)[0] << ".";
+        << result_c[1].get_value(1)[indx_flow_SE] << ".\n";
 
     // The contacts are doubled: increased transmission through damping with value -1.
     mio::osecir::Model model_d{model_a};
@@ -111,5 +115,5 @@ int main()
                              "I_Crit->D", "I_Crit->R"},
                             4, 4);
     std::cout << "With contacts doubled, the number of new transmissions (flow from S->E) in first time step is: "
-              << result_d[1].get_value(1)[0] << ".";
+              << result_d[1].get_value(1)[indx_flow_SE] << "\n";
 }
