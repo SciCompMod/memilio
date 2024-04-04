@@ -342,19 +342,19 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_g
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                   mio::osecirvvs::InfectionState::ExposedNaive,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                       mio::osecirvvs::InfectionState::ExposedNaive,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -451,11 +451,20 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
     std::vector<double> num_infected_range = {1.0, 10.0};
 
     for (const auto& region : region_mapping) {
-        for (double num_infected : num_infected_range) {
-            auto rng = mio::RandomNumberGenerator();
-            for (size_t run_per_scenario = 0; run_per_scenario < num_runs_per_scenario; run_per_scenario++) {
-                int region_id = region.second[mio::UniformIntDistribution<size_t>::get_instance()(
-                    rng, size_t(0), region.second.size())];
+        auto rng = mio::RandomNumberGenerator();
+        // rng.seed({3236549026, 3706391501, 886432438, 190527773, 3180356503, 1314521368});
+        if (mio::mpi::is_root()) {
+            printf("Seeds regions: ");
+            for (auto s : rng.get_seeds()) {
+                printf("%u, ", s);
+            }
+            printf("\n");
+        }
+        for (size_t run_per_scenario = 0; run_per_scenario < num_runs_per_scenario; run_per_scenario++) {
+            int region_id =
+                region
+                    .second[mio::UniformIntDistribution<size_t>::get_instance()(rng, size_t(0), region.second.size())];
+            for (double num_infected : num_infected_range) {
 
                 std::string result_dir_run = result_dir + "/" + region.first;
                 result_dir_run += "/" + std::to_string((int)num_infected) + "_Infected";
@@ -482,9 +491,9 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                     params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
 
                 // parameter_study.get_rng().seed(
-                //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+                //    {1744668429, 3100904884, 949309539, 3730340632, 1029148146, 3502301618}); //set seeds, e.g., for debugging
                 if (mio::mpi::is_root()) {
-                    printf("Seeds: ");
+                    printf("Seeds parameter study: ");
                     for (auto s : parameter_study.get_rng().get_seeds()) {
                         printf("%u, ", s);
                     }
@@ -501,14 +510,14 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         auto params              = std::vector<mio::osecirvvs::Model>();
                         params.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                       std::back_inserter(params), [](auto&& node) {
+                                                     std::back_inserter(params), [](auto&& node) {
                                            return node.property.get_simulation().get_model();
                                        });
 
                         auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
                         flows.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                       std::back_inserter(flows), [](auto&& node) {
+                                                     std::back_inserter(flows), [](auto&& node) {
                                            auto& flow_node         = node.property.get_simulation().get_flows();
                                            auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
                                            return interpolated_flows;
