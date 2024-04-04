@@ -33,13 +33,6 @@ endif()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
 # build python extensions
-pybind11_add_module(_simulation_secir MODULE
-    memilio/simulation/secir.cpp
-)
-target_link_libraries(_simulation_secir PRIVATE memilio ode_secir)
-target_include_directories(_simulation_secir PRIVATE memilio/simulation)
-install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
-
 pybind11_add_module(_simulation_abm MODULE
     memilio/simulation/abm.cpp
 )
@@ -62,13 +55,6 @@ target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)
 install(TARGETS _simulation LIBRARY DESTINATION memilio)
 
-pybind11_add_module(_simulation_oseir MODULE
-    memilio/simulation/oseir.cpp
-)
-target_link_libraries(_simulation_oseir PRIVATE memilio ode_seir)
-target_include_directories(_simulation_oseir PRIVATE memilio/simulation)
-install(TARGETS _simulation_oseir LIBRARY DESTINATION memilio)
-
 pybind11_add_module(_simulation_osir MODULE
     memilio/simulation/osir.cpp
 )
@@ -76,3 +62,23 @@ target_link_libraries(_simulation_osir PRIVATE memilio ode_sir)
 target_include_directories(_simulation_osir PRIVATE memilio/simulation)
 install(TARGETS _simulation_osir LIBRARY DESTINATION memilio)
 
+pybind11_add_module(_simulation_oseir MODULE
+    memilio/simulation/oseir.cpp
+)
+target_link_libraries(_simulation_oseir PRIVATE memilio ode_seir)
+target_include_directories(_simulation_oseir PRIVATE memilio/simulation)
+install(TARGETS _simulation_oseir LIBRARY DESTINATION memilio)
+
+pybind11_add_module(_simulation_secir MODULE
+    memilio/simulation/secir.cpp
+)
+target_link_libraries(_simulation_secir PRIVATE memilio ode_secir)
+target_include_directories(_simulation_secir PRIVATE memilio/simulation)
+install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
+
+pybind11_add_module(_simulation_osecirvvs MODULE
+    memilio/simulation/osecirvvs.cpp
+)
+target_link_libraries(_simulation_osecirvvs PRIVATE memilio ode_secirvvs)
+target_include_directories(_simulation_osecirvvs PRIVATE memilio/simulation)
+install(TARGETS _simulation_osecirvvs LIBRARY DESTINATION memilio)
