@@ -177,9 +177,6 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
     if not isinstance(weights, list):
         weights = [weights]
 
-    # set total_eval_number to -1 for each weight because this is the minimal possible silhouette coefficient
-    total_eval_number = -1*np.ones(len(weights))
-    n = 0
     # iterate over weights
     for weight in weights:
         # use the given weight to flatten the dendrogram
@@ -426,7 +423,7 @@ def analyze_npi_data(
         # compute hierarchical clustering (via best-suited method)
         compare_methods = False
         if compare_methods:
-
+            # TODO: criterion to select from methods (output scores from flatten_...?!)
             # centroid
             method = 'centroid'
             cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
@@ -478,37 +475,38 @@ def analyze_npi_data(
                  for wg in np.linspace(0.01, 1, 500)])
 
             samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, method=method)
+            # end compare_methods
 
-        # centroid has less clusters
-        method = 'centroid'
-        cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
-            corr_pairwdist,
-            method)
-        # plot dendrogram
-        plt.figure()
-        plt.title(method)
-        hierarchy.dendrogram(cluster_hierarch)
-        plt.savefig('figures/dendrogram.png')
-        plt.show()
-        max_coph_dist = coph_dist_mat.max()
+        else: # simplified, centroid had less clusters in example
+            method = 'centroid'
+            cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
+                corr_pairwdist,
+                method)
+            # plot dendrogram
+            plt.figure()
+            plt.title(method)
+            hierarchy.dendrogram(cluster_hierarch)
+            plt.savefig('figures/dendrogram.png')
+            plt.show()
+            max_coph_dist = coph_dist_mat.max()
 
-        npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-            npis_corr, distance.squareform(corr_pairwdist), cluster_hierarch,
-            [wg * max_coph_dist
-             for wg in np.linspace(0.98, 0.98, 1)], method)
+            npi_idx_to_cluster_idx = flatten_hierarch_clustering(
+                npis_corr, distance.squareform(corr_pairwdist), cluster_hierarch,
+                [wg * max_coph_dist
+                for wg in np.linspace(0.98, 0.98, 1)], method) # TODO reset to 0.01 to 1 with 500 samples
 
-        silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, method=method)
+            # silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, method=method)
 
-        cluster_dict = dict()
-        cluster_codes = [[] for i in range(npi_idx_to_cluster_idx.max())]
-        cluster_desc = [[] for i in range(npi_idx_to_cluster_idx.max())]
+        cluster_dict = dict() # TODO: Remove because not used? or use to write output?
+        cluster_codes = [[] for i in range(len(np.unique(npi_idx_to_cluster_idx)))]
+        cluster_desc = [[] for i in range(len(np.unique(npi_idx_to_cluster_idx)))]
         for i in range(len(npi_idx_to_cluster_idx)):
             cluster_dict[npi_codes_used[i]
-                         ] = "CM_" + str(npi_idx_to_cluster_idx[i]-1).zfill(3)
+                         ] = "CM_" + str(npi_idx_to_cluster_idx[i]).zfill(3) # use CM for "Cluster Massnahme"
             cluster_codes[npi_idx_to_cluster_idx
-                          [i]-1].append(npi_codes_used[i])
+                          [i]].append(npi_codes_used[i])
             cluster_desc[npi_idx_to_cluster_idx
-                         [i]-1].append(str(npis_used[i]))
+                         [i]].append(str(npis_used[i]))
 
         # create clustered dataframe
         df_npis_clustered = df_npis[[
@@ -516,12 +514,12 @@ def analyze_npi_data(
 
         for i in range(len(cluster_codes)):
             df_npis_clustered["CM_" + str(i).zfill(3)
-                              ] = df_npis[cluster_codes[i]].max(axis=1).copy()
+                              ] = df_npis[cluster_codes[i]].max(axis=1).copy() # TODO take weighted average instead of maximum??
 
-        npis_corr_cluster = df_npis_clustered.iloc[:, 2:].corr()
+        npis_corr_cluster = df_npis_clustered.iloc[:, 2:].corr() # TODO why were 2 and 4 clustered in the example??
         # npis_corr_cluster[abs(npis_corr_cluster)<0.25] = 0
         plt.imshow(abs(npis_corr_cluster), cmap='gray_r')
-        plt.title('Absolute correlation>0.25 of clustered NPIs')
+        plt.title('Absolute correlation of clustered NPIs')
         plt.xlabel('NPI cluster')
         plt.ylabel('NPI cluster')
         plt.colorbar()
