@@ -135,8 +135,8 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
 {
     //times
-    const double timeExposedMin            = 2.;
-    const double timeExposedMax            = 4.;
+    const double timeExposedMin            = 3.; // 2.;
+    const double timeExposedMax            = 3.; //4.;
     const double timeInfectedNoSymptomsMin = 1.;
     const double timeInfectedNoSymptomsMax = 1.;
 
@@ -235,8 +235,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
                                       reducTimeInfectedMild);
 
     //sasonality
-    const double seasonality_min = 0.1;
-    const double seasonality_max = 0.3;
+    const double seasonality_min = 0.2; //0.1;
+    const double seasonality_max = 0.2; //0.3;
 
     assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality>(), seasonality_min, seasonality_max);
 
@@ -341,9 +341,9 @@ mio::IOResult<void> set_interventions(mio::osecirvvs::Parameters& params, const 
         break;
     case 1:
         mio::log_info("Dynamic Damping (60% reduction).");
-        dynamic_npi_dampings.push_back(physical_distancing_school(start_day, 0.8, 0.8));
-        dynamic_npi_dampings.push_back(physical_distancing_work(start_day, 0.8, 0.8));
-        dynamic_npi_dampings.push_back(physical_distancing_other(start_day, 0.8, 0.8));
+        dynamic_npi_dampings.push_back(physical_distancing_school(start_day, 0.4, 0.4));
+        dynamic_npi_dampings.push_back(physical_distancing_work(start_day, 0.4, 0.4));
+        dynamic_npi_dampings.push_back(physical_distancing_other(start_day, 0.4, 0.4));
 
         dynamic_npis.set_interval(mio::SimulationTime(1.0)); // how often we check if we need to activate the NPI
         dynamic_npis.set_duration(mio::SimulationTime(14.0)); // duration of the NPI
@@ -408,19 +408,19 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                   mio::osecirvvs::InfectionState::ExposedNaive,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                       mio::osecirvvs::InfectionState::ExposedNaive,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -465,7 +465,7 @@ static const std::map<std::string, std::vector<int>> region_mapping = {
 };
 
 static const std::map<int, std::string> intervention_mapping = {
-    {-1, "No_intervention"}, {0, "Fixed_Damping."}, {1, "Dynamic_NPI"}};
+    {-1, "No_intervention"}, {0, "Fixed_Damping"}, {1, "Dynamic_NPI"}};
 
 /**
  * Run the parameter study.
@@ -556,14 +556,14 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         auto params              = std::vector<mio::osecirvvs::Model>();
                         params.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                       std::back_inserter(params), [](auto&& node) {
+                                                     std::back_inserter(params), [](auto&& node) {
                                            return node.property.get_simulation().get_model();
                                        });
 
                         auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
                         flows.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                       std::back_inserter(flows), [](auto&& node) {
+                                                     std::back_inserter(flows), [](auto&& node) {
                                            auto& flow_node         = node.property.get_simulation().get_flows();
                                            auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
                                            return interpolated_flows;
