@@ -30,12 +30,11 @@ from memilio.simulation.osecirvvs import InfectionState
 from memilio.simulation.osecirvvs import Model, simulate
 
 
-def run_secir_groups_simulation(show_plot=True):
+def run_secirvvs_simulation(show_plot=True):
     """
-    Runs the c++ SECIRVVS model using mulitple age groups 
+    Runs the c++ SECIRVVS model using a single age group 
     and plots the results
     """
-
 
     t0 = 0
     tmax = 30  # number of days to simulate
@@ -156,7 +155,7 @@ def run_secir_groups_simulation(show_plot=True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'osecirvvs_groups',
-        description='Simple example demonstrating the setup and simulation of the SECIRVVS model with multiple age groups.')
+        'osecirvvs_simple',
+        description='Simple example demonstrating the setup and simulation of the SECIRVVS model with a single age group.')
     args = arg_parser.parse_args()
-    run_secir_groups_simulation(**args.__dict__)
+    run_secirvvs_simulation(**args.__dict__)

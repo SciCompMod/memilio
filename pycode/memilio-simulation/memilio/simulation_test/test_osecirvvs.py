@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2024 MEmilio
 #
-# Authors:
+# Authors: Maximilian Betz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,12 +24,12 @@ import os
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix, SimulationDay
+from memilio.simulation import AgeGroup, ContactMatrix, Damping, SimulationDay
 from memilio.simulation.osecirvvs import InfectionState
 from memilio.simulation.osecirvvs import Model, Simulation, simulate, simulate_flows
 
 
-class Test_osecir_integration(unittest.TestCase):
+class Test_osecirvvs_integration(unittest.TestCase):
 
     here = os.path.dirname(os.path.abspath(__file__))
 
