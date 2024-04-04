@@ -65,7 +65,7 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     endif()
 
     if(MSVC)
-        execute_process(COMMAND .\bootstrap.bat
+        execute_process(COMMAND bootstrap
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
         execute_process(COMMAND .\b2 headers
