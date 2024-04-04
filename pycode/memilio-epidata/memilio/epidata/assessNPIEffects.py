@@ -90,6 +90,8 @@ def evaluate_clustering(corr_mat, corr_mat_pairw_dist, idx_to_cluster_idx, indic
     # In that case we cannot use silhouette_samples because we have to satisfy cluster numbers to be in '2 to n_samples - 1 (inclusive)'
     if (len(np.unique(idx_to_cluster_idx)) < len(idx_to_cluster_idx)) and (len(np.unique(idx_to_cluster_idx)) > 1):
 
+        # TODO: Do we want to compute the silhouette score on the distance of npis_corr or abs(npis_corr)?
+        # Otherwise formulated: How do we work with negative correlations for the correlation distance? -1 = 1 ?
         sample_silhouette_values = silhouette_samples(corr_mat_pairw_dist, idx_to_cluster_idx, metric="precomputed")
         ssc = silhouette_score(corr_mat_pairw_dist, idx_to_cluster_idx, metric="precomputed")
 
@@ -153,7 +155,6 @@ def compute_hierarch_clustering(corr_pairwdist,
 
 
 def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch, weights, method):
-    # TODO: Adapt comment on cophenetic distance and weights
     """! Flattens a hierarchical clustering for a (list of) maximum cophenetic
     distance(s) in the flat clusters and evaluates the resulting clustering with
     respect to the corresponding correlation matrix.
@@ -163,7 +164,7 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
     @param corr_mat_pairw_dist Pairwise distance computed from correlation matrix.
     @param cluster_hierarch hierarchical clustering of given features  / data
         set items.
-    @param weigths Maximum cophenetic distance or list of maximum cophenetic
+    @param weights Cophenetic distance or list of cophenetic
         distances to compute the flat clustering(s).
 
     @return flat clustering(s) according to the (list of) maximum distance(s).
@@ -198,7 +199,7 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
     # TODO: get best clustering
     pos_best_clustering_1 = np.nanargmax([s.sc1 for s in scored_clusterings])
     pos_best_clustering_2 = np.nanargmax([s.sc2 for s in scored_clusterings])
-    pos_best_clustering_12 = np.nanargmax([s.sc1+s.sc2 for s in scored_clusterings])
+    pos_best_clustering_12 = np.nanargmax([s.sc1/scored_clusterings[pos_best_clustering_1].sc1 + s.sc2/scored_clusterings[pos_best_clustering_1].sc2 for s in scored_clusterings])
     return scored_clusterings[pos_best_clustering_1].clustering
 
 
