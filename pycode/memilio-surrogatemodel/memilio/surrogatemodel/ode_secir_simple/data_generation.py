@@ -24,10 +24,10 @@ import random
 from datetime import date
 
 import numpy as np
-#import pandas as pd
-#import tensorflow as tf
-#from progress.bar import Bar
-#from sklearn.preprocessing import FunctionTransformer
+import pandas as pd
+import tensorflow as tf
+from progress.bar import Bar
+from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (ContactMatrix, Damping, LogLevel,
                                 UncertainContactMatrix, set_log_level, AgeGroup)
@@ -36,12 +36,15 @@ from memilio.simulation.secir import (Index_InfectionState,
                                       interpolate_simulation_result, simulate)
 
 
-# def remove_confirmed_compartments(result_array):
-#     sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
-#     sum_inf_symp = np.sum(result_array[:, [2, 3]], axis=1)
-#     result_array[:, 2] = sum_inf_no_symp
-#     result_array[:, 4] = sum_inf_symp
-#     return np.delete(result_array, [3, 5], axis=1)
+def remove_confirmed_compartments(result_array):
+    sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
+    sum_inf_symp = np.sum(result_array[:, [2, 3]], axis=1)
+    result_array[:, 2] = sum_inf_no_symp
+    result_array[:, 4] = sum_inf_symp
+    return np.delete(result_array, [3, 5], axis=1)
+
+
+
 
 
 def run_secir_simulation(days):
@@ -138,10 +141,10 @@ def run_secir_simulation(days):
     result_array = result.as_ndarray()
 
     #the first extry of the result array is a count of days ( WHY ??) we need to remove it 
-    result_array = result_array[1:]
+    #result_array = result_array[1:]
 
-    # result_array = remove_confirmed_compartments(
-    #     result_array[1:, :].transpose())
+    result_array = remove_confirmed_compartments(
+        result_array[1:, :].transpose())
 
     dataset = []
 
@@ -183,13 +186,15 @@ def generate_data(
 
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
-    #bar = Bar('Number of Runs done', max=num_runs)
+    bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
         data_run = run_secir_simulation(days)
-        data['inputs'].append(np.asarray(data_run).transpose()[:input_width])
-        data['labels'].append(np.asarray(data_run).transpose()[input_width:])
-        #bar.next()
-    #bar.finish()
+        # data['inputs'].append(np.asarray(data_run).transpose()[:input_width])
+        # data['labels'].append(np.asarray(data_run).transpose()[input_width:])
+        data['inputs'].append(np.asarray(data_run)[:input_width])
+        data['labels'].append(np.asarray(data_run)[input_width:])
+        bar.next()
+    bar.finish()
 
     if normalize:
         # logarithmic normalization
@@ -214,7 +219,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_simple_60days_w2.pickle'), 'wb') as f:
+        with open(os.path.join(path, 'data_secir_simple_150days_w2_50k.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -226,7 +231,7 @@ if __name__ == "__main__":
         os.path.dirname(os.path.realpath(path)))), 'data')
 
     input_width = 5
-    label_width = 60
-    num_runs = 10000
+    label_width = 150
+    num_runs = 50000
     data = generate_data(num_runs, path_data, input_width,
                          label_width)
