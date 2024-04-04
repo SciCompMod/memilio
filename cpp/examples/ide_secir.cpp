@@ -20,13 +20,13 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include <iostream>
+#include "memilio/epidemiology/state_age_function.h"
+#include "memilio/data/analyze_result.h"
 
 int main()
 {
@@ -35,14 +35,14 @@ int main()
     ScalarType tmax   = 10;
     ScalarType N      = 10000;
     ScalarType deaths = 13.10462213;
-    ScalarType dt     = 1;
+    ScalarType dt     = 1e-2;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions);
 
-    // add time points for initialization of transitions
+    // Add time points for initialization of transitions.
     Vec vec_init(num_transitions);
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
@@ -54,21 +54,22 @@ int main()
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-    // add initial time point to time series
+    vec_init                                                                              = vec_init * dt;
+    // Add initial time point to time series.
     init.add_time_point(-10, vec_init);
-    // add further time points until time 0
-    while (init.get_last_time() < 0) {
-        vec_init *= 1.01;
+    // Add further time points until time 0.
+    while (init.get_last_time() < -dt / 2) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
     // Initialize model.
     mio::isecir::Model model(std::move(init), N, deaths);
 
+    // Uncomment one of these lines to use a different method to initialize the model using the TimeSeries init.
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
-    // Set working parameters
+    // Set working parameters.
     mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
@@ -92,14 +93,18 @@ int main()
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+    model.parameters.set<mio::isecir::Seasonality>(0.1);
+    // Start the simulation on the 40th day of a year (i.e. in February).
+    model.parameters.set<mio::isecir::StartDay>(40);
 
     model.check_constraints(dt);
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0, dt);
+    mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
 
-    sim.get_result().print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
-    sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
-                                      16, 8);
+    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    // Uncomment this line to print the transitions.
+    // sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"}, 16, 8);
 }
