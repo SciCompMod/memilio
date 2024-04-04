@@ -107,7 +107,7 @@ int main()
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2.;
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
     model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
     // It is also possible to change values with the set function.

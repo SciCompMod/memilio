@@ -33,29 +33,26 @@ namespace isecir
 void Simulation::advance(ScalarType tmax)
 {
     mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
-    m_model->initialize(m_dt);
+    // Compute compartment sizes at time t_0=0.
+    m_model->calculate_initial_compartment_sizes(m_dt);
 
-    // for every time step:
+    // For every time step:
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
 
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
 
-        // compute_S:
+        // Compute susceptibles:
         m_model->compute_susceptibles(m_dt);
 
-        // compute flows:
+        // Compute flows:
         m_model->flows_current_timestep(m_dt);
 
-        // compute D
-        m_model->compute_deaths();
+        // Compute remaining compartments:
+        m_model->update_compartments_current_timestep();
 
-        // compute m_forceofinfection (only used for calculation of S and sigma_S^E in the next timestep!):
-        m_model->update_forceofinfection(m_dt);
-
-        // compute remaining compartments from flows
-        m_model->other_compartments_current_timestep(m_dt);
-        m_model->compute_recovered();
+        // Compute m_forceofinfection (only used for calculation of Susceptibles and flow SusceptibleToExposed in the next timestep!):
+        m_model->compute_forceofinfection(m_dt);
     }
 }
 

@@ -32,9 +32,9 @@ class Test_ParameterStudy(unittest.TestCase):
 
         A0 = mio.AgeGroup(0)
 
-        model.parameters.IncubationTime[A0] = 5.2
+        model.parameters.TimeExposed[A0] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[A0] = 2.
         model.parameters.TimeInfectedSymptoms[A0] = 6
-        model.parameters.SerialInterval[A0] = 4.2
         model.parameters.TimeInfectedSevere[A0] = 12
         model.parameters.TimeInfectedCritical[A0] = 8
 
