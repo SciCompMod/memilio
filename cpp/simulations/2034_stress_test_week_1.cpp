@@ -292,6 +292,71 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
     return mio::success();
 }
 
+/**
+ * @brief Sets the NPIs for a model based on the intervention parameter.
+ *
+ * @param params A reference to the parameters of the simulation. This object is modified by the function.
+ * @param intervention An integer that determines the type of npi to apply. 
+ *                     If intervention is 0, a fixed damping is applied with a 20% reduction.
+ *                     If intervention is 1, a dynamic damping is applied with a 60% reduction.
+ *                     If intervention is any other value, no intervention is applied.
+ */
+mio::IOResult<void> set_interventions(mio::osecirvvs::Parameters& params, const int intervention)
+{
+    auto group_weights_all    = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
+    auto& contacts            = params.get<mio::osecirvvs::ContactPatterns>();
+    auto& contact_dampings    = contacts.get_dampings();
+    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>();
+    auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
+    auto start_day            = mio::SimulationTime(0);
+
+    auto physical_distancing_school = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                    {size_t(ContactLocation::School)}, group_weights_all);
+    };
+    auto physical_distancing_work = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                    {size_t(ContactLocation::Work)}, group_weights_all);
+    };
+    auto physical_distancing_other = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                    {size_t(ContactLocation::Other)}, group_weights_all);
+    };
+
+    switch (intervention) {
+    case 0:
+        mio::log_info("Fixed Damping (Masks - 20% reduction).");
+        contact_dampings.push_back(physical_distancing_school(start_day, 0.8, 0.8));
+        contact_dampings.push_back(physical_distancing_work(start_day, 0.8, 0.8));
+        contact_dampings.push_back(physical_distancing_other(start_day, 0.8, 0.8));
+        break;
+    case 1:
+        mio::log_info("Dynamic Damping (60% reduction).");
+        dynamic_npi_dampings.push_back(physical_distancing_school(start_day, 0.8, 0.8));
+        dynamic_npi_dampings.push_back(physical_distancing_work(start_day, 0.8, 0.8));
+        dynamic_npi_dampings.push_back(physical_distancing_other(start_day, 0.8, 0.8));
+
+        dynamic_npis.set_interval(mio::SimulationTime(1.0)); // how often we check if we need to activate the NPI
+        dynamic_npis.set_duration(mio::SimulationTime(14.0)); // duration of the NPI
+        dynamic_npis.set_base_value(100'000);
+        dynamic_npis.set_threshold(1.0, dynamic_npi_dampings); // activation when incidence is above 1.0
+        break;
+    default:
+        mio::log_info("No intervention is applied.");
+    }
+
+    return mio::success();
+}
+
 //TODO: start initialization?
 mio::IOResult<void> set_population(std::vector<mio::osecirvvs::Model>& nodes, const std::string& path_pop,
                                    const std::vector<int>& node_ids)
@@ -314,8 +379,8 @@ mio::IOResult<void> set_population(std::vector<mio::osecirvvs::Model>& nodes, co
     return mio::success();
 }
 
-mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_graph(mio::Date start_date,
-                                                                                     const fs::path& data_dir)
+mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>
+get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention)
 {
     // global parameters
     const int num_age_groups = 6;
@@ -323,6 +388,7 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_g
     params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
+    BOOST_OUTCOME_TRY(set_interventions(params, intervention));
 
     auto population_data_path =
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
@@ -342,19 +408,19 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> get_g
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                       mio::osecirvvs::InfectionState::ExposedNaive,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -398,25 +464,8 @@ static const std::map<std::string, std::vector<int>> region_mapping = {
       12070, 12073, 13071, 13073, 13076, 16061, 16063, 16069, 16075, 13075, 15085, 15091}},
 };
 
-static const std::map<int, std::string> intervention_mapping = {{-1, "No_intervention"}};
-
-mio::IOResult<void> apply_interventions(mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& graph,
-                                        int intervention)
-{
-    mio::unused(graph);
-    switch (intervention) {
-    case 0:
-        mio::log_info("An intervention is applied.");
-        break;
-    case 1:
-        mio::log_info("Another intervention is applied.");
-        break;
-    default:
-        mio::log_info("No intervention is applied.");
-    }
-
-    return mio::success();
-}
+static const std::map<int, std::string> intervention_mapping = {
+    {-1, "No_intervention"}, {0, "Fixed_Damping."}, {1, "Dynamic_NPI"}};
 
 /**
  * Run the parameter study.
@@ -432,16 +481,16 @@ mio::IOResult<void> apply_interventions(mio::Graph<mio::osecirvvs::Model, mio::M
  */
 mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
 {
-    const auto start_date               = mio::Date(2034, 3, 1);
-    const auto num_days_sim             = 30.0;
-    const auto num_runs_per_scenario    = 5;
-    const auto num_runs_per_param_study = 1;
-    int interventions                   = -1;
+    const auto start_date                   = mio::Date(2034, 3, 1);
+    constexpr auto num_days_sim             = 30.0;
+    constexpr auto num_runs_per_scenario    = 5;
+    constexpr auto num_runs_per_param_study = 1;
+    constexpr int intervention              = -1;
 
-    result_dir += "/" + intervention_mapping.at(interventions);
+    result_dir += "/" + intervention_mapping.at(intervention);
 
     //create or load graph
-    BOOST_OUTCOME_TRY(params_graph, get_graph(start_date, data_dir));
+    BOOST_OUTCOME_TRY(params_graph, get_graph(start_date, data_dir, intervention));
 
     std::vector<int> county_ids(params_graph.nodes().size());
     std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
@@ -483,9 +532,6 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                     }
                 }
 
-                //apply interventions
-                BOOST_OUTCOME_TRY(apply_interventions(params_graph, interventions));
-
                 //run parameter study
                 auto parameter_study = mio::ParameterStudy<mio::FlowSimulation<mio::osecirvvs::Model>>{
                     params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
@@ -510,14 +556,14 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         auto params              = std::vector<mio::osecirvvs::Model>();
                         params.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                                     std::back_inserter(params), [](auto&& node) {
+                                       std::back_inserter(params), [](auto&& node) {
                                            return node.property.get_simulation().get_model();
                                        });
 
                         auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
                         flows.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                                     std::back_inserter(flows), [](auto&& node) {
+                                       std::back_inserter(flows), [](auto&& node) {
                                            auto& flow_node         = node.property.get_simulation().get_flows();
                                            auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
                                            return interpolated_flows;
