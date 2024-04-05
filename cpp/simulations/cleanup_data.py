@@ -32,16 +32,77 @@ def add_external_ids(pd):
     start_or_end_loc = ''
     start_or_end_zone = ''
     for index, row in pd.iterrows():
-        if ((row['loc_id_start'] == -3) | (row['loc_id_end'] == -3)):
-            if row['loc_id_start'] == -3:
-                start_or_end_loc = 'loc_id_start'
-                start_or_end_zone = 'start_zone'
-                start_or_end_activity = 'activity_start'
-            else:
-                start_or_end_loc = 'loc_id_end'
-                start_or_end_zone = 'end_zone'
-                start_or_end_activity = 'activity_end'
+        if ((row['loc_id_start'] == -3)):
+            start_or_end_loc = 'loc_id_start'
+            start_or_end_zone = 'start_zone'
+            start_or_end_activity = 'activity_start'
+            found = False
+            if (row[start_or_end_activity] == 1):  # work places 
+                if (not row['puid'] in person_to_work_place_dict.keys()):
+                    # check if a work place is already available and not full
+                    if (row[start_or_end_zone] in work_places_dict.keys()):
+                        if (work_places_dict[row[start_or_end_zone]][1] < max_persons_per_work_place):
+                            # add persons to existing work place
+                            person_to_work_place_dict[row['puid']
+                                                      ] = work_places_dict[row[start_or_end_zone]][0]
+                            work_places_dict[row[start_or_end_zone]][1] += 1
+                            found = True
+                    if (not found):
+                        # make new work place
+                        work_places_dict[row[start_or_end_zone]] = [
+                            work_place_ids, 1]
+                        work_place_ids -= 1
+                        person_to_work_place_dict[row['puid']
+                                                  ] = work_places_dict[row[start_or_end_zone]][0]
+                # overwrite "-3" in location_id
+                pd.at[index, start_or_end_loc] = person_to_work_place_dict[row['puid']]
 
+            # shops and private matters
+            elif (row[start_or_end_activity] == 3 or row[start_or_end_activity] == 5):
+                if (not row['puid'] in person_to_shop_dict.keys()):
+                    # check if a shop is already available and not full
+                    if (row[start_or_end_zone] in shops_dict.keys()):
+                        if (shops_dict[row[start_or_end_zone]][1] < max_persons_per_shop):
+                            # add persons to existing shop
+                            person_to_shop_dict[row['puid']
+                                                ] = shops_dict[row[start_or_end_zone]][0]
+                            shops_dict[row[start_or_end_zone]][1] += 1
+                            found = True
+                    if (not found):
+                        # make new shop
+                        shops_dict[row[start_or_end_zone]] = [
+                            shop_ids, 1]
+                        shop_ids -= 1
+                        person_to_shop_dict[row['puid']
+                                            ] = shops_dict[row[start_or_end_zone]][0]
+                # overwrite "-3" in location_id
+                pd.at[index, start_or_end_loc] = person_to_shop_dict[row['puid']]
+
+            # social events and 'other'
+            elif (row[start_or_end_activity] == 4 or row[start_or_end_activity] == 6):
+                if (not row['puid'] in person_to_social_event_dict.keys()):
+                    # check if a social event is already available and not full
+                    if (row[start_or_end_zone] in social_event_dict.keys()):
+                        if (social_event_dict[row[start_or_end_zone]][1] < max_persons_per_social_event):
+                            # add persons to existing social event
+                            person_to_social_event_dict[row['puid']
+                                                        ] = social_event_dict[row[start_or_end_zone]][0]
+                            social_event_dict[row[start_or_end_zone]][1] += 1
+                            found = True
+                    if (not found):
+                        # make new social event
+                        social_event_dict[row[start_or_end_zone]] = [
+                            social_event_ids, 1]
+                        social_event_ids -= 1
+                        person_to_social_event_dict[row['puid']
+                                                    ] = social_event_dict[row[start_or_end_zone]][0]
+                # overwrite "-3" in location_id
+                pd.at[index, start_or_end_loc] = person_to_social_event_dict[row['puid']]
+
+        if ((row['loc_id_end'] == -3)):
+            start_or_end_loc = 'loc_id_end'
+            start_or_end_zone = 'end_zone'
+            start_or_end_activity = 'activity_end'
             found = False
             if (row[start_or_end_activity] == 1):  # work places
                 if (not row['puid'] in person_to_work_place_dict.keys()):
@@ -64,7 +125,7 @@ def add_external_ids(pd):
                 pd.at[index, start_or_end_loc] = person_to_work_place_dict[row['puid']]
 
             # shops and private matters
-            elif (row[start_or_end_activity] == 3 | row[start_or_end_activity] == 5):
+            elif (row[start_or_end_activity] == 3 or row[start_or_end_activity] == 5):
                 if (not row['puid'] in person_to_shop_dict.keys()):
                     # check if a shop is already available and not full
                     if (row[start_or_end_zone] in shops_dict.keys()):
@@ -85,7 +146,7 @@ def add_external_ids(pd):
                 pd.at[index, start_or_end_loc] = person_to_shop_dict[row['puid']]
 
             # social events and 'other'
-            elif (row[start_or_end_activity] == 4 | row[start_or_end_activity] == 6):
+            elif (row[start_or_end_activity] == 4 or row[start_or_end_activity] == 6):
                 if (not row['puid'] in person_to_social_event_dict.keys()):
                     # check if a social event is already available and not full
                     if (row[start_or_end_zone] in social_event_dict.keys()):
@@ -104,7 +165,6 @@ def add_external_ids(pd):
                                                     ] = social_event_dict[row[start_or_end_zone]][0]
                 # overwrite "-3" in location_id
                 pd.at[index, start_or_end_loc] = person_to_social_event_dict[row['puid']]
-
     return pd
 
 
@@ -125,15 +185,31 @@ def add_school_ids(pd):
     start_or_end_loc = ''
     start_or_end_zone = ''
     for index, row in pd.iterrows():
-        if ((row['loc_id_start'] == -2) | (row['loc_id_end'] == -2)):
+        if ((row['loc_id_start'] == -2)):
+            start_or_end_loc = 'loc_id_start'
+            start_or_end_zone = 'start_zone'
             if (not row['puid'] in person_to_school_dict.keys()):
-                if row['loc_id_start'] == -2:
-                    start_or_end_loc = 'loc_id_start'
-                    start_or_end_zone = 'start_zone'
-                else:
-                    start_or_end_loc = 'loc_id_end'
-                    start_or_end_zone = 'end_zone'
-
+                found = False
+                # check if a school is already available and not full
+                if (row[start_or_end_zone] in schools_dict.keys()):
+                    if (schools_dict[row[start_or_end_zone]][1] < max_persons_per_school):
+                        # add persons to existing school
+                        person_to_school_dict[row['puid']
+                                              ] = schools_dict[row[start_or_end_zone]][0]
+                        schools_dict[row[start_or_end_zone]][1] += 1
+                        found = True
+                if (not found):
+                    # make new school
+                    schools_dict[row[start_or_end_zone]] = [school_ids, 1]
+                    school_ids -= 1
+                    person_to_school_dict[row['puid']
+                                          ] = schools_dict[row[start_or_end_zone]][0]
+            # overwrite "-2" in location_id
+            pd.at[index, start_or_end_loc] = person_to_school_dict[row['puid']]
+        if ((row['loc_id_end'] == -2)):
+            start_or_end_loc = 'loc_id_end'
+            start_or_end_zone = 'end_zone'
+            if (not row['puid'] in person_to_school_dict.keys()):
                 found = False
                 # check if a school is already available and not full
                 if (row[start_or_end_zone] in schools_dict.keys()):
@@ -179,7 +255,7 @@ def add_home_is_in_bs_column(pd):
         #list of persons who are in braunschweig
         list_person_in_bs = np.array([])
         for index, row in pd.iterrows():
-            if ((row['start_county'] == 3101 and row['activity_start'] == 7) or (row['end_county'] == 3101 and row['activity_end'] == 7)):
+            if ((row['start_county'] == 3101 and row['activity_start'] == 7) or (row['end_county'] == 3101 and row['activity_end'] == 7)): # this assumes he goes to his home, but could be another persons home
                 list_person_in_bs = np.append(list_person_in_bs, row['puid'])
         #drop duplicates
         list_person_in_bs = np.unique(list_person_in_bs)
@@ -189,7 +265,7 @@ def add_home_is_in_bs_column(pd):
     return pd
 
 
-PATH = "/Users/david/Documents/HZI/memilio/data/mobility/braunschweig_result.csv"
+PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result.csv"
 
 bd = pd.read_csv(PATH)
 
@@ -211,7 +287,7 @@ bd_new = add_home_ids(bd_new)
 print('Home IDs set.')
 bd_new = add_school_ids(bd_new)
 print('School IDs set.')
-bd_new = add_external_ids(bd_new)
+bd_new = add_external_ids(bd)
 print('External location IDs set.')
 
 # Write data back to disk
