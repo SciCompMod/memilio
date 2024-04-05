@@ -53,6 +53,8 @@ class ControlledStepperWrapper : public mio::IntegratorCore<FP>
         ControlledStepper<Vector<FP>, FP, Vector<FP>, FP, boost::numeric::odeint::vector_space_algebra,
                           typename boost::numeric::odeint::operations_dispatcher<Vector<FP>>::operations_type,
                           boost::numeric::odeint::never_resizer>>;
+    static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
+                                                           boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
     static_assert(!is_fsal_stepper,
                   "FSAL steppers cannot be used until https://github.com/boostorg/odeint/issues/72 is resolved.");
 
