@@ -64,13 +64,6 @@ public:
             return true;
         }
 
-        // We have some things that just work out if the last time point is zero, e.g. the first time point in m_populations is set to zero ion the constructor.
-        if (!(m_transitions.get_last_time() == 0)) {
-            log_error("A variable given for model construction is not valid. The last time point in the transition "
-                      "vector should be zero.");
-            return true;
-        }
-
         for (int i = 0; i < (int)InfectionState::Count; i++) {
             if (m_populations[0][i] < 0) {
                 log_error("Initialization failed. Initial values for populations are less than zero.");
@@ -122,17 +115,6 @@ public:
     void compute_susceptibles(ScalarType dt);
 
     /**
-     * @brief Computes size of a flow for the current last time value in m_transitions.
-     * 
-     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last time value in m_transitions. 
-     * The function compute_flow with an additional parameter is called with the specification of current_time_index as 
-     * the last index of m_transitions.
-     * See also compute_flow for a description of the parameters.
-     */
-    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
-
-    /**
      * @brief Computes size of a flow.
      * 
      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the time index current_time_index.
@@ -146,6 +128,17 @@ public:
      */
     void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
                       Eigen::Index current_time_index);
+
+    /**
+     * @brief Computes size of a flow for the current last time value in m_transitions.
+     * 
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
+     * last time value in m_transitions. 
+     * The function compute_flow with an additional parameter is called with the specification of current_time_index as 
+     * the last index of m_transitions.
+     * See also compute_flow for a description of the parameters.
+     */
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
@@ -218,6 +211,8 @@ public:
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
      * This determines how many inital values we need for the flows.
+     * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
+     * but this number ensures that it is possible.
      *
      * @param[in] dt Time step size.
      * 

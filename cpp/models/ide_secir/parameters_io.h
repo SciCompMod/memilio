@@ -56,6 +56,8 @@ namespace isecir
 * We also set the number of total confirmed cases in the model. 
 * Therefore the initialization method using the total confirmed cases is used in the model. See also the documentation of the model class.
 * 
+* The start date of the model simulation is set to t0=0.
+*
 * @param[in, out] model The model for which the inital flows should be computed.
 * @param[in] dt Time step size.
 * @param[in] path Path to the RKI file.
@@ -64,7 +66,7 @@ namespace isecir
 * @returns Any io errors that happen during reading of the files.
 */
 IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
-                                 ScalarType scale_confirmed_cases = 1.0);
+                                 ScalarType scale_confirmed_cases = 1.);
 
 } // namespace isecir
 } // namespace mio

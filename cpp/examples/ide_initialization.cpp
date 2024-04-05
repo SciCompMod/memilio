@@ -73,10 +73,10 @@ int main(int argc, char** argv)
 
         using Vec = mio::TimeSeries<ScalarType>::Vector;
         mio::TimeSeries<ScalarType> init((int)mio::isecir::InfectionTransition::Count);
-        init.add_time_point<Eigen::VectorXd>(-7., Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1.));
-        while (init.get_last_time() < 0) {
+        init.add_time_point<Eigen::VectorXd>(-7., Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
+        while (init.get_last_time() < -dt / 2) {
             init.add_time_point(init.get_last_time() + dt,
-                                Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1.));
+                                Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
         }
         model.m_transitions = init;
     }
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     }
 
     // Carry out simulation.
-    mio::isecir::Simulation sim(model, 0., dt);
+    mio::isecir::Simulation sim(model, dt);
     sim.advance(2.);
 
     // Print results.

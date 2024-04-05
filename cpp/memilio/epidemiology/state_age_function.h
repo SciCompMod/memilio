@@ -60,7 +60,8 @@ namespace mio
  *
  * The get_mean method is virtual and implements a basic version to determine the mean value of the StateAgeFunction. 
  * The base class implementation uses the fact that the StateAgeFunction is a survival function 
- * (i.e. 1-CDF for any cumulative distribution function CDF).
+ * (i.e. 1-CDF for any cumulative distribution function CDF). 
+ * Therefore, the base class implementation should only be used for StateAgeFunction%s of type a).
  * For some derived classes there is a more efficient way (see e.g., ExponentialDecay) to do this which is 
  * why it can be overridden. 
  *
@@ -190,6 +191,7 @@ struct StateAgeFunction {
      * 
      * This is a basic version to determine the mean value of a survival function
      * through numerical integration of the integral that describes the expected value.
+     * This basic implementation is only valid if the StateAgeFunction is of type a). Otherwise it should be overridden.
      *
      * For some specific derivations of StateAgeFunction%s there are more efficient ways to determine the 
      * the mean value which is why this member function is virtual and can be overridden (see, e.g., ExponentialDecay).
@@ -202,13 +204,12 @@ struct StateAgeFunction {
     virtual ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10)
     {
         if (!floating_point_equal(m_mean_tol, tol, 1e-14) || floating_point_equal(m_mean, -1., 1e-14)) {
-            ScalarType mean         = 0.;
-            ScalarType supp_max_idx = std::ceil(get_support_max(dt, tol) / dt);
             // Integration using Trapezoidal rule.
-            for (int i = 0; i < supp_max_idx; i++) {
+            ScalarType mean         = 0.5 * dt * eval(0 * dt);
+            ScalarType supp_max_idx = std::ceil(get_support_max(dt, tol) / dt);
+            for (int i = 1; i < supp_max_idx; i++) {
                 mean += dt * eval(i * dt);
             }
-            mean -= 0.5 * dt * eval(0 * dt);
 
             m_mean     = mean;
             m_mean_tol = tol;

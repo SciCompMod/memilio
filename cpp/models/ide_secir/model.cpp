@@ -159,12 +159,6 @@ void Model::compute_susceptibles(ScalarType dt)
         m_populations[num_time_points - 2][Eigen::Index(InfectionState::Susceptible)] / (1 + dt * m_forceofinfection);
 }
 
-void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt)
-{
-    Eigen::Index current_time_index = m_transitions.get_num_time_points() - 1;
-    compute_flow(idx_InfectionTransitions, idx_IncomingFlow, dt, current_time_index);
-}
-
 void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
                          Eigen::Index current_time_index)
 {
@@ -191,6 +185,12 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
 
     m_transitions.get_value(current_time_index)[Eigen::Index(idx_InfectionTransitions)] =
         (-dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
+}
+
+void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt)
+{
+    Eigen::Index current_time_index = m_transitions.get_num_time_points() - 1;
+    compute_flow(idx_InfectionTransitions, idx_IncomingFlow, dt, current_time_index);
 }
 
 void Model::flows_current_timestep(ScalarType dt)

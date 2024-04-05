@@ -38,8 +38,6 @@ namespace mio
 namespace isecir
 {
 
-// We assume that we start the simulation at time 0 and want to compute the necessary flows
-// in the past for the initialization of an IDE-SECIR model based on real data.
 IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
                                  ScalarType scale_confirmed_cases)
 {
