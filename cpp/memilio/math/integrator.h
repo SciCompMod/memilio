@@ -32,8 +32,7 @@ namespace mio
  * Function template to be integrated
  */
 template <typename FP = double>
-using DerivFunction = std::function<void(Eigen::Ref<const typename Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
-                                         Eigen::Ref<typename Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt)>;
+using DerivFunction = std::function<void(Eigen::Ref<const mio::Vector<FP>> y, FP t, Eigen::Ref<mio::Vector<FP>> dydt)>;
 
 template <typename FP = double>
 class IntegratorCore
@@ -64,8 +63,8 @@ public:
      * @return Always true for nonadaptive methods.
      *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
-    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> yt, FP& t,
-                      FP& dt, Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> ytp1) const = 0;
+    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt,
+                      Eigen::Ref<Vector<FP>> ytp1) const = 0;
 };
 
 /**
@@ -95,8 +94,7 @@ public:
      * @return A reference to the last value in the results time series.
      */
 
-    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt,
-                                                             TimeSeries<FP>& results)
+    Eigen::Ref<Vector<FP>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
         // hint at std functions for ADL
         using std::fabs;

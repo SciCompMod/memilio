@@ -81,7 +81,7 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    inline Eigen::Matrix<FP, Eigen::Dynamic, 1> get_compartments() const
+    inline Vector<FP> get_compartments() const
     {
         return this->array().template cast<FP>();
     }

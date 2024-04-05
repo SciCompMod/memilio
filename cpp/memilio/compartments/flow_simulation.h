@@ -26,6 +26,11 @@
 namespace mio
 {
 
+/**
+ * @brief A class for the simulation of a flow model.
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam M A FlowModel implementation.
+ */
 template <typename FP, class M>
 class FlowSimulation : public Simulation<FP, M>
 {
@@ -53,7 +58,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(FP tmax)
+    Eigen::Ref<Vector<FP>> advance(FP tmax)
     {
         // the derivfunktion (i.e. the lambda passed to m_integrator.advance below) requires that there are at least
         // as many entries in m_flow_result as in Base::m_result
@@ -94,12 +99,12 @@ public:
      * For each simulated time step, the TimeSeries contains the value of each flow. 
      * @{
      */
-    TimeSeries<ScalarType>& get_flows()
+    TimeSeries<FP>& get_flows()
     {
         return m_flow_result;
     }
 
-    const TimeSeries<ScalarType>& get_flows() const
+    const TimeSeries<FP>& get_flows() const
     {
         return m_flow_result;
     }
@@ -127,7 +132,7 @@ protected:
         }
     }
 
-    Eigen::Matrix<FP, Eigen::Dynamic, 1> m_pop; ///< pre-allocated temporary, used in right_hand_side()
+    Vector<FP> m_pop; ///< pre-allocated temporary, used in right_hand_side()
 
 private:
     mio::TimeSeries<FP> m_flow_result; ///< flow result of the simulation

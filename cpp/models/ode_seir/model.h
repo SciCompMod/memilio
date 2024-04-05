@@ -57,9 +57,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
-                   Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
-                   Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> flows) const override
+    void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
+                   Eigen::Ref<Vector<FP>> flows) const override
     {
         auto& params     = this->parameters;
         double coeffStoE = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *

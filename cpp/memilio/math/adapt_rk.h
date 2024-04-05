@@ -295,7 +295,7 @@ protected:
     FP m_abs_tol, m_rel_tol;
     FP m_dt_min, m_dt_max;
     mutable Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
-    mutable Eigen::Matrix<FP, Eigen::Dynamic, 1> m_yt_eval;
+    mutable Vector<FP> m_yt_eval;
 
 private:
     mutable Eigen::Array<FP, Eigen::Dynamic, Eigen::Dynamic> m_eps,

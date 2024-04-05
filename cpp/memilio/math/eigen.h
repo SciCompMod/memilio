@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_UTILS_EIGEN_H
-#define EPI_UTILS_EIGEN_H
+#ifndef MIO_UTILS_EIGEN_H
+#define MIO_UTILS_EIGEN_H
 
+#include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
 
 /* this file wraps includes from eigen3 library to disable warnings. */
@@ -38,4 +39,13 @@ GCC_CLANG_DIAGNOSTIC(pop)
 
 MSVC_WARNING_POP()
 
-#endif //EPI_UTILS_EIGEN_H
+namespace mio
+{
+
+/// A vector of type FP from the Eigen library
+template <class FP = ScalarType>
+using Vector = Eigen::Matrix<FP, Eigen::Dynamic, 1>;
+
+} // namespace mio
+
+#endif // MIO_UTILS_EIGEN_H

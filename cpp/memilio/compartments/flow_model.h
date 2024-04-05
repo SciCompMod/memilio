@@ -97,9 +97,8 @@ public:
 
     // Note: use get_flat_flow_index when accessing flows
     // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
-    virtual void get_flows(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> /*pop*/,
-                           Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> /*y*/, FP /*t*/,
-                           Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> /*flows*/) const = 0;
+    virtual void get_flows(Eigen::Ref<const Vector<FP>> /*pop*/, Eigen::Ref<const Vector<FP>> /*y*/, FP /*t*/,
+                           Eigen::Ref<Vector<FP>> /*flows*/) const = 0;
 
     /**
      * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.
@@ -109,8 +108,7 @@ public:
      * @param[in] flows The current flow values (as calculated by get_flows) as a flat array.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> flows,
-                         Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt) const
+    void get_derivatives(Eigen::Ref<const Vector<FP>> flows, Eigen::Ref<Vector<FP>> dydt) const
     {
         // set dydt to 0, then iteratively add all flow contributions
         dydt.setZero();
@@ -136,9 +134,8 @@ public:
      * @param[in] t The current time.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
-                         Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
-                         Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt) const override final
+    void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
+                         Eigen::Ref<Vector<FP>> dydt) const override final
     {
         m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
@@ -150,10 +147,9 @@ public:
      * This can be used as initial conditions in an ODE solver. By default, this is a zero vector.
      * @return The initial flows.
      */
-    Eigen::Matrix<FP, Eigen::Dynamic, 1> get_initial_flows() const
+    Vector<FP> get_initial_flows() const
     {
-        return Eigen::Matrix<FP, Eigen::Dynamic, 1>::Zero(
-            (this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size());
+        return Vector<FP>::Zero((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size());
     }
 
     /**
@@ -208,8 +204,7 @@ public:
     }
 
 private:
-    mutable Eigen::Matrix<FP, Eigen::Dynamic, 1>
-        m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
+    mutable Vector<FP> m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
 
     /**
      * @brief Compute the derivatives of the compartments.
@@ -221,8 +216,8 @@ private:
      * @tparam I The index of a flow in FlowChart.
      */
     template <size_t I = 0>
-    inline void get_rhs_impl(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> flows,
-                             Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> rhs, const FlowIndex& index) const
+    inline void get_rhs_impl(Eigen::Ref<const Vector<FP>> flows, Eigen::Ref<Vector<FP>> rhs,
+                             const FlowIndex& index) const
     {
         using Flow                 = type_at_index_t<I, Flows>;
         const auto flat_flow_index = get_flat_flow_index<Flow::source, Flow::target>(index);
@@ -249,19 +244,16 @@ private:
  */
 template <typename FP, class M>
 using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
-    std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
-    std::declval<Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>>>()));
+    std::declval<Eigen::Ref<const Vector<FP>>>(), std::declval<Eigen::Ref<Vector<FP>>>()));
 
 template <typename FP, class M>
 using get_flows_expr_t =
-    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
-                                                std::declval<Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>>(),
-                                                std::declval<FP>(),
-                                                std::declval<Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>>>()));
+    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Vector<FP>>>(),
+                                                std::declval<Eigen::Ref<const Vector<FP>>>(), std::declval<FP>(),
+                                                std::declval<Eigen::Ref<Vector<FP>>>()));
 
 template <typename FP, class M>
-using get_initial_flows_expr_t =
-    decltype(std::declval<Eigen::Matrix<FP, Eigen::Dynamic, 1>>() = std::declval<const M&>().get_initial_flows());
+using get_initial_flows_expr_t = decltype(std::declval<Vector<FP>>() = std::declval<const M&>().get_initial_flows());
 /** @} */
 
 /**

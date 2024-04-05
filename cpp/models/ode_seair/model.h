@@ -27,6 +27,7 @@
 #define ODESEAIR_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/config.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_seair/infection_state.h"
 #include "ode_seair/parameters.h"
@@ -37,9 +38,9 @@ namespace oseair
 {
 
 /********************
-    * define the model *
-    ********************/
-template <typename FP = double>
+ * define the model *
+ ********************/
+template <typename FP = ScalarType>
 class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
 {
     using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
@@ -50,9 +51,8 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> /* pop */,
-                         Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP /* t */,
-                         Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt) const override
+    void get_derivatives(Eigen::Ref<const Vector<FP>> /* pop */, Eigen::Ref<const Vector<FP>> y, FP /* t */,
+                         Eigen::Ref<Vector<FP>> dydt) const override
     {
         auto& params = this->parameters;
 

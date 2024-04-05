@@ -95,7 +95,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(FP tmax)
+    Eigen::Ref<Vector<FP>> advance(FP tmax)
     {
         return m_integrator.advance(
             [this](auto&& y, auto&& t, auto&& dydt) {

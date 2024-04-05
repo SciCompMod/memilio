@@ -47,9 +47,8 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
-                         Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
-                         Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> dydt) const override
+    void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
+                         Eigen::Ref<Vector<FP>> dydt) const override
     {
         auto& params     = this->parameters;
         double coeffStoI = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *

@@ -56,7 +56,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>> advance(ScalarType tmax)
+    Eigen::Ref<Vector<>> advance(ScalarType tmax)
     {
         return get_ode_integrator().advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
@@ -108,7 +108,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>> advance(ScalarType tmax)
+    Eigen::Ref<Vector<>> advance(ScalarType tmax)
     {
         assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(

@@ -72,9 +72,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> pop,
-                   Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>> y, FP t,
-                   Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> flows) const override
+    void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
+                   Eigen::Ref<Vector<FP>> flows) const override
     {
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
@@ -250,8 +249,7 @@ class Simulation;
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
-double get_infections_relative(const Simulation<FP, Base>& model, FP t,
-                               const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y);
+double get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Vector<FP>>& y);
 
 /**
  * specialization of compartment model simulation for secir models.
@@ -281,7 +279,7 @@ public:
      * @param tmax next stopping point of simulation
      * @return value at tmax
      */
-    Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> advance(FP tmax)
+    Eigen::Ref<Vector<FP>> advance(FP tmax)
     {
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
@@ -363,13 +361,12 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
                            std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     return mio::simulate_flows<FP, Model<FP>, Simulation<FP, mio::FlowSimulation<FP, Model<FP>>>>(t0, tmax, dt, model,
-                                                                                              integrator);
+                                                                                                  integrator);
 }
 
 //see declaration above.
 template <typename FP, class Base>
-double get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/,
-                               const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y)
+double get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/, const Eigen::Ref<const Vector<FP>>& y)
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
@@ -595,9 +592,9 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 */
 
 template <typename FP, class Base>
-Eigen::Matrix<FP, Eigen::Dynamic, 1> get_reproduction_numbers(const Simulation<FP, Base>& sim)
+Vector<FP> get_reproduction_numbers(const Simulation<FP, Base>& sim)
 {
-    Eigen::Matrix<FP, Eigen::Dynamic, 1> temp(sim.get_result().get_num_time_points());
+    Vector<FP> temp(sim.get_result().get_num_time_points());
     for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
         temp[i] = get_reproduction_number((size_t)i, sim).value();
     }
@@ -647,8 +644,7 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/,
-                           const Eigen::Ref<const Eigen::Matrix<FP, Eigen::Dynamic, 1>>& y)
+auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
@@ -676,7 +672,7 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/,
 }
 
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::Matrix<FP, Eigen::Dynamic, 1>> migrated, FP time)
+auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, FP time)
 {
     auto& model       = sim.get_model();
     auto nondetection = 1.0;
