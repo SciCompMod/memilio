@@ -48,10 +48,10 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def fetch_divi_data(
-    read_data=dd.defaultDict['read_data'],
-    out_folder=dd.defaultDict['out_folder'],
-    file_format=dd.defaultDict['file_format'],
-    start_date=date(2020, 4, 24),
+    read_data: bool =dd.defaultDict['read_data'],
+    out_folder: str =dd.defaultDict['out_folder'],
+    file_format: str =dd.defaultDict['file_format'],
+    start_date: date =date(2020, 4, 24),
     **kwargs
 ) -> Tuple[pd.DataFrame, date]:
     """
@@ -117,11 +117,11 @@ def fetch_divi_data(
 
 def preprocess_divi_data(
     df_raw: pd.DataFrame,
-    out_folder=dd.defaultDict['out_folder'],
-    start_date=date(2020, 4, 24),
-    end_date=dd.defaultDict['end_date'],
-    impute_dates=dd.defaultDict['impute_dates'],
-    moving_average=dd.defaultDict['moving_average'],
+    out_folder: str =dd.defaultDict['out_folder'],
+    start_date: date =date(2020, 4, 24),
+    end_date: date =dd.defaultDict['end_date'],
+    impute_dates: bool =dd.defaultDict['impute_dates'],
+    moving_average: int =dd.defaultDict['moving_average'],
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -194,10 +194,10 @@ def preprocess_divi_data(
 
 def write_divi_data(
     df: pd.DataFrame,
-    file_format=dd.defaultDict['file_format'],
-    out_folder=dd.defaultDict['out_folder'],
-    impute_dates=dd.defaultDict['impute_dates'],
-    moving_average=dd.defaultDict['moving_average'],
+    file_format: str = dd.defaultDict['file_format'],
+    out_folder: str = dd.defaultDict['out_folder'],
+    impute_dates: bool = dd.defaultDict['impute_dates'],
+    moving_average: int = dd.defaultDict['moving_average'],
 ) -> None:
     """
     Write the divi data into json files
@@ -264,13 +264,13 @@ def write_divi_data(
 
 
 def get_divi_data(
-    read_data=dd.defaultDict['read_data'],
-    file_format=dd.defaultDict['file_format'],
-    out_folder=dd.defaultDict['out_folder'],
-    start_date=date(2020, 4, 24),
-    end_date=dd.defaultDict['end_date'],
-    impute_dates=dd.defaultDict['impute_dates'],
-    moving_average=dd.defaultDict['moving_average'],
+    read_data: bool = dd.defaultDict['read_data'],
+    file_format: str = dd.defaultDict['file_format'],
+    out_folder: str = dd.defaultDict['out_folder'],
+    start_date: date = date(2020, 4, 24),
+    end_date: date = dd.defaultDict['end_date'],
+    impute_dates: bool = dd.defaultDict['impute_dates'],
+    moving_average: int = dd.defaultDict['moving_average'],
     **kwargs
 ):
     """! Downloads or reads the DIVI ICU data and writes them in different files.
