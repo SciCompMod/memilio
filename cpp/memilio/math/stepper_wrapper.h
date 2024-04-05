@@ -45,16 +45,14 @@ namespace mio
  * integrator, wrapped as mio::IntegratorCore.
  */
 template <typename FP,
-          template <class State = Vector<FP>, class Value = FP, class Deriv = State, class Time = FP,
-                    class Algebra    = boost::numeric::odeint::vector_space_algebra,
-                    class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
-                    class Resizer    = boost::numeric::odeint::never_resizer>
+          template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
           class ControlledStepper>
 class ControlledStepperWrapper : public mio::IntegratorCore<FP>
 {
-    using Stepper                         = boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>>;
-    static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
-                                                           boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
+    using Stepper = boost::numeric::odeint::controlled_runge_kutta<
+        ControlledStepper<Vector<FP>, FP, Vector<FP>, FP, boost::numeric::odeint::vector_space_algebra,
+                          typename boost::numeric::odeint::operations_dispatcher<Vector<FP>>::operations_type,
+                          boost::numeric::odeint::never_resizer>>;
     static_assert(!is_fsal_stepper,
                   "FSAL steppers cannot be used until https://github.com/boostorg/odeint/issues/72 is resolved.");
 
