@@ -317,7 +317,7 @@ inline TimeSpan hours(int hours)
 
 /**
  * @brief Create a TimeSpan with a specified number of days.
- * @param[in] seconds Number of days in the TimeSpan.
+ * @param[in] days Number of days in the TimeSpan.
  */
 inline TimeSpan days(int days)
 {

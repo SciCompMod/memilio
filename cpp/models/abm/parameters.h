@@ -287,12 +287,13 @@ struct InfectivityDistributions {
 
 /**
  * @brief Individual virus shed factor to account for variability in infectious viral load spread.
+ * Default values taken from https://www.nature.com/articles/s41564-022-01105-z/
 */
 struct VirusShedFactor {
-    using Type = CustomIndexArray<UniformDistribution<double>::ParamType, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<GammaDistribution<double>::ParamType, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        Type default_val({VirusVariant::Count, size}, UniformDistribution<double>::ParamType{0., 0.28});
+        Type default_val({VirusVariant::Count, size}, GammaDistribution<double>::ParamType{1.6, 1. / 22});
         return default_val;
     }
     static std::string name()
@@ -328,6 +329,21 @@ struct MaskProtection {
     static std::string name()
     {
         return "MaskProtection";
+    }
+};
+
+/**
+ * @brief Determines the infection rate by viral shed. Used as a linear factor.
+*/
+struct InfectionRateFromViralShed {
+    using Type = CustomIndexArray<ScalarType, VirusVariant>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({VirusVariant::Count}, 1.0);
+    }
+    static std::string name()
+    {
+        return "InfectionRateFromViralShed";
     }
 };
 
@@ -657,10 +673,11 @@ using ParametersBase =
                  TimeInfectedSevereToRecovered, TimeInfectedCriticalToDead, TimeInfectedCriticalToRecovered,
                  SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms, CriticalPerInfectedSevere,
                  DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions, VirusShedFactor,
-                 DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate, QuarantineDuration,
-                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, LogAgentIds>;
+                 DetectInfection, MaskProtection, InfectionRateFromViralShed, AerosolTransmissionRates, LockdownDate,
+                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
+                 LogAgentIds>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -694,9 +711,24 @@ struct ContactRates {
 };
 
 /**
+ * @brief Average contact duration in days.
+*/
+struct ContactDuration {
+    using Type = ScalarType;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type(5. / 24 / 60); // 5 minutes
+    }
+    static std::string name()
+    {
+        return "ContactDuration";
+    }
+};
+
+/**
  * @brief Parameters of the Infection that depend on the Location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, ContactDuration>;
 
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.

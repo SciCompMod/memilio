@@ -128,7 +128,7 @@ void Location::adjust_contact_rates(size_t num_agegroups)
     }
 }
 
-void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups)
+void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups, const Parameters& params)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
@@ -143,8 +143,10 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
                 /* average infectivity over the time step 
                  * to second order accuracy using midpoint rule
                 */
-                cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
-                cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2);
+                cell.m_cached_exposure_rate_contacts[{virus, age}] +=
+                    params.get<InfectionRateFromViralShed>()[{virus}] * inf.get_viral_shed(t + dt / 2);
+                cell.m_cached_exposure_rate_air[{virus}] +=
+                    inf.get_viral_shed(t + dt / 2); // TODO: Change to non-contact function!
             }
         }
 

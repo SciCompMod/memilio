@@ -76,7 +76,7 @@ ScalarType Infection::get_viral_load(TimePoint t) const
     }
 }
 
-ScalarType Infection::get_infectivity(TimePoint t) const
+ScalarType Infection::get_viral_shed(TimePoint t) const
 {
     if (m_viral_load.start_date >= t || get_infection_state(t) == InfectionState::Exposed)
         return 0;

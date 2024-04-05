@@ -58,7 +58,7 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
     {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
 mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
-    {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.02};
+    {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.005};
 
 /**
  * Determine initial distribution of infection states.
@@ -526,6 +526,8 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::DeathsPerInfectedCritical>()     = 0.002;
 
     // Set infection parameters
+    params.get<mio::abm::InfectionRateFromViralShed>() = 1.;
+
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
@@ -1088,7 +1090,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     // Determine inital infection state distribution
     //Time this
     auto start0 = std::chrono::high_resolution_clock::now();
-    // determine_initial_infection_states_world(input_dir, start_date);
+    //determine_initial_infection_states_world(input_dir, start_date);
     auto stop0     = std::chrono::high_resolution_clock::now();
     auto duration0 = std::chrono::duration<double>(stop0 - start0);
     std::cout << "Time taken by determine_initial_infection_states_world: " << duration0.count() << " seconds"
@@ -1106,6 +1108,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groups);
         create_sampled_world(world, input_dir, t0, max_num_persons);
+        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = pow(10, run_idx - 5);
         // Stop the clock after create_sampled_world and calculate the duration
         auto stop1     = std::chrono::high_resolution_clock::now();
         auto duration1 = std::chrono::duration<double>(stop1 - start1);
@@ -1251,7 +1254,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 1;
+        num_runs = 10;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 

@@ -249,12 +249,12 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
                     static auto result =
-                        model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}].params.a();
+                        model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}].params.alpha();
                     return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
                     static auto result =
-                        model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}].params.b();
+                        model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}].params.beta();
                     return result;
                 });
                 param_percentil(node, [virus_variant](auto&& model) -> auto& {

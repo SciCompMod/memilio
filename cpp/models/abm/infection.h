@@ -74,17 +74,20 @@ public:
     ScalarType get_viral_load(TimePoint t) const;
 
     /**
-     * @brief Get infectivity at a given time.
+     * @brief Get viral shed at a specific time.
      * Computed depending on current ViralLoad and individual invlogit function of each Person
      * corresponding to https://www.science.org/doi/full/10.1126/science.abi5273
      * The mapping corresponds to Fig. 2 C.
      * Formula of invlogit function can be found here:
      * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
      * in ExtendedMethods.html, Section 3.1.2.1.
+     * Also in accordance to Fig. 3d of another publication:
+     * https://www.nature.com/articles/s41564-022-01105-z/figures/3
+     * The result is in arbitrary units and has to be scaled to the rate "infections per day".
      * @param[in] t TimePoint of the querry.
-     * @return Infectivity at given TimePoint.
+     * @return Viral shed at given TimePoint.
      */
-    ScalarType get_infectivity(TimePoint t) const;
+    ScalarType get_viral_shed(TimePoint t) const;
 
     /**
      * @brief: Get VirusVariant.
@@ -159,7 +162,7 @@ private:
     ViralLoad m_viral_load; ///< ViralLoad of the Infection.
     ScalarType m_log_norm_alpha,
         m_log_norm_beta; ///< Parameters for the infectivity mapping, which is modelled through an invlogit function.
-    ScalarType m_individual_virus_shed_factor; ///< Individual virus shed factor.
+    ScalarType m_individual_virus_shed_factor; ///< Individual virus shed per day.
     bool m_detected; ///< Whether an Infection is detected or not.
 };
 
