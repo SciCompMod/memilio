@@ -311,23 +311,7 @@ PYBIND11_MODULE(_simulation_secir, m)
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
-
-    m.def(
-        "get_node_ids",
-        [](const std::string& path, bool is_node_for_county) {
-            auto result = mio::get_node_ids(path, is_node_for_county);
-            return pymio::check_and_throw(result);
-        },
-        py::return_value_policy::move);
 #endif // MEMILIO_HAS_JSONCPP
-
-    m.def(
-        "read_mobility_plain",
-        [](const std::string& filename) {
-            auto result = mio::read_mobility_plain(filename);
-            return pymio::check_and_throw(result);
-        },
-        py::return_value_policy::move);
 
     m.def("interpolate_simulation_result",
           py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));

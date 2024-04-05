@@ -464,7 +464,7 @@ public:
         // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
         // print column labels
         const auto w = width, p = precision;
-        set_ostream_format(out, w, p) << std::left << "Time";
+        set_ostream_format(out, w, p) << std::left << "\nTime";
         for (size_t k = 0; k < static_cast<size_t>(get_num_elements()); k++) {
             if (k < column_labels.size()) {
                 out << " ";

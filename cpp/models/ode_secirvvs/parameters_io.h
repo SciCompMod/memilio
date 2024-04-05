@@ -1340,6 +1340,24 @@ export_input_data_county_timeseries(std::vector<Model>&& model, const std::strin
 
     return success();
 }
+#else
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&, const std::string&, std::vector<int> const&,
+                                                   Date, const std::vector<double>&, double, int, const std::string&,
+                                                   const std::string&, const std::string&)
+{
+    mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
+    return success();
+}
+
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&&, const std::string&, std::vector<int> const&,
+                                                   Date, const std::vector<double>&, double, int, const std::string&,
+                                                   const std::string&, const std::string&, bool, const std::string&)
+{
+    mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
+    return success();
+}
 
 #endif //MEMILIO_HAS_HDF5
 
