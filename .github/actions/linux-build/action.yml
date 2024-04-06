@@ -103,8 +103,9 @@ runs:
     - name: save ccache
       id: save-ccache
       uses: actions/cache/save@v3
-        with:
-            key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+      with:
+        path: cpp/.ccache
+        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
     - name: create build dir archive
       shell: bash
       run: |
