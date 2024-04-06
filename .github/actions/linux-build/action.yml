@@ -65,7 +65,7 @@ runs:
           fi
         fi
     - name: load ccache
-      id: ccache-cache
+      id: load-ccache
       uses: actions/cache@v4
       with:
         path: cpp/.ccache
@@ -100,7 +100,11 @@ runs:
         cmake -DCMAKE_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
         ccache -s
-        cat .ccache.log
+    - name: save ccache
+      id: save-ccache
+      uses: actions/cache/save@v3
+        with:
+            key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
     - name: create build dir archive
       shell: bash
       run: |
