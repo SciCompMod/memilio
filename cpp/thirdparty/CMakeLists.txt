@@ -6,6 +6,8 @@ set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 
+set(CMAKE_CXX_STANDARD 17)
+
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
 
@@ -71,6 +73,9 @@ if(MEMILIO_USE_BUNDLED_BOOST)
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
         execute_process(COMMAND "./b2 headers"
+            WORKING_DIRECTORY ${boost_SOURCE_DIR}
+            )
+        execute_process(COMMAND "ls"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
     else()
