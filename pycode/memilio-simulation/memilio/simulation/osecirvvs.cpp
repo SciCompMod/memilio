@@ -49,7 +49,7 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template <class Sim>
 std::vector<Sim>
-filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge>>&& graph_results)
+filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge<double>>>&& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
@@ -68,8 +68,8 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
-                      size_t>(),
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>&, double, double,
+                      double, size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
                       &mio::ParameterStudy<Simulation>::set_num_runs)
@@ -79,8 +79,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
+        .def_property_readonly("model_graph", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
@@ -88,8 +87,9 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
         .def(
             "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>
-                   handle_result, bool variant_high) {
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>, size_t)>
+                   handle_result,
+               bool variant_high) {
                 self.run(
                     [variant_high](auto&& g) {
                         return draw_sample(g, variant_high);
@@ -104,16 +104,19 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                     });
             },
             py::arg("handle_result_func"), py::arg("variant_high"))
-        .def("run",
-             [](mio::ParameterStudy<Simulation>& self, bool variant_high) { //default argument doesn't seem to work with functions
+        .def(
+            "run",
+            [](mio::ParameterStudy<Simulation>& self,
+               bool variant_high) { //default argument doesn't seem to work with functions
                 return self.run([variant_high](auto&& g) {
                         return draw_sample(g, variant_high);
                     });
-            }, 
+            },
             py::arg("variant_high"))
         .def(
             "run_single",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation, size_t)> handle_result, bool variant_high) {
+            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation, size_t)> handle_result,
+               bool variant_high) {
                 self.run(
                     [variant_high](auto&& g) {
                         return draw_sample(g, variant_high);
@@ -124,12 +127,13 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                     });
             },
             py::arg("handle_result_func"), py::arg("variant_high"))
-        .def("run_single", 
+        .def(
+            "run_single",
             [](mio::ParameterStudy<Simulation>& self, bool variant_high) {
                 return filter_graph_results(self.run([variant_high](auto&& g) {
                     return draw_sample(g, variant_high);
                 }));
-            }, 
+            },
             py::arg("variant_high"));
 }
 
@@ -161,7 +165,8 @@ std::string pretty_name<mio::osecirvvs::InfectionState>()
 
 } // namespace pymio
 
-PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge>>);
+PYBIND11_MAKE_OPAQUE(
+    std::vector<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>);
 
 PYBIND11_MODULE(_simulation_osecirvvs, m)
 {
@@ -198,83 +203,91 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .value("DeadPartialImmunity", mio::osecirvvs::InfectionState::DeadPartialImmunity)
         .value("DeadImprovedImmunity", mio::osecirvvs::InfectionState::DeadImprovedImmunity);
 
-    pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase<double>>(m, "ParametersBase");
 
-    py::class_<mio::osecirvvs::Parameters, mio::osecirvvs::ParametersBase>(m, "Parameters")
+    py::class_<mio::osecirvvs::Parameters<double>, mio::osecirvvs::ParametersBase<double>>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
-        .def_property("commuter_nondetection",
-            [](const mio::osecirvvs::Parameters& self) {
+        .def_property(
+            "commuter_nondetection",
+            [](const mio::osecirvvs::Parameters<double>& self) {
                 return self.get_commuter_nondetection();
             },
-            [](mio::osecirvvs::Parameters& self, double v) {
+            [](mio::osecirvvs::Parameters<double>& self, double v) {
                 self.get_commuter_nondetection() = v;
             })
-        .def_property("start_commuter_detection",
-            [](const mio::osecirvvs::Parameters& self) {
+        .def_property(
+            "start_commuter_detection",
+            [](const mio::osecirvvs::Parameters<double>& self) {
                 return self.get_start_commuter_detection();
             },
-            [](mio::osecirvvs::Parameters& self, double v) {
+            [](mio::osecirvvs::Parameters<double>& self, double v) {
                 self.get_start_commuter_detection() = v;
             })
-        .def_property("end_commuter_detection",
-            [](const mio::osecirvvs::Parameters& self) {
+        .def_property(
+            "end_commuter_detection",
+            [](const mio::osecirvvs::Parameters<double>& self) {
                 return self.get_end_commuter_detection();
             },
-            [](mio::osecirvvs::Parameters& self, double v) {
+            [](mio::osecirvvs::Parameters<double>& self, double v) {
                 self.get_end_commuter_detection() = v;
             })
-        .def_property("end_dynamic_npis",
-            [](const mio::osecirvvs::Parameters& self) {
+        .def_property(
+            "end_dynamic_npis",
+            [](const mio::osecirvvs::Parameters<double>& self) {
                 return self.get_end_dynamic_npis();
             },
-            [](mio::osecirvvs::Parameters& self, double v) {
+            [](mio::osecirvvs::Parameters<double>& self, double v) {
                 self.get_end_dynamic_npis() = v;
             })
-        .def("check_constraints", &mio::osecirvvs::Parameters::check_constraints)
-        .def("apply_constraints", &mio::osecirvvs::Parameters::apply_constraints);
+        .def("check_constraints", &mio::osecirvvs::Parameters<double>::check_constraints)
+        .def("apply_constraints", &mio::osecirvvs::Parameters<double>::apply_constraints);
 
-    using SecirvvsPopulations = mio::Populations<mio::AgeGroup, mio::osecirvvs::InfectionState>;
-    pymio::bind_Population(m, "Population", mio::Tag<mio::osecirvvs::Model::Populations>{});
+    using SecirvvsPopulations = mio::Populations<double, mio::AgeGroup, mio::osecirvvs::InfectionState>;
+    pymio::bind_Population(m, "Population", mio::Tag<mio::osecirvvs::Model<double>::Populations>{});
 
-    pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations, mio::osecirvvs::Parameters>(
-        m, "ModelBase");
-    py::class_<mio::osecirvvs::Model, mio::CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations,
-                                                              mio::osecirvvs::Parameters>>(m, "Model")
+    pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations,
+                                   mio::osecirvvs::Parameters<double>>(m, "ModelBase");
+    py::class_<mio::osecirvvs::Model<double>,
+               mio::CompartmentalModel<double, mio::osecirvvs::InfectionState, SecirvvsPopulations,
+                                       mio::osecirvvs::Parameters<double>>>(m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecirvvs::Simulation<>>(m, "Simulation");
 
     m.def(
         "simulate",
-        [](double t0, double tmax, double dt, const mio::osecirvvs::Model& model) {
+        [](double t0, double tmax, double dt, const mio::osecirvvs::Model<double>& model) {
             return mio::osecirvvs::simulate(t0, tmax, dt, model);
         },
         "Simulates a Model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.def(
         "simulate_flows",
-        [](double t0, double tmax, double dt, const mio::osecirvvs::Model& model) {
+        [](double t0, double tmax, double dt, const mio::osecirvvs::Model<double>& model) {
             return mio::osecirvvs::simulate_flows(t0, tmax, dt, model);
         },
         "Simulates a osecirvvs model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
 
-    pymio::bind_ModelNode<mio::osecirvvs::Model>(m, "ModelNode");
+    pymio::bind_ModelNode<mio::osecirvvs::Model<double>>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecirvvs::Simulation<>>(m, "SimulationNode");
-    pymio::bind_ModelGraph<mio::osecirvvs::Model>(m, "ModelGraph");
+    pymio::bind_ModelGraph<mio::osecirvvs::Model<double>>(m, "ModelGraph");
     pymio::bind_MigrationGraph<mio::osecirvvs::Simulation<>>(m, "MigrationGraph");
-    pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge>>(
+    pymio::bind_GraphSimulation<
+        mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>(
         m, "MigrationSimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
-    py::bind_vector<std::vector<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge>>>(m, "EnsembleGraphResults");
+    py::bind_vector<
+        std::vector<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>>(
+        m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::osecirvvs::Simulation<>>(m, "ParameterStudy");
 
     m.def(
         "draw_sample",
-        [](mio::osecirvvs::Model& model) {
+        [](mio::osecirvvs::Model<double>& model) {
             return mio::osecirvvs::draw_sample(model);
         },
         py::arg("model"));
@@ -282,25 +295,28 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     // These functions are in general not secir dependent, only with the current config
     m.def(
         "set_nodes",
-        [](const mio::osecirvvs::Parameters& params, mio::Date start_date, mio::Date end_date, const std::string& data_dir,
-           const std::string& population_data_path, bool is_node_for_county,
-           mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph,
+        [](const mio::osecirvvs::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
+           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>& params_graph,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
            int num_days = 0, bool export_time_series = false) {
-            auto result = mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns,
-                                         mio::osecirvvs::Model, mio::MigrationParameters, mio::osecirvvs::Parameters,
-                                         decltype(mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model>),
-                                         decltype(mio::get_node_ids)>(
-                params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
-                mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model>, mio::get_node_ids, scaling_factor_inf,
-                scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
+            auto result =
+                mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+                               mio::osecirvvs::Model<double>, mio::MigrationParameters<double>,
+                               mio::osecirvvs::Parameters<double>,
+                               decltype(mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<ScalarType>>),
+                               decltype(mio::get_node_ids)>(
+                    params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
+                    mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>, mio::get_node_ids,
+                    scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
 
     m.def(
         "set_edges",
-        [](const std::string& data_dir, mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph,
+        [](const std::string& data_dir,
+           mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto migrating_comp = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                     mio::osecirvvs::InfectionState::ExposedNaive,
@@ -315,26 +331,26 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                                     mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
                                     mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
             auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
-            auto result         = mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters,
-                                         mio::MigrationCoefficientGroup, mio::osecirvvs::InfectionState,
-                                         decltype(mio::read_mobility_plain)>(
+            auto result         = mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>,
+                                         mio::MigrationParameters<double>, mio::MigrationCoefficientGroup,
+                                         mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
                 data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
 
 #ifdef MEMILIO_HAS_HDF5
-    pymio::bind_save_results<mio::osecirvvs::Model>(m);
+    pymio::bind_save_results<mio::osecirvvs::Model<double>>(m);
 #endif // MEMILIO_HAS_HDF5
 
 #ifdef MEMILIO_HAS_JSONCPP
-    pymio::bind_write_graph<mio::osecirvvs::Model>(m);
+    pymio::bind_write_graph<mio::osecirvvs::Model<double>>(m);
     m.def(
         "read_input_data_county",
-        [](std::vector<mio::osecirvvs::Model>& model, mio::Date date, const std::vector<int>& county,
+        [](std::vector<mio::osecirvvs::Model<double>>& model, mio::Date date, const std::vector<int>& county,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
            int num_days = 0, bool export_time_series = false) {
-            auto result = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model>(
+            auto result = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>(
                 model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },
@@ -342,9 +358,13 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 #endif // MEMILIO_HAS_JSONCPP
 
     m.def("interpolate_simulation_result",
-          py::overload_cast<const mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge>&>(&mio::interpolate_simulation_result<mio::osecirvvs::Simulation<>>));
+          py::overload_cast<
+              const mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>&>(
+              &mio::interpolate_simulation_result<mio::osecirvvs::Simulation<>>));
 
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge>>);
+    m.def("interpolate_ensemble_results",
+          &mio::interpolate_ensemble_results<
+              mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>);
 
     m.attr("__version__") = "dev";
 }
