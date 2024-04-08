@@ -105,7 +105,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated-copy;-Wno-expansion-to-defined")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning-option;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments")
+        "-Wno-unknown-warning-option;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;-Wno-c++20-attribute-extensions")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "/W4;/WX")
