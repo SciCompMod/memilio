@@ -26,16 +26,18 @@ from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import getVariantsData as gvsd
 from memilio.epidata import progress_indicator
 from datetime import date
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import statsmodels.api as sm
 
 pd.options.mode.copy_on_write = True
-
+mpl.use('TKAgg')
 
 def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
     with progress_indicator.Spinner(message="Computing r-value"):
@@ -73,16 +75,26 @@ def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
         df_r_eff = df_cases.iloc[:, :2]
         df_r_eff.insert(len(df_r_eff.columns), 'R_eff', 0)
 
+        _, axs = plt.subplots(2)
         for county in counties:
             # This is a copy of a subframe
             df_cases_county = df_cases[df_cases[dd.EngEng['idCounty']] == county]
-            # get incidence
+            # get incidence (This is not actually the incidence, population and "per 100000" cancels out)
             df_cases_county["Incidence"] = df_cases_county["Confirmed"].diff(
                 periods=7)
+            # dont use values where incidence is 0 ((or close to 0)?), to prevent high errors
+            # TODO: find out what value seems reasonable here (maybe percentage of county population?)
+            df_cases_county.loc[df_cases_county.Incidence < 100, "Incidence"] = np.nan
             # R_t = #neue Fälle(t-6,t)/#neue Fälle(t-10,t-4) (See RKI paper)
             df_r_eff.loc[df_r_eff.ID_County == county, "R_eff"] += (df_cases_county["Incidence"]/(
                 df_cases_county["Incidence"].shift(4))).replace([np.nan, np.inf], 0)
+            #df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
+            if True:
+                axs[0].plot(df_cases_county["Date"], df_cases_county['Incidence'])
+               
+                axs[1].scatter(df_r_eff[df_r_eff.ID_County == county]["Date"], np.log(df_r_eff[df_r_eff.ID_County == county]['R_eff']), marker='.')
 
+        # plt.show()
         # drop all rows where R_eff = 0
         # TODO: to dicuss if this is what we want
         df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
@@ -276,7 +288,17 @@ class NPIRegression():
                 2*np.pi*self.df_seasonality['Date'].dt.dayofyear/365))
 
         # variable for virus variant
-        # tbd
+        with progress_indicator.Spinner(message="Preparing variant data"):
+            df_var = gvsd.get_variants_data()
+            self.variants = df_var.iloc[:,1:].columns.to_list()
+            #add column for counties
+            df_var['ID_County'] = 0
+            #initialize dataframe
+            self.df_variants = pd.DataFrame(columns = df_var.columns)
+            for county in self.counties:
+                #append same data for each county
+                df_var.ID_County = county
+                self.df_variants = pd.concat([self.df_variants, df_var])
 
         with progress_indicator.Spinner(message="Preparing age structure data"):
             # variables for age structure
@@ -345,6 +367,8 @@ class NPIRegression():
                 self.df_seasonality, min_date, max_date)
             self.df_agestructure = mdfs.extract_subframe_based_on_dates(
                 self.df_agestructure, min_date, max_date)
+            self.df_variants = mdfs.extract_subframe_based_on_dates(
+                self.df_variants, min_date, max_date)
 
             self.df_npis['Date'] = pd.to_datetime(self.df_npis['Date'])
             self.df_vaccinations['Date'] = pd.to_datetime(
@@ -354,6 +378,8 @@ class NPIRegression():
                 self.df_seasonality['Date'])
             self.df_agestructure['Date'] = pd.to_datetime(
                 self.df_agestructure['Date'])
+            self.df_variants['Date'] = pd.to_datetime(
+                self.df_variants['Date'])
 
             # remove all dates where the r-value could not be computed
             for county in self.counties:
@@ -371,6 +397,8 @@ class NPIRegression():
                     missing_dates)) & (self.df_seasonality.ID_County == county)].index)
                 self.df_agestructure = self.df_agestructure.drop(self.df_agestructure[(self.df_agestructure.Date.isin(
                     missing_dates)) & (self.df_agestructure.ID_County == county)].index)
+                self.df_variants = self.df_variants.drop(self.df_variants[(self.df_variants.Date.isin(
+                    missing_dates)) & (self.df_variants.ID_County == county)].index)
 
             # drop columns where no NPIs are assigned
             num_dropped = 0
@@ -394,6 +422,8 @@ class NPIRegression():
                 ['ID_County', 'Date']).reset_index(inplace=True)
             self.df_agestructure.sort_values(
                 ['ID_County', 'Date']).reset_index(inplace=True)
+            self.df_variants.sort_values(
+                ['ID_County', 'Date']).reset_index(inplace=True)
 
             # reset index so that we can concatenate dataframes without problems
             self.df_r.reset_index(inplace=True)
@@ -402,6 +432,7 @@ class NPIRegression():
             self.df_regions.reset_index(inplace=True)
             self.df_seasonality.reset_index(inplace=True)
             self.df_agestructure.reset_index(inplace=True)
+            self.df_variants.reset_index(inplace=True)
 
     # define variables that will be used in every regression
 
@@ -420,6 +451,8 @@ class NPIRegression():
         self.reference_region = 'Stadtregion - Metropole'
         self.region_types.remove(self.reference_region)
 
+        #TODO: references for other variables?
+
         # define df with all variables that go into the model
         self.df_allvariables = pd.DataFrame([self.df_vaccinations[vacc_state]
                                              for vacc_state in self.used_vacc_states] +
@@ -428,7 +461,7 @@ class NPIRegression():
                                             [self.df_seasonality['sin'], self.df_seasonality['cos']] +
                                             [self.df_agestructure[age_category]
                                              for age_category in self.age_categories] +
-                                            [self.df_npis[npi] for npi in self.used_npis]).transpose()
+                                            [self.df_npis[npi] for npi in self.used_npis] + [self.df_variants[variant] for variant in self.variants]).transpose()
 
     # define variables for regression according to input and fit model
 
@@ -467,7 +500,7 @@ class NPIRegression():
         # define variables that will be used in backward selection
         regression_variables = self.used_vacc_states + self.region_types + \
             ['sin', 'cos'] + \
-            self.age_categories + self.used_npis
+            self.age_categories + self.used_npis + self.variants
 
         # do regression with all NPIs
         results = self.do_regression(regression_variables)
