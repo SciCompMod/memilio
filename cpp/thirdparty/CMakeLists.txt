@@ -79,15 +79,11 @@ if(MEMILIO_USE_BUNDLED_BOOST)
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
     else()
-        execute_process(COMMAND ./bootstrap.sh
+        execute_process(COMMAND ./bootstrap.sh cxxflags="-std=c++17"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            OUTPUT_QUIET
-            ERROR_QUIET
             )
-        execute_process(COMMAND ./b2 headers cxxflags="-std=c++17"
+        execute_process(COMMAND ./b2 cxxflags="-std=c++17" headers 
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            OUTPUT_QUIET
-            ERROR_QUIET
             )
     endif()
     
