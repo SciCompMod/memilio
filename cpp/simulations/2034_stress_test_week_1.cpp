@@ -346,9 +346,9 @@ mio::IOResult<void> set_interventions(mio::osecirvvs::Parameters& params, const 
         dynamic_npi_dampings.push_back(physical_distancing_other(start_day, 0.4, 0.4));
 
         dynamic_npis.set_interval(mio::SimulationTime(1.0)); // how often we check if we need to activate the NPI
-        dynamic_npis.set_duration(mio::SimulationTime(14.0)); // duration of the NPI
+        dynamic_npis.set_duration(mio::SimulationTime(30.0)); // duration of the NPI
         dynamic_npis.set_base_value(100'000);
-        dynamic_npis.set_threshold(1.0, dynamic_npi_dampings); // activation when incidence is above 1.0
+        dynamic_npis.set_threshold(1., dynamic_npi_dampings); // activation when incidence is above 1.0
         break;
     default:
         mio::log_info("No intervention is applied.");
@@ -383,6 +383,7 @@ mio::IOResult<
     std::pair<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>, std::vector<mio::osecirvvs::Model>>>
 get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention)
 {
+
     // global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters params(num_age_groups);
@@ -390,6 +391,21 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_interventions(params, intervention));
+
+    // print indices flow for transmission
+    // mio::osecirvvs::Model modele(num_age_groups);
+    // for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(6); i++) {
+    //     auto indx_naive   = modele.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleNaive,
+    //                                                  mio::osecirvvs::InfectionState::ExposedNaive>({i});
+    //     auto indx_partial = modele.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+    //                                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity>({i});
+    //     auto indx_ii      = modele.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+    //                                               mio::osecirvvs::InfectionState::ExposedImprovedImmunity>({i});
+
+    //     std::cout << indx_naive << "," << indx_partial << "," << indx_ii << std::endl;
+    // }
+
+    // std::exit(0);
 
     auto population_data_path =
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
@@ -486,7 +502,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
     constexpr auto num_days_sim             = 30.0;
     constexpr auto num_runs_per_scenario    = 5;
     constexpr auto num_runs_per_param_study = 1;
-    constexpr int intervention              = -1;
+    constexpr int intervention              = 1;
 
     result_dir += "/" + intervention_mapping.at(intervention);
 
@@ -495,6 +511,8 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
 
     auto& params_graph = graph_pair.first;
     auto& nodes        = graph_pair.second;
+
+    auto nodes_copy = nodes;
 
     std::vector<int> county_ids(params_graph.nodes().size());
     std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
@@ -524,11 +542,13 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
 
                 result_dir_run += "/" + std::to_string(region_id);
 
+                auto nodes_tmp = nodes_copy;
+
                 //find correct node and set number of infected
                 size_t node_indx = 0;
                 for (auto& node : params_graph.nodes()) {
                     // reset population
-                    node.property.populations = nodes[node_indx].populations;
+                    node.property.populations = nodes_tmp[node_indx].populations;
                     node_indx++;
                     if (node.id == region_id) {
                         node.property
@@ -537,7 +557,6 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         node.property
                             .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}] -=
                             num_infected;
-                        break;
                     }
                 }
 

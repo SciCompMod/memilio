@@ -694,7 +694,7 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_lockdown = 0;
             }
             else {
                 delay_lockdown = 0;
