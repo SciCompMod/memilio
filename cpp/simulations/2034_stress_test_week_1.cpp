@@ -561,8 +561,9 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                 }
 
                 //run parameter study
-                auto parameter_study = mio::ParameterStudy<mio::FlowSimulation<mio::osecirvvs::Model>>{
-                    params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
+                auto parameter_study =
+                    mio::ParameterStudy<mio::osecirvvs::Simulation<mio::FlowSimulation<mio::osecirvvs::Model>>>{
+                        params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
 
                 // parameter_study.get_rng().seed(
                 //    {1744668429, 3100904884, 949309539, 3730340632, 1029148146, 3502301618}); //set seeds, e.g., for debugging
