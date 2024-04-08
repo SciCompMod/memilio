@@ -89,7 +89,7 @@ IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const
     }
     return success();
 }
-IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges, 
+IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
                           const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
                           bool save_single_runs, bool save_percentiles)
 {
@@ -123,22 +123,18 @@ IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& en
             auto ensemble_edges_p75 = ensemble_percentile(ensemble_edges, 0.75);
             auto ensemble_edges_p95 = ensemble_percentile(ensemble_edges, 0.95);
 
-            BOOST_OUTCOME_TRY(
-                save_edges(ensemble_edges_p05, pairs_edges, (result_dir_p05 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_edges(ensemble_edges_p25, pairs_edges, (result_dir_p25 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_edges(ensemble_edges_p50, pairs_edges, (result_dir_p50 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_edges(ensemble_edges_p75, pairs_edges, (result_dir_p75 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_edges(ensemble_edges_p95, pairs_edges, (result_dir_p95 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p05, pairs_edges, (result_dir_p05 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p25, pairs_edges, (result_dir_p25 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p50, pairs_edges, (result_dir_p50 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p75, pairs_edges, (result_dir_p75 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p95, pairs_edges, (result_dir_p95 / "Edges.h5").string()));
         }
     }
     return success();
 }
 
-IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids, const std::string& filename)
+IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
+                          const std::string& filename)
 {
     const int num_edges = static_cast<int>(results.size());
     mio::unused(num_edges);
@@ -151,8 +147,8 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
         H5Group start_node_h5group{H5Gcreate(file.id, h5group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
         MEMILIO_H5_CHECK(start_node_h5group.id, StatusCode::UnknownError,
                          "Group could not be created (" + h5group_name + ")");
-        const int num_timepoints      = static_cast<int>(result.get_num_time_points());
-        const int num_infectionstates = 3 ; // (int)result.get_num_elements() / num_groups;
+        const int num_timepoints          = static_cast<int>(result.get_num_time_points());
+        constexpr int num_infectionstates = 3; // (int)result.get_num_elements() / num_groups;
 
         hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
         H5DataSpace dspace_t{H5Screate_simple(1, dims_t, NULL)};
@@ -172,22 +168,14 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                              .eval();
 
             for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
-                auto v = result_edge.get_value(t_idx).transpose().eval();
-                // std::cout << "result_edge: " << v << std::endl;
-                // mio::slice(total, {t_idx, 1}, {0, num_infectionstates}) +=
-                //     mio::slice(v, {num_infectionstates, num_infectionstates});
+                auto v           = result_edge.get_value(t_idx).transpose().eval();
                 total.row(t_idx) = v;
             }
 
             auto total_to_vector = std::vector<double>(total.data(), total.data() + total.size());
 
-            auto results_edge_to_vector = std::vector<double>(result_edge.get_times().begin(), result_edge.get_times().end());
-
-
-            std::cout << "result_edge: " << total_to_vector.size() << std::endl;
-
-            std::cout << "result_edge: " << results_edge_to_vector.size() << std::endl;
-
+            auto results_edge_to_vector =
+                std::vector<double>(result_edge.get_times().begin(), result_edge.get_times().end());
             hsize_t dims_values[] = {static_cast<hsize_t>(num_timepoints), static_cast<hsize_t>(num_infectionstates)};
             H5DataSpace dspace_values{H5Screate_simple(2, dims_values, NULL)};
             MEMILIO_H5_CHECK(dspace_values.id, StatusCode::UnknownError, "Values DataSpace could not be created.");
