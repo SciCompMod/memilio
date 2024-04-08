@@ -84,6 +84,8 @@ if(MEMILIO_USE_BUNDLED_BOOST)
             )
         execute_process(COMMAND ./b2 cxxflags="-std=c++17" headers 
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
+            OUTPUT_QUIET
+            ERROR_QUIET
             )
     endif()
     
