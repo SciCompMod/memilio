@@ -175,17 +175,9 @@ TEST(IdeSecir, checkStartTime)
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Define transitions that will be used for initialization.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 0.0;
+    Vec vec_init                                                          = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed] = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(0.0, vec_init);
     // Add further time points until t0.
@@ -227,17 +219,9 @@ TEST(IdeSecir, checkSimulationFunctions)
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization for transitions and death.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 0.0;
+    Vec vec_init                                                          = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed] = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(-0.5, vec_init);
     while (init.get_last_time() < 0) {
@@ -649,17 +633,9 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization for transitions.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 10.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(-12, vec_init);
     while (init.get_last_time() < 0) {
@@ -737,17 +713,9 @@ TEST(IdeSecir, compareEquilibria)
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization for transitions.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 10.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(-12, vec_init);
     while (init.get_last_time() < 0) {
