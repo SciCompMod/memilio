@@ -214,10 +214,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(auto baseline,
+        BOOST_OUTCOME_TRY(baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        BOOST_OUTCOME_TRY(auto minimum,
+        BOOST_OUTCOME_TRY(minimum,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
@@ -535,12 +535,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //create or load graph
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(auto created, get_graph(start_date, end_date, data_dir));
+        BOOST_OUTCOME_TRY(created, get_graph(start_date, end_date, data_dir));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(auto loaded, mio::read_graph<mio::osecir::Model>(save_dir.string()));
+        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecir::Model>(save_dir.string()));
         params_graph = loaded;
     }
 

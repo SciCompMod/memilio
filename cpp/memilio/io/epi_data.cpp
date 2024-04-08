@@ -36,7 +36,7 @@ std::vector<const char*> VaccinationDataEntry::age_group_names = {"0-4", "5-14",
 
 IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county, bool rki_age_groups)
 {
-    BOOST_OUTCOME_TRY(auto population_data, read_population_data(path, rki_age_groups));
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path, rki_age_groups));
     std::vector<int> id;
     id.reserve(population_data.size());
     for (auto&& entry : population_data) {
