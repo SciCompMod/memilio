@@ -67,7 +67,7 @@ int main()
 
     FP t0   = 0;
     FP tmax = 10;
-    FP dt   = 0.2;
+    FP dt   = 0.3;
 
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
 
