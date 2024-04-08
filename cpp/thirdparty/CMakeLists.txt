@@ -72,7 +72,7 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         execute_process(COMMAND "bootstrap.bat"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
-        execute_process(COMMAND ".\\b2 headers"
+        execute_process(COMMAND ".\\b2.exe headers"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
         execute_process(COMMAND "ls"
@@ -84,7 +84,7 @@ if(MEMILIO_USE_BUNDLED_BOOST)
             OUTPUT_QUIET
             ERROR_QUIET
             )
-        execute_process(COMMAND ./b2 headers
+        execute_process(COMMAND ./b2 headers cxxflags="-std=c++17"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             OUTPUT_QUIET
             ERROR_QUIET
