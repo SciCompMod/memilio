@@ -400,11 +400,11 @@ template <class T>
 IOResult<std::vector<T>> BinarySerializerObject::expect_list(const std::string& name, Tag<T>)
 {
     mio::unused(name);
-    BOOST_OUTCOME_TRY(size, expect_element("Size", Tag<size_t>{}));
+    BOOST_OUTCOME_TRY(auto size, expect_element("Size", Tag<size_t>{}));
     std::vector<T> v;
     v.reserve(size);
     for (auto i = size_t(0); i < size; ++i) {
-        BOOST_OUTCOME_TRY(t, expect_element("Item", Tag<T>{}));
+        BOOST_OUTCOME_TRY(auto t, expect_element("Item", Tag<T>{}));
         v.emplace_back(std::move(t));
     }
     return success(v);
@@ -424,9 +424,9 @@ template <class T>
 IOResult<boost::optional<T>> BinarySerializerObject::expect_optional(const std::string& name, Tag<T>)
 {
     mio::unused(name);
-    BOOST_OUTCOME_TRY(size, expect_element("Exists", Tag<size_t>{}));
+    BOOST_OUTCOME_TRY(auto size, expect_element("Exists", Tag<size_t>{}));
     if (size) {
-        BOOST_OUTCOME_TRY(t, expect_element("Value", Tag<T>{}));
+        BOOST_OUTCOME_TRY(auto t, expect_element("Value", Tag<T>{}));
         return mio::success(t);
     }
     return mio::success(boost::optional<T>{});

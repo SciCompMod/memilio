@@ -237,7 +237,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<double>> mu_H_U{model.size()};
     std::vector<std::vector<double>> mu_U_D{model.size()};
 
-    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto case_data, mio::read_confirmed_cases_data(path));
 
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
@@ -300,7 +300,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {
-    BOOST_OUTCOME_TRY(divi_data, mio::read_divi_data(path));
+    BOOST_OUTCOME_TRY(auto divi_data, mio::read_divi_data(path));
 
     auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -332,7 +332,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 IOResult<std::vector<std::vector<double>>>
 read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups)
 {
-    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path, !accumulate_age_groups));
+    BOOST_OUTCOME_TRY(auto population_data, mio::read_population_data(path, !accumulate_age_groups));
     //if we set up the model for one age group, the population data should be read in with the
     //age groups given in the population data json file and are accumulated later
     //otherwise the populations are directly saved for the correct model age groups
@@ -370,7 +370,7 @@ read_population_data(const std::string& path, const std::vector<int>& vregion, b
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                                    bool accumulate_age_groups)
 {
-    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion, accumulate_age_groups));
+    BOOST_OUTCOME_TRY(auto num_population, read_population_data(path, vregion, accumulate_age_groups));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
