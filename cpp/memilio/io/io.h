@@ -332,7 +332,7 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * extern void use_int(int i);
  * IOResult<void> parse_and_use_int(const std::string& s)
  * {
- *   BOOST_OUTCOME_TRY(i, parse_int(s));
+ *   BOOST_OUTCOME_TRY(auto i, parse_int(s));
  *   use_int(i);
  *   return success();
  * }
@@ -482,7 +482,7 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
     IOStatus status[] = {(rs ? IOStatus{} : rs.error())...};
     auto iter_err     = std::find_if(std::begin(status), std::end(status), [](auto& s) {
         return s.is_error();
-    });
+        });
 
     //evaluate f if all succesful
     auto result =
@@ -658,7 +658,7 @@ void serialize_internal(IOContext& io, E e)
 template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
 IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 {
-    BOOST_OUTCOME_TRY(i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
+    BOOST_OUTCOME_TRY(auto i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
     return success(E(i));
 }
 

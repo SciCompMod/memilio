@@ -2,7 +2,7 @@
 # If you like to upgrade, just change the number
 set(MEMILIO_EIGEN_VERSION "3.3.9")
 set(MEMILIO_SPDLOG_VERSION "1.11.0")
-set(MEMILIO_BOOST_VERSION "1.75.0")
+set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 
@@ -52,7 +52,9 @@ endif()
 
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    message(STATUS "Downloading Boost library. This can take a while.")
+    # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
+    add_compile_definitions(BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
+    message(STATUS "Downloading Boost library. This may take some time.")
 
     include(FetchContent)
     FetchContent_Declare(boost
