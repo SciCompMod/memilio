@@ -387,7 +387,7 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters params(num_age_groups);
     params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
-    params.get_end_dynamic_npis()          = 100000;
+    params.get_end_dynamic_npis()          = 32;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_interventions(params, intervention));
