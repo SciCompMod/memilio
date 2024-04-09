@@ -104,6 +104,15 @@ def plot_results(path):
     total_75 = group['Total'][()]
     f.close()
 
+    # real world
+    # TODO
+    f = h5py.File(
+        path + "PFADEINFUEGEN/Results.h5", 'r')
+    group = f['3101']
+    total_50 = group['Total'][()]
+    f.close()
+
+
     plot_infection_states_dead(time, total_50, total_25, total_75)
     plot_infection_states(time, total_50, total_25, total_75)
     

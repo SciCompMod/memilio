@@ -235,6 +235,30 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
     return mio::success(nodes);
 }
 
+/**
+ * Calls the function to generate the extrapolated data based on the reported data. The generated data is saved in the
+    * data directory.
+ * @param start_date start date of the simulation.
+ * @param num_days number of days to extrapolate the data.
+ * @param data_dir data directory.
+ * @returns created graph or any io errors that happen during reading of the files.
+ */
+mio::IOResult<void> generate_extrapolated_data(std::vector<mio::osecir::Model> nodes, std::vector<int> node_ids,
+                                               mio::Date start_date, const int num_days, const fs::path& data_dir)
+{
+
+    auto scaling_factor_infected = std::vector<double>(size_t(nodes[0].parameters.get_num_groups()), 1.0);
+    auto scaling_factor_icu      = 1.0;
+
+    BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
+        nodes, data_dir.string(), node_ids, start_date, scaling_factor_infected, scaling_factor_icu, num_days,
+        mio::path_join(data_dir.string(), "pydata/Germany", "county_divi_ma7.json"),
+        mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_ma7.json"),
+        mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json")));
+
+    return mio::success();
+}
+
 /*
 int main(int argc, char** argv)
 {

@@ -69,7 +69,17 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
     auto initial_graph                     = get_graph(date, 1, input_dir);
     size_t braunschweig_id                 = 16; // Braunschweig has ID 16
     auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
+    extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 30); // 30 days
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
+}
+
+/**
+ * Create extrapolation of real world data to compare with.
+*/
+void extrapolate_real_world_data(mio::osecir::Model& model, const std::string& input_dir, const mio::Date date,
+                                 int num_days)
+{
+    generate_extrapolated_data({model}, {3101}, date, num_days, input_dir);
 }
 
 /**
@@ -662,7 +672,6 @@ void set_local_parameters(mio::abm::World& world)
         0.0204 0.1444 0.5738 1.2127 0.3433 0.0178
         0.0371 0.0393 0.4171 0.9666 0.7495 0.0257
         0.0791 0.0800 0.3480 0.5588 0.2769 0.0180
-
     */
     mio::CustomIndexArray<ScalarType, mio::AgeGroup, mio::AgeGroup> contacts_other(
         {mio::AgeGroup(n_age_groups), mio::AgeGroup(n_age_groups)}, 0.);
@@ -707,15 +716,23 @@ void set_local_parameters(mio::abm::World& world)
         switch (loc.get_type()) {
         case mio::abm::LocationType::Home:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_home;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
+                1.8; // scaling due to beeing at school 1/1.8 * 100% of the time
             break;
         case mio::abm::LocationType::School:
-            loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_work;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_school;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
+                4.8; // scaling due to beeing at school 1/4.8 * 100% of the time
             break;
         case mio::abm::LocationType::Work:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_work;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
+                3.5; // scaling due to beeing at school 1/3.5 * 100% of the time
             break;
         default:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
+                5.2675; // scaling due to beeing at school 1/5.2675 * 100% of the time
             break;
         }
     }
@@ -1009,8 +1026,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(50); // End time per simulation
-    auto max_num_persons = 23000;
+    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(20); // End time per simulation
+    auto max_num_persons = 1000;
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     // ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -1039,7 +1056,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     // Determine inital infection state distribution
     //Time this
     auto start0 = std::chrono::high_resolution_clock::now();
-    //determine_initial_infection_states_world(input_dir, start_date);
+    determine_initial_infection_states_world(input_dir, start_date);
     auto stop0     = std::chrono::high_resolution_clock::now();
     auto duration0 = std::chrono::duration<double>(stop0 - start0);
     std::cout << "Time taken by determine_initial_infection_states_world: " << duration0.count() << " seconds"
@@ -1057,7 +1074,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groups);
         create_sampled_world(world, input_dir, t0, max_num_persons);
-        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = pow(10, run_idx - 5);
+        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = pow(10, (int)run_idx - 5);
         // Stop the clock after create_sampled_world and calculate the duration
         auto stop1     = std::chrono::high_resolution_clock::now();
         auto duration1 = std::chrono::duration<double>(stop1 - start1);
