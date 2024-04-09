@@ -41,3 +41,5 @@ An example can be found at:
 ## Initialization 
 
 - The file [parameters_io](parameters_io.h) provides functionality to compute initial data for the IDE-SECIR model based on real data. An example for this initialization method can be found at [IDE initialization example](../../examples/ide_initialization.cpp).
+
+- For fictional initialization you have different possibilities:
