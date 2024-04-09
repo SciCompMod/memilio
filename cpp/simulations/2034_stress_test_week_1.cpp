@@ -335,9 +335,9 @@ mio::IOResult<void> set_interventions(mio::osecirvvs::Parameters& params, const 
     switch (intervention) {
     case 0:
         mio::log_info("Fixed Damping (Masks - 20% reduction).");
-        contact_dampings.push_back(physical_distancing_school(start_day, 0.8, 0.8));
-        contact_dampings.push_back(physical_distancing_work(start_day, 0.8, 0.8));
-        contact_dampings.push_back(physical_distancing_other(start_day, 0.8, 0.8));
+        contact_dampings.push_back(physical_distancing_school(start_day, 0.2, 0.2));
+        contact_dampings.push_back(physical_distancing_work(start_day, 0.2, 0.2));
+        contact_dampings.push_back(physical_distancing_other(start_day, 0.2, 0.2));
         break;
     case 1:
         mio::log_info("Dynamic Damping (60% reduction).");
@@ -502,7 +502,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
     constexpr auto num_days_sim             = 30.0;
     constexpr auto num_runs_per_scenario    = 5;
     constexpr auto num_runs_per_param_study = 1;
-    constexpr int intervention              = 1;
+    constexpr int intervention              = 0;
 
     result_dir += "/" + intervention_mapping.at(intervention);
 
