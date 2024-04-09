@@ -110,7 +110,7 @@ bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_
 template <class T>
 bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
-    return !floating_point_less(v2, v1, abs_tol, rel_tol);
+    return !floating_point_greater(v2, v1, abs_tol, rel_tol);
 }
 
 /**
