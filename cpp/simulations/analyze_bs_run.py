@@ -77,7 +77,7 @@ def plot_infection_per_age_group(df):
 def plot_results(path):
     # median / 50-percentile
     f = h5py.File(
-        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_state_per_age_group/results_run0_sum.h5", 'r')
 
     # Get the HDF5 group; key needs to be a group name from above
     group = f['0']
@@ -94,31 +94,31 @@ def plot_results(path):
     f = h5py.File(
         path+"/infection_state_per_age_group/p25/Results.h5", 'r')
     group = f['0']
-    total_25 = group['Total'][()]
+    total_25 =total_50
     f.close()
 
     # 95-percentile
     f = h5py.File(
         path + "/infection_state_per_age_group/p75/Results.h5", 'r')
     group = f['0']
-    total_75 = group['Total'][()]
+    total_75 = total_50
     f.close()
 
     # real world
     # TODO
     f = h5py.File(
-        path + "PFADEINFUEGEN/Results.h5", 'r')
+        path + "/Results_rki.h5", 'r')
     group = f['3101']
-    total_50 = group['Total'][()]
+    total_real = group['Total'][()]
     f.close()
 
 
-    plot_infection_states_dead(time, total_50, total_25, total_75)
-    plot_infection_states(time, total_50, total_25, total_75)
+    plot_infection_states_dead(time, total_50, total_25, total_75,total_real)
+    plot_infection_states(time, total_50, total_25, total_75,total_real)
     
 
 
-def plot_infection_states(x, y50, y25, y75):
+def plot_infection_states(x, y50, y25, y75,y_real):
     plt.figure('Infection_states')
     plt.plot(x, y50)
     plt.legend(['S', 'E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Rec', 'Dead'])
@@ -127,14 +127,31 @@ def plot_infection_states(x, y50, y25, y75):
         plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.1)
         plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.1)
 
-def plot_infection_states_dead(x, y50, y25, y75):
-    plt.figure('Infection_states_dead')
-    plt.plot(x, y50[:,[5,7]])
-    plt.legend(['I_Crit', 'Dead'])
+def plot_infection_states_dead(x, y50, y25, y75,y_real):
+    # plt.figure('Infection_states_dead')
+    # # plt.plot(x, y50[:,[5,7]])
+    x_real = np.linspace(0, y_real.shape[0]-1,y_real.shape[0]) 
+    # plt.plot(x_real, y_real[:,[2]])
+    # plt.legend(['I_Crit', 'Dead'])
 
     # for i in [5,7]:
     #     plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.1)
     #     plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.1)
+
+    fig, ax1 = plt.subplots()
+
+    color = 'tab:red'
+    ax1.set_xlabel('time (s)')
+    ax1.set_ylabel('y50', color=color)
+    ax1.plot(x, y50[:,[5]], color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    color = 'tab:blue'
+    ax2.set_ylabel('y_real', color=color)  # we already handled the x-label with ax1
+    ax2.plot(x_real, y_real[:,[2]], color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.show()  
 
 
 def plot_infections_per_age_group(path):

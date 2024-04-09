@@ -61,25 +61,25 @@ mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initia
     {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 0.005};
 
 /**
- * Determine initial distribution of infection states.
-*/
-void determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date)
-{
-    // estimate intial population by ODE compartiments
-    auto initial_graph                     = get_graph(date, 1, input_dir);
-    size_t braunschweig_id                 = 16; // Braunschweig has ID 16
-    auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
-    extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 30); // 30 days
-    initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
-}
-
-/**
  * Create extrapolation of real world data to compare with.
 */
 void extrapolate_real_world_data(mio::osecir::Model& model, const std::string& input_dir, const mio::Date date,
                                  int num_days)
 {
-    generate_extrapolated_data({model}, {3101}, date, num_days, input_dir);
+    auto test = generate_extrapolated_data({model}, {3101}, date, num_days, input_dir);
+}
+
+/**
+ * Determine initial distribution of infection states.
+*/
+void determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date)
+{
+    // estimate intial population by ODE compartiments
+    auto initial_graph     = get_graph(date, 1, input_dir);
+    size_t braunschweig_id = 16; // Braunschweig has ID 16
+    auto braunschweig_node = initial_graph.value()[braunschweig_id];
+    extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 30); // 30 days
+    initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
 }
 
 /**
@@ -479,13 +479,36 @@ void set_parameters(mio::abm::Parameters& params)
                                                                TimeInfectedCriticalToRecovered_my_sigma.second};
 
     // Set percentage parameters
-    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>() = 0.5;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()     = 0.1;
-    params.get<mio::abm::CriticalPerInfectedSevere>()     = 0.05;
-    params.get<mio::abm::DeathsPerInfectedCritical>()     = 0.002;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.75;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.75;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.8;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.8;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.8;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.8;
+
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.0075;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.0075;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.019;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.0615;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.165;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.225;
+
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.075;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.075;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.075;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.15;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.3;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.4;
+
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.05;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.05;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.14;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.14;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.4;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.6;
 
     // Set infection parameters
-    params.get<mio::abm::InfectionRateFromViralShed>() = 1.;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 1.0;
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
@@ -1026,8 +1049,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(20); // End time per simulation
-    auto max_num_persons = 1000;
+    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(50); // End time per simulation
+    auto max_num_persons = 10000;
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
     // ensemble_infection_per_loc_type.reserve(size_t(num_runs));
@@ -1074,7 +1097,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groups);
         create_sampled_world(world, input_dir, t0, max_num_persons);
-        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = pow(10, (int)run_idx - 5);
+        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = pow(10, ((int)run_idx) - 5);
         // Stop the clock after create_sampled_world and calculate the duration
         auto stop1     = std::chrono::high_resolution_clock::now();
         auto duration1 = std::chrono::duration<double>(stop1 - start1);
