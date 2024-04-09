@@ -61,8 +61,8 @@ int main(int argc, char** argv)
 
     // Initialize model.
     ScalarType total_population = 80 * 1e6;
-    ScalarType deaths           = 10;
-    ScalarType dt               = 0.5;
+    ScalarType deaths = 0; // The number of deaths will be overwritten if real data is used for initialization.
+    ScalarType dt     = 0.5;
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
                              total_population, deaths);
 

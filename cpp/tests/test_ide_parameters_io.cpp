@@ -39,6 +39,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     auto start_date             = mio::Date(2020, 6, 3);
     ScalarType dt               = 0.5;
     // Initialize model.
+    // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number is used for the number of deaths.
     mio::isecir::Model model(mio::TimeSeries<ScalarType>(0., mio::TimeSeries<ScalarType>::Vector::Constant(
                                                                  (int)mio::isecir::InfectionTransition::Count, 1.)),
                              total_population, -1);
@@ -93,6 +94,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     ScalarType dt               = 0.5;
 
     // Initialize model.
+    // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number is used for the number of deaths.
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
                              total_population, -1);
 
