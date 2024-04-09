@@ -346,7 +346,7 @@ mio::IOResult<void> set_interventions(mio::osecirvvs::Parameters& params, const 
         dynamic_npi_dampings.push_back(physical_distancing_other(start_day, 0.4, 0.4));
 
         dynamic_npis.set_interval(mio::SimulationTime(1.0)); // how often we check if we need to activate the NPI
-        dynamic_npis.set_duration(mio::SimulationTime(30.0)); // duration of the NPI
+        dynamic_npis.set_duration(mio::SimulationTime(14.0)); // duration of the NPI
         dynamic_npis.set_base_value(100'000);
         dynamic_npis.set_threshold(1., dynamic_npi_dampings); // activation when incidence is above 1.0
         break;
@@ -383,11 +383,11 @@ mio::IOResult<
     std::pair<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>, std::vector<mio::osecirvvs::Model>>>
 get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention)
 {
-
     // global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters params(num_age_groups);
     params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
+    params.get_end_dynamic_npis()          = 100000;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_interventions(params, intervention));
