@@ -72,7 +72,7 @@ template <class T>
 bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
     auto diff = v1 - v2;
-    return diff < -abs_tol || diff < -abs_max(v1, v2) * rel_tol;
+    return diff < abs_tol || diff < abs_max(v1, v2) * rel_tol;
 }
 
 /**
@@ -110,7 +110,7 @@ bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_
 template <class T>
 bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
-    return !floating_point_greater(v2, v1, abs_tol, rel_tol);
+    return floating_point_less(v1, v2, abs_tol, rel_tol) || floating_point_equal(v1, v2, abs_tol, rel_tol);
 }
 
 /**
@@ -129,7 +129,7 @@ bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numer
 template <class T>
 bool floating_point_greater_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
-    return !floating_point_less(v1, v2, abs_tol, rel_tol);
+    return floating_point_greater(v1, v2, abs_tol, rel_tol) || floating_point_equal(v1, v2, abs_tol, rel_tol);
 }
 } // namespace mio
 
