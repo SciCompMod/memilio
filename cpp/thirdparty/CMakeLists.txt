@@ -72,12 +72,13 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         execute_process(COMMAND "bootstrap.bat"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
-        execute_process(COMMAND "help"
+        execute_process(COMMAND "start b2.exe"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
         execute_process(COMMAND "dir"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
+        
     else()
         execute_process(COMMAND ./bootstrap.sh cxxflags="-std=c++17"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
