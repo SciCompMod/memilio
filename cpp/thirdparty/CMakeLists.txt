@@ -72,10 +72,10 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         execute_process(COMMAND "bootstrap.bat"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
-        execute_process(COMMAND "b2.exe --help"
+        execute_process(COMMAND "help"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
-        execute_process(COMMAND "ls"
+        execute_process(COMMAND "dir"
             WORKING_DIRECTORY ${boost_SOURCE_DIR}
             )
     else()
