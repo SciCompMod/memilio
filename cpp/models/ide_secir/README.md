@@ -15,6 +15,8 @@ are used to simulate the spread of the disease.
 
 Below is an overview of the model architecture and its compartments.
 
+![tikzIDESECIR](https://github.com/SciCompMod/memilio/assets/70579874/3500421a-035c-4ce1-ae95-a54d8097be82)
+
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\phi$                      |  `ContactPatterns`               | Average number of contacts of a person per day. |
@@ -24,7 +26,7 @@ Below is an overview of the model architecture and its compartments.
 | $N$                         | `m_N`   | Total population. |
 | $D$                         |  `D`  | Number of dead people. |
 | $\mu_{z_1}^{z_2}$              |   `TransitionProbabilities `              | Probability of transition from a compartment $z_1$ to a compartment $z_2$. |  
-| $\gamma_{z_1}^{z_2}(\tau)$              |   `TransitionDistributions `              | TODO: The share of people that already spent $\tau$ days in compartment $z_1$ if they go to  $z_2$ in their course of infection. |  
+| $\gamma_{z_1}^{z_2}(\tau)$              |   `TransitionDistributions `              | TODO: The share of people that already spent $\tau$ days in compartment $z_1$ if they go to  $z_2$ in their course of infection. Should be a ember of StateAgeFunction.|  
 
 
 
@@ -34,8 +36,8 @@ The simulation runs in discrete time steps using a non-standard numerical scheme
 
 An example can be found at:
 
-- examples/ide_secir.cpp
+- [IDE minimal example](../../examples/ide_secir.cpp)
 
 ## Initialization 
 
-- The file [parameters_io](parameters_io.h) provides functionality to compute initial data for the IDE-SECIR model based on real data.
+- The file [parameters_io](parameters_io.h) provides functionality to compute initial data for the IDE-SECIR model based on real data. An example for this initialization method can be found at [IDE initialization example](../../examples/ide_initialization.cpp).
