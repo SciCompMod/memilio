@@ -161,31 +161,43 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                          StatusCode::UnknownError, "Time data could not be written.");
 
         int start_id = ids[edge_indx].first;
+        auto total   = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
+                                                                                                  num_infectionstates)
+                         .eval();
         while (ids[edge_indx].first == start_id) {
-            const auto& result_edge = results[edge_indx];
-            auto total              = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                             num_timepoints, num_infectionstates)
-                             .eval();
+            const auto& result_edge_indx = results[edge_indx];
+            auto edge_result             = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+                                   num_timepoints, num_infectionstates)
+                                   .eval();
 
             for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
-                auto v           = result_edge.get_value(t_idx).transpose().eval();
-                total.row(t_idx) = v;
+                auto v                 = result_edge_indx.get_value(t_idx).transpose().eval();
+                edge_result.row(t_idx) = v;
+                total.row(t_idx) += v;
             }
 
-            auto total_to_vector = std::vector<double>(total.data(), total.data() + total.size());
-
-            auto results_edge_to_vector =
-                std::vector<double>(result_edge.get_times().begin(), result_edge.get_times().end());
             hsize_t dims_values[] = {static_cast<hsize_t>(num_timepoints), static_cast<hsize_t>(num_infectionstates)};
             H5DataSpace dspace_values{H5Screate_simple(2, dims_values, NULL)};
             MEMILIO_H5_CHECK(dspace_values.id, StatusCode::UnknownError, "Values DataSpace could not be created.");
-            auto dset_name = std::to_string(ids[edge_indx].second);
+            auto dset_name = "End" + std::to_string(ids[edge_indx].second);
             H5DataSet dset_values{H5Dcreate(start_node_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE,
                                             dspace_values.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
             MEMILIO_H5_CHECK(dset_values.id, StatusCode::UnknownError, "Values DataSet could not be created.");
 
-            MEMILIO_H5_CHECK(H5Dwrite(dset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, total.data()),
-                             StatusCode::UnknownError, "Values data could not be written.");
+            MEMILIO_H5_CHECK(
+                H5Dwrite(dset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, edge_result.data()),
+                StatusCode::UnknownError, "Values data could not be written.");
+
+            // in the final iteration, we also save the total values
+            if (ids[edge_indx + 1].first != start_id) {
+                dset_name = "Total";
+                H5DataSet dset_total{H5Dcreate(start_node_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE,
+                                               dspace_values.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+                MEMILIO_H5_CHECK(dset_total.id, StatusCode::UnknownError, "Values DataSet could not be created.");
+                MEMILIO_H5_CHECK(
+                    H5Dwrite(dset_total.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, total.data()),
+                    StatusCode::UnknownError, "Values data could not be written.");
+            }
             edge_indx++;
         }
     }
@@ -219,8 +231,16 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         MEMILIO_H5_CHECK(
             H5Literate(region_h5group.id, H5_INDEX_NAME, H5_ITER_INC, NULL, &store_group_name, &h5dset_names),
             StatusCode::UnknownError, "Dataset names could not be read.");
-        auto num_groups = (Eigen::Index)std::count_if(h5dset_names.begin(), h5dset_names.end(), [](auto&& str) {
-            return str.find("Group") != std::string::npos;
+
+        std::string h5_key = std::any_of(h5dset_names.begin(), h5dset_names.end(),
+                                         [](const std::string& str) {
+                                             return str.find("Group") == 0;
+                                         })
+                                 ? "Group"
+                                 : "End";
+
+        auto num_groups = (Eigen::Index)std::count_if(h5dset_names.begin(), h5dset_names.end(), [&h5_key](auto&& str) {
+            return str.find(h5_key) != std::string::npos;
         });
 
         H5DataSet dataset_t{H5Dopen(region_h5group.id, "Time", H5P_DEFAULT)};
@@ -271,7 +291,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
             groups.add_time_point(time[t_idx]);
         }
         for (Eigen::Index group_idx = 0; group_idx < num_groups; ++group_idx) {
-            auto group_name = "/" + h5group_name + "/Group" + std::to_string(group_idx + 1);
+            auto group_name = "/" + h5group_name + "/" + h5_key + std::to_string(group_idx + 1);
             H5DataSet dataset_values{H5Dopen(file.id, group_name.c_str(), H5P_DEFAULT)};
             MEMILIO_H5_CHECK(dataset_values.id, StatusCode::UnknownError, "Values DataSet could not be read.");
 
