@@ -293,6 +293,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
+    auto ensemble_edges = std::vector<std::vector<mio::TimeSeries<double>>>{};
+    ensemble_edges.reserve(size_t(num_runs));
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
@@ -306,6 +308,14 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                            std::back_inserter(ensemble_params.back()), [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
+
+            ensemble_edges.emplace_back();
+            ensemble_edges.back().reserve(results_graph.edges().size());
+            std::transform(results_graph.edges().begin(), results_graph.edges().end(),
+                           std::back_inserter(ensemble_edges.back()), [](auto&& edge) {
+                               return edge.property.get_migrated();
+                           });
+
             return 0; //function needs to return something
         });
 
@@ -342,6 +352,37 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ASSERT_TRUE(results_run2);
     auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
     ASSERT_TRUE(results_run2_sum);
+
+    // test save edges (percentiles and results from single runs)
+    std::vector<std::pair<int, int>> pairs_edges = {{0, 1}};
+
+    auto save_edges_status = save_edges(ensemble_edges, pairs_edges, tmp_results_dir, true, true);
+    ASSERT_TRUE(save_edges_status);
+
+    // percentiles
+    auto results_edges_from_file_p05 = mio::read_result(tmp_results_dir + "/p05/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p05);
+    auto results_edges_from_file_p25 = mio::read_result(tmp_results_dir + "/p25/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p25);
+    auto results_edges_from_file_p50 = mio::read_result(tmp_results_dir + "/p50/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p50);
+    auto results_edges_from_file_p75 = mio::read_result(tmp_results_dir + "/p75/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p75);
+    auto results_edges_from_file_p95 = mio::read_result(tmp_results_dir + "/p95/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p95);
+
+    auto result_edges_from_file = results_edges_from_file_p25.value()[0];
+    EXPECT_EQ(ensemble_edges.back().back().get_num_elements(), result_edges_from_file.get_groups().get_num_elements());
+    EXPECT_EQ(ensemble_edges.back().back().get_num_time_points(),
+              result_edges_from_file.get_groups().get_num_time_points());
+
+    // single runs
+    auto results_edges_run0 = mio::read_result(tmp_results_dir + "/Edges_run0.h5");
+    ASSERT_TRUE(results_edges_run0);
+    auto results_edges_run1 = mio::read_result(tmp_results_dir + "/Edges_run1.h5");
+    ASSERT_TRUE(results_edges_run1);
+    auto results_edges_run2 = mio::read_result(tmp_results_dir + "/Edges_run2.h5");
+    ASSERT_TRUE(results_edges_run2);
 }
 
 TEST(TestSaveResult, save_edges)

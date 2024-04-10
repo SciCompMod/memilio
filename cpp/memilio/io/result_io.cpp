@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/io/result_io.h"
+#include <cstddef>
 
 #ifdef MEMILIO_HAS_HDF5
 
@@ -137,8 +138,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                           const std::string& filename)
 {
     const int num_edges = static_cast<int>(results.size());
-    mio::unused(num_edges);
-    int edge_indx = 0;
+    int edge_indx       = 0;
     H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
     MEMILIO_H5_CHECK(file.id, StatusCode::FileNotFound, filename);
     while (edge_indx < num_edges) {
@@ -164,14 +164,13 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
         auto total   = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
                                                                                                   num_infectionstates)
                          .eval();
-        while (ids[edge_indx].first == start_id) {
-            const auto& result_edge_indx = results[edge_indx];
-            auto edge_result             = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+        while (ids[edge_indx].first == start_id && edge_indx < num_edges) {
+            const auto& result_edge = results[edge_indx];
+            auto edge_result        = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
                                    num_timepoints, num_infectionstates)
                                    .eval();
-
-            for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
-                auto v                 = result_edge_indx.get_value(t_idx).transpose().eval();
+            for (Eigen::Index t_idx = 0; t_idx < result_edge.get_num_time_points(); ++t_idx) {
+                auto v                 = result_edge.get_value(t_idx).transpose().eval();
                 edge_result.row(t_idx) = v;
                 total.row(t_idx) += v;
             }
@@ -189,7 +188,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                 StatusCode::UnknownError, "Values data could not be written.");
 
             // in the final iteration, we also save the total values
-            if (ids[edge_indx + 1].first != start_id) {
+            if (ids[edge_indx + 1].first != start_id || edge_indx == num_edges - 1) {
                 dset_name = "Total";
                 H5DataSet dset_total{H5Dcreate(start_node_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE,
                                                dspace_values.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
@@ -290,8 +289,17 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         for (Eigen::Index t_idx = 0; t_idx < num_timepoints; ++t_idx) {
             groups.add_time_point(time[t_idx]);
         }
-        for (Eigen::Index group_idx = 0; group_idx < num_groups; ++group_idx) {
-            auto group_name = "/" + h5group_name + "/" + h5_key + std::to_string(group_idx + 1);
+
+        std::vector<int> h5_key_indices;
+        // Extract group indices from h5dset_names
+        for (const auto& name : h5dset_names) {
+            if (name.find(h5_key) == 0) {
+                h5_key_indices.push_back(std::stoi(name.substr(h5_key.size())));
+            }
+        }
+
+        for (auto h5_key_indx = size_t(0); h5_key_indx < h5_key_indices.size(); h5_key_indx++) {
+            auto group_name = "/" + h5group_name + "/" + h5_key + std::to_string(h5_key_indices[h5_key_indx]);
             H5DataSet dataset_values{H5Dopen(file.id, group_name.c_str(), H5P_DEFAULT)};
             MEMILIO_H5_CHECK(dataset_values.id, StatusCode::UnknownError, "Values DataSet could not be read.");
 
@@ -316,7 +324,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
 
             for (Eigen::Index idx_t = 0; idx_t < num_timepoints; idx_t++) {
                 for (Eigen::Index idx_c = 0; idx_c < num_infectionstates; idx_c++) {
-                    groups[idx_t][num_infectionstates * group_idx + idx_c] = group_values(idx_t, idx_c);
+                    groups[idx_t][num_infectionstates * h5_key_indx + idx_c] = group_values(idx_t, idx_c);
                 }
             }
         }
