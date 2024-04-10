@@ -340,7 +340,7 @@ mio::IOResult<void> set_interventions(mio::osecirvvs::Parameters& params, const 
         contact_dampings.push_back(physical_distancing_other(start_day, 0.2, 0.2));
         break;
     case 1:
-        mio::log_info("Dynamic Damping (60% reduction).");
+        mio::log_info("Dynamic Damping (40% reduction).");
         dynamic_npi_dampings.push_back(physical_distancing_school(start_day, 0.4, 0.4));
         dynamic_npi_dampings.push_back(physical_distancing_work(start_day, 0.4, 0.4));
         dynamic_npi_dampings.push_back(physical_distancing_other(start_day, 0.4, 0.4));
