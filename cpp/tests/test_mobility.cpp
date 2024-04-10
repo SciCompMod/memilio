@@ -170,7 +170,7 @@ TEST(TestMobility, edgeApplyMigration)
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1100);
 }
 
-TEST(TestMobility, condense_m_migrated)
+TEST(TestMobility, condense_m_mobility)
 {
     using Model = mio::osecir::Model;
 

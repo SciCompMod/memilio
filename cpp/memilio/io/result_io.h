@@ -133,7 +133,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                           const std::string& filename);
 
 /**
- * Save the results for the Edges obtained from the function condense_m_migrated.
+ * Save the results for the Edges obtained from the function condense_m_mobility.
  * @param ensemble_edges Simulation results for each run for each edge.
  * @param num_groups Number of age groups used simulation.
  * @param ids Identifiers for the start and end node of the edges.

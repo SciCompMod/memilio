@@ -357,7 +357,7 @@ private:
      * Additionally, the total number of commuters is stored in the last entry of m_mobility_results.
      * @param[in] t current time
      */
-    void condense_m_migrated(const double t, const std::vector<size_t>& indices_non_symptomatic,
+    void condense_m_mobility(const double t, const std::vector<size_t>& indices_non_symptomatic,
                              const std::vector<size_t>& indices_symptomatic);
 };
 
@@ -530,7 +530,7 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
             }
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
-            condense_m_migrated(t, indices_no_symptoms, indices_symptoms);
+            condense_m_mobility(t, indices_no_symptoms, indices_symptoms);
             m_migrated.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
@@ -549,7 +549,7 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
 
-        condense_m_migrated(t, indices_no_symptoms, indices_symptoms);
+        condense_m_mobility(t, indices_no_symptoms, indices_symptoms);
     }
     m_return_migrated = !m_return_migrated;
 }

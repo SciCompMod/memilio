@@ -164,7 +164,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
         auto total   = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
                                                                                                   num_infectionstates)
                          .eval();
-        while (ids[edge_indx].first == start_id && edge_indx < num_edges) {
+        while (edge_indx < num_edges && ids[edge_indx].first == start_id) {
             const auto& result_edge = results[edge_indx];
             auto edge_result        = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
                                    num_timepoints, num_infectionstates)

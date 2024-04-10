@@ -21,7 +21,7 @@
 
 namespace mio
 {
-void MigrationEdge::condense_m_migrated(const double t, const std::vector<size_t>& indices_non_symptomatic,
+void MigrationEdge::condense_m_mobility(const double t, const std::vector<size_t>& indices_non_symptomatic,
                                         const std::vector<size_t>& indices_symptomatic)
 {
 
