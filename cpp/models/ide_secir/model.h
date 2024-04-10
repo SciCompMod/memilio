@@ -96,6 +96,12 @@ public:
             return true;
         }
 
+        if (m_populations.get_num_time_points() != 1) {
+            log_error(
+                "The TimeSeries for compartments contains more than one time point. It is unclear how to initialize.");
+            return true;
+        }
+
         return parameters.check_constraints();
     }
 

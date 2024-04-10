@@ -419,7 +419,8 @@ TEST(IdeSecir, testModelConstraints)
     ScalarType deaths = 10;
     ScalarType dt     = 1;
 
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    int num_transitions  = (int)mio::isecir::InfectionTransition::Count;
+    int num_compartments = (int)mio::isecir::InfectionState::Count;
 
     // Create TimeSeries of the wrong size.
     mio::TimeSeries<ScalarType> init_wrong_size(num_transitions + 1);
@@ -475,7 +476,7 @@ TEST(IdeSecir, testModelConstraints)
     constraint_check = model.check_constraints(dt);
     EXPECT_FALSE(constraint_check);
 
-    // --- Test with new transitions that have a different last time point than in model initialization .
+    // --- Test with new transitions that have a different last time point than in model initialization.
     // Create TimeSeries with num_transitions elements.
     mio::TimeSeries<ScalarType> new_transitions(num_transitions);
     // Add time points for initialization of transitions ending at different time point.
@@ -485,6 +486,36 @@ TEST(IdeSecir, testModelConstraints)
     }
 
     model.m_transitions = new_transitions;
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- Correct wrong setup so that next check can be tested.
+    // Create TimeSeries with num_transitions elements.
+    mio::TimeSeries<ScalarType> init_enough_timepoints2(num_transitions);
+    // Add time points for initialization of transitions.
+    init_enough_timepoints2.add_time_point(-5, vec_init);
+    while (init_enough_timepoints2.get_last_time() < 0) {
+        init_enough_timepoints2.add_time_point(init_enough_timepoints2.get_last_time() + dt, vec_init);
+    }
+
+    // Set transitions again to TimeSeries with original last time point.
+    model.m_transitions = init_enough_timepoints2;
+
+    // Check that constraints are fulfilled.
+    constraint_check = model.check_constraints(dt);
+    EXPECT_FALSE(constraint_check);
+
+    // --- Test with TimeSeries for populations that contains more than one time point.
+    // Create TimeSeries with num_compartments elements.
+    mio::TimeSeries<ScalarType> populations_two_timepoints(num_compartments);
+    // Add time points.
+    populations_two_timepoints.add_time_point(-2, vec_init);
+    while (populations_two_timepoints.get_last_time() < 0) {
+        populations_two_timepoints.add_time_point(populations_two_timepoints.get_last_time() + dt, vec_init);
+    }
+
+    model.m_populations = populations_two_timepoints;
 
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
