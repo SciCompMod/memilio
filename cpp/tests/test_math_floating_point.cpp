@@ -31,13 +31,13 @@ public:
     using ParamType      = std::array<FP, 5>;
     using TruthTableType = std::array<std::array<bool, 3>, 3>;
 
-    FP a = 1.1, b = 3.2; // arbitrary values s.t. a < b
+    FP a = FP(1.1), b = FP(3.2); // arbitrary values s.t. a < b
     const ParamType params = {
         b - a, // abs_tol
         (b - a) / b, // rel_tol
-        0.0, // zero
-        10.0, // increased
-        0.1 // reduced
+        FP(0.0), // zero
+        FP(10.0), // increased
+        FP(0.1) // reduced
     };
 };
 
@@ -70,9 +70,8 @@ void test_fp_compare(FP v1, FP v2, typename TestMathFloatingPoint<FP>::ParamType
 {
     ASSERT_LT(v1, v2) << "This test is not set up correctly!";
     const auto [abs_tol, rel_tol, zero, increased, reduced] = params;
-
+    // on error, print out the name of the test, which is the same as the tested function
     auto info = std::string("  With fp_compare as ") + testing::UnitTest::GetInstance()->current_test_info()->name();
-
     // check basics
     EXPECT_EQ(fp_compare(v1, v1, zero, zero), truth_table[0][0]) << info;
     EXPECT_EQ(fp_compare(v1, v2, zero, zero), truth_table[0][1]) << info;
@@ -93,6 +92,13 @@ void test_fp_compare(FP v1, FP v2, typename TestMathFloatingPoint<FP>::ParamType
     EXPECT_EQ(fp_compare(v2, v1, zero, rel_tol), truth_table[2][0]) << info;
     EXPECT_EQ(fp_compare(v2, v1, zero, reduced * rel_tol), truth_table[2][1]) << info;
     EXPECT_EQ(fp_compare(v2, v1, zero, increased * rel_tol), truth_table[2][2]) << info;
+    // check equalities with tolerance (should be trivially true)
+    EXPECT_TRUE(fp_compare(v1, v1, abs_tol, zero)) << info;
+    EXPECT_TRUE(fp_compare(v1, v1, reduced * abs_tol, zero)) << info;
+    EXPECT_TRUE(fp_compare(v1, v1, increased * abs_tol, zero)) << info;
+    EXPECT_TRUE(fp_compare(v1, v1, zero, rel_tol)) << info;
+    EXPECT_TRUE(fp_compare(v1, v1, zero, reduced * rel_tol)) << info;
+    EXPECT_TRUE(fp_compare(v1, v1, zero, increased * rel_tol)) << info;
 }
 
 TYPED_TEST(TestMathFloatingPoint, floating_point_equal)
