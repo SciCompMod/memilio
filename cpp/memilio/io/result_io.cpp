@@ -188,7 +188,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                 StatusCode::UnknownError, "Values data could not be written.");
 
             // in the final iteration, we also save the total values
-            if (ids[edge_indx + 1].first != start_id || edge_indx == num_edges - 1) {
+            if (edge_indx == num_edges - 1 || ids[edge_indx + 1].first != start_id) {
                 dset_name = "Total";
                 H5DataSet dset_total{H5Dcreate(start_node_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE,
                                                dspace_values.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
