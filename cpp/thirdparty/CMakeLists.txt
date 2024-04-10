@@ -6,8 +6,6 @@ set(MEMILIO_BOOST_VERSION "1.84.0") # Minimal version needed: 1.76.0
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 
-set(CMAKE_CXX_STANDARD 17)
-
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
 
@@ -94,8 +92,11 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     
     add_library(boost INTERFACE)
     add_library(Boost::boost ALIAS boost)
-    target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}> 
-    )
+    target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
+    
+    if (NOT MSVC)
+        target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
+    endif()
 
     add_library(boost_disable_autolink INTERFACE)
     target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
