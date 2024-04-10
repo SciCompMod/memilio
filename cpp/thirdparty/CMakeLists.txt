@@ -68,25 +68,28 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         FetchContent_Populate(boost)
     endif()
 
-    if(MSVC)
-        execute_process(COMMAND "bootstrap.bat"
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            )
-        execute_process(COMMAND "b2.exe" headers
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            OUTPUT_QUIET
-            ERROR_QUIET
-            )
-        
-    else()
-        execute_process(COMMAND ./bootstrap.sh cxxflags="-std=c++17"
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            )
-        execute_process(COMMAND ./b2 cxxflags="-std=c++17" headers 
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            OUTPUT_QUIET
-            ERROR_QUIET
-            )
+    if(NOT IS_DIRECTORY "${boost_SOURCE_DIR}/boost")
+        if(MSVC)
+            execute_process(COMMAND "bootstrap.bat"
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                )
+            # b2 produces a lot of uninformative output, suppress it.
+            execute_process(COMMAND "b2.exe" headers
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                OUTPUT_QUIET
+                ERROR_QUIET
+                )
+        else()
+            execute_process(COMMAND ./bootstrap.sh
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                )
+            # b2 produces a lot of uninformative output, suppress it.
+            execute_process(COMMAND ./b2 headers 
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                OUTPUT_QUIET
+                ERROR_QUIET
+                )
+        endif()
     endif()
     
     add_library(boost INTERFACE)
