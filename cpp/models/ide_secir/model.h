@@ -90,7 +90,7 @@ public:
             return true;
         }
 
-        if (m_transitions.get_last_time() != m_populations.get_time(0)) {
+        if (m_transitions.get_last_time() != m_populations.get_last_time()) {
             log_error("Last time point of TimeSeries for transitions does not match first time point of TimeSeries for "
                       "compartments. Both of these time points have to agree for a sensible simulation.");
             return true;
