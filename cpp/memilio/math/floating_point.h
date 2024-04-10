@@ -72,7 +72,7 @@ template <class T>
 bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
     auto diff = v1 - v2;
-    return diff < abs_tol || diff < abs_max(v1, v2) * rel_tol;
+    return diff < -(abs_tol + rel_tol * abs_max(v1, v2));
 }
 
 /**
