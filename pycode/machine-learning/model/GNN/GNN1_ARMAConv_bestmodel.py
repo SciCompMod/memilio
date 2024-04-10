@@ -42,14 +42,16 @@ from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale
 
 
 # load and prepare data
-path = os.path.dirname(os.path.realpath(__file__))
-path_data = os.path.join(
-    os.path.dirname(
-        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data_GNN_nodamp_4000pop_1k_90days_24')
+#path = os.path.dirname(os.path.realpath(__file__))
+#path_data = os.path.join(
+#    os.path.dirname(
+#        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+#    'data_GNN_nodamp_4000pop_1k_90days_24')
 
 
-file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+#file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+
+file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_nodamp_400pop_1k_60days_w/data_secir_age_groups.pickle', 'rb')
 data_secir = pickle.load(file)
 
 
@@ -372,6 +374,11 @@ def train_and_evaluate_model(
 
     elapsed = time.perf_counter() - start
 
+    # save best weights as pickle 
+    with open("best_weights_ARMAConv_60days_nodamp_w_test.pickle", 'wb') as f:
+             pickle.dump(best_weights, f) 
+
+
     # plot the losses
     # plt.figure()
     # plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
@@ -395,21 +402,22 @@ def train_and_evaluate_model(
     print("Time for training: {:.4f} minutes".format(elapsed/60))
 
     #save the model
-    path = os.path.dirname(os.path.realpath(__file__))
-    path_models = os.path.join(
-        os.path.dirname(
-            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        save_name)
-    if not os.path.isdir(path_models):
-        os.mkdir(path_models)
+    # path = os.path.dirname(os.path.realpath(__file__))
+    # path_models = os.path.join(
+    #     os.path.dirname(
+    #         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+    #     save_name)
+    # if not os.path.isdir(path_models):
+    #     os.mkdir(path_models)
 
-    model_json = model.to_json()
-    # Store the JSON data in a file
-    with open("GNN_90days.json", "w") as file:
-        json.dump(model_json, file)
+    # model_json = model.to_json()
+    # # Store the JSON data in a file
+    # with open("GNN_90days.json", "w") as file:
+    #     json.dump(model_json, file)
 
-    #model.save(path_models, save_name +'h5')
-    model.save_weights(path_models+'.h5')
+    # #model.save(path_models, save_name +'h5')
+    # model.save_weights(path_models+'.h5')
+
 
     # save df 
 
@@ -437,9 +445,9 @@ def train_and_evaluate_model(
 
 
 start_hyper = time.perf_counter()
-epochs = 2
-filename = '/GNNtype1_ARMA_90days.csv'
-save_name = 'ARMAConv_90days_saved_model_test'
+epochs = 5
+filename = '/GNNtype1_ARMA_60days_w_test.csv'
+save_name = 'ARMAConv_60days_saved_model_w_test'
 #for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
