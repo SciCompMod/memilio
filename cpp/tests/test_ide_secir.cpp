@@ -460,8 +460,6 @@ TEST(IdeSecir, testModelConstraints)
     constraint_check = model_few_timepoints.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- The check_constraints() function of parameters is tested in its own test below. ---
-
     // --- Correct wrong setup so that next check can go through.
     mio::TimeSeries<ScalarType> init_enough_timepoints(num_transitions);
     init_enough_timepoints.add_time_point(-5, vec_init);
@@ -476,6 +474,22 @@ TEST(IdeSecir, testModelConstraints)
 
     constraint_check = model.check_constraints(dt);
     EXPECT_FALSE(constraint_check);
+
+    // --- Test with new transitions that have a different last time point than in model initialization .
+    // Create TimeSeries with num_transitions elements.
+    mio::TimeSeries<ScalarType> new_transitions(num_transitions);
+    // Add time points for initialization of transitions ending at different time point.
+    new_transitions.add_time_point(-5, vec_init);
+    while (new_transitions.get_last_time() < 1) {
+        new_transitions.add_time_point(new_transitions.get_last_time() + dt, vec_init);
+    }
+
+    model.m_transitions = new_transitions;
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- The check_constraints() function of parameters is tested in its own test below. ---
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
