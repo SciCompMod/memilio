@@ -14,6 +14,8 @@ set(TESTSOURCES
     test_damping.cpp
     test_odesecir.cpp
     test_odesecirvvs.cpp
+    test_sde_sir.cpp
+    test_sde_sirs.cpp
     test_mobility.cpp
     test_date.cpp
     test_eigen_util.cpp
@@ -35,6 +37,7 @@ set(TESTSOURCES
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
     test_abm_world.cpp
+    test_math_floating_point.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
     test_type_safe.cpp
