@@ -47,26 +47,26 @@ int main()
                                                                 {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
     // Assert that initial_populations has the right shape.
-    if ((int)initial_populations.size() != (int)LctState::InfectionState::Count) {
+    if (initial_populations.size() != (size_t)LctState::InfectionState::Count) {
         mio::log_error("The number of vectors in initial_populations does not match the number of InfectionStates.");
         return 1;
     }
-    if (((int)initial_populations[(int)LctState::InfectionState::Susceptible].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Susceptible>()) ||
-        ((int)initial_populations[(int)LctState::InfectionState::Exposed].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Exposed>()) ||
-        ((int)initial_populations[(int)LctState::InfectionState::InfectedNoSymptoms].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>()) ||
-        ((int)initial_populations[(int)LctState::InfectionState::InfectedSymptoms].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>()) ||
-        ((int)initial_populations[(int)LctState::InfectionState::InfectedSevere].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>()) ||
-        ((int)initial_populations[(int)LctState::InfectionState::InfectedCritical].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>()) ||
-        ((int)initial_populations[(int)LctState::InfectionState::Recovered].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Recovered>()) ||
-        ((int)initial_populations[(int)LctState::InfectionState::Dead].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Dead>())) {
+    if ((initial_populations[(int)LctState::InfectionState::Susceptible].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Susceptible>()) ||
+        (initial_populations[(int)LctState::InfectionState::Exposed].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Exposed>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedNoSymptoms].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedSymptoms].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedSevere].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>()) ||
+        (initial_populations[(int)LctState::InfectionState::InfectedCritical].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>()) ||
+        (initial_populations[(int)LctState::InfectionState::Recovered].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Recovered>()) ||
+        (initial_populations[(int)LctState::InfectionState::Dead].size() !=
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Dead>())) {
         mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
                        "subcompartments.");
         return 1;

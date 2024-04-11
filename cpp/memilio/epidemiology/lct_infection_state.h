@@ -36,7 +36,7 @@ class LctInfectionState
 {
 public:
     using InfectionState = InfectionStates;
-    static_assert((int)InfectionState::Count == sizeof...(Ns),
+    static_assert((size_t)InfectionState::Count == sizeof...(Ns),
                   "The number of integers provided as template parameters must be "
                   "the same as the entry Count of InfectionState.");
 
@@ -46,7 +46,7 @@ public:
      * @brief Gets the number of subcompartments in an infection state.
      *
      * @tparam State: Infection state for which the number of subcompartments should be returned.   
-     * @return Number of subcompartments for State.
+     * @return Number of subcompartments for State. Returned value is always at least one.
      */
     template <InfectionState State>
     static constexpr int get_num_subcompartments()
@@ -61,7 +61,8 @@ public:
      * In a simulation, the number of individuals in the subcompartments are stored in vectors. 
      * Accordingly, the index of the first subcompartment of State in such a vector is returned.
      * @tparam State: Infection state for which the index should be returned.    
-     * @return Index of the first subcompartment for a vector with one entry per subcompartment.
+     * @return Index of the first subcompartment for a vector with one entry per subcompartment. 
+     *      Returned value is always non-negative.
      */
     template <InfectionState State>
     static constexpr int get_first_index()
