@@ -255,8 +255,7 @@ public:
     BinarySerializerObject create_object(const std::string& type)
     {
         auto obj = BinarySerializerObject(m_stream, m_status, m_flags);
-        if (m_flags & IOF_IncludeTypeInfo)
-        {
+        if (m_flags & IOF_IncludeTypeInfo) {
             obj.add_element("Type", type);
         }
         return obj;
@@ -269,13 +268,14 @@ public:
     BinarySerializerObject expect_object(const std::string& type)
     {
         auto obj = BinarySerializerObject(m_stream, m_status, m_flags);
-        if (m_flags & IOF_IncludeTypeInfo)
-        {
+        if (m_flags & IOF_IncludeTypeInfo) {
             auto type_result = obj.expect_element("Type", Tag<std::string>{});
             if (!type_result) {
                 *m_status = IOStatus(StatusCode::InvalidType, "No TypeInfo in stream.");
-            } else if(type_result.value() != type) {
-                *m_status = IOStatus(StatusCode::InvalidType, "Unexpected type in stream:" + type_result.value() + ". Expected " + type);
+            }
+            else if (type_result.value() != type) {
+                *m_status = IOStatus(StatusCode::InvalidType,
+                                     "Unexpected type in stream:" + type_result.value() + ". Expected " + type);
             }
         }
         return BinarySerializerObject(m_stream, m_status, m_flags);
@@ -400,11 +400,11 @@ template <class T>
 IOResult<std::vector<T>> BinarySerializerObject::expect_list(const std::string& name, Tag<T>)
 {
     mio::unused(name);
-    BOOST_OUTCOME_TRY(size, expect_element("Size", Tag<size_t>{}));
+    BOOST_OUTCOME_TRY(auto size, expect_element("Size", Tag<size_t>{}));
     std::vector<T> v;
     v.reserve(size);
     for (auto i = size_t(0); i < size; ++i) {
-        BOOST_OUTCOME_TRY(t, expect_element("Item", Tag<T>{}));
+        BOOST_OUTCOME_TRY(auto t, expect_element("Item", Tag<T>{}));
         v.emplace_back(std::move(t));
     }
     return success(v);
@@ -424,9 +424,9 @@ template <class T>
 IOResult<boost::optional<T>> BinarySerializerObject::expect_optional(const std::string& name, Tag<T>)
 {
     mio::unused(name);
-    BOOST_OUTCOME_TRY(size, expect_element("Exists", Tag<size_t>{}));
+    BOOST_OUTCOME_TRY(auto size, expect_element("Exists", Tag<size_t>{}));
     if (size) {
-        BOOST_OUTCOME_TRY(t, expect_element("Value", Tag<T>{}));
+        BOOST_OUTCOME_TRY(auto t, expect_element("Value", Tag<T>{}));
         return mio::success(t);
     }
     return mio::success(boost::optional<T>{});
@@ -447,7 +447,6 @@ ByteStream serialize_binary(const T& t, int flags = 0)
     mio::serialize(ctxt, t);
     return stream;
 }
-
 
 /**
 * Deserialize an object from binary format.

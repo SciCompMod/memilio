@@ -214,10 +214,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(baseline,
+        BOOST_OUTCOME_TRY(auto baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        BOOST_OUTCOME_TRY(minimum,
+        BOOST_OUTCOME_TRY(auto minimum,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
@@ -535,12 +535,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //create or load graph
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, get_graph(start_date, end_date, data_dir));
+        BOOST_OUTCOME_TRY(auto created, get_graph(start_date, end_date, data_dir));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecir::Model>(save_dir.string()));
+        BOOST_OUTCOME_TRY(auto loaded, mio::read_graph<mio::osecir::Model>(save_dir.string()));
         params_graph = loaded;
     }
 
@@ -565,25 +565,25 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 
     auto save_single_run_result = mio::IOResult<void>(mio::success());
     auto ensemble               = parameter_study.run(
-        [](auto&& graph) {
+                      [](auto&& graph) {
             return draw_sample(graph);
-        },
-        [&](auto results_graph, auto&& run_idx) {
+                      },
+                      [&](auto results_graph, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
 
             auto params = std::vector<mio::osecir::Model>{};
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
-                           });
+                                         });
 
             if (save_single_run_result && save_single_runs) {
                 save_single_run_result =
                     save_result_with_params(interpolated_result, params, county_ids, result_dir, run_idx);
             }
             return std::make_pair(std::move(interpolated_result), std::move(params));
-        });
+                      });
 
     if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};

@@ -2,6 +2,7 @@
 # If you like to upgrade, just change the number
 set(MEMILIO_EIGEN_VERSION "3.3.9")
 set(MEMILIO_SPDLOG_VERSION "1.11.0")
+set(MEMILIO_BOOST_VERSION "1.84.0") # Minimal version needed: 1.76.0 
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 
@@ -51,10 +52,82 @@ endif()
 
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    include(BuildBoost)
+    # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
+    add_compile_definitions(BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
+    message(STATUS "Downloading Boost library. This may take some time.")
+
+    include(FetchContent)
+    FetchContent_Declare(boost
+    GIT_REPOSITORY https://github.com/boostorg/boost.git
+    GIT_TAG boost-${MEMILIO_BOOST_VERSION})
+    FetchContent_GetProperties(boost)
+
+    if(NOT boost_POPULATED)
+        FetchContent_Populate(boost)
+    endif()
+
+    if(NOT IS_DIRECTORY "${boost_SOURCE_DIR}/boost")
+        if(MSVC)
+            execute_process(COMMAND "bootstrap.bat"
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                )
+            # b2 produces a lot of uninformative output, suppress it.
+            execute_process(COMMAND "b2.exe" headers
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                OUTPUT_QUIET
+                ERROR_QUIET
+                )
+        else()
+            execute_process(COMMAND ./bootstrap.sh
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                )
+            # b2 produces a lot of uninformative output, suppress it.
+            execute_process(COMMAND ./b2 headers 
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                OUTPUT_QUIET
+                ERROR_QUIET
+                )
+        endif()
+    endif()
+    
+    add_library(boost INTERFACE)
+    add_library(Boost::boost ALIAS boost)
+    target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
+    
+    if (NOT MSVC)
+        target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
+    endif()
+
+    add_library(boost_disable_autolink INTERFACE)
+    target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
+    add_library(Boost::disable_autolinking ALIAS boost_disable_autolink)
+
+    add_library(boost_filesystem STATIC
+        ${boost_SOURCE_DIR}/libs/filesystem/src/codecvt_error_category.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/directory.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/exception.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/operations.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/path.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/path_traits.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/portability.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/unique_path.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp
+    )
+
+    target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
+    set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
+    add_library(Boost::filesystem ALIAS boost_filesystem)
+    if(NOT MSVC) #on gcc and apple clang we need to define BOOST_NO_CXX98_FUNCTION_BASE because a deprecated function is sometimes used in boost 
+        target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
+    endif( )
+
+    set(Boost_LIBRARIES Boost::boost Boost::filesystem)
+    set(Boost_FOUND ON)
+
 else()
-    find_package(Boost REQUIRED COMPONENTS outcome optional filesystem)
-endif(MEMILIO_USE_BUNDLED_BOOST)
+    find_package(Boost ${MEMILIO_BOOST_VERSION} REQUIRED COMPONENTS outcome optional filesystem)
+endif()
 
 # ## HDF5
 find_package(HDF5 COMPONENTS C)

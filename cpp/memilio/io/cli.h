@@ -584,7 +584,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
             i++; // skip the PrintOption argument
             for (; i < argc && !Identifier(argv[i]).is_option(); i++) {
                 // try to get the parameter's json value
-                BOOST_OUTCOME_TRY(value, get_param(parameters, argv[i]));
+                BOOST_OUTCOME_TRY(auto value, get_param(parameters, argv[i]));
                 // print the name (or alias) and value
                 os << "Option " << argv[i] << ":\n" << value << "\n";
             }
