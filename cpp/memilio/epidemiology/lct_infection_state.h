@@ -31,12 +31,12 @@ namespace mio
  * @tparam Ns Number of subcompartments for each infection state defined in InfectionState. 
  *      The number of given template arguments must be equal to the entry Count from InfectionState.
  */
-template <class InfectionStates, unsigned int... Ns>
+template <class InfectionStates, int... Ns>
 class LctInfectionState
 {
 public:
     using InfectionState = InfectionStates;
-    static_assert((unsigned int)InfectionState::Count == sizeof...(Ns),
+    static_assert((int)InfectionState::Count == sizeof...(Ns),
                   "The number of integers provided as template parameters must be "
                   "the same as the entry Count of InfectionState.");
 
@@ -49,7 +49,7 @@ public:
      * @return Number of subcompartments for State.
      */
     template <InfectionState State>
-    static constexpr unsigned int get_num_subcompartments()
+    static constexpr int get_num_subcompartments()
     {
         static_assert(State < InfectionState::Count, "State must be a a valid InfectionState.");
         return m_subcompartment_numbers[(int)State];
@@ -64,20 +64,20 @@ public:
      * @return Index of the first subcompartment for a vector with one entry per subcompartment.
      */
     template <InfectionState State>
-    static constexpr unsigned int get_first_index()
+    static constexpr int get_first_index()
     {
         static_assert(State < InfectionState::Count, "State must be a a valid InfectionState.");
-        unsigned int index = 0;
+        int index = 0;
         for (int i = 0; i < (int)(State); i++) {
             index = index + m_subcompartment_numbers[i];
         }
         return index;
     }
 
-    static constexpr unsigned int Count{(... + Ns)};
+    static constexpr int Count{(... + Ns)};
 
 private:
-    static constexpr const std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
+    static constexpr const std::array<int, sizeof...(Ns)> m_subcompartment_numbers{
         Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionState.
 };
 
