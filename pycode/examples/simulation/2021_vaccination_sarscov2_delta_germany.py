@@ -545,7 +545,7 @@ class Simulation:
             save_single_runs, save_percentiles)
         if create_gif:
             # any compartments in the model (see InfectionStates)
-            compartments = [c for c in range(2, 22)]
+            compartments = [c for c in range(2, 23)]
             mp.create_gif_map_plot(
                 self.results_dir + "/p75", self.results_dir, compartments)
 
@@ -555,4 +555,4 @@ if __name__ == "__main__":
     sim = Simulation(
         data_dir=os.path.join(file_path, "../../../data"),
         results_dir=os.path.join(file_path, "../../../results_osecirvvs"))
-    sim.run(num_days_sim=90, num_runs=2)
+    sim.run(num_days_sim=30, num_runs=5)
