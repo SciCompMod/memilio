@@ -70,17 +70,13 @@ TEST(TestInitializer, compareWithPrevious)
 
     // Add time points for initialization of transitions.
     mio::TimeSeries<ScalarType> init((int)mio::lsecir::InfectionTransition::Count);
-    mio::TimeSeries<ScalarType>::Vector vec_init((int)mio::lsecir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType>::Vector vec_init =
+        mio::TimeSeries<ScalarType>::Vector::Constant((int)mio::lsecir::InfectionTransition::Count, 1.);
     vec_init[(int)mio::lsecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-    vec_init[(int)mio::lsecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-    vec_init[(int)mio::lsecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
     // Add initial time point to time series.
     init.add_time_point(-130, vec_init);
     // Add further time points until time 0.
@@ -94,7 +90,7 @@ TEST(TestInitializer, compareWithPrevious)
     initializer.set_tol_for_support_max(1e-6);
     initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
 
-    for (int i = 0; i < (int)LctState::Count; i++) {
+    for (int i = 0; i < LctState::Count; i++) {
         EXPECT_NEAR(model.get_initial_values()[i], compare[i], 1e-4) << "at subcompartment number " << i;
     }
 }
@@ -110,15 +106,16 @@ TEST(TestInitializer, testConstraints)
     ScalarType deaths                = 9710;
     ScalarType total_population      = 83155031.0;
 
-    using Model    = mio::lsecir::Model<2, 3, 2, 3, 2>;
-    using LctState = Model::LctState;
+    using Model                   = mio::lsecir::Model<2, 3, 2, 3, 2>;
+    using LctState                = Model::LctState;
+    int infectionTransition_count = (int)mio::lsecir::InfectionTransition::Count;
 
     // Initialize a model.
     Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
 
     // Check wrong size of initial flows.
-    mio::TimeSeries<ScalarType> init_wrong_size((int)mio::lsecir::InfectionTransition::Count - 1);
-    Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones((int)mio::lsecir::InfectionTransition::Count - 1);
+    mio::TimeSeries<ScalarType> init_wrong_size(infectionTransition_count - 1);
+    Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones(infectionTransition_count - 1);
     init_wrong_size.add_time_point(-50, vec_wrong_size);
     while (init_wrong_size.get_last_time() < 0) {
         init_wrong_size.add_time_point(init_wrong_size.get_last_time() + dt, vec_wrong_size);
@@ -131,8 +128,8 @@ TEST(TestInitializer, testConstraints)
     EXPECT_TRUE(status);
 
     // Check if last time of initial flows is not zero.
-    mio::TimeSeries<ScalarType> init_wrong((int)mio::lsecir::InfectionTransition::Count);
-    Eigen::VectorXd vec_init = Eigen::VectorXd::Ones((int)mio::lsecir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType> init_wrong(infectionTransition_count);
+    Eigen::VectorXd vec_init = Eigen::VectorXd::Ones(infectionTransition_count);
     init_wrong.add_time_point(-50, vec_init);
     while (init_wrong.get_last_time() < -5) {
         init_wrong.add_time_point(init_wrong.get_last_time() + dt, vec_init);
@@ -158,7 +155,7 @@ TEST(TestInitializer, testConstraints)
     EXPECT_TRUE(status);
 
     // Check large step size.
-    mio::TimeSeries<ScalarType> init_wrong_step((int)mio::lsecir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType> init_wrong_step(infectionTransition_count);
     init_wrong_step.add_time_point(-50, vec_init);
     init_wrong_step.add_time_point(init_wrong_step.get_last_time() + 10 * dt, vec_init);
     while (init_wrong_step.get_last_time() < 0) {
@@ -171,7 +168,7 @@ TEST(TestInitializer, testConstraints)
     EXPECT_TRUE(status);
 
     // Check with too short time period of initial data.
-    mio::TimeSeries<ScalarType> init_short((int)mio::lsecir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType> init_short(infectionTransition_count);
     init_short.add_time_point(-1., vec_init);
     while (init_short.get_last_time() < 0) {
         init_short.add_time_point(init_short.get_last_time() + dt, vec_init);
@@ -182,7 +179,7 @@ TEST(TestInitializer, testConstraints)
     EXPECT_TRUE(status);
 
     // Check with correct flows.
-    mio::TimeSeries<ScalarType> init_right((int)mio::lsecir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType> init_right(infectionTransition_count);
     init_right.add_time_point(-50, vec_init);
     while (init_right.get_last_time() < 0) {
         init_right.add_time_point(init_right.get_last_time() + dt, vec_init);

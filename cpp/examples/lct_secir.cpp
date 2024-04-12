@@ -32,7 +32,7 @@
 
 int main()
 {
-    // Simple example to demonstrate how to run a simulation using an LCT SECIR model.
+    // Simple example to demonstrate how to run a simulation using an LCT-SECIR model.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
 
     using Model    = mio::lsecir::Model<2, 3, 1, 1, 5>;
@@ -69,7 +69,8 @@ int main()
     model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
     model.parameters.set<mio::lsecir::DeathsPerCritical>(0.3);
 
-    if (use_initializer_flows) { // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
+    if (use_initializer_flows) {
+        // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
         // Create TimeSeries with num_transitions elements.
         int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
         mio::TimeSeries<ScalarType> flows(num_transitions);

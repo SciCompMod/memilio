@@ -123,7 +123,7 @@ public:
         //D
         init[LctState::Count - 1] = deaths;
 
-        for (int i = 0; i < (int)LctState::Count; i++) {
+        for (int i = 0; i < LctState::Count; i++) {
             if (init[i] < 0) {
                 log_error("Initialization failed. Not enough time points for the transitions are given. More than {} "
                           "are needed but "
@@ -157,7 +157,7 @@ private:
      */
     bool check_constraints() const
     {
-        if (!((int)InfectionTransition::Count == (int)m_flows.get_num_elements())) {
+        if (!(Eigen::Index(InfectionTransition::Count) == m_flows.get_num_elements())) {
             log_error("Initial condition size does not match subcompartments.");
             return true;
         }
