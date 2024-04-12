@@ -24,9 +24,8 @@
 
 TEST(TestStateAgeFunction, testSpecialMember)
 { // Copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes, therefore test for one Special Member.
-    // Constructors of other members will be tested in other tests.
-    // TODO: look where
     // Use GammaSurvivalFunction as all parameters are used for this StateAgeFunction.
+    // Constructors of other members will be also tested.
     ScalarType dt = 0.5;
     mio::GammaSurvivalFunction gamma(1.0, 2.0, 3);
 
@@ -77,9 +76,31 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(gamma.get_location(), gamma5.get_location());
     EXPECT_EQ(gamma.get_scale(), gamma5.get_scale());
     EXPECT_EQ(gamma.get_support_max(dt), gamma5.get_support_max(dt));
+
+    // Test constructors of the other derived classes.
+    // Copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes.
+    mio::ExponentialDecay expdecay(1.0, 1.0);
+    EXPECT_EQ(expdecay.get_parameter(), 1.0);
+    EXPECT_EQ(expdecay.get_location(), 1.0);
+
+    mio::SmootherCosine smoothcos(1.0, 1.);
+    EXPECT_EQ(smoothcos.get_parameter(), 1.0);
+    EXPECT_EQ(smoothcos.get_location(), 1.0);
+
+    mio::LognormSurvivalFunction logn(0.1, 1, 0.5);
+    EXPECT_EQ(logn.get_parameter(), 0.1);
+    EXPECT_EQ(logn.get_location(), 1.0);
+    EXPECT_EQ(logn.get_scale(), 0.5);
+
+    mio::ConstantFunction constfunc(1.0);
+    EXPECT_EQ(constfunc.get_parameter(), 1.);
+
+    mio::ErlangDensity erl(2, 0.7);
+    EXPECT_EQ(erl.get_parameter(), 2);
+    EXPECT_EQ(erl.get_scale(), 0.7);
 }
 
-TEST(TestStateAgeFunction, testSettersAndGettersForParameter)
+TEST(TestStateAgeFunction, testSettersAndGettersForParameters)
 {
     // Deactivate temporarily log output for next tests. Errors are expected here.
     mio::set_log_level(mio::LogLevel::off);
@@ -116,8 +137,8 @@ TEST(TestStateAgeFunction, testGetSupportMax)
 {
     ScalarType dt = 0.5;
 
-    /* Test get_support_max for all derived classes as this method can be overridden. 
-    Check that the maximum support is correct after setting the parameters of a StateAgeFunction. */
+    // Test get_support_max for all derived classes as this method can be overridden.
+    // Check that the maximum support is correct after setting the parameters of a StateAgeFunction.
 
     mio::ExponentialDecay expdecay(1.0, 1.0);
     EXPECT_NEAR(expdecay.get_support_max(dt), 24.5, 1e-14);
@@ -267,7 +288,6 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_NEAR(wrapper_const.get_support_max(dt), -2.0, 1e-14);
 
     // Reactive log output.
-    //TODO: have a look if we have no logs in all the tests.
     mio::set_log_level(mio::LogLevel::warn);
 
     // Test if set_state_age_function works.
