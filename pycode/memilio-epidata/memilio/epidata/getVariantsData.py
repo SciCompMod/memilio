@@ -38,12 +38,13 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 mpl.use('TKAgg')
 
+
 def get_variants_data(read_data=dd.defaultDict['read_data'],
-                  file_format=dd.defaultDict['file_format'],
-                  out_folder=dd.defaultDict['out_folder'],
-                  no_raw=dd.defaultDict['no_raw'],
-                  make_plot=False
-                  ):
+                      file_format=dd.defaultDict['file_format'],
+                      out_folder=dd.defaultDict['out_folder'],
+                      no_raw=dd.defaultDict['no_raw'],
+                      make_plot=False
+                      ):
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -58,42 +59,47 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
             gd.write_dataframe(df_raw, directory, filename, file_format)
     else:
         raise gd.DataError("Something went wrong, dataframe is empty.")
-    
+
     df_ger = df_raw[df_raw.country == "Germany"]
     # for now, only consider GISAID source
     df_ger = df_ger[df_ger.source == "GISAID"]
-    variants = df_ger.variant.unique()
+    variants = df_ger.variant.unique().tolist()
+    # remove "UNK" from variants
+    variants.remove("UNK")
     print(str(len(variants)) + " Variants")
     df_ger = df_ger[df_ger.percent_variant.notna()]
 
     all_dates = np.array([], dtype='datetime64')
     weekdays = [[] for _ in range(7)]
-    for weekday in range(1,8):
-        all_dates = np.concatenate((all_dates, pd.to_datetime(df_ger.year_week + '-' + str(weekday), format = "%G-%V-%u").unique()))
-        weekdays[weekday-1] = pd.to_datetime(df_ger.year_week + '-' + str(weekday), format = "%G-%V-%u").unique()
+    for weekday in range(1, 8):
+        all_dates = np.concatenate((all_dates, pd.to_datetime(
+            df_ger.year_week + '-' + str(weekday), format="%G-%V-%u").unique()))
+        weekdays[weekday-1] = pd.to_datetime(
+            df_ger.year_week + '-' + str(weekday), format="%G-%V-%u").unique()
 
     df_out = pd.DataFrame()
     df_out['Date'] = all_dates
 
     for v in variants:
-        #create column for eacht variant
+        # create column for eacht variant
         df_out[v] = 0.
         # read percentage for each variant and apply those values to df out
         df_sub = df_ger[df_ger.variant == v]
         df_sub_values = df_sub.percent_variant.values[:]
-        for weekday in range(1,8):
-            dates = pd.to_datetime(df_sub.year_week.unique() + '-' + str(weekday), format = "%G-%V-%u").unique()
+        for weekday in range(1, 8):
+            dates = pd.to_datetime(df_sub.year_week.unique(
+            ) + '-' + str(weekday), format="%G-%V-%u").unique()
             df_out.loc[df_out.Date.isin(dates), v] += df_sub_values
 
     if make_plot:
         fig, axs = plt.subplots(4, 6)
         for v in range(len(variants)):
-            axs[int((v)/6)][(v)%6].fill_between(df_out.Date, df_out[variants[v]], 0., label = variants[v])
-            axs[int((v)/6)][(v)%6].legend()
+            axs[int((v)/6)][(v) % 6].fill_between(df_out.Date,
+                                                  df_out[variants[v]], 0., label=variants[v])
+            axs[int((v)/6)][(v) % 6].legend()
         plt.show()
 
     return df_out
-
 
 
 def main():

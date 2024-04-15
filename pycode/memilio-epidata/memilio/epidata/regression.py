@@ -39,6 +39,7 @@ import statsmodels.api as sm
 pd.options.mode.copy_on_write = True
 mpl.use('TKAgg')
 
+
 def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
     with progress_indicator.Spinner(message="Computing r-value"):
         # TODO: discuss how we want to compute R value
@@ -84,15 +85,18 @@ def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
                 periods=7)
             # dont use values where incidence is 0 ((or close to 0)?), to prevent high errors
             # TODO: find out what value seems reasonable here (maybe percentage of county population?)
-            df_cases_county.loc[df_cases_county.Incidence < 100, "Incidence"] = np.nan
+            df_cases_county.loc[df_cases_county.Incidence <
+                                100, "Incidence"] = np.nan
             # R_t = #neue Fälle(t-6,t)/#neue Fälle(t-10,t-4) (See RKI paper)
             df_r_eff.loc[df_r_eff.ID_County == county, "R_eff"] += (df_cases_county["Incidence"]/(
                 df_cases_county["Incidence"].shift(4))).replace([np.nan, np.inf], 0)
             #df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
             if True:
-                axs[0].plot(df_cases_county["Date"], df_cases_county['Incidence'])
-               
-                axs[1].scatter(df_r_eff[df_r_eff.ID_County == county]["Date"], np.log(df_r_eff[df_r_eff.ID_County == county]['R_eff']), marker='.')
+                axs[0].plot(df_cases_county["Date"],
+                            df_cases_county['Incidence'])
+
+                axs[1].scatter(df_r_eff[df_r_eff.ID_County == county]["Date"], np.log(
+                    df_r_eff[df_r_eff.ID_County == county]['R_eff']), marker='.')
 
         # plt.show()
         # drop all rows where R_eff = 0
@@ -290,13 +294,13 @@ class NPIRegression():
         # variable for virus variant
         with progress_indicator.Spinner(message="Preparing variant data"):
             df_var = gvsd.get_variants_data()
-            self.variants = df_var.iloc[:,1:].columns.to_list()
-            #add column for counties
+            self.variants = df_var.iloc[:, 1:].columns.to_list()
+            # add column for counties
             df_var['ID_County'] = 0
-            #initialize dataframe
-            self.df_variants = pd.DataFrame(columns = df_var.columns)
+            # initialize dataframe
+            self.df_variants = pd.DataFrame(columns=df_var.columns)
             for county in self.counties:
-                #append same data for each county
+                # append same data for each county
                 df_var.ID_County = county
                 self.df_variants = pd.concat([self.df_variants, df_var])
 
@@ -451,7 +455,7 @@ class NPIRegression():
         self.reference_region = 'Stadtregion - Metropole'
         self.region_types.remove(self.reference_region)
 
-        #TODO: references for other variables?
+        # TODO: references for other variables?
 
         # define df with all variables that go into the model
         self.df_allvariables = pd.DataFrame([self.df_vaccinations[vacc_state]
