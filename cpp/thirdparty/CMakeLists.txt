@@ -76,7 +76,7 @@ if(MEMILIO_USE_BUNDLED_BOOST)
                 )
         else()
             add_custom_target(bootstrap ALL ./bootstrap.sh
-                COMMAND ./b2 headers actions quietly
+                COMMAND ./b2 headers 
                 WORKING_DIRECTORY ${boost_SOURCE_DIR}
                 VERBATIM
                 )
