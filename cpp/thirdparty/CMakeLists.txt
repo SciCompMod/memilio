@@ -66,7 +66,10 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     if(NOT boost_POPULATED)
         FetchContent_Populate(boost)
     endif()
-
+    add_custom_target(ls ALL "ls"
+                WORKING_DIRECTORY ${boost_SOURCE_DIR}
+                VERBATIM
+                )
     if(NOT IS_DIRECTORY "${boost_SOURCE_DIR}/boost")
         if(MSVC)
             add_custom_target(bootstrap ALL "bootstrap.bat"
