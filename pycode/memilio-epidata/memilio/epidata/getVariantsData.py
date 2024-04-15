@@ -99,8 +99,7 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
 def main():
     """ Main program entry."""
 
-    arg_dict = gd.cli('divi',)
-    get_variants_data(**arg_dict)
+    get_variants_data()
 
 
 if __name__ == "__main__":
