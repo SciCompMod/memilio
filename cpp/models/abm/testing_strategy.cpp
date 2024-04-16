@@ -29,7 +29,7 @@ namespace abm
 TestingCriteria::TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states)
 {
     for (auto age : ages) {
-        m_ages.insert(static_cast<size_t>(age));
+        m_ages.set(static_cast<size_t>(age), true);
     }
     for (auto infection_state : infection_states) {
         m_infection_states.set(static_cast<size_t>(infection_state), true);
@@ -43,12 +43,12 @@ bool TestingCriteria::operator==(const TestingCriteria& other) const
 
 void TestingCriteria::add_age_group(const AgeGroup age_group)
 {
-    m_ages.insert(static_cast<size_t>(age_group));
+    m_ages.set(static_cast<size_t>(age_group), true);
 }
 
 void TestingCriteria::remove_age_group(const AgeGroup age_group)
 {
-    m_ages.erase(static_cast<size_t>(age_group));
+    m_ages.set(static_cast<size_t>(age_group), false);
 }
 
 void TestingCriteria::add_infection_state(const InfectionState infection_state)
@@ -63,8 +63,8 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
 
 bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 {
-    // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set. 
-    return (m_ages.empty() || m_ages.count(static_cast<size_t>(p.get_age()))) &&
+    // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set.
+    return (m_ages.none() || m_ages[static_cast<size_t>(p.get_age())]) &&
            (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
 }
 
@@ -102,10 +102,10 @@ void TestingScheme::update_activity_status(TimePoint t)
 
 bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
-    if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
-        double random = UniformDistribution<double>::get_instance()(rng);
-        if (random < m_probability) {
-            if (m_testing_criteria.evaluate(person, t)) {
+    if (t - person.get_time_of_last_test() > m_minimal_time_since_last_test) {
+        if (m_testing_criteria.evaluate(person, t)) {
+            double random = UniformDistribution<double>::get_instance()(rng);
+            if (random < m_probability) {
                 return !person.get_tested(rng, t, m_test_type.get_default());
             }
         }
@@ -115,23 +115,45 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
 
 TestingStrategy::TestingStrategy(
     const std::unordered_map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map)
-    : m_location_to_schemes_map(location_to_schemes_map)
+    : m_location_to_schemes_map(location_to_schemes_map.begin(), location_to_schemes_map.end())
 {
 }
 
 void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    auto& schemes_vector = m_location_to_schemes_map[loc_id];
-    if (std::find(schemes_vector.begin(), schemes_vector.end(), scheme) == schemes_vector.end()) {
-        schemes_vector.emplace_back(scheme);
+    auto iter_schemes =
+        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_id](auto& p) {
+            return p.first == loc_id;
+        });
+    if (iter_schemes == m_location_to_schemes_map.end()) {
+        //no schemes for this location yet, add a new list with one scheme
+        m_location_to_schemes_map.emplace_back(loc_id, std::vector<TestingScheme>(1, scheme));
+    }
+    else {
+        //add scheme to existing vector if the scheme doesn't exist yet
+        auto& schemes = iter_schemes->second;
+        if (std::find(schemes.begin(), schemes.end(), scheme) == schemes.end()) {
+            schemes.push_back(scheme);
+        }
     }
 }
 
 void TestingStrategy::remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    auto& schemes_vector = m_location_to_schemes_map[loc_id];
-    auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
-    schemes_vector.erase(last, schemes_vector.end());
+    auto iter_schemes =
+        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_id](auto& p) {
+            return p.first == loc_id;
+        });
+    if (iter_schemes != m_location_to_schemes_map.end()) {
+        //remove the scheme from the list
+        auto& schemes_vector = iter_schemes->second;
+        auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
+        schemes_vector.erase(last, schemes_vector.end());
+        //delete the list of schemes for this location if no schemes left
+        if (schemes_vector.empty()) {
+            m_location_to_schemes_map.erase(iter_schemes);
+        }
+    }
 }
 
 void TestingStrategy::update_activity_status(TimePoint t)
@@ -146,21 +168,27 @@ void TestingStrategy::update_activity_status(TimePoint t)
 bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location,
                                    TimePoint t)
 {
-    // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
-    if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
+    // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.
+    if (location.get_type() == mio::abm::LocationType::Home) {
         return true;
     }
 
-    // Combine two vectors of schemes at corresponding location and location stype
-    std::vector<TestingScheme>* schemes_vector[] = {
-        &m_location_to_schemes_map[LocationId{location.get_index(), location.get_type()}],
-        &m_location_to_schemes_map[LocationId{INVALID_LOCATION_INDEX, location.get_type()}]};
-
-    for (auto vec_ptr : schemes_vector) {
-        if (!std::all_of(vec_ptr->begin(), vec_ptr->end(), [&rng, &person, t](TestingScheme& ts) {
-                return !ts.is_active() || ts.run_scheme(rng, person, t);
-            })) {
-            return false;
+    //lookup schemes for this specific location as well as the location type
+    //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
+    for (auto loc_key : {LocationId{location.get_index(), location.get_type()},
+                         LocationId{INVALID_LOCATION_INDEX, location.get_type()}}) {
+        auto iter_schemes =
+            std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_key](auto& p) {
+                return p.first == loc_key;
+            });
+        if (iter_schemes != m_location_to_schemes_map.end()) {
+            //apply all testing schemes that are found
+            auto& schemes = iter_schemes->second;
+            if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
+                    return !ts.is_active() || ts.run_scheme(rng, person, t);
+                })) {
+                return false;
+            }
         }
     }
     return true;

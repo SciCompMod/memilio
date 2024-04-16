@@ -61,9 +61,10 @@ class Simulation:
                 param[mio.AgeGroup(i)].set_distribution(
                     mio.ParameterDistributionUniform(min[i], max[i]))
 
-        t_incubation = 5.2
-        t_serial_interval_min = 0.5 * 2.67 + 0.5 * 5.2
-        t_serial_interval_max = 0.5 * 4.00 + 0.5 * 5.2
+        timeExposedMin = 2.67
+        timeExposedMax = 4.
+        timeInfectedNoSymptomsMin = 1.2
+        timeInfectedNoSymptomsMax = 2.53
         timeInfectedSymptomsMin = [
             5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465]
         timeInfectedSymptomsMax = [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]
@@ -73,11 +74,11 @@ class Simulation:
         timeInfectedCriticalMax = [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]
 
         array_assign_uniform_distribution(
-            model.parameters.IncubationTime, t_incubation, t_incubation)
+            model.parameters.TimeExposed, timeExposedMin, timeExposedMax)
 
         array_assign_uniform_distribution(
-            model.parameters.SerialInterval, t_serial_interval_min,
-            t_serial_interval_max)
+            model.parameters.TimeInfectedNoSymptoms, timeInfectedNoSymptomsMin,
+            timeInfectedNoSymptomsMax)
 
         array_assign_uniform_distribution(
             model.parameters.TimeInfectedSymptoms, timeInfectedSymptomsMin,
@@ -176,8 +177,8 @@ class Simulation:
             minimum_file = os.path.join(
                 self.data_dir, "contacts", "minimum_" + location + ".txt")
             contact_matrices[i] = mio.ContactMatrix(
-                mio.secir.read_mobility_plain(baseline_file),
-                mio.secir.read_mobility_plain(minimum_file)
+                mio.read_mobility_plain(baseline_file),
+                mio.read_mobility_plain(minimum_file)
             )
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
@@ -202,7 +203,7 @@ class Simulation:
 
         typ_home = Intervention.Home.value
         typ_school = Intervention.SchoolClosure.value
-        typ_home = Intervention.HomeOffice.value
+        typ_homeoffice = Intervention.HomeOffice.value
         typ_gathering = Intervention.GatheringBanFacilitiesClosure.value
         typ_distance = Intervention.PhysicalDistanceAndMasks.value
         typ_senior = Intervention.SeniorAwareness.value
@@ -230,7 +231,7 @@ class Simulation:
 
         def home_office(t, min, max):
             return damping_helper(
-                t, min, max, lvl_main, typ_home, [loc_work])
+                t, min, max, lvl_main, typ_homeoffice, [loc_work])
 
         def social_events(t, min, max):
             return damping_helper(

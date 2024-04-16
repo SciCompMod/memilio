@@ -210,16 +210,19 @@ def check_for_all_counties(
     missing = len(get_county_ids(merge_berlin, merge_eisenach)
                   )-len(unique_county_list)
     if missing != 0:
-        print("Downloaded data is not complete. Missing " +
-              str(missing) + " counties.")
         if missing < 0:
             # Returning True if source data file contains more counties than list
-            print('Source data frame contains more counties than official '
-                  'county list. This could be OK, please verify yourself.')
+            gd.default_print('Warning', 'Source data frame contains ' + str(abs(missing)) +
+                             ' more counties than official county list. '
+                             'This could be OK, please verify yourself.')
             return True
-        elif missing < 10:
-            print('Missing counties: ' + str(list(set(get_county_ids(merge_berlin,
-                  merge_eisenach)).difference(unique_county_list).difference(set({11000})))))
+        else:
+            gd.default_print('Error', "Downloaded data is not complete. Missing " +
+                             str(missing) + " counties.")
+            if missing < 10:
+                gd.default_print('Info', 'Missing counties: ' +
+                                 str(list(set(get_county_ids(merge_berlin,
+                                                             merge_eisenach)).difference(unique_county_list).difference(set({11000})))))
         # Returning False if source data file lacks at least one county
         return False
 
@@ -317,7 +320,7 @@ def get_official_county_table():
         file = gd.download_file(url_counties, 1024, None,
                                 p.set_progress, verify=False)
     county_table = pd.read_excel(
-        file, sheet_name=1, header=5, engine='openpyxl')
+        file, sheet_name=1, header=5, engine=gd.Conf.excel_engine)
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
         '2': "type",  # name not important, column not used so far

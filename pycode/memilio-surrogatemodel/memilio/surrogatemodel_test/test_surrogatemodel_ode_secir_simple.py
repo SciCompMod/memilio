@@ -45,9 +45,9 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         days_2 = 30
         days_3 = 50
 
-        simulation_1 = data_generation.run_secir_simulation(days_1)
-        simulation_2 = data_generation.run_secir_simulation(days_2)
-        simulation_3 = data_generation.run_secir_simulation(days_3)
+        simulation_1 = data_generation.run_secir_simple_simulation(days_1)
+        simulation_2 = data_generation.run_secir_simple_simulation(days_2)
+        simulation_3 = data_generation.run_secir_simple_simulation(days_3)
 
         self.assertEqual(len(simulation_1), days_1+1)
         self.assertEqual(len(simulation_2), days_2+1)

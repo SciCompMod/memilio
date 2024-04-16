@@ -125,11 +125,11 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     //times
-    model.parameters.get<mio::osecirvvs::IncubationTime>()[mio::AgeGroup(0)]       = 5.2;
-    model.parameters.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(0)]       = 4.2;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)] = 5;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]   = 10;
-    model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)] = 8;
+    model.parameters.get<mio::osecirvvs::TimeExposed>()[mio::AgeGroup(0)]            = 3.2;
+    model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[mio::AgeGroup(0)] = 2.;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)]   = 5;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]     = 10;
+    model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)]   = 8;
 
     //probabilities
     model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.05;
@@ -296,9 +296,10 @@ void set_contact_parameters(mio::osecirvvs::Model::ParameterSet& parameters, boo
 void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_invalid_initial_value)
 {
     //times
-    const double incubationTime            = 5.2;
-    const double serialIntervalMin         = 0.5 * 2.67 + 0.5 * 5.2;
-    const double serialIntervalMax         = 0.5 * 4.00 + 0.5 * 5.2;
+    const double timeExposedMin            = 2.67;
+    const double timeExposedMax            = 4.;
+    const double timeInfectedNoSymptomsMin = 1.2;
+    const double timeInfectedNoSymptomsMax = 2.53;
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
     const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
     const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
@@ -306,10 +307,10 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), incubationTime, incubationTime,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeExposed>(), timeExposedMin, timeExposedMax,
                                       set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), serialIntervalMin,
-                                      serialIntervalMax, set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedNoSymptoms>(), timeInfectedNoSymptomsMin,
+                                      timeInfectedNoSymptomsMax, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
                                       timeInfectedSymptomsMax, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), timeInfectedSevereMin,
@@ -457,8 +458,8 @@ TEST(TestOdeSECIRVVS, draw_sample)
 
     // special cases
     ASSERT_NEAR(populations0.get_total(), 1000 * num_age_groups, 1e-2);
-    ASSERT_TRUE((parameters0.get<mio::osecirvvs::BaseInfectiousnessB161>().array(),
-                 parameters0.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array() * 1.6) //using high variant
+    ASSERT_TRUE((parameters0.get<mio::osecirvvs::InfectiousnessNewVariant>().array(),
+                 parameters0.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array() * 1.0) //using high variant
                     .all());
 
     // spot check for parameters that should be equal or different between nodes
@@ -492,6 +493,66 @@ TEST(TestOdeSECIRVVS, checkPopulationConservation)
 }
 
 #if defined(MEMILIO_HAS_HDF5) && defined(MEMILIO_HAS_JSONCPP)
+
+TEST(TestOdeSECIRVVS, read_confirmed_cases)
+{
+    auto num_age_groups = 6; //reading data requires RKI data age groups
+    auto model          = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
+    std::vector<int> region{1002};
+    auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
+    std::vector<std::vector<int>> t_Exposed(1);
+    std::vector<std::vector<int>> t_InfectedNoSymptoms(1);
+    std::vector<std::vector<int>> t_InfectedSymptoms(1);
+    std::vector<std::vector<int>> t_InfectedSevere(1);
+    std::vector<std::vector<int>> t_InfectedCritical(1);
+
+    std::vector<std::vector<double>> mu_C_R(1);
+    std::vector<std::vector<double>> mu_I_H(1);
+    std::vector<std::vector<double>> mu_H_U(1);
+
+    std::vector<std::vector<double>> num_InfectedSymptoms(1);
+    std::vector<std::vector<double>> num_death(1);
+    std::vector<std::vector<double>> num_rec(1);
+    std::vector<std::vector<double>> num_Exposed(1);
+    std::vector<std::vector<double>> num_InfectedNoSymptoms(1);
+    std::vector<std::vector<double>> num_InfectedSevere(1);
+    std::vector<std::vector<double>> num_icu(1);
+
+    num_InfectedSymptoms[0]   = std::vector<double>(num_age_groups, 0.0);
+    num_death[0]              = std::vector<double>(num_age_groups, 0.0);
+    num_rec[0]                = std::vector<double>(num_age_groups, 0.0);
+    num_Exposed[0]            = std::vector<double>(num_age_groups, 0.0);
+    num_InfectedNoSymptoms[0] = std::vector<double>(num_age_groups, 0.0);
+    num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
+    num_icu[0]                = std::vector<double>(num_age_groups, 0.0);
+    for (size_t group = 0; group < static_cast<size_t>(num_age_groups); group++) {
+
+        t_Exposed[0].push_back(static_cast<int>(
+            std::round(model[0].parameters.template get<mio::osecirvvs::TimeExposed>()[(mio::AgeGroup)group])));
+        t_InfectedNoSymptoms[0].push_back(static_cast<int>(std::round(
+            model[0].parameters.template get<mio::osecirvvs::TimeInfectedNoSymptoms>()[(mio::AgeGroup)group])));
+        t_InfectedSymptoms[0].push_back(static_cast<int>(std::round(
+            model[0].parameters.template get<mio::osecirvvs::TimeInfectedSymptoms>()[(mio::AgeGroup)group])));
+        t_InfectedSevere[0].push_back(static_cast<int>(
+            std::round(model[0].parameters.template get<mio::osecirvvs::TimeInfectedSevere>()[(mio::AgeGroup)group])));
+        t_InfectedCritical[0].push_back(static_cast<int>(std::round(
+            model[0].parameters.template get<mio::osecirvvs::TimeInfectedCritical>()[(mio::AgeGroup)group])));
+
+        mu_C_R[0].push_back(
+            model[0].parameters.template get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)group]);
+        mu_I_H[0].push_back(
+            model[0].parameters.template get<mio::osecirvvs::SeverePerInfectedSymptoms>()[(mio::AgeGroup)group]);
+        mu_H_U[0].push_back(
+            model[0].parameters.template get<mio::osecirvvs::CriticalPerSevere>()[(mio::AgeGroup)group]);
+    }
+
+    auto read = mio::osecirvvs::details::read_confirmed_cases_data(
+        path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
+        num_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+        t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, std::vector<double>(size_t(num_age_groups), 1.0));
+
+    ASSERT_THAT(read, IsSuccess());
+}
 
 TEST(TestOdeSECIRVVS, read_data)
 {
@@ -774,11 +835,11 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     std::nth_element(samples.begin(), samples.begin() + 6, samples.end());
     ASSERT_THAT(p, samples[6]);
 
-    p       = double(percentile_params.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(2)]);
+    p       = double(percentile_params.get<mio::osecirvvs::TimeExposed>()[mio::AgeGroup(2)]);
     samples = std::vector<double>();
     std::transform(sampled_nodes.begin(), sampled_nodes.end(), std::back_inserter(samples),
                    [](const std::vector<mio::osecirvvs::Model>& nodes) {
-                       return nodes[0].parameters.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(2)];
+                       return nodes[0].parameters.get<mio::osecirvvs::TimeExposed>()[mio::AgeGroup(2)];
                    });
     std::nth_element(samples.begin(), samples.begin() + 6, samples.end());
     ASSERT_THAT(p, samples[6]);
@@ -905,17 +966,14 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ICUCapacity>(2);
-    model.parameters.set<mio::osecirvvs::IncubationTime>(-2);
+    model.parameters.set<mio::osecirvvs::TimeExposed>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::IncubationTime>(2);
-    model.parameters.set<mio::osecirvvs::SerialInterval>(1);
+    model.parameters.set<mio::osecirvvs::TimeExposed>(2);
+    model.parameters.set<mio::osecirvvs::TimeInfectedNoSymptoms>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::SerialInterval>(5);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecirvvs::SerialInterval>(1.5);
+    model.parameters.set<mio::osecirvvs::TimeInfectedNoSymptoms>(5);
     model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -996,11 +1054,7 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(1);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     mio::set_log_level(mio::LogLevel::warn);
@@ -1023,19 +1077,15 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::Seasonality>(), 0);
 
-    model.parameters.set<mio::osecirvvs::IncubationTime>(-2);
+    model.parameters.set<mio::osecirvvs::TimeExposed>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[indx_agegroup], 2 * tol_times);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeExposed>()[indx_agegroup], tol_times);
 
-    model.parameters.set<mio::osecirvvs::SerialInterval>(0);
+    model.parameters.set<mio::osecirvvs::TimeInfectedNoSymptoms>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 0.15, 1e-14);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[indx_agegroup], tol_times);
 
-    model.parameters.set<mio::osecirvvs::SerialInterval>(5);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 0.15, 1e-14);
-
-    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(1e-5);
+    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(1e-10);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[indx_agegroup], tol_times);
 
@@ -1116,13 +1166,56 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[indx_agegroup], 1);
 
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant>(-4);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB117>()[indx_agegroup], 0);
-
-    model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::BaseInfectiousnessB161>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::InfectiousnessNewVariant>()[indx_agegroup], 1);
 
     mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRVVS, apply_variant_function)
+{
+    auto model = mio::osecirvvs::Model(1);
+    model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(0.2);
+
+    model.parameters.set<mio::osecirvvs::StartDay>(0);
+    model.parameters.set<mio::osecirvvs::StartDayNewVariant>(10);
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant>(2.0);
+    auto sim = mio::osecirvvs::Simulation<>(model);
+
+    // test that the transmission probability is not changed due to calling the advance function
+    sim.advance(0.01);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
+                0.2, 1e-10);
+
+    // test if the transmission probability is set to the correct value after applying the variant.
+    // The referece values are calculated using equation (36) in doi.org/10.1371/journal.pcbi.1010054
+    auto base_infectiousness = sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>();
+
+    // however, the parameter should stay unchanged if the new variant is not present in the population.
+    sim.apply_variant(0, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
+                0.2, 1e-10);
+
+    sim.apply_variant(9, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
+                0.2, 1e-10);
+
+    sim.apply_variant(10, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
+                0.99 * base_infectiousness[mio::AgeGroup(0)] +
+                    0.01 * base_infectiousness[mio::AgeGroup(0)] *
+                        sim.get_model().parameters.get<mio::osecirvvs::InfectiousnessNewVariant>()[mio::AgeGroup(0)],
+                1e-10);
+
+    sim.apply_variant(45, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
+                0.68 * base_infectiousness[mio::AgeGroup(0)] +
+                    0.32 * base_infectiousness[mio::AgeGroup(0)] *
+                        sim.get_model().parameters.get<mio::osecirvvs::InfectiousnessNewVariant>()[mio::AgeGroup(0)],
+                1e-10);
+
+    sim.apply_variant(1000, base_infectiousness);
+    EXPECT_NEAR(sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)],
+                0.4, 1e-10);
 }
