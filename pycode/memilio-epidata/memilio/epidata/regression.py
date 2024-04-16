@@ -37,7 +37,7 @@ import matplotlib as mpl
 import statsmodels.api as sm
 
 pd.options.mode.copy_on_write = True
-mpl.use('TKAgg')
+# mpl.use('TKAgg')
 
 
 def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
@@ -415,19 +415,19 @@ class NPIRegression():
 
             # sort all dataframes first by county and then by date so that all dataframes are aligned
             self.df_r.sort_values(['ID_County', 'Date']
-                                  ).reset_index(inplace=True)
+                                  )
             self.df_npis.sort_values(
-                ['ID_County', 'Date']).reset_index(inplace=True)
+                ['ID_County', 'Date'])
             self.df_vaccinations.sort_values(
-                ['ID_County', 'Date']).reset_index(inplace=True)
+                ['ID_County', 'Date'])
             self.df_regions.sort_values(
-                ['ID_County', 'Date']).reset_index(inplace=True)
+                ['ID_County', 'Date'])
             self.df_seasonality.sort_values(
-                ['ID_County', 'Date']).reset_index(inplace=True)
+                ['ID_County', 'Date'])
             self.df_agestructure.sort_values(
-                ['ID_County', 'Date']).reset_index(inplace=True)
+                ['ID_County', 'Date'])
             self.df_variants.sort_values(
-                ['ID_County', 'Date']).reset_index(inplace=True)
+                ['ID_County', 'Date'])
 
             # reset index so that we can concatenate dataframes without problems
             self.df_r.reset_index(inplace=True)
@@ -506,6 +506,8 @@ class NPIRegression():
             ['sin', 'cos'] + \
             self.age_categories + self.used_npis + self.variants
 
+        # counter for iterations in backward selection
+        iteration = 0
         # do regression with all NPIs
         results = self.do_regression(regression_variables)
         # store pvalues in dataframe
@@ -518,6 +520,14 @@ class NPIRegression():
         # this shouldn't be needed anymore because we check before if there is an NPI that is never active
         # drop rows with pvalue that is NaN
         # self.df_pvalues.dropna(inplace=True)
+        # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
+        self.df_pvalues.insert(2, "coeffs", list(results.params))
+        self.df_pvalues.insert(
+            3, "conf_int_min", list(results.conf_int()[0]))
+        self.df_pvalues.insert(
+            4, "conf_int_max", list(results.conf_int()[1]))
+
+        self.plot_confidence_intervals(iteration)
 
         # compute AIC and BIC as reference for later
         aic_min = results.aic
@@ -530,7 +540,7 @@ class NPIRegression():
 
         # list with NPIs that were removed
         removed_list = []
-        iteration = 0
+
         # TODO: think about how to decide when backwards selection is "done"
         while (counter_not_removed < 7) and (len(self.df_pvalues) > 5+len(fixed_variables)):
             iteration += 1
@@ -587,13 +597,6 @@ class NPIRegression():
                 # also, in this case we want to select variable_of_interest by taking the NPI with the highest pvalue of remaining NPIs
                 counter_not_removed = 0
 
-                # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
-                self.df_pvalues.insert(2, "coeffs", list(results.params))
-                self.df_pvalues.insert(
-                    3, "conf_int_min", list(results.conf_int()[0]))
-                self.df_pvalues.insert(
-                    4, "conf_int_max", list(results.conf_int()[1]))
-
                 self.plot_confidence_intervals(iteration)
 
             else:
@@ -621,11 +624,6 @@ class NPIRegression():
         # (i.e. also if in last loop no variable was removed)
         results = self.do_regression(
             self.df_pvalues['columns'][num_fixed_variables:])
-
-        # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
-        self.df_pvalues.insert(2, "coeffs", list(results.params))
-        self.df_pvalues.insert(3, "conf_int_min", list(results.conf_int()[0]))
-        self.df_pvalues.insert(4, "conf_int_max", list(results.conf_int()[1]))
 
         self.plot_confidence_intervals(iteration='final')
 
@@ -697,7 +695,6 @@ class NPIRegression():
 
 
 def main():
-    # 4 randomly chosen counties of each regioStar7 type
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
     npi_regression = NPIRegression(counties)
