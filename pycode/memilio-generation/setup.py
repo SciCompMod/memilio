@@ -15,6 +15,10 @@ except ImportError:
 
 __version__ = '0.1.0'
 
+boost_deps = []
+for wildcard in os.listdir('_skbuild/'):
+    boost_deps += [os.path.join('../../', os.path.join(path, file)) for path, dirs, files in os.walk('_skbuild/'+wildcard+'/cmake-build/_deps/boost-src/boost/') for file in files]
+
 setup(
     name='memilio-generation',
     version=__version__,
@@ -32,5 +36,5 @@ setup(
     long_description='',
     test_suite='memilio.generation_test',
     package_data={'memilio.generation': [
-        '../../_skbuild/*/cmake-build/compile_commands.json', '../tools/config.json']},
+        '../../_skbuild/*/cmake-build/compile_commands.json', *boost_deps, '../tools/config.json']},
 )
