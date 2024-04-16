@@ -90,7 +90,7 @@ def compute_R_eff(counties, out_folder=dd.defaultDict['out_folder']):
             # R_t = #neue Fälle(t-6,t)/#neue Fälle(t-10,t-4) (See RKI paper)
             df_r_eff.loc[df_r_eff.ID_County == county, "R_eff"] += (df_cases_county["Incidence"]/(
                 df_cases_county["Incidence"].shift(4))).replace([np.nan, np.inf], 0)
-            #df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
+            # df_r_eff.drop(df_r_eff[df_r_eff['R_eff'] == 0.0].index, inplace=True)
             if True:
                 axs[0].plot(df_cases_county["Date"],
                             df_cases_county['Incidence'])
@@ -587,6 +587,15 @@ class NPIRegression():
                 # also, in this case we want to select variable_of_interest by taking the NPI with the highest pvalue of remaining NPIs
                 counter_not_removed = 0
 
+                # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
+                self.df_pvalues.insert(2, "coeffs", list(results.params))
+                self.df_pvalues.insert(
+                    3, "conf_int_min", list(results.conf_int()[0]))
+                self.df_pvalues.insert(
+                    4, "conf_int_max", list(results.conf_int()[1]))
+
+                self.plot_confidence_intervals(iteration)
+
             else:
                 if plot:
                     # plot pvalues
@@ -618,10 +627,12 @@ class NPIRegression():
         self.df_pvalues.insert(3, "conf_int_min", list(results.conf_int()[0]))
         self.df_pvalues.insert(4, "conf_int_max", list(results.conf_int()[1]))
 
+        self.plot_confidence_intervals(iteration='final')
+
         return self.df_pvalues, results
 
     # plot coefficients and confidence intervals per independent variable
-    def plot_confidence_intervals(self):
+    def plot_confidence_intervals(self, iteration):
 
         fig, ax = plt.subplots()
         for i in range(len(self.df_pvalues)):
@@ -642,7 +653,7 @@ class NPIRegression():
         if not os.path.isdir('plots'):
             os.makedirs('plots')
         plt.tight_layout()
-        plt.savefig('plots/regression_results.png', format='png',
+        plt.savefig(f'plots/regression_results_iteration{iteration}.png', format='png',
                     dpi=500)
 
         plt.close()
@@ -692,7 +703,6 @@ def main():
     npi_regression = NPIRegression(counties)
 
     df_pvalues, results = npi_regression.backward_selection(plot=True)
-    npi_regression.plot_confidence_intervals()
 
 
 if __name__ == "__main__":
