@@ -441,84 +441,70 @@ TEST(IdeSecir, testModelConstraints)
 
     // --- Test with too few time points.
     // Create TimeSeries with num_transitions elements.
-    mio::TimeSeries<ScalarType> init(num_transitions);
+    mio::TimeSeries<ScalarType> init_few_timepoints(num_transitions);
     // Add time points for initialization of transitions.
     Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
-    init.add_time_point(-3, vec_init);
-    while (init.get_last_time() < 0) {
-        init.add_time_point(init.get_last_time() + dt, vec_init);
+    init_few_timepoints.add_time_point(-3, vec_init);
+    while (init_few_timepoints.get_last_time() < 0) {
+        init_few_timepoints.add_time_point(init_few_timepoints.get_last_time() + dt, vec_init);
     }
 
     // Initialize a model.
-    mio::isecir::Model model_few_timepoints(std::move(init), N, deaths);
+    mio::isecir::Model model(std::move(init_few_timepoints), N, deaths);
 
     mio::ExponentialDecay expdecay(4.0);
     mio::StateAgeFunctionWrapper delaydistribution(expdecay);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    model_few_timepoints.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
-
-    constraint_check = model_few_timepoints.check_constraints(dt);
-    EXPECT_TRUE(constraint_check);
-
-    // --- Correct wrong setup so that next check can go through.
-    mio::TimeSeries<ScalarType> init_enough_timepoints(num_transitions);
-    init_enough_timepoints.add_time_point(-5, vec_init);
-    while (init_enough_timepoints.get_last_time() < 0) {
-        init_enough_timepoints.add_time_point(init_enough_timepoints.get_last_time() + dt, vec_init);
-    }
-
-    // Initialize a model.
-    mio::isecir::Model model(std::move(init_enough_timepoints), N, deaths);
-
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
-    constraint_check = model.check_constraints(dt);
-    EXPECT_FALSE(constraint_check);
-
-    // --- Test with new transitions that have a different last time point than in model initialization.
-    // Create TimeSeries with num_transitions elements.
-    mio::TimeSeries<ScalarType> new_transitions(num_transitions);
-    // Add time points for initialization of transitions ending at different time point.
-    new_transitions.add_time_point(-5, vec_init);
-    while (new_transitions.get_last_time() < 1) {
-        new_transitions.add_time_point(new_transitions.get_last_time() + dt, vec_init);
-    }
-
-    model.m_transitions = new_transitions;
-
+    // Return true for not enough time points given for the initial transitions.
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- Correct wrong setup so that next check can be tested.
+    // --- Test with last time point of transitions not matching last time point of populations.
     // Create TimeSeries with num_transitions elements.
-    mio::TimeSeries<ScalarType> init_enough_timepoints2(num_transitions);
-    // Add time points for initialization of transitions.
-    init_enough_timepoints2.add_time_point(-5, vec_init);
-    while (init_enough_timepoints2.get_last_time() < 0) {
-        init_enough_timepoints2.add_time_point(init_enough_timepoints2.get_last_time() + dt, vec_init);
+    mio::TimeSeries<ScalarType> init_different_last_time(num_transitions);
+    // Add enough time points for initialization of transitions but with different last time point
+    // than before so that it does not match last time point of m_populations (that was set in
+    // when constructing model above).
+    init_different_last_time.add_time_point(-4, vec_init);
+    while (init_different_last_time.get_last_time() < 1) {
+        init_different_last_time.add_time_point(init_different_last_time.get_last_time() + dt, vec_init);
     }
 
-    // Set transitions again to TimeSeries with original last time point.
-    model.m_transitions = init_enough_timepoints2;
+    model.m_transitions = init_different_last_time;
 
-    // Check that constraints are fulfilled.
+    // Return true for not last time points of compartments and transitions not matching.
     constraint_check = model.check_constraints(dt);
-    EXPECT_FALSE(constraint_check);
+    EXPECT_TRUE(constraint_check);
 
     // --- Test with TimeSeries for populations that contains more than one time point.
     // Create TimeSeries with num_compartments elements.
-    mio::TimeSeries<ScalarType> populations_two_timepoints(num_compartments);
+    mio::TimeSeries<ScalarType> populations_many_timepoints(num_compartments);
     // Add time points.
-    populations_two_timepoints.add_time_point(-2, vec_init);
-    while (populations_two_timepoints.get_last_time() < 0) {
-        populations_two_timepoints.add_time_point(populations_two_timepoints.get_last_time() + dt, vec_init);
+    Vec vec_populations = Vec::Constant(num_compartments, 0.);
+    populations_many_timepoints.add_time_point(0, vec_populations);
+    while (populations_many_timepoints.get_last_time() < 1) {
+        populations_many_timepoints.add_time_point(populations_many_timepoints.get_last_time() + dt, vec_populations);
     }
 
-    model.m_populations = populations_two_timepoints;
+    model.m_populations = populations_many_timepoints;
 
+    // Return true for too many time points given for populations.
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
+
+    // --- Correct wrong setup so that next check can go through.
+    // Create TimeSeries with num_compartments elements.
+    mio::TimeSeries<ScalarType> correct_populations(num_compartments);
+    // Add one time point.
+    correct_populations.add_time_point(1, vec_populations);
+
+    model.m_populations = correct_populations;
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_FALSE(constraint_check);
 
     // --- The check_constraints() function of parameters is tested in its own test below. ---
 

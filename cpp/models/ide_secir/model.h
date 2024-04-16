@@ -91,14 +91,14 @@ public:
         }
 
         if (m_transitions.get_last_time() != m_populations.get_last_time()) {
-            log_error("Last time point of TimeSeries for transitions does not match first time point of TimeSeries for "
+            log_error("Last time point of TimeSeries for transitions does not match last time point of TimeSeries for "
                       "compartments. Both of these time points have to agree for a sensible simulation.");
             return true;
         }
 
         if (m_populations.get_num_time_points() != 1) {
-            log_error(
-                "The TimeSeries for compartments contains more than one time point. It is unclear how to initialize.");
+            log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
+                      "initialize.");
             return true;
         }
 
