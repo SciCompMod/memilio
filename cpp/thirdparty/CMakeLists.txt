@@ -69,13 +69,13 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     
     if(NOT IS_DIRECTORY "${boost_SOURCE_DIR}/boost")
         if(MSVC)
-            add_custom_target(bootstrap ALL "bootstrap.bat"
+            add_custom_target(boost-bootstrap ALL "bootstrap.bat"
                 COMMAND "b2.exe" headers
                 WORKING_DIRECTORY ${boost_SOURCE_DIR}
                 VERBATIM
                 )
         else()
-            add_custom_target(bootstrap ALL ./bootstrap.sh
+            add_custom_target(boost-bootstrap ALL ./bootstrap.sh
                 COMMAND ./b2 headers 
                 WORKING_DIRECTORY ${boost_SOURCE_DIR}
                 VERBATIM
@@ -84,7 +84,7 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     endif()
     
     add_library(boost INTERFACE)
-    add_dependencies(boost bootstrap)
+    add_dependencies(boost boost-bootstrap)
     add_library(Boost::boost ALIAS boost)
     target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
     

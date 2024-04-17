@@ -1,7 +1,6 @@
 import os
 import subprocess
 import sys
-from glob import glob
 
 from setuptools import find_packages, setup
 
@@ -33,5 +32,5 @@ setup(
     long_description='',
     test_suite='memilio.generation_test',
     package_data={'memilio.generation': [
-        '../../_skbuild/*/cmake-build/compile_commands.json', '../tools/config.json'] + glob('../../_skbuild/*/cmake-build/_deps/boost-src/boost/**/*.hpp')},
+        '../../_skbuild/*/cmake-build/compile_commands.json', '../tools/config.json']},
 )
