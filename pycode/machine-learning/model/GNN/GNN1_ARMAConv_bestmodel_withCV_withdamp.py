@@ -5,16 +5,12 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import FunctionTransformer
 
-# from first_attempt_withSpectral_withCV import preprocess, train_step, evaluate, test_evaluation
+
 import matplotlib.pyplot as plt
-import os
-import numpy as np
-import pandas as pd
 #import torch
 #import torch.nn as nn
 #import torch.nn.functional as F
-import pickle
-import spektral
+
 import time
 
 import numpy as np
@@ -34,19 +30,24 @@ from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMACon
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
 
+tf.keras.backend.clear_session()
 
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+  tf.config.experimental.set_memory_growth(gpu, True)
 
-
-
+tf.config.threading.inter_op_parallelism_threads = 1
 # load and prepare data
 path = os.path.dirname(os.path.realpath(__file__))
+
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data_GNN_400pop_one_var_damp_100days_1k_withmatrix')
+    'data_GNN_400pop_3var_damp_100days_1k_w')
 
 
-file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+file = open(os.path.join(path_data, 'GNN_400pop_3damp_w.pickle'), 'rb')
+#file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_400pop_3var_damp_100days_1k/GNN_400pop_3damp.pickle', 'rb')
 
 data_secir = pickle.load(file)
 
@@ -74,6 +75,7 @@ contact_matrices = data_secir['damped_matrix']
 n_runs = new_inputs.shape[0]
 n_pop = new_inputs.shape[1]
 n_dampings = np.asarray(data_secir['damping_day']).shape[2]
+#n_dampings = 1
 
 
 inputs_with_damp = np.dstack((new_inputs,(np.asarray(damping_factors).reshape([n_runs,n_pop,n_dampings])),
@@ -113,8 +115,8 @@ parameters = [layer, number_of_layers, number_of_channels]
 
 df = pd.DataFrame(
     columns=['layer', 'number_of_layers', 'channels', 'kfold_train',
-             'kfold_val', 'kfold_test', 'training_time',
-             'train_losses', 'val_losses'])
+             'kfold_val', 'kfold_test', 'training_time'])
+             #'train_losses', 'val_losses'])
 
 
 def train_and_evaluate_model(
@@ -209,7 +211,7 @@ def train_and_evaluate_model(
 
             def call(self, inputs):
                 x, a = inputs
-                #a = np.asarray(a)
+                a = np.asarray(a)
 
                 x = self.conv1([x, a])
                 x = self.conv2([x, a])
@@ -334,6 +336,7 @@ def train_and_evaluate_model(
         losses_history = []
         val_losses_history = []
 
+
         start = time.perf_counter()
 
         for batch in loader_tr:
@@ -388,6 +391,21 @@ def train_and_evaluate_model(
 
         elapsed = time.perf_counter() - start
 
+        # save the model
+        # path = os.path.dirname(os.path.realpath(__file__))
+        # path_models = os.path.join(
+        #     os.path.dirname(
+        #         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        #     'ARMAConv_100days_1damp_saved_model_test')
+        # if not os.path.isdir(path_models):
+        #     os.mkdir(path_models)
+
+        #model.save_weights(path_models, 'ARMAConv_test')
+         
+        # save best weights as pickle 
+        # with open("best_weights_ARMAConv_test.pcikle", 'wb') as f:
+        #     pickle.dump(best_weights, f) 
+
     # plot the losses
     # plt.figure()
     # plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
@@ -422,16 +440,6 @@ def train_and_evaluate_model(
 
     #model.save(path_models, save_name +'h5')
 
-        # save the model
-    path = os.path.dirname(os.path.realpath(__file__))
-    path_models = os.path.join(
-        os.path.dirname(
-            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'ARMAConv_100days_two_damp_saved_model')
-    if not os.path.isdir(path_models):
-        os.mkdir(path_models)
-
-    model.save(path_models, 'ARMAConv_2damp.h5')
 
     # save df 
 
@@ -440,9 +448,9 @@ def train_and_evaluate_model(
                              np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
-                             (elapsed / 60),
-                             [losses_history_all],
-                             [val_losses_history_all]]
+                             (elapsed / 60)]
+                             #[losses_history_all],
+                             #[val_losses_history_all]]
     print(df)
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
@@ -451,7 +459,7 @@ def train_and_evaluate_model(
     file_path = os.path.join(
        os.path.dirname(
            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-       'dataframes_dampingexperiments')
+       'dataframes_w')
     if not os.path.isdir(file_path):
        os.mkdir(file_path)
     file_path = file_path+filename
@@ -459,9 +467,9 @@ def train_and_evaluate_model(
 
 
 start_hyper = time.perf_counter()
-epochs = 1500
-filename = '/GNNtype1_ARMA_100days_2damp.csv'
-save_name = 'ARMAConv_100days_two_damp_saved_model'
+epochs = 10
+filename = '/GNNt_ARMA_100days_3damp_w.csv'
+save_name = 'egal'
 #for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
@@ -472,3 +480,4 @@ print(
 print(
     "Time for hyperparameter testing: {:.4f} hours".format(
         elapsed_hyper / 60 / 60))
+
