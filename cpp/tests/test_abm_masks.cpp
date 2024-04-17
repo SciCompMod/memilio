@@ -74,7 +74,7 @@ TEST(TestMasks, maskProtection)
 
     //cache precomputed results
     auto dt = mio::abm::days(1);
-    infection_location.cache_exposure_rates(t, dt, num_age_groups);
+    infection_location.cache_exposure_rates(t, dt, num_age_groups, params);
     // susc_person1 wears a mask, default protection is 1
     susc_person1.set_wear_mask(true);
     // susc_person2 does not wear a mask

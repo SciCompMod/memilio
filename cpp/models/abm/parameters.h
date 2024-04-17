@@ -332,13 +332,28 @@ struct MaskProtection {
 };
 
 /**
+ * @brief Determines the infection rate by viral shed. Used as a linear factor.
+*/
+struct InfectionRateFromViralShed {
+    using Type = CustomIndexArray<ScalarType, VirusVariant>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({VirusVariant::Count}, 2.0); //Julia
+    }
+    static std::string name()
+    {
+        return "InfectionRateFromViralShed";
+    }
+};
+
+/**
  * @brief Aerosol transmission rates. 
 */
 struct AerosolTransmissionRates {
     using Type = CustomIndexArray<ScalarType, VirusVariant>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type({VirusVariant::Count}, 1.0);
+        return Type({VirusVariant::Count}, 0.0); //Julia
     }
     static std::string name()
     {
@@ -657,10 +672,11 @@ using ParametersBase =
                  TimeInfectedSevereToRecovered, TimeInfectedCriticalToDead, TimeInfectedCriticalToRecovered,
                  SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms, CriticalPerInfectedSevere,
                  DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions, VirusShedFactor,
-                 DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate, QuarantineDuration,
-                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, LogAgentIds>;
+                 DetectInfection, MaskProtection, InfectionRateFromViralShed, AerosolTransmissionRates, LockdownDate,
+                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
+                 LogAgentIds>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

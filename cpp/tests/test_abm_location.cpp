@@ -127,7 +127,7 @@ TEST(TestLocation, CacheExposureRate)
     infected2.migrate_to(location, {0, 1});
 
     //cache precomputed results
-    location.cache_exposure_rates(t, dt, num_age_groups);
+    location.cache_exposure_rates(t, dt, num_age_groups, params);
 
     EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.015015859523894731, 1e-14);
     EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.015015859523894731, 1e-14);
@@ -142,7 +142,7 @@ TEST(TestLocation, CacheExposureRate)
     location.set_capacity(2, 22, 0); // Capacity for Cell 1
     location.set_capacity(2, 22, 1); // Capacity for Cell 2
     location.set_capacity(2, 22, 2); // Capacity for Cell 3
-    location.cache_exposure_rates(t, dt, num_age_groups);
+    location.cache_exposure_rates(t, dt, num_age_groups, params);
 
     EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.045047578571684191, 1e-14);
     EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.022523789285842095, 1e-14);
@@ -259,7 +259,7 @@ TEST(TestLocation, interact)
     location.add_person(infected3, {0});
 
     //cache precomputed results
-    location.cache_exposure_rates(t, dt, num_age_groups);
+    location.cache_exposure_rates(t, dt, num_age_groups, params);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;

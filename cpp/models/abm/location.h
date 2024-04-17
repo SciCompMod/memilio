@@ -233,8 +233,9 @@ public:
      * @param[in] t Current TimePoint of the Simulation.
      * @param[in] dt The duration of the Simulation step.
      * @param[in] num_agegroups The number of age groups in the model.
+     * @param[in] params Parameters of the Model.
      */
-    void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups);
+    void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups, const Parameters& params);
 
     /**
      * @brief Get the Location specific Infection parameters.
