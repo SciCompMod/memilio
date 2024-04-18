@@ -617,6 +617,10 @@ class NPIRegression():
                       self.df_pvalues['columns'][variable_of_interest])
                 # change df_pvalues to df_view because we actually want to remove variable_of_interest
                 self.df_pvalues = df_view[:]
+                self.df_pvalues["coeffs"] = list(results.params)
+                self.df_pvalues["conf_int_min"] = list(results.conf_int()[0])
+                self.df_pvalues["conf_int_max"] = list(
+                    results.conf_int()[1])
 
                 # set counter_not_removed  = 0 because we want to count how many times in a row a selected NPI was not removed
                 # due to unclear AIC and BIC
@@ -651,7 +655,7 @@ class NPIRegression():
         results = self.do_regression(
             self.df_pvalues['columns'][num_fixed_variables:])
 
-        self.plot_confidence_intervals(iteration='_final')
+        self.plot_confidence_intervals(iteration='final')
 
         return self.df_pvalues, results
 
@@ -674,10 +678,10 @@ class NPIRegression():
         ax.set_xlabel('Values of coefficients')
         ax.set_ylabel('Variables')
 
-        if not os.path.isdir('plots'):
-            os.makedirs('plots')
+        if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}'):
+            os.makedirs(f'plots/fine_resolution{self.fine_resolution}')
         plt.tight_layout()
-        plt.savefig(f'plots/regression_results_iteration{iteration}.png', format='png',
+        plt.savefig(f'plots/fine_resolution{self.fine_resolution}/regression_results_iteration_{iteration}.png', format='png',
                     dpi=500)
 
         plt.close()
@@ -711,10 +715,10 @@ class NPIRegression():
         ax.set_xlabel('P-values')
         ax.set_ylabel('Variables')
 
-        if not os.path.isdir('plots'):
-            os.makedirs('plots')
+        if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}'):
+            os.makedirs(f'plots/fine_resolution{self.fine_resolution}')
         plt.tight_layout()
-        plt.savefig(f'plots/pvalues_iteration{iteration}.png', format='png',
+        plt.savefig(f'plots/fine_resolution{self.fine_resolution}/pvalues_iteration_{iteration}.png', format='png',
                     dpi=500)
 
         plt.close()
@@ -726,7 +730,7 @@ def main():
     min_date = '2020-03-01'
     max_date = '2020-07-01'
 
-    fine_resolution = 2
+    fine_resolution = 0
 
     npi_regression = NPIRegression(
         counties, min_date, max_date, fine_resolution)

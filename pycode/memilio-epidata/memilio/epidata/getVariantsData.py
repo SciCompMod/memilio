@@ -36,7 +36,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
-mpl.use('TKAgg')
+# mpl.use('TKAgg')
 
 
 def get_variants_data(read_data=dd.defaultDict['read_data'],
