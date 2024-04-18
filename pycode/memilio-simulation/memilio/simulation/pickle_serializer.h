@@ -553,7 +553,7 @@ IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string& na
         return failure(*m_status);
     }
 
-    BOOST_OUTCOME_TRY(r, expect_list(name, tag));
+    BOOST_OUTCOME_TRY(auto&& r, expect_list(name, tag));
 
     if (r.size() == 0) {
         return success();
