@@ -219,19 +219,27 @@ class NPIRegression():
             directory = os.path.join(directory, 'Germany/')
             gd.check_dir(directory)
 
+            try:
+                # TODO: replace with clustering results
+                df_codes = pd.read_json(directory + 'npis.json')
+                self.used_npis = [code for code in df_codes.NPI_code.values if len(code.split('_'))==2]
+            except FileNotFoundError:
+                print('Subcategories not found. Using maincategories')
+                self.used_npis = ['M01a', 'M01b', 'M02a', 'M02b',
+                                'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
+                                'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
+
+
             # read NPI data
             filepath = os.path.join(
-                directory, 'germany_counties_npi_maincat.csv')
+                directory, 'germany_counties_npi_subcat.csv')
 
             if not os.path.exists(filepath):
+                print('NPI data not found. Running download script.')
                 self.df_npis = gnd.get_npi_data(start_date=date(2020, 1, 1),
                                                 fine_resolution=0, file_format='csv')
             else:
                 self.df_npis = pd.read_csv(filepath)
-
-            self.df_npis = self.df_npis[self.df_npis.ID_County.isin(
-                self.counties)]
-
             # read population data
             filepath = os.path.join(
                 directory, 'county_current_population.json')
@@ -493,10 +501,6 @@ class NPIRegression():
 
         # initial set of NPIs
         # use fine_resolution=0 for now for simplicity
-        # TODO: move this to constructor?
-        self.used_npis = ['M01a', 'M01b', 'M02a', 'M02b',
-                          'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
-                          'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
         # set up regression model
         self.set_up_model()
@@ -686,7 +690,6 @@ class NPIRegression():
 
 
 def main():
-    # 4 randomly chosen counties of each regioStar7 type
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
     npi_regression = NPIRegression(counties)
