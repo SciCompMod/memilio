@@ -107,15 +107,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert impute_dates == dd.defaultDict['impute_dates']
         assert rep_date == dd.defaultDict['rep_date']
 
-        arg_dict = gd.cli("cases_est")
-        read_data = arg_dict["read_data"]
-        file_format = arg_dict["file_format"]
-        out_folder = arg_dict["out_folder"]
-
-        assert read_data == dd.defaultDict['read_data']
-        assert file_format == dd.defaultDict['file_format']
-        assert out_folder == out_path_default
-
         arg_dict = gd.cli("commuter_official")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
@@ -268,20 +259,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             assert split_berlin == True
             assert moving_average == 0
             assert rep_date == False
-
-        test_args = ["prog", '--read-data', '--out-folder',
-                     folder, '--file-format', 'json']
-
-        with patch.object(sys, 'argv', test_args):
-            arg_dict = gd.cli("cases_est")
-            [read_data, file_format, out_folder] = [
-                arg_dict["read_data"],
-                arg_dict["file_format"],
-                arg_dict["out_folder"]]
-
-            assert read_data == True
-            assert file_format == 'json'
-            assert out_folder == "some_folder"
 
         test_args = [
             "prog", '--out-folder', folder, '--file-format', 'json',
@@ -445,7 +422,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
     @patch('memilio.epidata.getJHData.get_jh_data')
     def test_call_functions(
-            self, mock_jh, mock_caseswe, mock_vaccination, mock_popul,
+            self, mock_jh, mock_vaccination, mock_popul,
             mock_cases, mock_divi):
 
         arg_dict_all = {
@@ -472,9 +449,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         arg_dict_vaccination = {
             **arg_dict_all, **arg_dict_data_download,
             "sanitize_data": dd.defaultDict['sanitize_data']}
-
-        arg_dict_cases_est = {**arg_dict_cases}
-        arg_dict_cases_est.pop('files')
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
         # change start-date of jh to 2020-01-22
