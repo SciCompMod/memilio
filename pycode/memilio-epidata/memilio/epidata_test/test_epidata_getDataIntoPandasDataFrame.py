@@ -29,10 +29,8 @@ import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import getCaseData, getCaseDatawithEstimations
+from memilio.epidata import getCaseData, getDIVIData, getJHData, getPopulationData, getVaccinationData
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import (getDIVIData, getJHData, getPopulationData,
-                             getVaccinationData)
 
 
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
@@ -445,7 +443,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getCaseData.get_case_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
-    @patch('memilio.epidata.getCaseDatawithEstimations.get_case_data_with_estimations')
     @patch('memilio.epidata.getJHData.get_jh_data')
     def test_call_functions(
             self, mock_jh, mock_caseswe, mock_vaccination, mock_popul,
@@ -500,10 +497,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         getDIVIData.main()
         mock_divi.assert_called()
         mock_divi.assert_called_with(**arg_dict_divi)
-
-        getCaseDatawithEstimations.main()
-        mock_caseswe.assert_called()
-        mock_caseswe.assert_called_with(**arg_dict_cases_est)
 
         getJHData.main()
         mock_jh.assert_called()
