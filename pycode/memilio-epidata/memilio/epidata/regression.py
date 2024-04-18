@@ -209,39 +209,48 @@ def compute_R_eff_old_method(counties, out_folder=dd.defaultDict['out_folder']):
 
 class NPIRegression():
 
-    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01'):
+    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0):
         self.counties = counties
         self.min_date = min_date
         self.max_date = max_date
+        self.fine_resolution = fine_resolution
 
     # read data that is relevant for regression and store in dataframes
+
     def read_data(self, out_folder=dd.defaultDict['out_folder']):
         with progress_indicator.Spinner(message="Read in data"):
             directory = out_folder
             directory = os.path.join(directory, 'Germany/')
             gd.check_dir(directory)
 
-            try:
+            # read NPI data
+            if self.fine_resolution == 2:
+                try:
+                    # TODO: replace with clustering results
+                    df_codes = pd.read_json(directory + 'npis.json')
+                    self.used_npis = [
+                        code for code in df_codes.NPI_code.values if len(code.split('_')) == 2]
+                    filepath = os.path.join(
+                        directory, 'germany_counties_npi_subcat.csv')
+                except FileNotFoundError:
+                    print('Subcategories not found. Using maincategories.')
+                    self.fine_resolution == 0
+
+            if self.fine_resolution == 0:
                 # TODO: replace with clustering results
-                df_codes = pd.read_json(directory + 'npis.json')
-                self.used_npis = [
-                    code for code in df_codes.NPI_code.values if len(code.split('_')) == 2]
-            except FileNotFoundError:
-                print('Subcategories not found. Using maincategories')
                 self.used_npis = ['M01a', 'M01b', 'M02a', 'M02b',
                                   'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
                                   'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
-
-            # read NPI data
-            filepath = os.path.join(
-                directory, 'germany_counties_npi_subcat.csv')
+                filepath = os.path.join(
+                    directory, 'germany_counties_npi_maincat.csv')
 
             if not os.path.exists(filepath):
                 print('NPI data not found. Running download script.')
                 self.df_npis = gnd.get_npi_data(start_date=date(2020, 1, 1),
-                                                fine_resolution=0, file_format='csv')
+                                                fine_resolution=self.fine_resolution, file_format='csv')
             else:
                 self.df_npis = pd.read_csv(filepath)
+
             # read population data
             filepath = os.path.join(
                 directory, 'county_current_population.json')
@@ -717,7 +726,10 @@ def main():
     min_date = '2020-03-01'
     max_date = '2020-07-01'
 
-    npi_regression = NPIRegression(counties, min_date, max_date)
+    fine_resolution = 2
+
+    npi_regression = NPIRegression(
+        counties, min_date, max_date, fine_resolution)
 
     df_pvalues, results = npi_regression.backward_selection(plot=True)
 
