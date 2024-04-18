@@ -53,8 +53,6 @@ endif()
 
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
-    add_compile_definitions(BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
     message(STATUS "Downloading Boost library. This may take some time.")
 
     include(FetchContent)
@@ -67,20 +65,26 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         FetchContent_Populate(boost)
     endif()
     
-    if(NOT IS_DIRECTORY "${boost_SOURCE_DIR}/boost")
-        if(MSVC)
-            add_custom_target(boost-bootstrap ALL "bootstrap.bat"
-                COMMAND "b2.exe" headers
-                WORKING_DIRECTORY ${boost_SOURCE_DIR}
-                VERBATIM
-                )
-        else()
-            add_custom_target(boost-bootstrap ALL ./bootstrap.sh
-                COMMAND ./b2 headers 
-                WORKING_DIRECTORY ${boost_SOURCE_DIR}
-                VERBATIM
-                )
-        endif()
+    add_custom_target(boost-bootstrap ALL 
+            DEPENDS "${boost_SOURCE_DIR}/boost"
+            )
+
+    if(MSVC)
+        add_custom_command(
+            OUTPUT "${boost_SOURCE_DIR}/boost"
+            COMMAND "bootstrap.bat"
+            COMMAND "b2.exe" headers
+            WORKING_DIRECTORY ${boost_SOURCE_DIR}
+            VERBATIM
+            )
+    else()
+        add_custom_command(
+            OUTPUT "${boost_SOURCE_DIR}/boost"
+            COMMAND ./bootstrap.sh
+            COMMAND ./b2 headers 
+            WORKING_DIRECTORY ${boost_SOURCE_DIR}
+            VERBATIM
+            )
     endif()
     
     add_library(boost INTERFACE)
@@ -108,6 +112,8 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         ${boost_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
         ${boost_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp
     )
+    # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
+    target_compile_definitions(boost_filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
 
     target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
     set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
