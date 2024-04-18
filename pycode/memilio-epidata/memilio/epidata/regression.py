@@ -209,8 +209,10 @@ def compute_R_eff_old_method(counties, out_folder=dd.defaultDict['out_folder']):
 
 class NPIRegression():
 
-    def __init__(self, counties):
+    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01'):
         self.counties = counties
+        self.min_date = min_date
+        self.max_date = max_date
 
     # read data that is relevant for regression and store in dataframes
     def read_data(self, out_folder=dd.defaultDict['out_folder']):
@@ -222,13 +224,13 @@ class NPIRegression():
             try:
                 # TODO: replace with clustering results
                 df_codes = pd.read_json(directory + 'npis.json')
-                self.used_npis = [code for code in df_codes.NPI_code.values if len(code.split('_'))==2]
+                self.used_npis = [
+                    code for code in df_codes.NPI_code.values if len(code.split('_')) == 2]
             except FileNotFoundError:
                 print('Subcategories not found. Using maincategories')
                 self.used_npis = ['M01a', 'M01b', 'M02a', 'M02b',
-                                'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
-                                'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
-
+                                  'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
+                                  'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
 
             # read NPI data
             filepath = os.path.join(
@@ -289,6 +291,23 @@ class NPIRegression():
                 for vacc_state in self.all_vacc_states:
                     self.df_vaccinations.loc[(self.df_vaccinations['ID_County'] == county), vacc_state] = self.df_vaccinations.loc[self.df_vaccinations['ID_County']
                                                                                                                                    == county, vacc_state]/df_population.loc[df_population.ID_County == county, 'Population'].iloc[0]
+            # add rows for missing dates if self.min_date is smaller than first date in self.df_vaccinations
+            min_date_vacc = min(self.df_vaccinations.Date).strftime("%Y-%m-%d")
+            if self.min_date < min_date_vacc:
+                # list of all df we want to concatenate
+                df_list = []
+                # create df for each date that needs to be added
+                for date in pd.date_range(start=pd.to_datetime(self.min_date), end=pd.to_datetime(min_date_vacc)-pd.Timedelta(days=1)):
+                    # get correct structure for subdataframe
+                    df_add_date = self.df_vaccinations.loc[self.df_vaccinations['Date']
+                                                           == min_date_vacc]
+                    # set correct date
+                    df_add_date['Date'] = date
+                    # set all values vor vaccinations to 0
+                    df_add_date.iloc[:, 3:] = 0
+                    df_list.append(df_add_date)
+                df_list.append(self.df_vaccinations)
+                self.df_vaccinations = pd.concat(df_list)
 
         with progress_indicator.Spinner(message="Preparing seasonality data"):
             # variable for seasonality
@@ -352,35 +371,29 @@ class NPIRegression():
                                     county, self.region_types[key-1]] += 1
 
         with progress_indicator.Spinner(message="Handle datetimes"):
+            # TODO: check if this works as expected
             # make dates consistent, use df_vaccinations as reference
 
-            # TODO: define timeframe we want to investigate
-            # TODO: make dataframes consistent wrt timeframe, need to insert 0 entries before vaccination timeframe
-            # for now, use df_vaccinations as reference because this has the least entries
-
-            # remove dates from df_r which are not in df_vaccinations and vice versa
-            # first remove all dates which are not in df_vaccination or df_npis
-            min_date_vacc = min(self.df_vaccinations.Date)
+            # first remove all dates which are not in df_npis
             min_date_npis = min(self.df_npis.Date)
-            min_date = max(min_date_npis, min_date_vacc.strftime("%Y-%m-%d"))
-            max_date_vacc = max(self.df_vaccinations.Date)
+            self.min_date = max(min_date_npis, self.min_date)
             max_date_npis = max(self.df_npis.Date)
-            max_date = min(max_date_npis, max_date_vacc.strftime("%Y-%m-%d"))
+            self.max_date = min(max_date_npis, self.max_date)
 
             self.df_r = mdfs.extract_subframe_based_on_dates(
-                self.df_r, min_date, max_date)
+                self.df_r, self.min_date, self.max_date)
             self.df_vaccinations = mdfs.extract_subframe_based_on_dates(
-                self.df_vaccinations, min_date, max_date)
+                self.df_vaccinations, self.min_date, self.max_date)
             self.df_npis = mdfs.extract_subframe_based_on_dates(
-                self.df_npis, min_date, max_date)
+                self.df_npis, self.min_date, self.max_date)
             self.df_regions = mdfs.extract_subframe_based_on_dates(
-                self.df_regions, min_date, max_date)
+                self.df_regions, self.min_date, self.max_date)
             self.df_seasonality = mdfs.extract_subframe_based_on_dates(
-                self.df_seasonality, min_date, max_date)
+                self.df_seasonality, self.min_date, self.max_date)
             self.df_agestructure = mdfs.extract_subframe_based_on_dates(
-                self.df_agestructure, min_date, max_date)
+                self.df_agestructure, self.min_date, self.max_date)
             self.df_variants = mdfs.extract_subframe_based_on_dates(
-                self.df_variants, min_date, max_date)
+                self.df_variants, self.min_date, self.max_date)
 
             self.df_npis['Date'] = pd.to_datetime(self.df_npis['Date'])
             self.df_vaccinations['Date'] = pd.to_datetime(
@@ -629,7 +642,7 @@ class NPIRegression():
         results = self.do_regression(
             self.df_pvalues['columns'][num_fixed_variables:])
 
-        self.plot_confidence_intervals(iteration='final')
+        self.plot_confidence_intervals(iteration='_final')
 
         return self.df_pvalues, results
 
@@ -701,7 +714,10 @@ class NPIRegression():
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
-    npi_regression = NPIRegression(counties)
+    min_date = '2020-03-01'
+    max_date = '2020-07-01'
+
+    npi_regression = NPIRegression(counties, min_date, max_date)
 
     df_pvalues, results = npi_regression.backward_selection(plot=True)
 
