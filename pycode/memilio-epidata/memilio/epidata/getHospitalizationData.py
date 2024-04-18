@@ -56,7 +56,7 @@ def hospit_sanity_checks(df):
     actual_strings_list = df.columns.tolist()
     # check number of data categories
     if len(actual_strings_list) != 6:
-        print("Warning: Number of data categories changed.")
+        gd.default_print("Warning", "Number of data categories changed.")
 
     # these strings need to be in the header
     test_strings = {
@@ -119,7 +119,8 @@ def get_hospitailzations_per_day(seven_days_values):
 
     # break after 5 runs to prevent endless loop
     if run == 5:
-        print("Can't get hospitalizations per day from incidence.")
+        gd.default_print(
+            "Error", "Can't get hospitalizations per day from incidence.")
     if len(daily_values[daily_values < 0]) > 0:
         raise gd.DataError('Negative hospitalizations found.')
     # check that daily values are calculated correctly
@@ -136,12 +137,11 @@ def get_hospitailzations_per_day(seven_days_values):
 def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                              file_format=dd.defaultDict['file_format'],
                              out_folder=dd.defaultDict['out_folder'],
-                             no_raw=dd.defaultDict['no_raw'],
                              start_date=dd.defaultDict['start_date'],
                              end_date=dd.defaultDict['end_date'],
                              impute_dates=dd.defaultDict['impute_dates'],
                              moving_average=dd.defaultDict['moving_average'],
-                             make_plot=dd.defaultDict['make_plot']
+                             **kwargs
                              ):
     """! Downloads or reads the RKI hospitalization data and writes them in different files.
 
@@ -160,16 +160,17 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         Here Dates are always imputed so False changes nothing.
     @param moving_average [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out weekend effects.  Default defined in defaultDict.
-    @param make_plot [currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
     impute_dates = True
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
@@ -177,9 +178,14 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     filename = "RKIHospitFull"
     url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv"
     path = os.path.join(directory + filename + ".json")
-    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
+    df_raw = gd.get_file(path, url, read_data, param_dict={},
+                         interactive=conf.interactive)
 
-    hospit_sanity_checks(df_raw)
+    if conf.checks == True:
+        hospit_sanity_checks(df_raw)
+    else:
+        gd.default_print(
+            'Warning', "Sanity checks for hospitalization data have not been executed.")
 
     if not no_raw:
         gd.write_dataframe(df_raw, directory, filename, file_format)

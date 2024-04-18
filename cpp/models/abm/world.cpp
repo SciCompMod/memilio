@@ -45,7 +45,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
-    assert((size_t)age.size < (size_t)parameters.get_num_groups());
+    assert(age.get() < parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
@@ -131,7 +131,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& trip        = m_trip_list.get_next_trip(weekend);
             auto& person      = m_persons[trip.person_id];
             auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
+            if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     person->apply_mask_intervention(personal_rng, target_location);

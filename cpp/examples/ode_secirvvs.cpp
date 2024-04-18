@@ -66,11 +66,16 @@ int main()
 
     model.parameters.get<mio::osecirvvs::ICUCapacity>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() = 0.0143;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
-
+    const size_t daily_vaccinations = 10;
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay((size_t)tmax + 1));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay((size_t)tmax + 1));
+    for (size_t i = 0; i < tmax + 1; ++i) {
+        auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
+        model.parameters.get<mio::osecirvvs::DailyFirstVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            num_vaccinations;
+        model.parameters.get<mio::osecirvvs::DailyFullVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            num_vaccinations;
+    }
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
@@ -78,11 +83,11 @@ int main()
     contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
 
     //times
-    model.parameters.get<mio::osecirvvs::IncubationTime>()[mio::AgeGroup(0)]       = 5.2;
-    model.parameters.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(0)]       = 0.5 * 3.33 + 0.5 * 5.2;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)] = 7;
-    model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]   = 6;
-    model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)] = 7;
+    model.parameters.get<mio::osecirvvs::TimeExposed>()[mio::AgeGroup(0)]            = 3.33;
+    model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[mio::AgeGroup(0)] = 1.87;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)]   = 7;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]     = 6;
+    model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)]   = 7;
 
     //probabilities
     model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.15;

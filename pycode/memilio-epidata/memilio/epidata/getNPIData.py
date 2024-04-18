@@ -118,13 +118,13 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
 def print_manual_download(filename, url):
     """! Print download message to ask the user manually download a file. """
 
-    print(
-        'This script needs manual downloading of files. Please register'
-        ' at corona-datenplatform.com and download ' + filename + ' from ' + url +
-        '. Then move it to a folder named raw_data in this directory.')
+    gd.default_print("Error",
+                     'This script needs manual downloading of files. Please register'
+                     ' at corona-datenplatform.com and download ' + filename + ' from ' + url +
+                     '. Then move it to a folder named raw_data in this directory.')
 
 
-def read_files(directory, fine_resolution):
+def read_files(directory, fine_resolution, run_checks):
     """! Reads files from local directory and returns data in dataframes
 
     @param directory Directory where data is loaded from.
@@ -137,7 +137,6 @@ def read_files(directory, fine_resolution):
     @return Data frames df_npis_old (Decreed, encoded NPIs for all German
         counties) and df_npis_desc (Description of NPIs)
     """
-    run_check = True
     if fine_resolution > 0:
         try:
             try:
@@ -200,13 +199,6 @@ def read_files(directory, fine_resolution):
                 df_npis_old['NPI_code'] = df_npis_old['NPI_code'].str.replace(
                     'code_m', 'M')
             except FileNotFoundError:
-                # TODO: sanity check fails with this file due to different shapes of the dataframe
-                # analysis runs without problems, check if results are the same and either change
-                # sanity check or the way the data from this file is handled.
-                # For now, the sanity check is deactivated
-                run_check = False
-                print(
-                    'WARNING: sanity check is deactivated. Results may be not as expected.')
                 df_npis_old = pd.read_csv(
                     os.path.join(
                         directory, 'kr_massnahmen_unterkategorien.csv'),
@@ -225,7 +217,7 @@ def read_files(directory, fine_resolution):
         for tcode in test_codes:
             for i in [''] + ["_" + str(i) for i in range(1, 6)]:
                 if (df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
-                    print(tcode+i + " used.")
+                    gd.default_print("Debug", tcode+i + " used.")
         # end check
 
     else:  # read aggregated NPIs
@@ -246,12 +238,12 @@ def read_files(directory, fine_resolution):
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=2, engine='openpyxl')
+                sheet_name=2, engine=gd.Conf.excel_engine)
         else:
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=3, engine='openpyxl')
+                sheet_name=3, engine=gd.Conf.excel_engine)
     except FileNotFoundError:
         print_manual_download(
             'datensatzbeschreibung_massnahmen.xlsx',
@@ -260,19 +252,21 @@ def read_files(directory, fine_resolution):
 
     # download combinations of npis
     try:
+        fname = 'combination_npis_incl_ranking.xlsx'
         if fine_resolution > 0:
             df_npis_combinations_pre = pd.read_excel(
                 os.path.join(
-                    directory, 'combination_npis_incl_ranking_v3.xlsx'), engine='openpyxl')
-            if run_check == True:
-                npi_sanity_check(df_npis_old, df_npis_desc,
-                                 df_npis_combinations_pre)
-            return df_npis_old, df_npis_desc, df_npis_combinations_pre
-        else:
-            return df_npis_old, df_npis_desc, None
+                    directory, fname), engine=gd.Conf.excel_engine)
     except FileNotFoundError:
-        print('File not found.')
-        raise FileNotFoundError
+        raise FileNotFoundError('File ' + fname + ' not found.')
+
+    if run_checks:
+        npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
+    else:
+        gd.default_print(
+            'Warning', "Sanity checks for NPI data have not been executed.")
+
+    return df_npis_old, df_npis_desc, df_npis_combinations_pre
 
 
 def activate_npis_based_on_incidence(
@@ -389,7 +383,7 @@ def drop_codes_and_categories(
     @return Returns dropped codes, prior codes and reduced original data frame.
     """
     if fine_resolution > 0:
-        # subcategories can only be removed for fine_resolution=1,2 as they dont exist for fine_resolution=0
+
         for i in range(1, 6):
             # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
             # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
@@ -403,50 +397,49 @@ def drop_codes_and_categories(
         # correct 'M16_200_2' to missing 'M16_100_2'
         npi_codes_prior[npi_codes_prior == 'M16_200_2'] = 'M16_100_2'
 
-    # check for missing codes
-    npi_codes_prior_data = df_npis_old[dd.EngEng['npiCode']].unique()
+        # check for missing codes
+        npi_codes_prior_data = df_npis_old[dd.EngEng['npiCode']].unique()
 
-    missing_codes = list(set(npi_codes_prior).difference(
-        npi_codes_prior_data))
-    if len(missing_codes) > 0:
-        # if incidence is grouped, only search for grouping codes without
-        # having a detailed "_DETAIL" naming as of MCODE_NUMBER_DETAIL
-        if fine_resolution == 1:
-            missing_grouped_codes = []
-            for mcode in missing_codes:
-                # only consider incidence independent npis
-                # only exit if one of these (i.e., MCODE_NUMBER) is missing
-                if len(mcode.split('_')) != 3:
-                    missing_grouped_codes.append(mcode)
-            if len(missing_grouped_codes) > 0:  # only MCODE_NUMBER codes
-                raise gd.DataError('Missing NPI codes: ' +
-                                   str(missing_grouped_codes))
-        else:
-            raise gd.DataError('Missing NPI codes: ' + str(missing_codes))
+        missing_codes = list(set(npi_codes_prior).difference(
+            npi_codes_prior_data))
+        if len(missing_codes) > 0:
+            # if incidence is grouped, only search for grouping codes without
+            # having a detailed "_DETAIL" naming as of MCODE_NUMBER_DETAIL
+            if fine_resolution == 1:
+                missing_grouped_codes = []
+                for mcode in missing_codes:
+                    # only consider incidence independent npis
+                    # only exit if one of these (i.e., MCODE_NUMBER) is missing
+                    if len(mcode.split('_')) != 3:
+                        missing_grouped_codes.append(mcode)
+                if len(missing_grouped_codes) > 0:  # only MCODE_NUMBER codes
+                    raise gd.DataError('Missing NPI codes: ' +
+                                       str(missing_grouped_codes))
+            else:
+                raise gd.DataError('Missing NPI codes: ' + str(missing_codes))
 
-    # we dont have any explanations from "datensatzbeschreibung_massnahmen"
-    # on these codes, so drop the rows.
-    codes_dropped = list(set(npi_codes_prior_data).difference(
-        npi_codes_prior))
-
-    # also remove dummy 'Platzhalter' categories
-    dummy_categories = []
-    for i in range(len(npi_codes_prior)):
-        if 'Platzhalter' in npi_codes_prior_desc[i]:
-            dummy_categories.append(npi_codes_prior[i])
-    # codes without explanation and dummy categories
-    # sorting done for consistenty, maybe not necessary
-    codes_dropped = list(
-        np.sort(codes_dropped + dummy_categories + missing_codes))
-    if len(codes_dropped) > 0:
-        df_npis_old = df_npis_old[~df_npis_old[dd.EngEng['npiCode']].isin(
-            codes_dropped)].reset_index(drop=True)
-        if fine_resolution > 0:
-            # no subcodes for fine_resolution = 0
+        # we dont have any explanations from "datensatzbeschreibung_massnahmen"
+        # on these codes, so drop the rows.
+        codes_dropped = list(set(npi_codes_prior_data).difference(
+            npi_codes_prior))
+        # also remove dummy 'Platzhalter' categories
+        dummy_categories = []
+        for i in range(len(npi_codes_prior)):
+            if 'Platzhalter' in npi_codes_prior_desc[i]:
+                dummy_categories.append(npi_codes_prior[i])
+        # codes without explanation and dummy categories
+        # sorting done for consistenty, maybe not necessary
+        codes_dropped = list(np.sort(codes_dropped + dummy_categories))
+        if len(codes_dropped) > 0:
+            df_npis_old = df_npis_old[~df_npis_old[dd.EngEng['npiCode']].isin(
+                codes_dropped)].reset_index(drop=True)
             # for every main code removed, all 5 subcodes have to be removed;
             # if this is not the case, the naming of them is wrong/not consistent
             if (len(codes_dropped) % 6) != 0:
                 raise gd.DataError('Error in NPI names, please check.')
+    else:
+        # no dropping for fine_resolution == 0
+        codes_dropped = []
 
     return codes_dropped, npi_codes_prior, df_npis_old
 
@@ -487,7 +480,8 @@ def get_npi_data(fine_resolution=2,
                  end_date=dd.defaultDict['end_date'],
                  counties_considered=geoger.get_county_ids(),
                  npi_activation_days_threshold=3,
-                 npi_lifting_days_threshold=5
+                 npi_lifting_days_threshold=5,
+                 **kwargs
                  ):
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
@@ -532,6 +526,8 @@ def get_npi_data(fine_resolution=2,
     @param npi_alifting_days_threshold [Default: 5]. Defines necessary number
          of days below case incidence threshold threshold to lift NPIs.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
 
     # Depending on the federal state and time period, there are
     # huge differences for number of days before the lifting and activation.
@@ -555,27 +551,31 @@ def get_npi_data(fine_resolution=2,
 
     # read manual downloaded files from directory
     df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(
-        directory, fine_resolution)
+        directory, fine_resolution, conf.checks)
 
-    print('Download completed.')
+    gd.default_print('Debug', 'Download completed.')
 
     # Compute column index of NPI start (columns with NPIs start with days
     # which are provided in format dYYYYMMDD).
     npi_start_col = np.where(
         df_npis_old.columns.str.contains('d2') == True)[0][0]
 
-    # get existing codes that are used;
-    # we don't have codes M22 - M24 but these are still listed in description
-
-    # count how many codes contain M22, M23 or M24
-    num_nonexistent_codes = df_npis_desc['Variablenname'].str.count(
-        "M22|M23|M24").sum()
-    # do not include these nonexistent codes
-    if num_nonexistent_codes != 0:
-        npi_codes_prior = df_npis_desc['Variablenname'].iloc[: -
-                                                             num_nonexistent_codes]
-        npi_codes_prior_desc = df_npis_desc['Variable'].iloc[: -
-                                                             num_nonexistent_codes]
+    # get existing codes that are used; for fine resolution we don't
+    # have codes M22 - M24 but these are still listed in description
+    if fine_resolution > 0:
+        # count how many codes contain M22, M23 or M24
+        num_nonexistent_codes = df_npis_desc['Variablenname'].str.count(
+            "M22|M23|M24").sum()
+        # do not include these nonexistent codes
+        if num_nonexistent_codes != 0:
+            npi_codes_prior = df_npis_desc['Variablenname'].iloc[: -
+                                                                 num_nonexistent_codes]
+            npi_codes_prior_desc = df_npis_desc['Variable'].iloc[: -
+                                                                 num_nonexistent_codes]
+        else:
+            npi_codes_prior = df_npis_desc['Variablenname']
+            npi_codes_prior_desc = df_npis_desc['Variable']
+    # for fine_resolution = 0 df_npis_old M22-M24 are empty)
     else:
         npi_codes_prior = df_npis_desc['Variablenname']
         npi_codes_prior_desc = df_npis_desc['Variable']
@@ -657,7 +657,8 @@ def get_npi_data(fine_resolution=2,
             df_npis_combinations[npic_uniq][1] = df_npis_combinations_pre.iloc[np.array(npi_groups_idx[i]),
                                                                                start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
             if (df_npis_combinations[npic_uniq][1]-np.transpose(df_npis_combinations[npic_uniq][1])).max() > 0:
-                print('Error in input file: Please correct combination matrix input.')
+                gd.default_print(
+                    'Error', 'Input file does not match with data. Please correct combination matrix input.')
             # make it a dataframe to allow easy removal of code lines and rows
             # if they are not used later on
             df_npis_combinations[npic_uniq][1] = pd.DataFrame(
@@ -692,9 +693,9 @@ def get_npi_data(fine_resolution=2,
                 df_in_valid = pd.read_excel(
                     os.path.join(
                         directory, 'combinations_npis_cleanoutput.xlsx'),
-                    sheet_name=i, engine='openpyxl')
+                    sheet_name=i, engine=gd.Conf.excel_engine)
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
-                    print('Error in combination matrix.')
+                    gd.default_print('Error', 'Error in combination matrix.')
                 del df_in_valid
             else:
                 df_out.to_excel(
@@ -727,7 +728,8 @@ def get_npi_data(fine_resolution=2,
             if not dummy_a[i] == dummy_c[i]:
                 errors.append(i)
         if not errors == [0, 1, 2, 3, 4, 5]:
-            print("Additional errors in consistent naming.")
+            gd.default_print(
+                "Error", "Additional errors in consistent naming.")
         # End of check
 
         # correct for consistent naming (mainly done for plotting reasons,
@@ -868,11 +870,11 @@ def get_npi_data(fine_resolution=2,
         for i in range(len(dates_new) - 1)]
     date_diff_idx = np.where(np.array(date_diff) > 1)[0]
     if max(date_diff) > 1:
-        print("Error. Dates missing in data frame:")
+        gd.default_print("Error", "Dates missing in data frame:")
         for i in date_diff_idx:
-            print(
-                "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
-                str(dates_new[i] + timedelta(date_diff[i] - 1)))
+            gd.default_print("Debug",
+                             "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
+                             str(dates_new[i] + timedelta(date_diff[i] - 1)))
         raise gd.DataError('Exiting. Dates missing in data frame.')
 
     min_date = []
@@ -924,46 +926,40 @@ def get_npi_data(fine_resolution=2,
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
     counter_cases_start = 0
 
-    # create dataframe to count multiple codes after incidence dependent (de-)activation
-    df_incid_depend = pd.DataFrame()
-
     # setup dataframe for each maingroup, same format as df_npi_combinations
     # used to count codes that occur simultaneously now (before any (de-)activation)
-    if fine_resolution == 2:
-        df_count_joint_codes = df_npis_combinations[:]
-        for maincode in df_count_joint_codes.keys():
-            df_count_joint_codes[maincode][1] *= 0
-        df_counted_joint_codes = count_code_multiplicities(df_npis_old, df_count_joint_codes,
-                                                           counties_considered=counties_considered)
-        save_interaction_matrix(df_counted_joint_codes,
-                                'joint_codes', directory)
-        plot_interaction_matrix('joint_codes', directory)
+    df_count_joint_codes = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_joint_codes.keys():
+        df_count_joint_codes[maincode][1] *= 0
+    df_counted_joint_codes = count_code_multiplicities(df_npis_old, df_count_joint_codes,
+                                                       counties_considered=counties_considered)
+    save_interaction_matrix(df_counted_joint_codes, 'joint_codes', directory)
+    plot_interaction_matrix('joint_codes', directory)
 
-        df_count_incid_depend = copy.deepcopy(df_npis_combinations)
-        for maincode in df_count_incid_depend.keys():
-            df_count_incid_depend[maincode][1] *= 0
+    # create dataframe to count multiple codes after incidence dependent (de-)activation
+    df_incid_depend = pd.DataFrame()
+    df_count_incid_depend = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_incid_depend.keys():
+        df_count_incid_depend[maincode][1] *= 0
 
-        # create dataframe to count multiple codes after strictness deactivation
-        df_count_active = copy.deepcopy(df_npis_combinations)
-        for maincode in df_count_active.keys():
-            df_count_active[maincode][1] *= 0
+    # create dataframe to count multiple codes after strictness deactivation
+    df_count_active = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_active.keys():
+        df_count_active[maincode][1] *= 0
 
-        # setup dataframe for each maingroup, same format as df_npi_combinations
-        # used to count number of codes that are deactivated
-        df_count_deactivation = copy.deepcopy(df_npis_combinations)
-        for maincode in df_count_deactivation.keys():
-            df_count_deactivation[maincode][1] *= 0
+    # setup dataframe for each maingroup, same format as df_npi_combinations
+    # used to count number of codes that are deactivated
+    df_count_deactivation = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_deactivation.keys():
+        df_count_deactivation[maincode][1] *= 0
 
-    if fine_resolution > 0:
-
-        all_subcodes = []
-        for maincode in df_npis_combinations.keys():
-            all_subcodes += df_npis_combinations[maincode][1].columns.to_list()
-            # check (and validate) that element 0 and 1 in df_npis_combination match.
-            if df_npis_combinations[maincode][1].columns.to_list() != list(
-                    df_npis_combinations[maincode][0].keys()):
-                raise gd.DataError(
-                    'Error. Description and table do not match.')
+    all_subcodes = []
+    for maincode in df_npis_combinations.keys():
+        all_subcodes += df_npis_combinations[maincode][1].columns.to_list()
+        # check (and validate) that element 0 and 1 in df_npis_combination match.
+        if df_npis_combinations[maincode][1].columns.to_list() != list(
+                df_npis_combinations[maincode][0].keys()):
+            raise gd.DataError('Error. Description and table do not match.')
 
     for countyID in counties_considered:
         cid = 0
@@ -1006,53 +1002,49 @@ def get_npi_data(fine_resolution=2,
         df_local_old = copy.deepcopy(df_npis_old[df_npis_old[dd.EngEng['idCounty']]
                                                  == countyID])
 
-        if fine_resolution == 2:
-            # get number of codes of one NPI (incidence indep. + dep.)
-            # for fine_resolution=2, inc_codes=6
-            inc_codes = len(np.where(df_npis.columns.str.contains(
-                npis[dd.EngEng['npiCode']][0]))[0])
+        # get number of codes of one NPI (incidence indep. + dep.)
+        # for fine_resolution=1, inc_codes=1, for fine_res=2, inc_codes=6
+        inc_codes = len(np.where(df_npis.columns.str.contains(
+            npis[dd.EngEng['npiCode']][0]))[0])
 
-            # Consistency of incidence independent and dependent NPIs:
-            # The same NPI should not be prescribed multiple times at the same day
-            # for different incidence-dependent thresholds or incidence-independently.
-            # In order to avoid contradictions, only retain the strictest mentioned
-            # implementation. Incidence-independent is always stricter than any
-            # incidence-dependent implementation.
-            # define if details are printed (probably to be deactivated)
-            print_details = True
-            for i in range(int(len(df_local_old)/inc_codes)):
+        # Consistency of incidence independent and dependent NPIs:
+        # The same NPI should not be prescribed multiple times at the same day
+        # for different incidence-dependent thresholds or incidence-independently.
+        # In order to avoid contradictions, only retain the strictest mentioned
+        # implementation. Incidence-independent is always stricter than any
+        # incidence-dependent implementation.
+        for i in range(int(len(df_local_old)/inc_codes)):
 
-                # check if access is correct
+            # check if access is correct
+            if not all(
+                [npis[dd.EngEng['npiCode']][i * inc_codes] in npi_code_test
+                 for npi_code_test in df_local_old.iloc
+                 [inc_codes * i: inc_codes * (i + 1),
+                  npi_start_col - 1].to_list()]):
+                raise gd.DataError('Wrong NPI rows aggregated.')
+
+            sum_npi_inc = np.where(
+                df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col:].sum() > 1)
+            if (len(sum_npi_inc[0]) > 0):
+                gd.default_print("Trace",
+                                 'Reduce multiple prescription in county ' + str(countyID) +
+                                 ' for NPI ' + str(npis.loc[inc_codes*i, 'Description']))
+                for j in sum_npi_inc[0]:
+                    # get lowest index (i.e., strictest implementation of NPI).
+                    idx_start = np.where(
+                        df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col+j])[0].min()
+                    # Remove less strict and thus contradictory
+                    # implementations of the same NPI the same day.
+                    df_local_old.iloc[inc_codes*i+idx_start +
+                                      1:inc_codes*(i+1), npi_start_col+j] = 0
+
                 if not all(
-                    [npis[dd.EngEng['npiCode']][i * inc_codes] in npi_code_test
-                     for npi_code_test in df_local_old.iloc
-                     [inc_codes * i: inc_codes * (i + 1),
-                     npi_start_col - 1].to_list()]):
-                    raise gd.DataError('Wrong NPI rows aggregated.')
+                    df_local_old.iloc
+                    [inc_codes * i: inc_codes * (i + 1),
+                     npi_start_col + sum_npi_inc[0]].sum() == 1):
+                    raise gd.DataError('Consistency correction failed.')
 
-                sum_npi_inc = np.where(
-                    df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col:].sum() > 1)
-                if (len(sum_npi_inc[0]) > 0):
-                    if print_details:
-                        print(
-                            'Reduce multiple prescription in county ' + str(countyID) +
-                            ' for NPI ' + str(npis.loc[inc_codes*i, 'Description']))
-                    for j in sum_npi_inc[0]:
-                        # get lowest index (i.e., strictest implementation of NPI).
-                        idx_start = np.where(
-                            df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col+j])[0].min()
-                        # Remove less strict and thus contradictory
-                        # implementations of the same NPI the same day.
-                        df_local_old.iloc[inc_codes*i+idx_start +
-                                          1:inc_codes*(i+1), npi_start_col+j] = 0
-
-                    if not all(
-                        df_local_old.iloc
-                        [inc_codes * i: inc_codes * (i + 1),
-                         npi_start_col + sum_npi_inc[0]].sum() == 1):
-                        raise gd.DataError('Consistency correction failed.')
-
-            ## end of consistency correction ##
+        ## end of consistency correction ##
 
         # potentially remove rows if they are not in npis dict
         npi_rows = [i in npis[dd.EngEng['npiCode']].values
@@ -1189,11 +1181,9 @@ def get_npi_data(fine_resolution=2,
                             days_deact = np.where(
                                 df_local_new_merged.loc[subcode_active, nocombi_code] > 0)[0]
                             if len(days_deact) > 0:
-                                print('Deactivating for ' +
-                                      'County ' + str(countyID))
-                                print('\t' + str(nocombi_code) + ' due to ' +
-                                      str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
-                                print('\n')
+                                gd.default_print("Trace", 'Deactivating for ' +
+                                                 'County ' + str(countyID)+'\t' + str(nocombi_code) + ' due to ' +
+                                                 str(subcode) + ' on ' + str(len(days_deact)) + ' days.\n')
                                 # take subcode_active rows as days_deact is
                                 # numbering inside subcode_active rows only,
                                 # not numbering on the whole df_local_new_merged
@@ -1240,34 +1230,32 @@ def get_npi_data(fine_resolution=2,
         # print progress
         if countyidx == 1 or countyidx % int(
                 len(counties_considered) / 10) == 0:
-            print('Progress ' + str(countyidx) + ' / ' +
-                  str(len(counties_considered)) +
-                  '. Estimated time remaining: ' +
-                  str(int(time_remain / 60)) + ' min.')
+            gd.default_print('Debug', 'Progress ' + str(countyidx) + ' / ' +
+                             str(len(counties_considered)) +
+                             '. Estimated time remaining: ' +
+                             str(int(time_remain / 60)) + ' min.')
 
-    if fine_resolution > 2:
-        save_interaction_matrix(df_count_deactivation,
-                                'count_deactivation', directory)
-        plot_interaction_matrix('count_deactivation', directory)
-        save_interaction_matrix(df_count_incid_depend,
-                                'joint_codes_incid_depend', directory)
-        plot_interaction_matrix('joint_codes_incid_depend', directory)
-
-        save_interaction_matrix(
-            df_count_active, 'joint_codes_active', directory)
-        plot_interaction_matrix('joint_codes_active', directory)
+    save_interaction_matrix(df_count_deactivation,
+                            'count_deactivation', directory)
+    plot_interaction_matrix('count_deactivation', directory)
 
     if counter_cases_start >= len(counties_considered)*0.05:
-        print('WARNING: DataFrame starts with reported cases > 0 '
-              'for more than 5 percent of the counties to be considered. '
-              'In this case, incidence computation and activation of '
-              'incidence-dependent NPIs cannot be ensured to work correctly. '
-              'Please consider a start date of some weeks ahead of the '
-              'time window to be analyzed for NPI\'s effects.')
+        gd.default_print('Warning', 'DataFrame starts with reported cases > 0 '
+                         'for more than 5 percent of the counties to be considered. '
+                         'In this case, incidence computation and activation of '
+                         'incidence-dependent NPIs cannot be ensured to work correctly. '
+                         'Please consider a start date of some weeks ahead of the '
+                         'time window to be analyzed for NPI\'s effects.')
+
+    save_interaction_matrix(df_count_incid_depend,
+                            'joint_codes_incid_depend', directory)
+    plot_interaction_matrix('joint_codes_incid_depend', directory)
+
+    save_interaction_matrix(df_count_active, 'joint_codes_active', directory)
+    plot_interaction_matrix('joint_codes_active', directory)
 
     # print sub counters
-    print('Sub task counters are: ')
-    print(counters)
+    gd.default_print('Debug', 'Sub task counters are: '+str(counters))
 
     # reset index and drop old index column
     df_npis.reset_index(inplace=True)
@@ -1294,8 +1282,8 @@ def get_npi_data(fine_resolution=2,
                     start_date_new, end_date_new,
                     fine_resolution)
                 if (a != b):
-                    print('Error in NPI activation computation')
-                    print(a, b, a - b)
+                    gd.default_print('Error', 'Error in NPI activation computation' +
+                                     str(a) + str(b) + str(a - b))
 
     #### end validation ####
 
@@ -1412,7 +1400,7 @@ def plot_interaction_matrix(filename, directory):
 
     try:
         codelist = pd.ExcelFile(os.path.join(
-            directory, filename + '.xlsx'), engine='openpyxl').sheet_names
+            directory, filename + '.xlsx'), engine=gd.Conf.excel_engine).sheet_names
     except FileNotFoundError:
         raise FileNotFoundError('File ' + filename + ' not found.')
 
@@ -1431,7 +1419,7 @@ def plot_interaction_matrix(filename, directory):
     for code in codelist:
         df = pd.read_excel(
             os.path.join(directory, filename + '.xlsx'),
-            sheet_name=code, engine='openpyxl')
+            sheet_name=code, engine=gd.Conf.excel_engine)
 
         # remove first column and convert to numpy array
         array_exclusion = df.iloc[:, 1:].to_numpy()

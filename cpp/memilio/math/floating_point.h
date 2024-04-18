@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_MATH_FLOATING_POINT_H
-#define EPI_MATH_FLOATING_POINT_H
+#ifndef MIO_MATH_FLOATING_POINT_H
+#define MIO_MATH_FLOATING_POINT_H
 
 #include <algorithm>
 #include <cmath>
@@ -26,12 +26,13 @@
 
 namespace mio
 {
+
 /**
-     * maximum absolute value of two numbers.
-     * @param v1 first number
-     * @param v2 second number
-     * @return maximum absolute value between v1 and v2
-     */
+ * maximum absolute value of two numbers.
+ * @param v1 first number
+ * @param v2 second number
+ * @return maximum absolute value between v1 and v2
+ */
 template <class T>
 T abs_max(T v1, T v2)
 {
@@ -39,15 +40,15 @@ T abs_max(T v1, T v2)
 }
 
 /**
-     * compare two floating point values for equality with tolerances.
-     * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
-     * Otherwise use relative tolerance. If unsure, use both.
-     * @param v1 first floating point value
-     * @param v2 second floating point value
-     * @param abs_tol maximum allowed absolute difference, default 0.
-     * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
-     * @return true if v1 is within the specified relative OR absolute tolerance of v2  
-     */
+ * compare two floating point values for equality with tolerances.
+ * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
+ * Otherwise use relative tolerance. If unsure, use both.
+ * @param v1 first floating point value
+ * @param v2 second floating point value
+ * @param abs_tol maximum allowed absolute difference, default 0.
+ * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
+ * @return true if v1 is within the specified relative OR absolute tolerance of v2  
+ */
 template <class T>
 bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
@@ -56,38 +57,38 @@ bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_li
 }
 
 /**
-     * compare two floating point values with tolerances.
-     * v1 < v2 if 
-     *  a) v1 not == v2 within tolerances and 
-     *  b) v1 not > v2.
-     * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
-     * Use relative tolerance (or both) otherwise.
-     * @param v1 first floating point value
-     * @param v2 second floating point value
-     * @param abs_tol maximum allowed absolute difference for equality, default 0. 
-     * @param rel_tol maximum allowed relative difference for equality, default numeric_limits::min.
-     * @return true if v1 is less than v2 and not within relative or absolute tolerance of v2.
-     */
+ * compare two floating point values with tolerances.
+ * v1 < v2 if 
+ *  a) v1 not == v2 within tolerances and 
+ *  b) v1 not > v2.
+ * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
+ * Use relative tolerance (or both) otherwise.
+ * @param v1 first floating point value
+ * @param v2 second floating point value
+ * @param abs_tol maximum allowed absolute difference for equality, default 0. 
+ * @param rel_tol maximum allowed relative difference for equality, default numeric_limits::min.
+ * @return true if v1 is less than v2 and not within relative or absolute tolerance of v2.
+ */
 template <class T>
 bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
     auto diff = v1 - v2;
-    return diff < -abs_tol || diff < -abs_max(v1, v2) * rel_tol;
+    return diff < -(abs_tol + rel_tol * abs_max(v1, v2));
 }
 
 /**
-     * compare two floating point values with tolerances.
-     * v1 > v2 if 
-     *  a) v1 not == v2 within tolerances AND 
-     *  b) v1 not < v2.
-     * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
-     * Use relative tolerance (or both) otherwise.
-     * @param v1 first floating point value
-     * @param v2 second floating point value
-     * @param abs_tol maximum allowed absolute difference, default 0. 
-     * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
-     * @return true if v1 is greater than v2 and not within absolute or relative tolerance of v2.
-     */
+ * compare two floating point values with tolerances.
+ * v1 > v2 if 
+ *  a) v1 not == v2 within tolerances AND 
+ *  b) v1 not < v2.
+ * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
+ * Use relative tolerance (or both) otherwise.
+ * @param v1 first floating point value
+ * @param v2 second floating point value
+ * @param abs_tol maximum allowed absolute difference, default 0. 
+ * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
+ * @return true if v1 is greater than v2 and not within absolute or relative tolerance of v2.
+ */
 template <class T>
 bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
@@ -95,42 +96,43 @@ bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_
 }
 
 /**
-     * compare two floating point values with tolerances.
-     * v1 <= v2 if 
-     *  a) v1 < v2 OR 
-     *  b) v1 == v2 within tolerances.
-     * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
-     * Use relative tolerance (or both) otherwise.
-     * @param v1 first floating point value
-     * @param v2 second floating point value
-     * @param abs_tol maximum allowed absolute difference, default 0. 
-     * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
-     * @return true if v1 is less than v2 or within relative or absolute tolerances of v2.
-     */
+ * compare two floating point values with tolerances.
+ * v1 <= v2 if 
+ *  a) v1 < v2 OR 
+ *  b) v1 == v2 within tolerances.
+ * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
+ * Use relative tolerance (or both) otherwise.
+ * @param v1 first floating point value
+ * @param v2 second floating point value
+ * @param abs_tol maximum allowed absolute difference, default 0. 
+ * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
+ * @return true if v1 is less than v2 or within relative or absolute tolerances of v2.
+ */
 template <class T>
 bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
-    return !floating_point_less(v2, v1, abs_tol, rel_tol);
+    return !floating_point_greater(v1, v2, abs_tol, rel_tol);
 }
 
 /**
-     * compare two floating point values with tolerances.
-     * v1 >= v2 if 
-     *  a) v1 > v2 OR 
-     *  b) v1 == v2 within tolerances.
-     * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
-     * Use relative tolerance (or both) otherwise.
-     * @param v1 first floating point value
-     * @param v2 second floating point value
-     * @param abs_tol maximum allowed absolute difference, default 0. 
-     * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
-     * @return true if v1 is greater than v2 or within absolute or relative tolerance of v2.
-     */
+ * compare two floating point values with tolerances.
+ * v1 >= v2 if 
+ *  a) v1 > v2 OR 
+ *  b) v1 == v2 within tolerances.
+ * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
+ * Use relative tolerance (or both) otherwise.
+ * @param v1 first floating point value
+ * @param v2 second floating point value
+ * @param abs_tol maximum allowed absolute difference, default 0. 
+ * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
+ * @return true if v1 is greater than v2 or within absolute or relative tolerance of v2.
+ */
 template <class T>
 bool floating_point_greater_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
 {
     return !floating_point_less(v1, v2, abs_tol, rel_tol);
 }
+
 } // namespace mio
 
-#endif
+#endif // MIO_MATH_FLOATING_POINT_H
