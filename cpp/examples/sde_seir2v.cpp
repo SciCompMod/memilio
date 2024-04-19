@@ -93,7 +93,7 @@ int main()
 
     double t0   = 0.;
     double tmid = 100.;
-    double tmax = 200.;
+    double tmax = 400.;
     double dt   = 0.1;
 
     double total_population = 1000;
@@ -109,7 +109,7 @@ int main()
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1)}]  = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV2)}]  = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV1)}]  = 100;
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV2)}]  = 0;
+    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV2)}]  = 0.01;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV1)}] = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV2)}] = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1V2)}]  = 0;
@@ -140,7 +140,7 @@ int main()
 
     model.check_constraints();
 
-    auto ssirs = mio::sseir2v::simulate(t0, tmid, dt, model);
+    auto ssirs = mio::sseir2v::simulate(t0, 23, dt, model);
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::Susceptible)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[0];
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[1];
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV1)}]  = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[2];
@@ -155,6 +155,6 @@ int main()
 
     //print_to_file(ssirs, {"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"}, "seir2v_1.txt");
     ssirs.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
-    ssirs2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+    //ssirs2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
     getchar();
 }

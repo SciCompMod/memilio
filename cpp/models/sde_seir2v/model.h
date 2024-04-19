@@ -134,7 +134,7 @@ public:
         flows[get_flat_flow_index<InfectionState::RecoveredV1, InfectionState::ExposedV1V2>()] = std::max(
             std::min(
                 coeffStoIV2 * y[(size_t)InfectionState::RecoveredV1] 
-                    * pop[(size_t)InfectionState::InfectedV1V2]+ pop[(size_t)InfectionState::InfectedV2] +
+                    * (pop[(size_t)InfectionState::InfectedV1V2]+ pop[(size_t)InfectionState::InfectedV2]) +
                     sqrt(coeffStoIV2 * y[(size_t)InfectionState::RecoveredV1] * (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2])) *
                         inv_sqrt_dt * rv1_ev1v2,
                 y[(size_t)InfectionState::RecoveredV1] / step_size),
