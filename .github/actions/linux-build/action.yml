@@ -109,7 +109,7 @@ runs:
       uses: actions/cache/save@v4
       with:
         path: cpp/.ccache
-        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}-${{ hashFiles('cpp/.ccache/*/*/!(stats)') }}
+        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}-${{ hashFiles('cpp/.ccache/**', '!**/stats') }}
     - name: create build dir archive
       shell: bash
       run: |
