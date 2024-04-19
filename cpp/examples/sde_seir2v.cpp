@@ -93,10 +93,10 @@ int main()
 
     double t0   = 0.;
     double tmid = 100.;
-    double tmax = 400.;
+    double tmax = 200.;
     double dt   = 0.1;
 
-    double total_population = 180000;
+    double total_population = 1000;
 
     mio::RandomNumberGenerator rng;
     std::initializer_list<uint32_t> seeds = {14159265u, 35897932u};
@@ -126,12 +126,6 @@ int main()
         model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1V2)}] -
         model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV1V2)}] -
         model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV1V2)}];
-    
-  
-
-
-    model.parameters.get<mio::sseir2v::ContactPatterns>().get_baseline()(0, 0) = 1;
-    model.parameters.get<mio::sseir2v::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
     double beta = mio::DistributionAdapter<std::lognormal_distribution<double>>::get_instance()(rng, std::log(0.08), 0.5);
     double kappa = mio::DistributionAdapter<std::lognormal_distribution<double>>::get_instance()(rng, std::log(8), 0.2);
@@ -159,7 +153,7 @@ int main()
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV1V2)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[9];
     auto ssirs2 = mio::sseir2v::simulate(tmid, tmax, dt, model);
 
-    print_to_file(ssirs, {"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"}, "seir2v_1.txt");
+    //print_to_file(ssirs, {"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"}, "seir2v_1.txt");
     ssirs.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
     ssirs2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
     getchar();

@@ -55,9 +55,6 @@ public:
         auto& params     = this->parameters;
         double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
-                           
-        std::initializer_list<uint32_t> seeds = {14159265u, 35897932u};
-        rng.seed(seeds);
 
         double si = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
         double ir = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);

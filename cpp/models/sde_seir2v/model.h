@@ -93,12 +93,12 @@ public:
                         inv_sqrt_dt * s_ev1,
                 y[(size_t)InfectionState::Susceptible] / step_size),
             0.);
-
+         
         flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV2>()] = std::max(
             std::min(
                 coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * 
-                    (pop[(size_t)InfectionState::InfectedV1V2]+ pop[(size_t)InfectionState::InfectedV2]) +
-                    sqrt(coeffStoIV2 * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::InfectedV2]) *
+                    (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2]) +
+                    sqrt(coeffStoIV2 * y[(size_t)InfectionState::Susceptible] * (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2])) *
                         inv_sqrt_dt * s_ev2,
                 y[(size_t)InfectionState::Susceptible] / step_size),
             0.);  
@@ -134,8 +134,8 @@ public:
         flows[get_flat_flow_index<InfectionState::RecoveredV1, InfectionState::ExposedV1V2>()] = std::max(
             std::min(
                 coeffStoIV2 * y[(size_t)InfectionState::RecoveredV1] 
-                    * (pop[(size_t)InfectionState::InfectedV1V2]+ pop[(size_t)InfectionState::InfectedV2])  +
-                    sqrt(coeffStoIV2 * y[(size_t)InfectionState::RecoveredV1] * pop[(size_t)InfectionState::InfectedV1V2]) *
+                    * pop[(size_t)InfectionState::InfectedV1V2]+ pop[(size_t)InfectionState::InfectedV2] +
+                    sqrt(coeffStoIV2 * y[(size_t)InfectionState::RecoveredV1] * (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2])) *
                         inv_sqrt_dt * rv1_ev1v2,
                 y[(size_t)InfectionState::RecoveredV1] / step_size),
             0.);
