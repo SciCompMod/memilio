@@ -105,7 +105,7 @@ runs:
         ccache --show-stats
     - name: save ccache
       id: save-ccache
-      if: ${{ github.ref_name == 'main' || github.ref_name == '994/merge' }}
+      if: ${{ github.ref_name == 'main' || github.ref_name == '994/merge' || github.ref_name == '305-ccache-in-CI' }}
       uses: actions/cache/save@v4
       with:
         path: cpp/.ccache
