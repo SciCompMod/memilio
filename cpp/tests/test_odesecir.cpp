@@ -17,16 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "matchers.h"
+#include "distributions_helpers.h"
 #include "load_test_data.h"
+#include "matchers.h"
+
 #include "ode_secir/model.h"
-#include "memilio/math/adapt_rk.h"
 #include "ode_secir/parameter_space.h"
-#include "ode_secir/analyze_result.h"
 #include "ode_secir/parameters.h"
 #include "ode_secir/parameters_io.h"
-#include "memilio/io/epi_data.h"
-#include <distributions_helpers.h>
+#include "memilio/data/analyze_result.h"
+#include "memilio/math/adapt_rk.h"
+
 #include <gtest/gtest.h>
 
 TEST(TestOdeSecir, compareWithPreviousRun)

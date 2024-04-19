@@ -36,6 +36,7 @@
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
 #include "memilio/compartments/parameter_studies.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
@@ -208,8 +209,8 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>(
         m, "ModelBase");
-    py::class_<mio::osecir::Model<double>,
-               mio::CompartmentalModel<double, mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>>>(
+    py::class_<mio::osecir::Model<double>, mio::CompartmentalModel<double, mio::osecir::InfectionState,
+                                                                   SecirPopulations, mio::osecir::Parameters<double>>>(
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
