@@ -66,7 +66,7 @@ runs:
         fi
     - name: restore ccache
       id: restore-ccache
-      uses: actions/cache/restore@v2
+      uses: actions/cache/restore@v4
       with:
         path: cpp/.ccache
         key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
@@ -106,7 +106,7 @@ runs:
     - name: save ccache
       id: save-ccache
       if: ${{ github.ref_name == 'main' || github.ref_name == '994/merge' }}
-      uses: actions/cache/save@v2
+      uses: actions/cache/save@v4
       with:
         path: cpp/.ccache
         key: ${{ steps.restore-ccache.outputs.cache-primary-key }}
