@@ -24,33 +24,15 @@
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 
-#include "ode_secir/parameters_io.h"
-#include "memilio/utils/logging.h"
-#include <iterator>
+#include "memilio/config.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
+#include "ode_secir/parameters_io.h"
 #include "memilio/io/epi_data.h"
-#include "memilio/utils/memory.h"
-#include "memilio/utils/uncertain_value.h"
+#include "memilio/io/io.h"
 #include "memilio/utils/stl_util.h"
-#include "memilio/mobility/graph.h"
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/epidemiology/damping.h"
-#include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/date.h"
-
-#include <json/json.h>
-
-#include <boost/filesystem.hpp>
-
-#include <numeric>
-#include <vector>
-#include <iostream>
-#include <string>
-#include <random>
-#include <fstream>
 
 namespace mio
 {
@@ -222,7 +204,7 @@ IOResult<void> read_confirmed_cases_data(
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {
-    BOOST_OUTCOME_TRY(divi_data, mio::read_divi_data(path));
+    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
 
     auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -254,7 +236,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 IOResult<std::vector<std::vector<double>>>
 read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups)
 {
-    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path, !accumulate_age_groups));
+    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path, !accumulate_age_groups));
     //if we set up the model for one age group, the population data should be read in with the
     //age groups given in the population data json file and are accumulated later
     //otherwise the populations are directly saved for the correct model age groups

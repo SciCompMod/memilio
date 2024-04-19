@@ -24,18 +24,11 @@
 #include "memilio/math/integrator.h"
 #include "memilio/utils/logging.h"
 
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
-GCC_CLANG_DIAGNOSTIC(ignored "-Wlanguage-extension-token")
-MSVC_WARNING_DISABLE_PUSH(4127)
 #include "boost/numeric/odeint/external/eigen/eigen_algebra.hpp"
 #include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
-#include "boost/numeric/odeint/stepper/runge_kutta4.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 // #include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp" // TODO: reenable once boost bug is fixed
-MSVC_WARNING_POP()
-GCC_CLANG_DIAGNOSTIC(pop)
 
 namespace mio
 {

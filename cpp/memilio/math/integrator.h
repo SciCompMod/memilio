@@ -81,6 +81,7 @@ public:
      */
     OdeIntegrator(std::shared_ptr<IntegratorCore<FP>> core)
         : m_core(core)
+        , m_is_adaptive(false)
     {
     }
 
@@ -110,10 +111,11 @@ public:
 
         bool step_okay = true;
 
+        FP dt_copy; // used to check whether step sizing is adaptive
         FP dt_restore = 0; // used to restore dt if dt was decreased to reach tmax
         FP t          = t0;
-        size_t i      = results.get_num_time_points() - 1;
-        while (fabs((tmax - t) / (tmax - t0)) > 1e-10) {
+
+        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
             //we don't make timesteps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
             //but also unlikely to happen. may need to be reevaluated
@@ -122,24 +124,29 @@ public:
                 dt_restore = dt;
                 dt         = tmax - t;
             }
+            dt_copy = dt;
+
             results.add_time_point();
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
-            ++i;
+            // if dt has been changed (even slighly) by step, register the current m_core as adaptive
+            m_is_adaptive |= !floating_point_equal(dt, dt_copy);
         }
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
         dt = max(dt, dt_restore);
 
-        if (!step_okay) {
-            log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
-        }
-        else if (fabs((tmax - t) / (tmax - t0)) > 1e-14) {
-            log_warning("Last time step too small. Could not reach tmax exactly.");
-        }
-        else {
-            log_info("Adaptive step sizing successful to tolerances.");
+        if (m_is_adaptive) {
+            if (!step_okay) {
+                log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
+            }
+            else if (fabs((tmax - t) / (tmax - t0)) > 1e-14) {
+                log_warning("Last time step too small. Could not reach tmax exactly.");
+            }
+            else {
+                log_info("Adaptive step sizing successful to tolerances.");
+            }
         }
 
         return results.get_last_value();
@@ -147,11 +154,13 @@ public:
 
     void set_integrator(std::shared_ptr<IntegratorCore<FP>> integrator)
     {
-        m_core = integrator;
+        m_core        = integrator;
+        m_is_adaptive = false;
     }
 
 private:
     std::shared_ptr<IntegratorCore<FP>> m_core;
+    bool m_is_adaptive;
 };
 
 } // namespace mio

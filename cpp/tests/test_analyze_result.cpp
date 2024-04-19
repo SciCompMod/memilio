@@ -17,10 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/compartments/simulation.h"
-#include "ode_secir/analyze_result.h"
 #include "abm/analyze_result.h"
+#include "memilio/compartments/simulation.h"
 #include "matchers.h"
+#include "ode_secir/model.h"
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
@@ -560,7 +561,6 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
     EXPECT_EQ(check7, 0.4);
     EXPECT_EQ(check8, 0.5);
 }
-
 
 TEST(TestDistance, same_result_zero_distance)
 {

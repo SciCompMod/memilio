@@ -25,15 +25,8 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ode_secir/model.h"
-#include "ode_secir/analyze_result.h"
-#include "memilio/math/eigen_util.h"
-#include "memilio/mobility/graph.h"
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/io/io.h"
-#include "memilio/io/json_serializer.h"
-#include "memilio/io/result_io.h"
 #include "memilio/io/epi_data.h"
-#include "memilio/utils/date.h"
+#include "memilio/io/result_io.h"
 
 namespace mio
 {
@@ -106,7 +99,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
     std::vector<std::vector<double>> mu_H_U{model.size()};
     std::vector<std::vector<double>> mu_U_D{model.size()};
 
-    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
 
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
@@ -242,7 +235,7 @@ template <typename FP = double>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
                                    const std::vector<int>& vregion, bool accumulate_age_groups = false)
 {
-    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion, accumulate_age_groups));
+    BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion, accumulate_age_groups));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
@@ -299,7 +292,7 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
 
     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
 
-    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
+    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
 
     for (size_t node = 0; node < model.size(); node++) {
         for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
@@ -360,7 +353,7 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
             t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::read_divi_data(divi_data_path, region, date, num_icu));
         bool interpolate_rki_age_groups = num_age_groups == 1 ? true : false;
-        BOOST_OUTCOME_TRY(num_population,
+        BOOST_OUTCOME_TRY(auto&& num_population,
                           details::read_population_data(population_data_path, region, interpolate_rki_age_groups));
 
         for (size_t i = 0; i < region.size(); i++) {

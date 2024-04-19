@@ -21,7 +21,7 @@
 #define EPI_UTILS_PARAMETER_SET_H
 
 #include "memilio/io/io.h"
-#include "memilio/utils/stl_util.h"
+
 #include <tuple>
 #include <utility>
 

@@ -24,8 +24,6 @@
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
 
-#include <vector>
-
 namespace mio
 {
 namespace oseir
@@ -205,7 +203,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase<FP>::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 };

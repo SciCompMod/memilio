@@ -21,7 +21,6 @@
 #ifndef ODESEAIR_PARAMETERS_H
 #define ODESEAIR_PARAMETERS_H
 
-//#include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
 
 namespace mio
@@ -206,7 +205,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase<FP>::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 };

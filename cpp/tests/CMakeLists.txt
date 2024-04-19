@@ -38,6 +38,7 @@ set(TESTSOURCES
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
     test_abm_world.cpp
+    test_math_floating_point.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
     test_type_safe.cpp
@@ -88,7 +89,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir lct_secir abm gtest_main)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir lct_secir abm gtest_main AD::AD)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files

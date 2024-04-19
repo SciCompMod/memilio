@@ -226,7 +226,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
 
     // Compare the result of eval_right_hand_side() with a hand calculated result.
-    unsigned int num_subcompartments = LctState::Count;
+    int num_subcompartments = LctState::Count;
     Eigen::VectorXd dydt(num_subcompartments);
     model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
 
@@ -234,7 +234,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
         1.6901;
 
-    for (unsigned int i = 0; i < num_subcompartments; i++) {
+    for (int i = 0; i < num_subcompartments; i++) {
         ASSERT_NEAR(compare[i], dydt[i], 1e-3);
     }
 }
@@ -460,17 +460,17 @@ TEST(TestLCTSecir, testConstraints)
     using LctState = Model::LctState;
 
     // Check wrong size of initial value vector.
-    Model model1(std::move(Eigen::VectorXd::Ones((int)LctState::Count - 1)), std::move(parameters_lct));
+    Model model1(std::move(Eigen::VectorXd::Ones(LctState::Count - 1)), std::move(parameters_lct));
     constraint_check = model1.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with values smaller than zero.
-    Model model2(std::move(Eigen::VectorXd::Constant((int)LctState::Count, -1)), std::move(parameters_lct));
+    Model model2(std::move(Eigen::VectorXd::Constant(LctState::Count, -1)), std::move(parameters_lct));
     constraint_check = model2.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with correct conditions.
-    Model model3(std::move(Eigen::VectorXd::Constant((int)LctState::Count, 1)));
+    Model model3(std::move(Eigen::VectorXd::Constant(LctState::Count, 1)));
     constraint_check = model3.check_constraints();
     EXPECT_FALSE(constraint_check);
 

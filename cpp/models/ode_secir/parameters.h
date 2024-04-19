@@ -20,16 +20,12 @@
 #ifndef SECIR_PARAMETERS_H
 #define SECIR_PARAMETERS_H
 
-#include "memilio/math/eigen.h"
-#include "memilio/utils/uncertain_value.h"
-#include "memilio/math/adapt_rk.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/dynamic_npis.h"
-#include "memilio/utils/parameter_set.h"
+#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/custom_index_array.h"
-
-#include <vector>
+#include "memilio/utils/parameter_set.h"
+#include "memilio/utils/uncertain_value.h"
 
 namespace mio
 {
@@ -456,7 +452,7 @@ public:
                             "Consider to cancel and reset parameters.",
                             this->template get<TimeExposed<FP>>()[i], tol_times);
                 this->template get<TimeExposed<FP>>()[i] = tol_times;
-                corrected                   = true;
+                corrected                                = true;
             }
 
             if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < tol_times) {
@@ -465,7 +461,7 @@ public:
                             "Consider to cancel and reset parameters.",
                             this->template get<TimeInfectedNoSymptoms<FP>>()[i], tol_times);
                 this->template get<TimeInfectedNoSymptoms<FP>>()[i] = tol_times;
-                corrected                              = true;
+                corrected                                           = true;
             }
 
             if (this->template get<TimeInfectedSymptoms<FP>>()[i] < tol_times) {
@@ -676,7 +672,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase<FP>::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 
