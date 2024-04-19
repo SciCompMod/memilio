@@ -53,4 +53,5 @@ int main()
     auto ssirs = mio::ssirs::simulate(t0, tmax, dt, model);
 
     ssirs.print_table({"Susceptible", "Infected", "Recovered"});
+    getchar();
 }
