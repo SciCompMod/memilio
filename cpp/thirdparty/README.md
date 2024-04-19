@@ -10,4 +10,5 @@ Most dependencies of this project don't need to be installed manually. These dep
 
 The repository of the dependency is cloned during CMake configuration into the `<build>/_deps/<xyz>-src` directory. The dependency is then built together with the MEmilio project. The version of the package is set in the [thirdparty CMakeLists.txt](CMakeLists.txt). To upgrade the version, simply increase the version number there.
 
-Note: Cloning the boost git repository can take a while. Especially for this dependency, it may be useful to set the `MEMILIO_USE_BUNDLED_BOOST` option to `OFF` if the package is already installed. It is planned to offer the option to use a minimal extract of boost library as an archive included in the MEmilio project. With the minimal version of boost, only limited functionality of MEmilio can be used.
+Note: Cloning the boost git repository can take a while. Especially for this dependency, it may be useful to set the `MEMILIO_USE_BUNDLED_BOOST` option to `OFF` if the package is already installed. The installed boost version must be at least version 1.76.0.
+ It is planned to offer the option to use a minimal extract of boost library as an archive included in the MEmilio project. With the minimal version of boost, only limited functionality of MEmilio can be used.

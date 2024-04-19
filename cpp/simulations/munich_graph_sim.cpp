@@ -85,8 +85,8 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model, mio::MigrationParam
     //read node ids
     bool is_node_for_county         = false;
     bool interpolate_rki_age_groups = false;
-    BOOST_OUTCOME_TRY(auto node_ids, mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"),
-                                                       is_node_for_county, interpolate_rki_age_groups));
+    BOOST_OUTCOME_TRY(auto&& node_ids, mio::get_node_ids(mio::path_join((data_dir).string(), "population_data.json"),
+                                                         is_node_for_county, interpolate_rki_age_groups));
     std::vector<mio::osecir::Model> nodes(node_ids.size(), mio::osecir::Model(int(size_t(params.get_num_groups()))));
     //set parameters for every node
     for (auto& node : nodes) {
@@ -109,7 +109,7 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model, mio::MigrationParam
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
     //mobility matrix has to be provided by the user as input and should have shape num_nodes x num_nodes
-    BOOST_OUTCOME_TRY(auto mobility_data,
+    BOOST_OUTCOME_TRY(auto&& mobility_data,
                       mio::read_mobility_plain(mio::path_join((data_dir).string(), "mobility_matrix.txt")));
     if (mobility_data.rows() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data.cols() != Eigen::Index(params_graph.nodes().size())) {
@@ -181,12 +181,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
 
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(auto created_graph, get_graph(start_date, data_dir));
+        BOOST_OUTCOME_TRY(auto&& created_graph, get_graph(start_date, data_dir));
         BOOST_OUTCOME_TRY(mio::write_graph(created_graph, save_dir.string()));
         params_graph = created_graph;
     }
     else {
-        BOOST_OUTCOME_TRY(auto loaded_graph, mio::read_graph<mio::osecir::Model>(save_dir.string()));
+        BOOST_OUTCOME_TRY(auto&& loaded_graph, mio::read_graph<mio::osecir::Model>(save_dir.string()));
         params_graph = loaded_graph;
     }
 
