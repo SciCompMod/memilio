@@ -77,6 +77,7 @@ runs:
         export CCACHE_DIR=$(pwd)/.ccache
         export CCACHE_LOGFILE=$(pwd)/.ccache.log
         export CCACHE_MAXSIZE=1G
+        export CCACHE_STATSLOG=$(pwd)/.ccache.stats
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
@@ -100,15 +101,18 @@ runs:
         mkdir -p build && cd build
         cmake -DCMAKE_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
-        ccache -p #config
-        ccache -s #stats
+        ccache --show-config
+        echo "all stats"
+        ccache --show-stats
+        echo "stats for this build only"
+        ccache --show-log-stats
     - name: save ccache
       id: save-ccache
       if: ${{ github.ref_name == 'main' || github.ref_name == '994/merge' }}
       uses: actions/cache/save@v4
       with:
         path: cpp/.ccache
-        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}-${{ hashFiles('cpp/.ccache/**') }}
+        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}-${{ hashFiles('cpp/.ccache/*/*/!(stats)') }}
     - name: create build dir archive
       shell: bash
       run: |
