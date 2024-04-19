@@ -111,6 +111,7 @@ runs:
         key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
     - name: dont save ccache
       if: ${{ github.ref != 'refs/heads/main' }}
+      shell: bash
       run: |
         echo "Not saving cache!"
     - name: create build dir archive
