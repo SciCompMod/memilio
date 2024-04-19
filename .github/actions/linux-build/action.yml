@@ -64,8 +64,8 @@ runs:
             sudo apt-get -qq -y install clang-14
           fi
         fi
-    - name: load ccache
-      id: load-ccache
+    - name: restore ccache
+      id: restore-ccache
       uses: actions/cache/restore@v3
       with:
         path: cpp/.ccache
@@ -76,6 +76,7 @@ runs:
         cd cpp
         export CCACHE_DIR=$(pwd)/.ccache
         export CCACHE_LOGFILE=$(pwd)/.ccache.log
+        export CCACHE_MAXSIZE=1G
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
@@ -104,16 +105,16 @@ runs:
         ls -la ..
     - name: save ccache
       id: save-ccache
-      if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/305-ccache-in-CI' }}
+      if: ${{ github.ref_name == 'main' || github.ref == '994/merge' }}
       uses: actions/cache/save@v3
       with:
         path: cpp/.ccache
-        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        key: ${{ steps.restore-ccache.outputs.cache-primary-key }}
     - name: dont save ccache
       if: ${{ github.ref != 'refs/heads/main' }}
       shell: bash
       run: |
-        echo "Not saving cache! ${{ github.ref }}"
+        echo "Not saving cache! ${{ github.ref_name }}"
     - name: create build dir archive
       shell: bash
       run: |
@@ -125,10 +126,4 @@ runs:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build.tar.gz
-        retention-days: 1
-    - name: Upload ccache log
-      uses: actions/upload-artifact@v4
-      with:
-        name: ccachelog-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
-        path: cpp/.ccache.log
         retention-days: 1
