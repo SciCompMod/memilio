@@ -66,7 +66,7 @@ runs:
         fi
     - name: load ccache
       id: load-ccache
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v3
       with:
         path: cpp/.ccache
         key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
@@ -104,10 +104,15 @@ runs:
         ls -la ..
     - name: save ccache
       id: save-ccache
+      if: ${{ github.ref == 'refs/heads/main' }}
       uses: actions/cache/save@v3
       with:
         path: cpp/.ccache
         key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+    - name: dont save ccache
+      if: ${{ github.ref != 'refs/heads/main' }}
+      run: |
+        echo "Not saving cache!"
     - name: create build dir archive
       shell: bash
       run: |
