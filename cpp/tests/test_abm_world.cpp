@@ -94,7 +94,7 @@ TEST(TestWorld, getSubpopulationCombined)
     ASSERT_EQ(world.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
                                                                  mio::abm::LocationType::School),
               2);
-    ASSERT_EQ(world.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
+    ASSERT_EQ(world.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 4);
 }
 
 TEST(TestWorld, findLocation)
