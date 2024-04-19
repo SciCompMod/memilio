@@ -237,7 +237,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<double>> mu_H_U{model.size()};
     std::vector<std::vector<double>> mu_U_D{model.size()};
 
-    BOOST_OUTCOME_TRY(auto case_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
 
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
@@ -300,7 +300,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {
-    BOOST_OUTCOME_TRY(auto divi_data, mio::read_divi_data(path));
+    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
 
     auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -332,45 +332,51 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 IOResult<std::vector<std::vector<double>>>
 read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups)
 {
-    BOOST_OUTCOME_TRY(auto population_data, mio::read_population_data(path, !accumulate_age_groups));
-    //if we set up the model for one age group, the population data should be read in with the
-    //age groups given in the population data json file and are accumulated later
+    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path, !accumulate_age_groups));
     //otherwise the populations are directly saved for the correct model age groups
-    size_t age_group_size = accumulate_age_groups ? PopulationDataEntry::age_group_names.size()
                                                   : ConfirmedCasesDataEntry::age_group_names.size();
-    std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_group_size, 0.0));
+                                                  std::vector<std::vector<double>> vnum_population(
+                                                      vregion.size(), std::vector<double>(age_group_size, 0.0));
 
-    for (auto&& entry : population_data) {
-        auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 || (entry.county_id && regions::StateId(r) == regions::get_state_id(int(*entry.county_id))) ||
-                   (entry.county_id && regions::CountyId(r) == *entry.county_id) ||
-                   (entry.district_id && regions::DistrictId(r) == *entry.district_id);
-        });
-        if (it != vregion.end()) {
-            auto region_idx      = size_t(it - vregion.begin());
-            auto& num_population = vnum_population[region_idx];
-            for (size_t age = 0; age < num_population.size(); age++) {
-                num_population[age] += entry.population[AgeGroup(age)];
-            }
-        }
-    }
-    if (accumulate_age_groups) {
-        std::vector<std::vector<double>> vnum_pop_acc(vregion.size(), std::vector<double>(1, 0));
-        for (size_t region = 0; region < vregion.size(); ++region) {
-            vnum_pop_acc[region][0] =
-                std::accumulate(vnum_population[region].begin(), vnum_population[region].end(), 0.0);
-        }
-        return success(vnum_pop_acc);
-    }
-    else {
-        return success(vnum_population);
-    }
+                                                  for (auto&& entry : population_data) {
+                                                      auto it = std::find_if(
+                                                          vregion.begin(), vregion.end(), [&entry](auto r) {
+                                                              return r == 0 ||
+                                                                     (entry.county_id &&
+                                                                      regions::StateId(r) == regions::get_state_id(int(
+                                                                                                 *entry.county_id))) ||
+                                                                     (entry.county_id &&
+                                                                      regions::CountyId(r) == *entry.county_id) ||
+                                                                     (entry.district_id &&
+                                                                      regions::DistrictId(r) == *entry.district_id);
+                                                          });
+                                                      if (it != vregion.end()) {
+                                                          auto region_idx      = size_t(it - vregion.begin());
+                                                          auto& num_population = vnum_population[region_idx];
+                                                          for (size_t age = 0; age < num_population.size(); age++) {
+                                                              num_population[age] += entry.population[AgeGroup(age)];
+                                                          }
+                                                      }
+                                                  }
+                                                  if (accumulate_age_groups) {
+                                                      std::vector<std::vector<double>> vnum_pop_acc(
+                                                          vregion.size(), std::vector<double>(1, 0));
+                                                      for (size_t region = 0; region < vregion.size(); ++region) {
+                                                          vnum_pop_acc[region][0] =
+                                                              std::accumulate(vnum_population[region].begin(),
+                                                                              vnum_population[region].end(), 0.0);
+                                                      }
+                                                      return success(vnum_pop_acc);
+                                                  }
+                                                  else {
+                                                      return success(vnum_population);
+                                                  }
 }
 
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                                    bool accumulate_age_groups)
 {
-    BOOST_OUTCOME_TRY(auto num_population, read_population_data(path, vregion, accumulate_age_groups));
+    BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion, accumulate_age_groups));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
