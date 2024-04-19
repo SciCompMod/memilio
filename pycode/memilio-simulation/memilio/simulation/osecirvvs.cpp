@@ -36,6 +36,7 @@
 #include "ode_secirvvs/analyze_result.h"
 #include "ode_secirvvs/parameter_space.h"
 #include "ode_secirvvs/parameters_io.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/parameter_studies.h"
 
@@ -109,8 +110,8 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
             [](mio::ParameterStudy<Simulation>& self,
                bool variant_high) { //default argument doesn't seem to work with functions
                 return self.run([variant_high](auto&& g) {
-                        return draw_sample(g, variant_high);
-                    });
+                    return draw_sample(g, variant_high);
+                });
             },
             py::arg("variant_high"))
         .def(
@@ -319,17 +320,17 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
            mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto migrating_comp = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
             auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result         = mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>,
                                          mio::MigrationParameters<double>, mio::MigrationCoefficientGroup,
