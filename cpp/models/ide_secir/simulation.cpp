@@ -32,8 +32,8 @@ namespace isecir
 
 void Simulation::advance(ScalarType tmax)
 {
-    mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
-    // Compute compartment sizes at time t_0=0.
+    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
+                  m_model->m_transitions.get_last_time(), tmax, m_dt);
     m_model->calculate_initial_compartment_sizes(m_dt);
 
     // For every time step:
@@ -42,7 +42,7 @@ void Simulation::advance(ScalarType tmax)
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
 
-        // Compute susceptibles:
+        // compute Susceptibles:
         m_model->compute_susceptibles(m_dt);
 
         // Compute flows:
@@ -56,10 +56,10 @@ void Simulation::advance(ScalarType tmax)
     }
 }
 
-TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& m_model)
+TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& m_model)
 {
     m_model.check_constraints(dt);
-    Simulation sim(m_model, t0, dt);
+    Simulation sim(m_model, dt);
     sim.advance(tmax);
     return sim.get_result();
 }

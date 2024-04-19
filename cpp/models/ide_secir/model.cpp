@@ -38,7 +38,8 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
     , m_total_confirmed_cases{total_confirmed_cases}
 {
     m_populations.add_time_point<Eigen::VectorXd>(
-        0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+        m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    // Set deaths at simulation start time t0.
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = deaths;
 }
 
@@ -142,8 +143,8 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
     }
     else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] > 1e-12) {
         // If value for Recovered is initialized and standard method is not applicable (i.e., no value for total infections
-        //  or suceptibles given directly), calculate Susceptibles via other compartments.
-        // The calculation of other compartments' values is not dependent on Susceptibles at time 0, i.e., S(0), but only on the transitions of the past.
+        // or Susceptibles given directly), calculate Susceptibles via other compartments.
+        // The calculation of other compartments' values is not dependent on Susceptibles at time t0, i.e., S(t0), but only on the transitions of the past.
         m_initialization_method = 3;
 
         m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
@@ -236,7 +237,7 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
 
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
-        // Backward difference scheme to approximate first derivative.
+        // Use backward difference scheme to approximate first derivative.
         sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age) -
                 parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age - dt)) /
                dt * m_transitions[i + 1][idx_IncomingFlow];
@@ -376,9 +377,12 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
 
         ScalarType state_age = (num_time_points - 1 - i) * dt;
-
+        ScalarType season_val =
+            1 +
+            parameters.get<Seasonality>() *
+                sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
         m_forceofinfection +=
-            parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
+            season_val * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
             ((parameters
                       .get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *

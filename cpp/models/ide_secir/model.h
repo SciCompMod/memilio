@@ -40,12 +40,12 @@ public:
     *
     * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt from one compartment to another.
-    *   Possible transitions are specified in as #InfectionTransition%s.
-    *   Considered points of times should have the distance dt and the last time point should be 0. 
+    *   Possible transitions are specified in #InfectionTransition%s.
+    *   Considered time points should have the distance dt. The last time point determines the start time t0 of the simulation. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init The population of the considered region.
-    * @param[in] deaths The total number of deaths at the time zero.
+    * @param[in] deaths The total number of deaths at time t0.
     * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
@@ -190,6 +190,18 @@ public:
             return true;
         }
 
+        if (m_transitions.get_last_time() != m_populations.get_last_time()) {
+            log_error("Last time point of TimeSeries for transitions does not match last time point of TimeSeries for "
+                      "compartments. Both of these time points have to agree for a sensible simulation.");
+            return true;
+        }
+
+        if (m_populations.get_num_time_points() != 1) {
+            log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
+                      "initialize.");
+            return true;
+        }
+
         return parameters.check_constraints();
     }
 
@@ -204,13 +216,13 @@ public:
     }
 
     /**
-    * @brief Initializes the model and sets compartment values at time zero.
+    * @brief Initializes the model and sets compartment values at start time t0.
     *
     * The initialization method is selected automatically based on the different values that need to be set beforehand.
     * Infection compartments are always computed through historic flow.
-    * Initialization methods for susceptibles and recovered are tested in the following order:
-    * 1.) If a positive number for the total number of confirmed cases is set, recovered is set according to that value and #Susceptible%s are derived.
-    * 2.) If #Susceptible%s are set, recovered will be derived.
+    * Initialization methods for #Susceptible and #Recovered are tested in the following order:
+    * 1.) If a positive number for the total number of confirmed cases is set, #Recovered is set according to that value and #Susceptible%s are derived.
+    * 2.) If #Susceptible%s are set, #Recovered will be derived.
     * 3.) If #Recovered are set directly, #Susceptible%s are derived.
     * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to set the #Susceptible%s.
     *
