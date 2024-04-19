@@ -37,13 +37,14 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
     , m_N{N_init}
     , m_total_confirmed_cases{total_confirmed_cases}
 {
+    // Add first time point in m_populations according to last time point in m_transitions which is where we start the simulation.
     m_populations.add_time_point<Eigen::VectorXd>(
         m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
     // Set deaths at simulation start time t0.
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = deaths;
 }
 
-// ---- Functionality to calculate the sizes of the compartments for time zero. ----
+// ---- Functionality to calculate the sizes of the compartments for time t0. ----
 void Model::compute_compartment_from_flows(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
                                            int idx_TransitionDistribution1, int idx_TransitionDistribution2,
                                            ScalarType dt)
@@ -54,6 +55,7 @@ void Model::compute_compartment_from_flows(Eigen::Index idx_InfectionState, Eige
     ScalarType calc_time =
         std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt, m_tol),
                  parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt, m_tol));
+
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
@@ -144,7 +146,6 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
     else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] > 1e-12) {
         // If value for Recovered is initialized and standard method is not applicable (i.e., no value for total infections
         // or Susceptibles given directly), calculate Susceptibles via other compartments.
-        // The calculation of other compartments' values is not dependent on Susceptibles at time t0, i.e., S(t0), but only on the transitions of the past.
         m_initialization_method = 3;
 
         m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
@@ -157,8 +158,8 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
     }
     else {
-        // Compute Susceptibles at time 0 and m_forceofinfection at time -dt as initial values for discretization scheme.
-        // Use m_forceofinfection at -dt to be consistent with further calculations of S (see compute_susceptibles()),
+        // Compute Susceptibles at t0 and m_forceofinfection at time t0-dt as initial values for discretization scheme.
+        // Use m_forceofinfection at t0-dt to be consistent with further calculations of S (see compute_susceptibles()),
         // where also the value of m_forceofinfection for the previous timestep is used.
         compute_forceofinfection(dt, true);
         if (m_forceofinfection > 1e-12) {
@@ -173,7 +174,7 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
                 m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
                 (dt * m_forceofinfection);
 
-            // Recovered; calculate as the difference between the total population and the sum of the other compartment sizes.
+            // Recovered; calculated as the difference between the total population and the sum of the other compartment sizes.
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] =
                 m_N - m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] -
                 m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)] -
@@ -203,7 +204,7 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
         }
     }
 
-    // Compute m_forceofinfection at time 0 needed for further simulation.
+    // Compute m_forceofinfection at time t0 needed for further simulation.
     compute_forceofinfection(dt);
 }
 
@@ -211,8 +212,8 @@ void Model::calculate_initial_compartment_sizes(ScalarType dt)
 void Model::compute_susceptibles(ScalarType dt)
 {
     Eigen::Index num_time_points = m_populations.get_num_time_points();
-    // Using number of susceptibles from previous time step and force of infection from previous time step:
-    // Compute current number of susceptibles and store susceptibles in m_populations.
+    // Using number of Susceptibles from previous time step and force of infection from previous time step:
+    // Compute current number of Susceptibles and store Susceptibles in m_populations.
     m_populations.get_last_value()[Eigen::Index(InfectionState::Susceptible)] =
         m_populations[num_time_points - 2][Eigen::Index(InfectionState::Susceptible)] / (1 + dt * m_forceofinfection);
 }
@@ -360,10 +361,11 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
     ScalarType deaths;
 
     if (initialization) {
-        // Determine m_forceofinfection at time -dt which is the penultimate timepoint in m_transitions.
+        // Determine m_forceofinfection at time t0-dt which is the penultimate timepoint in m_transitions.
         num_time_points = m_transitions.get_num_time_points() - 1;
-        current_time    = -dt;
-        // Determine the number of death at time -dt.
+        // Get time of penultimate timepoint in m_transitions.
+        current_time = m_transitions.get_time(num_time_points - 1);
+        // Determine the number of death at time t0-dt.
         deaths = m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] -
                  m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
     }
