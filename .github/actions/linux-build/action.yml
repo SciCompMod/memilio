@@ -74,6 +74,8 @@ runs:
       shell: bash
       run: |
         cd cpp
+        export CCACHE_DIR=$(pwd)/.ccache
+        export CCACHE_LOGFILE=$(pwd)/.ccache.log
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
@@ -95,8 +97,6 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        export CCACHE_DIR=$(pwd)/.ccache
-        export CCACHE_LOGFILE=$(pwd)/.ccache.log
         cmake -DCMAKE_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
         ccache -s
@@ -117,4 +117,10 @@ runs:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build.tar.gz
+        retention-days: 1
+    - name: Upload ccache log
+      uses: actions/upload-artifact@v4
+      with:
+        name: ccachelog-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        path: cpp/.ccache.log
         retention-days: 1
