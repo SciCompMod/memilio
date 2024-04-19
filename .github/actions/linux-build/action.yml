@@ -104,7 +104,7 @@ runs:
         ls -la ..
     - name: save ccache
       id: save-ccache
-      if: ${{ github.ref == 'refs/heads/main' }}
+      if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/305-ccache-in-CI' }}
       uses: actions/cache/save@v3
       with:
         path: cpp/.ccache
