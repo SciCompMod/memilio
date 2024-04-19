@@ -113,7 +113,7 @@ runs:
       if: ${{ github.ref != 'refs/heads/main' }}
       shell: bash
       run: |
-        echo "Not saving cache!"
+        echo "Not saving cache! ${{ github.ref }}"
     - name: create build dir archive
       shell: bash
       run: |
