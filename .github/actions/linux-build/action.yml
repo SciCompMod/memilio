@@ -100,6 +100,7 @@ runs:
         mkdir -p build && cd build
         cmake -DCMAKE_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
+        ccache --version
         ccache --show-config
         ccache --show-stats
     - name: save ccache
