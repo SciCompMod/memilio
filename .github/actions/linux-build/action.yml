@@ -105,7 +105,7 @@ runs:
         ls -la ..
     - name: save ccache
       id: save-ccache
-      if: ${{ github.ref_name == 'main' || github.ref == '994/merge' }}
+      if: ${{ github.ref_name == 'main' || github.ref_name == '994/merge' }}
       uses: actions/cache/save@v3
       with:
         path: cpp/.ccache
