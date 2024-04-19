@@ -53,6 +53,7 @@ public:
     void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                    Eigen::Ref<Eigen::VectorXd> flows) const
     {
+        const double tol = 1 - 1e-10;
         auto& params     = this->parameters;
         double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
@@ -72,17 +73,17 @@ public:
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
                 sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) *
                     inv_sqrt_dt * si,
-            0.0, y[(size_t)InfectionState::Susceptible] / step_size);
+            0.0, y[(size_t)InfectionState::Susceptible] / step_size * tol);
 
         flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] = std::clamp(
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected] +
                 sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) * inv_sqrt_dt * ir,
-            0.0, y[(size_t)InfectionState::Infected] / step_size);
+            0.0, y[(size_t)InfectionState::Infected] / step_size * tol);
 
         flows[get_flat_flow_index<InfectionState::Recovered, InfectionState::Susceptible>()] = std::clamp(
             (1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered] +
                 sqrt((1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered]) * inv_sqrt_dt * rs,
-            0.0, y[(size_t)InfectionState::Recovered] / step_size);
+            0.0, y[(size_t)InfectionState::Recovered] / step_size * tol);
     }
 
     ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.
