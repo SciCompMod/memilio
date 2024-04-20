@@ -25,110 +25,16 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from memilio.simulation.secir import InfectionState
-from memilio.surrogatemodel.ode_secir_groups import network_architectures
+#from memilio.simulation.secir import InfectionState
+#from memilio.surrogatemodel.ode_secir_groups import network_architectures
 
 
-def plot_compartment_prediction_model(
-        inputs, labels, modeltype,  model=None,
-        plot_compartment='InfectedSymptoms', max_subplots=8):
-    """! Plot prediction of the model and label for one compartment. The average of all age groups is plotted. 
-
-    If model is none, we just plot the inputs and labels for the selected compartment without any predictions.  
-
-    @param inputs test inputs for model prediction. 
-    @param labels test labels. 
-    @param modeltype type of model. Can be 'classic' or 'timeseries'
-    @param model trained model. 
-    @param plot_col string name of compartment to be plotted. 
-    @param max_subplots Number of the simulation runs to be plotted and compared against. 
-    """
-    if modeltype == 'classic':
-        input_width = int(inputs.shape[1] / 48)
-        label_width = int(labels.shape[1])
-
-    elif modeltype == 'timeseries':
-        input_width = int(inputs.shape[1])
-        label_width = int(labels.shape[1])
-
-    plt.figure(figsize=(12, 8))
-    plot_compartment_index = 0
-    for compartment in InfectionState.values():
-        if compartment.name == plot_compartment:
-            break
-        plot_compartment_index += 1
-    if plot_compartment_index == len(InfectionState.values()):
-        raise ValueError('Compartment name given could not be found.')
-    max_n = min(max_subplots, inputs.shape[0])
-
-    for n in range(max_n):
-        plt.subplot(max_n, 1, n+1)
-        plt.ylabel(plot_compartment)
-
-        input_array = inputs[n].numpy()
-        label_array = labels[n].numpy()
-
-        if modeltype == 'classic':
-            input_plot = input_array[:(input_width*6*8)]
-            input_plot = input_plot.reshape(5, 48)
-
-            mean_per_day_input = []
-            for i in input_plot:
-                x = i[plot_compartment_index::8]
-                mean_per_day_input.append(x.mean())
-
-            plt.plot(
-                np.arange(0, input_width),
-                mean_per_day_input,
-                label='Inputs', marker='.', zorder=-10)
-
-        elif modeltype == 'timeseries':
-            mean_per_day_input = []
-            for i in input_array:
-                x = i[plot_compartment_index: inputs.shape[1] - 37:8]
-                mean_per_day_input.append(x.mean())
-
-            plt.plot(
-                np.arange(0, input_width),
-                mean_per_day_input,
-                label='Inputs', marker='.', zorder=-10)
-
-        mean_per_day = []
-        for i in label_array:
-            x = i[plot_compartment_index::8]
-            mean_per_day.append(x.mean())
-        plt.scatter(
-            np.arange(input_width, input_width + label_width),
-            mean_per_day,
-            edgecolors='k', label='Labels', c='#2ca02c', s=64)
-
-        if model is not None:
-            input_series = tf.expand_dims(inputs[n], axis=0)
-            pred = model(input_series)
-            pred = pred.numpy()
-            pred = pred.reshape((label_width, 48))
-
-            mean_per_day_pred = []
-            for i in pred:
-                x = i[plot_compartment_index::8]
-                mean_per_day_pred.append(x.mean())
-
-            plt.scatter(np.arange(input_width, input_width+pred.shape[-2]),
-                        # pred[0, :, plot_compartment_index],
-                        mean_per_day_pred,
-                        marker='X', edgecolors='k', label='Predictions',
-                        c='#ff7f0e', s=64)
-
-    plt.xlabel('days')
-    if os.path.isdir("plots") == False:
-        os.mkdir("plots")
-    plt.savefig('plots/evaluation_secir_groups_' + plot_compartment + '.png')
 
 
 #def network_fit(
 #        path, filename,  model, modeltype, df_save, max_epochs=30, early_stop=100, plot=True):
 def network_fit(
-        path, filename,  model, modeltype, max_epochs=30, early_stop=100, plot=True):
+        path, filename,  model,model_name, modeltype, max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -201,14 +107,17 @@ def network_fit(
                         callbacks=[early_stopping])
     
 
-    #save the model
+    # save the model
     path = os.path.dirname(os.path.realpath(__file__))
-
-
+    path_models = os.path.join(
+        os.path.dirname(
+            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        'saved_models_groups_nodamp_30days_w')
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
 
-    model.save(path_models, 'model_400pop_150day_bestmodel_secirgroups.h5')
+    model.save(path_models, 'LSTM_30days_groups_w.h5')
+
 
     if (plot):
         plot_losses(history)
@@ -220,18 +129,18 @@ def network_fit(
         print('mean: ',  df.mean())
 
                 
-        #filename_df = 'datfarame_secirgroups_onedamp_noinfo'
-        #df_save.loc[len(df_save.index)] = [df.mean()[0]]
+        filename_df = 'dataframe_secirgroups_nodamp_30days_w'
+        df_save.loc[len(df_save.index)] = [df.mean()[0], model_name]
         
-        # path = os.path.dirname(os.path.realpath(__file__))
-        # file_path = os.path.join(
-        #     os.path.dirname(
-        #         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        #     'secir_groups_onedamp_noinfo')
-        # if not os.path.isdir(file_path):
-        #     os.mkdir(file_path)
-        # file_path = os.path.join(file_path,filename_df)
-        # df_save.to_csv(file_path)
+        path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(
+            os.path.dirname(
+                os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+            'secir_groups_nodamp_w')
+        if not os.path.isdir(file_path):
+             os.mkdir(file_path)
+        file_path = os.path.join(file_path,filename_df)
+        df_save.to_csv(file_path)
 
     return history
 
@@ -276,15 +185,18 @@ def get_test_statistic(test_inputs, test_labels, model):
     
     # delete the two confirmed compartments from InfectionStates
     compartment_array = []
-    for compartment in InfectionState.values():
+    infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+    #for compartment in InfectionState.values():
+    for compartment in infectionstates:
         compartment_array.append(compartment) 
-    index = [3,5]
-    compartments_cleaned= np.delete(compartment_array, index)
+    #index = [3,5]
+    #compartments_cleaned= np.delete(compartment_array, index)
 
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
-        index=[str(compartment).split('.')[1]
-               for compartment in compartment_array],
+        #index=[str(compartment).split('.')[1]
+        #       for compartment in compartment_array],
+        index = infectionstates, 
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -377,42 +289,64 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    filename = 'data_secir_groups_30days_nodamp.pickle'
-    max_epochs = 10
+    filename = 'data_secir_groups_30days_nodamp_w.pickle'
+    max_epochs = 1500
     label_width = 30
 
     input_dim = get_input_dim_lstm(path_data, filename)
     output_dim = get_output_dim_lstm(path_data, filename)
-    #df_save = pd.DataFrame(columns = ['MAPE'])
+    df_save = pd.DataFrame(columns = ['MAPE', 'Model'])
+    model_name = 'LSTM 30'
 
 
 
 
 
-    model = "CNN_LSTM"
-    if model == "Dense_Single":
-            model = network_architectures.mlp_multi_input_single_output()
-            modeltype = 'classic'
+    def lstm_multi_input_multi_output(label_width, num_age_groups=6):
+        """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
+        one single time step in the future.
 
-    elif model == "Dense":
-            model = network_architectures.mlp_multi_input_multi_output(label_width)
-            modeltype = 'classic'
+        Input and output have shape [number of expert model simulations, time points in simulation,
+        number of individuals in infection states].
 
-    elif model == "LSTM":
-            model = network_architectures.lstm_multi_input_multi_output(
-                label_width)
-            modeltype = 'timeseries'
+        @param label_width Number of time steps in the output.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.LSTM(512, return_sequences=False),
+            tf.keras.layers.Dense(label_width * 8 * num_age_groups,
+                                kernel_initializer=tf.initializers.zeros()),
+            tf.keras.layers.Reshape([label_width, 8 * num_age_groups])])
+        return model
+       
+    model = lstm_multi_input_multi_output(label_width)
+    modeltype = 'timeseries'
 
-    elif model == "CNN":
-            model = network_architectures.cnn_multi_input_multi_output_simple(label_width)
-            modeltype = 'timeseries'
 
-    elif model == "CNN_LSTM":
-            model = network_architectures.cnn_lstm_hybrid(input_dim, output_dim)
-            modeltype = 'classic'
+
+    #model = "LSTM"
+    #if model == "Dense_Single":
+    #        model = network_architectures.mlp_multi_input_single_output()
+    #        modeltype = 'classic'
+
+    #elif model == "Dense":
+    #        model = network_architectures.mlp_multi_input_multi_output(label_width)
+    #        modeltype = 'classic'
+
+    #elif model == "LSTM":
+    #        model = network_architectures.lstm_multi_input_multi_output(
+    #            label_width)
+    #        modeltype = 'timeseries'
+
+    #elif model == "CNN":
+    #        model = network_architectures.cnn_multi_input_multi_output_simple(label_width)
+    #        modeltype = 'timeseries'
+
+    #elif model == "CNN_LSTM":
+    #        model = network_architectures.cnn_lstm_hybrid(input_dim, output_dim)
+    #        modeltype = 'classic'
     
     model_output = network_fit(
-            path_data, filename, model=model, modeltype=modeltype,
+            path_data, filename, model=model, model_name=model_name, modeltype=modeltype,
             max_epochs=max_epochs)
 
 
