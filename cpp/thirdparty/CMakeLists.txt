@@ -6,6 +6,7 @@ set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
+set(MEMILIO_HOPS_VERSION "v3.2.1")
 
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
@@ -49,6 +50,31 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
     add_library(Eigen3::Eigen ALIAS eigen)
 else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
+endif()
+
+# ## HOPS (for MCMC sampling)
+if(MEMILIO_USE_BUNDLED_HOPS)
+    set(HOPS_BINARIES OFF)
+    set(HOPS_EXAMPLES OFF)
+    set(HOPS_TESTS OFF)
+    set(HOPS_GUROBI OFF)
+    set(HOPS_TUNING OFF)
+    set(HOPS_MPI OFF)
+    set(HOPS_LP OFF)
+    set(HOPS_DOCS OFF)
+    set(HOPS_DNEST4_SUPPORT OFF)
+    message(STATUS "Downloading HOPS ${MEMILIO_HOPS_VERSION} for MCMC sampling")
+
+    include(FetchContent)
+    FetchContent_Declare(hops
+            GIT_REPOSITORY https://github.com/modsim/hops
+            GIT_TAG ${MEMILIO_HOPS_VERSION})
+    FetchContent_GetProperties(hops)
+
+    if(NOT hops_POPULATED)
+        FetchContent_Populate(hops)
+        add_subdirectory(${hops_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif()
 endif()
 
 # ## BOOST
