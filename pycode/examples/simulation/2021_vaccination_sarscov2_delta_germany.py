@@ -19,7 +19,6 @@
 #############################################################################
 import numpy as np
 from enum import Enum
-import datetime
 import os
 
 import memilio.simulation as mio
@@ -67,9 +66,9 @@ class Simulation:
         self.future = False
 
         if self.future:
-            self.start_date = datetime.date(2021, 10, 15)
+            self.start_date = mio.Date(2021, 10, 15)
         else:
-            self.start_date = datetime.date(2021, 6, 6)
+            self.start_date = mio.Date(2021, 6, 6)
 
     def set_covid_parameters(self, model):
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
@@ -90,9 +89,10 @@ class Simulation:
                     mio.ParameterDistributionUniform(min[i], max[i]))
 
         # times
-        t_incubation = 5.2
-        t_serial_interval_min = 0.5 * 2.67 + 0.5 * 5.2
-        t_serial_interval_max = 0.5 * 4.00 + 0.5 * 5.2
+        timeExposedMin = 2.67
+        timeExposedMax = 4.
+        timeInfectedNoSymptomsMin = 1.2
+        timeInfectedNoSymptomsMax = 2.53
         timeInfectedSymptomsMin = [
             5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465]
         timeInfectedSymptomsMax = [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]
@@ -102,11 +102,11 @@ class Simulation:
         timeInfectedCriticalMax = [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]
 
         array_assign_uniform_distribution(
-            model.parameters.IncubationTime, t_incubation, t_incubation)
+            model.parameters.TimeExposed, timeExposedMin, timeExposedMax)
 
         array_assign_uniform_distribution(
-            model.parameters.SerialInterval, t_serial_interval_min,
-            t_serial_interval_max)
+            model.parameters.TimeInfectedNoSymptoms, timeInfectedNoSymptomsMin,
+            timeInfectedNoSymptomsMax)
 
         array_assign_uniform_distribution(
             model.parameters.TimeInfectedSymptoms, timeInfectedSymptomsMin,
@@ -239,7 +239,7 @@ class Simulation:
             reducTimeInfectedMild)
 
         # start day is set to the n-th day of the year
-        model.parameters.StartDay = self.start_date.timetuple().tm_yday
+        model.parameters.StartDay = self.start_date.day_in_year
 
         model.parameters.Seasonality.value = 0.2
 
@@ -350,12 +350,12 @@ class Simulation:
                 group_weights_seniors)
 
         # OPEN SCENARIO SPRING
-        start_year = datetime.date(
+        start_year = mio.Date(
             2021, 1, 1)
         narrow = 0.05
 
         if start_year < end_date:
-            static_open_scenario_spring = (start_year - self.start_date).days
+            static_open_scenario_spring = start_year - self.start_date
             dampings.append(contacts_at_home(
                 static_open_scenario_spring, 0.0, 0.0))
             dampings.append(school_closure(
@@ -395,9 +395,9 @@ class Simulation:
             masks_high = 0.0
             masks_narrow = 0.0
 
-        start_open = datetime.date(
+        start_open = mio.Date(
             2021, month_open, 1)
-        start_summer = (start_open - self.start_date).days
+        start_summer = start_open - self.start_date
         params.end_dynamic_npis = start_summer
 
         if start_open < end_date:
@@ -415,7 +415,7 @@ class Simulation:
                 start_summer, masks_low + masks_narrow, masks_high - masks_narrow))
             dampings.append(senior_awareness(start_summer, 0.0, 0.0))
 
-        start_autumn = (datetime.date(2021, 10, 1) - self.start_date).days
+        start_autumn = mio.Date(2021, 10, 1) - self.start_date
         dampings.append(contacts_at_home(start_autumn, 0.0, 0.0))
         dampings.append(school_closure(
             start_autumn, 0.3 + narrow, 0.5 - narrow))
@@ -497,12 +497,10 @@ class Simulation:
 
         osecirvvs.set_nodes(
             model.parameters,
-            mio.Date(self.start_date.year,
-                     self.start_date.month, self.start_date.day),
-            mio.Date(end_date.year,
-                     end_date.month, end_date.day), self.data_dir,
+            self.start_date,
+            end_date, self.data_dir,
             path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, (end_date - self.start_date).days, False)
+            scaling_factor_icu, tnt_capacity_factor, end_date - self.start_date, False)
 
         osecirvvs.set_edges(
             self.data_dir, graph, len(Location))
@@ -511,7 +509,7 @@ class Simulation:
 
     def run(self, num_days_sim, num_runs=10, save_graph=True, create_gif=True):
         mio.set_log_level(mio.LogLevel.Warning)
-        end_date = self.start_date + datetime.timedelta(days=num_days_sim)
+        end_date = self.start_date + num_days_sim
 
         graph = self.get_graph(end_date)
 
