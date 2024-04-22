@@ -32,7 +32,8 @@ namespace isecir
 
 void Simulation::advance(ScalarType tmax)
 {
-    mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
+    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
+                  m_model->m_transitions.get_last_time(), tmax, m_dt);
     m_model->initialize(m_dt);
 
     // for every time step:
@@ -41,28 +42,29 @@ void Simulation::advance(ScalarType tmax)
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
 
-        // compute_S:
+        // compute Susceptibles:
         m_model->compute_susceptibles(m_dt);
 
         // compute flows:
         m_model->flows_current_timestep(m_dt);
 
-        // compute D
+        // compute Dead compartment:
         m_model->compute_deaths();
 
-        // compute m_forceofinfection (only used for calculation of S and sigma_S^E in the next timestep!):
+        // compute m_forceofinfection
+        // (only used for calculation of Susceptibles and the InfectionTransition SusceptibleToExposed in the next timestep!):
         m_model->update_forceofinfection(m_dt);
 
-        // compute remaining compartments from flows
+        // compute remaining compartments from flows:
         m_model->other_compartments_current_timestep(m_dt);
         m_model->compute_recovered();
     }
 }
 
-TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& m_model)
+TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& m_model)
 {
     m_model.check_constraints(dt);
-    Simulation sim(m_model, t0, dt);
+    Simulation sim(m_model, dt);
     sim.advance(tmax);
     return sim.get_result();
 }

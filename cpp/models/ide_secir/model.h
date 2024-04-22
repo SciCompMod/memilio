@@ -40,12 +40,12 @@ public:
     *
     * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt from one compartment to another.
-    *   Possible transitions are specified in as #InfectionTransition%s.
-    *   Considered points of times should have the distance dt and the last time point should be 0. 
+    *   Possible transitions are specified in #InfectionTransition%s.
+    *   Considered time points should have the distance dt. The last time point determines the start time t0 of the simulation. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init The population of the considered region.
-    * @param[in] deaths The total number of deaths at the time zero.
+    * @param[in] deaths The total number of deaths at time t0.
     * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
@@ -90,17 +90,29 @@ public:
             return true;
         }
 
+        if (m_transitions.get_last_time() != m_populations.get_last_time()) {
+            log_error("Last time point of TimeSeries for transitions does not match last time point of TimeSeries for "
+                      "compartments. Both of these time points have to agree for a sensible simulation.");
+            return true;
+        }
+
+        if (m_populations.get_num_time_points() != 1) {
+            log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
+                      "initialize.");
+            return true;
+        }
+
         return parameters.check_constraints();
     }
 
     /**
-    * @brief Initializes the model and sets compartment values at time zero.
+    * @brief Initializes the model and sets compartment values at start time t0.
     *
     * The initialization method is selected automatically based on the different values that need to be set beforehand.
     * Infection compartments are always computed through historic flow.
-    * Initialization methods for susceptibles and recovered are tested in the following order:
-    * 1.) If a positive number for the total number of confirmed cases is set, recovered is set according to that value and #Susceptible%s are derived.
-    * 2.) If #Susceptible%s are set, recovered will be derived.
+    * Initialization methods for #Susceptible and #Recovered are tested in the following order:
+    * 1.) If a positive number for the total number of confirmed cases is set, #Recovered is set according to that value and #Susceptible%s are derived.
+    * 2.) If #Susceptible%s are set, #Recovered will be derived.
     * 3.) If #Recovered are set directly, #Susceptible%s are derived.
     * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to set the #Susceptible%s.
     *
@@ -109,9 +121,9 @@ public:
     void initialize(ScalarType dt);
 
     /**
-    * @brief Computes number of Susceptibles for the current last time in m_populations.
+    * @brief Computes number of #Susceptible%s for the current last time in m_populations.
     *
-    * Number is computed using previous number of Susceptibles and the force of infection (also from previous timestep).
+    * Number is computed using previous number of #Susceptible%s and the force of infection (also from previous timestep).
     * Number is stored at the matching index in m_populations.
     * @param[in] dt Time discretization step size.    
     */
@@ -141,7 +153,7 @@ public:
     void flows_current_timestep(ScalarType dt);
 
     /**
-     * @brief Computes total number of Deaths for the current last time in m_populations.
+     * @brief Computes total number of people in the #Dead compartment for the current last time in m_populations.
      * 
      * Number is stored in m_populations.
      *
@@ -154,15 +166,16 @@ public:
      * Computed value is stored in m_forceofinfection.
      * 
      * @param[in] dt Time discretization step size.          
-     * @param[in] initialization if true we are in the case of the initilization of the model. 
-     *      For this we need forceofinfection at timepoint -dt which differs to usually used timepoints.
+     * @param[in] initialization If true we are in the case of the initialization of the model. 
+     *      For this we need forceofinfection at time point t0-dt and not at the current last time (given by m_transitions)
+     *      as in the other time steps.
      */
     void update_forceofinfection(ScalarType dt, bool initialization = false);
 
     /**
      * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_populations.
      * 
-     * Calculation is reasonable for all compartments except S, R, D. 
+     * Calculation is reasonable for all compartments except #Susceptible, #Recovered and #Dead. 
      * Therefore, we have alternative functions for those compartments.
      *
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
@@ -171,7 +184,7 @@ public:
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
-     *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases to Recovered). 
+     *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases to #Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
      *              If the second index is not needed, eg if probability[idx_TransitionDistribution1]=1, 
      *              just use an arbitrary legal index.
@@ -181,7 +194,7 @@ public:
                              int idx_TransitionDistribution1, int idx_TransitionDistribution2, ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments (compartments apart from S, R, D) for the current last timestep in m_populations.
+     * @brief Sets all values of remaining compartments (compartments apart from #Susceptible, #Recovered, #Dead) for the current last timestep in m_populations.
      *
      * New values are stored in m_populations. Most values are computed via the function get_size_of_compartments().
      * 
@@ -190,7 +203,7 @@ public:
     void other_compartments_current_timestep(ScalarType dt);
 
     /**
-     * @brief Computes total number of Recovered for the current last time in m_populations.
+     * @brief Computes total number of #Recovered for the current last time in m_populations.
      * 
      * Number is stored in m_populations.
      *
@@ -211,9 +224,9 @@ public:
      * @brief Returns the number associated with the method selected automatically for initialization.
      *
     * @returns 0 if the model has not yet been initialized and the method has not yet been selected,
-     *      1 if the method using the total number of confirmed cases at time 0 is used,
-     *      2 if the initialization is calculated using a beforehand set value for S,
-     *      3 if the initialization is calculated using a beforehand set value for R,
+     *      1 if the method using the total number of confirmed cases at time t0 is used,
+     *      2 if the initialization is calculated using a beforehand set value for #Susceptible,
+     *      3 if the initialization is calculated using a beforehand set value for #Recovered,
      *      4 if the force of infection method is used, 
      *      -1 if the initialization was not possible using any of the methods and
      *      -2 if the initialization was possible using one of the provided methods but the result is not appropriate.
@@ -233,7 +246,7 @@ public:
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point - dt.
+    ScalarType m_deaths_before{0}; ///< Total number of deaths at the time point t0 - dt.
     ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{

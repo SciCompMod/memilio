@@ -114,7 +114,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     assert(scaling_factor_inf.size() == num_age_groups); //TODO: allow vector or scalar valued scaling factors
     assert(ConfirmedCasesDataEntry::age_group_names.size() == num_age_groups);
 
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
 
     std::vector<std::vector<int>> t_Exposed{model.size()};
     std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
@@ -430,7 +430,7 @@ template <class Model>
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::string& path_rki,
                                    const std::vector<int>& vregion, Date date)
 {
-    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion));
 
     auto num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
     std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
@@ -634,9 +634,9 @@ IOResult<void> export_input_data_county_timeseries(
     assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
     assert(model.size() == region.size());
 
-    BOOST_OUTCOME_TRY(rki_data, read_confirmed_cases_data(confirmed_cases_path));
-    BOOST_OUTCOME_TRY(population_data, read_population_data(population_data_path));
-    BOOST_OUTCOME_TRY(divi_data, read_divi_data(divi_data_path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, read_confirmed_cases_data(confirmed_cases_path));
+    BOOST_OUTCOME_TRY(auto&& population_data, read_population_data(population_data_path));
+    BOOST_OUTCOME_TRY(auto&& divi_data, read_divi_data(divi_data_path));
 
     /* functionality copy from set_confirmed_cases_data() here splitted in params */
     /* which do not need to be reset for each day and compartments sizes that are */
@@ -913,7 +913,7 @@ IOResult<void> export_input_data_county_timeseries(
         }
 
         // read population basics
-        BOOST_OUTCOME_TRY(num_population, details::read_population_data(population_data, region));
+        BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data, region));
 
         std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data_fix_recovered(rki_data, region, date, num_rec, 14.));
@@ -924,10 +924,10 @@ IOResult<void> export_input_data_county_timeseries(
 
                     auto age_group_offset = age * (size_t)InfectionState::Count;
                     double S_v            = std::min(
-                        model[county]
-                                .parameters.template get<DailyFullVaccination>()[{AgeGroup(age), SimulationDay(day)}] +
-                            num_rec[county][age],
-                        num_population[county][age]);
+                                   model[county]
+                                           .parameters.template get<DailyFullVaccination>()[{AgeGroup(age), SimulationDay(day)}] +
+                                       num_rec[county][age],
+                                   num_population[county][age]);
                     double S_pv = std::max(
                         model[county]
                                 .parameters.template get<DailyFirstVaccination>()[{AgeGroup(age), SimulationDay(day)}] -
@@ -1223,6 +1223,24 @@ export_input_data_county_timeseries(std::vector<Model>&& model, const std::strin
                                                           scaling_factor_icu, num_days, divi_data_path,
                                                           confirmed_cases_path, population_data_path));
 
+    return success();
+}
+#else
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&, const std::string&, std::vector<int> const&,
+                                                   Date, const std::vector<double>&, double, int, const std::string&,
+                                                   const std::string&, const std::string&)
+{
+    mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
+    return success();
+}
+
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&&, const std::string&, std::vector<int> const&,
+                                                   Date, const std::vector<double>&, double, int, const std::string&,
+                                                   const std::string&, const std::string&, bool, const std::string&)
+{
+    mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
     return success();
 }
 
