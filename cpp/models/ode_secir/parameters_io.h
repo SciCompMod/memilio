@@ -171,7 +171,7 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
 
     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
 
-    BOOST_OUTCOME_TRY(case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
+    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
 
     for (size_t node = 0; node < model.size(); node++) {
         for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
@@ -230,7 +230,7 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
             t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::read_divi_data(divi_data_path, region, date, num_icu));
         bool interpolate_rki_age_groups = num_age_groups == 1 ? true : false;
-        BOOST_OUTCOME_TRY(num_population,
+        BOOST_OUTCOME_TRY(auto&& num_population,
                           details::read_population_data(population_data_path, region, interpolate_rki_age_groups));
 
         for (size_t i = 0; i < region.size(); i++) {
