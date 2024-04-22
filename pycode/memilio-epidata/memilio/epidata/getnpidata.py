@@ -17,10 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.epidata import getPopulationData as gpd
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getpopulationdata as gpd
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import geomodificationgermany as geoger
+from memilio.epidata import getdataintopandasdataframe as gd
 from datetime import date, datetime, timedelta
 import time
 import os
