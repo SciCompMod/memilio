@@ -121,9 +121,10 @@ for lw in label_widths:
                 # Due to the random structure, theres currently no need to shuffle the data
 
                 for _ in range(0, num_runs):
+                        pop = population[random.randint(0, len(population) - 1)]
                         start = time.time()
                         data_run = run_secir_groups_simulation(
-                                        days, population[random.randint(0, len(population) - 1)])
+                                        days, pop)
 
                         end = time.time()
                         times.append(end - start)
@@ -210,14 +211,15 @@ for i in range(iterations):
 
     
     for i in range(0, num_runs):
-        start = time.time()
+        
         # Generate a random damping day
         damping_day = random.randrange(
             input_width, input_width+label_width)
+        pop = population[random.randint(0, len(population) - 1)]
         
-
+        start = time.time()
         data_run, damped_contact_matrix = run_secir_groups_simulation(
-            days, damping_day, population[random.randint(0, len(population) - 1)])
+            days, damping_day, pop)
 
         end = time.time()
         times.append(end - start)
@@ -328,9 +330,10 @@ for nd in number_of_dampings:
         for i in range(iterations):
                 bar = Bar('Number of Runs done', max=num_runs)
                 for i in range(0, num_runs):
+                        pop =  population[random.randint(0, len(population) - 1)]
                         start = time.time()
                         data_run, damped_contact_matrix, damping_days_s = run_secir_groups_simulation(
-                        days, number_of_dampings,  damping_days[i], population[random.randint(0, len(population) - 1)])
+                        days, number_of_dampings,  damping_days[i],pop)
  
        
                         end = time.time()
@@ -432,55 +435,99 @@ df_results['time_per_sample'] = np.asarray(list(map(float,[i.replace(',', '.') f
 def plots(df_results):
         plt.figure().clf()
 
-        fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=False, figsize = (9,9), constrained_layout = True)
+        
+        from matplotlib.gridspec import GridSpec
+
+
+
+        #fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=False, figsize = (9,9), constrained_layout = True)
 
         df_simple = df_results.loc[df_results['task'] == 'secir simple'][['model', 'days','time_per_run']]
         df_groups = df_results.loc[df_results['task']== 'secir groups no  damp'][['model', 'days', 'time_per_run']]
         df_dampings = df_results.loc[df_results['task']== 'secir groups multiple damp'][['model', 'dampings', 'time_per_run']]
 
+                
 
-        
-        axs[0,0].plot(df_simple.loc[df_simple['model'] == 'ODE']['days'].values, df_simple.loc[df_simple['model'] == 'ODE']['time_per_run'].values, label = 'ODE')
-        axs[0,0].plot(df_simple.loc[df_simple['model'] == 'LSTM']['days'].values ,df_simple.loc[df_simple['model'] == 'LSTM']['time_per_run'].values, label = 'LSTM')
-        axs[0,0].set_xlabel('number of days')
-        axs[0,0].set_ylabel('time in ms')
-        axs[0,0].set_title('One population, one age group')
-        axs[0,0].legend() 
-        axs[0,0].set_xticks(df_simple.loc[df_simple['model'] == 'ODE']['days'].values)
+        fig = plt.figure(figsize=(10, 5))
+        gs = GridSpec(nrows=2, ncols=2)
+        ax0 = fig.add_subplot(gs[0, 0])
+        ax0.plot(df_simple.loc[df_simple['model'] == 'ODE']['days'].values, df_simple.loc[df_simple['model'] == 'ODE']['time_per_run'].values, label = 'ODE')
+        ax0.plot(df_simple.loc[df_simple['model'] == 'LSTM']['days'].values ,df_simple.loc[df_simple['model'] == 'LSTM']['time_per_run'].values, label = 'LSTM')
+        ax0.set_xlabel('number of days')
+        ax0.set_ylabel('time in ms')
+        ax0.set_title('One population, one age group')
+        ax0.legend() 
+        ax0.set_xticks(df_simple.loc[df_simple['model'] == 'ODE']['days'].values)
 
-        
 
-        axs[0,1].plot(df_groups.loc[df_groups['model'] == 'ODE']['days'].values, df_groups.loc[df_groups['model'] == 'ODE']['time_per_run'].values, label = 'ODE')
-        axs[0,1].plot(df_groups.loc[df_groups['model'] == 'LSTM']['days'].values ,df_groups.loc[df_groups['model'] == 'LSTM']['time_per_run'].values, label = 'LSTM')
-        axs[0,1].set_xlabel('number of days')
-        axs[0,1].set_ylabel('time in ms')
-        axs[0,1].set_title('One population, six age groups') 
-        axs[0,1].legend() 
-        axs[0,1].set_xticks(df_groups.loc[df_groups['model'] == 'ODE']['days'].values)
+        ax1 = fig.add_subplot(gs[1, 0])        
+        ax1.plot(df_groups.loc[df_groups['model'] == 'ODE']['days'].values, df_groups.loc[df_groups['model'] == 'ODE']['time_per_run'].values, label = 'ODE')
+        ax1.plot(df_groups.loc[df_groups['model'] == 'LSTM']['days'].values ,df_groups.loc[df_groups['model'] == 'LSTM']['time_per_run'].values, label = 'LSTM')
+        ax1.set_xlabel('number of days')
+        ax1.set_ylabel('time in ms')
+        ax1.set_title('One population, six age groups') 
+        ax1.legend() 
+        ax1.set_xticks(df_groups.loc[df_groups['model'] == 'ODE']['days'].values)
 
-        
-
+        ax2 = fig.add_subplot(gs[:, 1])
         labels = df_dampings.loc[df_dampings['model'] == 'ODE']['dampings'].values
         x = np.arange(len(labels))  # the label locations
         width = 0.35  # the width of the bars   
 
-        rects1 = axs[1,0].bar(x - width/2, df_dampings.loc[df_dampings['model'] == 'ODE']['time_per_run'].values, width, label='ODE')
-        rects2 = axs[1,0].bar(x + width/2, df_dampings.loc[df_dampings['model'] == 'LSTM']['time_per_run'].values, width, label='LSTM')
+        rects1 = ax2.bar(x - width/2, df_dampings.loc[df_dampings['model'] == 'ODE']['time_per_run'].values, width, label='ODE')
+        rects2 = ax2.bar(x + width/2, df_dampings.loc[df_dampings['model'] == 'LSTM']['time_per_run'].values, width, label='LSTM')
 
         # Add some text for labels, title and custom x-axis tick labels, etc.
-        axs[1,0].set_ylabel('time in ms')
-        axs[1,0].set_xlabel('number of dampings')
-        axs[1,0].set_title('One population, six age groups, mutliple dampings')
-        axs[1,0].set_xticks(x)
-        axs[1,0].set_xticklabels(labels)
-        axs[1,0].legend()
+        ax2.set_ylabel('time in ms')
+        ax2.set_xlabel('number of dampings')
+        ax2.set_title('One population, six age groups, mutliple dampings')
+        ax2.set_xticks(x)
+        ax2.set_xticklabels(labels)
+        ax2.legend()
+
+        
+        # axs[0,0].plot(df_simple.loc[df_simple['model'] == 'ODE']['days'].values, df_simple.loc[df_simple['model'] == 'ODE']['time_per_run'].values, label = 'ODE')
+        # axs[0,0].plot(df_simple.loc[df_simple['model'] == 'LSTM']['days'].values ,df_simple.loc[df_simple['model'] == 'LSTM']['time_per_run'].values, label = 'LSTM')
+        # axs[0,0].set_xlabel('number of days')
+        # axs[0,0].set_ylabel('time in ms')
+        # axs[0,0].set_title('One population, one age group')
+        # axs[0,0].legend() 
+        # axs[0,0].set_xticks(df_simple.loc[df_simple['model'] == 'ODE']['days'].values)
+
+        
+
+        # axs[0,1].plot(df_groups.loc[df_groups['model'] == 'ODE']['days'].values, df_groups.loc[df_groups['model'] == 'ODE']['time_per_run'].values, label = 'ODE')
+        # axs[0,1].plot(df_groups.loc[df_groups['model'] == 'LSTM']['days'].values ,df_groups.loc[df_groups['model'] == 'LSTM']['time_per_run'].values, label = 'LSTM')
+        # axs[0,1].set_xlabel('number of days')
+        # axs[0,1].set_ylabel('time in ms')
+        # axs[0,1].set_title('One population, six age groups') 
+        # axs[0,1].legend() 
+        # axs[0,1].set_xticks(df_groups.loc[df_groups['model'] == 'ODE']['days'].values)
+
+        
+
+        # labels = df_dampings.loc[df_dampings['model'] == 'ODE']['dampings'].values
+        # x = np.arange(len(labels))  # the label locations
+        # width = 0.35  # the width of the bars   
+
+        # rects1 = axs[1,0].bar(x - width/2, df_dampings.loc[df_dampings['model'] == 'ODE']['time_per_run'].values, width, label='ODE')
+        # rects2 = axs[1,0].bar(x + width/2, df_dampings.loc[df_dampings['model'] == 'LSTM']['time_per_run'].values, width, label='LSTM')
+
+        # # Add some text for labels, title and custom x-axis tick labels, etc.
+        # axs[1,0].set_ylabel('time in ms')
+        # axs[1,0].set_xlabel('number of dampings')
+        # axs[1,0].set_title('One population, six age groups, mutliple dampings')
+        # axs[1,0].set_xticks(x)
+        # axs[1,0].set_xticklabels(labels)
+        # axs[1,0].legend()
 
 
         def autolabel(rects):
                 """Attach a text label above each bar in *rects*, displaying its height."""
                 for rect in rects:
                         height = rect.get_height().round(2)
-                        axs[1,0].annotate('{}'.format(height),
+                        #axs[1,0].annotate('{}'.format(height),
+                        ax2.annotate('{}'.format(height),
                                 xy=(rect.get_x() + rect.get_width() / 2, height),
                                 xytext=(0, 3),  # 3 points vertical offset
                                 textcoords="offset points",
@@ -489,7 +536,7 @@ def plots(df_results):
 
         autolabel(rects1)
         autolabel(rects2)
-        fig.delaxes(axs[1,1])
+        #fig.delaxes(axs[1,1])
         plt.savefig("time_analysis_onepop.png")
 
 
