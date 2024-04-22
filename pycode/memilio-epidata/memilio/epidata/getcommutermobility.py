@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file getCommuterMobility.py
+@file getcommutermobility.py
 
 @brief gets data related to county mobility from "Bundesagentur fuer Arbeit"
 """
@@ -27,11 +27,11 @@ import os
 import numpy as np
 import pandas as pd
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import getPopulationData as gPd
-from memilio.epidata import progress_indicator
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import geomodificationgermany as geoger
+from memilio.epidata import getdataintopandasdataframe as gd
+from memilio.epidata import getpopulationdata as gPd
+from memilio.epidata import progressindicator
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
