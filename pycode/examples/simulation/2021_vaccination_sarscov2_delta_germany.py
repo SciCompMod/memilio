@@ -250,6 +250,8 @@ class Simulation:
         model.parameters.Seasonality.set_distribution(
             mio.ParameterDistributionUniform(seasonality_min, seasonality_max))
 
+        model.parameters.StartDayNewVariant = mio.Date(2021, 6, 6).day_in_year
+
     def set_contact_matrices(self, model):
         contact_matrices = mio.ContactMatrixGroup(
             len(list(Location)), self.num_groups)
@@ -431,6 +433,8 @@ class Simulation:
         # dampings.append(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow)) #S1F
         # dampings.append(social_events(start_autumn, 0.0 + narrow, 0.2 - narrow)) #S1F
 
+        params.ContactPatterns.dampings = dampings
+
         narrow = 0.0
         # local dynamic NPIs
         dynamic_npis = params.DynamicNPIsInfectedSymptoms
@@ -478,6 +482,16 @@ class Simulation:
         dynamic_npis.base_value = 100000
         dynamic_npis.set_threshold(35.0, dynamic_npi_dampings)
         dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2)
+
+        params.DynamicNPIsInfectedSymptoms = dynamic_npis
+
+        # school holidays (holiday periods are set per node, see set_nodes)
+        school_holiday_value = mio.UncertainValue(0.5 * (1.0 + 1.0))
+        school_holiday_value.set_distribution(
+            mio.ParameterDistributionUniform(1.0, 1.0))
+        params.ContactPatterns.school_holiday_damping = mio.DampingSampling(school_holiday_value, mio.DampingLevel(InterventionLevel.Holidays.value),
+                                                                            mio:: DampingType(Intervention.SchoolClosure.value), mio.SimulationTime(0.0),
+                                                                            [Location.School.value], group_weights_all)
 
     def get_graph(self, end_date):
         model = osecirvvs.Model(self.num_groups)
