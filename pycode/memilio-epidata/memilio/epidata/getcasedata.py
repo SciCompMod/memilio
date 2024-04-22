@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file getCaseData.py
+@file getcasedata.py
 @brief Downloads the case data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
 The raw case data we download can be found at
@@ -36,11 +36,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import modifyDataframeSeries as mdfs
-from memilio.epidata import progress_indicator
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import geomodificationgermany as geoger
+from memilio.epidata import getdataintopandasdataframe as gd
+from memilio.epidata import modifydataframeseries as mdfs
+from memilio.epidata import progressindicator
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
