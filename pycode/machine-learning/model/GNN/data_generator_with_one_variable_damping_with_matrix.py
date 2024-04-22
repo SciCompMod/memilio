@@ -1,9 +1,7 @@
 
 import json
 import pickle
-from memilio.simulation import Damping
-from memilio.simulation.secir import Model, simulate, AgeGroup
-from memilio.simulation.secir import InfectionState as State
+import copy
 import numpy as np
 from datetime import date
 import random
@@ -14,11 +12,21 @@ from datetime import date
 from sklearn.preprocessing import FunctionTransformer
 from random import randrange
 from memilio.simulation import (ContactMatrix, Damping, LogLevel,
-                                UncertainContactMatrix, set_log_level)
-from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
+                                UncertainContactMatrix, set_log_level, AgeGroup)
+from memilio.simulation.secir import (Index_InfectionState,
                                       InfectionState, Model, Simulation,
                                       interpolate_simulation_result, simulate)
 
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    new_dataset_entries = []
+    for i in dataset_entries : 
+      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+      dataset_entries_reshaped[:, 4] = sum_inf_symp
+      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+    return new_dataset_entries
 
 def run_secir_groups_simulation(days, populations, t1, damping_coeff):
     """
@@ -60,26 +68,52 @@ def run_secir_groups_simulation(days, populations, t1, damping_coeff):
         # Initial number of people in each compartment with random numbers
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Exposed)] = random.uniform(
-            0.00025, 0.0005) * populations[i]
+            0.00025, 0.005) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptoms)] = random.uniform(
-            0.0001, 0.00035) * populations[i]
+            0.0001, 0.0035) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptoms)] = random.uniform(
-            0.00007, 0.0001) * populations[i]
+            0.00007, 0.001) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSevere)] = random.uniform(
-            0.00003, 0.00006) * populations[i]
+            0.00003, 0.0006) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedCritical)] = random.uniform(
             0.00001, 0.00002) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(
-            0.002, 0.008) * populations[i]
+            0.002, 0.08) * populations[i]
         model.populations[AgeGroup(i),
-                          Index_InfectionState(InfectionState.Dead)] = 0
+                          Index_InfectionState(InfectionState.Dead)] = random.uniform(
+            0, 0.0003) * populations[i]
         model.populations.set_difference_from_group_total_AgeGroup(
             (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
+
+
+        # Initial number of people in each compartment with random numbers
+        # model.populations[AgeGroup(i), Index_InfectionState(
+        #     InfectionState.Exposed)] = random.uniform(
+        #     0.00025, 0.0005) * populations[i]
+        # model.populations[AgeGroup(i), Index_InfectionState(
+        #     InfectionState.InfectedNoSymptoms)] = random.uniform(
+        #     0.0001, 0.00035) * populations[i]
+        # model.populations[AgeGroup(i), Index_InfectionState(
+        #     InfectionState.InfectedSymptoms)] = random.uniform(
+        #     0.00007, 0.0001) * populations[i]
+        # model.populations[AgeGroup(i), Index_InfectionState(
+        #     InfectionState.InfectedSevere)] = random.uniform(
+        #     0.00003, 0.00006) * populations[i]
+        # model.populations[AgeGroup(i), Index_InfectionState(
+        #     InfectionState.InfectedCritical)] = random.uniform(
+        #     0.00001, 0.00002) * populations[i]
+        # model.populations[AgeGroup(i), Index_InfectionState(
+        #     InfectionState.Recovered)] = random.uniform(
+        #     0.002, 0.008) * populations[i]
+        # model.populations[AgeGroup(i),
+        #                   Index_InfectionState(InfectionState.Dead)] = 0
+        # model.populations.set_difference_from_group_total_AgeGroup(
+        #     (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
 
         # Compartment transition propabilities
         model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 0.5
@@ -127,22 +161,12 @@ def run_secir_groups_simulation(days, populations, t1, damping_coeff):
         data[day] = result.get_last_value()[:]
         # dataset.append(val)
     #dataset_entires_without_confirmed = remove_confirmed_compartments(data, num_groups)
+    dataset_entires_without_confirmed = remove_confirmed_compartments(data, num_groups)
     for row in data:
         dataset.append(row)
 
-    return dataset, damped_matrix
-
-
-def remove_confirmed_compartments(dataset_entries, num_groups):
-    new_dataset_entries = []
-    for i in dataset_entries : 
-      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
-      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
-      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
-      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
-      dataset_entries_reshaped[:, 4] = sum_inf_symp
-      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
-    return new_dataset_entries
+    
+    return dataset_entires_without_confirmed, damped_matrix
 
 
 def getBaselineMatrix():
@@ -214,6 +238,8 @@ def generate_data(
     for i in range(num_runs):
         dampingday = random.randint(5, 100)
         all_days.append(dampingday)
+
+    days = days+input_width
 
     for i in range(number_of_populations):
         # days = damping_days[-1]+20
@@ -398,10 +424,10 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_400pop_one_var_damp_100days_1k_withmatrix')
+        'data_GNN_400pop_one_var_damp_100days_1k_w')
 
     input_width = 5
-    days = 105
+    days = 100
     num_runs = 1000
     number_of_populations = 400
     generate_data(num_runs, path_data, input_width,
