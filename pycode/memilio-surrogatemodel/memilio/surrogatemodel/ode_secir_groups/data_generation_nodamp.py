@@ -29,23 +29,23 @@ import tensorflow as tf
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.simulation import (Damping, LogLevel, set_log_level)
-from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
+from memilio.simulation import (Damping, LogLevel, set_log_level, AgeGroup)
+from memilio.simulation.secir import (Index_InfectionState,
                                       InfectionState, Model,
                                       interpolate_simulation_result, simulate)
 
 
 
-# def remove_confirmed_compartments(dataset_entries, num_groups):
-#     new_dataset_entries = []
-#     for i in dataset_entries : 
-#       dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
-#       sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
-#       sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
-#       dataset_entries_reshaped[:, 2] = sum_inf_no_symp
-#       dataset_entries_reshaped[:, 4] = sum_inf_symp
-#       new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
-#     return new_dataset_entries
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    new_dataset_entries = []
+    for i in dataset_entries : 
+      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+      dataset_entries_reshaped[:, 4] = sum_inf_symp
+      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+    return new_dataset_entries
 
 
 
@@ -56,7 +56,7 @@ def run_secir_groups_simulation(days, populations):
     @return List containing the populations in each compartment used to initialize the run.
    """
     set_log_level(LogLevel.Off)
-
+ 
     start_day = 1
     start_month = 1
     start_year = 2019
@@ -79,26 +79,28 @@ def run_secir_groups_simulation(days, populations):
         model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
 
         # Initial number of people in each compartment with random numbers
+        # (before, the upper range boundary had one 0 more) e.g. (exposed: (0.00025,0.0005))
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Exposed)] = random.uniform(
-            0.00025, 0.0005) * populations[i]
+            0.00025, 0.005) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptoms)] = random.uniform(
-            0.0001, 0.00035) * populations[i]
+            0.0001, 0.0035) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptoms)] = random.uniform(
-            0.00007, 0.0001) * populations[i]
+            0.00007, 0.001) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSevere)] = random.uniform(
-            0.00003, 0.00006) * populations[i]
+            0.00003, 0.0006) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedCritical)] = random.uniform(
-            0.00001, 0.00002) * populations[i]
+            0.00001, 0.0002) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(
-            0.002, 0.008) * populations[i]
+            0.002, 0.08) * populations[i]
         model.populations[AgeGroup(i),
-                          Index_InfectionState(InfectionState.Dead)] = 0
+                          Index_InfectionState(InfectionState.Dead)] = random.uniform(
+            0, 0.0003) * populations[i]
         model.populations.set_difference_from_group_total_AgeGroup(
             (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
 
@@ -145,13 +147,13 @@ def run_secir_groups_simulation(days, populations):
 
     # Omit first column, as the time points are not of interest here. and remove confirmed compartments
     dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
-    #dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
-    #return dataset_entires_withut_confirmed
-    return dataset_entries.tolist()
+    dataset_entires_withut_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    return dataset_entires_withut_confirmed
+    #return dataset_entries.tolist()
 
 
 def generate_data(
-        num_runs, path_out, path_population, input_width, label_width,
+        num_runs, path_out, path_population, input_width, label_width, filename, 
         normalize=True, save_data=True):
     """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
@@ -222,7 +224,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_150days_nodamp.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, filename), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -307,8 +309,10 @@ if __name__ == "__main__":
     path_population = os.path.abspath(
         r"data//pydata//Germany//county_population.json")
 
+    filename = 'data_secir_groups_120days_nodamp_w.pickle'
+
     input_width = 5
-    label_width = 150
+    label_width = 120
     num_runs = 10000
     data = generate_data(num_runs, path_data, path_population, input_width,
-                         label_width)
+                         label_width, filename)

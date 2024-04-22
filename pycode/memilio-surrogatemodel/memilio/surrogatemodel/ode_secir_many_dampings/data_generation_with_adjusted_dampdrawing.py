@@ -29,22 +29,22 @@ import tensorflow as tf
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.simulation import (Damping, LogLevel, set_log_level)
-from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
+from memilio.simulation import (Damping, LogLevel, set_log_level, AgeGroup)
+from memilio.simulation.secir import ( Index_InfectionState,
                                       InfectionState, Model,
                                       interpolate_simulation_result, simulate)
 
 
-# def remove_confirmed_compartments(dataset_entries, num_groups):
-#     new_dataset_entries = []
-#     for i in dataset_entries : 
-#       dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
-#       sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
-#       sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
-#       dataset_entries_reshaped[:, 2] = sum_inf_no_symp
-#       dataset_entries_reshaped[:, 4] = sum_inf_symp
-#       new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
-#     return new_dataset_entries
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    new_dataset_entries = []
+    for i in dataset_entries : 
+      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+      dataset_entries_reshaped[:, 4] = sum_inf_symp
+      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+    return new_dataset_entries
 
 
 def run_secir_groups_simulation(days, number_of_dampings, damping_days, populations):
@@ -80,24 +80,25 @@ def run_secir_groups_simulation(days, number_of_dampings, damping_days, populati
         # Initial number of people in each compartment with random numbers
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Exposed)] = random.uniform(
-            0.00025, 0.0005) * populations[i]
+            0.00025, 0.005) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptoms)] = random.uniform(
-            0.0001, 0.00035) * populations[i]
+            0.0001, 0.0035) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptoms)] = random.uniform(
-            0.00007, 0.0001) * populations[i]
+            0.00007, 0.001) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSevere)] = random.uniform(
-            0.00003, 0.00006) * populations[i]
+            0.00003, 0.0006) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedCritical)] = random.uniform(
-            0.00001, 0.00002) * populations[i]
+            0.00001, 0.0002) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(
-            0.002, 0.008) * populations[i]
+            0.002, 0.08) * populations[i]
         model.populations[AgeGroup(i),
-                          Index_InfectionState(InfectionState.Dead)] = 0
+                          Index_InfectionState(InfectionState.Dead)] = random.uniform(
+            0, 0.0003) * populations[i]
         model.populations.set_difference_from_group_total_AgeGroup(
             (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
 
@@ -155,10 +156,10 @@ def run_secir_groups_simulation(days, number_of_dampings, damping_days, populati
 
     # delete the confirmed compartments 
 
-    #dataset_entires_without_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
+    dataset_entires_without_confirmed = remove_confirmed_compartments(dataset_entries, num_groups)
     #return dataset_entries.tolist()
-    return dataset_entries.tolist(), damped_matrices, damping_days
-    #return dataset_entires_without_confirmed, damped_matrices, damping_days
+    #return dataset_entries.tolist(), damped_matrices, damping_days
+    return dataset_entires_without_confirmed, damped_matrices, damping_days
 
 
 def generate_data(
@@ -380,7 +381,7 @@ if __name__ == "__main__":
     label_width = 100
     num_runs = 10000
     number_of_dampings = 5
-    file_name = 'data_secir_groups_100days_5damp.pickle'
+    file_name = 'data_secir_groups_100days_5damp_w.pickle'
 
     data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width, number_of_dampings, file_name, normalize = True, save_data=True)

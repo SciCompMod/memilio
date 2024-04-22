@@ -29,8 +29,8 @@ import tensorflow as tf
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.simulation import (Damping, LogLevel, set_log_level)
-from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
+from memilio.simulation import (Damping, LogLevel, set_log_level, AgeGroup)
+from memilio.simulation.secir import (Index_InfectionState,
                                       InfectionState, Model,
                                       interpolate_simulation_result, simulate)
 
@@ -80,24 +80,25 @@ def run_secir_groups_simulation(days, number_of_dampings, populations):
         # Initial number of people in each compartment with random numbers
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Exposed)] = random.uniform(
-            0.00025, 0.0005) * populations[i]
+            0.00025, 0.005) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptoms)] = random.uniform(
-            0.0001, 0.00035) * populations[i]
+            0.0001, 0.0035) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptoms)] = random.uniform(
-            0.00007, 0.0001) * populations[i]
+            0.00007, 0.001) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSevere)] = random.uniform(
-            0.00003, 0.00006) * populations[i]
+            0.00003, 0.0006) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedCritical)] = random.uniform(
-            0.00001, 0.00002) * populations[i]
+            0.00001, 0.0002) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(
-            0.002, 0.008) * populations[i]
+            0.002, 0.08) * populations[i]
         model.populations[AgeGroup(i),
-                          Index_InfectionState(InfectionState.Dead)] = 0
+                          Index_InfectionState(InfectionState.Dead)] =  random.uniform(
+            0, 0.0003) * populations[i]
         model.populations.set_difference_from_group_total_AgeGroup(
             (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
 
@@ -120,13 +121,13 @@ def run_secir_groups_simulation(days, number_of_dampings, populations):
     minimum = getMinimumMatrix()
 
 
-    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
-        (num_groups, num_groups)) * 10
+    # model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
+    #     (num_groups, num_groups)) * 10
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
+    #model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
 
 
     ##### generate damping days 
@@ -328,10 +329,10 @@ if __name__ == "__main__":
         r"data//pydata//Germany//county_population.json")
 
     input_width = 5
-    label_width = 30
+    label_width = 100
     num_runs = 10000
-    number_of_dampings = 3
-    file_name = 'data_secir_groups_30days_10k_3damp.pickle'
+    number_of_dampings = 2
+    file_name = 'data_secir_groups_100days_10k_2damp_w.pickle'
 
     data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width, number_of_dampings, file_name, normalize = True, save_data=True)
