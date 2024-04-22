@@ -157,6 +157,49 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
     }
 }
 
+// Check that the start time of the simulation is determined by the given time points for the transitions.
+TEST(IdeSecir, checkStartTime)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType tmax   = 3.0;
+    ScalarType N      = 10000.;
+    ScalarType deaths = 10.;
+    ScalarType dt     = 1.;
+    ScalarType t0     = 2.;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
+    mio::TimeSeries<ScalarType> init(num_transitions);
+
+    // Define transitions that will be used for initialization.
+    Vec vec_init                                                          = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed] = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+    // Add initial time point to TimeSeries.
+    init.add_time_point(0.0, vec_init);
+    // Add further time points until t0.
+    while (init.get_last_time() < t0) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    // Initialize model.
+    mio::isecir::Model model(std::move(init), N, deaths);
+
+    // Create class for simulation.
+    mio::isecir::Simulation sim(model, dt);
+
+    // Check that the last time point of transitions is equal to t0.
+    mio::TimeSeries<ScalarType> transitions = sim.get_transitions();
+    EXPECT_NEAR(t0, transitions.get_last_time(), 1e-8);
+
+    // Carry out simulation and check that first time point of resulting compartments is equal to t0.
+    sim.advance(tmax);
+    mio::TimeSeries<ScalarType> compartments = sim.get_result();
+    EXPECT_NEAR(t0, compartments.get_time(0), 1e-8);
+}
+
 // Check results of our simulation with an example calculated by hand,
 // for calculations see internal Overleaf document.
 // TODO: Add link to material when published.
@@ -175,17 +218,9 @@ TEST(IdeSecir, checkSimulationFunctions)
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization for transitions and death.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 0.0;
+    Vec vec_init                                                          = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed] = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(-0.5, vec_init);
     while (init.get_last_time() < 0) {
@@ -383,7 +418,8 @@ TEST(IdeSecir, testModelConstraints)
     ScalarType deaths = 10;
     ScalarType dt     = 1;
 
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    int num_transitions  = (int)mio::isecir::InfectionTransition::Count;
+    int num_compartments = (int)mio::isecir::InfectionState::Count;
 
     // Create TimeSeries of the wrong size.
     mio::TimeSeries<ScalarType> init_wrong_size(num_transitions + 1);
@@ -403,68 +439,73 @@ TEST(IdeSecir, testModelConstraints)
 
     // --- Test with negative number of deaths.
     // Create TimeSeries with num_transitions elements.
-    mio::TimeSeries<ScalarType> init(num_transitions);
+    mio::TimeSeries<ScalarType> init_few_timepoints(num_transitions);
     // Add time points for initialization of transitions.
     Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
-    init.add_time_point(-3., vec_init);
-    while (init.get_last_time() < 0.) {
-        init.add_time_point(init.get_last_time() + dt, vec_init);
+    init_few_timepoints.add_time_point(-3, vec_init);
+    while (init_few_timepoints.get_last_time() < 0) {
+        init_few_timepoints.add_time_point(init_few_timepoints.get_last_time() + dt, vec_init);
     }
     deaths = -10;
 
     // Initialize a model.
-    mio::TimeSeries<ScalarType> init_copy1(init);
-    mio::isecir::Model model_negative_deaths(std::move(init_copy1), N, deaths);
-
-    // Return true for negative entry in m_populations.
-    constraint_check = model_negative_deaths.check_constraints(dt);
-    EXPECT_TRUE(constraint_check);
-
-    // --- Test with too few time points.
-    deaths = 10;
-    // Initialize a model.
-    mio::isecir::Model model_few_timepoints(std::move(init), N, deaths);
+    mio::isecir::Model model(std::move(init_few_timepoints), N, deaths);
 
     mio::ExponentialDecay expdecay(4.0);
     mio::StateAgeFunctionWrapper delaydistribution(expdecay);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    model_few_timepoints.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
-    constraint_check = model_few_timepoints.check_constraints(dt);
+    // Return true for not enough time points given for the initial transitions.
+    constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- Test with negative flows.
+    // --- Test with last time point of transitions not matching last time point of populations.
     // Create TimeSeries with num_transitions elements.
-    mio::TimeSeries<ScalarType> init_negative(num_transitions);
-    // Add time points for initialization of transitions with negative flows.
-    Vec vec_init_negative = Vec::Constant(num_transitions, -5.);
-    init_negative.add_time_point(-5., vec_init_negative);
-    while (init_negative.get_last_time() < 0) {
-        init_negative.add_time_point(init_negative.get_last_time() + dt, vec_init_negative);
+    mio::TimeSeries<ScalarType> init_different_last_time(num_transitions);
+    // Add enough time points for initialization of transitions but with different last time point
+    // than before so that it does not match last time point of m_populations (that was set in
+    // when constructing model above).
+    init_different_last_time.add_time_point(-4, vec_init);
+    while (init_different_last_time.get_last_time() < 1) {
+        init_different_last_time.add_time_point(init_different_last_time.get_last_time() + dt, vec_init);
     }
-    // Initialize a model.
-    mio::isecir::Model model_negative_flows(std::move(init_negative), N, deaths);
 
-    constraint_check = model_negative_flows.check_constraints(dt);
+    model.m_transitions = init_different_last_time;
+
+    // Return true for not last time points of compartments and transitions not matching.
+    constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- The check_constraints() function of parameters is tested in its own test below. ---
+    // --- Test with TimeSeries for populations that contains more than one time point.
+    // Create TimeSeries with num_compartments elements.
+    mio::TimeSeries<ScalarType> populations_many_timepoints(num_compartments);
+    // Add time points.
+    Vec vec_populations = Vec::Constant(num_compartments, 0.);
+    populations_many_timepoints.add_time_point(0, vec_populations);
+    while (populations_many_timepoints.get_last_time() < 1) {
+        populations_many_timepoints.add_time_point(populations_many_timepoints.get_last_time() + dt, vec_populations);
+    }
+
+    model.m_populations = populations_many_timepoints;
+
+    // Return true for too many time points given for populations.
+    constraint_check = model.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
 
     // --- Correct wrong setup so that next check can go through.
-    mio::TimeSeries<ScalarType> init_valid(num_transitions);
-    init_valid.add_time_point(-5, vec_init);
-    while (init_valid.get_last_time() < 0) {
-        init_valid.add_time_point(init_valid.get_last_time() + dt, vec_init);
-    }
+    // Create TimeSeries with num_compartments elements.
+    mio::TimeSeries<ScalarType> correct_populations(num_compartments);
+    // Add one time point.
+    correct_populations.add_time_point(1, vec_populations);
 
-    // Initialize a model.
-    mio::isecir::Model model(std::move(init_valid), N, deaths);
-
-    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+    model.m_populations = correct_populations;
 
     constraint_check = model.check_constraints(dt);
     EXPECT_FALSE(constraint_check);
+
+    // --- The check_constraints() function of parameters is tested in its own test below. ---
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
@@ -622,17 +663,9 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization for transitions.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 10.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(-12, vec_init);
     while (init.get_last_time() < 0) {
@@ -710,17 +743,9 @@ TEST(IdeSecir, compareEquilibria)
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization for transitions.
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 10.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(-12, vec_init);
     while (init.get_last_time() < 0) {

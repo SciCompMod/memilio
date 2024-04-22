@@ -43,7 +43,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 {
     //--- Preparations ---
     // Try to get rki data from path.
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_noage(path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_noage(path));
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });

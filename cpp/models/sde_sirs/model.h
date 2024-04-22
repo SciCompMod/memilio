@@ -67,24 +67,24 @@ public:
         // take the minimum of the calculated flow and the source compartment, to ensure that
         // no compartment attains negative values.
 
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = std::min(
+        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = std::clamp(
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
                 sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) *
                     inv_sqrt_dt * si,
-            y[(size_t)InfectionState::Susceptible] / step_size);
+            0.0, y[(size_t)InfectionState::Susceptible] / step_size);
 
-        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] = std::min(
+        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] = std::clamp(
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected] +
                 sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) * inv_sqrt_dt * ir,
-            y[(size_t)InfectionState::Infected] / step_size);
+            0.0, y[(size_t)InfectionState::Infected] / step_size);
 
-        flows[get_flat_flow_index<InfectionState::Recovered, InfectionState::Susceptible>()] = std::min(
+        flows[get_flat_flow_index<InfectionState::Recovered, InfectionState::Susceptible>()] = std::clamp(
             (1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered] +
                 sqrt((1.0 / params.get<TimeImmune>()) * y[(size_t)InfectionState::Recovered]) * inv_sqrt_dt * rs,
-            y[(size_t)InfectionState::Recovered] / step_size);
+            0.0, y[(size_t)InfectionState::Recovered] / step_size);
     }
 
-    ScalarType step_size = 0.1; ///< A step size of the model with which the stochastic process is realized.
+    ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.
     mutable RandomNumberGenerator rng;
 
 private:
