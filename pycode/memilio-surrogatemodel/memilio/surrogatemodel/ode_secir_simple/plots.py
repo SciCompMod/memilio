@@ -2,7 +2,7 @@ import os
 import tensorflow as tf 
 import pickle 
 from  memilio.surrogatemodel.ode_secir_simple.model import split_data, get_test_statistic
-from memilio.surrogatemodel.ode_secir_groups.data_generation_nodamp import get_population
+#from memilio.surrogatemodel.ode_secir_groups.data_generation_nodamp import get_population
 import numpy as np 
 from memilio.simulation.secir import InfectionState
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-filename = "data_secir_simple_150days.pickle"
+filename = "data_secir_simple_150days_w2.pickle"
 
 if not os.path.isfile(os.path.join(path_data, 'data_secir_simple.pickle')):
         ValueError("no dataset found in path: " + path_data)
@@ -30,13 +30,13 @@ test_labels = data_splitted['test_labels']
 df_gridsearch = pd.read_csv('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_searchdataframe')
 # load trained model 
 #new_model = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
-new_model = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_bestLSTM_2024_150days')
+new_model = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_150days_w')
 
 pred = new_model.predict(test_inputs)
 
 # transform arrays, so we assign the data to the right compartment 
 # for our plot we only need one sample, not all 1000 test samples
-sample_id = 0
+sample_id = 894
 pred_transformed =  pred[sample_id].transpose()
 test_labels_transformed =  np.array(test_labels)[sample_id].transpose()
 
@@ -54,15 +54,17 @@ def lineplots_pred_label(pred_reversed, labels_reversed):
                 compartment_array.append(compartment) 
         index=[str(compartment).split('.')[1]
                for compartment in compartment_array]
-        
-        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(10,13))
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(10,13), constrained_layout = True)
         
         #fig, axes = plt.subplots(nrows=2, ncols=4, sharey=False)
         axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
-        for ax, c, p, l in zip(axes, index, pred, labels):
+        for ax, c, p, l in zip(axes, infectionstates, pred, labels):
                 ax.plot(l, label ='label')
                 ax.plot(p, label='pred', linestyle = '--')
-
+                ax.set_xlabel('Number of days')
+                ax.set_ylabel('Number of individuals')
+                
                 ax.set_title(c, fontsize = 10)
                 
                 #ax.legend(loc='upper right', ncols=3)
@@ -84,7 +86,7 @@ def lineplots_pred_label(pred_reversed, labels_reversed):
         #fig.legend(loc='upper right', ncols=3)
         
                 
-        plt.savefig("secir_simple_compartment_lines.png")
+        plt.savefig("secir_simple_compartment_lines_w.png")
 
 
 def closeup_susceptible(pred_reversed, labels_reversed):
@@ -110,15 +112,15 @@ def closeup_susceptible(pred_reversed, labels_reversed):
         ax.set_ylabel('MAPE loss')
         ax.legend(loc='upper right')
         ax.set_title('Closeup of first 20 days of Susceptible compartment')
-        plt.savefig("susceptible_closeup_secir_simple_dotted.png")
+        plt.savefig("susceptible_closeup_secir_simple_dotted_w.png")
 
         
 def lineplot_number_of_days():
        #model30 = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
-        model60 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_60days')
-        model90 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_90days')
-        model120 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_120days')
-        model150 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_150days')
+        model60 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_60days')
+        model90 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_90days')
+        model120 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_120days')
+        model150 = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_150days')
 
         models = [model60, model90, model120, model150]
         filenames =[ "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle","data_secir_simple_150days.pickle"]
@@ -209,24 +211,37 @@ def lineplot_days_simple_and_groups():
         path_data = os.path.join(os.path.dirname(os.path.realpath(
                 os.path.dirname(os.path.realpath(path)))), 'data')
         
-        filenames_simple=['data_secir_simple.pickle', "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle",
-                          "data_secir_simple_150days.pickle"]
-        filenames_groups = ['data_secir_groups_30days_nodamp.pickle',"data_secir_groups_60days_nodamp.pickle","data_secir_groups_90days_nodamp.pickle",
-                    "data_secir_groups_120days_nodamp.pickle","data_secir_groups_150days_nodamp.pickle"]
+        filenames_simple=['data_secir_simple_30days_widerinput_2.pickle', "data_secir_simple_60days_w2.pickle","data_secir_simple_90days_w2.pickle","data_secir_simple_120days_w2.pickle",
+                          "data_secir_simple_150days_w2.pickle"]
+        filenames_groups = ['data_secir_groups_30days_nodamp_w.pickle',"data_secir_groups_60days_nodamp_w.pickle","data_secir_groups_90days_nodamp_w.pickle",
+                    "data_secir_groups_120days_nodamp_w.pickle","data_secir_groups_150days_nodamp_w.pickle"]
+        
+        # filenames_simple=['data_secir_simple.pickle', "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle",
+        #                   "data_secir_simple_150days.pickle"]
+        # filenames_groups = ['data_secir_groups_30days_nodamp.pickle',"data_secir_groups_60days_nodamp.pickle","data_secir_groups_90days_nodamp.pickle",
+        #             "data_secir_groups_120days_nodamp.pickle","data_secir_groups_150days_nodamp.pickle"]
         
         path = os.path.dirname(os.path.realpath(__file__))
         path_models = os.path.join(os.path.dirname(os.path.realpath(
                 os.path.dirname(os.path.realpath(path)))), 'saved_models')
         
-        modelnames_simple = ['saved_models_secir_simple_bestLSTM_2024','saved_models_secir_simple_bestLSTM_2024_60days', 
-                             'saved_models_secir_simple_bestLSTM_2024_90days', 'saved_models_secir_simple_bestLSTM_2024_120days',
-                             'saved_models_secir_simple_bestLSTM_2024_150days']
-        modelnames_groups = ['saved_models_secir_groups_best_LSTM', 'saved_models_secir_groups_best_LSTM_60days', 'saved_models_secir_groups_best_LSTM_90days',
-                             'saved_models_secir_groups_best_LSTM_120days', 'saved_models_secir_groups_best_LSTM_150days']
+        # modelnames_simple = ['saved_models_secir_simple_bestLSTM_2024','saved_models_secir_simple_bestLSTM_2024_60days', 
+        #                      'saved_models_secir_simple_bestLSTM_2024_90days', 'saved_models_secir_simple_bestLSTM_2024_120days',
+        #                      'saved_models_secir_simple_bestLSTM_2024_150days']
+        # modelnames_groups = ['saved_models_secir_groups_best_LSTM', 'saved_models_secir_groups_best_LSTM_60days', 'saved_models_secir_groups_best_LSTM_90days',
+        #                      'saved_models_secir_groups_best_LSTM_120days', 'saved_models_secir_groups_best_LSTM_150days']
+
+        modelnames_simple = ['saved_models_secir_simple_30days_w','saved_models_secir_simple_60days_w', 
+                             'saved_models_secir_simple_90days_w', 'saved_models_secir_simple_120days_w',
+                             'saved_models_secir_simple_150days_w']
+        modelnames_groups = ['saved_models_groups_nodamp_30days_w', 'saved_models_groups_nodamp_60days_w', 'saved_models_groups_nodamp_90days_w',
+                             'saved_models_groups_nodamp_120days_w', 'saved_models_groups_nodamp_150days_w']
         
         days = [30,60,90,120,150]
 
-        MAPE_simple = []
+        #MAPE_simple = [0.0922, 0.1485, 0.2049, 0.1680, 0.3642]
+        #MAPE_groups = [0.4123, 0.3225, 0.4032, 0.4176, 0.7222]
+        MAPE_simple = []        
         MAPE_groups = []
         for filenames, modelnames, MAPE in zip([filenames_simple, filenames_groups], [modelnames_simple, modelnames_groups],[MAPE_simple, MAPE_groups]):
                 
@@ -282,7 +297,7 @@ def lineplot_days_simple_and_groups():
         fig.tight_layout()
         
 
-        plt.savefig("plot_days_simple_and_groups_v2.png")
+        plt.savefig("plot_days_simple_and_groups_v2_w.png")
 
 
 
@@ -352,14 +367,14 @@ def plot_losses(): # for secir groups
                 os.path.dirname(os.path.realpath(path)))), 'data')
         
         #filenames = ["data_secir_simple_150days.pickle", 'data_secir_groups_150days_nodamp.pickle']
-        filename = 'data_secir_groups_150days_nodamp.pickle'
+        filename = 'data_secir_groups_150days_nodamp_w.pickle'
 
       
         path_models = os.path.join(os.path.dirname(os.path.realpath(
                 os.path.dirname(os.path.realpath(path)))), 'saved_models')
         
         #modelnames = ['saved_models_secir_simple_bestLSTM_2024_150days', 'saved_models_secir_groups_best_LSTM_150days' ]
-        modelname = 'saved_models_secir_groups_best_LSTM_150days'
+        modelname = 'saved_models_groups_nodamp_150days_w'
         
         #for filename, modelname in zip(filenames, modelnames):
 
@@ -415,7 +430,7 @@ def plot_losses(): # for secir groups
         ax2.tick_params(axis='y', labelcolor=color)
         fig.tight_layout()
 
-        plt.savefig("MAE_MAPE_150_secir_groups.png")
+        plt.savefig("MAE_MAPE_150_secir_groups_w.png")
 
         
 # take closer look on day 56 which has highest MSE and MAPE 
@@ -434,7 +449,7 @@ def compartment_error_simple():
         path_data = os.path.join(os.path.dirname(os.path.realpath(
                 os.path.dirname(os.path.realpath(path)))), 'data')
         
-        filename = "data_secir_simple_150days.pickle"
+        filename = "data_secir_simple_150days_w2.pickle"
 
         file = open(os.path.join(path_data,filename), 'rb')
 
@@ -444,7 +459,7 @@ def compartment_error_simple():
         test_inputs = data_splitted['test_inputs']
         test_labels = data_splitted['test_labels']
 
-        new_model = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_bestLSTM_2024_150days')
+        new_model = tf.keras.models.load_model('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_150days_w')
 
         pred = new_model.predict(test_inputs)
 
@@ -464,7 +479,8 @@ def compartment_error_simple():
         
         #fig, axes = plt.subplots(nrows=2, ncols=4, sharey=False)
         axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
-        for ax, c, ms, ma in zip(axes, index, mae, mape):
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+        for ax, c, ms, ma in zip(axes, infectionstates, mae, mape):
                 
                 color = 'tab:blue'
                 ax.plot(ms, label ='MAE', color = color)
@@ -502,7 +518,7 @@ def compartment_error_simple():
 
         #fig.legend(lines[:2], line_labels[:2], loc='lower center') 
         #fig.('MSE and MAPE for compartments', fontsize=16)                
-        plt.savefig("150_simple_MSE_and_MAPE.png")
+        plt.savefig("150_simple_MAE_and_MAPE_w.png")
 
 
 def compartment_error_groups():
@@ -535,7 +551,7 @@ def compartment_error_groups():
 
 
 
-
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
         # calcuate average of all age gorups 
         #average_labels_reversed = []
         #for sample in labels_reversed = 
@@ -547,7 +563,7 @@ def compartment_error_groups():
         
         #fig, axes = plt.subplots(nrows=2, ncols=4, sharey=False)
         axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
-        for ax, c, ms, ma in zip(axes, index, mae, mape):
+        for ax, c, ms, ma in zip(axes, infectionstates, mae, mape):
                 
                 color = 'tab:blue'
                 ax.plot(ms, label ='MAE', color = color)
@@ -592,16 +608,23 @@ def plot_30days_differentmodels():
         path_data = os.path.join(os.path.dirname(os.path.realpath(
                 os.path.dirname(os.path.realpath(path)))), 'data')
         
-        filenames_simple=['data_secir_simple.pickle', "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle",
-                          "data_secir_simple_150days.pickle"]
+        # filenames_simple=['data_secir_simple.pickle', "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle",
+        #                   "data_secir_simple_150days.pickle"]
+        filenames_simple=['data_secir_simple_30days_widerinput_2.pickle', "data_secir_simple_60days_w2.pickle","data_secir_simple_90days_w2.pickle","data_secir_simple_120days_w2.pickle",
+                          "data_secir_simple_150days_w2.pickle"]
 
         path = os.path.dirname(os.path.realpath(__file__))
         path_models = os.path.join(os.path.dirname(os.path.realpath(
-                os.path.dirname(os.path.realpath(path)))), 'saved_models')
+                #os.path.dirname(os.path.realpath(path)))), 'saved_models')
+                os.path.dirname(os.path.realpath(path)))))
         
-        modelnames_simple = ['saved_models_secir_simple_bestLSTM_2024','saved_models_secir_simple_bestLSTM_2024_60days', 
-                             'saved_models_secir_simple_bestLSTM_2024_90days', 'saved_models_secir_simple_bestLSTM_2024_120days',
-                             'saved_models_secir_simple_bestLSTM_2024_150days']
+        modelnames_simple = ['saved_models_secir_simple_30days_w','saved_models_secir_simple_60days_w', 
+                             'saved_models_secir_simple_90days_w', 'saved_models_secir_simple_120days_w',
+                             'saved_models_secir_simple_150days_w']
+        
+        # modelnames_simple = ['saved_models_secir_simple_bestLSTM_2024','saved_models_secir_simple_bestLSTM_2024_60days', 
+        #                      'saved_models_secir_simple_bestLSTM_2024_90days', 'saved_models_secir_simple_bestLSTM_2024_120days',
+        #                      'saved_models_secir_simple_bestLSTM_2024_150days']
         
         days = ['30days','60days','90days','120days','150days']
 
@@ -635,9 +658,9 @@ def plot_30days_differentmodels():
 
                 pred_reversed = np.expm1(pred)
                 labels_reversed = np.expm1(test_labels)
-
+                infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
                 mape = 100*np.mean(abs((test_labels - pred)/test_labels), axis = 0).transpose()
-                for ax, c, ma in zip(axes, index, mape):
+                for ax, c, ma in zip(axes, infectionstates, mape):
                         
                         ax.set_ylabel('Test MAPE')
                         ax.set_xlabel('Days')
@@ -660,7 +683,7 @@ def plot_30days_differentmodels():
 
         fig.legend(lines[:(len(days))], line_labels[:len(days)], loc='upper center',  bbox_to_anchor=(0.5, -0.05), shadow=True, ncol=3)
         #fig.('MSE and MAPE for compartments', fontsize=16)                
-        plt.savefig("MAPE_30_days_allmodels_secirsimple.png")
+        plt.savefig("MAPE_30_days_allmodels_secirsimple_w.png")
 
 
 
@@ -963,3 +986,284 @@ def plot_results_on_b_w1_w3():
                 #ax.set_ylim(0, 250)
 
         plt.savefig('train_test_secir_simple_v_w1_w2.png')
+
+
+
+
+def compartment_error_simple_barplot_comarison_MAEmodel():
+        # this plot compares our classic model 30 day secir simple model with a model that used MAE as a loss metric
+
+                #load data 
+        #path = os.path.dirname(os.path.realpath(__file__))
+        #path_data = os.path.join(os.path.dirname(os.path.realpath(
+        #        os.path.dirname(os.path.realpath(path)))), 'data')
+        
+        #filename = "data_secir_simple_150days.pickle"
+
+        #file = open(os.path.join(path_data,filename), 'rb')
+        filename = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple.pickle'
+        modelnames = ['/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_bestLSTM_2024',
+                      '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models/saved_models_secir_simple_bestLSTM_2024_30days_mae']
+
+        all_mape =[]
+        for modelname in modelnames:
+        
+                file = open(filename, 'rb')
+        
+
+                data = pickle.load(file)
+                data_splitted = split_data(data['inputs'], data['labels'])
+
+                test_inputs = data_splitted['test_inputs']
+                test_labels = data_splitted['test_labels']
+
+                new_model = tf.keras.models.load_model(modelname)
+
+                pred = new_model.predict(test_inputs)
+
+                #mae =  np.mean((abs(labels_reversed - pred_reversed)), axis = 0).transpose()
+                mape = 100*np.mean(abs((test_labels - pred)/test_labels), axis = 0).transpose()
+                all_mape.append(np.mean(mape, axis = 1))
+                
+        compartment_array = []
+        for compartment in InfectionState.values():
+                compartment_array.append(compartment) 
+        index = [3,5]
+        compartments_cleaned= np.delete(compartment_array, index)
+
+        compartmentnames=[str(compartment).split('.')[1]
+               for compartment in compartments_cleaned]
+
+        compartment_errors = {
+        'MAPEmodel': all_mape[0],
+        'MAEmodel': all_mape[1]}
+
+
+        x = np.arange(-1,len(compartmentnames)-1)  # the label locations
+        width = 0.25  # the width of the bars
+        multiplier = 0
+
+        fig, ax = plt.subplots(layout='constrained')
+
+        for attribute, measurement in compartment_errors.items():
+
+                offset = width * multiplier
+                rects = ax.barh(x + offset, measurement.round(4), width, label=attribute)
+
+                large_bars = [p if p > 0.28 else '' for p in measurement.round(4)]
+                small_bars = [p if p <= 0.28 else '' for p in measurement.round(4)]
+
+                ax.bar_label(rects, small_bars,
+                  padding=3, color='black', fontsize = 8 )
+                ax.bar_label(rects, large_bars,
+                                        padding=-40, color='white', fontsize = 8)
+
+
+                #ax.bar_label(rects, padding=3, fontsize = 8)
+                multiplier += 1
+
+                # Add some text for labels, title and custom x-axis tick labels, etc.
+                ax.set_xlabel('Test MAPE')
+                #ax.set_ylabel('')
+                #ax.set_title('')
+                ax.set_yticks(x + width, compartmentnames)
+                ax.legend(loc='lower right', ncols=3)
+                #ax.set_ylim(0, 250)
+
+        plt.savefig("secir_simple_compartments_distribution_MAPE_MAEmodels_.png")
+
+
+def compartment_error_simple_barplot():
+                #load data 
+        #path = os.path.dirname(os.path.realpath(__file__))
+        #path_data = os.path.join(os.path.dirname(os.path.realpath(
+        #        os.path.dirname(os.path.realpath(path)))), 'data')
+        
+        #filename = "data_secir_simple_150days.pickle"
+
+        #file = open(os.path.join(path_data,filename), 'rb')
+        filenames = ['/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_30days_widerinput_2.pickle', 
+                     '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_90days_w2.pickle',
+                     '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data/data_secir_simple_150days_w2.pickle']
+        modelnames = ['/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_30days_w',
+                      '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_90days_w',
+                      '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_150days_w']
+
+        all_mape =[]
+        for filename, modelname in zip(filenames, modelnames):
+        
+                file = open(filename, 'rb')
+        
+
+                data = pickle.load(file)
+                data_splitted = split_data(data['inputs'], data['labels'])
+
+                test_inputs = data_splitted['test_inputs']
+                test_labels = data_splitted['test_labels']
+
+                new_model = tf.keras.models.load_model(modelname)
+
+                pred = new_model.predict(test_inputs)
+                pred_reversed = np.expm1(pred)
+                labels_reversed = np.expm1(test_labels)
+
+                #mae =  np.mean((abs(labels_reversed - pred_reversed)), axis = 0).transpose()
+                mape = 100*np.mean(abs((test_labels - pred)/test_labels), axis = 0).transpose()
+                all_mape.append(np.mean(mape, axis = 1))
+                #all_mape.append(np.mean(mae, axis = 1))
+                
+        compartment_array = []
+        for compartment in InfectionState.values():
+                compartment_array.append(compartment) 
+        index = [3,5]
+        compartments_cleaned= np.delete(compartment_array, index)
+
+        compartmentnames=[str(compartment).split('.')[1]
+               for compartment in compartments_cleaned]
+
+        compartment_errors = {
+        '30d': all_mape[0],
+        '90d': all_mape[1], 
+        '150d': all_mape[2]}
+
+
+        x = np.arange(-1,len(compartmentnames)-1)  # the label locations
+        width = 0.25  # the width of the bars
+        multiplier = 0
+
+        fig, ax = plt.subplots(layout='constrained')
+
+        for attribute, measurement in compartment_errors.items():
+
+                offset = width * multiplier
+                rects = ax.barh(x + offset, measurement.round(4), width, label=attribute)
+
+                large_bars = [p if p > 0.28 else '' for p in measurement.round(4)] # for MAPE
+                small_bars = [p if p <= 0.28 else '' for p in measurement.round(4)] # for MAPE
+                
+                # large_bars = [p if p > 80 else '' for p in measurement.round(2)] # for MAE
+                # small_bars = [p if p <= 80 else '' for p in measurement.round(2)] # for MAE
+
+
+
+                ax.bar_label(rects, small_bars,
+                  padding=3, color='black', fontsize = 8 )
+                ax.bar_label(rects, large_bars,
+                                        padding=-40, color='white', fontsize = 8)
+
+
+                #ax.bar_label(rects, padding=3, fontsize = 8)
+                multiplier += 1
+
+                # Add some text for labels, title and custom x-axis tick labels, etc.
+                ax.set_xlabel('Test MAPE')
+                #ax.set_xlabel('Test MAE')
+                #ax.set_ylabel('')
+                #ax.set_title('')
+                ax.set_yticks(x + width, compartmentnames)
+                ax.legend(loc='lower right', ncols=3)
+                #ax.set_ylim(0, 250)
+
+        plt.savefig("secir_simple_compartments_distribution_MAPE_w.png")
+
+
+def lineplot_days_simple_and_groups_MAE():
+        path = os.path.dirname(os.path.realpath(__file__))
+        path_data = os.path.join(os.path.dirname(os.path.realpath(
+                os.path.dirname(os.path.realpath(path)))), 'data')
+        
+        # filenames_simple=['data_secir_simple.pickle', "data_secir_simple_60days.pickle","data_secir_simple_90days.pickle","data_secir_simple_120days.pickle",
+        #                   "data_secir_simple_150days.pickle"]
+        
+        filenames_simple=['data_secir_simple_30days_widerinput_2.pickle', "data_secir_simple_60days_w2.pickle","data_secir_simple_90days_w2.pickle","data_secir_simple_120days_w2.pickle",
+                          "data_secir_simple_150days_w2.pickle"]
+        
+        filenames_groups = ['data_secir_groups_30days_nodamp_w.pickle',"data_secir_groups_60days_nodamp_w.pickle","data_secir_groups_90days_nodamp_w.pickle",
+                    "data_secir_groups_120days_nodamp_w.pickle","data_secir_groups_150days_nodamp_w.pickle"]
+
+        # filenames_groups = ['data_secir_groups_30days_nodamp.pickle',"data_secir_groups_60days_nodamp.pickle","data_secir_groups_90days_nodamp.pickle",
+        #             "data_secir_groups_120days_nodamp.pickle","data_secir_groups_150days_nodamp.pickle"]
+        
+        path = os.path.dirname(os.path.realpath(__file__))
+        path_models = os.path.join(os.path.dirname(os.path.realpath(
+                os.path.dirname(os.path.realpath(path)))), 'saved_models')
+        
+        # modelnames_simple = ['saved_models_secir_simple_bestLSTM_2024','saved_models_secir_simple_bestLSTM_2024_60days', 
+        #                      'saved_models_secir_simple_bestLSTM_2024_90days', 'saved_models_secir_simple_bestLSTM_2024_120days',
+        #                      'saved_models_secir_simple_bestLSTM_2024_150days']
+        
+        modelnames_simple = ['saved_models_secir_simple_30days_w','saved_models_secir_simple_60days_w', 
+                             'saved_models_secir_simple_90days_w', 'saved_models_secir_simple_120days_w',
+                             'saved_models_secir_simple_150days_w']
+        
+        modelnames_groups = ['saved_models_groups_nodamp_30days_w', 'saved_models_groups_nodamp_60days_w', 'saved_models_groups_nodamp_90days_w',
+                             'saved_models_groups_nodamp_120days_w', 'saved_models_groups_nodamp_150days_w']
+        
+        
+        # modelnames_simple = ['saved_models_secir_simple_30days_w','saved_models_secir_simple_60days_w', 
+        #                      'saved_models_secir_simple_90days_w', 'saved_models_secir_simple_120days_w',
+        #                      'saved_models_secir_simple_150days_w']
+        
+        days = [30,60,90,120,150]
+
+        MAE_simple = []
+        MAE_groups = []
+        for filenames, modelnames, MAE in zip([filenames_simple, filenames_groups], [modelnames_simple, modelnames_groups],[MAE_simple, MAE_groups]):
+                
+                for modelname, filename in zip(modelnames, filenames): 
+
+                        
+                        file = open(os.path.join(path_data,filename), 'rb')
+                        model = tf.keras.models.load_model(os.path.join(path_models, modelname))
+                        
+
+                        data = pickle.load(file)
+                        data_splitted = split_data(data['inputs'], data['labels'])
+
+                        test_inputs = data_splitted['test_inputs']
+                        test_labels = data_splitted['test_labels']
+                        pred = model.predict(test_inputs)
+                        pred_reversed = np.expm1(pred)
+                        labels_reversed = np.expm1(test_labels)
+
+                        mae =  np.mean((abs(labels_reversed - pred_reversed)), axis = 0).transpose()
+
+                        mean_mae = mae.mean()
+                        MAE.append(mean_mae)
+
+        # version 1 
+        # plt.figure().clf()
+        # fig, ax = plt.subplots(figsize =(8,4))
+        # ax.plot(days, MAPE_simple,  marker = 'o', label='simple' )
+        # ax.plot(days, MAPE_groups,  marker = 'x', label='groups' )
+        # ax.set_xticks(days)
+        # ax.set_xlabel('Number of days')
+        # ax.set_ylabel('MAPE')
+        # ax.set_title('MAPE for number of days to be predicted')
+        # plt.savefig("plot_days_simple_and_groups.png")
+
+        # version two with two axes 
+                               
+        plt.figure().clf()
+        fig, ax1 = plt.subplots(figsize =(8,4))
+
+        color = 'tab:red'
+        ax1.plot(days, MAE_simple, label ='simple', color = color, marker = 'o' )
+        ax1.set_xticks(days)
+        ax1.set_xlabel('Number of days')
+        ax1.set_ylabel('MAE', color = color)
+        ax1.tick_params(axis='y', labelcolor=color)
+        ax1.set_title('MAE for number of days to be predicted')
+        
+
+
+        ax2 = ax1.twinx()
+        color = 'tab:blue'
+        ax2.set_ylabel('MAE', color = color)
+        ax2.plot(days, MAE_groups, color = color, label = 'groups', marker = 'x')
+        ax2.tick_params(axis='y', labelcolor=color)
+        fig.legend(loc= 'lower left', fontsize = 9)
+        fig.tight_layout()
+        
+
+        plt.savefig("plot_days_simple_and_groups_MAE_w.png")
