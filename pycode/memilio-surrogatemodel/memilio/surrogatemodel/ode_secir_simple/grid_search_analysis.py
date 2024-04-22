@@ -47,29 +47,6 @@ def heatmap_act_opt(df):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ######## grid search analysis of layers and neurons ####################################
 
 
@@ -169,6 +146,47 @@ def heatmap(df):
 
 
 def heatmaps(df):
+    # df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    # df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
+
+    # df_heatmap2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    # df_heatmap2= df_heatmap2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
+
+    # df_heatmap3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
+    # df_heatmap3= df_heatmap3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
+
+    # fig, (ax0, ax1, ax2) = plt.subplots(nrows = 1, ncols = 3, sharex=True, figsize = (25,10))
+
+    # for ax, df_heatmap, name  in zip([ax0, ax1, ax2], [df_heatmap1 ,df_heatmap2, df_heatmap3], ['MLP', 'CNN', 'LSTM']):
+    #     im = ax.imshow(df_heatmap.values, cmap ='Blues' )
+
+    #     # Show all ticks and label them with the respective list entries
+    #     ax.set_xticks(np.arange(len(df_heatmap.columns)), labels=df_heatmap.columns)
+    #     ax.set_yticks(np.arange(len(df_heatmap.index)), labels=df_heatmap.index)
+
+    #     # Rotate the tick labels and set their alignment.
+    #     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+    #             rotation_mode="anchor")
+
+    #     # Loop over data dimensions and create text annotations.
+    #     for i in range(len(df_heatmap.index)):
+    #         for j in range(len(df_heatmap.columns)):
+    #             text = ax.text(j, i, np.around(df_heatmap.values, decimals=2)[i, j],
+    #                         ha="center", va="center", color="w")
+
+
+    #     cbar_kw = {}        
+    #     cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+    #     cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")        
+
+
+    #     ax.set_title("Number of layers and neurons for"+name)
+    # fig.tight_layout()
+    # plt.show()
+    # plt.savefig("heatmap_layers_neurons_all_blue.png")
+
+
+
     df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
     df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
@@ -178,56 +196,19 @@ def heatmaps(df):
     df_heatmap3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'kfold_test']])
     df_heatmap3= df_heatmap3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='kfold_test')
 
-    fig, (ax0, ax1, ax2) = plt.subplots(nrows = 1, ncols = 3, sharex=True, figsize = (25,10))
-
-    for ax, df_heatmap, name  in zip([ax0, ax1, ax2], [df_heatmap1 ,df_heatmap2, df_heatmap3], ['MLP', 'CNN', 'LSTM']):
-        im = ax.imshow(df_heatmap.values)
-
-        # Show all ticks and label them with the respective list entries
-        ax.set_xticks(np.arange(len(df_heatmap.columns)), labels=df_heatmap.columns)
-        ax.set_yticks(np.arange(len(df_heatmap.index)), labels=df_heatmap.index)
-
-        # Rotate the tick labels and set their alignment.
-        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-                rotation_mode="anchor")
-
-        # Loop over data dimensions and create text annotations.
-        for i in range(len(df_heatmap.index)):
-            for j in range(len(df_heatmap.columns)):
-                text = ax.text(j, i, np.around(df_heatmap.values, decimals=2)[i, j],
-                            ha="center", va="center", color="w")
-
-
-        cbar_kw = {}        
-        cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
-        cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")        
-
-
-        ax.set_title("Number of layers and neurons for"+name)
-    fig.tight_layout()
-    plt.show()
-    plt.savefig("heatmap_layers_neurons_all.png")
-
-
-
-    df_heatmap1 = pd.DataFrame(data =  df.loc[(df['model'] == 'Dense')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap1= df_heatmap1.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
-
-    df_heatmap2 = pd.DataFrame(data =  df.loc[(df['model'] == 'CNN')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap2= df_heatmap2.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
-
-    df_heatmap3 = pd.DataFrame(data =  df.loc[(df['model'] == 'LSTM')][['number_of_hidden_layers', 'number_of_neurons', 'mean_test_MAPE']])
-    df_heatmap3= df_heatmap3.pivot(index='number_of_hidden_layers', columns='number_of_neurons', values='mean_test_MAPE')
-
-    fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=True, figsize = (20,20))
+    fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=False, figsize = (9,9))
 
     for ax, df_heatmap, name  in zip(axs.flat, [df_heatmap1 ,df_heatmap2, df_heatmap3], ['MLP', 'CNN', 'LSTM']):
         
-        im = ax.imshow(df_heatmap.values)
+        im = ax.imshow(df_heatmap.values, cmap = 'Blues')
+        #plt.rcParams.update({'font.size': 30})
 
         # Show all ticks and label them with the respective list entries
         ax.set_xticks(np.arange(len(df_heatmap.columns)), labels=df_heatmap.columns)
         ax.set_yticks(np.arange(len(df_heatmap.index)), labels=df_heatmap.index)
+        
+        ax.set_ylabel('number of hidden layers')
+        ax.set_xlabel('number of neurons per layer')
 
         # Rotate the tick labels and set their alignment.
         plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -237,19 +218,21 @@ def heatmaps(df):
         for i in range(len(df_heatmap.index)):
             for j in range(len(df_heatmap.columns)):
                 text = ax.text(j, i, np.around(df_heatmap.values, decimals=2)[i, j],
-                            ha="center", va="center", color="w")
+                            ha="center", va="center", color="black")
 
 
-        cbar_kw = {}        
-        cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
-        cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")        
+        #cbar_kw = {}        
+        #cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+        #cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")        
 
 
-        ax.set_title("Number of layers and neurons for "+name)
+        ax.set_title("Model = "+name)
     fig.tight_layout()
-    plt.rcParams.update({'font.size': 15})
+    fig.colorbar(im, ax = axs, shrink=0.75, label = 'MAPE')
+    fig.delaxes(axs[1][1])
+ 
     plt.show()
-    plt.savefig("heatmap_layers_neurons_all.png")
+    plt.savefig("heatmap_layers_neurons_all_secir_simple_blue.png")
 
 
 

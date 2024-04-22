@@ -1,6 +1,7 @@
 import pandas as pd 
 import numpy as np 
 import matplotlib.pyplot as plt
+import os
 
 ### get all neccessary plots
 df_nodamp_MLP_part1 = pd.read_csv('pycode/memilio-surrogatemodel/memilio/secir_groups_nodamp_100days/datfarame_secirgroups_100days_nodamp')
@@ -90,8 +91,63 @@ def plot_multipledampings(df):
     ax.set_ylabel('test MAPE')
     ax.set_xlabel('Number of dampings')
     ax.set_title('Mean Test MAPE for different number of dampings')
-    plt.savefig("groups_multipledamp_2conv.png")
+    plt.savefig("groups_multipledamp.png")
 
 
 barplot(df_nodamp_100days)
 plot_multipledampings(df_all)
+
+
+def plot_multipledampings_w ():
+    path_2345 = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_2345damp'
+    LSTM_2345 = pd.DataFrame(data = pd.read_csv(os.path.join(path_2345, 'dataframe_secirgroups_2345damp_LSTM_w')))
+    MLP_2345 = pd.DataFrame(data = pd.read_csv(os.path.join(path_2345, 'dataframe_secirgroups_2345damp_MLP_w')))
+    CNN_2345 = pd.DataFrame(data = pd.read_csv(os.path.join(path_2345, 'dataframe_secirgroups_2345damp_CNN_w')))
+    df_2345_all = pd.concat([LSTM_2345,MLP_2345, CNN_2345 ])
+
+    
+    LSTM_1 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_W/datarame_secirgroups_10days__1damp_w_LSTM'))
+    MLP_1 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_W/datarame_secirgroups_10days__1damp_w_MLP'))
+    CNN_1 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/secir_groups_W/datarame_secirgroups_10days__1damp_w'))
+    CNN_1['Model'] = 'CNN'
+
+    df_2345_all = pd.concat([df_2345_all, LSTM_1, MLP_1, CNN_1])
+    df_2345_all.fillna(1, inplace = True)
+
+    df_grouped = pd.DataFrame(data=df_2345_all[['MAPE','Model', 'dampings']].groupby(['Model', 'dampings']).mean())
+    df_grouped.reset_index(inplace=True)
+    df_plot = df_grouped.pivot(index='Model', columns='dampings', values='MAPE')
+
+    MAPE = {
+        'MLP': df_plot.loc['MLP'].values.round(2).tolist(), 
+        'CNN':df_plot.loc['CNN'].values.round(2).tolist(), 
+        'LSTM': df_plot.loc['LSTM'].values.round(2).tolist(), 
+    }    
+    #df_bar=df_opt[['optimizer',  'kfold_test']]
+    x = df_grouped['dampings'].unique() # the label locations
+    width = 0.25  # the width of the bars
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout='constrained')
+
+    for attribute, measurement in MAPE.items():
+        offset = width * multiplier
+        rects = ax.bar(x +offset, measurement, width, label=attribute)
+        ax.bar_label(rects, padding=3, fontsize = 8)
+        multiplier += 1
+        
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+
+    #ax.set_yticks(x+width, layers)
+    bar_width = 0.25
+    plt.xticks(x + bar_width * (len(MAPE) - 1) / 2, range(1, len(x) + 1))
+    ax.legend(loc='upper right', ncols=3, fontsize="8",)
+
+    ax.set_ylabel('test MAPE')
+    ax.set_xlabel('Number of dampings')
+    ax.set_title('Mean Test MAPE for different number of dampings')
+    plt.savefig("groups_multipledamp_w.png")
+
+
+
