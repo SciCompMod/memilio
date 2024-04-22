@@ -18,22 +18,22 @@
 # limitations under the License.
 #############################################################################
 """
-@file getSimulationData.py
+@file getsimulationdata.py
 
 @brief Executes all data downloads which belong to the epidata package and downloads external data
 
 The functions which are called are:
-- getCaseData.get_case_data
-- getPopulationData.get_population_data
-- getVacccinationData.get_vaccination_data
-- getDIVIData.get_divi_data
+- getcasedata.get_case_data
+- getpopulationdata.get_population_data
+- getvacccinationdata.get_vaccination_data
+- getdividata.get_divi_data
 """
 
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import getCaseData
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import getcasedata
+from memilio.epidata import getdataintopandasdataframe as gd
+from memilio.epidata import getdividata, getpopulationdata, getvaccinationdata
 
 
 def print_error(text):
@@ -58,10 +58,10 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     """! Downloads all data from external sources
 
     The functions which are called are:
-    - getCaseData.get_case_data
-    - getPopulationData.get_population_data
-    - getVaccinationData.get_vaccination_data
-    - getDIVIData.get_divi_data
+    - getcasedata.get_case_data
+    - getpopulationdata.get_population_data
+    - getvaccinationdata.get_vaccination_data
+    - getdividata.get_divi_data
 
     Keyword arguments:
     @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
@@ -98,25 +98,25 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     arg_dict_divi = {**arg_dict_all, **arg_dict_data_download}
 
     try:
-        getCaseData.get_case_data(**arg_dict_cases)
+        getcasedata.get_case_data(**arg_dict_cases)
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('case')
 
     try:
-        getPopulationData.get_population_data(**arg_dict_all)
+        getpopulationdata.get_population_data(**arg_dict_all)
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('population')
 
     try:
-        getDIVIData.get_divi_data(**arg_dict_divi)
+        getdividata.get_divi_data(**arg_dict_divi)
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('DIVI')
 
     try:
-        getVaccinationData.get_vaccination_data(**arg_dict_vacc)
+        getvaccinationdata.get_vaccination_data(**arg_dict_vacc)
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
