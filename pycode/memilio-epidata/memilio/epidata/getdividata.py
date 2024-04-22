@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file getDIVIData.py
+@file getdividata.py
 
 @brief Data of the DIVI
 about Sars-CoV2 is downloaded.
@@ -40,10 +40,10 @@ from datetime import date
 
 import pandas as pd
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import modifyDataframeSeries as mdfs
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import geomodificationgermany as geoger
+from memilio.epidata import getdataintopandasdataframe as gd
+from memilio.epidata import modifydataframeseries as mdfs
 
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
