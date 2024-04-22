@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file geoModificationGermany.py
+@file geomodificationgermany.py
 
 @brief Provides methods to return lists of local entities such as federal states
     and counties and geographical merging criteria.
@@ -28,9 +28,9 @@ import os
 import numpy as np
 import pandas as pd
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import getdataintopandasdataframe as gd
+from memilio.epidata import modifydataframeseries
 from memilio.epidata import progress_indicator
 
 # activate CoW for more predictable behaviour of pandas DataFrames
