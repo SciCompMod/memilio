@@ -59,8 +59,8 @@ public:
     bool check_constraints(ScalarType dt) const
     {
         if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-            log_error(
-                "Initialization failed. Number of elements in transition vector does not match the required number.");
+            log_error("A variable given for model construction is not valid. Number of elements in transition vector "
+                      "does not match the required number.");
             return true;
         }
 
@@ -79,7 +79,7 @@ public:
         }
 
         for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
-            for (int j = 0; j < (int)InfectionState::Count; j++) {
+            for (int j = 0; j < (int)InfectionTransition::Count; j++) {
                 if (m_transitions[i][j] < 0) {
                     log_error("Initialization failed. One or more initial value for transitions is less than zero.");
                     return true;
@@ -262,7 +262,7 @@ public:
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     /* Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the initialization part. */
     TimeSeries<ScalarType>
-        m_transitions; ///<s TimeSeries containing points of time and the corresponding number of transitions.
+        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType>
         m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined #InfectionState%s.
     ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.

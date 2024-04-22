@@ -65,6 +65,11 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     if (model.m_transitions.get_num_time_points() > 0) {
         model.m_transitions = TimeSeries<ScalarType>((int)InfectionTransition::Count);
     }
+    if (model.m_populations.get_time(0) != 0) {
+        model.m_populations.remove_last_time_point();
+        model.m_populations.add_time_point<Eigen::VectorXd>(
+            0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    }
 
     // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = 4 * global_support_max_index;
