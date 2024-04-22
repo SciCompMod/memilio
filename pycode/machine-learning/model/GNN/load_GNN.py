@@ -19,7 +19,7 @@ from spektral.layers import ARMAConv
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
 
-from memilio.surrogatemodel.ode_secir_groups.data_generation_nodamp import get_population
+#from memilio.surrogatemodel.ode_secir_groups.data_generation_nodamp import get_population
 from memilio.simulation.secir import InfectionState
 
 
@@ -72,9 +72,9 @@ class Net(Model):
 
 
 
-## load data and model with damping 
+################### load data and model with damping 
 
-file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_400pop_one_var_damp_100days_1k_withmatrix/data_secir_age_groups.pickle','rb')
+file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_400pop_4var_damp_100days_1k_w/GNN_400pop_damp_w.pickle','rb')
 data_secir = pickle.load(file)
 
 
@@ -100,8 +100,8 @@ contact_matrices = data_secir['damped_matrix']
 
 n_runs = new_inputs.shape[0]
 n_pop = new_inputs.shape[1]
-#n_dampings = np.asarray(data_secir['damping_day']).shape[2]
-n_dampings = 1
+n_dampings = np.asarray(data_secir['damping_day']).shape[2]
+#n_dampings = 1
 
 
 inputs_with_damp = np.dstack((new_inputs,(np.asarray(damping_factors).reshape([n_runs,n_pop,n_dampings])),
@@ -146,23 +146,31 @@ loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
 inputs, target = loader_tr.__next__()
 
 model = Net()
-model(inputs, training=False)
+
+inputs, target = loader_te.__next__() 
+
+
+
+# saving input and labels 
+with open("inputs_100days_4damp_w.pickle", 'wb') as f:
+      pickle.dump(inputs, f) 
+with open("labels_100days_4damp_w.pickle", 'wb') as f:
+      pickle.dump(target, f) 
+
+
 #model.load_weights('/home/schm_a45/Documents/code3/memilio/pycode/machine-learning/ARMAConv_1damp_saved_model_test')
 
-with open("/home/schm_a45/Documents/Code/memilio/memilio/best_weights_ARMAConv_test.pickle", "rb") as fp:
-     b = pickle.load(fp)
-best_weights = b
-model.set_weights(best_weights)
+# with open("/home/schm_a45/Documents/Code/memilio/memilio/best_weights_ARMAConv_test.pickle", "rb") as fp:
+#      b = pickle.load(fp)
+# best_weights = b
+# model.set_weights(best_weights)
 
-inputs, target = loader_te.__next__()
-   
-pred = model(inputs, training=False)
-
+#pred = model(inputs, training=False)
 
 ############################ for ARMAConv model without dampings #########################################################
 
 ## generate and save input and labels file
-file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_nodamp_400pop_1k_60days_w/data_secir_age_groups.pickle', 'rb')
+file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_nodamp_400pop_1k_120days_w/data_secir_age_groups.pickle', 'rb')
 data_secir = pickle.load(file)
 
 len_dataset = data_secir['inputs'][0].shape[0]
@@ -214,18 +222,18 @@ loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
 inputs, target = loader_tr.__next__()
 
 # saving input and labels 
-with open("inputs_60days_w.pickle", 'wb') as f:
+with open("inputs_120days_w.pickle", 'wb') as f:
       pickle.dump(inputs, f) 
-with open("labels_60days_w.pickle", 'wb') as f:
+with open("labels_120days_w.pickle", 'wb') as f:
       pickle.dump(target, f) 
 
 ###################################################################################################
 
 # load the saved input and label file 
-file_i = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_inputs/inputs_60days_w.pickle', 'rb')
+file_i = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_inputs/inputs_100days_4damp_w.pickle', 'rb')
 test_inputs  = pickle.load(file_i)
 
-file_l = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_labels/labels_60days_w.pickle', 'rb')
+file_l = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_labels/labels_100days_4_damp_w.pickle', 'rb')
 test_labels  = pickle.load(file_l)
 
 node_features = test_inputs[0]
@@ -246,7 +254,7 @@ model = Net()
 model(test_inputs, training=False)
 #model.load_weights('/home/schm_a45/Documents/code3/memilio/pycode/machine-learning/ARMAConv_1damp_saved_model_test')
 
-with open("/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_model_weights/best_weights_ARMAConv_60days_nodamp_w.pickle", "rb") as fp:
+with open("/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_model_weights/best_weights_ARMAConv_100days_4damp_w.pickle", "rb") as fp:
      b = pickle.load(fp)
 best_weights = b
 model.set_weights(best_weights)
@@ -305,7 +313,7 @@ node1 = 324     # Berlin --> biggest city
 node2 = 74       # Mettmann --> medium county 
 node3 = 334   # Havelland --> small county (
 
-def compartments_two_nodescomparison(node_id1, node_id2, node_id3):
+def compartments_nodescomparison(node_id1, node_id2, node_id3):
 
     plt.figure().clf()
 
@@ -317,6 +325,7 @@ def compartments_two_nodescomparison(node_id1, node_id2, node_id3):
 
     compartmentnames=[str(compartment).split('.')[1]
                for compartment in compartments_cleaned]
+
 
     compartment_errors = [mape_reshaped[node_id1], mape_reshaped[node_id2], mape_reshaped[node_id3],
                              mae_reshaped[node_id1], mae_reshaped[node_id2],  mae_reshaped[node_id3]] 
@@ -354,4 +363,153 @@ def compartments_two_nodescomparison(node_id1, node_id2, node_id3):
                 ax.set_yticks(x + width * 0.2) 
                 ax.set_yticklabels(compartmentnames)
 
-    plt.savefig("GNN_compartmentdistribution.png")
+    plt.savefig("GNN_compartmentdistribution_MAEtraining.png")
+
+
+def populations_metrics_sctter(populations, mape_400, mae_400):
+    plt.figure().clf()
+    fig, axs = plt.subplots(1,2 ,figsize=(8,5))
+    axs[0].scatter(populations, mape_400)
+    axs[0].set_xlabel('Population size')
+    axs[0].set_ylabel('MAPE')
+    #axs[0].set_xlim(0,500000)
+    axs[0].set_title('Scatterplot of population vs MAPE ')
+
+    axs[1].scatter(populations, mae_400)
+    axs[1].set_xlabel('Population size')
+    axs[1].set_ylabel('MAE')
+    #axs[1].set_xlim(0,500000)
+    axs[1].set_title('Scatterplot of population vs MAE')
+    plt.savefig("GNN_pop_mae_mape_60days.png")
+
+def MAPE_MAE_distribution(mape_400, mae_400):
+    plt.figure().clf()
+    fig, axs = plt.subplots(1,2 ,figsize=(8,5))
+    axs[0].hist(mape_400, bins = 40)
+    axs[0].set_title('Hist MAPE ')
+    axs[0].set_xlabel('MAPE')
+    axs[0].set_ylabel('Count')
+
+    axs[1].hist(mae_400, bins = 40 )
+    axs[1].set_xlabel('MAPE')
+    axs[1].set_ylabel('Count')
+    axs[1].set_title('Hist MAE ')
+    plt.savefig("hist_MAPE_MAE_60w.png")
+
+
+def plot_mobility():
+
+    adjacency_matrix = np.asarray(sub_matrix)
+    
+    df_commuter = pd.DataFrame(data = adjacency_matrix)
+    # Calculate sum of each row
+    row_sums = df_commuter.sum(axis=1)
+    # Calculate sum of each column
+    column_sums = df_commuter.sum(axis=0)
+    
+    # Annahme: rows sind die herausfahrenden und columns sind die hereinfahrenden individuem (getestet an berlin und Havelland)
+    df = pd.DataFrame({'incomming':column_sums, 'outgoing': row_sums, 'mape': mape_400, 'mae':mae_400})
+    df['sum_commuters'] = df['incomming']+ df['outgoing']
+    df['pop_size']  = populations
+    df['relative_traffic'] = df['sum_commuters']/ df['pop_size']
+
+
+    plt.figure().clf()
+    fig, ax = plt.subplots()
+    ax.scatter(df['relative_traffic'], df['mape'])
+    ax.set_title('realive traffic vs. MAPE ')
+    #ax.set_xlabel('number of commuters')
+    ax.set_ylabel('MAPE')
+    plt.savefig("relative_traffic_vs_mape.png")
+
+    # plt.figure().clf()
+    # fig, axs = plt.subplots(1,2 ,figsize=(8,5))
+    # axs[0].scatter(df['incomming'], df['mape'])
+    # axs[0].set_title('Incomming commuters vs. MAPE ')
+    # axs[0].set_xlabel('number of commuters')
+    # axs[0].set_ylabel('MAPE')
+
+    # axs[1].scatter(df['incomming'], df['mae'])
+    # axs[1].set_title('Incomming commuters vs. MAE ')
+    # axs[1].set_xlabel('number of commuters')
+    # axs[1].set_ylabel('MAE')
+    # plt.savefig("incomming_commuters_vs_error.png")
+
+    
+def absolute_relative_traffic():
+    adjacency_matrix = np.asarray(sub_matrix)
+    
+    df_commuter = pd.DataFrame(data = adjacency_matrix)
+    # Calculate sum of each row
+    row_sums = df_commuter.sum(axis=1)
+    # Calculate sum of each column
+    column_sums = df_commuter.sum(axis=0)
+    
+    # Annahme: rows sind die herausfahrenden und columns sind die hereinfahrenden individuem (getestet an berlin und Havelland)
+    df = pd.DataFrame({'incomming':column_sums, 'outgoing': row_sums, 'mape': mape_400, 'mae':mae_400})
+    df['sum_commuters'] = df['incomming']+ df['outgoing']
+    df['pop_size']  = populations
+    df['relative_traffic'] = df['sum_commuters']/ df['pop_size']
+
+
+    plt.figure().clf()
+    fig, axs = plt.subplots(1,2 ,figsize=(8,5))
+    axs[0].scatter(df['sum_commuters'], df['mape'])
+    axs[0].set_title('traffic vs. MAPE ')
+    axs[0].set_xlabel('traffic')
+    axs[0].set_ylabel('MAPE')
+
+    axs[1].scatter(df['relative_traffic'], df['mape'])
+    axs[1].set_title('relative traffic vs. MAE ')
+    axs[1].set_xlabel('relative traffic')
+    axs[1].set_ylabel('MAPE')
+
+    plt.savefig("absolute_and_relative_traffic_vs_mape.png")
+
+def normalrange_vs_adjustedrange_plotdays():
+    w_30 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframes_w/GNNtype1_ARMA_30days_w_mittel.csv'))
+    w_30= w_30[w_60.columns]
+    w_60 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframes_w/GNNtype1_ARMA_60days_w.csv'))
+    w_90 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframes_w/GNNtype1_ARMA_90days_w.csv'))
+    w_120 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframes_w/GNNtype1_ARMA_120days_w.csv'))
+
+    df_w = pd.concat([w_30, w_60, w_90, w_120])
+    df_w['days'] = [30, 60, 90, 120]
+
+    b_30 = 2.14
+    b_60 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_gridsearch_2024/GNNtype1_ARMA_60days.csv'))
+    b_90 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_gridsearch_2024/GNNtype1_ARMA_90days.csv'))
+    b_120 = pd.DataFrame(data = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_gridsearch_2024/GNNtype1_ARMA_120days.csv'))
+    df_baseline = pd.concat([b_60, b_90, b_120])
+    
+
+    MAPE = {'baseline': np.insert(df_baseline['kfold_test'],0, b_30), 
+            'adjusted':df_w['kfold_test']}
+
+    days = df_w['days'].values
+    #df_bar=df_opt[['optimizer',  'kfold_test']]
+
+
+    x = np.arange(1,len(days)+1)  # the label locations
+    width = 0.25  # the width of the bars
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout='constrained')
+
+    for attribute, measurement in MAPE.items():
+        offset = width * multiplier
+        rects = ax.bar(x +offset, measurement.round(2), width, label=attribute)
+        ax.bar_label(rects, padding=3, fontsize = 10)
+        multiplier += 1
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+
+    #ax.set_yticks(x+width, layers)
+    ax.legend(loc='upper right', ncols=3)
+    ax.set_xticks(x + width, days)
+    #ax.set_xticks(x, labels=x, fontsize = 12)
+    
+    ax.set_ylabel('test MAPE')
+    ax.set_xlabel('number of days in prediction')
+    #ax.set_title('')
+    plt.savefig("GNN_days_baseline_vs_adjusted.png")
