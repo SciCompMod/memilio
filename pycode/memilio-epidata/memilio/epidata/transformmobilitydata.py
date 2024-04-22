@@ -22,9 +22,9 @@ import os
 import numpy as np
 import pandas as pd
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import geomodificationgermany as geoger
+from memilio.epidata import getdataintopandasdataframe as gd
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
