@@ -35,7 +35,7 @@ write_single_run_result(const size_t run,
                         const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge>& graph)
 {
     std::string abs_path;
-    BOOST_OUTCOME_TRY(created, mio::create_directory("results", abs_path));
+    BOOST_OUTCOME_TRY(auto&& created, mio::create_directory("results", abs_path));
 
     if (run == 0) {
         std::cout << "Results are stored in " << abs_path << '\n';
@@ -48,7 +48,7 @@ write_single_run_result(const size_t run,
     //omit edges to save space as they are not sampled
     int inode = 0;
     for (auto&& node : graph.nodes()) {
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(auto&& js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"]  = node.id;
         js_node["Model"]   = js_node_model;
@@ -99,11 +99,11 @@ int main()
     params.set<mio::osecir::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 12;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
@@ -150,7 +150,7 @@ int main()
         auto write_result_status = write_single_run_result(run, graph);
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
-        }       
+        }
         return 0; //Result handler must return something, but only meaningful when using MPI.
     };
     parameter_study.run(sample_graph, handle_result);

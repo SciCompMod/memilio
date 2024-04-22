@@ -46,7 +46,7 @@ from memilio.epidata import progress_indicator
 pd.options.mode.copy_on_write = True
 
 
-def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
+def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=True):
     """! Checks if all counties are mentioned in the case data set
 
    This check had to be added due to incomplete data downloads
@@ -57,27 +57,32 @@ def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
    @param df pandas dataframe to check
    @return Boolean to say if data is complete or not
    """
-
-    if not df.empty:
-        return geoger.check_for_all_counties(
-            df["IdLandkreis"].unique(),
-            merge_berlin, merge_eisenach)
-    # if it is empty
-    return False
+    if run_checks:
+        if not df.empty:
+            return geoger.check_for_all_counties(
+                df["IdLandkreis"].unique(),
+                merge_berlin, merge_eisenach)
+        # if it is empty
+        return False
+    else:
+        # skip checks, return True
+        # only done if default value in download_config.conf is changed
+        gd.default_print(
+            "Warning", "DataFrame has not been checked for completeness.")
+        return True
 
 
 def get_case_data(read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
                   out_folder=dd.defaultDict['out_folder'],
-                  no_raw=dd.defaultDict['no_raw'],
                   start_date=dd.defaultDict['start_date'],
                   end_date=dd.defaultDict['end_date'],
                   impute_dates=dd.defaultDict['impute_dates'],
                   moving_average=dd.defaultDict['moving_average'],
-                  make_plot=dd.defaultDict['make_plot'],
                   split_berlin=dd.defaultDict['split_berlin'],
                   rep_date=dd.defaultDict['rep_date'],
-                  files='All'
+                  files='All',
+                  **kwargs
                   ):
     """! Downloads the case data and provides different kind of structured data
 
@@ -117,24 +122,26 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default 2020-01-01.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param files List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+    run_checks = conf.checks
 
-    if files == 'All':
+    if (files == 'All') or (files == ['All']):
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
                  'all_state', 'infected_county', 'all_county', 'all_gender',
                  'all_state_gender', 'all_county_gender', 'all_age',
                  'all_state_age', 'all_county_age']
-    if files == 'Plot':
+    if (files == 'Plot') or (files == ['Plot']):
         # only consider plotable files
         files = ['infected', 'deaths', 'all_gender', 'all_age']
     # handle error of passing a string of one file instead of a list
@@ -150,8 +157,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
             "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
-        df = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
-        complete = check_for_completeness(df, merge_eisenach=True)
+        df = gd.get_file(path, url, read_data, param_dict={},
+                         interactive=conf.interactive)
+        complete = check_for_completeness(df, run_checks, merge_eisenach=True)
     except:
         pass
     if complete:
@@ -162,26 +170,30 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
     else:
         # try another possibility if df was empty or incomplete
-        print("Note: Case data is incomplete. Trying another source.")
+        gd.default_print(
+            "Info", "Case data is incomplete. Trying another source.")
         try:
             url = "https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
             df = gd.get_file(path, url, False, param_dict={
-                             "encoding": 'utf_8_sig'}, interactive=True)
-            complete = check_for_completeness(df, merge_eisenach=True)
+                             "encoding": 'utf_8_sig'}, interactive=conf.interactive)
+            complete = check_for_completeness(
+                df, run_checks, merge_eisenach=True)
         except:
             pass
         if not complete:
-            print("Note: Case data is still incomplete. Trying a thrid source.")
+            gd.default_print(
+                "Info", "Case data is still incomplete. Trying a third source.")
             try:
                 # If the data on github is not available we download the case data from rki from covid-19 datahub
                 url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" +\
                     "items/f10774f1c63e40168479a1feb6c7ca74/data"
                 df = gd.get_file(path, url, False, param_dict={
-                                 "encoding": 'utf_8_sig'}, interactive=True)
+                                 "encoding": 'utf_8_sig'}, interactive=conf.interactive)
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
-                complete = check_for_completeness(df, merge_eisenach=True)
+                complete = check_for_completeness(
+                    df, run_checks, merge_eisenach=True)
             except:
                 pass
         if not complete:
@@ -353,7 +365,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 df_local_cs, start_date, end_date)
             gd.write_dataframe(df_local_cs, directory, filename, file_format)
 
-            if make_plot:
+            if conf.plot:
                 if file == 'infected':
                     # make plot
                     df_local_cs.plot(title='COVID-19 infections', grid=True,

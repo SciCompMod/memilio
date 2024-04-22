@@ -89,39 +89,54 @@ optional arguments working for all are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -n, --no-raw                                | Defines if raw data will be stored for further use.       |
 +---------------------------------------------+-----------------------------------------------------------+
+| --no-progress-indicators                    | Disables all progress indicators (used for downloads etc.)|
++---------------------------------------------+-----------------------------------------------------------+
+| --interactive                               | Interactive download (Handle warnings, passwords etc.).   |
++---------------------------------------------+-----------------------------------------------------------+
+| -v, --verbose                              | Increases verbosity level.                                |
++---------------------------------------------+-----------------------------------------------------------+
+| --skip-checks                               | Skips sanity checks etc.                                  |
++---------------------------------------------+-----------------------------------------------------------+
 
 optional arguments working for some are:
 
 +---------------------------------------------+-----------------------------------------------------------+
 | -p, --make-plot                             | Plots the data.                                           |
 +---------------------------------------------+-----------------------------------------------------------+
-| -ed, --end-date                             | Changes date for which data collection is stopped [divi]  |
+| -ed, --end-date                             | Changes date for which data collection is stopped         |
 +---------------------------------------------+-----------------------------------------------------------+
-| -sd, --start-date                           | Changes date for which data collection is started [divi]  |
+| -sd, --start-date                           | Changes date for which data collection is started         |
 +---------------------------------------------+-----------------------------------------------------------+
 | -i, --impute-dates                          | Returns dataframes with all dates instead of only dates   |
 |                                             | where new cases have been reported.                       |
 |                                             |                                                           |
 |                                             | Note that this option will have a negative impact         |
 |                                             | on performance as well as on the storage space needed.    |
-|                                             | [cases]                                                   |
+|                                             |                                                           |
 +---------------------------------------------+-----------------------------------------------------------+
 | -m N, --moving-average N                    | The central N days moving average is computed for the     |
 |                                             | data.                                                     |
 |                                             |                                                           |
 |                                             | Note that the --impute_dates option will be implicitly    |
 |                                             | turned on, as computing the moving average requires all   |
-|                                             | dates to be available. [cases]                            |
+|                                             | dates to be available.                                    |
 +---------------------------------------------+-----------------------------------------------------------+
 | -sb, --split-berlin                         | Berlin data is split into different counties,             |
 |                                             | instead of having only one county for Berlin. [cases]     |
 +---------------------------------------------+-----------------------------------------------------------+
-| -- rep-date                                 | The reporting date will be prefered over possibly given   |
+| --rep-date                                  | The reporting date will be prefered over possibly given   |
 |                                             | dates of disease onset. [cases]                           |
 +---------------------------------------------+-----------------------------------------------------------+
-| -- sanitize-data                            | Different ways to distribute vaccinations to home         |
+| --sanitize-data                             | Different ways to distribute vaccinations to home         |
 |                                             | locations of vaccinated persons[vaccination]              |
 +---------------------------------------------+-----------------------------------------------------------+
+| --username                                  | Username for regionalstatistik.de [population]            |
++---------------------------------------------+-----------------------------------------------------------+
+| --password                                  | Password for regionalstatistik.de [population]            |
++---------------------------------------------+-----------------------------------------------------------+
+| --files                                     | Files to write [case]                                     |
++---------------------------------------------+-----------------------------------------------------------+
+
 
 Hint:
 When using the "--make-plot" option close one figure-window to get the next one.

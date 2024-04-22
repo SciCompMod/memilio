@@ -120,13 +120,13 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
 def print_manual_download(filename, url):
     """! Print download message to ask the user manually download a file. """
 
-    print(
-        'This script needs manual downloading of files. Please register'
-        ' at corona-datenplatform.com and download ' + filename + ' from ' + url +
-        '. Then move it to a folder named raw_data in this directory.')
+    gd.default_print("Error",
+                     'This script needs manual downloading of files. Please register'
+                     ' at corona-datenplatform.com and download ' + filename + ' from ' + url +
+                     '. Then move it to a folder named raw_data in this directory.')
 
 
-def read_files(directory, fine_resolution):
+def read_files(directory, fine_resolution, run_checks):
     """! Reads files from local directory and returns data in dataframes
 
     @param directory Directory where data is loaded from.
@@ -286,7 +286,6 @@ def read_files(directory, fine_resolution):
         except FileNotFoundError:
             print('File not found.')
             raise FileNotFoundError
-
 
 def activate_npis_based_on_incidence(
         local_incid, npi_lifting_days_threshold, npi_activation_days_threshold,
@@ -501,7 +500,8 @@ def get_npi_data(fine_resolution=2,
                  end_date=dd.defaultDict['end_date'],
                  counties_considered=geoger.get_county_ids(),
                  npi_activation_days_threshold=3,
-                 npi_lifting_days_threshold=5
+                 npi_lifting_days_threshold=5,
+                 **kwargs
                  ):
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
@@ -546,6 +546,8 @@ def get_npi_data(fine_resolution=2,
     @param npi_alifting_days_threshold [Default: 5]. Defines necessary number
          of days below case incidence threshold threshold to lift NPIs.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
 
     # Depending on the federal state and time period, there are
     # huge differences for number of days before the lifting and activation.
@@ -569,9 +571,9 @@ def get_npi_data(fine_resolution=2,
 
     # read manual downloaded files from directory
     df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(
-        directory, fine_resolution)
+        directory, fine_resolution, conf.checks)
 
-    print('Download completed.')
+    gd.default_print('Debug', 'Download completed.')
 
     # Compute column index of NPI start (columns with NPIs start with days
     # which are provided in format dYYYYMMDD).
@@ -671,7 +673,8 @@ def get_npi_data(fine_resolution=2,
             df_npis_combinations[npic_uniq][1] = df_npis_combinations_pre.iloc[np.array(npi_groups_idx[i]),
                                                                                start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
             if (df_npis_combinations[npic_uniq][1]-np.transpose(df_npis_combinations[npic_uniq][1])).max() > 0:
-                print('Error in input file: Please correct combination matrix input.')
+                gd.default_print(
+                    'Error', 'Input file does not match with data. Please correct combination matrix input.')
             # make it a dataframe to allow easy removal of code lines and rows
             # if they are not used later on
             df_npis_combinations[npic_uniq][1] = pd.DataFrame(
@@ -706,9 +709,9 @@ def get_npi_data(fine_resolution=2,
                 df_in_valid = pd.read_excel(
                     os.path.join(
                         directory, 'combinations_npis_cleanoutput.xlsx'),
-                    sheet_name=i, engine='openpyxl')
+                    sheet_name=i, engine=gd.Conf.excel_engine)
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
-                    print('Error in combination matrix.')
+                    gd.default_print('Error', 'Error in combination matrix.')
                 del df_in_valid
             else:
                 df_out.to_excel(
@@ -741,7 +744,8 @@ def get_npi_data(fine_resolution=2,
             if not dummy_a[i] == dummy_c[i]:
                 errors.append(i)
         if not errors == [0, 1, 2, 3, 4, 5]:
-            print("Additional errors in consistent naming.")
+            gd.default_print(
+                "Error", "Additional errors in consistent naming.")
         # End of check
 
         # correct for consistent naming (mainly done for plotting reasons,
@@ -882,11 +886,11 @@ def get_npi_data(fine_resolution=2,
         for i in range(len(dates_new) - 1)]
     date_diff_idx = np.where(np.array(date_diff) > 1)[0]
     if max(date_diff) > 1:
-        print("Error. Dates missing in data frame:")
+        gd.default_print("Error", "Dates missing in data frame:")
         for i in date_diff_idx:
-            print(
-                "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
-                str(dates_new[i] + timedelta(date_diff[i] - 1)))
+            gd.default_print("Debug",
+                             "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
+                             str(dates_new[i] + timedelta(date_diff[i] - 1)))
         raise gd.DataError('Exiting. Dates missing in data frame.')
 
     min_date = []
@@ -1204,11 +1208,9 @@ def get_npi_data(fine_resolution=2,
                             days_deact = np.where(
                                 df_local_new_merged.loc[subcode_active, nocombi_code] > 0)[0]
                             if len(days_deact) > 0:
-                                print('Deactivating for ' +
-                                      'County ' + str(countyID))
-                                print('\t' + str(nocombi_code) + ' due to ' +
-                                      str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
-                                print('\n')
+                                gd.default_print("Trace", 'Deactivating for ' +
+                                                 'County ' + str(countyID)+'\t' + str(nocombi_code) + ' due to ' +
+                                                 str(subcode) + ' on ' + str(len(days_deact)) + ' days.\n')
                                 # take subcode_active rows as days_deact is
                                 # numbering inside subcode_active rows only,
                                 # not numbering on the whole df_local_new_merged
@@ -1255,10 +1257,10 @@ def get_npi_data(fine_resolution=2,
         # print progress
         if countyidx == 1 or countyidx % int(
                 len(counties_considered) / 10) == 0:
-            print('Progress ' + str(countyidx) + ' / ' +
-                  str(len(counties_considered)) +
-                  '. Estimated time remaining: ' +
-                  str(int(time_remain / 60)) + ' min.')
+            gd.default_print('Debug', 'Progress ' + str(countyidx) + ' / ' +
+                             str(len(counties_considered)) +
+                             '. Estimated time remaining: ' +
+                             str(int(time_remain / 60)) + ' min.')
 
     if fine_resolution == 2:
         save_interaction_matrix(df_count_deactivation,
@@ -1273,16 +1275,15 @@ def get_npi_data(fine_resolution=2,
         plot_interaction_matrix('joint_codes_active', directory)
 
     if counter_cases_start >= len(counties_considered)*0.05:
-        print('WARNING: DataFrame starts with reported cases > 0 '
-              'for more than 5 percent of the counties to be considered. '
-              'In this case, incidence computation and activation of '
-              'incidence-dependent NPIs cannot be ensured to work correctly. '
-              'Please consider a start date of some weeks ahead of the '
-              'time window to be analyzed for NPI\'s effects.')
+        gd.default_print('Warning', 'DataFrame starts with reported cases > 0 '
+                         'for more than 5 percent of the counties to be considered. '
+                         'In this case, incidence computation and activation of '
+                         'incidence-dependent NPIs cannot be ensured to work correctly. '
+                         'Please consider a start date of some weeks ahead of the '
+                         'time window to be analyzed for NPI\'s effects.')
 
     # print sub counters
-    print('Sub task counters are: ')
-    print(counters)
+    gd.default_print('Debug', 'Sub task counters are: '+str(counters))
 
     # reset index and drop old index column
     df_npis.reset_index(inplace=True)
@@ -1309,8 +1310,8 @@ def get_npi_data(fine_resolution=2,
                     start_date_new, end_date_new,
                     fine_resolution)
                 if (a != b):
-                    print('Error in NPI activation computation')
-                    print(a, b, a - b)
+                    gd.default_print('Error', 'Error in NPI activation computation' +
+                                     str(a) + str(b) + str(a - b))
 
     #### end validation ####
 
@@ -1427,7 +1428,7 @@ def plot_interaction_matrix(filename, directory):
 
     try:
         codelist = pd.ExcelFile(os.path.join(
-            directory, filename + '.xlsx'), engine='openpyxl').sheet_names
+            directory, filename + '.xlsx'), engine=gd.Conf.excel_engine).sheet_names
     except FileNotFoundError:
         raise FileNotFoundError('File ' + filename + ' not found.')
 
@@ -1446,7 +1447,7 @@ def plot_interaction_matrix(filename, directory):
     for code in codelist:
         df = pd.read_excel(
             os.path.join(directory, filename + '.xlsx'),
-            sheet_name=code, engine='openpyxl')
+            sheet_name=code, engine=gd.Conf.excel_engine)
 
         # remove first column and convert to numpy array
         array_exclusion = df.iloc[:, 1:].to_numpy()

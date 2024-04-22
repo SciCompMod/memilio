@@ -24,10 +24,13 @@ import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import progress_indicator
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
+
+    # set verbosity level to Debug to check prints
+    gd.Conf.v_level = 'Debug'
 
     list_int_state_ids = [i+1 for i in range(16)]
     list_str_state_ids = [str(i+1).zfill(2) for i in range(16)]
@@ -181,7 +184,6 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def test_get_state_IDs(self):
         # zfill is false
@@ -313,7 +315,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertFalse(geoger.check_for_all_counties(
             unique_county_list, False, False))
         mock_print.assert_called_with(
-            'Downloaded data is not complete. Missing 412 counties.')
+            'Error: Downloaded data is not complete. Missing 412 counties.')
 
         # check with more counties
         unique_county_list = geoger.get_county_ids(False, False, False)
@@ -322,24 +324,26 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertTrue(geoger.check_for_all_counties(
             unique_county_list, False, False))
         mock_print.assert_called_with(
-            'Source data frame contains more counties than official '
+            'Warning: Source data frame contains ' +
+            str(len(testlist)) + ' more counties than official '
             'county list. This could be OK, please verify yourself.')
 
-        # check without some counries
+        # check without some countries
         unique_county_list = geoger.get_county_ids(False, False, False)
         testlist = (1001, 3456, 10041)
         for i in range(0, len(testlist)):
             unique_county_list.remove(testlist[i])
         self.assertFalse(geoger.check_for_all_counties(
             unique_county_list, False, False))
-        mock_print.assert_called_with('Missing counties: [3456, 10041, 1001]')
+        mock_print.assert_called_with(
+            'Info: Missing counties: [3456, 10041, 1001]')
 
         # check without merged counties
         unique_county_list = geoger.get_county_ids(True, True, False)
         self.assertFalse(geoger.check_for_all_counties(
             unique_county_list, False, False))
         mock_print.assert_called_with(
-            'Downloaded data is not complete. Missing 12 counties.')
+            'Error: Downloaded data is not complete. Missing 12 counties.')
 
     def test_get_countyid_to_stateid_map(self):
 

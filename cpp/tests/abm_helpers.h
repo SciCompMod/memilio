@@ -30,13 +30,13 @@
 #include <memory>
 
 // Assign the name to general age group.
-const size_t NUM_AGE_GROUPS     = 6;
-const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 6);
-const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 5);
-const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 4);
-const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 3);
-const auto AGE_GROUP_60_TO_79 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
-const auto AGE_GROUP_80_PLUS  = mio::AgeGroup(NUM_AGE_GROUPS - 1);
+const size_t num_age_groups   = 6;
+const auto age_group_0_to_4   = mio::AgeGroup(0);
+const auto age_group_5_to_14  = mio::AgeGroup(1);
+const auto age_group_15_to_34 = mio::AgeGroup(2);
+const auto age_group_35_to_59 = mio::AgeGroup(3);
+const auto age_group_60_to_79 = mio::AgeGroup(4);
+const auto age_group_80_plus  = mio::AgeGroup(5);
 
 /**
  * mock of the generator function of DistributionAdapter<DistT>.
@@ -97,16 +97,16 @@ struct ScopedMockDistribution {
 /**
  * @brief Create a Person without a World object. Intended for simple use in tests.
 */
-mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = AGE_GROUP_15_TO_34,
+mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
-                                  mio::abm::Parameters params              = mio::abm::Parameters(NUM_AGE_GROUPS));
+                                  mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups));
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.
 */
 mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
-                                  mio::AgeGroup age                        = AGE_GROUP_15_TO_34,
+                                  mio::AgeGroup age                        = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 

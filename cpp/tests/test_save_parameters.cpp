@@ -49,11 +49,11 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     auto& params = model.parameters;
 
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 3.9;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+        params.get<mio::osecir::TimeExposed>()[i]            = 2.6;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.6;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8.;
 
         params.get<mio::osecir::Seasonality>()          = 0.0;
         params.get<mio::osecir::ICUCapacity>()          = 100.0;
@@ -89,7 +89,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0].get_distribution()->add_predefined_sample(4711.0);
+    params.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0].get_distribution()->add_predefined_sample(4711.0);
 
     TempFileRegister file_register;
     auto filename     = file_register.get_unique_path("TestParameters-%%%%-%%%%.json");
@@ -141,23 +141,23 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
         check_distribution(*model.populations[{i, mio::osecir::InfectionState::Recovered}].get_distribution(),
                            *read_model.populations[{i, mio::osecir::InfectionState::Recovered}].get_distribution());
 
-        ASSERT_EQ(model.parameters.get<mio::osecir::IncubationTime>()[i],
-                  read_model.parameters.get<mio::osecir::IncubationTime>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::osecir::TimeExposed>()[i],
+                  read_model.parameters.get<mio::osecir::TimeExposed>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i],
+                  read_model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i],
                   read_model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::osecir::SerialInterval>()[i],
-                  read_model.parameters.get<mio::osecir::SerialInterval>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecir::TimeInfectedSevere>()[i],
                   read_model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecir::TimeInfectedCritical>()[i],
                   read_model.parameters.get<mio::osecir::TimeInfectedCritical>()[i]);
 
-        check_distribution(*model.parameters.get<mio::osecir::IncubationTime>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::osecir::IncubationTime>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::osecir::TimeExposed>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::osecir::TimeExposed>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i].get_distribution(),
                            *read_model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::osecir::SerialInterval>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::osecir::SerialInterval>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::osecir::TimeInfectedSevere>()[i].get_distribution(),
                            *read_model.parameters.get<mio::osecir::TimeInfectedSevere>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::osecir::TimeInfectedCritical>()[i].get_distribution(),
@@ -210,11 +210,11 @@ TEST(TestSaveParameters, read_graph_without_edges)
 
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8.;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
@@ -256,14 +256,14 @@ TEST(TestSaveParameters, read_graph_without_edges)
     auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir, mio::IOF_OmitDistributions, false);
 
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::IncubationTime>()[i],
-                  params.get<mio::osecir::IncubationTime>()[i]);
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeExposed>()[i],
+                  params.get<mio::osecir::TimeExposed>()[i]);
 
         EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i],
                   params.get<mio::osecir::TimeInfectedSymptoms>()[i]);
 
-        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::SerialInterval>()[i],
-                  params.get<mio::osecir::SerialInterval>()[i]);
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i],
+                  params.get<mio::osecir::TimeInfectedNoSymptoms>()[i]);
 
         EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSevere>()[i],
                   params.get<mio::osecir::TimeInfectedSevere>()[i]);
@@ -375,11 +375,11 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     model.parameters.set<mio::osecir::TestAndTraceCapacity>(30);
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < (size_t)num_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 3.9;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+        params.get<mio::osecir::TimeExposed>()[i]            = 2.6;
+        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.6;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8.;
 
         params.get<mio::osecir::Seasonality>() = 0.0;
         params.get<mio::osecir::ICUCapacity>() = 100.0;
@@ -492,12 +492,12 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                 *graph_model.populations[{group, mio::osecir::InfectionState::Exposed}].get_distribution().get(),
                 *graph_read_model.populations[{group, mio::osecir::InfectionState::Exposed}].get_distribution().get());
 
-            ASSERT_EQ(graph_model.parameters.get<mio::osecir::IncubationTime>()[group],
-                      graph_read_model.parameters.get<mio::osecir::IncubationTime>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::osecir::TimeExposed>()[group],
+                      graph_read_model.parameters.get<mio::osecir::TimeExposed>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[group],
+                      graph_read_model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[group],
                       graph_read_model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::osecir::SerialInterval>()[group],
-                      graph_read_model.parameters.get<mio::osecir::SerialInterval>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::osecir::TimeInfectedSevere>()[group],
                       graph_read_model.parameters.get<mio::osecir::TimeInfectedSevere>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::osecir::TimeInfectedCritical>()[group],
@@ -519,11 +519,13 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                       graph_read_model.parameters.get<mio::osecir::CriticalPerSevere>()[group]);
 
             check_distribution(
-                *graph_model.parameters.get<mio::osecir::IncubationTime>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::osecir::IncubationTime>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::osecir::TimeExposed>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::osecir::TimeExposed>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::osecir::SerialInterval>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::osecir::SerialInterval>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[group]
+                     .get_distribution()
+                     .get());
             check_distribution(
                 *graph_model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[group].get_distribution().get());
@@ -576,6 +578,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result = mio::osecir::read_input_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
@@ -623,6 +626,7 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
         model[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result =
         mio::osecir::read_input_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -682,6 +686,7 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model3[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model3[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
+
     auto read_result1 =
         mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf, scaling_factor_icu, path);
     auto read_result2 =
@@ -826,11 +831,11 @@ TEST(TestSaveParameters, json_write_read_parameters_secirvvs)
     auto& params = model.parameters;
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::osecirvvs::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecirvvs::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecirvvs::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecirvvs::TimeInfectedSevere>()[i]   = 10.;
-        params.get<mio::osecirvvs::TimeInfectedCritical>()[i] = 8.;
+        params.get<mio::osecirvvs::TimeExposed>()[i]            = 3.2;
+        params.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i] = 2.;
+        params.get<mio::osecirvvs::TimeInfectedSymptoms>()[i]   = 5.;
+        params.get<mio::osecirvvs::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::osecirvvs::TimeInfectedCritical>()[i]   = 8.;
 
         model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[i] = 0.06;
         model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
@@ -874,12 +879,12 @@ TEST(TestSaveParameters, json_write_read_parameters_secirvvs)
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        ASSERT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[i],
-                  read_model.parameters.get<mio::osecirvvs::IncubationTime>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeExposed>()[i],
+                  read_model.parameters.get<mio::osecirvvs::TimeExposed>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i],
+                  read_model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i],
                   read_model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::osecirvvs::SerialInterval>()[i],
-                  read_model.parameters.get<mio::osecirvvs::SerialInterval>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i],
                   read_model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i]);
         ASSERT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[i],
