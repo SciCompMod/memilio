@@ -101,7 +101,7 @@ def heatmaps(df):
 
 
 
-    fig.colorbar(im, ax = axs, shrink=0.75, label = 'Test MAPE')
+    fig.colorbar(im, ax = axs, shrink=0.75, label = 'MAPE')
     
     fig.delaxes(axs[2][1])
     
@@ -266,8 +266,6 @@ def boxplot_layers(df_combined):
 
 
 def heatmaps_act_opt(df):
-    
-
     df_1 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GCNConv') & (df['number_of_layers']==2)& (df['channels']==512)][['optimizer', 'activation', 'kfold_test']])
     df_1= df_1.pivot(index='optimizer', columns='activation', values='kfold_test')
     
@@ -295,7 +293,7 @@ def heatmaps_act_opt(df):
 
     for ax, df_heatmap, name  in zip(axs.flat, [df_1 ,df_2, df_3, df_4, df_5], layers):
         
-        im = ax.imshow(df_heatmap.values, cmap ='Blues_r' )
+        im = ax.imshow(df_heatmap.values, cmap ='summer_r' )
 
         # Show all ticks and label them with the respective list entries
         ax.set_xticks(np.arange(len(df_heatmap.columns)), labels=df_heatmap.columns)
