@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file customPlot.py
+@file customplot.py
 @brief Plots time series data as provided by the scripts.
 """
 import os
@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getdataintopandasdataframe as gd
 
 mpl.use('Agg')
 
