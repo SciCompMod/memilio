@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file getDataIntoPandasDataFrame.py
+@file getdataintopandasdataframe.py
 @brief Tools to convert data to pandas dataframes
 
 This tool contains
@@ -45,8 +45,8 @@ from pkg_resources import parse_version
 
 import pandas as pd
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import progress_indicator
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import progressindicator
 
 
 class VerbosityLevel(Enum):
@@ -133,9 +133,9 @@ class Conf:
             warnings.simplefilter(action='ignore', category=DeprecationWarning)
         # deactivate (or activate progress indicator)
         if Conf.show_progr == True:
-            progress_indicator.ProgressIndicator.disable_indicators(False)
+            progressindicator.ProgressIndicator.disable_indicators(False)
         else:
-            progress_indicator.ProgressIndicator.disable_indicators(True)
+            progressindicator.ProgressIndicator.disable_indicators(True)
 
 
 def default_print(verbosity_level, message):
@@ -286,7 +286,7 @@ def get_file(
                 raise FileNotFoundError(error_message)
     else:
         try:  # to download file from url and show download progress
-            with progress_indicator.Percentage(message="Downloading " + url) as p:
+            with progressindicator.Percentage(message="Downloading " + url) as p:
                 file = download_file(
                     url, 1024, None, p.set_progress,
                     verify="interactive" if interactive else True)
