@@ -1,8 +1,6 @@
 import pandas as pd 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import matplotlib as mpl
 import re
 
 df = pd.read_csv('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframe_hyperparameters/dataframe_frid_search_GNN_noedges_full_concat.csv')
@@ -23,6 +21,9 @@ for i in df['optimizer']:
 
 df['layer'] = layers
 df['optimizer'] = optimizer
+df.drop([80], inplace = True)
+
+df['kfold_test'] = df['kfold_test'].astype('float')
 
 
 df_ARMA =  df.loc[df['layer'] == 'ARMAConv']
@@ -79,8 +80,6 @@ def plot_max_min_losses(min_loss_train, min_loss_val, max_loss_train, max_loss_v
     plt.savefig("min_max_losses_.png")
 
 
-
-
 def barplot(df):
        
 
@@ -133,10 +132,6 @@ def barplot(df):
     ax.set_title('Mean Test MAPE for different number of layers')
     plt.savefig("bar_GNN1_layer.png")
 
-
-
-
-
 def heatmap(df):
     #df_heatmap1 = pd.DataFrame(data = df.loc[(df['layer'] == 'GCNConv') & (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
     df['kfold_test'] = df['kfold_test'].astype(float)
@@ -171,8 +166,6 @@ def heatmap(df):
     plt.savefig("heatmap_activation_optimizer.png")
 
 
-
-
 # def plot_layer():
 #     plt.figure().clf() 
 #     df_layer_plot = pd.DataFrame(data = df.loc[(df['activation'] == 'elu') & (df['optimizer']=='Adam')][['layer', 'number_of_layers', 'kfold_test']])
@@ -198,34 +191,28 @@ def heatmap(df):
 #     plt.savefig("layers.png")
 
 
-
-
-
-
 def heatmaps(df):
 
-
-    df_1 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GCNConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_1 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GCNConv')& (df['number_of_layers']=='2')][['activation', 'optimizer', 'kfold_test']])
     df_1= df_1.pivot(index='activation', columns='optimizer', values='kfold_test')
     
-    df_2 = pd.DataFrame(data =  df.loc[(df['layer'] == 'ARMAConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_2 = pd.DataFrame(data =  df.loc[(df['layer'] == 'ARMAConv')& (df['number_of_layers']=='2')][['activation', 'optimizer', 'kfold_test']])
     df_2= df_2.pivot(index='activation', columns='optimizer', values='kfold_test')
     
-    df_3 = pd.DataFrame(data =  df.loc[(df['layer'] == 'APPNPConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_3 = pd.DataFrame(data =  df.loc[(df['layer'] == 'APPNPConv')& (df['number_of_layers']=='2')][['activation', 'optimizer', 'kfold_test']])
     df_3= df_3.pivot(index='activation', columns='optimizer', values='kfold_test')
     
-    df_4 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GATConv')& (df['number_of_layers']==3)][['activation', 'optimizer', 'kfold_test']])
+    df_4 = pd.DataFrame(data =  df.loc[(df['layer'] == 'GATConv')& (df['number_of_layers']=='2')][['activation', 'optimizer', 'kfold_test']])
     df_4= df_4.pivot(index='activation', columns='optimizer', values='kfold_test')
 
     plt.figure().clf() 
     layers = df['layer'].unique()
 
-
-    fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=False, figsize = (20,20), constrained_layout = True)
+    fig, axs = plt.subplots(nrows = 2, ncols = 2, sharex=False,figsize = (8,8),  constrained_layout = True)
 
     for ax, df_heatmap, name  in zip(axs.flat, [df_1 ,df_2, df_3, df_4], layers):
         
-        im = ax.imshow(df_heatmap.values, cmap ='Blues_r' )
+        im = ax.imshow(df_heatmap.values, cmap ='summer_r' )
 
         # Show all ticks and label them with the respective list entries
         ax.set_xticks(np.arange(len(df_heatmap.columns)), labels=df_heatmap.columns)
@@ -246,19 +233,14 @@ def heatmaps(df):
                 
         ax.set_title('Model = '+name) 
 
-
-
     fig.colorbar(im, ax = axs, shrink=0.75, label = 'Test MAPE')
     
-    fig.delaxes(axs[1][1])
+    #fig.delaxes(axs[1][1])
     
-    plt.rcParams.update({'font.size': 25})
+    #plt.rcParams.update({'font.size': 25})
+    plt.title('GNN activation and optimizer for models with 2 layers')
     plt.show()
-    plt.savefig("GNN_heatmap_activ_opt.png")
-
-
-
-
+    plt.savefig("GNN_heatmap_activ_opt_2layer.png")
 
 
 
