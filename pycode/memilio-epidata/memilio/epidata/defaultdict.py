@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file defaultDict.py
+@file defaultdict.py
 
 @brief Defines global parameter, lists and dictionaries
 
