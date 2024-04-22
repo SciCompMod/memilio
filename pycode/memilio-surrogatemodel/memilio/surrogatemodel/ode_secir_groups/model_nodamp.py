@@ -112,11 +112,11 @@ def network_fit(
     path_models = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'saved_models_groups_nodamp_30days_w')
+        'saved_models_groups_onedamp_noinfo_CNN_w')
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
 
-    model.save(path_models, 'LSTM_30days_groups_w.h5')
+    model.save(path_models, 'CNN_100days_groups_damp_noinfo_w.h5')
 
 
     if (plot):
@@ -129,7 +129,7 @@ def network_fit(
         print('mean: ',  df.mean())
 
                 
-        filename_df = 'dataframe_secirgroups_nodamp_30days_w'
+        filename_df = 'dataframe_secirgroups_onedamp_noinfo_100days_w_CNN'
         df_save.loc[len(df_save.index)] = [df.mean()[0], model_name]
         
         path = os.path.dirname(os.path.realpath(__file__))
@@ -289,14 +289,14 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    filename = 'data_secir_groups_30days_nodamp_w.pickle'
+    filename = 'data_secir_groups_100days_onedamp_w.pickle'
     max_epochs = 1500
-    label_width = 30
+    label_width = 100
 
     input_dim = get_input_dim_lstm(path_data, filename)
     output_dim = get_output_dim_lstm(path_data, filename)
     df_save = pd.DataFrame(columns = ['MAPE', 'Model'])
-    model_name = 'LSTM 30'
+    model_name = 'CNN 100'
 
 
 
@@ -316,10 +316,54 @@ if __name__ == "__main__":
             tf.keras.layers.Dense(label_width * 8 * num_age_groups,
                                 kernel_initializer=tf.initializers.zeros()),
             tf.keras.layers.Reshape([label_width, 8 * num_age_groups])])
+    
         return model
+    
+    def mlp_multi_input_multi_output(label_width, num_age_groups=6):
+        """! Simple MLP Network which takes the compartments for multiple time steps as input and
+        returns the 8 compartments for all age groups for multiple time steps in the future. 
+
+        Reshaping adds an extra dimension to the output, so the shape of the output is 30x48.
+        This makes the shape comparable to that of the multi-output models.
+
+        @param label_width Number of time steps in the output.
+        @param num_age_groups Number of age groups in population.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=label_width*num_age_groups*8),
+            tf.keras.layers.Reshape([label_width, num_age_groups*8])
+        ])
+        return model
+    
+    def cnn_model(input_dim, output_dim):
+
+                    model = tf.keras.Sequential()
+                    model.add(
+                        tf.keras.layers.Conv1D(
+                            filters=64, kernel_size=3, activation='relu',
+                            input_shape=(input_dim, 1)))  # 312
+                    model.add(tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'))
+                    model.add(tf.keras.layers.Dropout(0.5))
+                    model.add(tf.keras.layers.MaxPooling1D(pool_size=2))
+                    model.add(tf.keras.layers.Flatten())
+                    #model.add(GaussianNoise(0.35)) 
+                    model.add(tf.keras.layers.BatchNormalization())
+                    model.add(tf.keras.layers.Dense(1024, activation='relu'))
+                    model.add(tf.keras.layers.BatchNormalization())
+                    model.add(tf.keras.layers.Dense(1024, activation='relu'))            
+
+                    model.add(tf.keras.layers.Dense(output_dim, activation='linear'))  # 1440
+                    model.add(tf.keras.layers.Reshape([100, 6*8]))
+                    return model
+
        
-    model = lstm_multi_input_multi_output(label_width)
-    modeltype = 'timeseries'
+    model = cnn_model(240, 4800)
+    modeltype = 'classic'
 
 
 

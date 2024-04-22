@@ -25,8 +25,8 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from memilio.simulation.secir import InfectionState
-from memilio.surrogatemodel.ode_secir_simple import network_architectures
+#from memilio.simulation.secir import InfectionState
+#from memilio.surrogatemodel.ode_secir_simple import network_architectures
 
 
 def plot_compartment_prediction_model(
@@ -86,7 +86,7 @@ def plot_compartment_prediction_model(
     plt.savefig('plots/evaluation_secir_simple_' + plot_compartment + '.png')
 
 
-def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100, plot=False):
+def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -117,6 +117,7 @@ def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100,
 
     model.compile(
         loss=tf.keras.losses.MeanAbsolutePercentageError(),
+        #loss=tf.keras.losses.MeanAbsoluteError(),
         optimizer=tf.keras.optimizers.Adam(),
         metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
@@ -131,17 +132,17 @@ def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100,
     path_models = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'saved_models_secir_simple_bestLSTM_2024_150days')
+        'saved_models_secir_simple_120days_w')
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
 
-    model.save(path_models, 'LSTM_150days_secirsimple.h5')
+    model.save(path_models, 'LSTM_120days_secirsimple_w.h5')
 
     if (plot):
-        plot_losses(history)
-        plot_compartment_prediction_model(
-            test_inputs, test_labels, model=model,
-            plot_compartment='InfectedSymptoms', max_subplots=3)
+        #plot_losses(history)
+        #plot_compartment_prediction_model(
+        #    test_inputs, test_labels, model=model,
+        #    plot_compartment='InfectedSymptoms', max_subplots=3)
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
         print('mean: ',  df.mean())
@@ -151,7 +152,7 @@ def network_fit(path,filename, model, modelname,  max_epochs=30, early_stop=100,
         file_path = os.path.join(
             os.path.dirname(
                 os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-            'secir_simple_dataframes')
+            'secir_simple_dataframes_w')
         if not os.path.isdir(file_path):
             os.mkdir(file_path)
         file_path = file_path+'secir_simple_best'+modelname
@@ -200,16 +201,20 @@ def get_test_statistic(test_inputs, test_labels, model):
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
         
     # delete the two confirmed compartments from InfectionStates
+    infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
     compartment_array = []
-    for compartment in InfectionState.values():
+    #for compartment in InfectionState.values():
+    #    compartment_array.append(compartment) 
+    #index = [3,5]
+    #compartments_cleaned= np.delete(compartment_array, index)
+    for compartment in infectionstates:
         compartment_array.append(compartment) 
-    index = [3,5]
-    compartments_cleaned= np.delete(compartment_array, index)
 
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
-        index=[str(compartment).split('.')[1]
-               for compartment in compartment_array],
+        #index=[str(compartment).split('.')[1]
+        #       for compartment in compartments_cleaned],
+        index = infectionstates, 
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -260,9 +265,9 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-    filename = "data_secir_simple_150days.pickle"
+    filename = "data_secir_simple_120days_w2.pickle"
     max_epochs = 1500
-    label_width = 150 
+    label_width = 120 
 
 
 
@@ -288,16 +293,33 @@ if __name__ == "__main__":
 
 
 
-    model = "LSTM"
-    if model == "Dense_single":
-        model = network_architectures.mlp_multi_input_single_output()
-    elif model == "Dense":
-            model = network_architectures.mlp_multi_input_multi_output(label_width)
-    elif model == "LSTM":
-        model = network_architectures.lstm_multi_input_multi_output(label_width)
-    elif model == "CNN":
-        model = network_architectures.cnn_multi_input_multi_output(label_width)
+    def lstm_multi_input_multi_output(label_width):
+        """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
+
+        Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
+
+        @param label_width Number of time steps in the output.
+        """
+        num_outputs = 8
+        model = tf.keras.Sequential([
+            tf.keras.layers.LSTM(32, return_sequences=False),
+            tf.keras.layers.Dense(label_width*num_outputs,
+                                kernel_initializer=tf.initializers.zeros()),
+            tf.keras.layers.Reshape([label_width, num_outputs])])
+        return model
+    
+    model = lstm_multi_input_multi_output(label_width)
+
+    #model = "LSTM"
+    #if model == "Dense_single":
+    #    model = network_architectures.mlp_multi_input_single_output()
+    #elif model == "Dense":
+    #        model = network_architectures.mlp_multi_input_multi_output(label_width)
+    #elif model == "LSTM":
+    #    model = network_architectures.lstm_multi_input_multi_output(label_width)
+    #elif model == "CNN":
+    #    model = network_architectures.cnn_multi_input_multi_output(label_width)
 
     model_output = network_fit(
-        path_data, filename, model=model, modelname  = 'LSTM_150',
+        path_data, filename, model=model, modelname  = 'LSTM_120_w',
         max_epochs=max_epochs)

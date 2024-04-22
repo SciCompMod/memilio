@@ -25,8 +25,8 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from memilio.simulation.secir import InfectionState
-from memilio.surrogatemodel.ode_secir_groups import network_architectures
+#from memilio.simulation.secir import InfectionState
+#from memilio.surrogatemodel.ode_secir_groups import network_architectures
 
 
 def plot_compartment_prediction_model(
@@ -288,39 +288,39 @@ def network_fit(
                         callbacks=[early_stopping])
     
 
-    #save the model
+    # save the model
     path = os.path.dirname(os.path.realpath(__file__))
     path_models = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'saved_models/saved_models_secir_groups_onedamp_best_LSTM__30days')
+        'saved_models_groups_100days_1damp_CNN_w')
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
 
-    model.save(path_models, 'onedamp_30days.h5')
+    model.save(path_models, 'CNN_100days_groups_onedamp_w.h5')
 
     if (plot):
-        plot_losses(history)
-        plot_compartment_prediction_model(
-            test_inputs, test_labels, modeltype, model=model,
-            plot_compartment='InfectedSymptoms', max_subplots=3)
+        #plot_losses(history)
+        #plot_compartment_prediction_model(
+        #    test_inputs, test_labels, modeltype, model=model,
+        #    plot_compartment='InfectedSymptoms', max_subplots=3)
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
         print('mean: ',  df.mean())
         
         
-        # filename_df = 'datarame_secirgroups_onedamp_noinfo_sametestset'
-        # df_save.loc[len(df_save.index)] = [df.mean()[0], model_name]
-        
-        # path = os.path.dirname(os.path.realpath(__file__))
-        # file_path = os.path.join(
-        #     os.path.dirname(
-        #         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        #     'secir_groups_onedamp_noinfo')
-        # if not os.path.isdir(file_path):
-        #     os.mkdir(file_path)
-        # file_path = os.path.join(file_path,filename_df)
-        # df_save.to_csv(file_path)
+        filename_df = 'datarame_secirgroups_10days__1damp_w_CNN'
+        df_save.loc[len(df_save.index)] = [df.mean()[0], model_name]
+    
+        path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(
+            os.path.dirname(
+                os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+            'secir_groups_W')
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+        file_path = os.path.join(file_path,filename_df)
+        df_save.to_csv(file_path)
 
 
     return history
@@ -376,11 +376,25 @@ def get_test_statistic(test_inputs, test_labels, model):
     #           for compartment in compartments_cleaned],
     #    columns=['Percentage Error'])
 
+
+
+
+    infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+    compartment_array = []
+    #for compartment in InfectionState.values():
+    #    compartment_array.append(compartment) 
+    #index = [3,5]
+    #compartments_cleaned= np.delete(compartment_array, index)
+    for compartment in infectionstates:
+        compartment_array.append(compartment) 
+
     mean_percentage = pd.DataFrame(
-         data=relative_err_means_percentage,
-         index=[str(compartment).split('.')[1]
-                for compartment in InfectionState.values()],
-         columns=['Percentage Error'])
+        data=relative_err_means_percentage,
+        #index=[str(compartment).split('.')[1]
+        #       for compartment in compartments_cleaned],
+        index = infectionstates, 
+        columns=['Percentage Error'])
+
 
     return mean_percentage
 
@@ -505,6 +519,20 @@ def split_damping_days(damping_days, split_train=0.7,
     return data
 
 
+#def get_input_dim_lstm(path, filename):
+#    """! Extract the dimensiond of the input data#
+
+   #@param path path to the data 
+
+   #"""
+   # file = open(os.path.join(path, filename), 'rb')
+
+    #data = pickle.load(file)
+    #input_dim = data['inputs'].shape[2] + np.asarray(
+    #    data['contact_matrix']).shape[1] * np.asarray(data['contact_matrix']).shape[2]+1
+
+    #return input_dim
+
 def get_input_dim_lstm(path, filename):
     """! Extract the dimensiond of the input data
 
@@ -514,10 +542,43 @@ def get_input_dim_lstm(path, filename):
     file = open(os.path.join(path, filename), 'rb')
 
     data = pickle.load(file)
-    input_dim = data['inputs'].shape[2] + np.asarray(
-        data['contact_matrix']).shape[1] * np.asarray(data['contact_matrix']).shape[2]+1
+    input_dim = data['inputs'].shape[2] 
 
     return input_dim
+
+
+
+
+def get_output_dim_lstm(path, filename):
+    """! Extract the dimensiond of the input data
+
+   @param path path to the data 
+
+   """
+    file = open(os.path.join(path, filename), 'rb')
+
+    data = pickle.load(file)
+    output_dim = data['labels'].shape[2] * data['labels'].shape[1]
+
+    return output_dim
+
+
+def get_dim_classic(path, name):
+    """! Extract the  input and output dimensions of the data for the classic models
+
+   @param path path to the data 
+   @param file file name
+
+   """
+    file = open(os.path.join(path, name ), 'rb')
+
+    data = pickle.load(file)
+    #input_dim = data['inputs'].shape[1]*data['inputs'].shape[2]+ np.asarray(data['contact_matrix']).shape[1]* np.asarray(data['contact_matrix']).shape[2]* np.asarray(data['contact_matrix']).shape[3]+np.asarray(data['damping_day']).shape[1]
+    input_dim = 277
+    #output_dim = data['labels'].shape[1]*data['labels'].shape[2]
+    output_dim = 4800
+    
+    return input_dim, output_dim
 
 
 if __name__ == "__main__":
@@ -525,39 +586,110 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-    filename = 'data_secir_groups_30days_onevardamp_baseline.pickle'
+    filename = 'data_secir_groups_100days_onedamp_w.pickle'
     df_save = pd.DataFrame(columns = ['MAPE', 'Model'])
+
+    input_dim_classic, output_dim_classic = get_dim_classic(path_data,filename)
+
+    input_dim = get_input_dim_lstm(path_data, filename)
+    output_dim = get_output_dim_lstm(path_data, filename)   
+
 
 
     max_epochs = 1500
-    label_width = 30
+    label_width = 100
 
-    input_dim = get_input_dim_lstm(path_data, filename)
+    #input_dim = get_input_dim_lstm(path_data, filename)
+
+    def lstm_multi_input_multi_output(label_width, num_age_groups=6):
+        """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
+        one single time step in the future.
+
+        Input and output have shape [number of expert model simulations, time points in simulation,
+        number of individuals in infection states].
+
+        @param label_width Number of time steps in the output.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.LSTM(512, return_sequences=False),
+            tf.keras.layers.Dense(label_width * 8 * num_age_groups,
+                                kernel_initializer=tf.initializers.zeros()),
+            tf.keras.layers.Reshape([label_width, 8 * num_age_groups])])
+        return model
+    
+    def mlp_multi_input_multi_output(label_width, num_age_groups=6):
+        """! Simple MLP Network which takes the compartments for multiple time steps as input and
+        returns the 8 compartments for all age groups for multiple time steps in the future. 
+
+        Reshaping adds an extra dimension to the output, so the shape of the output is 30x48.
+        This makes the shape comparable to that of the multi-output models.
+
+        @param label_width Number of time steps in the output.
+        @param num_age_groups Number of age groups in population.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=1024, activation='relu'),
+            tf.keras.layers.Dense(units=label_width*num_age_groups*8),
+            tf.keras.layers.Reshape([label_width, num_age_groups*8])
+        ])
+        return model
+    
+
+
+    def cnn_model(input_dim, output_dim):
+
+                    model = tf.keras.Sequential()
+                    model.add(
+                        tf.keras.layers.Conv1D(
+                            filters=64, kernel_size=3, activation='relu',
+                            input_shape=(input_dim, 1)))  # 312
+                    model.add(tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'))
+                    model.add(tf.keras.layers.Dropout(0.5))
+                    model.add(tf.keras.layers.MaxPooling1D(pool_size=2))
+                    model.add(tf.keras.layers.Flatten())
+                    #model.add(GaussianNoise(0.35)) 
+                    model.add(tf.keras.layers.BatchNormalization())
+                    model.add(tf.keras.layers.Dense(1024, activation='relu'))
+                    model.add(tf.keras.layers.BatchNormalization())
+                    model.add(tf.keras.layers.Dense(1024, activation='relu'))            
+
+                    model.add(tf.keras.layers.Dense(output_dim, activation='linear'))  # 1440
+                    model.add(tf.keras.layers.Reshape([100, 6*8]))
+                    return model
+
+        
+    model = cnn_model(input_dim_classic,output_dim_classic)
 
     #models = ['Dense','LSTM', 'CNN']
 
-    models = ["LSTM"]
-    for model_name in models:
-        model = model_name
-        if model == "Dense_Single":
-            model = network_architectures.mlp_multi_input_single_output()
-            modeltype = 'classic'
+    model_name = "CNN"
+    modeltype = 'classic'
+    #model = cnn_multi_input_multi_output(label_width)
+    #for model_name in models:
+    #    model = model_name
+    #    if model == "Dense_Single":
+    #        model = network_architectures.mlp_multi_input_single_output()
+    #        modeltype = 'classic'
 
-        elif model == "Dense":
-            model = network_architectures.mlp_multi_input_multi_output(label_width)
-            modeltype = 'classic'
+        #elif model == "Dense":
+        #    model = network_architectures.mlp_multi_input_multi_output(label_width)
+        #    modeltype = 'classic'
 
-        elif model == "LSTM":
-            model = network_architectures.lstm_multi_input_multi_output(
-            label_width)
-            modeltype = 'timeseries'
+        #elif model == "LSTM":
+        #    model = network_architectures.lstm_multi_input_multi_output(
+        #    label_width)
+        #    modeltype = 'timeseries'
 
-        elif model == "CNN":
-            model = network_architectures.cnn_multi_input_multi_output(label_width)
-            modeltype = 'timeseries'
+        #elif model == "CNN":
+        #    model = network_architectures.cnn_multi_input_multi_output(label_width)
+        #    modeltype = 'timeseries'
 
         #for i in range(5):
 
-        model_output = network_fit(
+    model_output = network_fit(
             path_data, filename, model=model,model_name = model_name,  modeltype=modeltype, df_save = df_save,
             max_epochs=max_epochs)
