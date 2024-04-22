@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 """
-@file getHospitalizationData.py
+@file gethospitalizationdata.py
 @brief Downloads the hospitalization data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
 The raw hospitalization data can be found at
@@ -32,9 +32,9 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import modifyDataframeSeries as mdfs
+from memilio.epidata import defaultdict as dd
+from memilio.epidata import getdataintopandasdataframe as gd
+from memilio.epidata import modifydataframeseries as mdfs
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
