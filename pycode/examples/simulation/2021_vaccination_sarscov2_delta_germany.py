@@ -489,8 +489,8 @@ class Simulation:
         school_holiday_value = mio.UncertainValue(0.5 * (1.0 + 1.0))
         school_holiday_value.set_distribution(
             mio.ParameterDistributionUniform(1.0, 1.0))
-        params.ContactPatterns.school_holiday_damping = mio.DampingSampling(school_holiday_value, mio.DampingLevel(InterventionLevel.Holidays.value),
-                                                                            mio:: DampingType(Intervention.SchoolClosure.value), mio.SimulationTime(0.0),
+        params.ContactPatterns.school_holiday_damping = mio.DampingSampling(school_holiday_value, InterventionLevel.Holidays.value,
+                                                                            Intervention.SchoolClosure.value, 0.0,
                                                                             [Location.School.value], group_weights_all)
 
     def get_graph(self, end_date):
