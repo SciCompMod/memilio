@@ -14,7 +14,8 @@ else:
 
 
 ####### minimal sanity check on data #######
-bd = pd.read_csv(r'/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/pycode/memilio-epidata/memilio/epidata/bs_und_umgebung.csv', header=None, skiprows=1)
+bd = pd.read_csv(
+    r'/Users/David/Documents/HZI/memilio/data/mobility/modified_braunschweig_result.csv', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 # bd.rename(
@@ -147,12 +148,12 @@ dict_vehicle = {1: 'bicyle', 2: 'car_driver',
 # #     return bd_persons_trip_chain_activity_after, bd_persons_trip_chain_vehicle_choice
 
 
-# # read in the data
-# if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figs_bs_data')):
-#     os.makedirs(os.path.join(os.path.dirname(
-#         os.path.abspath(__file__)), 'figs_bs_data'))
-# figs_path = os.path.join(os.path.dirname(
-#     os.path.abspath(__file__)), 'figs_bs_data')
+# define figure path
+if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figs_bs_data')):
+    os.makedirs(os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), 'figs_bs_data'))
+figs_path = os.path.join(os.path.dirname(
+    os.path.abspath(__file__)), 'figs_bs_data')
 
 # # check whether first start location is the last end location
 # first_trip = bd[['personID','loc_id_start']].drop_duplicates(subset=['personID'], keep='first').reset_index(drop=True)
@@ -191,15 +192,18 @@ dict_vehicle = {1: 'bicyle', 2: 'car_driver',
 # plt.title('Number of trips per person tripcount (Braunschweig)')
 # plt.savefig(os.path.join(figs_path, 'number_of_trips_per_person.png'), dpi=300)
 
-# bd_persons_ages = bd[['personID', 'age']].drop_duplicates()
+bd_persons_ages = bd[['personID', 'age']].drop_duplicates()
 # bd_persons_ages['AgeCohort'] = pd.cut(bd_persons_ages['age'], bins=[-1, 18, 25, 35, 45, 55, 65, 75, 85, 105], labels=[
 #     '0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66-75', '76-85', '86+',])
-# bd_persons_ages_cohorts = bd_persons_ages.groupby(
-#     ['AgeCohort']).size().reset_index(name='counts')
-# bd_persons_ages_cohorts.index = bd_persons_ages_cohorts['AgeCohort'].to_list()
-# bd_persons_ages_cohorts.plot.bar(figsize=(
-#     10, 7), title='Age distribution', xlabel='Age cohorts', ylabel='Number of persons', legend=None)
-# plt.savefig(os.path.join(figs_path, 'age_distribution.png'), dpi=300)
+# ages according to RKI data
+bd_persons_ages['AgeCohort'] = pd.cut(bd_persons_ages['age'], bins=[-1, 2, 5, 14, 17, 24, 29, 39, 49, 64, 74, 105], labels=[
+    '0-2', '3-5', '6-14', '15-17', '18-24', '25-29', '30-39', '40-49', '50-64', '65-74', '75+'])
+bd_persons_ages_cohorts = bd_persons_ages.groupby(
+    ['AgeCohort']).size().reset_index(name='counts')
+bd_persons_ages_cohorts.index = bd_persons_ages_cohorts['AgeCohort'].to_list()
+bd_persons_ages_cohorts.plot.bar(figsize=(
+    10, 7), title='Age distribution', xlabel='Age cohorts', ylabel='Number of persons', legend=None)
+plt.savefig(os.path.join(figs_path, 'age_distribution.png'), dpi=300)
 
 # # get the id with the persons with the highest number and print them
 # # [id_person_max_trips, id_person_max_1_trips] = [
@@ -511,20 +515,19 @@ dict_vehicle = {1: 'bicyle', 2: 'car_driver',
 
 
 ## draft to add collumn to check if the location in Braunschweig 
-bd['home_in_bs'] = 0
-#list of persons who are in braunschweig
-list_person_in_bs = np.array([])
-for index, row in bd.iterrows():
-	if((row['countyStart']==3101 and row['ActivityBefore'] == 7) or (row['countyEnd']==3101 and row['ActivityAfter'] == 7)):
-            list_person_in_bs = np.append(list_person_in_bs, row['personID'])
-#drop duplicates
-list_person_in_bs = np.unique(list_person_in_bs)
-for index, row in bd.iterrows():
-    if row['personID'] in list_person_in_bs:
-        bd.at[index, 'home_in_bs'] = 1
-
-        
-bd.to_csv('modified_braunschweig_result.csv', index=False)
+# bd['home_in_bs'] = 0
+# #list of persons who are in braunschweig
+# list_person_in_bs = np.array([])
+# for index, row in bd.iterrows():
+# 	if((row['countyStart']==3101 and row['ActivityBefore'] == 7) or (row['countyEnd']==3101 and row['ActivityAfter'] == 7)):
+#             list_person_in_bs = np.append(list_person_in_bs, row['personID'])
+# #drop duplicates
+# list_person_in_bs = np.unique(list_person_in_bs)
+# for index, row in bd.iterrows():
+#     if row['personID'] in list_person_in_bs:
+#         bd.at[index, 'home_in_bs'] = 1
+#
+# bd.to_csv('modified_braunschweig_result.csv', index=False)
 
 #count number of trips which are in braunschweig
 # bs_trip_count = 0
@@ -536,11 +539,11 @@ bd.to_csv('modified_braunschweig_result.csv', index=False)
 # bs_trip_count/len(bd)*100
 
 # count how many persons are in braunschweig
-bs_person_count = 0
-# collapse all persons to one trip and check if the trip is in braunschweig
-persons_in_bs = bd[['personID', 'home_in_bs']].drop_duplicates().groupby(['personID']).aggregate('sum').reset_index()
-# percentage number of persons in braunschweig is persons with not zero home_in_bs / all persons
-persons_in_bs.loc[persons_in_bs['home_in_bs']==0].size/persons_in_bs.size*100
+# bs_person_count = 0
+# # collapse all persons to one trip and check if the trip is in braunschweig
+# persons_in_bs = bd[['personID', 'home_in_bs']].drop_duplicates().groupby(['personID']).aggregate('sum').reset_index()
+# # percentage number of persons in braunschweig is persons with not zero home_in_bs / all persons
+# persons_in_bs.loc[persons_in_bs['home_in_bs']==0].size/persons_in_bs.size*100
 
 
 

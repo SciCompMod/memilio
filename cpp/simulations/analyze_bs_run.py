@@ -44,7 +44,7 @@ def main(path, n_runs):
     # num_files = len([entry for entry in os.listdir(path)])
     # read in each txt file and convert to numpy array
     # df_np_3d = np.empty((num_rows, num_cols, n_runs))
-    print(os.listdir(path))
+    # print(os.listdir(path))
     for file in os.listdir(path):
         file_path = os.path.join(path, file)
         # read in txt file
@@ -77,7 +77,7 @@ def plot_infection_per_age_group(df):
 def plot_results(path):
     # median / 50-percentile
     f = h5py.File(
-        path+"/infection_state_per_age_group/results_run0_sum.h5", 'r')
+        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
 
     # Get the HDF5 group; key needs to be a group name from above
     group = f['0']
@@ -94,14 +94,14 @@ def plot_results(path):
     f = h5py.File(
         path+"/infection_state_per_age_group/p25/Results.h5", 'r')
     group = f['0']
-    total_25 =total_50
+    total_25 = group['Total'][()]
     f.close()
 
     # 95-percentile
     f = h5py.File(
         path + "/infection_state_per_age_group/p75/Results.h5", 'r')
     group = f['0']
-    total_75 = total_50
+    total_75 = group['Total'][()]
     f.close()
 
     # real world
@@ -112,46 +112,82 @@ def plot_results(path):
     total_real = group['Total'][()]
     f.close()
 
+    plot_infection_states_individual(
+        time, total_50, total_25, total_75, total_real)
+    plot_infection_states(time, total_50, total_25, total_75)
 
-    plot_infection_states_dead(time, total_50, total_25, total_75,total_real)
-    plot_infection_states(time, total_50, total_25, total_75,total_real)
-    
 
-
-def plot_infection_states(x, y50, y25, y75,y_real):
+def plot_infection_states(x, y50, y25, y75):
     plt.figure('Infection_states')
-    plt.plot(x, y50)
+    plt.title('Infection states')
+    color_plot = cmx.get_cmap('Set1').colors
+    print(color_plot)
+
+    for i in range(y50.shape[1]):
+        plt.plot(x, y50[:, i], color=color_plot[i])
+
     plt.legend(['S', 'E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Rec', 'Dead'])
 
     for i in range(y50.shape[1]):
-        plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.1)
-        plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.1)
+       plt.fill_between(x, y50[:, i], y25[:, i],
+                        alpha=0.5, color=color_plot[i])
+       plt.fill_between(x, y50[:, i], y75[:, i],
+                        alpha=0.5, color=color_plot[i])
 
-def plot_infection_states_dead(x, y50, y25, y75,y_real):
+
+def plot_infection_states_individual(x, y50, y25, y75, y_real):
     # plt.figure('Infection_states_dead')
     # # plt.plot(x, y50[:,[5,7]])
     x_real = np.linspace(0, y_real.shape[0]-1,y_real.shape[0]) 
     # plt.plot(x_real, y_real[:,[2]])
     # plt.legend(['I_Crit', 'Dead'])
 
-    # for i in [5,7]:
-    #     plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.1)
-    #     plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.1)
+    fig, ax = plt.subplots(3, 1)
 
-    fig, ax1 = plt.subplots()
-
+    # Severe
     color = 'tab:red'
-    ax1.set_xlabel('time (s)')
-    ax1.set_ylabel('y50', color=color)
-    ax1.plot(x, y50[:,[5]], color=color)
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax[0].set_xlabel('time (s)')
+    ax[0].set_ylabel('y50', color=color)
+    ax[0].plot(x, y50[:, [4]], color=color)
+    ax[0].tick_params(axis='y', labelcolor=color)
+    # instantiate a second axes that shares the same x-axis
+    ax2 = ax[0].twinx()
     color = 'tab:blue'
-    ax2.set_ylabel('y_real', color=color)  # we already handled the x-label with ax1
-    ax2.plot(x_real, y_real[:,[2]], color=color)
+    # we already handled the x-label with ax1
+    ax2.set_ylabel('y_real', color=color)
+    ax2.plot(x_real, y_real[:, [6]], '*', color=color)
     ax2.tick_params(axis='y', labelcolor=color)
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    plt.show()  
+
+    # Critical
+    color = 'tab:red'
+    ax[1].set_xlabel('time (s)')
+    ax[1].set_ylabel('y50', color=color)
+    ax[1].plot(x, y50[:, [5]], color=color)
+    ax[1].tick_params(axis='y', labelcolor=color)
+    # instantiate a second axes that shares the same x-axis
+    ax2 = ax[1].twinx()
+    color = 'tab:blue'
+    # we already handled the x-label with ax1
+    ax2.set_ylabel('y_real', color=color)
+    ax2.plot(x_real, y_real[:, [7]], '*', color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+
+    # Dead
+    color = 'tab:red'
+    ax[2].set_xlabel('time (s)')
+    ax[2].set_ylabel('y50', color=color)
+    ax[2].plot(x, y50[:, [7]], color=color)
+    ax[2].tick_params(axis='y', labelcolor=color)
+    # instantiate a second axes that shares the same x-axis
+    ax2 = ax[2].twinx()
+    color = 'tab:blue'
+    ax2.set_ylabel('y_real', color=color)  # we already handled the x-label with ax1
+    ax2.plot(x_real, y_real[:, [9]], '*', color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.show()
 
 
 def plot_infections_per_age_group(path):
@@ -199,7 +235,7 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     #path to results
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
+    path = "/Users/David/Documents/HZI/memilio/data/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:

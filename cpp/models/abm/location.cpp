@@ -146,7 +146,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
                 cell.m_cached_exposure_rate_contacts[{virus, age}] +=
                     params.get<InfectionRateFromViralShed>()[{virus}] * inf.get_viral_shed(t + dt / 2);
                 cell.m_cached_exposure_rate_air[{virus}] +=
-                    inf.get_viral_shed(t + dt / 2); // TODO: Change to non-contact function!
+                    inf.get_viral_shed(t + dt / 2); // TODO: Adapt function/factor for air transmission.
             }
         }
 

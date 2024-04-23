@@ -164,7 +164,7 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
         case InfectionState::InfectedSymptoms: {
             // roll out next infection step
 
-            ScalarType severity_protection_factor = 1.;
+            ScalarType severity_protection_factor = 0.;
             p                                     = uniform_dist(rng);
             if (latest_exposure.first != ExposureType::NoProtection) {
                 severity_protection_factor =
