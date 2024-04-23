@@ -316,45 +316,31 @@ struct TestParameters {
     UncertainValue specificity;
 };
 
-struct GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.9, 0.99};
-    }
-    static std::string name()
-    {
-        return "GenericTest";
-    }
+/**
+ * @brief Type of a Test.
+ */
+enum class TestType : std::uint32_t
+{
+    Generic = 0,
+    Antigen,
+    PCR,
+
+    Count
 };
 
-/**
- * @brief Reliability of an AntigenTest.
- */
-struct AntigenTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
+struct TestData {
+    using Type = CustomIndexArray<TestParameters, TestType>;
+    static auto get_default(AgeGroup /*size*/)
     {
-        return Type{0.8, 0.88};
+        Type default_val                 = Type({TestType::Count});
+        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99};
+        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88};
+        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99};
+        return default_val;
     }
     static std::string name()
     {
-        return "AntigenTest";
-    }
-};
-
-/**
- * @brief Reliability of a PCRTest.
- */
-struct PCRTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.9, 0.99};
-    }
-    static std::string name()
-    {
-        return "PCRTest";
+        return "TestData";
     }
 };
 
@@ -550,7 +536,8 @@ using ParametersBase =
                  InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
-                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
+                 TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
