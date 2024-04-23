@@ -31,7 +31,7 @@ int main()
 
     double t0   = 0;
     double tmax = 50.;
-    double dt   = 0.1;
+    double dt   = 1.0;
 
     mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
