@@ -153,8 +153,19 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
 TEST(TestTestingCriteria, getDefaultTestParameters)
 {
-    // Create the world with 4 age groups.
     auto world           = mio::abm::World(num_age_groups);
-    auto test_type       = mio::abm::TestType::Antigen;
-    auto test_parameters = world.parameters.get<mio::abm::TestData>()[test_type];
+    auto test_parameters = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Generic];
+    ASSERT_NEAR(test_parameters.sensitivity, 0.9, 1e-7);
+    ASSERT_NEAR(test_parameters.specificity, 0.99, 1e-7);
+    test_parameters = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
+    ASSERT_NEAR(test_parameters.sensitivity, 0.8, 1e-7);
+    ASSERT_NEAR(test_parameters.specificity, 0.88, 1e-7);
+    test_parameters = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR];
+    ASSERT_NEAR(test_parameters.sensitivity, 0.9, 1e-7);
+    ASSERT_NEAR(test_parameters.specificity, 0.99, 1e-7);
+
+    world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR].sensitivity = 0.8;
+    world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR].specificity = 0.88;
+    ASSERT_NEAR(test_parameters.sensitivity, 0.9, 1e-7);
+    ASSERT_NEAR(test_parameters.specificity, 0.99, 1e-7);
 }
