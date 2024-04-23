@@ -45,7 +45,7 @@ def run_oseir_simulation():
     A0 = AgeGroup(0)
 
     # Compartment transition duration
-    model.parameters.TimeExposed[A0] = 6.
+    model.parameters.TimeExposed[A0] = 5.2
     model.parameters.TimeInfected[A0] = 6.
 
     # Compartment transition propabilities
@@ -61,7 +61,7 @@ def run_oseir_simulation():
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
         (num_groups, num_groups))
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
-        (num_groups, num_groups)) * 0
+        (num_groups, num_groups))
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 

@@ -57,9 +57,9 @@ def run_osir_simulation():
         (A0, State.Susceptible), populations[0])
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
-        (num_groups, num_groups)) * 1
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
-        (num_groups, num_groups)) * 0
+        (num_groups, num_groups))
+    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
+        (num_groups, num_groups))
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 

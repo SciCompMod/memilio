@@ -324,11 +324,10 @@ TEST(TestSeir, get_derivatives)
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
-    // print_seir_params(model);
 
     auto seir = simulate(t0, tmax, dt, model);
 
-    auto dydt_default  = Eigen::VectorXd(Eigen::Index(mio::oseir::InfectionState::Count));
+    auto dydt_default = Eigen::VectorXd(Eigen::Index(mio::oseir::InfectionState::Count));
     dydt_default.setZero();
     Eigen::VectorXd y0 = seir.get_value(0);
     model.get_derivatives(y0, y0, 0, dydt_default);
