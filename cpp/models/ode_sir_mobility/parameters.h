@@ -5,6 +5,9 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
+#include "memilio/utils/custom_index_array.h"
+#include <iostream>
+#include "regions.h"
 
 #include <vector>
 
@@ -62,7 +65,35 @@ struct ContactPatterns {
     }
 };
 
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeInfected, ContactPatterns>;
+/**
+     * @brief The mean number of Persons migrating from one Region to another during a Time interval
+     */
+struct CommutingRatio {
+    using Type = std::vector<std::tuple<Region, Region, double>>;
+    static Type get_default()
+    {
+        return Type({{Region(0), Region(0), 0.}});
+    }
+    static std::string name()
+    {
+        return "CommutingRatio";
+    }
+};
+
+struct ImpactCommuters {
+    using Type = UncertainValue;
+    static Type get_default()
+    {
+        return Type(1.0);
+    }
+    static std::string name()
+    {
+        return "ImpactCommuters";
+    }
+};
+
+using ParametersBase =
+    ParameterSet<TransmissionProbabilityOnContact, TimeInfected, ContactPatterns, CommutingRatio, ImpactCommuters>;
 
 /**
  * @brief Parameters of SIR model.
@@ -70,9 +101,15 @@ using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeInfect
 class Parameters : public ParametersBase
 {
 public:
-    Parameters()
-        : ParametersBase()
+    Parameters(Region num_regions)
+        : ParametersBase() //TODO: Is this fine?
+        , m_num_regions{num_regions}
     {
+    }
+
+    Region get_num_regions() const
+    {
+        return m_num_regions;
     }
 
     /**
@@ -138,10 +175,10 @@ public:
     }
 
 private:
-    Parameters(ParametersBase&& base)
-        : ParametersBase(std::move(base))
-    {
-    }
+    // Parameters(ParametersBase&& base)
+    //     : ParametersBase(std::move(base)) //TODO: Adjust
+    // {
+    // }
 
 public:
     /**
@@ -154,9 +191,12 @@ public:
         BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
         return success(Parameters(std::move(base)));
     }
+
+private:
+    Region m_num_regions;
 };
 
-} // namespace osir
+} // namespace osirmobility
 } // namespace mio
 
 #endif // SIR_PARAMETERS_H

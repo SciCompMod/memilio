@@ -2,10 +2,8 @@
 #ifndef ODESIRMOBILITY_MODEL_H
 #define ODESIRMOBILITY_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/mobility/graph.h"
 #include "ode_sir_mobility/infection_state.h"
 #include "ode_sir_mobility/parameters.h"
 #include "ode_sir_mobility/regions.h"
@@ -19,34 +17,56 @@ namespace osirmobility
     * define the model *
     ********************/
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState, Region>, Parameters>
+using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
+                       Flow<InfectionState::Infected, InfectionState::Recovered>>;
+
+class Model : public FlowModel<InfectionState, Populations<Region, InfectionState>, Parameters, Flows>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState, Region>, Parameters>;
+
+    using Base = FlowModel<InfectionState, mio::Populations<Region, InfectionState>, Parameters, Flows>;
 
 public:
     Model(int num_regions)
-        : Base(Populations({InfectionState::Count, Region(num_regions)}, 0.), ParameterSet())
+        : Base(Populations({Region(num_regions), InfectionState::Count}, 0.), ParameterSet(num_regions))
     {
     }
+    // Einmal über den Vektor und später nochmal über die Regions
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                   Eigen::Ref<Eigen::VectorXd> flows) const override
     {
         auto& params     = this->parameters;
-        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        auto& population = this->populations;
 
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Infected] =
-            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                           params.get<TransmissionProbabilityOnContact>() / population.get_total();
+
+        Region n_regions = params.get_num_regions();
+
+        for (auto edge : params.get<CommutingRatio>()) {
+            auto start_region = get<0>(edge);
+            auto end_region   = get<1>(edge);
+            auto strength     = get<double>(edge);
+            // s_n += h_mn/P_m * i_m
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(start_region)] +=
+                strength * pop[population.get_flat_index({end_region, InfectionState::Infected})];
+            // s_m += h_mn/P_m * i_n
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(end_region)] +=
+                strength * pop[population.get_flat_index({start_region, InfectionState::Infected})];
+        }
+
+        for (auto i = Region(0); i < n_regions; i++) {
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>({i})] +=
+                pop[population.get_flat_index({i, InfectionState::Infected})];
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>({i})] *=
+                coeffStoI * y[population.get_flat_index({i, InfectionState::Susceptible})];
+            flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>({i})] =
+                (1.0 / params.get<TimeInfected>()) * y[population.get_flat_index({i, InfectionState::Infected})];
+        }
     }
 };
 
-} // namespace osir
+} // namespace osirmobility
 } // namespace mio
 
-#endif // ODESIR_MODEL_H
+#endif // ODESIRMOBILITY_MODEL_H
