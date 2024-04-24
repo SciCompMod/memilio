@@ -24,6 +24,7 @@
 #include "abm/time.h"
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
+#include "abm/test_type.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
@@ -314,18 +315,6 @@ struct HighViralLoadProtectionFactor {
 struct TestParameters {
     UncertainValue sensitivity;
     UncertainValue specificity;
-};
-
-/**
- * @brief Type of a Test.
- */
-enum class TestType : std::uint32_t
-{
-    Generic = 0,
-    Antigen,
-    PCR,
-
-    Count
 };
 
 struct TestData {

@@ -115,7 +115,7 @@ public:
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
     TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test, TimePoint start_date,
-                  TimePoint end_date, const TestParameters& test_parameters, ScalarType probability);
+                  TimePoint end_date, TestParameters test_parameters, ScalarType probability);
 
     /**
      * @brief Compares two TestingScheme%s for functional equality.

@@ -432,10 +432,10 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto start_date        = mio::abm::TimePoint(20);
     const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
     const auto probability       = 1.0;
-    const auto test_params       = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR];
+    const auto test_params_pcr  = mio::abm::TestParameters{0.9, 0.99};
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params, probability);
+        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params_pcr, probability);
 
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),

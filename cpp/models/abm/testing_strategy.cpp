@@ -69,7 +69,7 @@ bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 }
 
 TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
-                             TimePoint start_date, TimePoint end_date, const TestParameters& test_parameters,
+                             TimePoint start_date, TimePoint end_date, TestParameters test_parameters,
                              double probability)
     : m_testing_criteria(testing_criteria)
     , m_minimal_time_since_last_test(minimal_time_since_last_test)
