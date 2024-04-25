@@ -37,7 +37,7 @@
 namespace fs = boost::filesystem;
 
 // Assign the name to general age group.
-size_t num_age_groups         = 6;
+size_t num_age_groupss         = 6;
 const auto age_group_0_to_4   = mio::AgeGroup(0);
 const auto age_group_5_to_14  = mio::AgeGroup(1);
 const auto age_group_15_to_34 = mio::AgeGroup(2);
@@ -58,7 +58,7 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
     {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
 mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
-    {mio::AgeGroup(num_age_groups), mio::osecir::InfectionState::Count}, 1.};
+    {mio::AgeGroup(num_age_groupss), mio::osecir::InfectionState::Count}, 0.005};
 
 /**
  * Create extrapolation of real world data to compare with.
@@ -81,7 +81,7 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
 
     //std::cout << initial_infection_distribution.array() << std::endl;
-    extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 60); // 60 days
+    // extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 60); // 60 days
 }
 
 /**
@@ -95,6 +95,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
 
         auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
             rng, initial_infection_distribution.slice(person.get_age()).as_array().array()));
+        // std::cout << "INfection dist" << initial_infection_distribution.slice(person.get_age()).as_array().array() << std::endl;
 
         //bool detected = false;
         if (infection_state != mio::osecir::InfectionState::Susceptible) {
@@ -201,8 +202,11 @@ mio::AgeGroup determine_age_group(uint32_t age)
     else if (age <= 79) {
         return age_group_60_to_79;
     }
-    else {
+    else if (age > 79){
         return age_group_80_plus;
+    }
+    else {
+        return age_group_0_to_4;
     }
 }
 
@@ -367,7 +371,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         uint32_t age           = row[index["age"]];
         uint32_t home_id       = row[index["huid"]];
         int target_location_id = row[index["loc_id_end"]];
-        int start_location_id  = row[index["loc_id_start"]];
+        // int start_location_id  = row[index["loc_id_start"]];
 
         uint32_t trip_start     = row[index["start_time"]];
         uint32_t transport_mode = row[index["travel_mode"]];
@@ -376,7 +380,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         // Add the trip to the trip list person and location must exist at this point
         auto target_location = locations.find(target_location_id)->second;
-        auto start_location  = locations.find(start_location_id)->second;
+        
 
         auto it_person = persons.find(person_id);
 
@@ -401,11 +405,12 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         it_person->second.set_assigned_location(
             target_location); //This assumes that we only have in each tripchain only one location type for each person
-        if (locations.find(start_location_id) == locations.end()) {
-            // For trips where the start location is not known use Home instead
-            start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
+        // if (locations.find(start_location_id) == locations.end()) {
+        //     // For trips where the start location is not known use Home instead
+           
+        // }
+        mio::abm::LocationId start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
                               mio::abm::LocationType::Home};
-        }
         world.get_trip_list().add_trip(mio::abm::Trip(
             it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location,
             start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
@@ -545,7 +550,7 @@ void set_parameters(mio::abm::Parameters& params)
 // set location specific parameters
 void set_local_parameters(mio::abm::World& world)
 {
-    const int n_age_groups = world.parameters.get_num_groups();
+    const int n_age_groups = (int)world.parameters.get_num_groups();
 
     // setting this up in matrix-form would be much nicer,
     // but we somehow can't construct Eigen object with initializer lists
@@ -1051,12 +1056,12 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
-    auto max_num_persons = 12550;
+    auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
+    auto max_num_persons = 235000;
 
-    // auto ensemble_infection_per_loc_type =
-    //     std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
-    // ensemble_infection_per_loc_type.reserve(size_t(num_runs));
+    auto ensemble_infection_per_loc_type =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
+    ensemble_infection_per_loc_type.reserve(size_t(num_runs));
     auto ensemble_infection_per_age_group =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per age group results
     ensemble_infection_per_age_group.reserve(size_t(num_runs));
@@ -1069,42 +1074,42 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     // auto run_idx            = size_t(1); // The run index
     // auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
 
-    int tid = -1;
-#pragma omp parallel private(tid) // Start of parallel region: forks threads
-    {
-        tid = omp_get_thread_num(); // default is number of CPUs on machine
-        printf("Hello World from thread = %d and rank = %d\n", tid, rank);
-        if (tid == 0) {
-            printf("Number of threads = %d\n", omp_get_num_threads());
-        }
-    } // ** end of the the parallel: joins threads
+//     int tid = -1;
+// #pragma omp parallel private(tid) // Start of parallel region: forks threads
+//     {
+//         tid = omp_get_thread_num(); // default is number of CPUs on machine
+//         printf("Hello World from thread = %d and rank = %d\n", tid, rank);
+//         if (tid == 0) {
+//             printf("Number of threads = %d\n", omp_get_num_threads());
+//         }
+//     } // ** end of the the parallel: joins threads
 
     // Determine inital infection state distribution
     //Time this
-    auto start0 = std::chrono::high_resolution_clock::now();
+    // auto start0 = std::chrono::high_resolution_clock::now();
     determine_initial_infection_states_world(input_dir, start_date);
-    auto stop0     = std::chrono::high_resolution_clock::now();
-    auto duration0 = std::chrono::duration<double>(stop0 - start0);
-    std::cout << "Time taken by determine_initial_infection_states_world: " << duration0.count() << " seconds"
-              << std::endl;
+    // auto stop0     = std::chrono::high_resolution_clock::now();
+    // auto duration0 = std::chrono::duration<double>(stop0 - start0);
+    // std::cout << "Time taken by determine_initial_infection_states_world: " << duration0.count() << " seconds"
+    //           << std::endl;
 
     // Create one world for all simulations that will be copied
-    // auto world = mio::abm::World(num_age_groups);
+    // auto world = mio::abm::World(num_age_groupss);
     // create_sampled_world(world, input_dir, t0, max_num_persons);
 
     // Loop over a number of runs
     for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
 
         // Start the clock before create_sampled_world
-        auto start1 = std::chrono::high_resolution_clock::now();
+        // auto start1 = std::chrono::high_resolution_clock::now();
         // Create the sampled simulation with start time t0.
-        auto world = mio::abm::World(num_age_groups);
+        auto world = mio::abm::World(num_age_groupss);
         create_sampled_world(world, input_dir, t0, max_num_persons);
-        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = pow(10, ((int)run_idx) * 0 + 1.5);
+        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = 7;
         // Stop the clock after create_sampled_world and calculate the duration
-        auto stop1     = std::chrono::high_resolution_clock::now();
-        auto duration1 = std::chrono::duration<double>(stop1 - start1);
-        std::cout << "Time taken by create_sampled_world: " << duration1.count() << " seconds" << std::endl;
+        // auto stop1     = std::chrono::high_resolution_clock::now();
+        // auto duration1 = std::chrono::duration<double>(stop1 - start1);
+        // std::cout << "Time taken by create_sampled_world: " << duration1.count() << " seconds" << std::endl;
 
         // auto world_copy = world; // COPY CONSTRUCTOR DOESN'T WORK. LOCATIONS AREN'T ASSIGNED!
         auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -1135,9 +1140,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         sim.advance(tmax, historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
                     historyInfectionPerAgeGroup);
         // Stop the clock after sim.advance and calculate the duration
-        auto stop2     = std::chrono::high_resolution_clock::now();
-        auto duration2 = std::chrono::duration<double>(stop2 - start2);
-        std::cout << "Time taken by sim.advance: " << duration2.count() << " seconds" << std::endl;
+        // auto stop2     = std::chrono::high_resolution_clock::now();
+        // auto duration2 = std::chrono::duration<double>(stop2 - start2);
+        // std::cout << "Time taken by sim.advance: " << duration2.count() << " seconds" << std::endl;
 
         // TODO: update result of the simulation to be a vector of location result.
         // auto temp_sim_infection_per_loc_tpye =
@@ -1221,8 +1226,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir  = "/Users/David/Documents/HZI/memilio/data";
-    std::string result_dir = input_dir + "/results";
+    std::string input_dir  = "C:\\Users\\korf_sa\\Documents\\rep\\data";
+    std::string result_dir = input_dir + "\\results";
     size_t num_runs;
     bool save_single_runs = true;
 
@@ -1247,7 +1252,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 20;
+        num_runs = 1;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 

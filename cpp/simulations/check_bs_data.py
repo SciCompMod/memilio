@@ -15,7 +15,7 @@ else:
 
 ####### minimal sanity check on data #######
 bd = pd.read_csv(
-    r'/Users/David/Documents/HZI/memilio/data/mobility/modified_braunschweig_result.csv', header=None, skiprows=1)
+    r'C:\Users\korf_sa\Documents\rep\data\mobility\modified_braunschweig_result.csv', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 # bd.rename(
@@ -34,6 +34,32 @@ dict_leisure = {1: 'work', 2: 'education', 3: 'Shopping', 4: 'free time',
 dict_vehicle = {1: 'bicyle', 2: 'car_driver',
                 3: 'car_codriver', 4: 'public transport', 5: 'walk'}
 
+#check if there are same locations where people end their trips with different activity_after
+bd_same_loc = bd[['loc_id_end', 'ActivityAfter']].drop_duplicates()
+#count how many different activities are after the same location
+bd_same_loc = bd_same_loc.groupby(['loc_id_end']).size().reset_index(name='counts')
+
+#check how many persons in which age group have the activity_after 2
+bd_age_activity = bd[['personID','age', 'ActivityAfter']].loc[bd['ActivityAfter']==1]
+#drop pid duplicates
+bd_age_activity = bd_age_activity.drop_duplicates()
+bd_age_activity = bd_age_activity.groupby(['age']).size().reset_index(name='counts')
+bd_age_activity.plot(kind='bar', x='age', y='counts')
+plt.xlabel('Age')
+plt.ylabel('Number of persons')
+plt.title('Number of persons going to work in Braunschweig')
+plt.show()  
+#also put the age into bins
+bd_age_activity['ageCohort'] = pd.cut(bd_age_activity['age'], bins=[-1, 2, 5, 14, 17, 24, 29, 39, 49, 64, 74, 105], labels=[
+    '0-2', '3-5', '6-14', '15-17', '18-24', '25-29', '30-39', '40-49', '50-64', '65-74', '75+'])
+bd_age_activity_cohorts = bd_age_activity.groupby(
+    ['ageCohort']).size().reset_index(name='counts')
+bd_age_activity_cohorts.index = bd_age_activity_cohorts['ageCohort'].to_list()
+bd_age_activity_cohorts.plot.bar(figsize=(
+    10, 7), title='Age distribution of people going to school', xlabel='Age cohorts', ylabel='Number of persons', legend=None)
+plt.show()
+ 
+x=1
 # # check if people do the same trip more than once
 # trips = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime']]
 # duplicate_trips = trips.duplicated()
