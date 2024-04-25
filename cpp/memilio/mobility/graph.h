@@ -335,8 +335,8 @@ template <class ContactLocation, class Model, class MigrationParams, class Migra
           class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,
                          std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-                         ReadFunction&& read_func,
-                         std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{})
+                         ReadFunction&& read_func, std::vector<ScalarType> commuting_weights,
+                         bool save_results_edges = false, std::vector<std::vector<size_t>> indices_save_edges = {})
 {
     // mobility between nodes
     BOOST_OUTCOME_TRY(mobility_data_commuter,
@@ -388,7 +388,12 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
             //only add edges with mobility above thresholds for performance
             //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
             if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
-                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
+                if (save_results_edges) {
+                    params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs), indices_save_edges);
+                }
+                else {
+                    params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
+                }
             }
         }
     }
