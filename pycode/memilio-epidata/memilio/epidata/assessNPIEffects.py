@@ -631,9 +631,8 @@ def write_clustered_npis(df_npis: pd.DataFrame, method:str, cluster_codes: list[
     gd.write_dataframe(df_npis, directory, filename, file_format)
     #write cluster dict
     filename = 'cluster_description'
-    gd.write_dataframe(df_npis, directory, filename, file_format)
-
-
+    with open(directory+filename, 'w') as f:
+        print(cluster_dict, file=f)
 
 
 def main():
@@ -647,7 +646,7 @@ def main():
     npi_codes_considered = ['M01a_010', 'M01a_020',
                             'M01a_100', 'M01a_110', 'M01a_120']
     analyze_npi_data(True, True, fine_resolution, npis_final,
-                     directory, file_format, npi_codes_considered)
+                     directory, file_format, False)
 
 
 if __name__ == "__main__":
