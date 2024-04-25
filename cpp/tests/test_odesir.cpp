@@ -183,41 +183,61 @@ TEST(TestOdeSir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(Testsir, get_derivatives_agegrp_compare)
+TEST(Testsir, get_flows)
 {
-    // Test, that in the case of one age group, the simulation is the same as before the implementation of agegroups
-    // This test is independent of the integrator used.
-    double t0   = 0.;
-    double tmax = 50.;
-    double dt   = 0.1002004008016032;
-
-    double total_population = 1061000;
-
     mio::osir::Model model(1);
 
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 1000;
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 1000;
+    constexpr auto total_population                                             = 400;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 100;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 100;
     model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] =
         total_population - model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
-    model.parameters.set<mio::osir::TimeInfected>(2);
+
+    model.parameters.set<mio::osir::TimeInfected>(4);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat();
-    contact_matrix[0].get_baseline().setConstant(2.7);
-    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
-
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-
+    contact_matrix[0].get_baseline().setConstant(1);
     model.check_constraints();
 
-    auto sir = simulate(t0, tmax, dt, model, integrator);
-
-    auto dydt_default  = Eigen::VectorXd(Eigen::Index(mio::osir::InfectionState::Count));
+    auto dydt_default = Eigen::VectorXd(Eigen::Index(mio::osir::InfectionState::Count));
     dydt_default.setZero();
-    Eigen::VectorXd y0 = sir.get_value(0);
+    auto y0 = model.get_initial_values();
     model.get_derivatives(y0, y0, 0, dydt_default);
 
-    EXPECT_NEAR(dydt_default[0], -2694.9104618284641, 1e-12);
-    EXPECT_NEAR(dydt_default[1], 2194.9104618284641, 1e-12);
-    EXPECT_NEAR(dydt_default[2], 500, 1e-12);
+    EXPECT_NEAR(dydt_default[0], -50, 1e-12);
+    EXPECT_NEAR(dydt_default[1], 25, 1e-12);
+    EXPECT_NEAR(dydt_default[2], 25, 1e-12);
+}
+
+TEST(Testsir, Simulation)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 1;
+
+    mio::osir::Model model(1);
+
+    constexpr auto total_population                                             = 400;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 100;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 100;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] =
+        total_population - model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
+
+    model.parameters.set<mio::osir::TimeInfected>(4);
+    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(1);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(1);
+    model.check_constraints();
+
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    auto sim        = simulate(t0, tmax, dt, model, integrator);
+
+    EXPECT_EQ(sim.get_num_time_points(), 2);
+
+    const auto& results_t1 = sim.get_last_value();
+    EXPECT_NEAR(results_t1[0], 150, 1e-12);
+    EXPECT_NEAR(results_t1[1], 125, 1e-12);
+    EXPECT_NEAR(results_t1[2], 125, 1e-12);
 }
