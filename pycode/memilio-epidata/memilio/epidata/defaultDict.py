@@ -98,7 +98,7 @@ EngEng = {
     'vaccNotComplete': "Vacc_not_completed",
     # test data
     'positiveRate': 'Positive_rate',
-    'testPositiveRatio': 'tests_positive_ratio',
+    'testPositiveRatio': 'Positive_rate',
     # NPI data
     'npiCode': 'NPI_code',
     # mobility data refs

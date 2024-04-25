@@ -238,10 +238,6 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[1] = df_test[1][df_test[1].State != 'unbekannt']
     df_test[1].reset_index(drop=True, inplace=True)
 
-    # correct positive rate to percentage
-    df_test[0][dd.EngEng['testPositiveRatio']
-               ] = df_test[0][dd.EngEng['testPositiveRatio']]/100
-
     # replace state names with IDs
     df_test[1].rename(
         columns={dd.EngEng['state']: dd.EngEng['idState']}, inplace=True)
