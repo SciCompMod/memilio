@@ -57,7 +57,7 @@ class TestAbm(unittest.TestCase):
         testing_crit = abm.TestingCriteria(
             testing_ages, testing_inf_states)
         testing_scheme = abm.TestingScheme(testing_crit, abm.days(
-            1), t0, t0 + abm.days(1), abm.TestParameters(0.9, 0.99), 1.0)
+            1), t0, t0 + abm.days(1), world.parameters.TestData[abm.TestType.Antigen], 1.0)
         # initially false, will only active once simulation starts
         self.assertEqual(testing_scheme.active, False)
 

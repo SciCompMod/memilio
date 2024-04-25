@@ -315,6 +315,18 @@ struct HighViralLoadProtectionFactor {
 struct TestParameters {
     UncertainValue sensitivity;
     UncertainValue specificity;
+
+    TestParameters() = default;
+
+    TestParameters(UncertainValue input_sensitivity, UncertainValue input_specificity) {
+        sensitivity = input_sensitivity;
+        specificity = input_specificity;
+    }
+
+    TestParameters(UncertainValue value) {
+        sensitivity = value;
+        sensitivity = value;
+    }
 };
 
 /**

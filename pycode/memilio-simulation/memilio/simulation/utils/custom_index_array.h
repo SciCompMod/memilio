@@ -201,11 +201,11 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
             },
             pybind11::return_value_policy::reference_internal)
         .def("__setitem__",
-             [](C& self, Index const& idx, double value) {
+             [](C& self, Index const& idx, C::value_type value) {
                  self[idx] = value;
              })
         .def("__setitem__",
-             [](C& self, std::tuple<mio::Index<Tags>...> idx, double value) {
+             [](C& self, std::tuple<mio::Index<Tags>...> idx, C::value_type value) {
                  self[{std::get<mio::Index<Tags>>(idx)...}] = value;
              })
         .def(
