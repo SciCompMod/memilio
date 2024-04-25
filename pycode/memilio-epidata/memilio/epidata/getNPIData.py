@@ -147,8 +147,8 @@ def read_files(directory, fine_resolution, run_checks):
                     filename = "npis_subcategories_raw"
                     filepath = os.path.join(directory + filename + '.json')
                     if os.path.exists(filepath):
-                        d=json.load(open(filepath))
-                        df_npis_old=pd.DataFrame(d)
+                        d = json.load(open(filepath))
+                        df_npis_old = pd.DataFrame(d)
                     else:
                         codelist = [
                             'm01a', 'm01b', 'm02a', 'm02b', 'm03', 'm04', 'm05', 'm06',
@@ -158,13 +158,15 @@ def read_files(directory, fine_resolution, run_checks):
                         for code in codelist:
                             df_npis_per_code = pd.read_csv(
                                 os.path.join(directory,
-                                            f'kr_massn_unterkat_{code}.csv'),
+                                             f'kr_massn_unterkat_{code}.csv'),
                                 sep=',')
 
                             # set some parameters for dataframe
                             if counter_codes == 0:
-                                counties = np.sort(df_npis_per_code.ags5.unique())
-                                num_counties = len(df_npis_per_code.ags5.unique())
+                                counties = np.sort(
+                                    df_npis_per_code.ags5.unique())
+                                num_counties = len(
+                                    df_npis_per_code.ags5.unique())
 
                                 # extract dates from data
                                 dates = df_npis_per_code.iloc[:int(
@@ -186,14 +188,15 @@ def read_files(directory, fine_resolution, run_checks):
                                 dummy_to_append = pd.DataFrame(
                                     columns=['code'] + dates_new,
                                     data=copy.deepcopy(df_npis_per_code
-                                                    [df_npis_per_code.ags5 == counties[i]].
-                                                    iloc[:, 6:].T.reset_index().values))
+                                                       [df_npis_per_code.ags5 == counties[i]].
+                                                       iloc[:, 6:].T.reset_index().values))
 
-                                df_local[i] = pd.concat([df_local[i], dummy_to_append])
+                                df_local[i] = pd.concat(
+                                    [df_local[i], dummy_to_append])
 
                                 if df_npis_per_code.iloc[i * len(dates): (i + 1) *
-                                                        len(dates),
-                                                        3].nunique() > 1:
+                                                         len(dates),
+                                                         3].nunique() > 1:
                                     raise gd.DataError(
                                         'Dates are not sorted as expected.')
 
@@ -206,12 +209,14 @@ def read_files(directory, fine_resolution, run_checks):
                         df_npis_old = pd.concat([df_local[i]
                                                 for i in range(num_counties)])
                         # 'bundesland' maps to stateID for DIVI, so rename it seperately here
-                        df_npis_old.rename({'bundesland':dd.EngEng('state')}, axis=1, inplace=True)
+                        df_npis_old.rename(
+                            {'bundesland': dd.EngEng('state')}, axis=1, inplace=True)
                         # rename other columns according to default dict
                         df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
                         df_npis_old['NPI_code'] = df_npis_old['NPI_code'].str.replace(
                             'code_m', 'M')
-                        gd.write_dataframe(df_npis_old, directory, filename, 'json')
+                        gd.write_dataframe(
+                            df_npis_old, directory, filename, 'json')
                 except FileNotFoundError:
                     # TODO: sanity check fails with this file due to different shapes of the dataframe
                     # analysis runs without problems, check if results are the same and either change
@@ -233,8 +238,8 @@ def read_files(directory, fine_resolution, run_checks):
             # check if rows hospitals and geriatric care are still empty;
             # these fields have been empty so far and are thus not used
             test_codes = ['M23_010', 'M23_020', 'M23_030', 'M23_040',
-                        'M23_050', 'M23_060', 'M24_010', 'M24_020',
-                        'M24_030', 'M24_040', 'M24_050', 'M24_060']
+                          'M23_050', 'M23_060', 'M24_010', 'M24_020',
+                          'M24_030', 'M24_040', 'M24_050', 'M24_060']
             for tcode in test_codes:
                 for i in [''] + ["_" + str(i) for i in range(1, 6)]:
                     if (df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
@@ -279,13 +284,14 @@ def read_files(directory, fine_resolution, run_checks):
                         directory, 'combination_npis_incl_ranking_v3.xlsx'), engine='openpyxl')
                 if run_check == True:
                     npi_sanity_check(df_npis_old, df_npis_desc,
-                                    df_npis_combinations_pre)
+                                     df_npis_combinations_pre)
                 return df_npis_old, df_npis_desc, df_npis_combinations_pre
             else:
                 return df_npis_old, df_npis_desc, None
         except FileNotFoundError:
             print('File not found.')
             raise FileNotFoundError
+
 
 def activate_npis_based_on_incidence(
         local_incid, npi_lifting_days_threshold, npi_activation_days_threshold,
@@ -948,7 +954,7 @@ def get_npi_data(fine_resolution=2,
     # setup dataframe for each maingroup, same format as df_npi_combinations
     # used to count codes that occur simultaneously now (before any (de-)activation)
     if fine_resolution == 2:
-        #use deepcopy to copy a dict
+        # use deepcopy to copy a dict
         df_count_joint_codes = copy.deepcopy(df_npis_combinations)
         for maincode in df_count_joint_codes.keys():
             df_count_joint_codes[maincode][1] *= 0
