@@ -334,7 +334,7 @@ public:
         , m_return_times(0)
         , m_return_migrated(false)
         , m_save_indices(params.get_save_indices())
-        , m_mobility_results(m_save_indices.size())
+        , m_mobility_results(m_save_indices.size() + 1)
     {
     }
 
@@ -348,7 +348,7 @@ public:
         , m_return_times(0)
         , m_return_migrated(false)
         , m_save_indices(0)
-        , m_mobility_results(m_save_indices.size())
+        , m_mobility_results(m_save_indices.size() + 1)
     {
     }
 
@@ -424,7 +424,7 @@ private:
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
     std::vector<std::vector<size_t>> m_save_indices; // groups of indices from compartments to save
-    TimeSeries<double> m_mobility_results; // save results from edges + total number of commuters
+    TimeSeries<double> m_mobility_results; // save results from edges + entry for the total number of commuters
 
     /**
      * Computes a condensed version of m_migrated and puts it in m_mobility_results.
@@ -571,9 +571,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         }
         m_t_last_dynamic_npi_check = t;
     }
-
-    static auto indices_tuple                     = get_indices_of_symptomatic_and_nonsymptomatic(node_from);
-    auto& [indices_no_symptoms, indices_symptoms] = indices_tuple;
 
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {

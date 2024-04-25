@@ -235,7 +235,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    size_t num_groups = 3;
+    const size_t num_groups = 3;
     mio::osecir::Model model((int)num_groups);
     double fact = 1.0 / (double)num_groups;
 
@@ -274,12 +274,34 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
+    // get indices of INS and ISy compartments.
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+
+    // Reserve Space. The multiplication by 2 is necessary because we have the
+    // base and the confirmed compartments for each age group.
+    for (auto& vec : indices_save_edges) {
+        vec.reserve(2 * num_groups);
+    }
+
+    // get indices and write them to the vector
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
+    }
+
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(num_groups * (size_t)mio::osecir::InfectionState::Count, 0.1),
+                   indices_save_edges);
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);

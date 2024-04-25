@@ -175,7 +175,8 @@ TEST(TestMobility, condense_m_mobility)
     using Model = mio::osecir::Model;
 
     //setup nodes
-    Model model(1);
+    const size_t num_groups = 1;
+    Model model(num_groups);
     auto& params = model.parameters;
     auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns>());
     cm[0].get_baseline()(0, 0) = 5.0;
@@ -193,11 +194,32 @@ TEST(TestMobility, condense_m_mobility)
     params.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]           = 1.;
     params.apply_constraints();
 
+    // get indices of INS and ISy compartments.
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+
+    // Reserve Space. The multiplication by 2 is necessary because we have the
+    // base and the confirmed compartments for each age group.
+    for (auto& vec : indices_save_edges) {
+        vec.reserve(2 * num_groups);
+    }
+
+    // get indices and write them to the vector
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
+    }
+
     //setup different edges
     double t = 0.;
     mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
     mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
-    mio::MigrationEdge edge1(Eigen::VectorXd::Constant(10, 0.1));
+    mio::MigrationEdge edge1(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
     edge1.apply_migration(t, 0.0, node1, node2);
     auto migrated = edge1.get_migrated().get_last_value();
     EXPECT_NEAR(migrated[0], 1.0, 1e-12);
@@ -208,7 +230,7 @@ TEST(TestMobility, condense_m_mobility)
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 30;
     mio::SimulationNode<mio::osecir::Simulation<>> node3(model, t);
     mio::SimulationNode<mio::osecir::Simulation<>> node4(model, t);
-    mio::MigrationEdge edge2(Eigen::VectorXd::Constant(10, 0.1));
+    mio::MigrationEdge edge2(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
     edge2.apply_migration(t, 0.5, node3, node4);
     migrated = edge2.get_migrated().get_last_value();
     EXPECT_NEAR(migrated[0], 11.0, 1e-12);
