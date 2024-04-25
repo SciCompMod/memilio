@@ -268,6 +268,9 @@ def silhouette(pairw_dist_mat, cluster_labels, method):
 def analyze_npi_data(
         read_data, make_plot, fine_resolution, npis, directory, file_format,
         npi_codes_considered):
+    
+    # TODO: Error in custom plot list
+    make_plot = False
 
     if not read_data:
         # return df_npis, npis or remove else from below
@@ -549,6 +552,8 @@ def analyze_npi_data(
         plt.imshow(abs(npis_corr_reorder), cmap='gray_r')
         plt.colorbar()
 
+        write_clustered_npis(df_npis, 'median', cluster_codes, npis_corr, directory, npi_codes_used)
+
         # npi_indices_all = set(range(npis_corr.shape[0]))
         # for i in [40]:#[10, 20, 40, 80, 160]:
         #     kmeans_npis = KMeans(n_clusters=i).fit(df_npis_used.iloc[:,2:].T)
@@ -590,6 +595,45 @@ def analyze_npi_data(
                                     str(j) + "_of_"+str(num_images))
                 plt.tight_layout()
                 j += 1
+
+def write_clustered_npis(df_npis: pd.DataFrame, method:str, cluster_codes: list[list[str]], 
+               npis_corr: np.ndarray, directory: str, npi_codes_used:np.ndarray):
+    cluster_dict = dict()
+    #only compute cluster with more than two items
+    cluster_to_combine = [item for item in cluster_codes if len(item)>1]
+    name_id = 0
+    for cl in cluster_to_combine:
+        # get index of cluster items to check if they are negative or positive correlated
+        cluster_idx = [np.where(npi_codes_used == cl_code)[0][0] for cl_code in cl]
+        for id_npi in cluster_idx:
+            if npis_corr[cluster_idx[0], id_npi] < 0:
+                # switch npis 0 -> 1 and 1 -> 0
+                npi_to_switch = npi_codes_used[id_npi]
+                df_npis[npi_to_switch]-=1
+                df_npis[npi_to_switch]*=-1
+        # copy values and delete item from dataframe
+        values = [df_npis[cl_code].values for cl_code in cl]
+        df_npis.drop(cl, axis=1, inplace = True)
+        #name clusters #TODO: how? For now cluster_0,1,2...
+        cluster_name = 'cluster_' + str(name_id)
+        # write cluster names in a dict (and to json) to reconstruct clusters after regression
+        cluster_dict[cluster_name] = cl
+        # TODO: how should the cluster values for the regression be calculated
+        if method == 'mean':
+            cluster_value = np.array(values).mean(axis=0)
+        if method == 'median':
+            cluster_value = np.median(np.array(values), axis=0)
+        df_npis[cluster_name] = cluster_value
+        name_id+=1
+    #write npis with clusters
+    filename = 'clustered_npis'
+    file_format = 'json'
+    gd.write_dataframe(df_npis, directory, filename, file_format)
+    #write cluster dict
+    filename = 'cluster_description'
+    gd.write_dataframe(df_npis, directory, filename, file_format)
+
+
 
 
 def main():
