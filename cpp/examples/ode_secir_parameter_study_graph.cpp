@@ -33,6 +33,7 @@
 #include "ode_secir/parameter_space.h"
 #include "boost/filesystem.hpp"
 #include "memilio/utils/stl_util.h"
+#include <cstddef>
 #include <cstdio>
 #include <iomanip>
 
@@ -187,6 +188,31 @@ void set_synthetic_population_data(mio::osecir::Model& model)
     }
 }
 
+std::vector<std::vector<size_t>> get_indices_of_symptomatic_and_nonsymptomatic(mio::osecir::Model& model)
+{
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+    const auto num_groups = static_cast<size_t>(model.parameters.get_num_groups());
+
+    // Reserve Space. The multiplication by 2 is necessary because we have the
+    // base and the confirmed compartments for each age group.
+    for (auto& vec : indices_save_edges) {
+        vec.reserve(2 * num_groups);
+    }
+
+    // get indices and write them to the vector
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
+    }
+    return indices_save_edges;
+}
+
 /**
  * Run the parameter study.
  * Load a previously stored graph or create a new one from data. 
@@ -221,19 +247,24 @@ int main()
 
     // set population data
     set_synthetic_population_data(model);
+    auto indices_save_edges = get_indices_of_symptomatic_and_nonsymptomatic(model);
 
     params_graph.add_node(1001, model);
     params_graph.add_node(1002, model);
     params_graph.add_node(1003, model);
 
     params_graph.add_edge(0, 1,
-                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.05));
+                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.05),
+                          indices_save_edges);
     params_graph.add_edge(1, 0,
-                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.1));
+                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.1),
+                          indices_save_edges);
     params_graph.add_edge(1, 2,
-                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.15));
+                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.15),
+                          indices_save_edges);
     params_graph.add_edge(2, 1,
-                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.2));
+                          Eigen::VectorXd::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.2),
+                          indices_save_edges);
 
     //run parameter study
     auto parameter_study =
@@ -285,10 +316,9 @@ int main()
             ensemble_params.emplace_back(std::move(std::get<1>(run)));
             ensemble_edges.emplace_back(std::move(std::get<2>(run)));
         }
-        auto county_ids = std::vector<int>{1001, 1002, 1003};
-        auto save_results_status =
-            save_results(ensemble_results, ensemble_params, county_ids, "test_results", false);
-        auto pairs_edges = std::vector<std::pair<int, int>>{};
+        auto county_ids          = std::vector<int>{1001, 1002, 1003};
+        auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, "test_results", false);
+        auto pairs_edges         = std::vector<std::pair<int, int>>{};
         for (auto& edge : params_graph.edges()) {
             pairs_edges.push_back({county_ids[edge.start_node_idx], county_ids[edge.end_node_idx]});
         }

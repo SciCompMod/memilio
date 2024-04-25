@@ -18,29 +18,34 @@
 * limitations under the License.
 */
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/utils/compiler_diagnostics.h"
 
 namespace mio
 {
-void MigrationEdge::condense_m_mobility(const double t, const std::vector<size_t>& indices_non_symptomatic,
-                                        const std::vector<size_t>& indices_symptomatic)
+void MigrationEdge::condense_m_mobility(const double t)
 {
+    // only call this if his->m_save_indices.size()  is greater than 0. Perfect would be to define this in compile time
+    const size_t save_indices_size = this->m_save_indices.size();
+    if (save_indices_size > 0) {
 
-    const auto& last_value = m_migrated.get_last_value();
+        const auto& last_value           = m_migrated.get_last_value();
+        Eigen::VectorXd condensed_values = Eigen::VectorXd::Zero(save_indices_size + 1);
 
-    auto num_INS =
-        std::accumulate(indices_non_symptomatic.begin(), indices_non_symptomatic.end(), 0., [&](auto sum, auto i) {
-            return sum + last_value[i];
-        });
+        // sum up the values of m_save_indices for each group (e.g. Age groups)
+        std::transform(this->m_save_indices.begin(), this->m_save_indices.end(), condensed_values.data(),
+                       [&last_value](const auto& indices) {
+                           return std::accumulate(indices.begin(), indices.end(), 0.0,
+                                                  [&last_value](double sum, auto i) {
+                                                      return sum + last_value[i];
+                                                  });
+                       });
 
-    auto num_ISy = std::accumulate(indices_symptomatic.begin(), indices_symptomatic.end(), 0., [&](auto sum, auto i) {
-        return sum + last_value[i];
-    });
+        // the last value is the sum of commuters
+        condensed_values[save_indices_size] = m_migrated.get_last_value().sum();
 
-    double total_commuters = m_migrated.get_last_value().sum();
-
-    // as time point t which contains now the carriers, infectious and total over age groups
-    m_mobility_results.add_time_point(
-        t, (mio::TimeSeries<double>::Vector(3) << num_INS, num_ISy, total_commuters).finished());
+        // Move the condensed values to the m_mobility_results time series
+        m_mobility_results.add_time_point(t, std::move(condensed_values));
+    }
 }
 
 } // namespace mio

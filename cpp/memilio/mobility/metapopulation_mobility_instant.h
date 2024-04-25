@@ -127,6 +127,8 @@ public:
      */
     MigrationParameters(const MigrationCoefficientGroup& coeffs)
         : m_coefficients(coeffs)
+        , m_save_indices(0)
+
     {
     }
 
@@ -136,6 +138,31 @@ public:
      */
     MigrationParameters(const Eigen::VectorXd& coeffs)
         : m_coefficients({MigrationCoefficients(coeffs)})
+        , m_save_indices(0)
+    {
+    }
+
+    /**
+    * @brief Constructor for a new MigrationParameters object.
+    *
+    * @param coeffs migration coefficients
+    * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
+    */
+    MigrationParameters(const MigrationCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+        : m_coefficients(coeffs)
+        , m_save_indices(save_indices)
+    {
+    }
+
+    /**
+    * @brief Constructor for a new MigrationParameters object.
+    *
+    * @param coeffs migration coefficients
+    * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
+    */
+    MigrationParameters(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+        : m_coefficients({MigrationCoefficients(coeffs)})
+        , m_save_indices(save_indices)
     {
     }
 
@@ -177,6 +204,20 @@ public:
     {
         m_coefficients = coeffs;
     }
+
+    /**
+     * @return the indices we want to save for the edge
+     */
+    const auto& get_save_indices() const
+    {
+        return m_save_indices;
+    }
+
+    const auto& get_save_indices()
+    {
+        return m_save_indices;
+    }
+
     /** @} */
 
     /**
@@ -239,6 +280,7 @@ public:
 private:
     MigrationCoefficientGroup m_coefficients; //one per group and compartment
     DynamicNPIs m_dynamic_npis;
+    std::vector<std::vector<size_t>> m_save_indices; // groups of indices from compartments to save
 };
 
 /**
@@ -291,7 +333,8 @@ public:
         , m_migrated(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
         , m_return_migrated(false)
-        , m_mobility_results(3)
+        , m_save_indices(params.get_save_indices())
+        , m_mobility_results(m_save_indices.size())
     {
     }
 
@@ -304,7 +347,38 @@ public:
         , m_migrated(coeffs.rows())
         , m_return_times(0)
         , m_return_migrated(false)
-        , m_mobility_results(3)
+        , m_save_indices(0)
+        , m_mobility_results(m_save_indices.size())
+    {
+    }
+
+    /**
+     * create edge with coefficients as MigrationParameters object and a 2d vector of indices which determine which compartments we save.
+     * @param coeffs % of people in each group and compartment that migrate in each time step.
+     * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
+     */
+    MigrationEdge(const MigrationParameters& params, const std::vector<std::vector<size_t>>& save_indices)
+        : m_parameters(params)
+        , m_migrated(params.get_coefficients().get_shape().rows())
+        , m_return_times(0)
+        , m_return_migrated(false)
+        , m_save_indices(save_indices)
+        , m_mobility_results(m_save_indices.size() + 1)
+    {
+    }
+
+    /**
+     * create edge with coefficients and a 2d vector of indices which determine which compartments we save.
+     * @param coeffs % of people in each group and compartment that migrate in each time step.
+     * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
+     */
+    MigrationEdge(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+        : m_parameters(coeffs)
+        , m_migrated(coeffs.rows())
+        , m_return_times(0)
+        , m_return_migrated(false)
+        , m_save_indices(save_indices)
+        , m_mobility_results(m_save_indices.size() + 1)
     {
     }
 
@@ -349,7 +423,8 @@ private:
     bool m_return_migrated;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
-    TimeSeries<double> m_mobility_results;
+    std::vector<std::vector<size_t>> m_save_indices; // groups of indices from compartments to save
+    TimeSeries<double> m_mobility_results; // save results from edges + total number of commuters
 
     /**
      * Computes a condensed version of m_migrated and puts it in m_mobility_results.
@@ -357,8 +432,7 @@ private:
      * Additionally, the total number of commuters is stored in the last entry of m_mobility_results.
      * @param[in] t current time
      */
-    void condense_m_mobility(const double t, const std::vector<size_t>& indices_non_symptomatic,
-                             const std::vector<size_t>& indices_symptomatic);
+    void condense_m_mobility(const double t);
 };
 
 /**
@@ -530,7 +604,7 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
             }
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
-            condense_m_mobility(t, indices_no_symptoms, indices_symptoms);
+            condense_m_mobility(t);
             m_migrated.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
@@ -549,7 +623,7 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
 
-        condense_m_mobility(t, indices_no_symptoms, indices_symptoms);
+        condense_m_mobility(t);
     }
     m_return_migrated = !m_return_migrated;
 }

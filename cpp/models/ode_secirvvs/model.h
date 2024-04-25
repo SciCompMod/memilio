@@ -871,42 +871,6 @@ auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated,
     }
 }
 
-template <class Base = mio::Simulation<Model>>
-auto get_indices_of_symptomatic_and_nonsymptomatic(const Simulation<Base>& sim)
-{
-    const auto& model                           = sim.get_model();
-    constexpr size_t num_compartments_per_group = 6;
-    const auto num_groups                       = model.parameters.get_num_groups();
-    std::vector<size_t> indices_no_symptoms;
-    std::vector<size_t> indices_symptoms;
-    indices_no_symptoms.reserve(num_compartments_per_group * size_t(num_groups));
-    indices_symptoms.reserve(num_compartments_per_group * size_t(num_groups));
-
-    static const std::array<InfectionState, num_compartments_per_group> no_symptoms_states = {
-        InfectionState::InfectedNoSymptomsNaive,
-        InfectionState::InfectedNoSymptomsNaiveConfirmed,
-        InfectionState::InfectedNoSymptomsPartialImmunity,
-        InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
-        InfectionState::InfectedNoSymptomsImprovedImmunity,
-        InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed};
-
-    static const std::array<InfectionState, num_compartments_per_group> symptoms_states = {
-        InfectionState::InfectedSymptomsNaive,
-        InfectionState::InfectedSymptomsNaiveConfirmed,
-        InfectionState::InfectedSymptomsPartialImmunity,
-        InfectionState::InfectedSymptomsPartialImmunityConfirmed,
-        InfectionState::InfectedSymptomsImprovedImmunity,
-        InfectionState::InfectedSymptomsImprovedImmunityConfirmed};
-
-    for (auto i = AgeGroup(0); i < num_groups; ++i) {
-        for (size_t j = 0; j < num_compartments_per_group; ++j) {
-            indices_no_symptoms.emplace_back(model.populations.get_flat_index({i, no_symptoms_states[j]}));
-            indices_symptoms.emplace_back(model.populations.get_flat_index({i, symptoms_states[j]}));
-        }
-    }
-    return std::make_tuple(std::move(indices_no_symptoms), std::move(indices_symptoms));
-}
-
 } // namespace osecirvvs
 } // namespace mio
 

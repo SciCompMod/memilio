@@ -31,7 +31,8 @@ int main()
     const auto tmax = 30.;
     const auto dt   = 0.5; //time step of migration, daily migration every second step
 
-    mio::osecir::Model model(1);
+    const size_t num_groups = 1;
+    mio::osecir::Model model(num_groups);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 10000;
     model.parameters.set<mio::osecir::StartDay>(0);
     model.parameters.set<mio::osecir::Seasonality>(0.2);
@@ -66,11 +67,32 @@ int main()
     model_group1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 9990;
     model_group1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]     = 100;
 
+    // get indices of INS and ISy compartments.
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+
+    // Reserve Space. The multiplication by 2 is necessary because we have the
+    // base and the confirmed compartments for each age group.
+    for (auto& vec : indices_save_edges) {
+        vec.reserve(2 * num_groups);
+    }
+
+    // get indices and write them to the vector
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
+    }
+
     mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
-    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1));
-    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1));
+    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
+    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 

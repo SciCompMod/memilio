@@ -669,28 +669,6 @@ auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated,
     }
 }
 
-template <class Base = mio::Simulation<Model>>
-auto get_indices_of_symptomatic_and_nonsymptomatic(const Simulation<Base>& sim)
-{
-    const auto& model     = sim.get_model();
-    const auto num_groups = model.parameters.get_num_groups();
-    std::vector<size_t> indices_no_symptoms;
-    std::vector<size_t> indices_symptoms; //(2 * size_t(num_groups));
-    indices_no_symptoms.reserve(2 * size_t(num_groups));
-    indices_symptoms.reserve(2 * size_t(num_groups));
-
-    for (auto i = AgeGroup(0); i < num_groups; ++i) {
-        indices_no_symptoms.emplace_back(model.populations.get_flat_index({i, InfectionState::InfectedNoSymptoms}));
-        indices_no_symptoms.emplace_back(
-            model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsConfirmed}));
-
-        indices_symptoms.emplace_back(model.populations.get_flat_index({i, InfectionState::InfectedSymptoms}));
-        indices_symptoms.emplace_back(model.populations.get_flat_index({i, InfectionState::InfectedSymptomsConfirmed}));
-    }
-
-    return std::make_tuple(std::move(indices_no_symptoms), std::move(indices_symptoms));
-}
-
 } // namespace osecir
 } // namespace mio
 
