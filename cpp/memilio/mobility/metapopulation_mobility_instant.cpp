@@ -24,7 +24,6 @@ namespace mio
 {
 void MigrationEdge::condense_m_mobility(const double t)
 {
-    // only call this if his->m_save_indices.size()  is greater than 0. Perfect would be to define this in compile time
     const size_t save_indices_size = this->m_save_indices.size();
     if (save_indices_size > 0) {
 

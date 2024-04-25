@@ -316,8 +316,15 @@ int main()
             ensemble_params.emplace_back(std::move(std::get<1>(run)));
             ensemble_edges.emplace_back(std::move(std::get<2>(run)));
         }
+        // create directory for results.
+        boost::filesystem::path results_dir("test_results");
+        bool created = boost::filesystem::create_directories(results_dir);
+        if (created) {
+            mio::log_info("Directory '{:s}' was created.", results_dir.string());
+        }
+
         auto county_ids          = std::vector<int>{1001, 1002, 1003};
-        auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, "test_results", false);
+        auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, results_dir, false);
         auto pairs_edges         = std::vector<std::pair<int, int>>{};
         for (auto& edge : params_graph.edges()) {
             pairs_edges.push_back({county_ids[edge.start_node_idx], county_ids[edge.end_node_idx]});
