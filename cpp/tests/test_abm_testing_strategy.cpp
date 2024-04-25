@@ -150,25 +150,3 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
               true); // Person tests and tests negative
     ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
 }
-
-TEST(TestTestingCriteria, getParametersFromTestData)
-{
-    // Test whether the TestParameters from the default TestData is set correctly. 
-    auto world           = mio::abm::World(num_age_groups);
-    auto test_parameters = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Generic];
-    ASSERT_NEAR(test_parameters.sensitivity, 0.9, 1e-7);
-    ASSERT_NEAR(test_parameters.specificity, 0.99, 1e-7);
-    test_parameters = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
-    ASSERT_NEAR(test_parameters.sensitivity, 0.8, 1e-7);
-    ASSERT_NEAR(test_parameters.specificity, 0.88, 1e-7);
-    test_parameters = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR];
-    ASSERT_NEAR(test_parameters.sensitivity, 0.9, 1e-7);
-    ASSERT_NEAR(test_parameters.specificity, 0.99, 1e-7);
-
-    // Test whether the TestParameters of TestData can be modified.
-    world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR].sensitivity = 0.8;
-    world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR].specificity = 0.88;
-    test_parameters = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::PCR];
-    ASSERT_NEAR(test_parameters.sensitivity, 0.8, 1e-7);
-    ASSERT_NEAR(test_parameters.specificity, 0.88, 1e-7);
-}

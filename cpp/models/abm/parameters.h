@@ -317,6 +317,9 @@ struct TestParameters {
     UncertainValue specificity;
 };
 
+/**
+ * @brief Store a map from the TestTypes to their TestParameters.
+ */
 struct TestData {
     using Type = CustomIndexArray<TestParameters, TestType>;
     static auto get_default(AgeGroup /*size*/)
