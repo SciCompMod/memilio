@@ -285,7 +285,7 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
-// Check if the model uses the correct method for initialization using the function get_initialization_method().
+// Check if the model uses the correct method for initialization using the function get_initialization_method_compartments().
 TEST(IdeSecir, checkInitializations)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -311,14 +311,14 @@ TEST(IdeSecir, checkInitializations)
     mio::isecir::Model model1(std::move(init_copy1), N, deaths, 1000);
 
     // Check that the initialization method is not already set.
-    EXPECT_EQ(0, model1.get_initialization_method());
+    EXPECT_EQ(0, model1.get_initialization_method_compartments());
 
     // Carry out simulation.
     mio::isecir::Simulation sim1(model1, dt);
     sim1.advance(tmax);
 
     // Verify that the expected initialization method was used.
-    EXPECT_EQ(1, sim1.get_model().get_initialization_method());
+    EXPECT_EQ(1, sim1.get_model().get_initialization_method_compartments());
 
     // --- Case with S.
     /* !! For the other tests, the contact rate is set to 0 so that the force of infection is zero.
@@ -339,7 +339,7 @@ TEST(IdeSecir, checkInitializations)
     sim2.advance(tmax);
 
     // Verify that the expected initialization method was used.
-    EXPECT_EQ(2, sim2.get_model().get_initialization_method());
+    EXPECT_EQ(2, sim2.get_model().get_initialization_method_compartments());
 
     // --- Case with R.
     mio::TimeSeries<ScalarType> init_copy3(init);
@@ -353,7 +353,7 @@ TEST(IdeSecir, checkInitializations)
     sim3.advance(tmax);
 
     // Verify that the expected initialization method was used.
-    EXPECT_EQ(3, sim3.get_model().get_initialization_method());
+    EXPECT_EQ(3, sim3.get_model().get_initialization_method_compartments());
 
     // --- Case with forceofinfection.
     mio::TimeSeries<ScalarType> init_copy4(init);
@@ -364,7 +364,7 @@ TEST(IdeSecir, checkInitializations)
     sim4.advance(tmax);
 
     // Verify that the expected initialization method was used.
-    EXPECT_EQ(4, sim4.get_model().get_initialization_method());
+    EXPECT_EQ(4, sim4.get_model().get_initialization_method_compartments());
 
     // --- Case without fitting initialization method.
     // Deactivate temporarily log output for next tests. Errors are expected here.
@@ -381,7 +381,7 @@ TEST(IdeSecir, checkInitializations)
     sim5.advance(tmax);
 
     // Verify that initialization was not possible with one of the models methods.
-    EXPECT_EQ(-1, sim5.get_model().get_initialization_method());
+    EXPECT_EQ(-1, sim5.get_model().get_initialization_method_compartments());
 
     // --- Test with negative number of deaths.
     deaths = -10;
@@ -397,7 +397,7 @@ TEST(IdeSecir, checkInitializations)
     sim6.advance(tmax);
 
     // Verify that initialization was possible but the result is not appropriate.
-    EXPECT_EQ(-2, sim6.get_model().get_initialization_method());
+    EXPECT_EQ(-2, sim6.get_model().get_initialization_method_compartments());
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
