@@ -26,8 +26,8 @@ dates = df['datum']
 # plot data
 plt.figure(figsize=(10, 5))
 plt.plot(dates, icu_cap, label='ICU capacity')
-# plt.plot(dates, icu_avail, label='ICU available')
 plt.plot(dates, icu_occ, label='ICU Occupancy')
+plt.plot(dates, icu_avail, label='ICU available')
 plt.xticks(dates[::360], rotation=45)
 plt.legend()
 plt.title('ICU beds in Germany')
