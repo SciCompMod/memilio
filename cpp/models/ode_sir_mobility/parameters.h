@@ -4,10 +4,10 @@
 
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/custom_index_array.h"
-#include <iostream>
-#include "regions.h"
+#include "ode_sir_mobility/regions.h"
 
 #include <vector>
 
@@ -16,16 +16,16 @@ namespace mio
 namespace osirmobility
 {
 
-/*******************************************
-      * Define Parameters of the SIR model *
-    *******************************************/
+/****************************************************
+ * Define Parameters of the SIR model with mobility *
+ ****************************************************/
 
 /**
-     * @brief probability of getting infected from a contact
-     */
+ * @brief Probability of getting infected from a contact.
+ */
 struct TransmissionProbabilityOnContact {
     using Type = UncertainValue;
-    static Type get_default()
+    static Type get_default(Region)
     {
         return Type(1.0);
     }
@@ -36,11 +36,11 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-     * @brief the infectious time in day unit
+     * @brief The infectious time in day unit.
      */
 struct TimeInfected {
     using Type = UncertainValue;
-    static Type get_default()
+    static Type get_default(Region)
     {
         return Type(6.0);
     }
@@ -51,11 +51,11 @@ struct TimeInfected {
 };
 
 /**
-     * @brief the contact patterns within the society are modelled using a ContactMatrix
+     * @brief The contact patterns within the society are modelled using a ContactMatrix.
      */
 struct ContactPatterns {
     using Type = ContactMatrix;
-    static Type get_default()
+    static Type get_default(Region)
     {
         return Type{1};
     }
@@ -66,11 +66,11 @@ struct ContactPatterns {
 };
 
 /**
-     * @brief The mean number of Persons migrating from one Region to another during a Time interval
-     */
+ * @brief The mean number of people migrating from one Region to another during a TimeStep.
+ */
 struct CommutingRatio {
     using Type = std::vector<std::tuple<Region, Region, double>>;
-    static Type get_default()
+    static Type get_default(Region)
     {
         return Type({{Region(0), Region(0), 0.}});
     }
@@ -80,11 +80,14 @@ struct CommutingRatio {
     }
 };
 
+/**
+ * @brief The ratio that regulates the infections during commuting.
+*/
 struct ImpactCommuters {
     using Type = UncertainValue;
-    static Type get_default()
+    static Type get_default(Region)
     {
-        return Type(1.0);
+        return Type(0.);
     }
     static std::string name()
     {
@@ -92,8 +95,23 @@ struct ImpactCommuters {
     }
 };
 
-using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact, TimeInfected, ContactPatterns, CommutingRatio, ImpactCommuters>;
+/**
+ * @brief The Region%s that a person crosses when travelling from one Region to another. 
+*/
+struct PathIntersections {
+    using Type = CustomIndexArray<std::vector<Region>, Region, Region>;
+    static Type get_default(Region size)
+    {
+        return Type({size, size});
+    }
+    static std::string name()
+    {
+        return "PathIntersections";
+    }
+};
+
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeInfected, ContactPatterns, CommutingRatio,
+                                    ImpactCommuters, PathIntersections>;
 
 /**
  * @brief Parameters of SIR model.
@@ -101,15 +119,21 @@ using ParametersBase =
 class Parameters : public ParametersBase
 {
 public:
-    Parameters(Region num_regions)
-        : ParametersBase() //TODO: Is this fine?
+    Parameters(Region num_regions, AgeGroup num_agegroups)
+        : ParametersBase(num_regions)
         , m_num_regions{num_regions}
+        , m_num_agegroups(num_agegroups)
     {
     }
 
     Region get_num_regions() const
     {
         return m_num_regions;
+    }
+
+    AgeGroup get_num_agegroups() const
+    {
+        return m_num_agegroups;
     }
 
     /**
@@ -194,6 +218,7 @@ public:
 
 private:
     Region m_num_regions;
+    AgeGroup m_num_agegroups;
 };
 
 } // namespace osirmobility
