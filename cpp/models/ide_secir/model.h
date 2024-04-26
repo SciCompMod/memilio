@@ -21,10 +21,13 @@
 #ifndef IDESECIR_MODEL_H
 #define IDESECIR_MODEL_H
 
+#include "abm/virus_variant.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
+
+#include "vector"
 
 namespace mio
 {
@@ -62,6 +65,7 @@ public:
      * and mostly needed for initialization. 
      * For Susceptible, Recovered and Dead, use corresponding alternative functions.
      *
+     * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
@@ -70,14 +74,11 @@ public:
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases
      *               to Recovered). 
-     *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
-     *              If the second index is not needed, e.g., if probability[idx_TransitionDistribution1]=1, 
-     *              just use an arbitrary legal index.
-     * @param[in] dt Time discretization step size.
+     *              Related probability is calculated via 1-probability[idx_TransitionDistribution1].
+     *              Sometimes the second index is not needed, e.g., if probability[idx_TransitionDistribution1]=1.
      */
-    void compute_compartment_from_flows(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                                        int idx_TransitionDistribution1, int idx_TransitionDistribution2,
-                                        ScalarType dt);
+    void compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
+                                        int idx_TransitionDistribution1, int idx_TransitionDistribution2 = 0);
 
     /**
      * @brief Computes the values of the infection compartments subset at initialization.
@@ -260,6 +261,16 @@ public:
         // people in defined #InfectionState%s.
 
 private:
+    /**
+     * @brief Updates the values of one compartment using flows.
+     *
+     * New value is stored in m_populations. The value is calculated using the compartment size in the previous 
+     * time step and the related flows of the current time step. 
+     * Therefore the flows of the current time step should be calculated before using this function.
+     */
+    void update_compartment_from_flow(InfectionState infectionState, std::vector<InfectionTransition>&& IncomingFlows,
+                                      std::vector<InfectionTransition>&& OutgoingFlows);
+
     // ---- Private parameters. ----
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.

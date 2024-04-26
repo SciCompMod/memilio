@@ -61,8 +61,7 @@ enum class InfectionTransition
     InfectedSevereToRecovered            = 7,
     InfectedCriticalToDead               = 8,
     InfectedCriticalToRecovered          = 9,
-    Count                                = 10,
-    DummyIndex                           = 0
+    Count                                = 10
 };
 
 // This is an alternative implementation for the infection transitions; currently not used.

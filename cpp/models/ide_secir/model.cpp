@@ -24,6 +24,8 @@
 #include "memilio/utils/logging.h"
 #include "memilio/math/eigen.h"
 
+#include "vector"
+
 namespace mio
 {
 namespace isecir
@@ -45,9 +47,9 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
 }
 
 // ---- Functionality to calculate the sizes of the compartments for time t0. ----
-void Model::compute_compartment_from_flows(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                                           int idx_TransitionDistribution1, int idx_TransitionDistribution2,
-                                           ScalarType dt)
+void Model::compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_InfectionState,
+                                           Eigen::Index idx_IncomingFlow, int idx_TransitionDistribution1,
+                                           int idx_TransitionDistribution2)
 {
     ScalarType sum = 0;
 
@@ -77,30 +79,29 @@ void Model::compute_compartment_from_flows(Eigen::Index idx_InfectionState, Eige
 void Model::initial_compute_compartments_infection(ScalarType dt)
 {
     // Exposed
-    compute_compartment_from_flows(
-        Eigen::Index(InfectionState::Exposed), Eigen::Index(InfectionTransition::SusceptibleToExposed),
-        (int)InfectionTransition::ExposedToInfectedNoSymptoms, (int)InfectionTransition::DummyIndex,
-        dt); // This is a dummy index as there is no transition from Exposed to Recovered in our model.
+    compute_compartment_from_flows(dt, Eigen::Index(InfectionState::Exposed),
+                                   Eigen::Index(InfectionTransition::SusceptibleToExposed),
+                                   (int)InfectionTransition::ExposedToInfectedNoSymptoms);
     // InfectedNoSymptoms
-    compute_compartment_from_flows(Eigen::Index(InfectionState::InfectedNoSymptoms),
+    compute_compartment_from_flows(dt, Eigen::Index(InfectionState::InfectedNoSymptoms),
                                    Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
                                    (int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
-                                   (int)InfectionTransition::InfectedNoSymptomsToRecovered, dt);
+                                   (int)InfectionTransition::InfectedNoSymptomsToRecovered);
     // InfectedSymptoms
-    compute_compartment_from_flows(Eigen::Index(InfectionState::InfectedSymptoms),
+    compute_compartment_from_flows(dt, Eigen::Index(InfectionState::InfectedSymptoms),
                                    Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
                                    (int)InfectionTransition::InfectedSymptomsToInfectedSevere,
-                                   (int)InfectionTransition::InfectedSymptomsToRecovered, dt);
+                                   (int)InfectionTransition::InfectedSymptomsToRecovered);
     // InfectedSevere
-    compute_compartment_from_flows(Eigen::Index(InfectionState::InfectedSevere),
+    compute_compartment_from_flows(dt, Eigen::Index(InfectionState::InfectedSevere),
                                    Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),
                                    (int)InfectionTransition::InfectedSevereToInfectedCritical,
-                                   (int)InfectionTransition::InfectedSevereToRecovered, dt);
+                                   (int)InfectionTransition::InfectedSevereToRecovered);
     // InfectedCritical
-    compute_compartment_from_flows(Eigen::Index(InfectionState::InfectedCritical),
+    compute_compartment_from_flows(dt, Eigen::Index(InfectionState::InfectedCritical),
                                    Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
                                    (int)InfectionTransition::InfectedCriticalToDead,
-                                   (int)InfectionTransition::InfectedCriticalToRecovered, dt);
+                                   (int)InfectionTransition::InfectedCriticalToRecovered);
 }
 
 void Model::initial_compute_compartments(ScalarType dt)
@@ -285,54 +286,55 @@ void Model::flows_current_timestep(ScalarType dt)
 
 void Model::update_compartments()
 {
-    Eigen::Index num_time_points = m_populations.get_num_time_points();
-
     // Exposed
-    m_populations.get_last_value()[Eigen::Index(InfectionState::Exposed)] =
-        m_populations[num_time_points - 2][Eigen::Index(InfectionState::Exposed)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)];
+    update_compartment_from_flow(InfectionState::Exposed, {InfectionTransition::SusceptibleToExposed},
+                                 {InfectionTransition::ExposedToInfectedNoSymptoms});
 
     // InfectedNoSymptoms
-    m_populations.get_last_value()[Eigen::Index(InfectionState::InfectedNoSymptoms)] =
-        m_populations[num_time_points - 2][Eigen::Index(InfectionState::InfectedNoSymptoms)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered)];
+    update_compartment_from_flow(InfectionState::InfectedNoSymptoms, {InfectionTransition::ExposedToInfectedNoSymptoms},
+                                 {InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
+                                  InfectionTransition::InfectedNoSymptomsToRecovered});
 
     // InfectedSymptoms
-    m_populations.get_last_value()[Eigen::Index(InfectionState::InfectedSymptoms)] =
-        m_populations[num_time_points - 2][Eigen::Index(InfectionState::InfectedSymptoms)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered)];
+    update_compartment_from_flow(
+        InfectionState::InfectedSymptoms, {InfectionTransition::InfectedNoSymptomsToInfectedSymptoms},
+        {InfectionTransition::InfectedSymptomsToInfectedSevere, InfectionTransition::InfectedSymptomsToRecovered});
 
     // InfectedSevere
-    m_populations.get_last_value()[Eigen::Index(InfectionState::InfectedSevere)] =
-        m_populations[num_time_points - 2][Eigen::Index(InfectionState::InfectedSevere)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSevereToRecovered)];
+    update_compartment_from_flow(
+        InfectionState::InfectedSevere, {InfectionTransition::InfectedSymptomsToInfectedSevere},
+        {InfectionTransition::InfectedSevereToInfectedCritical, InfectionTransition::InfectedSevereToRecovered});
 
     // InfectedCritical
-    m_populations.get_last_value()[Eigen::Index(InfectionState::InfectedCritical)] =
-        m_populations[num_time_points - 2][Eigen::Index(InfectionState::InfectedCritical)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)] -
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToRecovered)];
+    update_compartment_from_flow(
+        InfectionState::InfectedCritical, {InfectionTransition::InfectedSevereToInfectedCritical},
+        {InfectionTransition::InfectedCriticalToDead, InfectionTransition::InfectedCriticalToRecovered});
 
     // Recovered
-    m_populations.get_last_value()[Eigen::Index(InfectionState::Recovered)] =
-        m_populations[num_time_points - 2][Eigen::Index(InfectionState::Recovered)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSevereToRecovered)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToRecovered)];
+    update_compartment_from_flow(
+        InfectionState::Recovered,
+        {InfectionTransition::InfectedNoSymptomsToRecovered, InfectionTransition::InfectedSymptomsToRecovered,
+         InfectionTransition::InfectedSevereToRecovered, InfectionTransition::InfectedCriticalToRecovered},
+        std::vector<InfectionTransition>());
 
     // Dead
-    m_populations.get_last_value()[Eigen::Index(InfectionState::Dead)] =
-        m_populations[num_time_points - 2][Eigen::Index(InfectionState::Dead)] +
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
+    update_compartment_from_flow(InfectionState::Dead, {InfectionTransition::InfectedCriticalToDead},
+                                 std::vector<InfectionTransition>());
+}
+
+void Model::update_compartment_from_flow(InfectionState infectionState,
+                                         std::vector<InfectionTransition>&& IncomingFlows,
+                                         std::vector<InfectionTransition>&& OutgoingFlows)
+{
+    Eigen::Index num_time_points   = m_populations.get_num_time_points();
+    ScalarType updated_compartment = m_populations[num_time_points - 2][Eigen::Index(infectionState)];
+    for (const InfectionTransition& inflow : IncomingFlows) {
+        updated_compartment += m_transitions.get_last_value()[Eigen::Index(inflow)];
+    }
+    for (const InfectionTransition& outflow : OutgoingFlows) {
+        updated_compartment -= m_transitions.get_last_value()[Eigen::Index(outflow)];
+    }
+    m_populations.get_last_value()[Eigen::Index(infectionState)] = updated_compartment;
 }
 
 void Model::compute_forceofinfection(ScalarType dt, bool initialization)
