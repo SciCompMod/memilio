@@ -22,6 +22,7 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "benchmark/benchmark.h"
 #include "ode_secirvvs/model.h"
+#include "memilio/math/adapt_rk.h"
 #include <string>
 
 const std::string config_path = "../../benchmarks/graph_simulation.config";
