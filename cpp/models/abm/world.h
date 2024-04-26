@@ -198,6 +198,13 @@ public:
     Location& get_individualized_location(LocationId id);
 
     /**
+     * @brief Get a Person.
+     * @param[in] id PersonId of the Person.
+     * @return Reference to the Person.
+    */
+    Person& get_person(uint32_t id) const;
+
+    /**
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
      * @param[in] person The Person.

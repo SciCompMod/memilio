@@ -121,7 +121,6 @@ def plot_infection_states(x, y50, y25, y75):
     plt.figure('Infection_states')
     plt.title('Infection states')
     color_plot = cmx.get_cmap('Set1').colors
-    print(color_plot)
 
     for i in range(y50.shape[1]):
         plt.plot(x, y50[:, i], color=color_plot[i])
@@ -155,8 +154,9 @@ def plot_infection_states_individual(x, y50, y25, y75, y_real):
     color = 'tab:blue'
     # we already handled the x-label with ax1
     ax2.set_ylabel('y_real', color=color)
-    ax2.plot(x_real, y_real[:, [6]], '*', color=color)
+    ax2.plot(x_real, y_real[:, [6]], color=color)
     ax2.tick_params(axis='y', labelcolor=color)
+    plt.title('Severe')
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
     # Critical
@@ -170,8 +170,9 @@ def plot_infection_states_individual(x, y50, y25, y75, y_real):
     color = 'tab:blue'
     # we already handled the x-label with ax1
     ax2.set_ylabel('y_real', color=color)
-    ax2.plot(x_real, y_real[:, [7]], '*', color=color)
+    ax2.plot(x_real, y_real[:, [7]], color=color)
     ax2.tick_params(axis='y', labelcolor=color)
+    plt.title('Critical')
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
     # Dead
@@ -184,8 +185,9 @@ def plot_infection_states_individual(x, y50, y25, y75, y_real):
     ax2 = ax[2].twinx()
     color = 'tab:blue'
     ax2.set_ylabel('y_real', color=color)  # we already handled the x-label with ax1
-    ax2.plot(x_real, y_real[:, [9]], '*', color=color)
+    ax2.plot(x_real, y_real[:, [9]], color=color)
     ax2.tick_params(axis='y', labelcolor=color)
+    plt.title('Dead')
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
 
