@@ -28,7 +28,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getVariantsData as gvsd
 from memilio.epidata import progress_indicator
-from datetime import date
+from datetime import date, datetime
 import os
 import pandas as pd
 import numpy as np
@@ -223,33 +223,18 @@ class NPIRegression():
             directory = os.path.join(directory, 'Germany/')
             gd.check_dir(directory)
 
-            # read NPI data
-            if self.fine_resolution == 2:
-                try:
-                    # TODO: replace with clustering results
-                    df_codes = pd.read_json(directory + 'npis.json')
-                    self.used_npis = [
-                        code for code in df_codes.NPI_code.values if len(code.split('_')) == 2]
-                    filepath = os.path.join(
-                        directory, 'germany_counties_npi_subcat.csv')
-                except FileNotFoundError:
-                    print('Subcategories not found. Using maincategories.')
-                    self.fine_resolution == 0
-
-            if self.fine_resolution == 0:
-                # TODO: replace with clustering results
-                self.used_npis = ['M01a', 'M01b', 'M02a', 'M02b',
-                                  'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12',
-                                  'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21']
-                filepath = os.path.join(
-                    directory, 'germany_counties_npi_maincat.csv')
-
+            filepath = os.path.join(directory + 'clustered_npis.json')
+            
             if not os.path.exists(filepath):
                 print('NPI data not found. Running download script.')
                 self.df_npis = gnd.get_npi_data(start_date=date(2020, 1, 1),
                                                 fine_resolution=self.fine_resolution, file_format='csv')
             else:
-                self.df_npis = pd.read_csv(filepath)
+                self.df_npis = pd.read_json(filepath)
+
+            self.used_npis = self.df_npis.columns.to_list()
+            self.used_npis.remove('Date')
+            self.used_npis.remove('ID_County')
 
             # read population data
             filepath = os.path.join(
@@ -403,9 +388,9 @@ class NPIRegression():
 
             # first remove all dates which are not in df_npis
             min_date_npis = min(self.df_npis.Date)
-            self.min_date = max(min_date_npis, self.min_date)
+            self.min_date = max(datetime.strftime(min_date_npis, '%Y-%m-%d'), self.min_date)
             max_date_npis = max(self.df_npis.Date)
-            self.max_date = min(max_date_npis, self.max_date)
+            self.max_date = min(datetime.strftime(max_date_npis, '%Y-%m-%d'), self.max_date)
 
             self.df_r = mdfs.extract_subframe_based_on_dates(
                 self.df_r, self.min_date, self.max_date)
