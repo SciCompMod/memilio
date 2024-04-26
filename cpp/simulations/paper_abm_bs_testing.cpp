@@ -1178,7 +1178,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // }
 
         // Start the clock before sim.advance
-        auto start2 = std::chrono::high_resolution_clock::now();
+        // auto start2 = std::chrono::high_resolution_clock::now();
         // Advance the world to tmax
         // sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyInfectionPerAgeGroup,
         //             historyPersonInfDelta, historyInfectionStatePerAgeGroup);

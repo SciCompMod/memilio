@@ -70,13 +70,13 @@ public:
         double sum = 0;
         while (m_t < tmax) {
             evolve_world(tmax);
-            // double start, end;
-            // start = omp_get_wtime();
+            double start, end;
+            start = omp_get_wtime();
             (history.log(*this), ...);
-            // end = omp_get_wtime();
-            // sum = sum + (end - start);
+            end = omp_get_wtime();
+            sum = sum + (end - start);
         }
-        // std::cout << "Time spent on logging: " << sum << std::endl;
+        std::cout << "Time spent on logging: " << sum << std::endl;
     }
 
     /**
