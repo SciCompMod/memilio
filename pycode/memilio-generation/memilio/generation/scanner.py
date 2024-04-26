@@ -100,7 +100,7 @@ class Scanner:
         intermed_repr = IntermediateRepresentation()
         utility.output_cursor_print(self.ast.cursor, 1)
         self.find_node(self.ast.cursor, intermed_repr)
-        #self.output_ast_file()
+        # self.output_ast_file()
         self.finalize(intermed_repr)
         return intermed_repr
 

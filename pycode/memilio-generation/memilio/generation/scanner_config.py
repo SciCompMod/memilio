@@ -59,7 +59,6 @@ class ScannerConfig:
     target_folder: str
     optional: dict = field(default_factory=dict)
 
-
     def __post_init__(self: Self) -> None:
         """
         Additional data for the generation, that is not set in the config.json. 
