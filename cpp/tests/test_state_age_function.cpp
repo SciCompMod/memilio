@@ -230,7 +230,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
     EXPECT_EQ(wrapper.get_parameter(), testvalue_before);
     EXPECT_EQ(wrapper.get_support_max(dt), testvalue_before);
     // Use the formula for the mean of a SmootherCosine StateAgeFunction: 0.5 * parameter.
-    // See also the Dokumentation of get_mean().
+    // See also the documentation of get_mean().
     EXPECT_EQ(wrapper.get_mean(dt), testvalue_before * 0.5);
 
     wrapper.set_parameter(testvalue_after);

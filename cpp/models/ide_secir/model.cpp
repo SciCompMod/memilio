@@ -204,7 +204,7 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
 
 void Model::flows_current_timestep(ScalarType dt)
 {
-    // Calculate flow from S to E with force of infection from previous time step und susceptibles from current time step.
+    // Calculate flow from Susceptibles to Exposed with force of infection from previous time step and Susceptibles from current time step.
     m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] =
         dt * m_forceofinfection * m_populations.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
     // Calculate all other flows with compute_flow.
@@ -275,7 +275,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
         num_time_points = m_transitions.get_num_time_points() - 1;
         // Get time of penultimate timepoint in m_transitions.
         current_time = m_transitions.get_time(num_time_points - 1);
-        // Determine the number of death at time t0-dt.
+        // Determine the number of individuals in Dead compartment at time t0-dt.
         deaths = m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] -
                  m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
     }

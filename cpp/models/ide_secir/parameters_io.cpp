@@ -42,7 +42,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                                  ScalarType scale_confirmed_cases)
 {
     //--- Preparations ---
-    // Try to get rki data from path.
+    // Try to get RKI data from path.
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_noage(path));
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -74,7 +74,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = 4 * global_support_max_index;
     // The last time needed is dependent on the mean stay time in the Exposed compartment and
-    // the mean stay time of presymptomatic infdividuals in InfectedNoSymptoms.
+    // the mean stay time of asymptomatic individuals in InfectedNoSymptoms.
     ScalarType mean_ExposedToInfectedNoSymptoms =
         model.parameters.get<TransitionDistributions>()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
             .get_mean(dt);

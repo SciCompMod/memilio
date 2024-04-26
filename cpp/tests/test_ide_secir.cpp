@@ -450,7 +450,7 @@ TEST(IdeSecir, testModelConstraints)
     // Initialize a model.
     mio::isecir::Model model_negative_deaths(std::move(init), N, deaths);
 
-    // Return true for negative entry in m_populations..
+    // Return true for negative entry in m_populations.
     constraint_check = model_negative_deaths.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 

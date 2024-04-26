@@ -58,7 +58,7 @@ namespace isecir
 * 
 * The start date of the model simulation is set to t0=0.
 *
-* @param[in, out] model The model for which the inital flows should be computed.
+* @param[in, out] model The model for which the initial flows should be computed.
 * @param[in] dt Time step size.
 * @param[in] path Path to the RKI file.
 * @param[in] date The start date of the simulation and the last time point of the TimeSeries used for initialization.
