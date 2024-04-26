@@ -67,7 +67,7 @@ mio::IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(con
     return mio::success(arr);
 }
 
-mio::IOResult<void> run(const std::string& filename, mio::osirmobility::Model& model)
+mio::IOResult<void> preprocess(const std::string& filename, mio::osirmobility::Model& model)
 {
     BOOST_OUTCOME_TRY(mobility_paths, read_path_mobility(filename));
     size_t n_regions = (size_t)model.parameters.get_num_regions();
@@ -103,6 +103,35 @@ mio::IOResult<void> run(const std::string& filename, mio::osirmobility::Model& m
     return mio::success();
 }
 
+mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, const std::string& trip_chains,
+                                         mio::osirmobility::Model& model, size_t number_regions)
+{
+    BOOST_OUTCOME_TRY(preprocess(trip_chains, model));
+    // mobility between nodes
+    BOOST_OUTCOME_TRY(mobility_data_commuter,
+                      mio::read_mobility_plain(mobility_data + "mobility" + "commuter_migration_scaled.txt"));
+    if (mobility_data_commuter.rows() != Eigen::Index(number_regions) ||
+        mobility_data_commuter.cols() != Eigen::Index(number_regions)) {
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Mobility matrices do not have the correct size. You may need to run "
+                            "transformMobilitydata.py from pycode memilio epidata package.");
+    }
+
+    for (auto age = mio::AgeGroup(0); age < model.parameters.get_num_agegroups(); age++) {
+        for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
+            for (size_t county_idx_j = 0; county_idx_j < number_regions; ++county_idx_j) {
+                //commuters
+                auto population_i      = model.populations.get_group_total(mio::osirmobility::Region(county_idx_i));
+                auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / population_i;
+                model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
+                    {mio::osirmobility::Region(county_idx_i), mio::osirmobility::Region(county_idx_j),
+                     commuter_coeff_ij});
+            }
+        }
+    }
+    return mio::success();
+}
+
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
@@ -117,7 +146,8 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& filename = "";
+    const std::string& mobility_data   = "";
+    const std::string& trip_chain_data = "";
 
     mio::osirmobility::Model model(number_regions, number_age_groups);
 
@@ -151,7 +181,7 @@ int main()
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
         {mio::osirmobility::Region(1), mio::osirmobility::Region(3), 0.8});
 
-    auto preprocess = run(filename, model);
+    auto result_preprocess = set_mobility_weights(mobility_data, trip_chain_data, model, number_regions);
 
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
 
