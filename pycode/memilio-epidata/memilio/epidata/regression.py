@@ -340,6 +340,23 @@ class NPIRegression():
                 df_var.ID_County = county
                 self.df_variants = pd.concat([self.df_variants, df_var])
 
+            # fig, ax = plt.subplots()
+            # ax.plot(self.df_variants.iloc[:, 0],
+            #         self.df_variants.iloc[:, 1:-1], label=self.df_variants.columns[1:-1])
+
+            # if not os.path.isdir(f'plots'):
+            #     os.makedirs(f'plots')
+            # plt.tight_layout()
+            # plt.legend()
+            # plt.savefig(f'plots/variants.png', format='png',
+            #             dpi=500)
+
+            # plt.close()
+
+            # self.df_variants.plot(
+            #     x='Date', y=self.df_variants.columns[1:-1], kind='line')
+            # plt.show()
+
         with progress_indicator.Spinner(message="Preparing age structure data"):
             # variables for age structure
             self.df_agestructure = self.df_vaccinations.loc[:, [
@@ -361,9 +378,10 @@ class NPIRegression():
             self.df_regions = self.df_vaccinations.loc[:, [
                 dd.EngEng['idCounty'], dd.EngEng['date']]]
             # create column for every region type
-            self.region_types = ['Stadtregion - Metropole', 'Stadtregion - Regiopole und Großstadt', 'Stadtregion - Mittelstadt, städtischer Raum',
-                                 'Stadtregion - Kleinstädtischer, dörflicher Raum', 'Ländliche Region - Zentrale Stadt', 'Ländliche Region - Städtischer Raum',
-                                 'Ländliche Region - Kleinstädtischer, dörflicher Raum']
+            # self.region_types = ['Stadtregion - Metropole', 'Stadtregion - Regiopole und Großstadt', 'Stadtregion - Mittelstadt, städtischer Raum',
+            #                      'Stadtregion - Kleinstädtischer, dörflicher Raum', 'Ländliche Region - Zentrale Stadt', 'Ländliche Region - Städtischer Raum',
+            #                      'Ländliche Region - Kleinstädtischer, dörflicher Raum']
+            self.region_types = ['71', '72', '73', '74', '75', '76', '77']
             # create columns for region types
             for r_id in range(7):
                 self.df_regions[self.region_types[r_id]] = 0
@@ -482,7 +500,8 @@ class NPIRegression():
 
         # TODO: discuss which region type we want to use as reference
         # for now use Metropole
-        self.reference_region = 'Stadtregion - Metropole'
+        # self.reference_region = 'Stadtregion - Metropole'
+        self.reference_region = '71'
         self.region_types.remove(self.reference_region)
 
         # TODO: references for other variables?
@@ -543,15 +562,17 @@ class NPIRegression():
         # add column with column names to df
         self.df_pvalues.insert(
             1, "columns", fixed_variables + regression_variables)
-        # this shouldn't be needed anymore because we check before if there is an NPI that is never active
-        # drop rows with pvalue that is NaN
-        # self.df_pvalues.dropna(inplace=True)
         # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
         self.df_pvalues.insert(2, "coeffs", list(results.params))
         self.df_pvalues.insert(
             3, "conf_int_min", list(results.conf_int()[0]))
         self.df_pvalues.insert(
             4, "conf_int_max", list(results.conf_int()[1]))
+
+        # this shouldn't be needed anymore because we check before if there is an NPI that is never active
+        # drop rows with pvalue that is NaN
+        # TODO: check if there are NaNs from other variables such as variants
+        self.df_pvalues.dropna(inplace=True)
 
         self.plot_confidence_intervals(iteration)
 
@@ -661,30 +682,34 @@ class NPIRegression():
 
     # plot coefficients and confidence intervals per independent variable
     def plot_confidence_intervals(self, iteration):
+        num_plots = 4
+        plotted_variables = int(len(self.df_pvalues)/num_plots)
+        for plot_number in range(num_plots):
 
-        fig, ax = plt.subplots()
-        for i in range(len(self.df_pvalues)):
-            ax.plot((self.df_pvalues['conf_int_min'].iloc[i],
-                    self.df_pvalues['conf_int_max'].iloc[i]), (i, i), '-o', color='teal', markersize=3)
-            ax.scatter(self.df_pvalues['coeffs'].iloc[i],
-                       i, color='teal', marker='x')
+            fig, ax = plt.subplots()
+            for i in range(plot_number*plotted_variables, (plot_number+1)*plotted_variables):
+                ax.plot((self.df_pvalues['conf_int_min'].iloc[i],
+                         self.df_pvalues['conf_int_max'].iloc[i]), (i, i), '-o', color='teal', markersize=3)
+                ax.scatter(self.df_pvalues['coeffs'].iloc[i],
+                           i, color='teal', marker='x')
 
-        ax.axvline(color='gray')
+            ax.axvline(color='gray')
 
-        ax.set_yticks(range(0, len(self.df_pvalues)),
-                      list(self.df_pvalues['columns']), fontsize=5)
-        ax.invert_yaxis()
+            ax.set_yticks(range(plot_number*plotted_variables, (plot_number+1)*plotted_variables),
+                          list(self.df_pvalues['columns'])[plot_number*plotted_variables: (plot_number+1)*plotted_variables], fontsize=5)
+            ax.invert_yaxis()
 
-        ax.set_xlabel('Values of coefficients')
-        ax.set_ylabel('Variables')
+            ax.set_xlabel('Values of coefficients')
+            ax.set_ylabel('Variables')
 
-        if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}'):
-            os.makedirs(f'plots/fine_resolution{self.fine_resolution}')
-        plt.tight_layout()
-        plt.savefig(f'plots/fine_resolution{self.fine_resolution}/regression_results_iteration_{iteration}.png', format='png',
-                    dpi=500)
+            if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}/regression_results'):
+                os.makedirs(
+                    f'plots/fine_resolution{self.fine_resolution}/regression_results')
+            plt.tight_layout()
+            plt.savefig(f'plots/fine_resolution{self.fine_resolution}/regression_results/regression_results_iteration_{iteration}_plot{plot_number}.png', format='png',
+                        dpi=500)
 
-        plt.close()
+            plt.close()
 
     # plot pvalues and variable_of_interest for iteration in backward selection
     def plot_pvalues(self, iteration, variable_of_interest, removed):
@@ -709,16 +734,16 @@ class NPIRegression():
         plt.legend(handles, labels, loc='lower right')
 
         ax.set_yticks(range(0, len(self.df_pvalues)), list(
-            self.df_pvalues['columns']))
+            self.df_pvalues['columns']), fontsize=4)
         ax.invert_yaxis()
 
         ax.set_xlabel('P-values')
         ax.set_ylabel('Variables')
 
-        if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}'):
-            os.makedirs(f'plots/fine_resolution{self.fine_resolution}')
+        if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}/pvalues'):
+            os.makedirs(f'plots/fine_resolution{self.fine_resolution}/pvalues')
         plt.tight_layout()
-        plt.savefig(f'plots/fine_resolution{self.fine_resolution}/pvalues_iteration_{iteration}.png', format='png',
+        plt.savefig(f'plots/fine_resolution{self.fine_resolution}/pvalues/pvalues_iteration_{iteration}.png', format='png',
                     dpi=500)
 
         plt.close()
@@ -728,7 +753,7 @@ def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
     min_date = '2020-03-01'
-    max_date = '2020-07-01'
+    max_date = '2022-07-01'
 
     fine_resolution = 0
 
