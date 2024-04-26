@@ -54,11 +54,11 @@ public:
 
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
     /**
-     * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_populations.
+     * @brief Compute the compartment specified in idx_InfectionState at the current time -- only using historic flow values and disrespecting potential, previous compartment value.
      * 
-     * Calculation is reasonable for all compartments except #Susceptible, #Recovered and #Dead. 
-     * Therefore, we have alternative functions for those compartments.
-     * Function is currently just used to calculate the compartment sizes at time t_0. It could also be used for other time steps.
+     * The computation is meaningful for all compartments except #Susceptible, #Recovered and #Death
+     * and mostly needed for initialization. 
+     * For #Susceptible, #Recovered and #Dead, use corresponding alternative functions.
      *
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
@@ -68,7 +68,7 @@ public:
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases to #Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
-     *              If the second index is not needed, eg if probability[idx_TransitionDistribution1]=1, 
+     *              If the second index is not needed, e.g., if probability[idx_TransitionDistribution1]=1, 
      *              just use an arbitrary legal index.
      * @param[in] dt Time discretization step size.
      */
@@ -77,21 +77,21 @@ public:
                                         ScalarType dt);
 
     /**
-     * @brief Sets the values of the compartments listed below for time t_0 in m_populations during initialization.
+     * @brief Computes the values of the infection compartments subset at initialization.
      *
      * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical
      * for time t_0 are calculated using the initial data in form of flows.
-     * Calculated values are stored in m_populations. The values are computed via the function compute_compartment_from_flows().
+     * Calculated values are stored in m_populations.
      * 
      * @param[in] dt Time discretization step size.
      */
     void compute_compartments_initialization(ScalarType dt);
 
     /**
-     * @brief The initial values for the flows and additional information is used to calculate the compartment sizes at start time t_0.
+     * @brief Computes the values of compartments at initialization.
      * 
      * The initialization method is selected automatically based on the different values that need to be set beforehand.
-     * Infection compartments are always computed through historic flow.
+     * Infection compartments are always computed through historic flows.
      * Initialization methods for #Susceptible and #Recovered are tested in the following order:
      * 1.) If a positive number for the total number of confirmed cases is set, #Recovered is set according to that value and #Susceptible%s are derived.
      * 2.) If #Susceptible%s are set, #Recovered will be derived.
@@ -224,7 +224,7 @@ public:
     }
 
     /**
-    * @brief Initializes the model and sets compartment values at start time t0.
+    * @brief Returns the index of the automatically selected initialization method.
     *
     * The initialization method is selected automatically based on the different values that need to be set beforehand.
     * Infection compartments are always computed through historic flow.
@@ -234,7 +234,7 @@ public:
     * 3.) If #Recovered are set directly, #Susceptible%s are derived.
     * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to set the #Susceptible%s.
     *
-    * @param[in] dt Time discretization step size.         
+    * @return Index representing the initialization method.
     */
     int get_initialization_method_compartments()
     {
