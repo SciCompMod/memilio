@@ -217,27 +217,6 @@ int main()
     return (int)status;
 }
 
-int main_old()
-{
-    Seair_NLP nlp;
-    using FP = ad::gt1s<double>::type;
-    std::vector<double> x(nlp.getN());
-    std::vector<FP> t1_x(nlp.getN());
-    std::vector<FP> constraints(nlp.getM());
-    FP objective;
-
-    for (size_t i = 0; i < x.size(); ++i) {
-        ad::value(t1_x[i]) = x[i];
-    }
-    ad::derivative(t1_x[0]) = 1;
-
-    nlp.get_starting_point(nlp.getN(), true, x.data(), false, nullptr, nullptr, nlp.getM(), false, nullptr);
-    nlp.eval_objective_constraints(t1_x, constraints, objective);
-    std::cout << "directional derivitive of objective function is  " << ad::derivative(objective) << std::endl;
-
-    return 0;
-}
-
 bool Seair_NLP::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g, Ipopt::Index& nnz_h_lag,
                              IndexStyleEnum& index_style)
 {
