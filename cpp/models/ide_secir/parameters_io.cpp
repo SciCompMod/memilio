@@ -106,7 +106,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     ScalarType time_idx           = 0;
     for (auto&& entry : rki_data) {
         int offset = get_offset_in_days(entry.date, date);
-        if (!(offset < min_offset_needed) && !(offset > max_offset_needed)) {
+        if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
             }
