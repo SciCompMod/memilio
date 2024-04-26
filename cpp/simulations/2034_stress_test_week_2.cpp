@@ -34,6 +34,7 @@
 #include "ode_secirvvs/parameter_space.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/stl_util.h"
+#include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 #include <boost/fusion/functional/invocation/invoke.hpp>
 #include <cstddef>
@@ -175,10 +176,10 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
     const double relativeTransmissionNoSymptomsMax = 1.0;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     // depends on incidence and test and trace capacity
-    const double riskOfInfectionFromSymptomaticMin    = 1.0;
-    const double riskOfInfectionFromSymptomaticMax    = 1.0;
-    const double maxRiskOfInfectionFromSymptomaticMin = 1.0;
-    const double maxRiskOfInfectionFromSymptomaticMax = 1.0;
+    const double riskOfInfectionFromSymptomaticMin    = 0.2;
+    const double riskOfInfectionFromSymptomaticMax    = 0.4;
+    const double maxRiskOfInfectionFromSymptomaticMin = 0.6;
+    const double maxRiskOfInfectionFromSymptomaticMax = 0.8;
     const double recoveredPerInfectedNoSymptomsMin[]  = {0., 0., 0., 0., 0., 0.};
     const double recoveredPerInfectedNoSymptomsMax[]  = {0., 0., 0., 0., 0., 0.};
     const double severePerInfectedSymptomsMin[]       = {0.25, 0.1, 0.1, 0.1, 0.1, 0.3};
@@ -505,11 +506,25 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
         return n.id;
     });
 
-    double initially_infected                     = 1.0 / 100000.0;
+    double initially_infected = 1.0 / 100000.0;
+    //from Berits mail
+    double daily_num_tests_in_Germany = (500.0 / 7.0) * 36.;
+
+    //daily 2/3 of the daily num tests can be performed in the hotspot regions and 1/3 in the non-hotspot regions
+    double daily_num_tests_in_hotspots     = 2. / 3. * daily_num_tests_in_Germany;
+    double daily_num_tests_in_non_hotspots = 1. / 3. * daily_num_tests_in_Germany;
+    //calculate total population
+    double pop_Germany = 0;
+    for (auto& node : params_graph.nodes()) {
+        pop_Germany += node.property.populations.get_total();
+    }
+    //Regular test capacity and 10x test capacity
+    std::vector<double> tnt_factors               = {1.0, 10.0};
     std::vector<size_t> num_regions_with_infected = {static_cast<size_t>(0.02 * params_graph.nodes().size()),
                                                      static_cast<size_t>(0.1 * params_graph.nodes().size())};
     for (size_t num_regions : num_regions_with_infected) {
-        auto rng = mio::RandomNumberGenerator();
+        std::string result_dir_run = result_dir + "/" + std::to_string(num_regions) + "_with_infected_counties";
+        auto rng                   = mio::RandomNumberGenerator();
         //rng.seed({3236549026, 3706391501, 886432438, 190527773, 3180356503, 1314521368});
         if (mio::mpi::is_root()) {
             printf("Seeds regions: ");
@@ -518,140 +533,164 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
             }
             printf("\n");
         }
-        for (size_t run_per_scenario = 0; run_per_scenario < num_runs_per_scenario; run_per_scenario++) {
-            //draw regions
-            for (size_t region = 0; region < num_regions; ++region) {
-                int region_id  = node_ids_global[mio::UniformIntDistribution<size_t>::get_instance()(
-                    rng, size_t(0), node_ids_global.size())];
-                auto nodes_tmp = nodes_copy;
+        for (double tnt_fac : tnt_factors) {
+            result_dir_run += "/tnt_fac_" + std::to_string(tnt_fac);
 
-                //find correct node and set number of infected
-                size_t node_indx = 0;
-                for (auto& node : params_graph.nodes()) {
-                    // reset population
-                    node.property.populations = nodes_tmp[node_indx].populations;
-                    node_indx++;
-                    if (node.id == region_id) {
-                        auto percentage_symptomatic =
-                            node.property.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[{mio::AgeGroup(3)}] /
-                            (node.property.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[{mio::AgeGroup(3)}] +
-                             node.property.parameters
-                                 .get<mio::osecirvvs::TimeInfectedNoSymptoms>()[{mio::AgeGroup(3)}]);
-                        auto infected =
-                            initially_infected *
+            for (size_t run_per_scenario = 0; run_per_scenario < num_runs_per_scenario; run_per_scenario++) {
+                double population_in_hotspot_regions = 0;
+                std::vector<int> hotspot_ids;
+                //draw regions
+                for (size_t region = 0; region < num_regions; ++region) {
+                    int region_id = node_ids_global[mio::UniformIntDistribution<size_t>::get_instance()(
+                        rng, size_t(0), node_ids_global.size())];
+                    hotspot_ids.push_back(region_id);
+                    auto nodes_tmp = nodes_copy;
+
+                    //find correct node and set number of infected
+                    size_t node_indx = 0;
+                    for (auto& node : params_graph.nodes()) {
+                        // reset population
+                        node.property.populations = nodes_tmp[node_indx].populations;
+                        node_indx++;
+                        if (node.id == region_id) {
+                            population_in_hotspot_regions += node.property.populations.get_total();
+                            auto percentage_symptomatic =
+                                node.property.parameters
+                                    .get<mio::osecirvvs::TimeInfectedSymptoms>()[{mio::AgeGroup(3)}] /
+                                (node.property.parameters
+                                     .get<mio::osecirvvs::TimeInfectedSymptoms>()[{mio::AgeGroup(3)}] +
+                                 node.property.parameters
+                                     .get<mio::osecirvvs::TimeInfectedNoSymptoms>()[{mio::AgeGroup(3)}]);
+                            auto infected =
+                                initially_infected *
+                                node.property
+                                    .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}];
+                            node.property.populations[{mio::AgeGroup(3),
+                                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] =
+
+                                percentage_symptomatic * infected;
+                            node.property.populations[{mio::AgeGroup(3),
+                                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}] =
+                                (1 - percentage_symptomatic) * infected;
+
                             node.property
-                                .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}];
-                        node.property
-                            .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] =
-
-                            percentage_symptomatic * infected;
-                        node.property
-                            .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}] =
-                            (1 - percentage_symptomatic) * infected;
-
-                        node.property
-                            .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}] -=
-                            infected;
+                                .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}] -=
+                                infected;
+                        }
                     }
                 }
-            }
+                double population_in_non_hotspot_regions = pop_Germany - population_in_hotspot_regions;
 
-            std::string result_dir_run = result_dir + "/" + std::to_string(num_regions) + "_with_infected_counties";
-
-            //run parameter study
-            auto parameter_study =
-                mio::ParameterStudy<mio::osecirvvs::Simulation<mio::FlowSimulation<mio::osecirvvs::Model>>>{
-                    params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
-
-            // parameter_study.get_rng().seed(
-            //    {1744668429, 3100904884, 949309539, 3730340632, 1029148146, 3502301618}); //set seeds, e.g., for debugging
-            if (mio::mpi::is_root()) {
-                printf("Seeds parameter study: ");
-                for (auto s : parameter_study.get_rng().get_seeds()) {
-                    printf("%u, ", s);
-                }
-                printf("\n");
-            }
-
-            auto save_single_run_result = mio::IOResult<void>(mio::success());
-            auto ensemble               = parameter_study.run(
-                [&](auto&& graph) {
-                    return draw_sample(graph);
-                },
-                [&](auto results_graph, auto&& run_idx) {
-                    auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-                    auto params              = std::vector<mio::osecirvvs::Model>();
-                    params.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                                 std::back_inserter(params), [](auto&& node) {
-                                       return node.property.get_simulation().get_model();
-                                   });
-
-                    auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
-                    flows.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                                 std::back_inserter(flows), [](auto&& node) {
-                                       auto& flow_node         = node.property.get_simulation().get_flows();
-                                       auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
-                                       return interpolated_flows;
-                                   });
-
-                    // auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
-                    // auto results_berlin     = interpolated_result[324];
-                    // for (auto t_indx = 0; t_indx < results_berlin.get_num_time_points(); t_indx++) {
-                    //     double timm_pi = 0.0;
-                    //     double timm_ii = 0.0;
-                    //     for (mio::AgeGroup i = 0; i < mio::AgeGroup(6); i++) {
-                    //         timm_pi += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
-                    //             {i, mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity})];
-                    //         timm_ii += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
-                    //             {i, mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity})];
-                    //     }
-                    //     printf("t=%i, timm_pi=%f, timm_ii=%f\n", int(results_berlin.get_time(t_indx)), timm_pi, timm_ii);
-                    // }
-
-                    std::cout << "run " << run_idx << " complete." << std::endl;
-                    return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows));
-                });
-
-            if (mio::mpi::is_root()) {
-                boost::filesystem::path dir(result_dir_run);
-                bool created = boost::filesystem::create_directories(dir);
-
-                if (created) {
-                    mio::log_info("Directory '{:s}' was created.", dir.string());
-                }
-                printf("Saving results to \"%s\".\n", result_dir_run.c_str());
-            }
-
-            if (ensemble.size() > 0) {
-                auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_results.reserve(ensemble.size());
-                auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
-                ensemble_params.reserve(ensemble.size());
-                auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_flows.reserve(ensemble.size());
-                for (auto&& run : ensemble) {
-                    ensemble_results.emplace_back(std::move(std::get<0>(run)));
-                    ensemble_params.emplace_back(std::move(std::get<1>(run)));
-                    ensemble_flows.emplace_back(std::move(std::get<2>(run)));
+                //set TNT values
+                for (auto& node : params_graph.nodes()) {
+                    if (std::find(hotspot_ids.begin(), hotspot_ids.end(), node.id) != hotspot_ids.end()) {
+                        node.property.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() =
+                            mio::UncertainValue(tnt_fac * daily_num_tests_in_hotspots / population_in_hotspot_regions *
+                                                node.property.populations.get_total());
+                    }
+                    else {
+                        node.property.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() = mio::UncertainValue(
+                            tnt_fac * daily_num_tests_in_non_hotspots / population_in_non_hotspot_regions *
+                            node.property.populations.get_total());
+                    }
                 }
 
-                BOOST_OUTCOME_TRY(save_single_run_result);
-                BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir_run, false));
+                //run parameter study
+                auto parameter_study =
+                    mio::ParameterStudy<mio::osecirvvs::Simulation<mio::FlowSimulation<mio::osecirvvs::Model>>>{
+                        params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
 
-                auto result_dir_run_flows = result_dir_run + "/flows";
+                // parameter_study.get_rng().seed(
+                //    {1744668429, 3100904884, 949309539, 3730340632, 1029148146, 3502301618}); //set seeds, e.g., for debugging
                 if (mio::mpi::is_root()) {
-                    boost::filesystem::path dir(result_dir_run_flows);
+                    printf("Seeds parameter study: ");
+                    for (auto s : parameter_study.get_rng().get_seeds()) {
+                        printf("%u, ", s);
+                    }
+                    printf("\n");
+                }
+
+                auto save_single_run_result = mio::IOResult<void>(mio::success());
+                auto ensemble               = parameter_study.run(
+                    [&](auto&& graph) {
+                        return draw_sample(graph);
+                    },
+                    [&](auto results_graph, auto&& run_idx) {
+                        auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+                        auto params              = std::vector<mio::osecirvvs::Model>();
+                        params.reserve(results_graph.nodes().size());
+                        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                                                     std::back_inserter(params), [](auto&& node) {
+                                           return node.property.get_simulation().get_model();
+                                       });
+
+                        auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
+                        flows.reserve(results_graph.nodes().size());
+                        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                                                     std::back_inserter(flows), [](auto&& node) {
+                                           auto& flow_node         = node.property.get_simulation().get_flows();
+                                           auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
+                                           return interpolated_flows;
+                                       });
+
+                        // auto& model_node_berlin = results_graph.nodes()[324].property.get_simulation().get_model();
+                        // auto results_berlin     = interpolated_result[324];
+                        // for (auto t_indx = 0; t_indx < results_berlin.get_num_time_points(); t_indx++) {
+                        //     double timm_pi = 0.0;
+                        //     double timm_ii = 0.0;
+                        //     for (mio::AgeGroup i = 0; i < mio::AgeGroup(6); i++) {
+                        //         timm_pi += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
+                        //             {i, mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity})];
+                        //         timm_ii += results_berlin.get_value(t_indx)[model_node_berlin.populations.get_flat_index(
+                        //             {i, mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity})];
+                        //     }
+                        //     printf("t=%i, timm_pi=%f, timm_ii=%f\n", int(results_berlin.get_time(t_indx)), timm_pi, timm_ii);
+                        // }
+
+                        std::cout << "run " << run_idx << " complete." << std::endl;
+                        return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows));
+                    });
+
+                if (mio::mpi::is_root()) {
+                    boost::filesystem::path dir(result_dir_run);
                     bool created = boost::filesystem::create_directories(dir);
 
                     if (created) {
                         mio::log_info("Directory '{:s}' was created.", dir.string());
                     }
-                    printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
+                    printf("Saving results to \"%s\".\n", result_dir_run.c_str());
                 }
-                BOOST_OUTCOME_TRY(
-                    save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
+
+                if (ensemble.size() > 0) {
+                    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+                    ensemble_results.reserve(ensemble.size());
+                    auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
+                    ensemble_params.reserve(ensemble.size());
+                    auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
+                    ensemble_flows.reserve(ensemble.size());
+                    for (auto&& run : ensemble) {
+                        ensemble_results.emplace_back(std::move(std::get<0>(run)));
+                        ensemble_params.emplace_back(std::move(std::get<1>(run)));
+                        ensemble_flows.emplace_back(std::move(std::get<2>(run)));
+                    }
+
+                    BOOST_OUTCOME_TRY(save_single_run_result);
+                    BOOST_OUTCOME_TRY(
+                        save_results(ensemble_results, ensemble_params, county_ids, result_dir_run, false));
+
+                    auto result_dir_run_flows = result_dir_run + "/flows";
+                    if (mio::mpi::is_root()) {
+                        boost::filesystem::path dir(result_dir_run_flows);
+                        bool created = boost::filesystem::create_directories(dir);
+
+                        if (created) {
+                            mio::log_info("Directory '{:s}' was created.", dir.string());
+                        }
+                        printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
+                    }
+                    BOOST_OUTCOME_TRY(
+                        save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
+                }
             }
         }
     }
