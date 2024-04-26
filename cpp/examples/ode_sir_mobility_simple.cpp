@@ -8,7 +8,6 @@
 #include "ode_sir_mobility/model.h"
 #include "ode_sir_mobility/parameters.h"
 #include "ode_sir_mobility/regions.h"
-#include "ode_sir_mobility/contact_location.h"
 #include "memilio/io/io.h"
 
 mio::IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(const std::string& filename)
@@ -123,9 +122,11 @@ mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, const
                 //commuters
                 auto population_i      = model.populations.get_group_total(mio::osirmobility::Region(county_idx_i));
                 auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / population_i;
-                model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
-                    {mio::osirmobility::Region(county_idx_i), mio::osirmobility::Region(county_idx_j),
-                     commuter_coeff_ij});
+                if (commuter_coeff_ij > 4e-5) {
+                    model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
+                        {mio::osirmobility::Region(county_idx_i), mio::osirmobility::Region(county_idx_j),
+                         commuter_coeff_ij});
+                }
             }
         }
     }
