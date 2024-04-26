@@ -74,14 +74,13 @@ void Model::compute_compartment_from_flows(Eigen::Index idx_InfectionState, Eige
     m_populations.get_last_value()[idx_InfectionState] = sum;
 }
 
-void Model::compute_compartments_initialization(ScalarType dt)
+void Model::initial_compute_compartments_infection(ScalarType dt)
 {
     // Exposed
     compute_compartment_from_flows(
         Eigen::Index(InfectionState::Exposed), Eigen::Index(InfectionTransition::SusceptibleToExposed),
-        (int)InfectionTransition::ExposedToInfectedNoSymptoms, 0,
-        dt); // This is a dummy index as there is no transition from Exposed to Recovered in our model,
-    // write any transition here as probability from Exposed to Recovered is 0.
+        (int)InfectionTransition::ExposedToInfectedNoSymptoms, (int)InfectionTransition::DummyIndex,
+        dt); // This is a dummy index as there is no transition from Exposed to Recovered in our model.
     // InfectedNoSymptoms
     compute_compartment_from_flows(Eigen::Index(InfectionState::InfectedNoSymptoms),
                                    Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
@@ -104,11 +103,11 @@ void Model::compute_compartments_initialization(ScalarType dt)
                                    (int)InfectionTransition::InfectedCriticalToRecovered, dt);
 }
 
-void Model::calculate_initial_compartment_sizes(ScalarType dt)
+void Model::initial_compute_compartments(ScalarType dt)
 {
     // The initialization method only affects the Susceptible and Recovered compartments.
     // It is possible to calculate the sizes of the other compartments in advance because only the initial values of the flows are used.
-    compute_compartments_initialization(dt);
+    initial_compute_compartments_infection(dt);
 
     if (m_total_confirmed_cases > 1e-12) {
         m_initialization_method = 1;
@@ -284,7 +283,7 @@ void Model::flows_current_timestep(ScalarType dt)
                  Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), dt);
 }
 
-void Model::update_compartments_current_timestep()
+void Model::update_compartments()
 {
     Eigen::Index num_time_points = m_populations.get_num_time_points();
 

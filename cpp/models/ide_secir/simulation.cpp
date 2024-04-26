@@ -34,7 +34,7 @@ void Simulation::advance(ScalarType tmax)
 {
     mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
                   m_model->m_transitions.get_last_time(), tmax, m_dt);
-    m_model->calculate_initial_compartment_sizes(m_dt);
+    m_model->initial_compute_compartments(m_dt);
 
     // For every time step:
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
@@ -49,7 +49,7 @@ void Simulation::advance(ScalarType tmax)
         m_model->flows_current_timestep(m_dt);
 
         // Update remaining compartments:
-        m_model->update_compartments_current_timestep();
+        m_model->update_compartments();
 
         // Compute m_forceofinfection (only used for calculation of Susceptibles and flow SusceptibleToExposed in the next timestep!):
         m_model->compute_forceofinfection(m_dt);
