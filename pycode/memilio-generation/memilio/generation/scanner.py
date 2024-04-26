@@ -100,6 +100,7 @@ class Scanner:
         intermed_repr = IntermediateRepresentation()
         utility.output_cursor_print(self.ast.cursor, 1)
         self.find_node(self.ast.cursor, intermed_repr)
+        #self.output_ast_file()
         self.finalize(intermed_repr)
         return intermed_repr
 
@@ -138,7 +139,8 @@ class Scanner:
             CursorKind.CXX_BASE_SPECIFIER: self.check_base_specifier,
             CursorKind.CONSTRUCTOR: self.check_constructor,
             CursorKind.STRUCT_DECL: self.check_struct,
-            CursorKind.TYPE_ALIAS_DECL: self.check_type_alias
+            CursorKind.TYPE_ALIAS_DECL: self.check_type_alias,
+            CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias
         }
         return switch.get(kind, lambda *args: None)
 
@@ -188,8 +190,7 @@ class Scanner:
         elif (self.config.optional.get("simulation_class")
               and node.spelling == self.config.optional.get("simulation_class")):
             intermed_repr.simulation_class = node.spelling
-        elif (self.config.optional.get("parameterset_wrapper") and self.config.namespace
-                + self.config.parameterset in [base.spelling for base in node.get_children()]):
+        elif (self.config.optional.get("parameterset_wrapper") and self.config.parameterset + "<FP>" in [base.spelling for base in node.get_children()]):
             intermed_repr.parameterset_wrapper = node.spelling
 
     def check_model_base(
@@ -204,7 +205,7 @@ class Scanner:
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
-            base_type = base.get_definition().type
+            base_type = base.type
             intermed_repr.model_base = utility.get_base_class_string(base_type)
 
     def check_base_specifier(
