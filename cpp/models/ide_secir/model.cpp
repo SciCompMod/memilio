@@ -323,8 +323,8 @@ void Model::update_compartments()
 }
 
 void Model::update_compartment_from_flow(InfectionState infectionState,
-                                         std::vector<InfectionTransition>&& IncomingFlows,
-                                         std::vector<InfectionTransition>&& OutgoingFlows)
+                                         std::vector<InfectionTransition> const&& IncomingFlows,
+                                         std::vector<InfectionTransition> const&& OutgoingFlows)
 {
     Eigen::Index num_time_points   = m_populations.get_num_time_points();
     ScalarType updated_compartment = m_populations[num_time_points - 2][Eigen::Index(infectionState)];

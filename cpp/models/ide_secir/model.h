@@ -268,8 +268,9 @@ private:
      * time step and the related flows of the current time step. 
      * Therefore the flows of the current time step should be calculated before using this function.
      */
-    void update_compartment_from_flow(InfectionState infectionState, std::vector<InfectionTransition>&& IncomingFlows,
-                                      std::vector<InfectionTransition>&& OutgoingFlows);
+    void update_compartment_from_flow(InfectionState infectionState,
+                                      std::vector<InfectionTransition> const&& IncomingFlows,
+                                      std::vector<InfectionTransition> const&& OutgoingFlows);
 
     // ---- Private parameters. ----
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
