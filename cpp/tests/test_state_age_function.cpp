@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "memilio/utils/logging.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include <gtest/gtest.h>
@@ -42,6 +43,7 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(gamma.get_location(), gamma2.get_location());
     EXPECT_EQ(gamma.get_scale(), gamma2.get_scale());
     EXPECT_EQ(gamma.get_support_max(dt), gamma2.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma2.get_mean(dt));
 
     // check copy is true copy, not reference.
     gamma.set_parameter(2.0);
@@ -55,6 +57,7 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(gamma.get_location(), gamma3.get_location());
     EXPECT_EQ(gamma.get_scale(), gamma3.get_scale());
     EXPECT_EQ(gamma.get_support_max(dt), gamma3.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma3.get_mean(dt));
 
     // copy assignment
     mio::GammaSurvivalFunction gamma4 = gamma3;
@@ -63,6 +66,7 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(gamma.get_location(), gamma4.get_location());
     EXPECT_EQ(gamma.get_scale(), gamma4.get_scale());
     EXPECT_EQ(gamma.get_support_max(dt), gamma4.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma4.get_mean(dt));
 
     // check copy is true copy, not reference.
     gamma.set_scale(2.0);
@@ -76,6 +80,7 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(gamma.get_location(), gamma5.get_location());
     EXPECT_EQ(gamma.get_scale(), gamma5.get_scale());
     EXPECT_EQ(gamma.get_support_max(dt), gamma5.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma5.get_mean(dt));
 
     // Test constructors of the other derived classes.
     // Copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes.
@@ -223,6 +228,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_location(), wrapper2.get_location());
     EXPECT_EQ(wrapper.get_scale(), wrapper2.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper2.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper2.get_mean(dt));
 
     // check copy is true copy, not reference.
     wrapper.set_parameter(2.0);
@@ -236,6 +242,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_location(), wrapper3.get_location());
     EXPECT_EQ(wrapper.get_scale(), wrapper3.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper3.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper3.get_mean(dt));
 
     // copy assignment
     mio::StateAgeFunctionWrapper wrapper4 = wrapper3;
@@ -244,6 +251,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_location(), wrapper4.get_location());
     EXPECT_EQ(wrapper.get_scale(), wrapper4.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper4.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper4.get_mean(dt));
 
     // check copy is true copy, not reference.
     wrapper.set_scale(2.0);
@@ -257,6 +265,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_location(), wrapper5.get_location());
     EXPECT_EQ(wrapper.get_scale(), wrapper5.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper5.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper5.get_mean(dt));
 
     // Also test the constructor of StateAgeFunctionWrapper initialized with other StateAgeFunction%s.
     // This way we can be sure that clone_impl works for all derived classes of StateAgeFunction.
@@ -265,12 +274,14 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper_exp.get_parameter(), 1.0);
     EXPECT_EQ(wrapper_exp.get_location(), 1.0);
     EXPECT_NEAR(wrapper_exp.get_support_max(dt), 24.5, 1e-14);
+    EXPECT_NEAR(wrapper_exp.get_mean(dt), 1., 1e-14);
 
     mio::SmootherCosine smoothcos(1.0, 1.);
     mio::StateAgeFunctionWrapper wrapper_smoothcos(smoothcos);
     EXPECT_EQ(wrapper_smoothcos.get_parameter(), 1.0);
     EXPECT_EQ(wrapper_smoothcos.get_location(), 1.0);
     EXPECT_NEAR(wrapper_smoothcos.get_support_max(dt), 2.0, 1e-14);
+    EXPECT_NEAR(wrapper_smoothcos.get_mean(dt), 1.5, 1e-14);
 
     mio::LognormSurvivalFunction logn(0.1, 1, 0.5);
     mio::StateAgeFunctionWrapper wrapper_logn(logn);
@@ -286,6 +297,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     mio::set_log_level(mio::LogLevel::off);
 
     EXPECT_NEAR(wrapper_const.get_support_max(dt), -2.0, 1e-14);
+    EXPECT_NEAR(wrapper_const.get_mean(dt), 1., 1e-14);
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
@@ -301,7 +313,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
 TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
 {
     // Test Getter and Setter for Wrapper only for GammaSurvivalFunction since we have checked getter and setter
-    // as well as get_support_max for all derived classes in previous test.
+    // as well as get_support_max and get_mean for all derived classes in previous test.
 
     ScalarType dt = 0.5;
 
@@ -312,6 +324,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
     EXPECT_EQ(wrapper.get_location(), 2);
     EXPECT_EQ(wrapper.get_scale(), 3);
     EXPECT_EQ(wrapper.get_support_max(dt), 71.5);
+    EXPECT_NEAR(wrapper.get_mean(dt), 5.00694, 1e-4);
 
     wrapper.set_parameter(4);
     wrapper.set_location(0);
@@ -320,12 +333,13 @@ TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
     EXPECT_EQ(wrapper.get_location(), 0);
     EXPECT_EQ(wrapper.get_scale(), 1);
     EXPECT_EQ(wrapper.get_support_max(dt), 32);
+    EXPECT_NEAR(wrapper.get_mean(dt), 4., 1e-4);
 }
 
 TEST(TestStateAgeFunction, testComparisonOperator)
 {
     // Check that StateAgeFunctions are only considered equal if they are of the same derived
-    // class and have the same parameters.
+    // class and have the same parameter.
     mio::GammaSurvivalFunction gamma(0.5, 0, 1);
     mio::GammaSurvivalFunction gamma2(0.5, 0, 1);
     mio::GammaSurvivalFunction gamma3(2, 0, 1);
