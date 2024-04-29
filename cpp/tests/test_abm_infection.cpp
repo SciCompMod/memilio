@@ -99,12 +99,12 @@ TEST(TestInfection, init)
 
 TEST(TestInfection, getInfectionState)
 {
-    auto counter   = mio::Counter<uint32_t>(0);
-    auto rng       = mio::abm::Person::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
-    auto params    = mio::abm::Parameters(num_age_groups);
-    auto t         = mio::abm::TimePoint(0);
+    auto counter    = mio::Counter<uint32_t>(0);
+    auto rng        = mio::abm::Person::RandomNumberGenerator(mio::Key<uint64_t>{0}, 0, counter);
+    auto params     = mio::abm::Parameters(num_age_groups);
+    auto t          = mio::abm::TimePoint(0);
     auto infection1 = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
-                                         mio::abm::InfectionState::Exposed, {}, true);
+                                          mio::abm::InfectionState::Exposed, {}, true);
     EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection1.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
 
@@ -112,9 +112,9 @@ TEST(TestInfection, getInfectionState)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(1))
-        .WillOnce(testing::Return(0.8)); // Recovered
+        .WillRepeatedly(testing::Return(0.8)); // Recovered
     auto infection2 = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
-                                         mio::abm::InfectionState::InfectedCritical, {}, true);
+                                          mio::abm::InfectionState::InfectedCritical, {}, true);
     EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
     EXPECT_EQ(infection2.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
 }
