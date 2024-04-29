@@ -122,12 +122,15 @@ def plot_infection_states(x, y50, y25, y75):
     plt.title('Infection states')
     color_plot = cmx.get_cmap('Set1').colors
 
-    for i in range(y50.shape[1]):
+    states_plot = [1, 2, 3, 4, 5, 7]
+    legend_plot = ['E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Dead']
+
+    for i in states_plot:
         plt.plot(x, y50[:, i], color=color_plot[i])
 
-    plt.legend(['S', 'E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Rec', 'Dead'])
+    plt.legend(legend_plot)
 
-    for i in range(y50.shape[1]):
+    for i in states_plot:
        plt.fill_between(x, y50[:, i], y25[:, i],
                         alpha=0.5, color=color_plot[i])
        plt.fill_between(x, y50[:, i], y75[:, i],
