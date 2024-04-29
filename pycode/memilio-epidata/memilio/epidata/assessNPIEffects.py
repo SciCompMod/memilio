@@ -203,15 +203,18 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
     return scored_clusterings[pos_best_clustering_1].clustering
 
 
-def silhouette(pairw_dist_mat, cluster_labels, method):
+def silhouette(pairw_dist_mat, cluster_labels):
 
     # if only one clustering is given, surround it by a list to make loop work.
-    if isinstance(cluster_labels, list) and ((isinstance(cluster_labels[0], int)) or (isinstance(cluster_labels[0], np.intc))):
+    if (isinstance(cluster_labels, list) or isinstance(cluster_labels, np.ndarray)) and ((isinstance(cluster_labels[0], int)) or (isinstance(cluster_labels[0], np.intc))):
         cluster_labels = [cluster_labels]
 
     plt.figure()
 
     for clustering in cluster_labels:
+        
+        # get number of clusters (naming starting with 0,1,2...)
+        n_clusters = clustering.max()+1
 
         # Check for clusterings where every sample is in their own cluster or where all samples are in one cluster.
         # In that case we cannot use silhouette_samples because we have to satisfy cluster numbers to be in '2 to n_samples - 1 (inclusive)'
@@ -222,7 +225,7 @@ def silhouette(pairw_dist_mat, cluster_labels, method):
 
             y_lower = 10
             for i in range(n_clusters):
-                ith_cluster_silhouette_values = sample_silhouette_values[cluster_labels == i]
+                ith_cluster_silhouette_values = sample_silhouette_values[clustering == i]
 
                 ith_cluster_silhouette_values.sort()
 
@@ -255,12 +258,12 @@ def silhouette(pairw_dist_mat, cluster_labels, method):
             plt.xticks([-0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
 
             plt.title(
-                "Silhouette analysis for " + label +
+                "Silhouette analysis for" +
                 " clustering with n_clusters = " + str(n_clusters),
             )
             plt.tight_layout()
             plt.savefig('figures/silhouette_plot.png')
-            plt.show()
+            #plt.show()
 
         else:
             print("Dimension mismatch.") 
@@ -270,7 +273,7 @@ def silhouette(pairw_dist_mat, cluster_labels, method):
 
 def analyze_npi_data(
         read_data, make_plot, fine_resolution, npis, directory, file_format,
-        npi_codes_considered, abs_correlation):
+        npi_codes_considered, abs_correlation, cluster_function):
     
     # TODO: Error in custom plot list
     make_plot = False
@@ -511,9 +514,9 @@ def analyze_npi_data(
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
                 npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist
-                for wg in np.linspace(0.98, 0.98, 1)], method) # TODO reset to 0.01 to 1 with 500 samples
+                for wg in np.linspace(0.2, 1, 500)], method) # TODO reset to 0.01 to 1 with 500 samples
 
-            # silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, method=method)
+            silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx)
 
         cluster_dict = dict() # TODO: Remove because not used? or use to write output?
         cluster_codes = [[] for i in range(len(np.unique(npi_idx_to_cluster_idx)))]
@@ -532,7 +535,7 @@ def analyze_npi_data(
 
         for i in range(len(cluster_codes)):
             df_npis_clustered["CM_" + str(i).zfill(3)
-                              ] = df_npis[cluster_codes[i]].mean(axis=1).copy() # TODO take weighted average instead of maximum??
+                              ] = cluster_function(df_npis[cluster_codes[i]], axis=1)
 
         npis_corr_cluster = df_npis_clustered.iloc[:, 2:].corr() # TODO why were 2 and 4 clustered in the example??
         # npis_corr_cluster[abs(npis_corr_cluster)<0.25] = 0
@@ -567,9 +570,10 @@ def analyze_npi_data(
 
         plt.figure()
         plt.imshow(npis_corr_reorder, cmap=cmap, vmin=vmin, vmax=1)
+        plt.title('Correlation of reordered NPIs')
         plt.colorbar()
 
-        write_clustered_npis(df_npis, 'median', cluster_codes, npis_corr, directory, npi_codes_used)
+        write_clustered_npis(df_npis, cluster_function, cluster_codes, npis_corr_mat, directory, npi_codes_used)
 
         # npi_indices_all = set(range(npis_corr.shape[0]))
         # for i in [40]:#[10, 20, 40, 80, 160]:
@@ -613,8 +617,7 @@ def analyze_npi_data(
                 plt.tight_layout()
                 j += 1
 
-def write_clustered_npis(df_npis: pd.DataFrame, method:str, cluster_codes: list[list[str]], 
-               npis_corr: np.ndarray, directory: str, npi_codes_used:np.ndarray):
+def write_clustered_npis(df_npis, cluster_function, cluster_codes, npis_corr, directory, npi_codes_used):
     cluster_dict = dict()
     #only compute cluster with more than two items
     cluster_to_combine = [item for item in cluster_codes if len(item)>1]
@@ -636,10 +639,7 @@ def write_clustered_npis(df_npis: pd.DataFrame, method:str, cluster_codes: list[
         # write cluster names in a dict (and to json) to reconstruct clusters after regression
         cluster_dict[cluster_name] = cl
         # TODO: how should the cluster values for the regression be calculated
-        if method == 'mean':
-            cluster_value = np.array(values).mean(axis=0)
-        if method == 'median':
-            cluster_value = np.median(np.array(values), axis=0)
+        cluster_value = cluster_function(np.array(values), axis=0)
         df_npis[cluster_name] = cluster_value
         name_id+=1
     #write npis with clusters
@@ -662,7 +662,7 @@ def main():
     npi_codes_considered = ['M01a_010', 'M01a_020',
                             'M01a_100', 'M01a_110', 'M01a_120']
     analyze_npi_data(True, True, fine_resolution, npis_final,
-                     directory, file_format, False, True)
+                     directory, file_format, False, True, np.mean)
 
 
 if __name__ == "__main__":
