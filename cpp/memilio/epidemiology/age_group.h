@@ -42,7 +42,7 @@ struct AgeGroup : public Index<AgeGroup> {
     template <class IOContext>
     static IOResult<AgeGroup> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(i, mio::deserialize(io, Tag<size_t>{}));
+        BOOST_OUTCOME_TRY(auto&& i, mio::deserialize(io, Tag<size_t>{}));
         return success(AgeGroup(i));
     }
 };

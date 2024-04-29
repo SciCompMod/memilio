@@ -198,7 +198,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .value("DeadPartialImmunity", mio::osecirvvs::InfectionState::DeadPartialImmunity)
         .value("DeadImprovedImmunity", mio::osecirvvs::InfectionState::DeadImprovedImmunity);
 
-    pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase, pymio::EnablePickling::Required>(m, "ParametersBase");
 
     pymio::bind_class<mio::osecirvvs::Parameters, pymio::EnablePickling::Required, mio::osecirvvs::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
@@ -236,7 +236,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     using SecirvvsPopulations = mio::Populations<mio::AgeGroup, mio::osecirvvs::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::osecirvvs::Model::Populations>{});
 
-    pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations, mio::osecirvvs::Parameters>(
+    pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations, mio::osecirvvs::Parameters, pymio::EnablePickling::Never>(
         m, "ModelBase");
     pymio::bind_class<mio::osecirvvs::Model, pymio::EnablePickling::Required, mio::CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations,
                                                               mio::osecirvvs::Parameters>>(m, "Model")
