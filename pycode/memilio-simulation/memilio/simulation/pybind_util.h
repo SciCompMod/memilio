@@ -136,8 +136,13 @@ public:
 };
 
 /**
- * Function-like that has two template parameter packs, by hiding one inside the operator of BindClassHelper.
- * Parameter pack Options uses template deduction. 
+ * bind_class is defined as a function-like object using the overloaded call operator of BindClassHelper.
+ * It is a nibloid, that means:
+ *      - Explicit template argument lists may not be specified when calling it.
+ *      - It is visible to argument-dependent lookup, because it is a function object.
+ *      - When it is found by normal unqualified lookup for the name to the left of the function-call operator, it inhibits argument-dependent lookup.
+ * In this case, nibloid is used to have a function-like structure with two template parameter packs, by hiding one inside the operator of BindClassHelper.
+ * The first template parameter pack 'Args' needs to be defined explicitly, while the second template parameter pack 'Options' is deduced automatically.
  * @tparam T class for binding
  * @tparam F value of enum EnablePickling defining pickling behaviour
  * @tparam Args base class of T.
