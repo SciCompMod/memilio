@@ -42,15 +42,15 @@ inputs:
     required: false
     default: "OFF"
 runs:
-  using: "composite"
   env:
-    compiler-version:
-      gcc:
-        min: "9"
-        latest: "10"
-      clang:
-        min: "6.0"
-        latest: "14"
+        compiler-version:
+          gcc:
+            min: "9"
+            latest: "11"
+          clang:
+            min: "6.0"
+            latest: "14"
+  using: "composite"
   steps:
     - name: Install dependencies
       shell: bash
