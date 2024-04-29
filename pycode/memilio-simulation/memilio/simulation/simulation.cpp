@@ -66,7 +66,7 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
 
     pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
-    py::class_<mio::SimulationDay, mio::Index<mio::SimulationDay>>(m, "SimulationDay").def(py::init<size_t>());
+    pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Required, mio::Index<mio::SimulationDay>>(m, "SimulationDay").def(py::init<size_t>());
 
     pymio::bind_date(m, "Date");
 

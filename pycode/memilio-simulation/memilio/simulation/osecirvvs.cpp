@@ -65,7 +65,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
 template <class Simulation>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
+    pymio::bind_class<mio::ParameterStudy<Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
@@ -200,7 +200,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 
     pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase>(m, "ParametersBase");
 
-    py::class_<mio::osecirvvs::Parameters, mio::osecirvvs::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::osecirvvs::Parameters, pymio::EnablePickling::Required, mio::osecirvvs::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
         .def_property("commuter_nondetection",
             [](const mio::osecirvvs::Parameters& self) {
@@ -238,7 +238,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 
     pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations, mio::osecirvvs::Parameters>(
         m, "ModelBase");
-    py::class_<mio::osecirvvs::Model, mio::CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations,
+    pymio::bind_class<mio::osecirvvs::Model, pymio::EnablePickling::Required, mio::CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations,
                                                               mio::osecirvvs::Parameters>>(m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 

@@ -21,16 +21,17 @@
 #define PYMIO_FLOW_SIMULATION_H
 
 #include "memilio/compartments/flow_simulation.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
 
 namespace pymio
 {
 
-template <class Model>
+template <class Model, EnablePickling F>
 void bind_Flow_Simulation(pybind11::module_& m)
 {
-    pybind11::class_<mio::FlowSimulation<Model>>(m, "FlowSimulation")
+    bind_class<mio::FlowSimulation<Model>, F>(m, "FlowSimulation")
         .def(pybind11::init<const Model&, double, double>(), pybind11::arg("model"), pybind11::arg("t0") = 0,
              pybind11::arg("dt") = 0.1)
         .def_property_readonly("result",
