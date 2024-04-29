@@ -204,11 +204,11 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
             },
             pybind11::return_value_policy::reference_internal)
         .def("__setitem__",
-             [](C& self, Index const& idx, typename C::value_type value) {
+             [](C& self, Index const& idx, Type value) {
                  self[idx] = value;
              })
         .def("__setitem__",
-             [](C& self, std::tuple<mio::Index<Tags>...> idx, typename C::value_type value) {
+             [](C& self, std::tuple<mio::Index<Tags>...> idx, Type value) {
                  self[{std::get<mio::Index<Tags>>(idx)...}] = value;
              })
         .def(
@@ -219,10 +219,10 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
             pybind11::keep_alive<0, 1>())
         .def("get_flat_index", &C::get_flat_index)
         //scalar assignment
-        .def("__setitem__", &assign_scalar<C, typename C::value_type, Tags...>);
+        .def("__setitem__", &assign_scalar<C, Type, Tags...>);
 
     //scalar assignment with conversion from double
-    if (std::is_convertible<typename C::value_type, double>::value) {
+    if (std::is_convertible<Type, double>::value) {
         c.def("__setitem__", &assign_scalar<C, double, Tags...>);
     }
     //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
