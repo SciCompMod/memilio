@@ -20,6 +20,7 @@
 import os
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 from memilio.epidata import customPlot
@@ -33,6 +34,8 @@ from dataclasses import dataclass
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
+
+mpl.use('Qtagg')
 
 @dataclass
 class scored_cluster:
@@ -267,7 +270,7 @@ def silhouette(pairw_dist_mat, cluster_labels, method):
 
 def analyze_npi_data(
         read_data, make_plot, fine_resolution, npis, directory, file_format,
-        npi_codes_considered):
+        npi_codes_considered, abs_correlation):
     
     # TODO: Error in custom plot list
     make_plot = False
@@ -405,11 +408,23 @@ def analyze_npi_data(
 
         # compute correlations
         npis_corr = df_npis_used.iloc[:, 2:].corr().values
+        npis_corr_abs = abs(npis_corr)
+        # define which correlation matrix should be used based on input variable
+        # also adjust colormaps
+        if abs_correlation:
+            npis_corr_mat = npis_corr_abs
+            vmin = 0
+            cmap = 'gray_r'
+        else:
+            npis_corr_mat = npis_corr
+            vmin = -1
+            cmap = 'RdGy'
         # plot log-colored correlations
-        plt.imshow(abs(npis_corr), cmap='gray_r')
+        plt.imshow(npis_corr_mat, cmap=cmap, vmin=vmin, vmax=1)
+        plt.colorbar()
         # plot histogram
         plt.figure()
-        plt.hist(npis_corr.flatten(), bins=50)
+        plt.hist(npis_corr_mat.flatten(), bins=50)
         plt.title("Correlation histogram", fontsize=18)
         plt.xlabel("Correlation", fontsize=12)
         plt.ylabel("Number of values", fontsize=12)
@@ -419,7 +434,7 @@ def analyze_npi_data(
         # We compute the pairwise distances of these nodes. Then, nodes with
         # similar correlations towards all other nodes exhibit small distances
         corr_pairwdist = distance.pdist(
-            npis_corr, metric='euclidean')
+            npis_corr_mat, metric='euclidean')
 
         npi_codes_used = np.asarray(df_npis_used.iloc[:, 2:].columns)
 
@@ -438,9 +453,9 @@ def analyze_npi_data(
             hierarchy.dendrogram(cluster_hierarch)
             # plt.show()
             max_coph_dist = coph_dist_mat.max()
-            # TODO: Discuss why abs(npis_corr) is used as input and not corr_pairwdist
+            # TODO: Discuss why npis_corr is used as input and not corr_pairwdist
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist
                  for wg in np.linspace(0.01, 1, 500)])
 
@@ -457,7 +472,7 @@ def analyze_npi_data(
             hierarchy.dendrogram(cluster_hierarch)
             max_coph_dist = coph_dist_mat.max()
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist for wg in np.linspace(0.01, 1, 500)])
 
             samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, label=method)
@@ -473,7 +488,7 @@ def analyze_npi_data(
             hierarchy.dendrogram(cluster_hierarch)
             max_coph_dist = coph_dist_mat.max()
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist
                  for wg in np.linspace(0.01, 1, 500)])
 
@@ -490,11 +505,11 @@ def analyze_npi_data(
             plt.title(method)
             hierarchy.dendrogram(cluster_hierarch)
             plt.savefig('figures/dendrogram.png')
-            plt.show()
+            #plt.show()
             max_coph_dist = coph_dist_mat.max()
 
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist
                 for wg in np.linspace(0.98, 0.98, 1)], method) # TODO reset to 0.01 to 1 with 500 samples
 
@@ -517,11 +532,12 @@ def analyze_npi_data(
 
         for i in range(len(cluster_codes)):
             df_npis_clustered["CM_" + str(i).zfill(3)
-                              ] = df_npis[cluster_codes[i]].max(axis=1).copy() # TODO take weighted average instead of maximum??
+                              ] = df_npis[cluster_codes[i]].mean(axis=1).copy() # TODO take weighted average instead of maximum??
 
         npis_corr_cluster = df_npis_clustered.iloc[:, 2:].corr() # TODO why were 2 and 4 clustered in the example??
         # npis_corr_cluster[abs(npis_corr_cluster)<0.25] = 0
-        plt.imshow(abs(npis_corr_cluster), cmap='gray_r')
+        plt.figure()
+        plt.imshow(npis_corr_cluster, cmap=cmap, vmin=vmin, vmax=1)
         plt.title('Absolute correlation of clustered NPIs')
         plt.xlabel('NPI cluster')
         plt.ylabel('NPI cluster')
@@ -547,9 +563,10 @@ def analyze_npi_data(
         file_npi.close()
 
         npi_idx_new = np.argsort(npi_idx_to_cluster_idx)
-        npis_corr_reorder = npis_corr[npi_idx_new, :][:, npi_idx_new]
+        npis_corr_reorder = npis_corr_mat[npi_idx_new, :][:, npi_idx_new]
 
-        plt.imshow(abs(npis_corr_reorder), cmap='gray_r')
+        plt.figure()
+        plt.imshow(npis_corr_reorder, cmap=cmap, vmin=vmin, vmax=1)
         plt.colorbar()
 
         write_clustered_npis(df_npis, 'median', cluster_codes, npis_corr, directory, npi_codes_used)
@@ -638,7 +655,6 @@ def write_clustered_npis(df_npis: pd.DataFrame, method:str, cluster_codes: list[
 def main():
     """! Main program entry."""
 
-    # arg_dict = gd.cli("testing")
     fine_resolution = 2
     npis_final = []
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
@@ -646,7 +662,7 @@ def main():
     npi_codes_considered = ['M01a_010', 'M01a_020',
                             'M01a_100', 'M01a_110', 'M01a_120']
     analyze_npi_data(True, True, fine_resolution, npis_final,
-                     directory, file_format, False)
+                     directory, file_format, False, True)
 
 
 if __name__ == "__main__":
