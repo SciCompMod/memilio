@@ -125,8 +125,24 @@ public:
     /**
      * @brief Computes size of a flow.
      * 
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the time 
+     * index current_time_index.
+     *
+     * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
+     * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
+     *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
+     *      the value of this incoming flow.
+     * @param[in] dt Time step to compute flow for.
+     * @param[in] current_time_index The time index the flow should be computed for.
+     */
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
+                      Eigen::Index current_time_index);
+
+    /**
+     * @brief Computes size of a flow for the current last time value in m_transitions.
+     * 
      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last time value in m_transitions.
+     * last time value in m_transitions. 
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
@@ -134,7 +150,7 @@ public:
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      */
-    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
@@ -216,6 +232,20 @@ public:
 
         return parameters.check_constraints();
     }
+
+    /**
+     * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
+     *
+     * This determines how many inital values we need for the flows.
+     * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
+     * but this number ensures that it is possible.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Global support_max.
+     *
+     */
+    ScalarType get_global_support_max(ScalarType dt) const;
 
     /**
      * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.

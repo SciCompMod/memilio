@@ -423,5 +423,28 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
     m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
 }
 
+ScalarType Model::get_global_support_max(ScalarType dt) const
+{
+    return std::max(
+        {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+             .get_support_max(dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered].get_support_max(
+             dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_support_max(
+             dt, m_tol),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
+             .get_support_max(dt, m_tol)});
+}
+
 } // namespace isecir
 } // namespace mio
