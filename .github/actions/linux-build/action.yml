@@ -1,13 +1,5 @@
 name: "Linux Build"
 description: "Build the C++ library on Linux. Produces artifact build-cpp-linux-$compiler-$version-$config."
-env:
-  compiler-version:
-    gcc:
-      min: "9"
-      latest: "10"
-    clang:
-      min: "6.0"
-      latest: "14"
 inputs:
   config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
@@ -51,6 +43,14 @@ inputs:
     default: "OFF"
 runs:
   using: "composite"
+  env:
+    compiler-version:
+      gcc:
+        min: "9"
+        latest: "10"
+      clang:
+        min: "6.0"
+        latest: "14"
   steps:
     - name: Install dependencies
       shell: bash
