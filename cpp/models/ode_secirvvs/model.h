@@ -23,12 +23,14 @@
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/parameters.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 
+#include <cstddef>
 #include <math.h>
 #include <numeric>
 #include <fstream>
@@ -128,13 +130,7 @@ public:
                              this->populations.get_from(pop, {i, InfectionState::InfectedCriticalImprovedImmunity});
         }
 
-        double risk_h_partial = calc_risk_perceived(4., 0.7); // R_t
-        double risk_h_full    = calc_risk_perceived(6., 0.4); // vacc
-
-        mio::unused(risk_h_partial, risk_h_full);
-
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
-
             size_t SNi    = this->populations.get_flat_index({i, InfectionState::SusceptibleNaive});
             size_t ENi    = this->populations.get_flat_index({i, InfectionState::ExposedNaive});
             size_t INSNi  = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaive});
@@ -492,6 +488,11 @@ public:
         }
     }
 
+    double softplus(const double x, const double slope, const double threshold, const double epsilon) const
+    {
+        return slope * epsilon * std::log(std::exp(1 / epsilon * (threshold - x)) + 1);
+    }
+
     double calc_risk_perceived(const double a, const double b) const
     {
         const auto& icu_occupancy = this->parameters.template get<DailyICUOccupancy>();
@@ -505,20 +506,19 @@ public:
             double gamma      = std::pow(b, a) * std::pow(days[i], a - 1) * std::exp(-b * days[i]) / std::tgamma(a);
             perceived_risk[i] = icu_occupancy[i] * gamma;
         }
+        // // schreibe die werte von gamma_dist(days) in einen vector und speichere diese als txt datei
+        // std::ofstream file("/localdata1/code_2024/memilio/gamma_dist_a_" + std::to_string(a) + "_b_" +
+        //                    std::to_string(b) + ".txt");
+        // for (size_t i = 0; i < icu_occupancy.size(); ++i) {
+        //     file << std::pow(b, a) * std::pow(days[i], a - 1) * std::exp(-b * days[i]) / std::tgamma(a) << std::endl;
+        // }
+        // file.close();
 
-        // schreibe die werte von gamma_dist(days) in einen vector und speichere diesen als txt datei
-        std::ofstream file("/localdata1/code_2024/memilio/gamma_dist_a_" + std::to_string(a) + "_b_" +
-                           std::to_string(b) + ".txt");
-        for (size_t i = 0; i < icu_occupancy.size(); ++i) {
-            file << std::pow(b, a) * std::pow(days[i], a - 1) * std::exp(-b * days[i]) / std::tgamma(a) << std::endl;
-        }
-        file.close();
-
-        std::ofstream file_icu("/localdata1/code_2024/memilio/icu.txt");
-        for (size_t i = 0; i < icu_occupancy.size(); ++i) {
-            file_icu << icu_occupancy[i] << std::endl;
-        }
-        file_icu.close();
+        // std::ofstream file_icu("/localdata1/code_2024/memilio/icu.txt");
+        // for (size_t i = 0; i < icu_occupancy.size(); ++i) {
+        //     file_icu << icu_occupancy[i] << std::endl;
+        // }
+        // file_icu.close();
 
         return std::accumulate(perceived_risk.begin(), perceived_risk.end(), 0.0);
     }
@@ -668,12 +668,152 @@ public:
         }
     }
 
+    void feedback_vaccinations(double t)
+    {
+        auto& params                    = this->get_model().parameters;
+        auto& pop                       = this->get_model().populations;
+        const double perceived_risk_vac = calc_risk_perceived(params.template get<alphaGammaVaccination>(),
+                                                              params.template get<betaGammaVaccination>());
+        const size_t num_groups         = (size_t)params.get_num_groups();
+        const auto& last_value          = this->get_result().get_last_value();
+
+        constexpr auto sensitivity_vac = 0.1;
+
+        std::vector<double> vac_daily_first(num_groups, 0.0);
+        std::vector<double> vac_daily_full(num_groups, 0.0);
+        std::vector<double> vac_daily_booster(num_groups, 0.0);
+
+        for (size_t age = 0; age < num_groups; ++age) {
+            auto indx_S_naive     = pop.get_flat_index({(AgeGroup)age, InfectionState::SusceptibleNaive});
+            auto indx_naive_layer = {
+                pop.get_flat_index({(AgeGroup)age, InfectionState::SusceptibleNaive}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::ExposedNaive}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::InfectedNoSymptomsNaive}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::InfectedNoSymptomsNaiveConfirmed}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::InfectedSymptomsNaive}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::InfectedSymptomsNaiveConfirmed}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::InfectedSevereNaive}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::InfectedCriticalNaive}),
+                pop.get_flat_index({(AgeGroup)age, InfectionState::DeadNaive})};
+            const auto pop_layer =
+                std::accumulate(indx_naive_layer.begin(), indx_naive_layer.end(), 0.0, [&](double sum, size_t indx) {
+                    return sum + last_value[indx];
+                });
+
+            const auto vac_first_current = params.template get<DailyFirstVaccination>()[{
+                (AgeGroup)age, mio::SimulationDay(t) - mio::SimulationDay(1)}];
+            const auto vac_full_current  = params.template get<DailyFullVaccination>()[{
+                (AgeGroup)age, mio::SimulationDay(t) - mio::SimulationDay(1)}];
+            // const auto vac_booster_current =
+            //     params.template get<DailyBoosterVaccination>()[{(AgeGroup)age, mio::SimulationDay(t) - 1}];
+
+            if (vac_full_current > vac_first_current) {
+                log_warning("more full vaccinations than first vaccinations at time {} /  full_vacc =   {} ", t,
+                            vac_full_current);
+            }
+            // if (vac_booster_current > vac_full_current) {
+            //     log_warning("more booster vaccinations than full vaccinations at time {} /  booster_vacc =   {} ", t,
+            //                 vac_booster_current);
+            // }
+
+            const auto vac_rate_first_willing =
+                vac_first_current +
+                (params.template get<WillignessToVaccinateFirstMax>()[(AgeGroup)age] - vac_first_current) *
+                    (1 - std::exp(-sensitivity_vac * perceived_risk_vac));
+
+            const auto vac_rate_full_willing =
+                vac_full_current +
+                (params.template get<WillignessToVaccinateFullMax>()[(AgeGroup)age] - vac_full_current) *
+                    (1 - std::exp(-sensitivity_vac * perceived_risk_vac));
+
+            // const auto vac_rate_booster_willing =
+            //     vac_booster_current +
+            //     (params.template get<WillignessToVaccinateBoosterMax>()[(AgeGroup)age] - vac_booster_current) *
+            //         (1 - std::exp(-sensitivity_vac * perceived_risk_vac));
+
+            vac_daily_first[age] =
+                last_value[indx_S_naive] / (params.template get<DelayTimeVaccination>() * pop_layer) *
+                params.template get<EpsilonVaccination>() *
+                std::log(std::exp(
+                    (vac_rate_first_willing - vac_rate_first_willing) / params.template get<EpsilonVaccination>() + 1));
+
+            vac_daily_full[age] =
+                last_value[indx_S_naive] / (params.template get<DelayTimeVaccination>() * pop_layer) *
+                params.template get<EpsilonVaccination>() *
+                std::log(std::exp(
+                    (vac_rate_full_willing - vac_rate_full_willing) / params.template get<EpsilonVaccination>() + 1));
+
+            // vac_daily_booster[age] = last_value[indx_S_naive] /
+            //                          (params.template get<DelayTimeVaccination>() * pop_layer) *
+            //                          params.template get<EpsilonVaccination>() *
+            //                          std::log(std::exp((vac_rate_booster_willing - vac_rate_booster_willing) /
+            //                                                params.template get<EpsilonVaccination>() +
+            //    1));
+
+            if (vac_full_current + vac_daily_full[age] < vac_first_current) {
+                log_warning("more full vaccinations than first vaccinations at time {} /  full_vacc =   {} ", t,
+                            vac_full_current + vac_daily_full[age]);
+            }
+            // if (vac_booster_current + vac_daily_booster[age] < vac_full_current) {
+            //     log_warning("more booster vaccinations than full vaccinations at time {} /  booster_vacc =   {} ", t,
+            //                 vac_booster_current + vac_daily_booster[age]);
+            // }
+
+            // write the daily vaccinations to the parameter. May need to resize.
+        }
+    }
+
+    void feedback_contacts(double t)
+    {
+        auto& params = this->get_model().parameters;
+        double perceived_risk_contacts =
+            calc_risk_perceived(params.template get<alphaGammaContacts>(), params.template get<betaGammaContacts>());
+        auto& contact_patterns = params.template get<ContactPatterns>();
+
+        // work
+        auto const reduction_work =
+            (params.template get<ContactReductionWorkMin>() - params.template get<ContactReductionWorkMax>()) /
+                params.template get<ICUCapacity>() * params.template get<EpsilonVaccination>() *
+                std::log(std::exp((params.template get<ICUCapacity>() - perceived_risk_contacts) /
+                                  params.template get<EpsilonVaccination>()) +
+                         1) +
+            params.template get<ContactReductionWorkMax>();
+
+        // home
+        auto const reduction_home =
+            (params.template get<ContactReductionHomeMin>() - params.template get<ContactReductionHomeMax>()) /
+                params.template get<ICUCapacity>() * params.template get<EpsilonVaccination>() *
+                std::log(std::exp((params.template get<ICUCapacity>() - perceived_risk_contacts) /
+                                  params.template get<EpsilonVaccination>()) +
+                         1) +
+            params.template get<ContactReductionHomeMax>();
+
+        // school
+        auto const reduction_school =
+            (params.template get<ContactReductionSchoolMin>() - params.template get<ContactReductionSchoolMax>()) /
+                params.template get<ICUCapacity>() * params.template get<EpsilonVaccination>() *
+                std::log(std::exp((params.template get<ICUCapacity>() - perceived_risk_contacts) /
+                                  params.template get<EpsilonVaccination>()) +
+                         1) +
+            params.template get<ContactReductionSchoolMax>();
+
+        // other
+        auto const reduction_other =
+            (params.template get<ContactReductionOtherMin>() - params.template get<ContactReductionOtherMax>()) /
+                params.template get<ICUCapacity>() * params.template get<EpsilonVaccination>() *
+                std::log(std::exp((params.template get<ICUCapacity>() - perceived_risk_contacts) /
+                                  params.template get<EpsilonVaccination>()) +
+                         1) +
+            params.template get<ContactReductionOtherMax>();
+        //  3. apply the reduction/increase of contacts
+    }
+
     void add_icu_occupancy()
     {
-        auto& params         = this->get_model().parameters;
-        size_t num_groups    = (size_t)params.get_num_groups();
-        auto last_value      = this->get_result().get_last_value();
-        double icu_occupancy = 0.0;
+        auto& params           = this->get_model().parameters;
+        size_t num_groups      = (size_t)params.get_num_groups();
+        const auto& last_value = this->get_result().get_last_value();
+        double icu_occupancy   = 0.0;
         for (size_t age = 0; age < num_groups; ++age) {
             auto indx_icu_naive =
                 this->get_model().populations.get_flat_index({(AgeGroup)age, InfectionState::InfectedCriticalNaive});

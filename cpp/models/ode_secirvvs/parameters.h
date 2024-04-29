@@ -30,6 +30,7 @@
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/custom_index_array.h"
 
+#include <cstddef>
 #include <vector>
 
 namespace mio
@@ -560,6 +561,248 @@ struct DailyICUOccupancy {
     }
 };
 
+/**
+* @brief shape parameter of the gamma distribution for the vaccinations.
+*/
+struct alphaGammaVaccination {
+    using Type = double;
+    static Type get_default()
+    {
+        return 6.;
+    }
+    static std::string name()
+    {
+        return "alphaGammaVaccination";
+    }
+};
+
+/**
+* @brief scale parameter of the gamma distribution for the vaccinations.
+*/
+struct betaGammaVaccination {
+    using Type = double;
+    static Type get_default()
+    {
+        return .4;
+    }
+    static std::string name()
+    {
+        return "betaGammaVaccination";
+    }
+};
+
+/**
+* @brief shape parameter of the gamma distribution for the contacts.
+*/
+struct alphaGammaContacts {
+    using Type = double;
+    static Type get_default()
+    {
+        return 6.;
+    }
+    static std::string name()
+    {
+        return "alphaGammaContacts";
+    }
+};
+
+/**
+* @brief scale parameter of the gamma distribution for the contacts.
+*/
+struct betaGammaContacts {
+    using Type = double;
+    static Type get_default()
+    {
+        return .7;
+    }
+    static std::string name()
+    {
+        return "betaGammaContacts";
+    }
+};
+
+/**
+* @brief number of days in the past we consider for the gamma distribution.
+*/
+struct CutOffGamma {
+    using Type = size_t;
+    static Type get_default()
+    {
+        return 40;
+    }
+    static std::string name()
+    {
+        return "CutOffGamma";
+    }
+};
+
+struct ContactReductionWorkMax {
+    using Type = double;
+    static Type get_default()
+    {
+        return 0.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionWorkMax";
+    }
+};
+
+struct ContactReductionWorkMin {
+    using Type = double;
+    static Type get_default()
+    {
+        return 1.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionWorkMin";
+    }
+};
+
+struct ContactReductionHomeMax {
+    using Type = double;
+    static Type get_default()
+    {
+        return 0.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionHomeMax";
+    }
+};
+
+struct ContactReductionHomeMin {
+    using Type = double;
+    static Type get_default()
+    {
+        return 1.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionHomeMin";
+    }
+};
+
+struct ContactReductionSchoolMax {
+    using Type = double;
+    static Type get_default()
+    {
+        return 0.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionSchoolMax";
+    }
+};
+
+struct ContactReductionSchoolMin {
+    using Type = double;
+    static Type get_default()
+    {
+        return 1.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionSchoolMin";
+    }
+};
+
+struct ContactReductionOtherMax {
+    using Type = double;
+    static Type get_default()
+    {
+        return 0.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionOtherMax";
+    }
+};
+
+struct ContactReductionOtherMin {
+    using Type = double;
+    static Type get_default()
+    {
+        return 1.0;
+    }
+    static std::string name()
+    {
+        return "ContactReductionOtherMin";
+    }
+};
+struct DelayTimeVaccination {
+    using Type = double;
+    static Type get_default()
+    {
+        return 1.0;
+    }
+    static std::string name()
+    {
+        return "DelayTimeVaccination";
+    }
+};
+
+struct EpsilonVaccination {
+    using Type = double;
+    static Type get_default()
+    {
+        return 0.01;
+    }
+    static std::string name()
+    {
+        return "EpsilonVaccination";
+    }
+};
+
+struct EpsilonContacts {
+    using Type = double;
+    static Type get_default()
+    {
+        return 10.0;
+    }
+    static std::string name()
+    {
+        return "EpsilonContacts";
+    }
+};
+
+struct WillignessToVaccinateFirstMax {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "WillignessToVaccinateFirstMax";
+    }
+};
+
+struct WillignessToVaccinateFullMax {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "WillignessToVaccinateFullMax";
+    }
+};
+
+struct WillignessToVaccinateBoosterMax {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "WillignessToVaccinateBoosterMax";
+    }
+};
+
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
                  TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
@@ -570,7 +813,11 @@ using ParametersBase =
                  ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
                  ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
                  ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, InfectiousnessNewVariant,
-                 StartDayNewVariant, DailyICUOccupancy>;
+                 StartDayNewVariant, DailyICUOccupancy, alphaGammaVaccination, betaGammaVaccination, alphaGammaContacts,
+                 betaGammaContacts, CutOffGamma, ContactReductionWorkMax, ContactReductionWorkMin,
+                 ContactReductionHomeMax, ContactReductionHomeMin, ContactReductionSchoolMax, ContactReductionSchoolMin,
+                 ContactReductionOtherMax, ContactReductionOtherMin, DelayTimeVaccination, EpsilonVaccination,
+                 EpsilonContacts>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
