@@ -53,7 +53,7 @@ int main()
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>();
     contact_matrix[0].get_baseline().setConstant(2.7);
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant(1, 1, 0.7), mio::SimulationTime(30.));
+    
 
     model.check_constraints();
 
