@@ -58,8 +58,8 @@ void set_params_distributions_normal(Model& model, double t0, double tmax, doubl
     // times
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
 
-        set_distribution(model.parameters.get<IncubationTime>()[i]);
-        set_distribution(model.parameters.get<SerialInterval>()[i]);
+        set_distribution(model.parameters.get<TimeExposed>()[i]);
+        set_distribution(model.parameters.get<TimeInfectedNoSymptoms>()[i]);
         set_distribution(model.parameters.get<TimeInfectedSymptoms>()[i]);
         set_distribution(model.parameters.get<TimeInfectedSevere>()[i]);
         set_distribution(model.parameters.get<TimeInfectedCritical>()[i]);
@@ -115,8 +115,8 @@ void draw_sample_infection(Model& model)
     model.parameters.get<Seasonality>().draw_sample();
 
     //not age dependent
-    model.parameters.get<IncubationTime>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<TimeExposed>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<TimeInfectedNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
@@ -124,8 +124,8 @@ void draw_sample_infection(Model& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.get<IncubationTime>()[i] = model.parameters.get<IncubationTime>()[AgeGroup(0)];
-        model.parameters.get<SerialInterval>()[i] = model.parameters.get<SerialInterval>()[AgeGroup(0)];
+        model.parameters.get<TimeExposed>()[i]            = model.parameters.get<TimeExposed>()[AgeGroup(0)];
+        model.parameters.get<TimeInfectedNoSymptoms>()[i] = model.parameters.get<TimeInfectedNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
             model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =

@@ -36,6 +36,7 @@ import argparse
 import os
 
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 def clean_data(
@@ -87,7 +88,8 @@ def clean_data(
 
             for item in files:
                 if item.endswith(".json") or item.endswith(".h5"):
-                    print("Deleting file ", os.path.join(directory, item))
+                    gd.default_print("Info", "Deleting file " +
+                                     os.path.join(directory, item))
                     os.remove(os.path.join(directory, item))
 
             # delete directories if empty
@@ -95,7 +97,7 @@ def clean_data(
                 os.rmdir(directory)
             except OSError:
                 continue
-            print("Deleting directory ", directory)
+            gd.default_print("Info", "Deleting directory " + directory)
 
         # delete further jh files
         files = []
@@ -106,7 +108,8 @@ def clean_data(
 
         for item in files:
             if item.endswith(".json") or item.endswith(".h5"):
-                print("Deleting file ", os.path.join(out_path, item))
+                gd.default_print("Info", "Deleting file " +
+                                 os.path.join(out_path, item))
                 os.remove(os.path.join(out_path, item))
 
     else:
@@ -128,8 +131,8 @@ def clean_data(
 
                     for item in files:
                         if item.endswith(ending) and "_jh" in item:
-                            print("Deleting file ",
-                                  os.path.join(directory, item))
+                            gd.default_print("Info", "Deleting file " +
+                                             os.path.join(directory, item))
                             os.remove(os.path.join(directory, item))
 
                     # delete directories
@@ -138,7 +141,7 @@ def clean_data(
                     except OSError:
                         continue
 
-                    print("Deleting directory ", directory)
+                    gd.default_print("Info", "Deleting directory " + directory)
 
                 # delete further jh files
                 files = []
@@ -150,7 +153,8 @@ def clean_data(
                 for item in files:
                     if item.endswith(ending):
                         if "_jh" in item or "JohnHopkins" in item:
-                            print("Deleting file ", os.path.join(out_path, item))
+                            gd.default_print(
+                                "Info", "Deleting file " + os.path.join(out_path, item))
                             os.remove(os.path.join(out_path, item))
 
             # other data is stored in the same folder
@@ -193,20 +197,21 @@ def clean_data(
 
                     for file in filenames:
                         if file in item:
-                            print(
-                                "Deleting file ", os.path.join(
-                                    directory, item))
+                            gd.default_print("Info",
+                                             "Deleting file " + os.path.join(
+                                                 directory, item))
                             os.remove(os.path.join(directory, item))
 
                 # delete directory if empty
                 try:
                     os.rmdir(directory)
-                    print("Deleting directory ", directory)
+                    gd.default_print("Info", "Deleting directory " + directory)
                 except OSError:
                     pass
 
             if filenames == []:
-                print("Please specify what should be deleted. See --help for details.")
+                gd.default_print(
+                    "Info", "Please specify what should be deleted. See --help for details.")
 
 
 def cli():
@@ -220,8 +225,8 @@ def cli():
     - choose file format: json or hdf5
     - define path to files
     """
-
-    out_path_default = dd.defaultDict['out_folder']
+    conf = gd.Conf(dd.defaultDict['out_folder'])
+    out_path_default = conf.path_to_use
 
     parser = argparse.ArgumentParser()
 

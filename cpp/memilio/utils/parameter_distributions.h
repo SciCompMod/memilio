@@ -316,7 +316,7 @@ public:
         return rnumb;
     }
 
-    template<class IOObject>
+    template <class IOObject>
     void serialize_elements(IOObject& obj) const
     {
         obj.add_element("Mean", m_mean);
@@ -326,14 +326,14 @@ public:
         obj.add_list("PredefinedSamples", m_predefined_samples.begin(), m_predefined_samples.end());
     }
 
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("ParameterDistributionNormal");
         serialize_elements(obj);
     }
 
-    template<class IOContext, class IOObject>
+    template <class IOContext, class IOObject>
     static IOResult<ParameterDistributionNormal> deserialize_elements(IOContext& io, IOObject& obj)
     {
         auto m      = obj.expect_element("Mean", Tag<double>{});
@@ -342,15 +342,15 @@ public:
         auto ub     = obj.expect_element("UpperBound", Tag<double>{});
         auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
         auto p      = apply(
-            io,
-            [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& predef_) {
+                 io,
+                 [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& predef_) {
                 auto distr = ParameterDistributionNormal(lb_, ub_, m_, s_);
                 for (auto&& e : predef_) {
                     distr.add_predefined_sample(e);
                 }
                 return distr;
-            },
-            lb, ub, m, s, predef);
+                 },
+                 lb, ub, m, s, predef);
         if (p) {
             return success(p.value());
         }
@@ -359,7 +359,7 @@ public:
         }
     }
 
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<ParameterDistributionNormal> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("ParameterDistributionNormal");
@@ -419,7 +419,7 @@ public:
         return new ParameterDistributionUniform(*this);
     }
 
-    template<class IOObject>
+    template <class IOObject>
     void serialize_elements(IOObject& obj) const
     {
         obj.add_element("LowerBound", m_lower_bound);
@@ -427,29 +427,29 @@ public:
         obj.add_list("PredefinedSamples", m_predefined_samples.begin(), m_predefined_samples.end());
     }
 
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("ParameterDistributionUniform");
         serialize_elements(obj);
     }
 
-    template<class IOContext, class IOObject>
+    template <class IOContext, class IOObject>
     static IOResult<ParameterDistributionUniform> deserialize_elements(IOContext& io, IOObject& obj)
     {
         auto lb     = obj.expect_element("LowerBound", Tag<double>{});
         auto ub     = obj.expect_element("UpperBound", Tag<double>{});
         auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
         auto p      = apply(
-            io,
-            [](auto&& lb_, auto&& ub_, auto&& predef_) {
+                 io,
+                 [](auto&& lb_, auto&& ub_, auto&& predef_) {
                 auto distr = ParameterDistributionUniform(lb_, ub_);
                 for (auto&& e : predef_) {
                     distr.add_predefined_sample(e);
                 }
                 return distr;
-            },
-            lb, ub, predef);
+                 },
+                 lb, ub, predef);
         if (p) {
             return success(p.value());
         }
@@ -458,7 +458,7 @@ public:
         }
     }
 
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<ParameterDistributionUniform> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("ParameterDistributionUniform");
@@ -473,7 +473,7 @@ template <class IOObj>
 void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionUniform& uniform_dist)
 {
     obj.add_element("Type", std::string("Uniform"));
-    uniform_dist.serialize_elements(obj);   
+    uniform_dist.serialize_elements(obj);
 }
 
 /**
@@ -488,11 +488,11 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
     auto type = obj.expect_element("Type", Tag<std::string>{});
     if (type) {
         if (type.value() == "Uniform") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionUniform::deserialize_elements(io, obj));
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionUniform::deserialize_elements(io, obj));
             return std::make_shared<ParameterDistributionUniform>(r);
         }
         else if (type.value() == "Normal") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionNormal::deserialize_elements(io, obj));
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionNormal::deserialize_elements(io, obj));
             return std::make_shared<ParameterDistributionNormal>(r);
         }
         else {

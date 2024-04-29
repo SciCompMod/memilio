@@ -58,6 +58,13 @@ namespace mio
  * decreasing. This is no limitation as the support is only needed for StateAgeFunctions of Type a) as given above.
  * For classes of type b) a dummy implementation logging an error and returning -2 for get_support_max() should be implemented.
  *
+ * The get_mean method is virtual and implements a basic version to determine the mean value of the StateAgeFunction. 
+ * The base class implementation uses the fact that the StateAgeFunction is a survival function 
+ * (i.e. 1-CDF for any cumulative distribution function CDF). 
+ * Therefore, the base class implementation should only be used for StateAgeFunction%s of type a).
+ * For some derived classes there is a more efficient way (see e.g., ExponentialDecay) to do this which is 
+ * why it can be overridden. 
+ *
  * See ExponentialDecay, SmootherCosine and ConstantFunction for examples of derived classes.
  */
 struct StateAgeFunction {
@@ -69,8 +76,10 @@ struct StateAgeFunction {
      */
     StateAgeFunction(ScalarType init_parameter)
         : m_parameter{init_parameter}
-        , m_support_max{-1.} // initialize support maximum as not set
-        , m_support_tol{-1.} // initialize support tolerance as not set
+        , m_mean{-1.} // Initialize mean as not set.
+        , m_mean_tol{-1.} // Initialize tolerance for computation of mean as not set.
+        , m_support_max{-1.} // Initialize support maximum as not set.
+        , m_support_tol{-1.} // Initialize tolerance for computation of support as not set.
     {
     }
 
@@ -144,6 +153,7 @@ struct StateAgeFunction {
         m_parameter = new_parameter;
 
         m_support_max = -1.;
+        m_mean        = -1;
     }
 
     /**
@@ -177,6 +187,37 @@ struct StateAgeFunction {
     }
 
     /**
+     * @brief Computes the mean value of the function using the time step size dt and some tolerance tol. 
+     * 
+     * This is a basic version to determine the mean value of a survival function
+     * through numerical integration of the integral that describes the expected value.
+     * This basic implementation is only valid if the StateAgeFunction is of type a). Otherwise it should be overridden.
+     *
+     * For some specific derivations of StateAgeFunction%s there are more efficient ways to determine the 
+     * the mean value which is why this member function is virtual and can be overridden (see, e.g., ExponentialDecay).
+     * The mean value is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
+     *
+     * @param[in] dt Time step size used for the numerical integration. 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance. 
+     * @return ScalarType mean value.
+     */
+    virtual ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10)
+    {
+        if (!floating_point_equal(m_mean_tol, tol, 1e-14) || floating_point_equal(m_mean, -1., 1e-14)) {
+            // Integration using Trapezoidal rule.
+            ScalarType mean         = 0.5 * dt * eval(0 * dt);
+            ScalarType supp_max_idx = std::ceil(get_support_max(dt, tol) / dt);
+            for (int i = 1; i < supp_max_idx; i++) {
+                mean += dt * eval(i * dt);
+            }
+
+            m_mean     = mean;
+            m_mean_tol = tol;
+        }
+        return m_mean;
+    }
+
+    /**
      * @brief Get type of StateAgeFunction, i.e.which derived class is used.
      * 
      * @param[out] string 
@@ -205,6 +246,8 @@ protected:
     virtual StateAgeFunction* clone_impl() const = 0;
 
     ScalarType m_parameter; ///< Parameter for function in derived class.
+    ScalarType m_mean; ///< Mean value of the function.
+    ScalarType m_mean_tol; ///< Tolerance for computation of the mean.
     ScalarType m_support_max; ///< Maximum of the support of the function.
     ScalarType m_support_tol; ///< Tolerance for computation of the support.
 };
@@ -239,6 +282,22 @@ struct ExponentialDecay : public StateAgeFunction {
     ScalarType eval(ScalarType state_age) override
     {
         return std::exp(-m_parameter * state_age);
+    }
+
+    /**
+     * @brief Computes the mean value of the function. 
+     * 
+     * For ExponentialDecay, the mean value is the reciprocal of the function parameter.
+     *
+     * @param[in] dt Time step size used for the numerical integration (unused for ExponentialDecay). 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance (unused for ExponentialDecay). 
+     * @return ScalarType mean value.
+     */
+    ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) override
+    {
+        unused(dt);
+        unused(tol);
+        return 1. / m_parameter;
     }
 
 protected:
@@ -298,6 +357,10 @@ struct SmootherCosine : public StateAgeFunction {
         return m_support_max;
     }
 
+    // TODO: There is also a closed form for the mean value of Smoothercosine: 0.5*m_parameter.
+    // However, a StateAgeFunction that uses the default implementation is required for testing purposes.
+    // Therefore, the closed form is only used for comparison in the tests.
+    // If another StateAgeFunction is implemented that uses the default implementation, the function get_mean() should be overwritten here.
 protected:
     /**
      * @brief Clones unique pointer to a StateAgeFunction.
@@ -363,6 +426,22 @@ struct ConstantFunction : public StateAgeFunction {
                   "of type b); see documentation of StateAgeFunction Base class.");
 
         return m_support_max;
+    }
+
+    /**
+     * @brief Computes the mean value of the function. 
+     * 
+     * For ConstantFunction, the mean value is the function parameter.
+     *
+     * @param[in] dt Time step size used for the numerical integration (unused for ConstantFunction). 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance (unused for ConstantFunction). 
+     * @return ScalarType mean value.
+     */
+    ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) override
+    {
+        unused(dt);
+        unused(tol);
+        return m_parameter;
     }
 
 protected:
@@ -460,7 +539,7 @@ struct StateAgeFunctionWrapper {
     /**
      * @brief Get type of StateAgeFunction, i.e. which derived class is used.
      *
-     * @param[out] string 
+     * @return string 
      */
     std::string get_state_age_function_type() const
     {
@@ -498,9 +577,28 @@ struct StateAgeFunctionWrapper {
         m_function->set_parameter(new_parameter);
     }
 
+    /**
+     * @brief Get the m_support_max object of m_function. 
+     * 
+     * @param[in] dt Time step size at which function will be evaluated. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
+     * @return ScalarType m_support_max
+     */
     ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) const
     {
         return m_function->get_support_max(dt, tol);
+    }
+
+    /**
+     * @brief Get the m_mean object of m_function. 
+     * 
+     * @param[in] dt Time step size used for the numerical integration. 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance. 
+     * @return ScalarType m_mean
+     */
+    ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) const
+    {
+        return m_function->get_mean(dt, tol);
     }
 
 private:

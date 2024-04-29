@@ -217,7 +217,7 @@ std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, Damping
 {
     std::vector<size_t> indices;
     for (size_t i = 0; i < damping_expr.get_dampings().size(); ++i) {
-        auto& d = damping_expr.get_dampings()[i];
+        const auto d = damping_expr.get_dampings()[i];
         if (d.get_level() == lvl && d.get_type() == type && double(d.get_time()) > double(begin) &&
             double(d.get_time()) < double(end)) {
             indices.push_back(i);
@@ -320,7 +320,7 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
     for (auto& damping_expr : damping_expr_group) {
         //go from the back so indices aren't invalidated when dampings are removed
         //use indices to loop instead of reverse iterators because removing invalidates the current iterator
-        for (auto i = size_t(0); i < damping_expr.get_dampings().size() - 1; ++i) {
+        for (auto i = int(0); i < int(damping_expr.get_dampings().size()) - 1; ++i) {
             auto it = damping_expr.get_dampings().rbegin() + i;
 
             //look for previous damping of the same type/level

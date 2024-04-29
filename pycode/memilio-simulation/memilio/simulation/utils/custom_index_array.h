@@ -37,6 +37,12 @@
 namespace pymio
 {
 
+template <typename T, typename = void>
+struct has_indices_attribute : std::false_type {};
+
+template <typename T>
+struct has_indices_attribute<T, std::void_t<decltype(std::declval<T>().size().indices)>> : std::true_type {};
+
 // Recursively bind the members of custom index array
 // that require a single Tag as a template argument.
 template <class C>
@@ -48,6 +54,11 @@ void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>&
 {
     std::string tname = pretty_name<T>();
     c.def(("size_" + tname).c_str(), &C::template size<T>);
+
+    // Only add if the Index is multidimensional, e.g. only when Index::indices exists, because it is used in resize
+    if constexpr (has_indices_attribute<C>::value){
+        c.def(("resize_" + tname).c_str(), &C::template resize<T>);
+    }
 
     // Catch warning ImportError: generic_type: type "" is already registered!
     try {
@@ -141,6 +152,9 @@ void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m, p
     c.def("size", [](const C& self) {
         return self.size(); //just a single index, no tuple
     });
+    c.def("resize", [](C& self, mio::Index<Tag> new_dims) {
+        self.resize(new_dims); //tuple of single indices
+    });
 }
 template <class C, class... Tags>
 std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m,
@@ -150,6 +164,10 @@ std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_Custo
     c.def("size", [](const C& self) {
         return self.size().indices; //tuple of single indices
     });
+    c.def("resize", [](C& self, mio::Index<Tags...> new_dims) {
+        self.resize(new_dims); //tuple of single indices
+    });
+    // c.def("resize", pybind11::overload_cast<mio::Index<Tags...>>(&C::resize));
 
     // Catch warning ImportError: generic_type: type "" is already registered!
     try {
