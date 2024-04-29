@@ -61,17 +61,17 @@ runs:
         fi
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            sudo apt-get -qq -y install gcc-${{compiler-version.gcc.min}}
-            sudo apt-get -qq -y install g++-${{compiler-version.gcc.min}}
+            sudo apt-get -qq -y install gcc-${{ compiler-version.gcc.min }}
+            sudo apt-get -qq -y install g++-${{ compiler-version.gcc.min }}
           else        
-            sudo apt-get -qq -y install gcc-${{compiler-version.gcc.latest}}
-            sudo apt-get -qq -y install g++-${{compiler-version.gcc.latest}}
+            sudo apt-get -qq -y install gcc-${{ compiler-version.gcc.latest}}
+            sudo apt-get -qq -y install g++-${{ compiler-version.gcc.latest}}
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            sudo apt-get -qq -y install clang-${{compiler-version.clang.min}}
+            sudo apt-get -qq -y install clang-${{ compiler-version.clang.min }}
           else
-            sudo apt-get -qq -y install clang-${{compiler-version.clang.latest}}
+            sudo apt-get -qq -y install clang-${{ compiler-version.clang.latest }}
           fi
         fi
     - name: Build
@@ -80,19 +80,19 @@ runs:
         cd cpp
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            export CC=/usr/bin/gcc-${{compiler-version.gcc.min}}
-            export CXX=/usr/bin/g++-${{compiler-version.gcc.min}}
+            export CC=/usr/bin/gcc-${{ compiler-version.gcc.min }}
+            export CXX=/usr/bin/g++-${{ compiler-version.gcc.min }}
           else        
-            export CC=/usr/bin/gcc-${{compiler-version.gcc.latest}}
-            export CXX=/usr/bin/g++-${{compiler-version.gcc.latest}}
+            export CC=/usr/bin/gcc-${{ compiler-version.gcc.latest }}
+            export CXX=/usr/bin/g++-${{ compiler-version.gcc.latest }}
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            export CC=/usr/bin/clang-${{compiler-version.clang.min}}
-            export CXX=/usr/bin/clang++-${{compiler-version.clang.min}}
+            export CC=/usr/bin/clang-${{ compiler-version.clang.min }}
+            export CXX=/usr/bin/clang++-${{ compiler-version.clang.min }}
           else        
-            export CC=/usr/bin/clang-${{compiler-version.clang.latest}}
-            export CXX=/usr/bin/clang++-${{compiler-version.clang.latest}}
+            export CC=/usr/bin/clang-${{ compiler-version.clang.latest }}
+            export CXX=/usr/bin/clang++-${{ compiler-version.clang.latest }}
           fi
         else
           echo "unknown value for action input: compiler"
