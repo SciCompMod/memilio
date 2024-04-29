@@ -50,7 +50,7 @@ public:
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init The population of the considered region.
     * @param[in] deaths The total number of deaths at time t0.
-    * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialisation.
+    * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialization.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
@@ -125,8 +125,24 @@ public:
     /**
      * @brief Computes size of a flow.
      * 
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the time 
+     * index current_time_index.
+     *
+     * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
+     * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
+     *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
+     *      the value of this incoming flow.
+     * @param[in] dt Time step to compute flow for.
+     * @param[in] current_time_index The time index the flow should be computed for.
+     */
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
+                      Eigen::Index current_time_index);
+
+    /**
+     * @brief Computes size of a flow for the current last time value in m_transitions.
+     * 
      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last time value in m_transitions.
+     * last time value in m_transitions. 
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
@@ -134,7 +150,7 @@ public:
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      */
-    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
@@ -180,32 +196,28 @@ public:
             return true;
         }
 
-        ScalarType support_max = std::max(
-            {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_support_max(dt, m_tol),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_support_max(dt, m_tol)});
+        for (int i = 0; i < (int)InfectionState::Count; i++) {
+            if (m_populations[0][i] < 0) {
+                log_error("Initialization failed. Initial values for populations are less than zero.");
+                return true;
+            }
+        }
 
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
+        // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
+        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
             return true;
         }
 
+        for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
+            for (int j = 0; j < (int)InfectionTransition::Count; j++) {
+                if (m_transitions[i][j] < 0) {
+                    log_error("Initialization failed. One or more initial value for transitions is less than zero.");
+                    return true;
+                }
+            }
+        }
         if (m_transitions.get_last_time() != m_populations.get_last_time()) {
             log_error("Last time point of TimeSeries for transitions does not match last time point of TimeSeries for "
                       "compartments. Both of these time points have to agree for a sensible simulation.");
@@ -220,6 +232,20 @@ public:
 
         return parameters.check_constraints();
     }
+
+    /**
+     * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
+     *
+     * This determines how many inital values we need for the flows.
+     * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
+     * but this number ensures that it is possible.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Global support_max.
+     *
+     */
+    ScalarType get_global_support_max(ScalarType dt) const;
 
     /**
      * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
@@ -259,6 +285,7 @@ public:
         m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s.
+    ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
 
 private:
     /**
@@ -275,7 +302,6 @@ private:
     // ---- Private parameters. ----
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
         //See also get_initialization_method_compartments() for the number code.
