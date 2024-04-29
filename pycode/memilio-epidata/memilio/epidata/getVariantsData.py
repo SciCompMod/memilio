@@ -91,12 +91,17 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
             ) + '-' + str(weekday), format="%G-%V-%u").unique()
             df_out.loc[df_out.Date.isin(dates), v] += df_sub_values
 
+    # transform from weekly data to daily data
+    df_out = df_out.set_index('Date').resample('D').ffill()
+
     if make_plot:
         fig, axs = plt.subplots(4, 6)
         for v in range(len(variants)):
             axs[int((v)/6)][(v) % 6].fill_between(df_out.Date,
                                                   df_out[variants[v]], 0., label=variants[v])
             axs[int((v)/6)][(v) % 6].legend()
+
+        plt.savefig('variants_test.png')
         plt.show()
 
     return df_out
@@ -105,7 +110,7 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
 def main():
     """ Main program entry."""
 
-    get_variants_data()
+    df_variants = get_variants_data(make_plot=False)
 
 
 if __name__ == "__main__":
