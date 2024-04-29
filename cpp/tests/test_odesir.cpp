@@ -183,7 +183,7 @@ TEST(TestOdeSir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(Testsir, get_flows)
+TEST(Testsir, get_derivatives)
 {
     mio::osir::Model model(1);
 
