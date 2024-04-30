@@ -335,7 +335,10 @@ class NPIRegression():
         # variable for virus variant
         with progress_indicator.Spinner(message="Preparing variant data"):
             df_var = gvsd.get_variants_data(transform_to_daily=True)
-            self.variants = df_var.iloc[:, 1:].columns.to_list()
+            # use only alpha and delta (because we want to assess effect of alpha and delta wrt to wildtype)
+            # TODO: discuss if this is the right approach (if we want to estimate effects of variants at all with our model)
+            self.variants = ['B.1.617.2', 'B.1.1.7']
+            # self.variants = df_var.iloc[:, 1:].columns.to_list()
             # add column for counties
             df_var['ID_County'] = 0
             # initialize dataframe
@@ -789,8 +792,6 @@ class NPIRegression():
             labels = ['Variable of interest was not removed']
             handles = [plt.Rectangle((0, 0), 1, 1, color='r')]
 
-        # plt.legend(handles, labels, loc='lower right', fontsize = 8)
-
         axes[1].set_xlabel('P-values')
         axes[0].set_ylabel('Variables')
 
@@ -810,8 +811,8 @@ class NPIRegression():
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
-    min_date = '2020-03-01'
-    max_date = '2020-07-01'
+    min_date = '2021-09-01'
+    max_date = '2021-10-31'
 
     fine_resolution = 2
 
