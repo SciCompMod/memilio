@@ -334,7 +334,7 @@ class NPIRegression():
 
         # variable for virus variant
         with progress_indicator.Spinner(message="Preparing variant data"):
-            df_var = gvsd.get_variants_data()
+            df_var = gvsd.get_variants_data(transform_to_daily=True)
             self.variants = df_var.iloc[:, 1:].columns.to_list()
             # add column for counties
             df_var['ID_County'] = 0
