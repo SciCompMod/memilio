@@ -575,7 +575,15 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                                 (node.property.parameters
                                      .get<mio::osecirvvs::TimeInfectedSymptoms>()[{mio::AgeGroup(3)}] +
                                  node.property.parameters
-                                     .get<mio::osecirvvs::TimeInfectedNoSymptoms>()[{mio::AgeGroup(3)}]);
+                                     .get<mio::osecirvvs::TimeInfectedNoSymptoms>()[{mio::AgeGroup(3)}] +
+                                 node.property.parameters.get<mio::osecirvvs::TimeExposed>()[{mio::AgeGroup(3)}]);
+                            auto percentage_exposed =
+                                node.property.parameters.get<mio::osecirvvs::TimeExposed>()[{mio::AgeGroup(3)}] /
+                                (node.property.parameters
+                                     .get<mio::osecirvvs::TimeInfectedSymptoms>()[{mio::AgeGroup(3)}] +
+                                 node.property.parameters
+                                     .get<mio::osecirvvs::TimeInfectedNoSymptoms>()[{mio::AgeGroup(3)}] +
+                                 node.property.parameters.get<mio::osecirvvs::TimeExposed>()[{mio::AgeGroup(3)}]);
                             auto infected = initially_infected * node.property.populations.get_total();
                             node.property.populations[{mio::AgeGroup(3),
                                                        mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] =
@@ -583,7 +591,11 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                                 percentage_symptomatic * infected;
                             node.property.populations[{mio::AgeGroup(3),
                                                        mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}] =
-                                (1 - percentage_symptomatic) * infected;
+                                (1 - percentage_exposed - percentage_symptomatic) * infected;
+
+                            node.property
+                                .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::ExposedNaive}] =
+                                percentage_exposed * infected;
 
                             node.property
                                 .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}] -=
