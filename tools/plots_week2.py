@@ -115,7 +115,7 @@ def plot_icu_occupancy_per_scenario(path_results, indx_comp, interventions, regi
             entry["data_p25"], label=f"Counties Infected: {num_counties_inf}, TNT: {tnt_fact} p25",
             linewidth=linewidth, linestyle=linestyle, color=color)
         ax.plot(
-            entry["data_p75"], label=f"Num Inf: {num_counties_inf}, TNT: {tnt_fact} p75",
+            entry["data_p75"], label=f"Counties Infected: {num_counties_inf}, TNT: {tnt_fact} p75",
             linewidth=linewidth, linestyle='--', color=color)
         ax.fill_between(
             np.arange(0, len(entry["data_p25"])), entry["data_p25"], entry["data_p75"], color=color, alpha=opacity)
@@ -162,14 +162,17 @@ if __name__ == '__main__':
 
     all_comp = np.arange(0, 29, 1)
 
-    plot_icu_occupancy_per_scenario(path_results, infected_compartments,
-                                    interventions, regions_with_inf,  tnt_fact, plot_flows, "Total Infected", num_runs)
+    # plot_icu_occupancy_per_scenario(path_results, infected_compartments,
+    #                                 interventions, regions_with_inf,  tnt_fact, plot_flows, "Total Infected", num_runs)
 
-    plot_icu_occupancy_per_scenario(path_results, icu,
-                                    interventions, regions_with_inf,  tnt_fact, plot_flows, "ICU Occupancy", num_runs)
+    # plot_icu_occupancy_per_scenario(path_results, icu,
+    #                                 interventions, regions_with_inf,  tnt_fact, plot_flows, "ICU Occupancy", num_runs)
 
-    plot_icu_occupancy_per_scenario(path_results, hosp,
-                                    interventions, regions_with_inf,  tnt_fact, plot_flows, "Hospitalized Individuals", num_runs)
+    # plot_icu_occupancy_per_scenario(path_results, hosp,
+    #                                 interventions, regions_with_inf,  tnt_fact, plot_flows, "Hospitalized Individuals", num_runs)
 
-    plot_icu_occupancy_per_scenario(path_results, flows_hu,
-                                    interventions, regions_with_inf,  tnt_fact, True, "ICU Admissions", num_runs)
+    # plot_icu_occupancy_per_scenario(path_results, flows_hu,
+    #                                 interventions, regions_with_inf,  tnt_fact, True, "ICU Admissions", num_runs)
+
+    plot_icu_occupancy_per_scenario(path_results, flows_se,
+                                    interventions, regions_with_inf,  tnt_fact, True, "tranmissions", num_runs)
