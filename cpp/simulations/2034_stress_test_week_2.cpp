@@ -164,7 +164,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
 
     //probabilities
     double fac_variant                                 = 1.0;
-    const auto transmission_prob                       = 3 / 80.85552683191771;
+    const auto transmission_prob                       = 3.5 / 80.85552683191771;
     const double transmissionProbabilityOnContactMin[] = {
         transmission_prob * fac_variant, transmission_prob * fac_variant, transmission_prob * fac_variant,
         transmission_prob * fac_variant, transmission_prob * fac_variant, transmission_prob * fac_variant};
@@ -399,15 +399,17 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_interventions(params, intervention));
 
-    // print indices flow for transmission
+    // print indices flow for to ICU
     // mio::osecirvvs::Model modele(num_age_groups);
     // for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(6); i++) {
-    //     auto indx_naive   = modele.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleNaive,
-    //                                                  mio::osecirvvs::InfectionState::ExposedNaive>({i});
-    //     auto indx_partial = modele.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-    //                                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity>({i});
-    //     auto indx_ii      = modele.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-    //                                               mio::osecirvvs::InfectionState::ExposedImprovedImmunity>({i});
+    //     auto indx_naive = modele.get_flat_flow_index<mio::osecirvvs::InfectionState::InfectedSevereNaive,
+    //                                                  mio::osecirvvs::InfectionState::InfectedCriticalNaive>({i});
+    //     auto indx_partial =
+    //         modele.get_flat_flow_index<mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity,
+    //                                    mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity>({i});
+    //     auto indx_ii =
+    //         modele.get_flat_flow_index<mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity,
+    //                                    mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity>({i});
 
     //     std::cout << indx_naive << "," << indx_partial << "," << indx_ii << std::endl;
     // }
@@ -488,7 +490,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
     const auto start_date                   = mio::Date(2034, 4, 1); //Cd
     constexpr auto num_days_sim             = 50.0;
     constexpr auto num_runs_per_scenario    = 5;
-    constexpr auto num_runs_per_param_study = 10; //Cd
+    constexpr auto num_runs_per_param_study = 50; //Cd
     constexpr int intervention              = -1;
 
     result_dir += "/" + intervention_mapping.at(intervention);
@@ -538,6 +540,12 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
             result_dir_run = result_dir_run_copy + "/tnt_fac_" + std::to_string(tnt_fac);
 
             for (size_t run_per_scenario = 0; run_per_scenario < num_runs_per_scenario; run_per_scenario++) {
+                size_t node_indx = 0;
+                for (auto& node : params_graph.nodes()) {
+                    node.property.populations = nodes_copy[node_indx].populations;
+                    node_indx++;
+                }
+
                 auto result_dir_scenario             = result_dir_run + std::to_string(run_per_scenario);
                 double population_in_hotspot_regions = 0;
                 std::vector<int> hotspot_ids;
@@ -545,16 +553,20 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                 for (size_t region = 0; region < num_regions; ++region) {
                     int region_id = node_ids_global[mio::UniformIntDistribution<size_t>::get_instance()(
                         rng, size_t(0), node_ids_global.size())];
+                    bool new_id   = std::find(hotspot_ids.begin(), hotspot_ids.end(), region_id) == hotspot_ids.end();
+                    while (!new_id) {
+                        region_id = node_ids_global[mio::UniformIntDistribution<size_t>::get_instance()(
+                            rng, size_t(0), node_ids_global.size())];
+                        new_id    = std::find(hotspot_ids.begin(), hotspot_ids.end(), region_id) == hotspot_ids.end();
+                    }
+
                     hotspot_ids.push_back(region_id);
-                    auto nodes_tmp = nodes_copy;
 
                     //find correct node and set number of infected
-                    size_t node_indx = 0;
+                    node_indx = 0;
                     for (auto& node : params_graph.nodes()) {
                         node_indx++;
                         if (node.id == region_id) {
-                            // reset population
-                            node.property.populations = nodes_tmp[node_indx].populations;
 
                             population_in_hotspot_regions += node.property.populations.get_total();
                             auto percentage_symptomatic =
@@ -579,9 +591,11 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         }
                     }
                 }
-                auto num_sucep    = 0.;
-                auto num_infected = 0.;
+                auto num_sucep         = 0.;
+                auto num_infected      = 0.;
+                int count_inf_counties = 0;
                 for (auto& node : params_graph.nodes()) {
+                    auto local_num_infected = 0.;
                     for (auto age = mio::AgeGroup(0); age < mio::AgeGroup(6); ++age) {
                         num_sucep +=
                             node.property.populations[{age, mio::osecirvvs::InfectionState::SusceptibleNaive}] +
@@ -590,11 +604,17 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                             node.property
                                 .populations[{age, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}];
 
-                        num_infected +=
+                        local_num_infected +=
                             node.property.populations[{age, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] +
                             node.property.populations[{age, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}];
                     }
+
+                    num_infected += local_num_infected;
+                    if (local_num_infected > 0) {
+                        count_inf_counties++;
+                    }
                 }
+                std::cout << "num counties infected " << count_inf_counties << std::endl;
                 double population_in_non_hotspot_regions = pop_Germany - population_in_hotspot_regions;
 
                 //set TNT values
@@ -616,8 +636,8 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                     mio::ParameterStudy<mio::osecirvvs::Simulation<mio::FlowSimulation<mio::osecirvvs::Model>>>{
                         params_graph, 0.0, num_days_sim, 0.5, num_runs_per_param_study};
 
-                // parameter_study.get_rng().seed(
-                //    {1744668429, 3100904884, 949309539, 3730340632, 1029148146, 3502301618}); //set seeds, e.g., for debugging
+                parameter_study.get_rng().seed({1744668429, 3100904884, 949309539, 3730340632, 1029148146,
+                                                3502301618}); //set seeds, e.g., for debugging
                 if (mio::mpi::is_root()) {
                     printf("Seeds parameter study: ");
                     for (auto s : parameter_study.get_rng().get_seeds()) {
@@ -716,7 +736,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
 
 int main(int argc, char** argv)
 {
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::err);
     mio::mpi::init();
 
     std::string save_dir;
