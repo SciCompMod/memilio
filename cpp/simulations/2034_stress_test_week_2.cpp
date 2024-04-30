@@ -488,7 +488,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
     const auto start_date                   = mio::Date(2034, 4, 1); //Cd
     constexpr auto num_days_sim             = 50.0;
     constexpr auto num_runs_per_scenario    = 5;
-    constexpr auto num_runs_per_param_study = 50; //Cd
+    constexpr auto num_runs_per_param_study = 10; //Cd
     constexpr int intervention              = -1;
 
     result_dir += "/" + intervention_mapping.at(intervention);
@@ -506,7 +506,7 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
         return n.id;
     });
 
-    double initially_infected = 1.0 / 100000.0;
+    double initially_infected = 10.0 / 100'000.0;
     //from Berits mail
     double daily_num_tests_in_Germany = (500.0 / 7.0) * 36.;
 
@@ -520,12 +520,12 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
     }
     //Regular test capacity and 10x test capacity
     std::vector<int> tnt_factors                  = {1, 10};
-    std::vector<size_t> num_regions_with_infected = {static_cast<size_t>(0.02 * params_graph.nodes().size()),
-                                                     static_cast<size_t>(0.1 * params_graph.nodes().size())};
+    std::vector<size_t> num_regions_with_infected = {static_cast<size_t>(0.1 * params_graph.nodes().size()),
+                                                     static_cast<size_t>(0.2 * params_graph.nodes().size())};
     for (size_t num_regions : num_regions_with_infected) {
         std::string result_dir_run = result_dir + "/" + std::to_string(num_regions) + "_with_infected_counties";
         auto rng                   = mio::RandomNumberGenerator();
-        //rng.seed({3236549026, 3706391501, 886432438, 190527773, 3180356503, 1314521368});
+        rng.seed({3236549026, 3706391501, 886432438, 190527773, 3180356503, 1314521368});
         if (mio::mpi::is_root()) {
             printf("Seeds regions: ");
             for (auto s : rng.get_seeds()) {
@@ -551,10 +551,11 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                     //find correct node and set number of infected
                     size_t node_indx = 0;
                     for (auto& node : params_graph.nodes()) {
-                        // reset population
-                        node.property.populations = nodes_tmp[node_indx].populations;
                         node_indx++;
                         if (node.id == region_id) {
+                            // reset population
+                            node.property.populations = nodes_tmp[node_indx].populations;
+
                             population_in_hotspot_regions += node.property.populations.get_total();
                             auto percentage_symptomatic =
                                 node.property.parameters
@@ -576,6 +577,22 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                                 .populations[{mio::AgeGroup(3), mio::osecirvvs::InfectionState::SusceptibleNaive}] -=
                                 infected;
                         }
+                    }
+                }
+                auto num_sucep    = 0.;
+                auto num_infected = 0.;
+                for (auto& node : params_graph.nodes()) {
+                    for (auto age = mio::AgeGroup(0); age < mio::AgeGroup(6); ++age) {
+                        num_sucep +=
+                            node.property.populations[{age, mio::osecirvvs::InfectionState::SusceptibleNaive}] +
+                            node.property
+                                .populations[{age, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}] +
+                            node.property
+                                .populations[{age, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}];
+
+                        num_infected +=
+                            node.property.populations[{age, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] +
+                            node.property.populations[{age, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}];
                     }
                 }
                 double population_in_non_hotspot_regions = pop_Germany - population_in_hotspot_regions;
