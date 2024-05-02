@@ -256,7 +256,7 @@ public:
         for (int i = 0; i < this->array().size(); i++) {
             FP value = this->array()[i];
             if (value < 0.) {
-                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, ad::value(value), 0);
+                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, value, 0);
             }
         }
     }
