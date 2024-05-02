@@ -18,10 +18,10 @@
 * limitations under the License.
 */
 
-
 #include "ad/ad.hpp"
-#include "ad/ad_spdlog_formatter.h" // IWYU pragma: keep
+#include "ad/ad_spdlog_formatter.h"
 
+#include "memilio/utils/compiler_diagnostics.h"
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"
 #include "ode_seair/parameters.h"
@@ -106,9 +106,9 @@ private:
     const int numPathConstraints_  = 1;
     const int pcresolution_ =
         5; // the resultion of path constraints is by this factor higher than the control discretization
-    const int numIntervals_        = pcresolution_ * numControlIntervals_;
-    const int n_                   = numControlIntervals_ * numControls_;
-    const int m_                   = numIntervals_ * numPathConstraints_;
+    const int numIntervals_ = pcresolution_ * numControlIntervals_;
+    const int n_            = numControlIntervals_ * numControls_;
+    const int m_            = numIntervals_ * numPathConstraints_;
 };
 
 template <typename FP>
@@ -142,7 +142,6 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
         grid[i] = (tmax / numIntervals_) * i + (t0 / numIntervals_) * (numIntervals_ - i);
     }
     mio::oseair::Model<FP> model;
-    auto& params = model.parameters;
 
     set_initial_values(model);
     int gridindex = 0;
@@ -240,6 +239,7 @@ bool Seair_NLP::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz
 bool Seair_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Number* x_u, Ipopt::Index m,
                                 Ipopt::Number* g_l, Ipopt::Number* g_u)
 {
+    mio::unused(n, m);
     // controls order: 1. alpha_a, 2. alpha_i, 3. kappa
     for (int i = 0; i < numControlIntervals_; ++i) {
         x_l[i]                            = 0.05; // lower bound of alpha_a
@@ -261,6 +261,7 @@ bool Seair_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Numbe
 bool Seair_NLP::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x, bool init_z, Ipopt::Number* z_L,
                                    Ipopt::Number* z_U, Ipopt::Index m, bool init_lambda, Ipopt::Number* lambda)
 {
+    mio::unused(init_x, z_L, z_U, m, lambda);
     assert(init_z == false);
     assert(init_lambda == false);
 
@@ -272,6 +273,7 @@ bool Seair_NLP::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x
 
 bool Seair_NLP::eval_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number& obj_value)
 {
+    mio::unused(new_x);
     std::vector<double> xx(getN());
     std::vector<double> constraints(getM());
     for (int i = 0; i < n; ++i)
@@ -282,6 +284,7 @@ bool Seair_NLP::eval_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt
 
 bool Seair_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number* grad_f)
 {
+    mio::unused(new_x);
     using FP = ad::gt1s<double>::type;
     std::vector<FP> xx(getN());
     std::vector<FP> constraints(getM());
@@ -299,6 +302,7 @@ bool Seair_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, 
 
 bool Seair_NLP::eval_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Number* g)
 {
+    mio::unused(new_x);
     std::vector<double> xx(getN());
     std::vector<double> constraints(getM());
     double obj_value = 0;
@@ -313,7 +317,7 @@ bool Seair_NLP::eval_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt
 bool Seair_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac,
                            Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values)
 {
-
+    mio::unused(new_x, nele_jac);
     if (values == nullptr) {
         int jac_index = 0;
         for (int i = 0; i < n; ++i) {
@@ -349,6 +353,7 @@ bool Seair_NLP::eval_h(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt
                        const Ipopt::Number* lambda, bool new_lambda, Ipopt::Index nele_hess, Ipopt::Index* iRow,
                        Ipopt::Index* jCol, Ipopt::Number* values)
 {
+    mio::unused(n, x, new_x, obj_factor, m, lambda, new_lambda, new_lambda, nele_hess, iRow, jCol, values);
     return true;
 }
 
@@ -357,6 +362,7 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
                                   const Ipopt::Number* g, const Ipopt::Number* lambda, Ipopt::Number obj_value,
                                   const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* ip_cq)
 {
+    mio::unused(status, n, z_L, z_U, m, g, lambda, obj_value, ip_data, ip_cq);
     std::cout << "optimal solution is\n";
     std::cout << "Writing output to text files" << std::endl;
     using FP  = double;
@@ -371,7 +377,6 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
         grid[i] = (tmax / numIntervals_) * i + (t0 / numIntervals_) * (numIntervals_ - i);
     }
     mio::oseair::Model<FP> model;
-    auto& params = model.parameters;
 
     //open files for parameter output
     std::ofstream outFileAlphaA("alpha_a.txt");
@@ -444,5 +449,7 @@ bool Seair_NLP::intermediate_callback(Ipopt::AlgorithmMode mode, Ipopt::Index it
                                       Ipopt::Number alpha_pr, Ipopt::Index ls_trials, const Ipopt::IpoptData* ip_data,
                                       Ipopt::IpoptCalculatedQuantities* ip_cq)
 {
+    mio::unused(mode, iter, obj_value, inf_pr, inf_du, mu, d_norm, regularization_size, alpha_du, alpha_pr, ls_trials,
+                ip_data, ip_cq);
     return true;
 }

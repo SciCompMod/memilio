@@ -25,8 +25,6 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
 
-#include <vector>
-#include <array>
 #include <numeric>
 
 namespace mio

@@ -29,7 +29,10 @@
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
 #include <Eigen/Dense>
+GCC_CLANG_DIAGNOSTIC(pop)
 
 namespace mio
 {

@@ -24,7 +24,7 @@
  * Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak */
 
 #include "ad/ad.hpp"
-#include "ad/ad_spdlog_formatter.h" // IWYU pragma: keep
+#include "ad/ad_spdlog_formatter.h"
 
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"
@@ -103,7 +103,7 @@ int main()
     std::cout << last2 << std::endl;
 
     std::cout << "Compare algorithmic differentiation (AD) with finite differences (FD)" << std::endl;
-    for (size_t i = 0; i < last1.size(); ++i) {
+    for (Eigen::Index i = 0; i < last1.size(); ++i) {
         std::cout << "AD: " << ad::derivative(last1[i]) << "  FD: " << (1. / h) * (last2[i] - ad::value(last1[i]))
                   << std::endl;
     }

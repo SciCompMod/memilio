@@ -20,7 +20,6 @@
 #ifndef STEPPER_WRAPPER_H_
 #define STEPPER_WRAPPER_H_
 
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/integrator.h"
 #include "memilio/utils/logging.h"
 
