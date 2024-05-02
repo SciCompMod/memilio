@@ -40,6 +40,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <string>
 #include <vector>
@@ -521,22 +522,22 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
         pop_Germany += node.property.populations.get_total();
     }
     //Regular test capacity and 10x test capacity
-    std::vector<int> tnt_factors                  = {1, 0};
+    std::vector<double> tnt_factors               = {0., 0.5, 1.};
     std::vector<size_t> num_regions_with_infected = {static_cast<size_t>(0.1 * params_graph.nodes().size()),
                                                      static_cast<size_t>(0.2 * params_graph.nodes().size())};
     for (size_t num_regions : num_regions_with_infected) {
-        std::string result_dir_run = result_dir + "/" + std::to_string(num_regions) + "_with_infected_counties";
-        auto rng                   = mio::RandomNumberGenerator();
-        rng.seed({3236549026, 3706391501, 886432438, 190527773, 3180356503, 1314521368});
-        if (mio::mpi::is_root()) {
-            printf("Seeds regions: ");
-            for (auto s : rng.get_seeds()) {
-                printf("%u, ", s);
-            }
-            printf("\n");
-        }
+        std::string result_dir_run      = result_dir + "/" + std::to_string(num_regions) + "_with_infected_counties";
         std::string result_dir_run_copy = result_dir_run;
         for (double tnt_fac : tnt_factors) {
+            auto rng = mio::RandomNumberGenerator();
+            rng.seed({3236549026, 3706391501, 886432438, 190527773, 3180356503, 1314521368});
+            if (mio::mpi::is_root()) {
+                printf("Seeds regions: ");
+                for (auto s : rng.get_seeds()) {
+                    printf("%u, ", s);
+                }
+                printf("\n");
+            }
             result_dir_run = result_dir_run_copy + "/tnt_fac_" + std::to_string(tnt_fac);
 
             for (size_t run_per_scenario = 0; run_per_scenario < num_runs_per_scenario; run_per_scenario++) {
@@ -626,6 +627,11 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         count_inf_counties++;
                     }
                 }
+                std::cout << "hotspots: ";
+                for (size_t i = 0; i < hotspot_ids.size(); ++i) {
+                    std::cout << hotspot_ids[i] << " ";
+                }
+                std::cout << "\n";
                 std::cout << "num counties infected " << count_inf_counties << std::endl;
                 double population_in_non_hotspot_regions = pop_Germany - population_in_hotspot_regions;
 
