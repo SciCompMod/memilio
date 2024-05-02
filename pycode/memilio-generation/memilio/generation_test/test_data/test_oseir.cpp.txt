@@ -43,6 +43,12 @@ std::string pretty_name<mio::oseir::FP>()
 }
 
 template <>
+std::string pretty_name<mio::AgeGroup>()
+{
+   return "AgeGroup";
+}
+
+template <>
 std::string pretty_name<mio::oseir::InfectionState>()
 {
    return "InfectionState";
@@ -71,11 +77,11 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
 	.def("check_constraints", &mio::oseir::Parameters::check_constraints)
 	.def("apply_constraints", &mio::oseir::Parameters::apply_constraints);
 
-    using Populations = mio::Populations<FP, InfectionState>;
+    using Populations = mio::Populations<FP, AgeGroup, InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
     
-    pymio::bind_CompartmentalModel<FP, mio::oseir::InfectionState, mio::Populations<FP, InfectionState>>(m, "ModelBase");
-    py::class_<mio::oseir::Model, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, mio::oseir::Flows>>(m, "Model")
+    pymio::bind_CompartmentalModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>>(m, "ModelBase");
+    py::class_<mio::oseir::Model, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>>(m, "Model")
     ;
 
 

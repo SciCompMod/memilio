@@ -37,30 +37,50 @@ namespace osir
     * define the model *
     ********************/
 template <typename FP = ScalarType>
-class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
+class Model
+    : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>>
 {
-    using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
+    using Base =
+        mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>>;
 
 public:
-    Model()
-        : Base(mio::Populations<FP, InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
+    Model(int num_agegroups)
+        : Base(mio::Populations<FP, AgeGroup, InfectionState>({AgeGroup(num_agegroups), InfectionState::Count}),
+               typename Base::ParameterSet(AgeGroup(num_agegroups)))
     {
     }
 
     void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
                          Eigen::Ref<Vector<FP>> dydt) const override
     {
-        auto& params     = this->parameters;
-        double coeffStoI = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.template get<TransmissionProbabilityOnContact<FP>>() / this->populations.get_total();
+        auto params                              = this->parameters;
+        AgeGroup n_agegroups                     = params.get_num_groups();
+        ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns<FP>>();
 
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Infected] =
-            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
+        for (auto i = AgeGroup(0); i < n_agegroups; i++) {
+
+            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
+            size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
+
+            for (auto j = AgeGroup(0); j < n_agegroups; j++) {
+
+                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+
+                double Nj = pop[Sj] + pop[Ij] + pop[Rj];
+
+                double coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                   static_cast<Eigen::Index>((size_t)j)) *
+                                   params.template get<TransmissionProbabilityOnContact<FP>>()[i] / Nj;
+
+                dydt[Si] += -coeffStoI * y[Si] * pop[Ij];
+                dydt[Ii] += coeffStoI * y[Si] * pop[Ij];
+            }
+            dydt[Ii] -= (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
+            dydt[Ri] = (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
+        }
     }
 };
 

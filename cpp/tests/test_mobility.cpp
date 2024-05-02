@@ -19,18 +19,13 @@
 */
 #define _USE_MATH_DEFINES
 
+#include "matchers.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "ode_seir/model.h"
-#include "ode_seir/infection_state.h"
-#include "ode_seir/parameters.h"
 #include "ode_secir/model.h"
-#include "memilio/math/eigen_util.h"
-#include "memilio/math/eigen.h"
-#include "memilio/compartments/simulation.h"
-#include "matchers.h"
-#include "gtest/gtest.h"
 
-#include <cmath>
+#include "gtest/gtest.h"
 
 TEST(TestMobility, compareNoMigrationWithSingleIntegration)
 {
@@ -38,17 +33,17 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     auto tmax = 5.0;
     auto dt   = 0.5;
 
-    mio::oseir::Model<double> model1;
-    model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
-    model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
+    mio::oseir::Model<double> model1(1);
+    model1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 0.9;
+    model1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.1;
     model1.populations.set_total(1000);
-    model1.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model1.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
     model1.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.4);
     model1.parameters.set<mio::oseir::TimeExposed<double>>(4);
     model1.parameters.set<mio::oseir::TimeInfected<double>>(10);
 
-    auto model2                                                                                           = model1;
-    model2.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 1.;
+    auto model2                                                                     = model1;
+    model2.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 1.;
     model2.populations.set_total(500);
 
     auto graph_sim =

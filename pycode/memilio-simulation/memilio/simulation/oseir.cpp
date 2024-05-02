@@ -41,6 +41,12 @@ std::string pretty_name<mio::oseir::InfectionState>()
     return "InfectionState";
 }
 
+template <>
+std::string pretty_name<mio::AgeGroup>()
+{
+    return "AgeGroup";
+}
+
 } // namespace pymio
 
 PYBIND11_MODULE(_simulation_oseir, m)
@@ -66,17 +72,17 @@ PYBIND11_MODULE(_simulation_oseir, m)
     pymio::bind_ParameterSet<mio::oseir::ParametersBase<double>>(m, "ParametersBase");
 
     py::class_<mio::oseir::Parameters<double>, mio::oseir::ParametersBase<double>>(m, "Parameters")
-        .def(py::init<>())
+        .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::oseir::Parameters<double>::check_constraints);
 
-    using Populations = mio::Populations<double, mio::oseir::InfectionState>;
-    pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>(
+    using SeirPopulations = mio::Populations<double, mio::AgeGroup, mio::oseir::InfectionState>;
+    pymio::bind_Population(m, "SeirPopulations", mio::Tag<mio::oseir::Model<double>::Populations>{});
+
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, SeirPopulations, mio::oseir::Parameters<double>>(
         m, "ModelBase");
-    py::class_<mio::oseir::Model<double>,
-               mio::CompartmentalModel<double, mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>>(
-        m, "Model")
-        .def(py::init<>());
+    py::class_<mio::oseir::Model<double>, mio::CompartmentalModel<double, mio::oseir::InfectionState, SeirPopulations,
+                                                                  mio::oseir::Parameters<double>>>(m, "Model")
+        .def(py::init<int>(), py::arg("num_agegroups"));
 
     m.def(
         "simulate",

@@ -56,11 +56,11 @@ set(TESTSOURCES
     test_mobility_io.cpp
     test_transform_iterator.cpp
     test_metaprogramming.cpp
-    test_ide_seir.cpp
     test_history.cpp
     test_utils.cpp
     abm_helpers.h
     abm_helpers.cpp
+    test_ide_seir.cpp
     test_ide_secir.cpp
     test_state_age_function.cpp
     distributions_helpers.h
@@ -77,6 +77,7 @@ set(TESTSOURCES ${TESTSOURCES}
 test_json_serializer.cpp
 test_epi_data_io.cpp
 test_lct_parameters_io.cpp
+test_ide_parameters_io.cpp
 )
 endif()
 

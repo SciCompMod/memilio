@@ -171,6 +171,16 @@ PYBIND11_MAKE_OPAQUE(
 
 PYBIND11_MODULE(_simulation_osecirvvs, m)
 {
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("abs_tol") = 1e-14);
+
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("interpolation_times"));
+
     pymio::iterable_enum<mio::osecirvvs::InfectionState>(m, "InfectionState")
         .value("SusceptibleNaive", mio::osecirvvs::InfectionState::SusceptibleNaive)
         .value("SusceptiblePartialImmunity", mio::osecirvvs::InfectionState::SusceptiblePartialImmunity)
@@ -283,6 +293,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     //interpolate_ensemble_results
     py::bind_vector<
         std::vector<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>>(
+
         m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::osecirvvs::Simulation<>>(m, "ParameterStudy");
 
@@ -361,10 +372,13 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     m.def("interpolate_simulation_result",
           py::overload_cast<
               const mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>&>(
+
               &mio::interpolate_simulation_result<mio::osecirvvs::Simulation<>>));
 
     m.def("interpolate_ensemble_results",
+
           &mio::interpolate_ensemble_results<
+
               mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>);
 
     m.attr("__version__") = "dev";

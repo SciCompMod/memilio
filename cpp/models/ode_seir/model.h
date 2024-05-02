@@ -21,16 +21,15 @@
 #define SEIR_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
+#include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/utils/type_list.h"
-#include "memilio/epidemiology/populations.h"
-#include "memilio/io/io.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
-#include <algorithm>
-#include <iterator>
+
+#include <Eigen/Dense>
 
 namespace mio
 {
@@ -47,29 +46,49 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
 template <typename FP = ScalarType>
-class Model : public FlowModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>
+class Model
+    : public FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>
 {
-    using Base = FlowModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>;
+    using Base = FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>;
 
 public:
-    Model()
-        : Base(typename Base::Populations({InfectionState::Count}, 0.), typename Base::ParameterSet())
+    Model(int num_agegroups)
+        : Base(typename Base::Populations({AgeGroup(num_agegroups), InfectionState::Count}),
+               typename Base::ParameterSet(AgeGroup(num_agegroups)))
     {
     }
 
     void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
                    Eigen::Ref<Vector<FP>> flows) const override
     {
-        auto& params     = this->parameters;
-        double coeffStoE = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.template get<TransmissionProbabilityOnContact<FP>>() / this->populations.get_total();
+        const Index<AgeGroup> age_groups = reduce_index<Index<AgeGroup>>(this->populations.size());
+        const auto& params               = this->parameters;
 
-        flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>()] =
-            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>()] =
-            (1.0 / params.template get<TimeExposed<FP>>()) * y[(size_t)InfectionState::Exposed];
-        flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
-            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
+        for (auto j : make_index_range(age_groups)) {
+            const size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+            const size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
+            const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+            const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+
+            const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+
+            for (auto i : make_index_range(age_groups)) {
+                const size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+                const size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
+                const size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
+
+                const double coeffStoE =
+                    params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *
+                    params.template get<TransmissionProbabilityOnContact<FP>>()[i] * Nj_inv;
+
+                flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] +=
+                    coeffStoE * y[Si] * y[Ij];
+                flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(i)] =
+                    (1.0 / params.template get<TimeExposed<FP>>()[i]) * y[Ei];
+                flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(i)] =
+                    (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
+            }
+        }
     }
 
     /**
@@ -84,18 +103,54 @@ public:
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
         }
 
-        ScalarType TimeInfected = this->parameters.template get<mio::oseir::TimeInfected<FP>>();
+        auto const& params = this->parameters;
 
-        ScalarType coeffStoE = this->parameters.template get<mio::oseir::ContactPatterns>().get_matrix_at(
-                                   y.get_time(static_cast<Eigen::Index>(t_idx)))(0, 0) *
-                               this->parameters.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>() /
-                               this->populations.get_total();
+        const size_t num_groups                    = (size_t)params.get_num_groups();
+        constexpr size_t num_infected_compartments = 2;
+        const size_t total_infected_compartments   = num_infected_compartments * num_groups;
 
-        ScalarType result =
-            y.get_value(static_cast<Eigen::Index>(t_idx))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] *
-            TimeInfected * coeffStoE;
+        ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns<ScalarType>>();
 
-        return mio::success(result);
+        Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
+        Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
+
+        for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
+            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            for (auto j = AgeGroup(0); j < AgeGroup(num_groups); j++) {
+
+                double Nj    = this->populations.get_group_total(j);
+                double divNj = 1.0 / Nj;
+
+                double coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
+                                   params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * divNj;
+                F((size_t)i, (size_t)j + num_groups) = coeffStoE * y.get_value(t_idx)[Si];
+            }
+
+            double T_Ei                          = params.template get<mio::oseir::TimeExposed<ScalarType>>()[i];
+            double T_Ii                          = params.template get<mio::oseir::TimeInfected<ScalarType>>()[i];
+            V((size_t)i, (size_t)i)              = 1.0 / T_Ei;
+            V((size_t)i + num_groups, (size_t)i) = -1.0 / T_Ei;
+            V((size_t)i + num_groups, (size_t)i + num_groups) = 1.0 / T_Ii;
+        }
+
+        V = V.inverse();
+
+        Eigen::MatrixXd NextGenMatrix = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
+        NextGenMatrix                 = F * V;
+
+        //Compute the largest eigenvalue in absolute value
+        Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
+
+        ces.compute(NextGenMatrix);
+        const Eigen::VectorXcd eigen_vals = ces.eigenvalues();
+
+        Eigen::VectorXd eigen_vals_abs;
+        eigen_vals_abs.resize(eigen_vals.size());
+
+        for (int i = 0; i < eigen_vals.size(); i++) {
+            eigen_vals_abs[i] = std::abs(eigen_vals[i]);
+        }
+        return mio::success(eigen_vals_abs.maxCoeff());
     }
 
     /**
