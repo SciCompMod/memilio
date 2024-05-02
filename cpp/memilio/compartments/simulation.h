@@ -207,7 +207,6 @@ using is_compartment_model_simulation =
  * @param[in] dt Initial step size of integration.
  * @param[in] model An instance of a CompartmentalModel.
  * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
- * @tparam FP floating point type, e.g., double
  * @return A TimeSeries to represent the final Simulation result
  * @tparam FP floating point type, e.g., double
  * @tparam Model The particular Model derived from CompartmentModel to simulate.

@@ -28,16 +28,14 @@ int main()
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.5; //time step of migration, daily migration every second step
-    using FP        = ScalarType;
 
-    mio::oseir::Model<FP> model(1);
+    mio::oseir::Model<> model(1);
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 10000;
-    model.parameters.set<mio::oseir::TimeExposed<FP>>(1);
-    model.parameters.set<mio::oseir::TimeInfected<FP>>(1);
+    model.parameters.set<mio::oseir::TimeExposed<>>(1);
+    model.parameters.set<mio::oseir::TimeInfected<>>(1);
 
     // set contact matrix
-    mio::ContactMatrixGroup& contact_matrix =
-        model.parameters.get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns<>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(2.7);
 
     //two mostly identical groups
@@ -46,14 +44,14 @@ int main()
 
     //some contact restrictions in group 1
     mio::ContactMatrixGroup& contact_matrix1 =
-        model_group1.parameters.get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat();
+        model_group1.parameters.get<mio::oseir::ContactPatterns<>>().get_cont_freq_mat();
     contact_matrix1[0].add_damping(0.5, mio::SimulationTime(5));
 
     //infection starts in group 1
     model_group1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 9990;
     model_group1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 10;
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<FP, mio::oseir::Model<FP>>>, mio::MigrationEdge<FP>> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::oseir::Model<>>>, mio::MigrationEdge<>> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));
