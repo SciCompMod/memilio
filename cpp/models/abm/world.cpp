@@ -178,6 +178,11 @@ Location& World::get_individualized_location(LocationId id)
     return *m_locations[id.index];
 }
 
+Person& World::get_person(uint32_t id) const
+{
+    return *m_persons[id];
+}
+
 const Location& World::find_location(LocationType type, const Person& person) const
 {
     auto index = person.get_assigned_location_index(type);

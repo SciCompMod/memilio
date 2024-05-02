@@ -81,13 +81,14 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
 
     //std::cout << initial_infection_distribution.array() << std::endl;
-    // extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 60); // 60 days
+    //extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 90); // 90 days
 }
 
 /**
  * Assign an infection state to each person according to real world data read in through the ODE secir model.
+ * Infections are set with probabilities computed by the values in the rows in initial_infection_distribution.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
+void assign_infection_state_prob(mio::abm::World& world, mio::abm::TimePoint t)
 {
     // convert initial population to ABM initial infections
     for (auto& person : world.get_persons()) {
@@ -105,6 +106,50 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
             //}
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.parameters, t, infection_state_map.at(infection_state)));
+        }
+    }
+}
+
+/**
+ * Assign an infection state to each person according to real world data read in through the ODE secir model.
+ * Infections are set with the rounded values in the rows in initial_infection_distribution.
+ * Only works if enough persons in the all age groups exist.
+ * The number of agents in the model should fit to the sum of the rows in initial_infection_distribution,
+ * otherwise many agents will be susceptible.
+ */
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
+{
+    // save all persons with age groups
+    std::vector<std::vector<uint32_t>> persons_by_age(num_age_groupss);
+
+    for (auto& person : world.get_persons()) {
+        persons_by_age[person.get_age().get()].push_back(person.get_person_id());
+    }
+
+    for (size_t age = 0; age < num_age_groupss; ++age) {
+        auto age_slice = initial_infection_distribution.slice(mio::AgeGroup(age)).as_array().array();
+        auto age_grp   = mio::AgeGroup(age).get();
+        // Check that the world has enough persons in each age group to initialize infections.
+        // (All persons minus the susceptibles.)
+        // For lower population sizes use the same method with _prob at the end.
+        assert(age_slice.sum() - age_slice[0] <= persons_by_age[age_grp].size() &&
+               "Not enough persons to initialize with given amount of infections.");
+
+        // Iterate over all InfectionStates except the susceptibles.
+        for (auto i = 1; i < age_slice.size(); ++i) {
+            for (auto j = 0; j < std::floor(age_slice[i]); ++j) {
+                // select random person and assign Infection
+                uint32_t id_rnd          = persons_by_age[age_grp][mio::UniformIntDistribution<size_t>::get_instance()(
+                    world.get_rng(), 0U, persons_by_age[age_grp].size() - 1)];
+                mio::abm::Person& person = world.get_person(id_rnd);
+                auto rng                 = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+                person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                             world.parameters, t,
+                                                             infection_state_map.at(mio::osecir::InfectionState(i))));
+                persons_by_age[age_grp].erase(
+                    std::remove(persons_by_age[age_grp].begin(), persons_by_age[age_grp].end(), id_rnd),
+                    persons_by_age[age_grp].end());
+            }
         }
     }
 }
@@ -1133,7 +1178,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // }
 
         // Start the clock before sim.advance
-        auto start2 = std::chrono::high_resolution_clock::now();
+        // auto start2 = std::chrono::high_resolution_clock::now();
         // Advance the world to tmax
         // sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyInfectionPerAgeGroup,
         //             historyPersonInfDelta, historyInfectionStatePerAgeGroup);
