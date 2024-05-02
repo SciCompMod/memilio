@@ -28,13 +28,12 @@ int main()
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.5; //time step of migration, daily migration every second step
-    using FP        = ScalarType;
 
-    mio::oseir::Model<FP> model;
+    mio::oseir::Model<> model;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 10000;
-    model.parameters.set<mio::oseir::TimeExposed<FP>>(1);
+    model.parameters.set<mio::oseir::TimeExposed<>>(1);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.set<mio::oseir::TimeInfected<FP>>(1);
+    model.parameters.set<mio::oseir::TimeInfected<>>(1);
 
     //two mostly identical groups
     auto model_group1 = model;
@@ -45,7 +44,7 @@ int main()
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 9990;
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 10;
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<FP, mio::oseir::Model<FP>>>, mio::MigrationEdge<FP>> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::oseir::Model<>>>, mio::MigrationEdge<>> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));
