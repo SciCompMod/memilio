@@ -261,7 +261,7 @@ bool Seair_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Numbe
 bool Seair_NLP::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x, bool init_z, Ipopt::Number* z_L,
                                    Ipopt::Number* z_U, Ipopt::Index m, bool init_lambda, Ipopt::Number* lambda)
 {
-    mio::unused(init_x, z_L, z_U, m, lambda);
+    mio::unused(init_x, init_z, z_L, z_U, m, init_lambda, lambda);
     assert(init_z == false);
     assert(init_lambda == false);
 
