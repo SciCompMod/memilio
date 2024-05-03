@@ -310,10 +310,9 @@ public:
 
             flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
                                       InfectionState::TemporaryImmunImprovedImmunity>({i})] =
-                std::min(
-                    y[SNi] -
-                        flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::ExposedNaive>({i})],
-                    booster_vacc);
+                std::min(y[SIIi] - flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
+                                                             InfectionState::ExposedImprovedImmunity>({i})],
+                         booster_vacc);
 
             // ICU capacity shortage is close
             // TODO: if this is used with vaccination model, it has to be adapted if CriticalPerSevere
