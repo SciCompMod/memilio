@@ -22,7 +22,7 @@
 
 #include "memilio/utils/compiler_diagnostics.h"
 
-/* disable warnings of odint.hpp */
+/* disable warnings of odeint.hpp */
 
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wdeprecated-declarations")
@@ -33,7 +33,7 @@ GCC_CLANG_DIAGNOSTIC(pop)
 
 /**
  * This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
- * algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp 
+ * algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp. 
  */
 
 using ad_forward_t = typename ad::gt1s<double>::type; // AD data type for scalar forward mode
@@ -63,7 +63,7 @@ int main()
     state_type x(2);
     x[0]                 = 1.0; // start at x=1.0, p=0.0
     x[1]                 = 0.0;
-    ad::derivative(x[0]) = 1.0; // compute derivitive with respect to x[0] (scalar tangent-linear mode)
+    ad::derivative(x[0]) = 1.0; // compute derivative with respect to x[0] (scalar tangent-linear mode)
 
     auto t0    = time_type(0.0);
     auto t_end = time_type(10.0);
