@@ -2,7 +2,7 @@
 #define AD_SPDLOG_FORMATTER_H
 
 #include "ad/ad.hpp"
-#include "spdlog/fmt/bundled/format.h"
+#include "memilio/utils/logging.h"
 
 template <>
 struct fmt::formatter<ad::gt1s<double>::type> {
