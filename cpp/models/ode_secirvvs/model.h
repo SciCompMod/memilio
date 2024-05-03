@@ -265,53 +265,55 @@ public:
             }
 
             // vaccinations
-            auto t_idx = SimulationDay((size_t)t);
-            if (t_idx > SimulationDay(0)) {
-                auto t_m1 = SimulationDay((size_t)t - 1);
-                double first_vacc;
-                double full_vacc;
-                double booster_vacc;
+            const auto t_idx = SimulationDay((size_t)t);
 
-                first_vacc = params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] -
-                             params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_m1}];
-                full_vacc = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
-                            params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_m1}];
-                booster_vacc = params.template get<DailyBoosterVaccination>()[{(AgeGroup)i, t_idx}] -
-                               params.template get<DailyBoosterVaccination>()[{(AgeGroup)i, t_m1}];
+            // Calculates the number of vaccinations per layer for a specific day and age group.
+            // If the size of the `DailyPartialVaccination` array is smaller than the current day t then zero is returned.
+            // Otherwise, we differentiate between greater and equal SimulationDay(0) since the numbers are accumulated.
+            double first_vacc =
+                static_cast<size_t>(params.get<DailyPartialVaccination>().size<SimulationDay>()) > (size_t)t
+                    ? (t_idx > SimulationDay(0) ? params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] -
+                                                      params.template get<DailyPartialVaccination>()[{
+                                                          (AgeGroup)i, SimulationDay((size_t)t - 1)}]
+                                                : params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}])
+                    : 0;
 
-                double first_vaccinations =
-                    (y[SNi] - flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::ExposedNaive>(
-                                  {i})] <
-                     first_vacc)
-                        ? y[SNi] -
-                              flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::ExposedNaive>(
-                                  {i})]
-                        : first_vacc;
+            double full_vacc =
+                static_cast<size_t>(params.get<DailyFullVaccination>().size<SimulationDay>()) > (size_t)t
+                    ? (t_idx > SimulationDay(0)
+                           ? params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
+                                 params
+                                     .template get<DailyFullVaccination>()[{(AgeGroup)i, SimulationDay((size_t)t - 1)}]
+                           : params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}])
+                    : 0;
 
-                double second_vaccinations =
-                    (y[SPIi] - flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
-                                                         InfectionState::ExposedPartialImmunity>({i})] <
-                     full_vacc)
-                        ? y[SPIi] - flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
-                                                              InfectionState::ExposedPartialImmunity>({i})]
-                        : full_vacc;
-                flows[get_flat_flow_index<InfectionState::SusceptibleNaive,
-                                          InfectionState::TemporaryImmunPartialImmunity>({i})] = first_vaccinations;
+            double booster_vacc =
+                static_cast<size_t>(params.get<DailyBoosterVaccination>().size<SimulationDay>()) > (size_t)t
+                    ? (t_idx > SimulationDay(0) ? params.template get<DailyBoosterVaccination>()[{(AgeGroup)i, t_idx}] -
+                                                      params.template get<DailyBoosterVaccination>()[{
+                                                          (AgeGroup)i, SimulationDay((size_t)t - 1)}]
+                                                : params.template get<DailyBoosterVaccination>()[{(AgeGroup)i, t_idx}])
+                    : 0;
 
-                flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
-                                          InfectionState::TemporaryImmunImprovedImmunity>({i})] = second_vaccinations;
+            flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::TemporaryImmunPartialImmunity>(
+                {i})] =
+                std::min(
+                    y[SNi] -
+                        flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::ExposedNaive>({i})],
+                    first_vacc);
 
-                double third_vaccinations =
-                    (y[SIIi] - flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
-                                                         InfectionState::ExposedImprovedImmunity>({i})] <
-                     booster_vacc)
-                        ? y[SIIi] - flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
-                                                              InfectionState::ExposedImprovedImmunity>({i})]
-                        : booster_vacc;
+            flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
+                                      InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                std::min(y[SPIi] - flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
+                                                             InfectionState::ExposedPartialImmunity>({i})],
+                         full_vacc);
 
-                flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
-                                          InfectionState::TemporaryImmunImprovedImmunity>({i})] = third_vaccinations;
-            }
+            flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
+                                      InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                std::min(
+                    y[SNi] -
+                        flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::ExposedNaive>({i})],
+                    booster_vacc);
 
             // ICU capacity shortage is close
             // TODO: if this is used with vaccination model, it has to be adapted if CriticalPerSevere
@@ -379,7 +381,9 @@ public:
                                       InfectionState::TemporaryImmunPartialImmunity>({i})] =
                 (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
 
-            // TemporaryImmunPartialImmunity
+            // Waning immunity
+            flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity, InfectionState::SusceptibleNaive>(
+                {i})] = 1 / params.get<TimeWaningPartialImmunity>()[i] * y[SPIi];
             flows[get_flat_flow_index<InfectionState::TemporaryImmunPartialImmunity,
                                       InfectionState::SusceptiblePartialImmunity>({i})] =
                 1 / params.get<TimeTemporaryImmunityPI>()[i] * y[TImm1];
@@ -550,14 +554,11 @@ public:
                      params.get<DeathsPerCritical>()[i]) /
                 params.get<TimeInfectedCritical>()[i] * y[ICrIIi];
 
-            // TemporaryImmunImprovedImmunity
+            // Waning immunity
             flows[get_flat_flow_index<InfectionState::TemporaryImmunImprovedImmunity,
                                       InfectionState::SusceptibleImprovedImmunity>({i})] =
                 1 / params.get<TimeTemporaryImmunityII>()[i] * y[TImm2];
 
-            // waning
-            flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity, InfectionState::SusceptibleNaive>(
-                {i})] = 1 / params.get<TimeWaningPartialImmunity>()[i] * y[SPIi];
             flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
                                       InfectionState::SusceptiblePartialImmunity>({i})] =
                 1 / params.get<TimeWaningImprovedImmunity>()[i] * y[SIIi];
@@ -593,7 +594,7 @@ public:
             },
             par, pop);
     }
-};
+}; // namespace osecirvvs
 
 //forward declaration, see below.
 template <class BaseT = mio::Simulation<Model>>

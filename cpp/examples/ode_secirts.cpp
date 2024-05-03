@@ -31,7 +31,7 @@ int main()
     double tmax = 100;
     double dt   = 0.1;
 
-    mio::log_info("Simulating SECIRVVS; t={} ... {} with dt = {}.", t0, tmax, dt);
+    mio::log_info("Simulating SECIRTS; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::osecirvvs::Model model(3);
     auto nb_groups = model.parameters.get_num_groups();
