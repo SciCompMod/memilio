@@ -126,7 +126,6 @@ def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("sim")
-    arg_dict['moving_average'] = 7
     get_simulation_data(**arg_dict)
 
 
