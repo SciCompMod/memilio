@@ -19,17 +19,7 @@
 */
 
 #include "ad/ad.hpp"
-
-#include "memilio/utils/compiler_diagnostics.h"
-
-/* disable warnings of odeint.hpp */
-
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wdeprecated-declarations")
-
 #include "boost/numeric/odeint.hpp"
-
-GCC_CLANG_DIAGNOSTIC(pop)
 
 /**
  * This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
