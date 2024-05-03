@@ -28,21 +28,20 @@ namespace mio
 namespace abm
 {
 
-
 /**
  * @brief Mode of Transport.
  */
 enum class TransportMode : uint32_t
 {
-    Bike = 0,
+    Unknown = 0,
+    Bike,
     CarDriver,
     CarPassenger,
     PublicTransport,
     Walking,
-    Other,
-    Unknown
-};
+    Other
 
+};
 
 /**
  * @brief Type of the activity.
