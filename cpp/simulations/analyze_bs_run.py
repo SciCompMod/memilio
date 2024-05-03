@@ -64,19 +64,35 @@ def main(path, n_runs):
 
 
 def plot_infection_per_location_type(df):
-    # df.plot.area(x='Time', y=['Home', 'Work', 'School', 'SocialEvent', 'BasicsShop'], stacked=True, figsize=(10, 6))
+    # Calculate moving average for all location types
+    df['MA_Home'] = df.Home.rolling(10, min_periods=1).mean()
+    df['MA_Work'] = df.Work.rolling(10, min_periods=1).mean()
+    df['MA_School'] = df.School.rolling(10, min_periods=1).mean()
+    df['MA_SocialEvent'] = df.SocialEvent.rolling(10, min_periods=1).mean()
+    df['MA_BasicsShop'] = df.BasicsShop.rolling(10, min_periods=1).mean()
+    df['MA_Hospital'] = df.Hospital.rolling(10, min_periods=1).mean()
+    df['MA_ICU'] = df.ICU.rolling(10, min_periods=1).mean()
+    df['MA_Car'] = df.Car.rolling(10, min_periods=1).mean()
+    df['MA_PublicTransport'] = df.PublicTransport.rolling(
+        10, min_periods=1).mean()
+    df['MA_Cemetery'] = df.Cemetery.rolling(10, min_periods=1).mean()
 
-    fig, axs = plt.subplots(5, 2, constrained_layout=True)
-    df.plot(x='Time', y='Home', color='tab:blue', ax=axs[0, 0])
-    df.plot(x='Time', y='Work', color='tab:green', ax=axs[0, 1])
-    df.plot(x='Time', y='School', color='tab:red', ax=axs[1, 0])
-    df.plot(x='Time', y='SocialEvent', color='tab:orange', ax=axs[1, 1])
-    df.plot(x='Time', y='BasicsShop', color='tab:purple', ax=axs[2, 0])
-    df.plot(x='Time', y='Hospital', color='tab:brown', ax=axs[2, 1])
-    df.plot(x='Time', y='ICU', color='tab:pink', ax=axs[3, 0])
-    df.plot(x='Time', y='Car', color='tab:gray', ax=axs[3, 1])
-    df.plot(x='Time', y='PublicTransport', color='tab:olive', ax=axs[4, 0])
-    df.plot(x='Time', y='Cemetery', color='tab:cyan', ax=axs[4, 1])
+    df.plot(x='Time', y=['MA_Home', 'MA_Work', 'MA_School', 'MA_SocialEvent', 'MA_BasicsShop',
+            'MA_Hospital', 'MA_ICU', 'MA_Car', 'MA_PublicTransport', 'MA_Cemetery'], figsize=(10, 6))
+
+    # Subplots of individual location types
+    # fig, axs = plt.subplots(5, 2, constrained_layout=True)
+    # df.plot(x='Time', y='MA_Home', color='tab:blue', ax=axs[0, 0])
+    # df.plot(x='Time', y='MA_Work', color='tab:green', ax=axs[0, 1])
+    # df.plot(x='Time', y='MA_School', color='tab:red', ax=axs[1, 0])
+    # df.plot(x='Time', y='MA_SocialEvent', color='tab:orange', ax=axs[1, 1])
+    # df.plot(x='Time', y='MA_BasicsShop', color='tab:purple', ax=axs[2, 0])
+    # df.plot(x='Time', y='MA_Hospital', color='tab:brown', ax=axs[2, 1])
+    # df.plot(x='Time', y='MA_ICU', color='tab:pink', ax=axs[3, 0])
+    # df.plot(x='Time', y='MA_Car', color='tab:gray', ax=axs[3, 1])
+    # df.plot(x='Time', y='MA_PublicTransport', color='tab:olive', ax=axs[4, 0])
+    # df.plot(x='Time', y='MA_Cemetery', color='tab:cyan', ax=axs[4, 1])
+
     plt.show()
 
 
