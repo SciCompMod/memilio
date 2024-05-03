@@ -51,7 +51,7 @@ int main()
     ad::derivative(a1_x) = 0.0; // for reverse-mode the seed has to be set to zero
     ad::ga1s<double>::global_tape->register_variable(a1_x); // register input variable
     ad::ga1s<double>::type a1_y = square(a1_x);
-    std::cout << "value of square(" << ad::value(a1_x) << ") is " << ad::value(t1_y) << std::endl;
+    std::cout << "value of square(" << ad::value(a1_x) << ") is " << ad::value(a1_y) << std::endl;
     ad::ga1s<double>::global_tape->register_output_variable(a1_y);
     ad::derivative(a1_y) = 1.0;
     ad::ga1s<double>::global_tape
