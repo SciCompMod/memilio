@@ -20,11 +20,11 @@ env:
   PUBLICENV: 
     compiler-version:
       gcc:
-        min: "9"
-        latest: "11"
+        min: 9
+        latest: 11
       clang:
-        min: "6.0"
-        latest: "14"
+        min: 6.0
+        latest: 14
 
 jobs:
   pre-commit:
