@@ -56,7 +56,7 @@ public:
     {
         auto& params = this->parameters;
 
-        const auto pop_total = pop.sum() - pop[(size_t)InfectionState::ObjectiveFunction];
+        const auto pop_total = pop.sum();
 
         auto& alpha_a          = params.template get<AlphaA<FP>>();
         auto& alpha_i          = params.template get<AlphaI<FP>>();
@@ -81,7 +81,6 @@ public:
         dydt[(size_t)InfectionState::Infected]          = kappa * a - beta * i - mu * i;
         dydt[(size_t)InfectionState::Recovered]         = rho * a + beta * i - gamma * r;
         dydt[(size_t)InfectionState::Perished]          = mu * i;
-        dydt[(size_t)InfectionState::ObjectiveFunction] = 1 - alpha_i - alpha_a + 0.1 * kappa;
     }
 };
 

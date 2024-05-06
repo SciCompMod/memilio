@@ -117,17 +117,14 @@ void set_initial_values(mio::oseair::Model<FP>& model)
     const double N = Seair_NLP::N; // total population of the United States
 
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] =
-        0.9977558755803503;
+        0.9977558755803503 * N;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}] =
-        0.0003451395725394549;
+        0.0003451395725394549 * N;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] =
-        0.00037846880968213874;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}] =
-        (337072.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] =
-        (17448.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}] = (9619.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::ObjectiveFunction)}] = 0.0;
+        0.00037846880968213874 * N;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = 337072.0;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = 17448.0;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]  = 9619.0;
 }
 
 template <typename FP>
@@ -145,10 +142,13 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
 
     set_initial_values(model);
     int gridindex = 0;
+    objective     = 0.0;
     for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
         model.parameters.template get<mio::oseair::AlphaA<FP>>() = x[controlIndex];
         model.parameters.template get<mio::oseair::AlphaI<FP>>() = x[controlIndex + numControlIntervals_];
         model.parameters.template get<mio::oseair::Kappa<FP>>()  = x[controlIndex + 2 * numControlIntervals_];
+        objective += pcresolution_ * (-x[controlIndex] - x[controlIndex + numControlIntervals_] +
+                                      0.1 * x[controlIndex + 2 * numControlIntervals_]);
 
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
 
@@ -156,9 +156,6 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
 
             for (int j = 0; j < (int)mio::oseair::InfectionState::Count; ++j) {
                 model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
-            }
-            if (gridindex == numIntervals_ - 1) {
-                objective = result.get_last_value()[(int)mio::oseair::InfectionState::ObjectiveFunction] - (tmax - t0);
             }
             constraints[gridindex] = result.get_last_value()[(int)mio::oseair::InfectionState::Infected];
         }
@@ -253,7 +250,7 @@ bool Seair_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Numbe
     // path constraints
     for (int i = 0; i < m_; ++i) {
         g_l[i] = 0.0;
-        g_u[i] = 1e6 / N;
+        g_u[i] = 1e6;
     }
     return true;
 }

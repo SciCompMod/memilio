@@ -45,17 +45,14 @@ void set_initial_values(mio::oseair::Model<FP>& model)
     const double N = 327167434; // total population of the United States
 
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] =
-        0.9977558755803503;
+        0.9977558755803503 * N;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}] =
-        0.0003451395725394549;
+        0.0003451395725394549 * N;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] =
-        0.00037846880968213874;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}] =
-        (337072.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] =
-        (17448.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}] = (9619.0 / N);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::ObjectiveFunction)}] = 0.0;
+        0.00037846880968213874 * N;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = 337072.0;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = 17448.0;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]  = 9619.0;
 }
 
 int main()
