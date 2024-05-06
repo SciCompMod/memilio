@@ -41,7 +41,7 @@ namespace oseair
  * @brief Social distancing.
  */
 template <typename FP = double>
-struct AlphaA {
+struct SocialDistancing {
     using Type = FP;
     static Type get_default()
     {
@@ -49,7 +49,7 @@ struct AlphaA {
     }
     static std::string name()
     {
-        return "AlphaA";
+        return "SocialDistancing";
     }
 };
 
@@ -57,7 +57,7 @@ struct AlphaA {
  * @brief Quarantining.
  */
 template <typename FP = double>
-struct AlphaI {
+struct Quarantined {
     using Type = FP;
     static Type get_default()
     {
@@ -65,7 +65,7 @@ struct AlphaI {
     }
     static std::string name()
     {
-        return "AlphaI";
+        return "Quarantined";
     }
 };
 
@@ -73,7 +73,7 @@ struct AlphaI {
  * @brief Rate of testing.
  */
 template <typename FP = double>
-struct Kappa {
+struct TestingRate {
     using Type = FP;
     static Type get_default()
     {
@@ -81,7 +81,7 @@ struct Kappa {
     }
     static std::string name()
     {
-        return "Kappa";
+        return "TestingRate";
     }
 };
 
@@ -89,7 +89,7 @@ struct Kappa {
  * @brief Recovery rate.
  */
 template <typename FP = double>
-struct Beta {
+struct RecoveryRate {
     using Type = FP;
     static Type get_default()
     {
@@ -97,7 +97,7 @@ struct Beta {
     }
     static std::string name()
     {
-        return "Beta";
+        return "RecoveryRate";
     }
 };
 
@@ -105,7 +105,7 @@ struct Beta {
  * @brief Death Rate.
  */
 template <typename FP = double>
-struct Mu {
+struct DeathRate {
     using Type = FP;
     static Type get_default()
     {
@@ -113,7 +113,7 @@ struct Mu {
     }
     static std::string name()
     {
-        return "Mu";
+        return "DeathRate";
     }
 };
 
@@ -121,7 +121,7 @@ struct Mu {
  * @brief Inverse of the latent period of the virus.
  */
 template <typename FP = double>
-struct TLatentInverse {
+struct TimeExposed {
     using Type = FP;
     static Type get_default()
     {
@@ -129,7 +129,7 @@ struct TLatentInverse {
     }
     static std::string name()
     {
-        return "TLatentInverse";
+        return "TimeExposed";
     }
 };
 
@@ -137,7 +137,7 @@ struct TLatentInverse {
  * @brief Infectious period for unconfirmed infected people.
  */
 template <typename FP = double>
-struct Rho {
+struct RecoveryRateFromAsymptomatic {
     using Type = FP;
     static Type get_default()
     {
@@ -145,7 +145,7 @@ struct Rho {
     }
     static std::string name()
     {
-        return "Rho";
+        return "RecoveryRateFromAsymptomatic";
     }
 };
 
@@ -153,7 +153,7 @@ struct Rho {
  * @brief Rate recovered people become susceptible again.
  */
 template <typename FP = double>
-struct Gamma {
+struct TimeRecoveredInv {
     using Type = FP;
     static Type get_default()
     {
@@ -161,13 +161,14 @@ struct Gamma {
     }
     static std::string name()
     {
-        return "Gamma";
+        return "TimeRecoveredInv";
     }
 };
 
 template <typename FP = double>
 using ParametersBase =
-    ParameterSet<AlphaA<FP>, AlphaI<FP>, Kappa<FP>, Beta<FP>, Mu<FP>, TLatentInverse<FP>, Rho<FP>, Gamma<FP>>;
+    ParameterSet<SocialDistancing<FP>, Quarantined<FP>, TestingRate<FP>, RecoveryRate<FP>, DeathRate<FP>,
+                 TimeExposed<FP>, RecoveryRateFromAsymptomatic<FP>, TimeRecoveredInv<FP>>;
 
 /**
  * @brief Parameters of an SEAIR model.

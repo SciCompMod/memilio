@@ -81,9 +81,9 @@ public:
                                    const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* ip_cq) override;
 
     bool intermediate_callback(Ipopt::AlgorithmMode mode, Ipopt::Index iter, Ipopt::Number obj_value,
-                               Ipopt::Number inf_pr, Ipopt::Number inf_du, Ipopt::Number mu, Ipopt::Number d_norm,
-                               Ipopt::Number regularization_size, Ipopt::Number alpha_du, Ipopt::Number alpha_pr,
-                               Ipopt::Index ls_trials, const Ipopt::IpoptData* ip_data,
+                               Ipopt::Number inf_pr, Ipopt::Number inf_du, Ipopt::Number DeathRate,
+                               Ipopt::Number d_norm, Ipopt::Number regularization_size, Ipopt::Number alpha_du,
+                               Ipopt::Number alpha_pr, Ipopt::Index ls_trials, const Ipopt::IpoptData* ip_data,
                                Ipopt::IpoptCalculatedQuantities* ip_cq) override;
 
     template <typename FP = double>
@@ -144,9 +144,9 @@ void Seair_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
     int gridindex = 0;
     objective     = 0.0;
     for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
-        model.parameters.template get<mio::oseair::AlphaA<FP>>() = x[controlIndex];
-        model.parameters.template get<mio::oseair::AlphaI<FP>>() = x[controlIndex + numControlIntervals_];
-        model.parameters.template get<mio::oseair::Kappa<FP>>()  = x[controlIndex + 2 * numControlIntervals_];
+        model.parameters.template get<mio::oseair::SocialDistancing<FP>>() = x[controlIndex];
+        model.parameters.template get<mio::oseair::Quarantined<FP>>()      = x[controlIndex + numControlIntervals_];
+        model.parameters.template get<mio::oseair::TestingRate<FP>>()      = x[controlIndex + 2 * numControlIntervals_];
         objective += pcresolution_ * (-x[controlIndex] - x[controlIndex + numControlIntervals_] +
                                       0.1 * x[controlIndex + 2 * numControlIntervals_]);
 
@@ -183,7 +183,7 @@ int main()
     // Note: The following choices are only examples, they might not be
     //       suitable for your optimization problem.
     app->Options()->SetNumericValue("tol", 1e-6);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
+    app->Options()->SetStringValue("DeathRate_strategy", "adaptive");
     app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("limited_memory_update_type", "bfgs");
@@ -237,14 +237,14 @@ bool Seair_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Numbe
                                 Ipopt::Number* g_l, Ipopt::Number* g_u)
 {
     mio::unused(n, m);
-    // controls order: 1. alpha_a, 2. alpha_i, 3. kappa
+    // controls order: 1. SocialDistancing, 2. Quarantined, 3. TestingRate
     for (int i = 0; i < numControlIntervals_; ++i) {
-        x_l[i]                            = 0.05; // lower bound of alpha_a
-        x_u[i]                            = 0.5; // upper bound of alpha_a
-        x_l[i + numControlIntervals_]     = 0.01; // lower bound of alpha_i
-        x_u[i + numControlIntervals_]     = 0.3; // upper bound of alpha_i
-        x_l[i + 2 * numControlIntervals_] = 0.15; // lower bound of kappa
-        x_u[i + 2 * numControlIntervals_] = 0.3; // upper bound of kappa
+        x_l[i]                            = 0.05; // lower bound of SocialDistancing
+        x_u[i]                            = 0.5; // upper bound of SocialDistancing
+        x_l[i + numControlIntervals_]     = 0.01; // lower bound of Quarantined
+        x_u[i + numControlIntervals_]     = 0.3; // upper bound of Quarantined
+        x_l[i + 2 * numControlIntervals_] = 0.15; // lower bound of TestingRate
+        x_u[i + 2 * numControlIntervals_] = 0.3; // upper bound of TestingRate
     }
 
     // path constraints
@@ -376,35 +376,39 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
     mio::oseair::Model<FP> model;
 
     //open files for parameter output
-    std::ofstream outFileAlphaA("alpha_a.txt");
-    std::ofstream outFileAlphaI("alpha_i.txt");
-    std::ofstream outFileKappa("kappa.txt");
+    std::ofstream outFileSocialDistancing("SocialDistancing.txt");
+    std::ofstream outFileQuarantined("Quarantined.txt");
+    std::ofstream outFileTestingRate("TestingRate.txt");
 
     //open files for state output
-    std::ofstream outFileS("s.txt");
-    std::ofstream outFileE("e.txt");
-    std::ofstream outFileA("a.txt");
-    std::ofstream outFileI("i.txt");
-    std::ofstream outFileR("r.txt");
-    std::ofstream outFileP("p.txt");
+    std::ofstream outFileSusceptible("Susceptible.txt");
+    std::ofstream outFileExposed("Exposed.txt");
+    std::ofstream outFileAsymptomatic("Asymptomatic.txt");
+    std::ofstream outFileInfected("Infected.txt");
+    std::ofstream outFileRecovered("Recovered.txt");
+    std::ofstream outFileDead("Dead.txt");
 
     set_initial_values(model);
     int gridindex = 0;
     for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
-        model.parameters.template get<mio::oseair::AlphaA<FP>>() = x[controlIndex];
-        model.parameters.template get<mio::oseair::AlphaI<FP>>() = x[controlIndex + numControlIntervals_];
-        model.parameters.template get<mio::oseair::Kappa<FP>>()  = x[controlIndex + 2 * numControlIntervals_];
+        model.parameters.template get<mio::oseair::SocialDistancing<FP>>() = x[controlIndex];
+        model.parameters.template get<mio::oseair::Quarantined<FP>>()      = x[controlIndex + numControlIntervals_];
+        model.parameters.template get<mio::oseair::TestingRate<FP>>()      = x[controlIndex + 2 * numControlIntervals_];
 
-        outFileAlphaA << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaA<FP>>() << "\n";
-        outFileAlphaI << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaI<FP>>() << "\n";
-        outFileKappa << grid[gridindex] << " " << model.parameters.template get<mio::oseair::Kappa<FP>>() << "\n";
+        outFileSocialDistancing << grid[gridindex] << " "
+                                << model.parameters.template get<mio::oseair::SocialDistancing<FP>>() << "\n";
+        outFileQuarantined << grid[gridindex] << " " << model.parameters.template get<mio::oseair::Quarantined<FP>>()
+                           << "\n";
+        outFileTestingRate << grid[gridindex] << " " << model.parameters.template get<mio::oseair::TestingRate<FP>>()
+                           << "\n";
 
-        outFileS << grid[gridindex] << " " << model.populations[{Idx(IS::Susceptible)}] * N / 1000.0 << "\n";
-        outFileE << grid[gridindex] << " " << model.populations[{Idx(IS::Exposed)}] * N / 1000.0 << "\n";
-        outFileA << grid[gridindex] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0 << "\n";
-        outFileI << grid[gridindex] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
-        outFileR << grid[gridindex] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0 << "\n";
-        outFileP << grid[gridindex] << " " << model.populations[{Idx(IS::Dead)}] * N / 1000.0 << "\n";
+        outFileSusceptible << grid[gridindex] << " " << model.populations[{Idx(IS::Susceptible)}] * N / 1000.0 << "\n";
+        outFileExposed << grid[gridindex] << " " << model.populations[{Idx(IS::Exposed)}] * N / 1000.0 << "\n";
+        outFileAsymptomatic << grid[gridindex] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0
+                            << "\n";
+        outFileInfected << grid[gridindex] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
+        outFileRecovered << grid[gridindex] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0 << "\n";
+        outFileDead << grid[gridindex] << " " << model.populations[{Idx(IS::Dead)}] * N / 1000.0 << "\n";
 
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
 
@@ -413,40 +417,47 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
             for (int j = 0; j < (int)mio::oseair::InfectionState::Count; ++j) {
                 model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
             }
-            outFileS << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Susceptible)}] * N / 1000.0 << "\n";
-            outFileE << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Exposed)}] * N / 1000.0 << "\n";
-            outFileA << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0 << "\n";
-            outFileI << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
-            outFileR << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0 << "\n";
-            outFileP << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Dead)}] * N / 1000.0 << "\n";
+            outFileSusceptible << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Susceptible)}] * N / 1000.0
+                               << "\n";
+            outFileExposed << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Exposed)}] * N / 1000.0 << "\n";
+            outFileAsymptomatic << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0
+                                << "\n";
+            outFileInfected << grid[gridindex + 1] << " "
+                            << model.outFileSocialDistancingpopulations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
+            outFileRecovered << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0
+                             << "\n";
+            outFileDead << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Dead)}] * N / 1000.0 << "\n";
         }
 
-        outFileAlphaA << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaA<FP>>() << "\n";
-        outFileAlphaI << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaI<FP>>() << "\n";
-        outFileKappa << grid[gridindex] << " " << model.parameters.template get<mio::oseair::Kappa<FP>>() << "\n";
+        outFileSocialDistancing << grid[gridindex] << " "
+                                << model.parameters.template get<mio::oseair::SocialDistancing<FP>>() << "\n";
+        outFileQuarantined << grid[gridindex] << " " << model.parameters.template get<mio::oseair::Quarantined<FP>>()
+                           << "\n";
+        outFileTestingRate << grid[gridindex] << " " << model.parameters.template get<mio::oseair::TestingRate<FP>>()
+                           << "\n";
     }
 
     //close files
-    outFileAlphaA.close();
-    outFileAlphaI.close();
-    outFileKappa.close();
-    outFileS.close();
-    outFileE.close();
-    outFileA.close();
-    outFileI.close();
-    outFileR.close();
-    outFileP.close();
+    outFileSocialDistancing.close();
+    outFileQuarantined.close();
+    outFileTestingRate.close();
+    outFileSusceptible.close();
+    outFileExposed.close();
+    outFileAsymptomatic.close();
+    outFileInfected.close();
+    outFileRecovered.close();
+    outFileDead.close();
 
     return;
 }
 
 bool Seair_NLP::intermediate_callback(Ipopt::AlgorithmMode mode, Ipopt::Index iter, Ipopt::Number obj_value,
-                                      Ipopt::Number inf_pr, Ipopt::Number inf_du, Ipopt::Number mu,
+                                      Ipopt::Number inf_pr, Ipopt::Number inf_du, Ipopt::Number DeathRate,
                                       Ipopt::Number d_norm, Ipopt::Number regularization_size, Ipopt::Number alpha_du,
                                       Ipopt::Number alpha_pr, Ipopt::Index ls_trials, const Ipopt::IpoptData* ip_data,
                                       Ipopt::IpoptCalculatedQuantities* ip_cq)
 {
-    mio::unused(mode, iter, obj_value, inf_pr, inf_du, mu, d_norm, regularization_size, alpha_du, alpha_pr, ls_trials,
-                ip_data, ip_cq);
+    mio::unused(mode, iter, obj_value, inf_pr, inf_du, DeathRate, d_norm, regularization_size, alpha_du, alpha_pr,
+                ls_trials, ip_data, ip_cq);
     return true;
 }

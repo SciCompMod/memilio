@@ -18,11 +18,6 @@
 * limitations under the License.
 */
 
-/* This model is an extented SEIR type model of the COVID-19 pandemic in the US
- * that also includes asymptomatic and dead people.
- * A detailed description of the model can be found in the publication
- * Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak */
-
 #ifndef ODESEAIR_MODEL_H
 #define ODESEAIR_MODEL_H
 
@@ -37,9 +32,6 @@ namespace mio
 namespace oseair
 {
 
-/********************
- * define the model *
- ********************/
 template <typename FP = ScalarType>
 class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
 {
@@ -54,36 +46,35 @@ public:
     void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP /* t */,
                          Eigen::Ref<Vector<FP>> dydt) const override
     {
-        auto& params = this->parameters;
-
+        auto& params         = this->parameters;
         const auto pop_total = pop.sum();
 
-        auto& alpha_a          = params.template get<AlphaA<FP>>();
-        auto& alpha_i          = params.template get<AlphaI<FP>>();
-        auto& kappa            = params.template get<Kappa<FP>>();
-        auto& beta             = params.template get<Beta<FP>>();
-        auto& mu               = params.template get<Mu<FP>>();
-        auto& t_latent_inverse = params.template get<TLatentInverse<FP>>();
-        auto& rho              = params.template get<Rho<FP>>();
-        auto& gamma            = params.template get<Gamma<FP>>();
-
         dydt[(size_t)InfectionState::Susceptible] =
-            -alpha_a / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Asymptomatic] -
-            alpha_i / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
-            gamma * y[(size_t)InfectionState::Recovered];
+            -params.template get<SocialDistancing<FP>>() / pop_total * y[(size_t)InfectionState::Susceptible] *
+                pop[(size_t)InfectionState::Asymptomatic] -
+            params.template get<Quarantined<FP>>() / pop_total * y[(size_t)InfectionState::Susceptible] *
+                pop[(size_t)InfectionState::Infected] +
+            params.template get<TimeRecoveredInv<FP>>() * y[(size_t)InfectionState::Recovered];
         dydt[(size_t)InfectionState::Exposed] =
 
-            alpha_a / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Asymptomatic] +
-            alpha_i / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            t_latent_inverse * y[(size_t)InfectionState::Exposed];
-        dydt[(size_t)InfectionState::Asymptomatic] = t_latent_inverse * y[(size_t)InfectionState::Exposed] -
-                                                     (kappa + rho) * y[(size_t)InfectionState::Asymptomatic];
+            params.template get<SocialDistancing<FP>>() / pop_total * y[(size_t)InfectionState::Susceptible] *
+                pop[(size_t)InfectionState::Asymptomatic] +
+            params.template get<Quarantined<FP>>() / pop_total * y[(size_t)InfectionState::Susceptible] *
+                pop[(size_t)InfectionState::Infected] -
+            y[(size_t)InfectionState::Exposed] / params.template get<TimeExposed<FP>>();
+        dydt[(size_t)InfectionState::Asymptomatic] =
+            y[(size_t)InfectionState::Exposed] / params.template get<TimeExposed<FP>>() -
+            (params.template get<TestingRate<FP>>() + params.template get<RecoveryRateFromAsymptomatic<FP>>()) *
+                y[(size_t)InfectionState::Asymptomatic];
         dydt[(size_t)InfectionState::Infected] =
-            kappa * y[(size_t)InfectionState::Asymptomatic] - (beta + mu) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] = rho * y[(size_t)InfectionState::Asymptomatic] +
-                                                  beta * y[(size_t)InfectionState::Infected] -
-                                                  gamma * y[(size_t)InfectionState::Recovered];
-        dydt[(size_t)InfectionState::Dead] = mu * y[(size_t)InfectionState::Infected];
+            params.template get<TestingRate<FP>>() * y[(size_t)InfectionState::Asymptomatic] -
+            (params.template get<RecoveryRate<FP>>() + params.template get<DeathRate<FP>>()) *
+                y[(size_t)InfectionState::Infected];
+        dydt[(size_t)InfectionState::Recovered] =
+            params.template get<RecoveryRateFromAsymptomatic<FP>>() * y[(size_t)InfectionState::Asymptomatic] +
+            params.template get<RecoveryRate<FP>>() * y[(size_t)InfectionState::Infected] -
+            params.template get<TimeRecoveredInv<FP>>() * y[(size_t)InfectionState::Recovered];
+        dydt[(size_t)InfectionState::Dead] = params.template get<DeathRate<FP>>() * y[(size_t)InfectionState::Infected];
     }
 };
 

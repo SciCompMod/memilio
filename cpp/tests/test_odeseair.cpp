@@ -58,14 +58,14 @@ protected:
             model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] -
             model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}];
 
-        model.parameters.set<mio::oseair::AlphaA<double>>(.5);
-        model.parameters.set<mio::oseair::AlphaI<double>>(.5);
-        model.parameters.get<mio::oseair::Kappa<double>>()          = 1.;
-        model.parameters.get<mio::oseair::Beta<double>>()           = 1.;
-        model.parameters.get<mio::oseair::Mu<double>>()             = 1.;
-        model.parameters.get<mio::oseair::TLatentInverse<double>>() = 1.;
-        model.parameters.get<mio::oseair::Rho<double>>()            = 1.;
-        model.parameters.get<mio::oseair::Gamma<double>>()          = 1.;
+        model.parameters.set<mio::oseair::SocialDistancing<double>>(.5);
+        model.parameters.set<mio::oseair::Quarantined<double>>(.5);
+        model.parameters.get<mio::oseair::TestingRate<double>>()                  = 1.;
+        model.parameters.get<mio::oseair::RecoveryRate<double>>()                 = 1.;
+        model.parameters.get<mio::oseair::DeathRate<double>>()                    = 1.;
+        model.parameters.get<mio::oseair::TimeExposed<double>>()                  = 1.;
+        model.parameters.get<mio::oseair::RecoveryRateFromAsymptomatic<double>>() = 1.;
+        model.parameters.get<mio::oseair::TimeRecoveredInv<double>>()             = 1.;
     }
 };
 
@@ -125,15 +125,15 @@ TEST(TestOdeSeair, compareWithPreviousRun)
     mio::oseair::Model<double> model;
 
     // set parameters to default values just for code covereage
-    model.parameters.set<mio::oseair::AlphaA<double>>(0.2);
-    model.parameters.set<mio::oseair::AlphaI<double>>(0.2);
+    model.parameters.set<mio::oseair::SocialDistancing<double>>(0.2);
+    model.parameters.set<mio::oseair::Quarantined<double>>(0.2);
 
-    model.parameters.get<mio::oseair::Kappa<double>>()          = 0.2;
-    model.parameters.get<mio::oseair::Beta<double>>()           = 0.0067;
-    model.parameters.get<mio::oseair::Mu<double>>()             = 0.0041;
-    model.parameters.get<mio::oseair::TLatentInverse<double>>() = 0.5;
-    model.parameters.get<mio::oseair::Rho<double>>()            = 0.1;
-    model.parameters.get<mio::oseair::Gamma<double>>()          = 0.0;
+    model.parameters.get<mio::oseair::TestingRate<double>>()                  = 0.2;
+    model.parameters.get<mio::oseair::RecoveryRate<double>>()                 = 0.0067;
+    model.parameters.get<mio::oseair::DeathRate<double>>()                    = 0.0041;
+    model.parameters.get<mio::oseair::TimeExposed<double>>()                  = 2.;
+    model.parameters.get<mio::oseair::RecoveryRateFromAsymptomatic<double>>() = 0.1;
+    model.parameters.get<mio::oseair::TimeRecoveredInv<double>>()             = 0.0;
 
     // set initial values
     const double total_population = 327167434; // total population of the United States
