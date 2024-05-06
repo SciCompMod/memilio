@@ -52,7 +52,7 @@ else()
 endif()
 
 # ## IPOPT (numerial optimization)
-if(MEMILIO_ENABLE_OPTIMIZATION)
+if(MEMILIO_ENABLE_IPOPT)
     message(STATUS "Downloading Ipopt library")
 
     include(FetchContent)

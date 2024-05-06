@@ -21,14 +21,12 @@
 #include "ad/ad.hpp"
 #include "boost/numeric/odeint.hpp"
 
-/**
- * This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
- * algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp. 
- */
+//This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
+// algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp.
 
 using ad_forward_t = typename ad::gt1s<double>::type; // AD data type for scalar forward mode
 
-/* The type of container used to hold the state vector */
+// The type of container used to hold the state vector
 using value_type = ad_forward_t;
 using time_type  = value_type;
 typedef std::vector<value_type> state_type;

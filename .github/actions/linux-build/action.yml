@@ -93,7 +93,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_ENABLE_OPTIMIZATION=${{ inputs.enable-optimization }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_ENABLE_IPOPT=${{ inputs.enable-optimization }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
     - name: create build dir archive
       shell: bash
