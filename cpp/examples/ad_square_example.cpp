@@ -38,16 +38,17 @@
  *  After the conmputation the Jacobian-vector product is accessed by the command ad::derivative(y).
  *  
  *  Reverse mode (also known as adjoint mode, or back progpagation) computes vector-Jacobian products of f(x).
- *  I..e, if if J(x) denotes the Jacobian of f(x) and
- *  w is an m-dimensional seed vector (which is a row vector), the revose mode computes the  vector-matrix product
+ *  I.e, if if J(x) denotes the Jacobian of f(x) and
+ *  w is an m-dimensional seed vector (which is a row vector), the reverse mode computes the vector-matrix product
  *  w * J(x). The data type of x is set to a reverse mode AD data type that additionally to the
  *  original value, also stores derivative information. The original value is accessed by the command
  *  ad::value(x). The derivative information is accessed by ad::derivative(x).
  *  While the forward mode computes derivatives in one sweep, the reverse mode computes is divided
- *  into two sweeps. A forward sweep for the computation, where intermediate results are stored on a tape. After
- *  the forward sweep the seed of the compuation is set by the commad ad::derivative(y) = w.
- *  And a reverse sweep, where the actual derivative compuation has to be performed. The derivative information of
- *  x has to be initalized to zero (ad::derivative(x) = 0), before the tape can be intepreted backwards. Then, 
+ *  into two sweeps. A forward sweep for the computation, where intermediate results are stored on a temporary
+ *  memory location called tape. After
+ *  the forward sweep, the seed of the computation is set by the command ad::derivative(y) = w.
+ *  And a reverse sweep, where the actual derivative computation takes place, has to be performed. The derivative information of
+ *  x has to be initalized to zero (ad::derivative(x) = 0), before the tape can be interpreted backwards. Then, 
  *  the tape can interpreted backwards
  *  and the vector-Jacobian product can be accessed the command ad::derivative(x).
  *  
