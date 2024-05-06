@@ -136,6 +136,90 @@ def plot_icu_occupancy_per_scenario(path_results, indx_comp, interventions, regi
             plt.clf()
 
 
+def get_num_more_than_x(path, comp, x):
+    f = h5py.File(path, 'r')
+    count = np.zeros(f['1001']['Total'].shape[0])
+    # iteriere über alle keys in f
+    for key in f.keys():
+        group = f[key]
+        total = group['Total'][()]
+        comp_simulated = np.sum(total[:, comp], axis=1)
+        # prüfe jeden Eintrag von comp_simulated, ob er größer als x ist.
+        count += np.where(comp_simulated > x, 1, 0)
+    f.close()
+
+    return count[1:]
+
+
+def plot_num_counties_more_than_x(x, path_results, indx_comp, interventions, regions,  tnt_factors, plot_flows, title, num_runs):
+    for intervention in interventions:
+        results = []
+        for region in regions:
+            for tnt_factor in tnt_factors:
+                data_p50 = []
+                for run in range(num_runs):
+                    flows_add = ""
+                    if plot_flows:
+                        flows_add = "flows"
+                    path = os.path.join(
+                        path_results, intervention, region, tnt_factor + str(run), flows_add, "p50", "Results.h5")
+                    data_p50.append(get_num_more_than_x(path, indx_comp, x))
+
+                data_p50 = np.sort(data_p50, axis=0)
+
+                if plot_flows:
+                    data_p50 = np.diff(data_p50, axis=1)
+
+                entry = {
+                    "intervention": intervention,
+                    "region": region,
+                    "tnt_factor": tnt_factor,
+                    "min_data": data_p50[0],
+                    "max_data": data_p50[num_runs - 1]
+                }
+                results.append(entry)
+
+        # Plotting
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+        ax.set_title(title)
+        ax.set_xlabel("Time [days]")
+        ax.set_ylabel("Counties with more than " +
+                      str(int(x)) + " transmissions")
+
+        # ax.set_ylim(0, 100)
+        # ax.set_yscale('log')
+        ax.grid(True)
+        count_entry = 0
+        for entry in results:
+            linestyle = '--'
+            linewidth = 3
+            color = colors[count_entry]
+
+            num_counties_inf = 40 if entry['region'] == regions[0] else 80
+            # transform tnt factor to float
+            tnt_fact_str = ''.join(
+                filter(lambda ch: ch.isdigit() or ch == '.', entry['tnt_factor']))
+            tnt_fact = round(float(tnt_fact_str), 1)
+
+            ax.plot(
+                entry["max_data"], label=f"Counties Infected: {num_counties_inf}, TNT: {tnt_fact} max",
+                linewidth=linewidth, linestyle=linestyle, color=color)
+            ax.plot(
+                entry["min_data"], label=f"Counties Infected: {num_counties_inf}, TNT: {tnt_fact} min",
+                linewidth=linewidth, linestyle='--', color=color)
+            ax.fill_between(
+                np.arange(0, len(entry["max_data"])), entry["min_data"], entry["max_data"], color=color, alpha=opacity)
+
+            count_entry += 1
+
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(
+            os.path.join(plot_path, f"week2_num_infected.png"))
+        plt.clf()
+
+
 if __name__ == '__main__':
     path_results = "/localdata1/test/memilio/test"
 
@@ -169,6 +253,9 @@ if __name__ == '__main__':
     flows_hu = [11, 28, 44]
 
     all_comp = np.arange(0, 29, 1)
+
+    plot_num_counties_more_than_x(10.0, path_results, infected_compartments,
+                                  interventions, regions_with_inf,  tnt_fact, plot_flows, "Infected People", num_runs)
 
     plot_icu_occupancy_per_scenario(path_results, infected_compartments,
                                     interventions, regions_with_inf,  tnt_fact, plot_flows, "Total Infected", num_runs)
