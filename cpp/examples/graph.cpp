@@ -30,7 +30,11 @@ int main()
     const auto dt   = 0.5; //time step of migration, daily migration every second step
 
     mio::oseir::Model<> model(1);
+
+    // set population
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 10000;
+
+    // set transition times
     model.parameters.set<mio::oseir::TimeExposed<>>(1);
     model.parameters.set<mio::oseir::TimeInfected<>>(1);
 
