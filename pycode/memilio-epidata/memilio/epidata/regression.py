@@ -210,11 +210,12 @@ def compute_R_eff_old_method(counties, out_folder=dd.defaultDict['out_folder']):
 
 class NPIRegression():
 
-    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0):
+    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0, delay=0):
         self.counties = counties
         self.min_date = min_date
         self.max_date = max_date
         self.fine_resolution = fine_resolution
+        self.delay = delay
 
     # read data that is relevant for regression and store in dataframes
 
@@ -224,7 +225,7 @@ class NPIRegression():
             directory = os.path.join(directory, 'Germany/')
             gd.check_dir(directory)
 
-            filepath = os.path.join(directory + 'clustered_npis_setting4.json')
+            filepath = os.path.join(directory + 'clustered_npis.json')
 
             if not os.path.exists(filepath):
 
@@ -294,6 +295,12 @@ class NPIRegression():
                 self.df_r = compute_R_eff(counties=self.counties)
             else:
                 self.df_r = pd.read_json(filepath)
+
+            # shift column 'Date' for a certain number of days given by delay
+            # a positive delay means that the effect of NPIs occurs after they are being implemented
+            # a negative delay means that the effect of NPIs occurs before they are being implemented
+            # this is why we shift the 'Date'-column of df_r by -delay
+            self.df_r['Date'] -= pd.Timedelta(days=self.delay)
 
         with progress_indicator.Spinner(message="Preparing vaccination data"):
             # computing proportion of vaccinated individuals by dividing by respective population of county
@@ -499,7 +506,7 @@ class NPIRegression():
 
     # define variables that will be used in every regression
 
-    def set_up_model(self):
+    def set_up_model(self, delay=0):
 
         self.read_data()
 
@@ -862,8 +869,10 @@ def main():
 
     fine_resolution = 2
 
+    delay = 1
+
     npi_regression = NPIRegression(
-        counties, min_date, max_date, fine_resolution)
+        counties, min_date, max_date, fine_resolution, delay)
 
     df_pvalues, results = npi_regression.backward_selection(plot=True)
 
