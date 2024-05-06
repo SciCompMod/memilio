@@ -51,12 +51,12 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Vector<FP>> /* pop */, Eigen::Ref<const Vector<FP>> y, FP /* t */,
+    void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP /* t */,
                          Eigen::Ref<Vector<FP>> dydt) const override
     {
         auto& params = this->parameters;
 
-        const auto pop_total = y.sum() - y[(size_t)InfectionState::ObjectiveFunction];
+        const auto pop_total = pop.sum() - pop[(size_t)InfectionState::ObjectiveFunction];
 
         auto& alpha_a          = params.template get<AlphaA<FP>>();
         auto& alpha_i          = params.template get<AlphaI<FP>>();
