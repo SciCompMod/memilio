@@ -66,9 +66,9 @@ public:
     virtual bool eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac,
                             Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values) override;
 
-    /** Method to return:
-    *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
-    *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
+    /* Method to return:
+    *   1) The structure of the Hessian of the Lagrangian (if "values" is NULL)
+    *   2) The values of the Hessian of the Lagrangian (if "values" is not NULL)
     */
     virtual bool eval_h(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number obj_factor, Ipopt::Index m,
                         const Ipopt::Number* lambda, bool new_lambda, Ipopt::Index nele_hess, Ipopt::Index* iRow,
@@ -79,7 +79,6 @@ public:
                                    const Ipopt::Number* z_L, const Ipopt::Number* z_U, Ipopt::Index m,
                                    const Ipopt::Number* g, const Ipopt::Number* lambda, Ipopt::Number obj_value,
                                    const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* ip_cq) override;
-    //@}
 
     bool intermediate_callback(Ipopt::AlgorithmMode mode, Ipopt::Index iter, Ipopt::Number obj_value,
                                Ipopt::Number inf_pr, Ipopt::Number inf_du, Ipopt::Number mu, Ipopt::Number d_norm,

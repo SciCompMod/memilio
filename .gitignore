@@ -5,7 +5,6 @@
 .pnp.js
 
 # misc
-CMakeLists.txt.user
 .DS_Store
 .env.local
 .env.development.local
