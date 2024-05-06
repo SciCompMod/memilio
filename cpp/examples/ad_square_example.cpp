@@ -38,7 +38,7 @@
  *  After the conmputation the Jacobian-vector product is accessed by the command ad::derivative(y).
  *  
  *  Reverse mode (also known as adjoint mode, or back progpagation) computes vector-Jacobian products of f(x).
- *  I.e, if if J(x) denotes the Jacobian of f(x) and
+ *  I.e, if J(x) denotes the Jacobian of f(x) and
  *  w is an m-dimensional seed vector (which is a row vector), the reverse mode computes the vector-matrix product
  *  w * J(x). The data type of x is set to a reverse mode AD data type that additionally to the
  *  original value, also stores derivative information. The original value is accessed by the command
