@@ -411,15 +411,12 @@ class NPIRegression():
 
             # first remove all dates which are not in df_npis
             min_date_npis = min(self.df_npis.Date)
-            # self.min_date = max(min_date_npis, self.min_date)
-            # atm the following line is needed when using clustered NPIs
-            self.min_date = max(datetime.strftime(
-                min_date_npis, '%Y-%m-%d'), self.min_date)
             max_date_npis = max(self.df_npis.Date)
-            # self.max_date = min(max_date_npis, self.max_date)
-            # atm the following line is needed when using clustered NPIs
-            self.max_date = min(datetime.strftime(
-                max_date_npis, '%Y-%m-%d'), self.max_date)
+            if not isinstance(self.df_npis.Date[0], str):
+                min_date_npis = datetime.strftime(min_date_npis, '%Y-%m-%d')
+                max_date_npis = datetime.strftime(max_date_npis, '%Y-%m-%d')
+            self.min_date = max(min_date_npis, self.min_date)
+            self.max_date = min(max_date_npis, self.max_date)
 
             self.df_r = mdfs.extract_subframe_based_on_dates(
                 self.df_r, self.min_date, self.max_date)
