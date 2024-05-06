@@ -299,7 +299,7 @@ class NPIRegression():
             # shift column 'Date' for a certain number of days given by delay
             # a positive delay means that the effect of NPIs occurs after they are being implemented
             # a negative delay means that the effect of NPIs occurs before they are being implemented
-            # this is why we shift the 'Date'-column of df_r by -delay
+            # this is why we shift the 'Date'-column of df_r by delay days
             self.df_r['Date'] -= pd.Timedelta(days=self.delay)
 
         with progress_indicator.Spinner(message="Preparing vaccination data"):
@@ -595,8 +595,11 @@ class NPIRegression():
         self.plot_confidence_intervals(iteration)
 
         # compute AIC and BIC as reference for later
-        aic_min = results.aic
-        bic_min = results.bic_llf
+        aic_initial = results.aic
+        bic_initial = results.bic_llf
+
+        aic_min = aic_initial
+        bic_min = bic_initial
         print('AIC init: ', aic_min)
         print('BIC init: ', bic_min)
 
@@ -697,7 +700,7 @@ class NPIRegression():
         self.plot_confidence_intervals(iteration='final')
         self.plot_active_countydays(iteration='final')
 
-        return self.df_pvalues, results
+        return self.df_pvalues, results, aic_initial, aic_min
 
     # plot coefficients and confidence intervals per independent variable
     def plot_confidence_intervals(self, iteration):
@@ -848,7 +851,7 @@ class NPIRegression():
                               npi_names_all, fontsize=5)
                 ax.invert_yaxis()
 
-                ax.set_xlabel('Number of active county days')
+                ax.set_xlabel('Percentage of active county days')
                 ax.set_ylabel('NPIs')
 
             if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results'):
@@ -861,6 +864,28 @@ class NPIRegression():
             plt.close()
 
 
+def plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all):
+
+    fig, ax = plt.subplots()
+
+    ax.plot(delay_list, aic_initial_all)
+    ax.plot(delay_list, aic_final_all)
+
+    ax.set_xticks(delay_list)
+
+    ax.set_xlabel('Delay')
+    ax.set_ylabel('AIC')
+
+    if not os.path.isdir(f'plots/delay'):
+        os.makedirs(
+            f'plots/delay')
+    plt.tight_layout()
+    plt.savefig(f'plots/delay/aic.png', format='png',
+                dpi=500)
+
+    plt.close()
+
+
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
@@ -869,12 +894,22 @@ def main():
 
     fine_resolution = 2
 
-    delay = 1
+    delay_list = [delay for delay in range(-10, 11)]
+    aic_initial_all = []
+    aic_final_all = []
 
-    npi_regression = NPIRegression(
-        counties, min_date, max_date, fine_resolution, delay)
+    for delay in delay_list:
 
-    df_pvalues, results = npi_regression.backward_selection(plot=True)
+        npi_regression = NPIRegression(
+            counties, min_date, max_date, fine_resolution, delay)
+
+        df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
+            plot=False)
+
+        aic_initial_all.append(aic_initial)
+        aic_final_all.append(aic_final)
+
+    plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all)
 
 
 if __name__ == "__main__":
