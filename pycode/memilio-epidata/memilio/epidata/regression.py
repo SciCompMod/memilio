@@ -474,8 +474,7 @@ class NPIRegression():
                 num_dropped += 1
 
             # sort all dataframes first by county and then by date so that all dataframes are aligned
-            self.df_r.sort_values(['ID_County', 'Date']
-                                  )
+            self.df_r.sort_values(['ID_County', 'Date'])
             self.df_npis.sort_values(
                 ['ID_County', 'Date'])
             self.df_vaccinations.sort_values(
@@ -506,6 +505,15 @@ class NPIRegression():
 
         # set up endogenous variable
         self.Y = self.df_r['R_eff']
+        variants_considered = ['Other', 'B.1.617.2', 'B.1.1.7']
+        # consider (known) variant data to r-value, so the effect does not have to be estimated in regression
+        variants = self.df_variants.loc[:, variants_considered]/100
+        #add all variants not considered to 'Other' column (with an effect of 0% to wildtype)
+        variants['Other'] += self.df_variants.loc[:, ~self.df_variants.columns.isin(variants_considered)].iloc[:,2:-1].sum(axis=1)/100
+        variants['Other']*=1.
+        variants['B.1.1.7']*=1.3
+        variants['B.1.617.2']*=1.6
+        self.Y /= (variants.sum(axis=1))
 
         # TODO: discuss which vaccination states we want to include
         self.used_vacc_states = list(self.all_vacc_states[0:3])
@@ -526,7 +534,7 @@ class NPIRegression():
                                             [self.df_seasonality['sin'], self.df_seasonality['cos']] +
                                             [self.df_agestructure[age_category]
                                              for age_category in self.age_categories] +
-                                            [self.df_npis[npi] for npi in self.used_npis] + [self.df_variants[variant] for variant in self.variants]).transpose()
+                                            [self.df_npis[npi] for npi in self.used_npis]).transpose()# + [self.df_variants[variant] for variant in self.variants]).transpose()
 
     # define variables for regression according to input and fit model
 
@@ -809,8 +817,8 @@ class NPIRegression():
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
-    min_date = '2021-09-01'
-    max_date = '2021-10-31'
+    min_date = '2021-01-01'
+    max_date = '2021-12-31'
 
     fine_resolution = 2
 

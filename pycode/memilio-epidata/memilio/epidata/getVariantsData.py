@@ -110,7 +110,7 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
         plt.show()
     if sanitize:
         sanitize_data(df_out)
-
+    df_out.sort_values('Date').reset_index(drop=True, inplace=True)
     return df_out
 
 # do sanitizing for variants 'Other' and 'B.1.617.2' because we assume that 'Other' is present 100%
@@ -156,7 +156,7 @@ def main():
     """ Main program entry."""
 
     df_variants = get_variants_data(
-        make_plot=False, transform_to_daily=True, sanitize=True)
+        make_plot=False, transform_to_daily=False, sanitize=True)
     plot_variants_data(df_variants, variants='wildtype_alpha_delta')
 
 
