@@ -41,6 +41,10 @@ inputs:
     description: "Enable Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
     required: false
     default: "OFF"
+
+env:
+  PUBLICENV: This is a test
+
 runs:
   using: "composite"
   steps:
@@ -54,7 +58,7 @@ runs:
         fi
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            sudo apt-get -qq -y install gcc-${{ PUBLICENV.compiler-version.gcc.min }}
+            sudo apt-get -qq -y install gcc-${{ PUBLICENV }}
             sudo apt-get -qq -y install g++-${{ PUBLICENV.compiler-version.gcc.min }}
           else        
             sudo apt-get -qq -y install gcc-${{ PUBLICENV.compiler-version.gcc.latest}}
