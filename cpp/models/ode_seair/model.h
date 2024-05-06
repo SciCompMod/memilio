@@ -19,7 +19,7 @@
 */
 
 /* This model is an extented SEIR type model of the COVID-19 pandemic in the US
- * that also includes asymptomatic and perished people.
+ * that also includes asymptomatic and dead people.
  * A detailed description of the model can be found in the publication
  * Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak */
 
@@ -67,20 +67,23 @@ public:
         auto& rho              = params.template get<Rho<FP>>();
         auto& gamma            = params.template get<Gamma<FP>>();
 
-        const auto& s = y[(size_t)InfectionState::Susceptible];
-        const auto& e = y[(size_t)InfectionState::Exposed];
-        const auto& a = y[(size_t)InfectionState::Asymptomatic];
-        const auto& i = y[(size_t)InfectionState::Infected];
-        const auto& r = y[(size_t)InfectionState::Recovered];
-
         dydt[(size_t)InfectionState::Susceptible] =
-            -alpha_a / pop_total * s * a - alpha_i / pop_total * s * i + gamma * r;
+            -alpha_a / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Asymptomatic] -
+            alpha_i / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
+            gamma * y[(size_t)InfectionState::Recovered];
         dydt[(size_t)InfectionState::Exposed] =
-            alpha_a / pop_total * s * a + alpha_i / pop_total * s * i - t_latent_inverse * e;
-        dydt[(size_t)InfectionState::Asymptomatic]      = t_latent_inverse * e - kappa * a - rho * a;
-        dydt[(size_t)InfectionState::Infected]          = kappa * a - beta * i - mu * i;
-        dydt[(size_t)InfectionState::Recovered]         = rho * a + beta * i - gamma * r;
-        dydt[(size_t)InfectionState::Perished]          = mu * i;
+
+            alpha_a / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Asymptomatic] +
+            alpha_i / pop_total * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
+            t_latent_inverse * y[(size_t)InfectionState::Exposed];
+        dydt[(size_t)InfectionState::Asymptomatic] = t_latent_inverse * y[(size_t)InfectionState::Exposed] -
+                                                     (kappa + rho) * y[(size_t)InfectionState::Asymptomatic];
+        dydt[(size_t)InfectionState::Infected] =
+            kappa * y[(size_t)InfectionState::Asymptomatic] - (beta + mu) * y[(size_t)InfectionState::Infected];
+        dydt[(size_t)InfectionState::Recovered] = rho * y[(size_t)InfectionState::Asymptomatic] +
+                                                  beta * y[(size_t)InfectionState::Infected] -
+                                                  gamma * y[(size_t)InfectionState::Recovered];
+        dydt[(size_t)InfectionState::Dead] = mu * y[(size_t)InfectionState::Infected];
     }
 };
 

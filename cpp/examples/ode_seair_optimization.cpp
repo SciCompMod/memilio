@@ -35,13 +35,13 @@
 class Seair_NLP : public Ipopt::TNLP
 {
 public:
-    static constexpr double N              = 327167434; // total US population
-    Seair_NLP()                            = default;
-    Seair_NLP(const Seair_NLP&)            = delete;
-    Seair_NLP(Seair_NLP&&)                 = delete;
+    static constexpr double N   = 327167434; // total US population
+    Seair_NLP()                 = default;
+    Seair_NLP(const Seair_NLP&) = delete;
+    Seair_NLP(Seair_NLP&&)      = delete;
     Seair_NLP& operator=(const Seair_NLP&) = delete;
-    Seair_NLP& operator=(Seair_NLP&&)      = delete;
-    ~Seair_NLP()                           = default;
+    Seair_NLP& operator=(Seair_NLP&&) = delete;
+    ~Seair_NLP()                      = default;
     bool get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g, Ipopt::Index& nnz_h_lag,
                       IndexStyleEnum& index_style) override;
     bool get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Number* x_u, Ipopt::Index m, Ipopt::Number* g_l,
@@ -121,10 +121,11 @@ void set_initial_values(mio::oseair::Model<FP>& model)
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}] =
         0.0003451395725394549 * N;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] =
+
         0.00037846880968213874 * N;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = 337072.0;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = 17448.0;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]  = 9619.0;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}]      = 9619.0;
 }
 
 template <typename FP>
@@ -404,7 +405,7 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
         outFileA << grid[gridindex] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0 << "\n";
         outFileI << grid[gridindex] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
         outFileR << grid[gridindex] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0 << "\n";
-        outFileP << grid[gridindex] << " " << model.populations[{Idx(IS::Perished)}] * N / 1000.0 << "\n";
+        outFileP << grid[gridindex] << " " << model.populations[{Idx(IS::Dead)}] * N / 1000.0 << "\n";
 
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
 
@@ -418,7 +419,7 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
             outFileA << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0 << "\n";
             outFileI << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
             outFileR << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0 << "\n";
-            outFileP << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Perished)}] * N / 1000.0 << "\n";
+            outFileP << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Dead)}] * N / 1000.0 << "\n";
         }
 
         outFileAlphaA << grid[gridindex] << " " << model.parameters.template get<mio::oseair::AlphaA<FP>>() << "\n";
