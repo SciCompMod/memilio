@@ -334,8 +334,8 @@ TEST(TestEpiData, set_vaccination_data)
     std::vector<int> county_ids = {1001};
     mio::osecirvvs::Model model(num_age_groups);
     model.parameters.set<mio::osecirvvs::VaccinationGap>(3);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(1);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialVaccination>(1);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedVaccination>(2);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(1);
     std::vector<mio::osecirvvs::Model> model_vector{model};
 

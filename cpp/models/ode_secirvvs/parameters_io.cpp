@@ -345,9 +345,9 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
     auto num_groups = model[0].parameters.get_num_groups();
 
     auto days_until_effective_n =
-        (int)(double)model[0].parameters.get<DaysUntilEffectivePartialImmunity>()[AgeGroup(0)];
+        (int)(double)model[0].parameters.get<DaysUntilEffectivePartialVaccination>()[AgeGroup(0)];
     auto days_until_effective_pi =
-        (int)(double)model[0].parameters.get<DaysUntilEffectiveImprovedImmunity>()[AgeGroup(0)];
+        (int)(double)model[0].parameters.get<DaysUntilEffectiveImprovedVaccination>()[AgeGroup(0)];
     auto days_until_effective_ii =
         (int)(double)model[0].parameters.get<DaysUntilEffectiveBoosterImmunity>()[AgeGroup(0)];
     // iterate over regions (e.g., counties)
@@ -395,12 +395,12 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                         date,
                         static_cast<int>(
                             -model[region_idx].parameters.template get<TimeTemporaryImmunityPI>()[age] -
-                            model[region_idx].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[age])) &&
+                            model[region_idx].parameters.template get<DaysUntilEffectiveImprovedVaccination>()[age])) &&
                 date_df <=
                     offset_date_by_days(
-                        date,
-                        static_cast<int>(
-                            -model[region_idx].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[age]))) {
+                        date, static_cast<int>(
+                                  -model[region_idx]
+                                       .parameters.template get<DaysUntilEffectiveImprovedVaccination>()[age]))) {
                 model[region_idx].populations[{age, InfectionState::TemporaryImmunPartialImmunity}] +=
                     vacc_data_entry.num_vaccinations_completed;
             }

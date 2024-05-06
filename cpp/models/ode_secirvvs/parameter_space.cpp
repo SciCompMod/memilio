@@ -37,7 +37,7 @@ void draw_sample_demographics(Model& model)
     model.parameters.get<ICUCapacity>().draw_sample();
     model.parameters.get<TestAndTraceCapacity>().draw_sample();
 
-    std::vector<InfectionState> naive_states = {
+    const static std::vector<InfectionState> naive_immunity_states = {
         InfectionState::SusceptibleNaive,
         InfectionState::ExposedNaive,
         InfectionState::InfectedNoSymptomsNaive,
@@ -49,7 +49,7 @@ void draw_sample_demographics(Model& model)
         InfectionState::DeadNaive,
     };
 
-    std::vector<InfectionState> partial_states = {
+    const static std::vector<InfectionState> partial_immunity_states = {
         InfectionState::SusceptiblePartialImmunity,        InfectionState::ExposedPartialImmunity,
         InfectionState::InfectedNoSymptomsPartialImmunity, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
         InfectionState::InfectedSymptomsPartialImmunity,   InfectionState::InfectedSymptomsPartialImmunityConfirmed,
@@ -57,7 +57,7 @@ void draw_sample_demographics(Model& model)
         InfectionState::TemporaryImmunPartialImmunity,     InfectionState::DeadPartialImmunity,
     };
 
-    std::vector<InfectionState> improved_states = {
+    const static std::vector<InfectionState> improved_immunity_states = {
         InfectionState::SusceptibleImprovedImmunity,        InfectionState::ExposedImprovedImmunity,
         InfectionState::InfectedNoSymptomsImprovedImmunity, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
         InfectionState::InfectedSymptomsImprovedImmunity,   InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
@@ -85,9 +85,9 @@ void draw_sample_demographics(Model& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
 
-        double group_naive_total    = calculate_layer_total(naive_states, i);
-        double group_partial_total  = calculate_layer_total(partial_states, i);
-        double group_improved_total = calculate_layer_total(improved_states, i);
+        const double group_naive_total    = calculate_layer_total(naive_immunity_states, i);
+        const double group_partial_total  = calculate_layer_total(partial_immunity_states, i);
+        const double group_improved_total = calculate_layer_total(improved_immunity_states, i);
 
         //sample initial compartments (with exceptions)
         for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
@@ -97,9 +97,9 @@ void draw_sample_demographics(Model& model)
                 model.populations[{i, inf_state}].draw_sample();
             }
         }
-        double diff_naive    = group_naive_total - calculate_layer_total(naive_states, i);
-        double diff_partial  = group_partial_total - calculate_layer_total(partial_states, i);
-        double diff_improved = group_improved_total - calculate_layer_total(improved_states, i);
+        const double diff_naive    = group_naive_total - calculate_layer_total(naive_immunity_states, i);
+        const double diff_partial  = group_partial_total - calculate_layer_total(partial_immunity_states, i);
+        const double diff_improved = group_improved_total - calculate_layer_total(improved_immunity_states, i);
 
         adjust_susceptible_population(i, diff_naive, InfectionState::SusceptibleNaive);
         adjust_susceptible_population(i, diff_partial, InfectionState::SusceptiblePartialImmunity);

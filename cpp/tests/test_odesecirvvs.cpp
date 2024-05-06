@@ -73,20 +73,25 @@ TEST(TestOdeSECIRVVS, simulateDefault)
 
 TEST(TestOdeSECIRVVS, overflow_vaccinations)
 {
+    const double t0   = 0;
+    const double tmax = 1;
+    const double dt   = 1;
+
     // init simple model
     mio::osecirvvs::Model model(1);
     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive}]            = 10.;
     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]  = 10.;
     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}] = 10.;
+    // model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>(0.0);
+    model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.0;
 
     // set vaccination rates higher than total population for each layer
     const size_t daily_vaccinations = 100;
-    const size_t num_days           = 100;
-    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(num_days));
-    for (size_t i = 0; i < num_days; ++i) {
-        auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(tmax));
+    for (size_t i = 0; i < tmax; ++i) {
+        auto num_vaccinations = static_cast<double>((i + 1) * daily_vaccinations);
         model.parameters.get<mio::osecirvvs::DailyPartialVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
         model.parameters.get<mio::osecirvvs::DailyFullVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
@@ -97,7 +102,7 @@ TEST(TestOdeSECIRVVS, overflow_vaccinations)
 
     // simulate one step with explicit Euler
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto result     = simulate_flows(0., 2., 1., model, integrator);
+    auto result     = simulate_flows(t0, tmax, dt, model, integrator);
 
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =
@@ -123,6 +128,63 @@ TEST(TestOdeSECIRVVS, overflow_vaccinations)
     EXPECT_NEAR(result[1].get_last_value()[flow_indx_booster_vaccination], result[0].get_value(1)[indx_S_improved],
                 1e-10);
 }
+
+// TEST(TestOdeSECIRVVS, vaccination_rate)
+// {
+//     const double t0   = 0;
+//     const double tmax = 1;
+//     const double dt   = 1;
+
+//     // init simple model
+//     mio::osecirvvs::Model model(1);
+//     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive}]            = 10.;
+//     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]  = 10.;
+//     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}] = 10.;
+
+//     // set vaccination rates higher than total population for each layer
+//     const size_t daily_vaccinations = 100;
+//     const size_t num_days           = 100;
+//     model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(num_days));
+//     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(num_days));
+//     model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(num_days));
+//     for (size_t i = 0; i < num_days; ++i) {
+//         auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
+//         model.parameters.get<mio::osecirvvs::DailyPartialVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+//             num_vaccinations;
+//         model.parameters.get<mio::osecirvvs::DailyFullVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+//             num_vaccinations;
+//         model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+//             num_vaccinations;
+//     }
+
+//     // simulate one step with explicit Euler
+//     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+//     auto result     = simulate_flows(t0, tmax, dt, model, integrator);
+
+//     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
+//     auto flow_indx_partial_vaccination =
+//         model.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleNaive,
+//                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity>({mio::AgeGroup(0)});
+//     auto flow_indx_full_vaccination =
+//         model.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+//                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity>({mio::AgeGroup(0)});
+//     auto flow_indx_booster_vaccination =
+//         model.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+//                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity>({mio::AgeGroup(0)});
+
+//     auto indx_S_naive =
+//         model.populations.get_flat_index({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive});
+//     auto indx_S_partial = model.populations.get_flat_index(
+//         {mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptiblePartialImmunity});
+//     auto indx_S_improved = model.populations.get_flat_index(
+//         {mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity});
+
+//     // check that the number of vaccinated people is never higher than the number of susceptible people
+//     EXPECT_NEAR(result[1].get_last_value()[flow_indx_partial_vaccination], result[0].get_value(1)[indx_S_naive], 1e-10);
+//     EXPECT_NEAR(result[1].get_last_value()[flow_indx_full_vaccination], result[0].get_value(1)[indx_S_partial], 1e-10);
+//     EXPECT_NEAR(result[1].get_last_value()[flow_indx_booster_vaccination], result[0].get_value(1)[indx_S_improved],
+//                 1e-10);
+// }
 
 void assign_uniform_distribution(mio::UncertainValue& p, double min, double max, bool set_invalid_initial_value)
 {
@@ -1020,14 +1082,14 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::VaccinationGap>(2);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(-2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialVaccination>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(7);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(-0.2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialVaccination>(7);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedVaccination>(-0.2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(7);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedVaccination>(7);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1151,13 +1213,13 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::VaccinationGap>()[indx_agegroup], 0);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(-2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialVaccination>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectivePartialImmunity>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectivePartialVaccination>()[indx_agegroup], 0);
 
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(-0.2);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedVaccination>(-0.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DaysUntilEffectiveImprovedVaccination>()[indx_agegroup], 0);
 
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(-0.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

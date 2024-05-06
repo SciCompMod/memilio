@@ -149,11 +149,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<VaccinationGap>()[i]; });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectivePartialImmunity>()[i];
+                    return model.parameters.template get<DaysUntilEffectivePartialVaccination>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectiveImprovedImmunity>()[i];
+                    return model.parameters.template get<DaysUntilEffectiveImprovedVaccination>()[i];
                 });
 
             for (auto day = SimulationDay(0); day < num_days; ++day) {

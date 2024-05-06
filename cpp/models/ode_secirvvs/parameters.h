@@ -428,7 +428,7 @@ struct VaccinationGap {
 /**
  * @brief Time in days until first vaccine dose takes full effect.
  */
-struct DaysUntilEffectivePartialImmunity {
+struct DaysUntilEffectivePartialVaccination {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -436,14 +436,14 @@ struct DaysUntilEffectivePartialImmunity {
     }
     static std::string name()
     {
-        return "DaysUntilEffectivePartialImmunity";
+        return "DaysUntilEffectivePartialVaccination";
     }
 };
 
 /**
  * @brief Time in days until second vaccine dose takes full effect.
  */
-struct DaysUntilEffectiveImprovedImmunity {
+struct DaysUntilEffectiveImprovedVaccination {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -451,7 +451,7 @@ struct DaysUntilEffectiveImprovedImmunity {
     }
     static std::string name()
     {
-        return "DaysUntilEffectiveImprovedImmunity";
+        return "DaysUntilEffectiveImprovedVaccination";
     }
 };
 
@@ -641,8 +641,8 @@ using ParametersBase =
                  TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity,
-                 DaysUntilEffectiveImprovedImmunity, DaysUntilEffectiveBoosterImmunity, DailyFullVaccination,
+                 CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialVaccination,
+                 DaysUntilEffectiveImprovedVaccination, DaysUntilEffectiveBoosterImmunity, DailyFullVaccination,
                  DailyBoosterVaccination, DailyPartialVaccination, ReducExposedPartialImmunity,
                  ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
                  ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
@@ -883,18 +883,18 @@ public:
                 corrected                         = true;
             }
 
-            if (this->get<DaysUntilEffectivePartialImmunity>()[i] < 0.0) {
+            if (this->get<DaysUntilEffectivePartialVaccination>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {} to {}",
-                            this->get<DaysUntilEffectivePartialImmunity>()[i], 0);
-                this->get<DaysUntilEffectivePartialImmunity>()[i] = 0;
-                corrected                                         = true;
+                            this->get<DaysUntilEffectivePartialVaccination>()[i], 0);
+                this->get<DaysUntilEffectivePartialVaccination>()[i] = 0;
+                corrected                                            = true;
             }
 
-            if (this->get<DaysUntilEffectiveImprovedImmunity>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity changed from {} to {}",
-                            this->get<DaysUntilEffectiveImprovedImmunity>()[i], 0);
-                this->get<DaysUntilEffectiveImprovedImmunity>()[i] = 0;
-                corrected                                          = true;
+            if (this->get<DaysUntilEffectiveImprovedVaccination>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination changed from {} to {}",
+                            this->get<DaysUntilEffectiveImprovedVaccination>()[i], 0);
+                this->get<DaysUntilEffectiveImprovedVaccination>()[i] = 0;
+                corrected                                             = true;
             }
 
             if (this->get<DaysUntilEffectiveBoosterImmunity>()[i] < 0.0) {
@@ -1105,18 +1105,18 @@ public:
                 return true;
             }
 
-            if (this->get<DaysUntilEffectivePartialImmunity>()[i] < 0.0) {
-                log_error("Constraint check: Parameter DaysUntilEffectivePartialImmunity smaller {}", 0);
+            if (this->get<DaysUntilEffectivePartialVaccination>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectivePartialVaccination smaller {}", 0);
                 return true;
             }
 
-            if (this->get<DaysUntilEffectiveImprovedImmunity>()[i] < 0.0) {
-                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {}", 0);
+            if (this->get<DaysUntilEffectiveImprovedVaccination>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination smaller {}", 0);
                 return true;
             }
 
             if (this->get<DaysUntilEffectiveBoosterImmunity>()[i] < 0.0) {
-                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {}", 0);
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination smaller {}", 0);
                 return true;
             }
 
