@@ -17,7 +17,14 @@ on:
   workflow_dispatch:
 
 env:
-  PUBLICENV: Available for all jobs in this workflow
+  PUBLICENV: 
+    compiler-version:
+      gcc:
+        min: "9"
+        latest: "11"
+      clang:
+        min: "6.0"
+        latest: "14"
 
 jobs:
   pre-commit:
