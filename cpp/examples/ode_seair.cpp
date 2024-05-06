@@ -19,7 +19,7 @@
 */
 
 /* This model is a extented SEIR type model of the COVID-19 pandemic in the US
- * that als includes asymptomatic and perished people.
+ * that als includes asymptomatic and dead people.
  * A detailed description of the model can be found in the publication
  * Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak */
 
@@ -52,7 +52,7 @@ void set_initial_values(mio::oseair::Model<FP>& model)
         0.00037846880968213874 * N;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = 337072.0;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = 17448.0;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]  = 9619.0;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}]      = 9619.0;
 }
 
 int main()

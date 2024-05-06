@@ -49,14 +49,14 @@ protected:
         model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] = 20;
         model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]     = 5;
         model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}]    = 10;
-        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]     = 10;
+        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}]         = 10;
         model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] =
             total_population -
             model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}] -
             model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] -
             model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}] -
             model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] -
-            model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}];
+            model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}];
 
         model.parameters.set<mio::oseair::AlphaA<double>>(.5);
         model.parameters.set<mio::oseair::AlphaI<double>>(.5);
@@ -79,7 +79,7 @@ TEST_F(ModelTestOdeSeair, simulateDefault)
 
 TEST_F(ModelTestOdeSeair, checkPopulationConservation)
 {
-    auto result = mio::simulate<double, mio::oseair::Model<double>>(t0, 50, dt, model);
+    auto result        = mio::simulate<double, mio::oseair::Model<double>>(t0, 50, dt, model);
     double num_persons = result.get_last_value().sum();
     EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
@@ -91,13 +91,12 @@ TEST_F(ModelTestOdeSeair, get_derivatives)
     auto y0 = model.get_initial_values();
     model.get_derivatives(y0, y0, 0, dydt_default);
 
-    EXPECT_NEAR(dydt_default[0], 4.375, 1e-12);
-    EXPECT_NEAR(dydt_default[1], -4.375, 1e-12);
-    EXPECT_NEAR(dydt_default[2], 10, 1e-12);
-    EXPECT_NEAR(dydt_default[3], 15, 1e-12);
-    EXPECT_NEAR(dydt_default[4], -30, 1e-12);
-    EXPECT_NEAR(dydt_default[5], 5, 1e-12);
-    EXPECT_NEAR(dydt_default[6], 0.1, 1e-12);
+    EXPECT_NEAR(dydt_default[(size_t)mio::oseair::InfectionState::Susceptible], 4.375, 1e-12);
+    EXPECT_NEAR(dydt_default[(size_t)mio::oseair::InfectionState::Exposed], -4.375, 1e-12);
+    EXPECT_NEAR(dydt_default[(size_t)mio::oseair::InfectionState::Asymptomatic], -30, 1e-12);
+    EXPECT_NEAR(dydt_default[(size_t)mio::oseair::InfectionState::Infected], 10, 1e-12);
+    EXPECT_NEAR(dydt_default[(size_t)mio::oseair::InfectionState::Recovered], 15, 1e-12);
+    EXPECT_NEAR(dydt_default[(size_t)mio::oseair::InfectionState::Dead], 5, 1e-12);
 }
 
 TEST_F(ModelTestOdeSeair, Simulation)
@@ -109,13 +108,12 @@ TEST_F(ModelTestOdeSeair, Simulation)
     EXPECT_EQ(sim.get_num_time_points(), 2);
 
     const auto& results_t1 = sim.get_last_value();
-    EXPECT_NEAR(results_t1[0], 49.375, 1e-12);
-    EXPECT_NEAR(results_t1[1], 5.625, 1e-12);
-    EXPECT_NEAR(results_t1[2], 15, 1e-12);
-    EXPECT_NEAR(results_t1[3], 25, 1e-12);
-    EXPECT_NEAR(results_t1[4], -10, 1e-12);
-    EXPECT_NEAR(results_t1[5], 15, 1e-12);
-    EXPECT_NEAR(results_t1[6], 0.1, 1e-12);
+    EXPECT_NEAR(results_t1[(size_t)mio::oseair::InfectionState::Susceptible], 49.375, 1e-12);
+    EXPECT_NEAR(results_t1[(size_t)mio::oseair::InfectionState::Exposed], 5.625, 1e-12);
+    EXPECT_NEAR(results_t1[(size_t)mio::oseair::InfectionState::Asymptomatic], -10, 1e-12);
+    EXPECT_NEAR(results_t1[(size_t)mio::oseair::InfectionState::Infected], 15, 1e-12);
+    EXPECT_NEAR(results_t1[(size_t)mio::oseair::InfectionState::Recovered], 25, 1e-12);
+    EXPECT_NEAR(results_t1[(size_t)mio::oseair::InfectionState::Dead], 15, 1e-12);
 }
 
 TEST(TestOdeSeair, compareWithPreviousRun)
@@ -147,14 +145,14 @@ TEST(TestOdeSeair, compareWithPreviousRun)
         (337072.0 / total_population);
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] =
         (17448.0 / total_population);
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}] =
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}] =
         (9619.0 / total_population);
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] =
         1 - model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}] -
         model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] -
         model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] -
-        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}];
+        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}];
 
     // check constraints
     model.apply_constraints();

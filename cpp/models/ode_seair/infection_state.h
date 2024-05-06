@@ -34,10 +34,10 @@ enum class InfectionState
 {
     Susceptible,
     Exposed,
+    Asymptomatic,
     Infected,
     Recovered,
-    Asymptomatic,
-    Perished,
+    Dead,
     Count
 };
 
