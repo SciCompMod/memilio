@@ -1022,7 +1022,7 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            save_result_result = save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string());
+            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);
