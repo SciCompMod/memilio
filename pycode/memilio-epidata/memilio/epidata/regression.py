@@ -224,7 +224,7 @@ class NPIRegression():
             directory = os.path.join(directory, 'Germany/')
             gd.check_dir(directory)
 
-            filepath = os.path.join(directory + 'clustered_npis.json')
+            filepath = os.path.join(directory + 'clustered_npis_setting4.json')
 
             if not os.path.exists(filepath):
 
@@ -417,7 +417,6 @@ class NPIRegression():
                 max_date_npis = datetime.strftime(max_date_npis, '%Y-%m-%d')
             self.min_date = max(min_date_npis, self.min_date)
             self.max_date = min(max_date_npis, self.max_date)
-
 
             self.df_r = mdfs.extract_subframe_based_on_dates(
                 self.df_r, self.min_date, self.max_date)
@@ -704,6 +703,7 @@ class NPIRegression():
             self.df_pvalues['columns'][num_fixed_variables:])
 
         self.plot_confidence_intervals(iteration='final')
+        self.plot_active_countydays(iteration='final')
 
         return self.df_pvalues, results
 
@@ -820,12 +820,60 @@ class NPIRegression():
 
         plt.close()
 
+    def plot_active_countydays(self, iteration):
+        num_plots = len(self.df_pvalues)//25
+        split_variables = np.array_split(
+            range(len(self.df_pvalues)), num_plots)
+        for plot_number in range(num_plots):
+
+            # determine begin and end for plotted variables
+            plotted_variables_begin = sum([len(x)
+                                          for x in split_variables][:plot_number])
+            plotted_variables_end = sum([len(x)
+                                        for x in split_variables][:plot_number+1])
+
+            fig, ax = plt.subplots()
+
+            # vertical line at x=0
+            ax.axvline(color='gray')
+
+            npi_names_all = []
+            county_days_all = []
+            county_days_total = self.df_npis.count().iloc[0]
+            for i in range(plotted_variables_begin, plotted_variables_end):
+                # get number of active county day for all NPIs/ clusters of NPIs
+                npi_name = self.df_pvalues['columns'].iloc[i]
+
+                if npi_name in list(self.df_npis.columns[3:]):
+                    npi_names_all.append(npi_name)
+                    county_days_all.append(self.df_npis[npi_name].sum())
+
+            for j in range(len(self.df_npis.columns[3:])):
+
+                ax.barh(npi_names_all, county_days_all/county_days_total)
+
+                ax.set_yticks(range(len(npi_names_all)),
+                              npi_names_all, fontsize=5)
+                ax.invert_yaxis()
+
+                ax.set_xlabel('Number of active county days')
+                ax.set_ylabel('NPIs')
+
+            if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results'):
+                os.makedirs(
+                    f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results')
+            plt.tight_layout()
+            plt.savefig(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results/active_countydays_iteration_{iteration}_plot{plot_number}.png', format='png',
+                        dpi=500)
+
+            plt.close()
+
 
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
-    min_date = '2021-01-01'
-    max_date = '2021-12-31'
+    min_date = '2020-03-01'
+    max_date = '2020-05-01'
 
     fine_resolution = 2
 
