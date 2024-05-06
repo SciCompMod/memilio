@@ -16,6 +16,15 @@ on:
       - "**/memilio-epidata/**"
   workflow_dispatch:
 
+env:
+  compiler-version:
+    gcc:
+      min: "9"
+      latest: "11"
+    clang:
+      min: "6.0"
+      latest: "14"
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
