@@ -52,7 +52,7 @@
  *  the tape can interpreted backwards
  *  and the vector-Jacobian product can be accessed the command ad::derivative(x).
  *  
- *  For an concise introduction to AD we recommend the article: 
+ *  For a concise introduction to AD we recommend the article: 
  *  Verma, Arun. "An introduction to automatic differentiation." Current Science (2000): 804-807.
  */
 
