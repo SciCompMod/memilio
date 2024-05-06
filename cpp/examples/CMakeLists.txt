@@ -49,7 +49,7 @@ target_link_libraries(ad_square_example PRIVATE AD::AD)
 set_target_properties(ad_square_example PROPERTIES CXX_STANDARD 14)
 
 add_executable(ad_odeint_example ad_odeint_example.cpp)
-target_link_libraries(ad_odeint_example PRIVATE AD::AD Boost::boost memilio)
+target_link_libraries(ad_odeint_example PRIVATE AD::AD Boost::boost)
 set_target_properties(ad_odeint_example PROPERTIES CXX_STANDARD 14)
 
 add_executable(ode_sir_ageres_example ode_sir_ageres.cpp)
