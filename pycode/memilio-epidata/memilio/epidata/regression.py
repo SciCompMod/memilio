@@ -30,6 +30,7 @@ from memilio.epidata import getVariantsData as gvsd
 from memilio.epidata import progress_indicator
 from datetime import date, datetime
 import os
+import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -224,17 +225,36 @@ class NPIRegression():
             gd.check_dir(directory)
 
             filepath = os.path.join(directory + 'clustered_npis.json')
-            
+
             if not os.path.exists(filepath):
-                print('NPI data not found. Running download script.')
-                self.df_npis = gnd.get_npi_data(start_date=date(2020, 1, 1),
-                                                fine_resolution=self.fine_resolution, file_format='csv')
+
+                print('Clustered NPI data not found. Using NPI data.')
+
+                if self.fine_resolution == 0:
+                    filepath = os.path.join(
+                        directory, 'germany_counties_npi_maincat.csv')
+
+                if self.fine_resolution == 2:
+                    filepath = os.path.join(
+                        directory, 'germany_counties_npi_subcat.csv')
+
+                if not os.path.exists(filepath):
+                    print('NPI data not found. Running download script.')
+                    self.df_npis = gnd.get_npi_data(start_date=date(2020, 1, 1),
+                                                    fine_resolution=self.fine_resolution, file_format='csv')
+
+                self.df_npis = pd.read_csv(filepath)
+                self.used_npis = self.df_npis.columns.to_list()
+                self.used_npis.remove('Unnamed: 0')
+                self.used_npis.remove('Date')
+                self.used_npis.remove('ID_County')
+
             else:
                 self.df_npis = pd.read_json(filepath)
 
-            self.used_npis = self.df_npis.columns.to_list()
-            self.used_npis.remove('Date')
-            self.used_npis.remove('ID_County')
+                self.used_npis = self.df_npis.columns.to_list()
+                self.used_npis.remove('Date')
+                self.used_npis.remove('ID_County')
 
             # read population data
             filepath = os.path.join(
@@ -314,8 +334,11 @@ class NPIRegression():
 
         # variable for virus variant
         with progress_indicator.Spinner(message="Preparing variant data"):
-            df_var = gvsd.get_variants_data()
-            self.variants = df_var.iloc[:, 1:].columns.to_list()
+            df_var = gvsd.get_variants_data(transform_to_daily=True)
+            # use only alpha and delta (because we want to assess effect of alpha and delta wrt to wildtype)
+            # TODO: discuss if this is the right approach (if we want to estimate effects of variants at all with our model)
+            self.variants = ['B.1.617.2', 'B.1.1.7']
+            # self.variants = df_var.iloc[:, 1:].columns.to_list()
             # add column for counties
             df_var['ID_County'] = 0
             # initialize dataframe
@@ -671,68 +694,113 @@ class NPIRegression():
 
     # plot coefficients and confidence intervals per independent variable
     def plot_confidence_intervals(self, iteration):
-        num_plots = 4
-        plotted_variables = int(len(self.df_pvalues)/num_plots)
+        num_plots = len(self.df_pvalues)//25
+        split_variables = np.array_split(
+            range(len(self.df_pvalues)), num_plots)
         for plot_number in range(num_plots):
 
+            # determine begin and end for plotted variables
+            plotted_variables_begin = sum([len(x)
+                                          for x in split_variables][:plot_number])
+            plotted_variables_end = sum([len(x)
+                                        for x in split_variables][:plot_number+1])
+
             fig, ax = plt.subplots()
-            for i in range(plot_number*plotted_variables, (plot_number+1)*plotted_variables):
+
+            # vertical line at x=0
+            ax.axvline(color='gray')
+
+            for i in range(plotted_variables_begin, plotted_variables_end):
+                # plot cofidence interval
                 ax.plot((self.df_pvalues['conf_int_min'].iloc[i],
                          self.df_pvalues['conf_int_max'].iloc[i]), (i, i), '-o', color='teal', markersize=3)
+                # plot coefficient
                 ax.scatter(self.df_pvalues['coeffs'].iloc[i],
                            i, color='teal', marker='x')
 
-            ax.axvline(color='gray')
+                # different colors for background
+                if i % 2 == 0:
+                    ax.axhspan(i-0.5, i+0.5, facecolor='gray', alpha=0.1)
 
-            ax.set_yticks(range(plot_number*plotted_variables, (plot_number+1)*plotted_variables),
-                          list(self.df_pvalues['columns'])[plot_number*plotted_variables: (plot_number+1)*plotted_variables], fontsize=5)
+            ax.set_yticks(range(plotted_variables_begin, plotted_variables_end),
+                          list(self.df_pvalues['columns'])[plotted_variables_begin: plotted_variables_end], fontsize=5)
             ax.invert_yaxis()
 
             ax.set_xlabel('Values of coefficients')
             ax.set_ylabel('Variables')
 
-            if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}/regression_results'):
+            if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results'):
                 os.makedirs(
-                    f'plots/fine_resolution{self.fine_resolution}/regression_results')
+                    f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results')
             plt.tight_layout()
-            plt.savefig(f'plots/fine_resolution{self.fine_resolution}/regression_results/regression_results_iteration_{iteration}_plot{plot_number}.png', format='png',
+            plt.savefig(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results/regression_results_iteration_{iteration}_plot{plot_number}.png', format='png',
                         dpi=500)
 
             plt.close()
 
     # plot pvalues and variable_of_interest for iteration in backward selection
     def plot_pvalues(self, iteration, variable_of_interest, removed):
+        num_plots = 3
         # plot pvalues
-        fig, ax = plt.subplots()
-        ax.barh(range(len(self.df_pvalues)), self.df_pvalues['pvalues'])
+        fig, (ax1, ax2, ax3) = plt.subplots(1, num_plots, sharex=True)
+        axes = [ax1, ax2, ax3]
+
+        split_variables = np.array_split(
+            range(len(self.df_pvalues)), num_plots)
+
+        for plot_number in range(num_plots):
+
+            # determine begin and end for plotted variables
+            plotted_variables_begin = sum([len(x)
+                                          for x in split_variables][:plot_number])
+            plotted_variables_end = sum([len(x)
+                                        for x in split_variables][:plot_number+1])
+            axes[plot_number].barh(range(plotted_variables_begin, plotted_variables_end),
+                                   self.df_pvalues['pvalues'][plotted_variables_begin: plotted_variables_end], zorder=1)
+
+            # add vertical lines for orientation
+            axes[plot_number].axvline(0.25, color='gray', alpha=0.2, zorder=0)
+            axes[plot_number].axvline(0.5, color='gray', alpha=0.2, zorder=0)
+            axes[plot_number].axvline(0.75, color='gray', alpha=0.2, zorder=0)
+
+            # set y axis
+            axes[plot_number].set_yticks(range(plotted_variables_begin, plotted_variables_end), list(
+                self.df_pvalues['columns'][plotted_variables_begin: plotted_variables_end]), fontsize=5)
+            axes[plot_number].invert_yaxis()
+
         # get index of npi_of interest and change color of that bar
-        index = self.df_pvalues.index.get_loc(variable_of_interest)
+        index = self.df_pvalues.index.get_loc(
+            variable_of_interest)
+        # get plot where variable_of_interest is displayed
+        plot_of_interest = [i for i in range(
+            num_plots) if index in split_variables[i]][0]
+        # adjust index with respect to plot_of_interest
+        index = index - sum([len(x)
+                             for x in split_variables][:plot_of_interest])
 
         # if variable_of_interest was removed change color to green
         if removed:
-            ax.get_children()[index].set_color('g')
+            axes[plot_of_interest].get_children()[index].set_color('g')
             labels = ['Variable of interest was removed']
             handles = [plt.Rectangle((0, 0), 1, 1, color='g')]
 
         # if variable_of_interest was not removed change color to red
         else:
-            ax.get_children()[index].set_color('r')
+            axes[plot_of_interest].get_children()[index].set_color('r')
             labels = ['Variable of interest was not removed']
             handles = [plt.Rectangle((0, 0), 1, 1, color='r')]
 
-        plt.legend(handles, labels, loc='lower right')
+        axes[1].set_xlabel('P-values')
+        axes[0].set_ylabel('Variables')
 
-        ax.set_yticks(range(0, len(self.df_pvalues)), list(
-            self.df_pvalues['columns']), fontsize=4)
-        ax.invert_yaxis()
+        plt.legend(handles, labels, bbox_to_anchor=(1, 0), loc="lower right",
+                   bbox_transform=fig.transFigure, ncol=1, fontsize=8)
 
-        ax.set_xlabel('P-values')
-        ax.set_ylabel('Variables')
-
-        if not os.path.isdir(f'plots/fine_resolution{self.fine_resolution}/pvalues'):
-            os.makedirs(f'plots/fine_resolution{self.fine_resolution}/pvalues')
+        if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/pvalues'):
+            os.makedirs(
+                f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/pvalues')
         plt.tight_layout()
-        plt.savefig(f'plots/fine_resolution{self.fine_resolution}/pvalues/pvalues_iteration_{iteration}.png', format='png',
+        plt.savefig(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/pvalues/pvalues_iteration_{iteration}.png', format='png',
                     dpi=500)
 
         plt.close()
@@ -741,10 +809,10 @@ class NPIRegression():
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
-    min_date = '2020-03-01'
-    max_date = '2022-07-01'
+    min_date = '2021-09-01'
+    max_date = '2021-10-31'
 
-    fine_resolution = 0
+    fine_resolution = 2
 
     npi_regression = NPIRegression(
         counties, min_date, max_date, fine_resolution)

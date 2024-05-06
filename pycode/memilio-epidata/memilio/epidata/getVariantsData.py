@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
@@ -43,7 +44,9 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
                       file_format=dd.defaultDict['file_format'],
                       out_folder=dd.defaultDict['out_folder'],
                       no_raw=dd.defaultDict['no_raw'],
-                      make_plot=False
+                      make_plot=False,
+                      transform_to_daily=True,
+                      sanitize=True
                       ):
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -91,21 +94,70 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
             ) + '-' + str(weekday), format="%G-%V-%u").unique()
             df_out.loc[df_out.Date.isin(dates), v] += df_sub_values
 
+    if transform_to_daily:
+        # transform from weekly to daily data
+        df_out = df_out.set_index('Date').resample('D').ffill()
+        df_out.reset_index(inplace=True)
+
     if make_plot:
         fig, axs = plt.subplots(4, 6)
         for v in range(len(variants)):
             axs[int((v)/6)][(v) % 6].fill_between(df_out.Date,
                                                   df_out[variants[v]], 0., label=variants[v])
             axs[int((v)/6)][(v) % 6].legend()
+
+        plt.savefig('variants_test.png')
         plt.show()
+    if sanitize:
+        sanitize_data(df_out)
 
     return df_out
+
+# do sanitizing for variants 'Other' and 'B.1.617.2' because we assume that 'Other' is present 100%
+# until beginning of 2021
+
+
+def sanitize_data(df_variants):
+    max_date_other_100 = df_variants[df_variants['Other']
+                                     == 100.0]['Date'].max()
+    df_variants.loc[df_variants['Date'] < max_date_other_100, 'Other'] = 100.0
+    df_variants.loc[df_variants['Date'] <
+                    max_date_other_100, 'B.1.617.2'] = 0.0
+
+
+def plot_variants_data(df_variants, min_date='2020-03-01', max_date='2022-03-01', variants='wildtype_alpha_delta'):
+
+    fig, ax = plt.subplots()
+
+    df_variants = mdfs.extract_subframe_based_on_dates(
+        df_variants, min_date, max_date)
+
+    if variants == 'all':
+        ax.plot(df_variants.iloc[:, 0], df_variants.iloc[:,
+                1:-1], label=df_variants.columns[1:-1])
+        filename = 'all_variants'
+
+    elif variants == 'wildtype_alpha_delta':
+        variants_of_interest = ['Other', 'B.1.617.2', 'B.1.1.7']
+        ax.plot(df_variants.iloc[:, 0],
+                df_variants.loc[:, variants_of_interest], label=variants_of_interest, linewidth=2.0)
+        filename = 'wildtype_alpha_delta'
+
+    if not os.path.isdir(f'plots/variants'):
+        os.makedirs(f'plots/variants')
+    plt.tight_layout()
+    plt.legend()
+    plt.savefig(f'plots/variants/{filename}.png', format='png',
+                dpi=500)
+    plt.close()
 
 
 def main():
     """ Main program entry."""
 
-    get_variants_data()
+    df_variants = get_variants_data(
+        make_plot=False, transform_to_daily=True, sanitize=True)
+    plot_variants_data(df_variants, variants='wildtype_alpha_delta')
 
 
 if __name__ == "__main__":
