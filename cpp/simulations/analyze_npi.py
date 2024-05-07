@@ -7,46 +7,34 @@ import numpy as np
 import os
 import openpyxl
 
-# # from the first file 'datensatzbeschreibung_massnahmen' we want to extract the following information:
-# # on the site DSB BL we have the following information:
-# #first column is the short name of the measure
-# # third column is the explanation of the measure
-# #we want a map from the short name to the explanation
 
-# # get the data from the first file
-# csv_file = pd.read_csv(
-#     r'C:\Users\korf_sa\Documents\rep\cpp\simulations\datensatzbeschreibung_massnahmen.csv', header=None, skiprows=1)
-
-
-
-
-# csv_file = pd.read_csv(
-#     r'C:\Users\korf_sa\Documents\rep\cpp\simulations\germany_counties_npi_maincat.csv', header=None, skiprows=1)
-# # csv_file = pd.read_csv(
-# #     r'C:\Users\korf_sa\Documents\rep\cpp\simulations\germany_counties_npi_subcat.csv', header=None, skiprows=1)
-
-
-
-# #mapping from column entry to column name:
-# dict_leisure = {1: 'ContactPriv', 2: 'Schools', 3: 'Kita', 4: 'IndoorEvents',
-#                 5: 'OutdoorEvents', 6: 'Culture', 7: 'Retail', 8: 'Gastronomy'}
-
-# #delete all files with different zip code
-# csv_file = csv_file[csv_file[2] == zip_code_brunswick]
-# # also delete all files with different date
-# csv_file = csv_file[(csv_file[1] >= start_date) & (csv_file[1] <= end_date)]
-# #delete all the columns that are zero
-# # csv_file = csv_file.loc[:, (csv_file != 0).any(axis=0)]
-# #delete all the columns that are not zero but keep header number 0
-
-# #plot a heatmap of the resulting 0/1 matrix within the dataframe
-
-# sns.heatmap(csv_file.iloc[:, 3:], cmap='coolwarm', cbar=False)
-# plt.show()
-
-# # we want 
-
-# x=1
+#define a function which takes in a list of dates in the form yyyy-mm-dd and summarizes them in a range of dates where the dates are consecutive, e.g. [2021-01-01, 2021-01-02, 2021-01-03, 2021-01-05] -> [2021-01-01 to 2021-01-03, 2021-01-05]
+def summarize_dates(dates):
+    #sort the list of dates
+    dates.sort()
+    #initialize the list of ranges
+    ranges = []
+    #initialize the start of the range
+    start = dates[0]
+    #initialize the end of the range
+    end = dates[0]
+    #iterate through the list of dates
+    for i in range(1, len(dates)):
+        #if the date is the next day of the previous date
+        if pd.to_datetime(dates[i]) == pd.to_datetime(dates[i-1]) + pd.DateOffset(days=1):
+            #set the end of the range to the current date
+            end = dates[i]
+        #if the date is not the next day of the previous date
+        else:
+            #append the range to the list of ranges
+            ranges.append(str(start) + ' to ' + str(end))
+            #set the start of the range to the current date
+            start = dates[i]
+            #set the end of the range to the current date
+            end = dates[i]
+    #append the last range to the list of ranges
+    ranges.append(str(start) + ' to ' + str(end))
+    return ranges
 
 
 
@@ -54,45 +42,43 @@ import openpyxl
 df_abb = pd.read_excel('/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/datensatzbeschreibung_massnahmen.xlsx', sheet_name='DSB BL')
 
 #read in the matrix which tells us which measure is active on which day
-df_measure_matrix = pd.read_csv(r'/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/germany_counties_npi_subcat.csv', header=None, skiprows=1)
+df_measure_matrix = pd.read_csv(r'/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/germany_counties_npi_subcat.csv')
 
 zip_code_brunswick = 3101
 start_date = '2021-03-01'
 end_date = '2021-05-31'
 
+
+one_day_after = pd.to_datetime(start_date) + pd.DateOffset(days=1)
 #now we want to shorten the matrix to the zip code of Brunswick and the time period of interest
 #delete all files with different zip code
-df_measure_matrix = df_measure_matrix[df_measure_matrix[2] == zip_code_brunswick]
-# also delete all files with different date
-df_measure_matrix = df_measure_matrix[(df_measure_matrix[1] >= start_date) & (df_measure_matrix[1] <= end_date)]
+df_measure_matrix = df_measure_matrix[df_measure_matrix['ID_County'] == zip_code_brunswick]
+#also delete all files with different date
+df_measure_matrix = df_measure_matrix[(df_measure_matrix['Date'] >= start_date) & (df_measure_matrix['Date'] <= end_date)]
+#delete all the columns that just contain zeros
+df_measure_matrix = df_measure_matrix.loc[:, (df_measure_matrix != 0).any(axis=0)]
 
-# now we want to do the following:
-# 1. for every measure we want to count how many days it was active
-# 2. We want to sort the measures by the number of days they were active
-# 3. We want to plot the measures in a bar plot with the number of days they were active
-# 4. We want a txt file which has for each measure the full explanation and the days it was active
 
-# begin with 1.
-# get the number of days a measure was active
-measure_by_days = df_measure_matrix.iloc[:, 3:]
-# count the number of days a measure was active
-measure_by_days = measure_by_days.sum()
-# sort the measures by the number of days they were active
-measure_by_days = measure_by_days.sort_values(ascending=False)
-#delete all the columns that are zero
-measure_by_days = measure_by_days[measure_by_days != 0]
+#rename the first column from the abbreviation to the full explanation
+# create a map from the short name to the explanation
+dict_measure = {}
+for i in range(len(df_abb)):
+    dict_measure[df_abb['Variablenname'][i]] = df_abb['Beschreibung'][i]
+df_measure_matrix = df_measure_matrix.rename(columns=dict_measure)
+
 
 # now we need create a txt file with the measures and the number of days they were active and the full explanation
-# create a txt file
 f = open('measures_active_days.txt', 'w')
-#get first row of df_abb
-
-
 # for every measure
-for measure in measure_by_days.axes[0]:
-    # get the full explanation
-    full_explanation = df_abb['Beschreibung'][measure-3]
-    # write the full explanation and the number of days the measure was active to the txt file
-    f.write(full_explanation + ' ' + str(measure_by_days[measure]) + '\n')
+for measure in df_measure_matrix.axes[1][3:]:
+    # count the days it was active
+    days = df_measure_matrix[measure].sum()
+    # get the dates it was active on in one list
+    dates = df_measure_matrix[df_measure_matrix[measure] == 1]['Date'].to_list()
+    # summarize the dates in ranges
+    date_ranges = summarize_dates(dates)
+    # write the measure and the number of days it was active in the txt file also write down each date the measure was active
+    f.write(measure + ': ' + str(days) + ' days ' + 'Dates: ' + str(date_ranges) + '\n\n')
+    
 
 x=1
