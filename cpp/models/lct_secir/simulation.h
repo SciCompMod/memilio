@@ -180,7 +180,6 @@ private:
  */
 template <class Model, class Sim = Simulation<Model>>
 TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model,
-
                                 std::shared_ptr<IntegratorCore<ScalarType>> integrator = nullptr)
 {
     model.check_constraints();
