@@ -27,9 +27,9 @@ namespace oseair
 {
 
 /**
-     * @brief The InfectionState enum describes the possible
-     * categories for the infectious state of persons
-     */
+ * @brief The InfectionState enum describes the possible
+ * categories for the infectious state of persons
+ */
 enum class InfectionState
 {
     Susceptible,

@@ -26,9 +26,9 @@ namespace mio
 namespace iseir
 {
 /**
-    * @brief The InfectionState enum describes the possible categories for the infectious state of persons 
-    *    in ide_seir model.
-    */
+ * @brief The InfectionState enum describes the possible categories for the infectious state of persons 
+ *    in ide_seir model.
+ */
 enum class InfectionState
 {
     S = 0,

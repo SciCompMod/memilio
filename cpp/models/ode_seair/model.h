@@ -56,7 +56,6 @@ public:
                 pop[(size_t)InfectionState::Infected] +
             params.template get<TimeRecoveredInv<FP>>() * y[(size_t)InfectionState::Recovered];
         dydt[(size_t)InfectionState::Exposed] =
-
             params.template get<SocialDistancing<FP>>() / pop_total * y[(size_t)InfectionState::Susceptible] *
                 pop[(size_t)InfectionState::Asymptomatic] +
             params.template get<Quarantined<FP>>() / pop_total * y[(size_t)InfectionState::Susceptible] *

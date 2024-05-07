@@ -36,13 +36,13 @@ namespace mio
 {
 namespace osecir
 {
-/* Sets alls SecirParams parameters normally distributed, 
-*  using the current value and a given standard deviation
-* @param[inout] params SecirParams including contact patterns for alle age groups
-* @param[in] t0 start time
-* @param[in] tmax end time
-* @param[in] dev_rel maximum relative deviation from particular value(s) given in params
-*/
+/** Sets alls SecirParams parameters normally distributed, 
+ *  using the current value and a given standard deviation
+ * @param[inout] params SecirParams including contact patterns for alle age groups
+ * @param[in] t0 start time
+ * @param[in] tmax end time
+ * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
+ */
 template <typename FP = double>
 void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, double dev_rel)
 {
@@ -179,9 +179,9 @@ void draw_sample_infection(Model<FP>& model)
 }
 
 /** Draws a sample from Model parameter distributions and stores sample values
-* as SecirParams parameter values (cf. UncertainValue and SecirParams classes)
-* @param[inout] model Model including contact patterns for alle age groups
-*/
+ * as SecirParams parameter values (cf. UncertainValue and SecirParams classes).
+ * @param[inout] model Model including contact patterns for alle age groups.
+ */
 template <typename FP = double>
 void draw_sample(Model<FP>& model)
 {
