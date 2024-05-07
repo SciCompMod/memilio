@@ -135,6 +135,13 @@ public:
                              this->populations.get_from(pop, {i, InfectionState::InfectedCriticalImprovedImmunity});
         }
 
+        // get vaccinations with
+        // Eigen::VectorXd vaccinations_at(const CustomIndexArray<double, AgeGroup, SimulationDay>& daily_vaccinations,
+        // const Scalartype t, const ScalarType eps = 0.15) const
+        auto const& partial_vaccination = vaccinations_at(this->parameters.get<DailyPartialVaccination>(), t);
+
+        mio::unused(partial_vaccination);
+
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
             size_t SNi    = this->populations.get_flat_index({i, InfectionState::SusceptibleNaive});
@@ -562,6 +569,40 @@ public:
                                       InfectionState::SusceptiblePartialImmunity>({i})] =
                 1 / params.get<TimeWaningImprovedImmunity>()[i] * y[SIIi];
         }
+    }
+
+    Eigen::VectorXd vaccinations_at(const CustomIndexArray<double, AgeGroup, SimulationDay>& daily_vaccinations,
+                                    const ScalarType t, const ScalarType eps = 0.15) const
+    {
+        auto const& params  = this->parameters;
+        const ScalarType ub = (size_t)t + 1.0;
+        const ScalarType lb = ub - eps;
+
+        Eigen::VectorXd smoothed_vaccinations((size_t)params.get_num_groups());
+
+        if (t > ub) {
+            mio::log_warning("Vaccination time is out of bounds");
+        }
+        // check if t is in the range of the interval [lb,ub]
+        if (t >= lb) {
+            // need a eigen vector of size params.get_num_groups() to store the number of vaccinations per age group
+
+            // ToDo: Find a way to Iterate over all three vaccination types
+            for (AgeGroup age = AgeGroup(0); age < params.get_num_groups(); age++) {
+                const auto num_vaccinations = daily_vaccinations[{age, SimulationDay((size_t)t + 1)}] -
+                                              daily_vaccinations[{age, SimulationDay((size_t)t)}];
+                const auto num_vaccinations_eps = daily_vaccinations[{age, SimulationDay((size_t)t - eps + 1)}] -
+                                                  daily_vaccinations[{age, SimulationDay((size_t)t - eps)}];
+                smoothed_vaccinations[(size_t)age] = smoother_cosine(t, lb, ub, num_vaccinations_eps, num_vaccinations);
+            }
+        }
+        else {
+            for (auto age = AgeGroup(0); age < params.get_num_groups(); age++) {
+                smoothed_vaccinations[(size_t)age] = daily_vaccinations[{age, SimulationDay((size_t)t + 1)}] -
+                                                     daily_vaccinations[{age, SimulationDay((size_t)t)}];
+            }
+        }
+        return smoothed_vaccinations;
     }
 
     /**
