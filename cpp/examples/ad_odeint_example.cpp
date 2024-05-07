@@ -69,10 +69,12 @@ int main()
 
     // We want to compare AD derivatives with difference quotient
     // To this end, we simulate again with a perturbation of the initial value of x[0]
-    const double h        = 1e-3;
+    const double h        = 1e-3; // pertubation for finite differences
     std::vector<double> y = {ad::value(x[0]), ad::value(x[1])};
-    x[0]                  = 1.0 + h;
+    x[0]                  = 1.0 + h; // add perturbation to initial value of x[0]
     x[1]                  = 0.0;
+
+    // integrate perturbed system
     boost::numeric::odeint::integrate_adaptive(make_controlled<error_stepper_type>(abs_tol, rel_tol),
                                                harmonic_oscillator, x, t0, t_end, dt);
 
