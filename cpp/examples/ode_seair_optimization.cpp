@@ -183,7 +183,7 @@ int main()
     // Note: The following choices are only examples, they might not be
     //       suitable for your optimization problem.
     app->Options()->SetNumericValue("tol", 1e-6);
-    app->Options()->SetStringValue("DeathRate_strategy", "adaptive");
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("limited_memory_update_type", "bfgs");

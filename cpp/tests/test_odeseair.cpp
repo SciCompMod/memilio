@@ -124,7 +124,7 @@ TEST(TestOdeSeair, compareWithPreviousRun)
 
     mio::oseair::Model<double> model;
 
-    // set parameters to default values just for code covereage
+    // Set the parameters to the values used.
     model.parameters.set<mio::oseair::SocialDistancing<double>>(0.2);
     model.parameters.set<mio::oseair::Quarantined<double>>(0.2);
 

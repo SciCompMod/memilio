@@ -17,7 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "ode_seair/model.h"
+#include "ode_seair/infection_state.h"
+#include "ode_seair/parameters.h"
+#include "memilio/compartments/simulation.h"
+
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/time_series.h"
+
 #include "ad/ad.hpp"
+#include "ad/ad_spdlog_formatter.h"
 #include "boost/numeric/odeint.hpp"
 #include <gtest/gtest.h>
 
@@ -32,9 +42,7 @@ TEST(Testad, ad_square)
 {
     std::vector<double> x_values = {3., 5., 10.5};
     for (const double& x : x_values) {
-        /**** Forward AD ****/
-        // Forward and backward AD are just different strategies for calculating the derivative.
-        // They should produce the same results.
+        // Forward AD.
         ad::gt1s<double>::type t1_x; // tangent-linear AD type
         ad::value(t1_x)             = x; // set value (this corresponds to the non-AD part)
         ad::derivative(t1_x)        = 1.0; // set tangent-linear derivative seed
@@ -42,7 +50,7 @@ TEST(Testad, ad_square)
         EXPECT_EQ(ad::value(t1_x) * ad::value(t1_x), ad::value(t1_y));
         EXPECT_EQ(2. * ad::value(t1_x), ad::derivative(t1_y));
 
-        /**** Reverse AD ****/
+        // Reverse AD.
         // Create tape (allocation).
         if (!ad::ga1s<double>::global_tape)
             ad::ga1s<double>::global_tape = ad::ga1s<double>::tape_t::create();
@@ -120,4 +128,50 @@ TEST(Testad, ad_odeint)
     // Compare AD derivatives with a difference quotient.
     EXPECT_NEAR(ad::derivative(x[0]), (ad::value(x_compare[0]) - ad::value(x[0])) / h, 1e-4);
     EXPECT_NEAR(ad::derivative(x[1]), (ad::value(x_compare[1]) - ad::value(x[1])) / h, 1e-4);
+}
+
+TEST(Testad, ad_seair)
+{
+    using FP = typename ad::gt1s<double>::type; // AD data type for scalar forward mode.
+
+    FP t0   = 0.;
+    FP tmax = 0.1;
+    FP dt   = 0.1;
+
+    mio::oseair::Model<FP> admodel;
+
+    // Set initial values.
+    admodel.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}]  = 450.;
+    admodel.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]      = 100.;
+    admodel.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] = 200.;
+    admodel.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]     = 50.;
+    admodel.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}]    = 100.;
+    admodel.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}]         = 100.;
+
+    // Compute derivative with respect to the TestingRate (scalar tangent-linear mode).
+    ad::derivative(admodel.parameters.get<mio::oseair::TestingRate<FP>>()) = 1.0;
+    ad::value(admodel.parameters.get<mio::oseair::TestingRate<FP>>())      = 0.2;
+
+    auto adresult = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, admodel);
+
+    // We want to compare AD derivatives with difference quotient.
+    const double h = 1e-4;
+    mio::oseair::Model<double> model;
+
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}]  = 450.;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]      = 100.;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] = 200.;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]     = 50.;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}]    = 100.;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}]         = 100.;
+
+    model.parameters.get<mio::oseair::TestingRate<double>>() = 0.2 + h;
+
+    auto result =
+        mio::simulate<double, mio::oseair::Model<double>>(ad::value(t0), ad::value(tmax), ad::value(dt), model);
+    EXPECT_EQ(result.get_num_time_points(), adresult.get_num_time_points());
+    for (int i = 0; i < (int)mio::oseair::InfectionState::Count; i++) {
+        EXPECT_NEAR(ad::derivative(adresult.get_last_value()[i]),
+                    (result.get_last_value()[i] - ad::value(adresult.get_last_value()[i])) / h, 1e-3);
+    }
 }
