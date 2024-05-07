@@ -422,8 +422,8 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
             outFileExposed << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Exposed)}] * N / 1000.0 << "\n";
             outFileAsymptomatic << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Asymptomatic)}] * N / 1000.0
                                 << "\n";
-            outFileInfected << grid[gridindex + 1] << " "
-                            << model.outFileSocialDistancingpopulations[{Idx(IS::Infected)}] * N / 1000.0 << "\n";
+            outFileInfected << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Infected)}] * N / 1000.0
+                            << "\n";
             outFileRecovered << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Recovered)}] * N / 1000.0
                              << "\n";
             outFileDead << grid[gridindex + 1] << " " << model.populations[{Idx(IS::Dead)}] * N / 1000.0 << "\n";
