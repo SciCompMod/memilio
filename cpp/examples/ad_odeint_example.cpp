@@ -21,25 +21,27 @@
 #include "ad/ad.hpp"
 #include "boost/numeric/odeint.hpp"
 
-//This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
+// This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
 // algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp.
 
-using ad_forward_t = typename ad::gt1s<double>::type; // AD data type for scalar forward mode
+using ad_forward_type = typename ad::gt1s<double>::type; // AD data type for scalar forward mode
+
+using value_type = ad_forward_type;
+using time_type  = value_type;
 
 // The type of container used to hold the state vector
-using value_type = ad_forward_t;
-using time_type  = value_type;
 typedef std::vector<value_type> state_type;
 
 double damping = 0.15;
 
-/* The rhs of x' = f(x) */
+/** The rhs of x' = f(x). This ODE describes a damped harmonic oscillator. */
 void harmonic_oscillator(const state_type& x, state_type& dxdt, const time_type /* t */)
 {
     dxdt[0] = x[1];
     dxdt[1] = -x[0] - damping * x[1];
 }
 
+// We use a an adaptive step size control
 using error_stepper_type =
     boost::numeric::odeint::runge_kutta_cash_karp54<state_type, value_type, state_type, value_type>;
 using controlled_stepper_type = boost::numeric::odeint::controlled_runge_kutta<error_stepper_type>;
@@ -53,9 +55,9 @@ int main()
     x[1]                 = 0.0;
     ad::derivative(x[0]) = 1.0; // compute derivative with respect to x[0] (scalar tangent-linear mode)
 
-    auto t0    = time_type(0.0);
-    auto t_end = time_type(10.0);
-    auto dt    = time_type(0.01);
+    auto t0    = time_type(0.0); // initial time
+    auto t_end = time_type(10.0); // stop time
+    auto dt    = time_type(0.01); // hint for initial step size
 
     const double abs_tol = 1e-6; // absolute tolerance for error-controlled integration
     const double rel_tol = 1e-6; // relative tolerance for error-controlled integration
