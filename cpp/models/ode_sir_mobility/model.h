@@ -40,55 +40,62 @@ public:
         auto& params     = this->parameters;
         auto& population = this->populations;
 
-        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / population.get_total();
-
         Region n_regions     = params.get_num_regions();
         AgeGroup n_agegroups = params.get_num_agegroups();
-        for (auto age = AgeGroup(0); age < n_agegroups; age++) {
-            for (auto edge : params.get<CommutingRatio>()) {
-                auto start_region = get<0>(edge);
-                auto end_region   = get<1>(edge);
-                auto strength     = get<double>(edge);
-                if (start_region == end_region) {
-                    continue;
-                }
-                // s_n += h_mn/P_m * i_m
-                flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(
-                    {start_region, age})] +=
-                    strength * pop[population.get_flat_index({end_region, age, InfectionState::Infected})];
-                // s_m += h_mn/P_m * i_n
-                flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>({end_region, age})] +=
-                    strength * pop[population.get_flat_index({start_region, age, InfectionState::Infected})];
 
-                // s_n += gamma * h_nm/P_n * sum(h_km/P_k * p_nm,k * i_k)
-                for (auto edge_commuter : params.get<CommutingRatio>()) {
-                    auto start_region_commuter = get<0>(edge_commuter);
-                    auto end_region_commuter   = get<1>(edge_commuter);
-                    auto strength_commuter     = get<double>(edge_commuter);
-                    if (end_region_commuter != end_region || start_region_commuter == start_region ||
-                        ((std::find(params.get<PathIntersections>()[{start_region, end_region}].begin(),
-                                    params.get<PathIntersections>()[{start_region, end_region}].end(),
-                                    start_region_commuter)) ==
-                         params.get<PathIntersections>()[{start_region, end_region}].end())) {
+        for (auto age_i = AgeGroup(0); age_i < n_agegroups; age_i++) {
+            for (auto age_j = AgeGroup(0); age_j < n_agegroups; age_j++) {
+                double coeffStoI =
+                    params.get<ContactPatterns>().get_matrix_at(t)(static_cast<Eigen::Index>((size_t)age_i),
+                                                                   static_cast<Eigen::Index>((size_t)age_j)) *
+                    params.get<TransmissionProbabilityOnContact>() / population.get_group_total(age_j);
+                for (auto edge : params.get<CommutingRatio>()) {
+                    auto start_region = get<0>(edge);
+                    auto end_region   = get<1>(edge);
+                    auto strength     = get<double>(edge);
+                    if (start_region == end_region) {
                         continue;
                     }
-                    auto test = params.get<PathIntersections>()[{start_region, end_region}];
+                    // s_n += h_mn/P_m * i_m
                     flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(
-                        {start_region, age})] +=
-                        params.get<ImpactCommuters>() * strength * strength_commuter *
-                        pop[population.get_flat_index({start_region_commuter, age, InfectionState::Infected})];
+                        {start_region, age_i})] +=
+                        strength * pop[population.get_flat_index({end_region, age_j, InfectionState::Infected})];
+                    // s_m += h_mn/P_m * i_n
+                    flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(
+                        {end_region, age_i})] +=
+                        strength * pop[population.get_flat_index({start_region, age_j, InfectionState::Infected})];
+
+                    // s_n += gamma * h_nm/P_n * sum(h_km/P_k * p_nm,k * i_k)
+                    for (auto edge_commuter : params.get<CommutingRatio>()) {
+                        auto start_region_commuter = get<0>(edge_commuter);
+                        auto end_region_commuter   = get<1>(edge_commuter);
+                        auto strength_commuter     = get<double>(edge_commuter);
+                        if (end_region_commuter != end_region || start_region_commuter == start_region ||
+                            ((std::find(params.get<PathIntersections>()[{start_region, end_region}].begin(),
+                                        params.get<PathIntersections>()[{start_region, end_region}].end(),
+                                        start_region_commuter)) ==
+                             params.get<PathIntersections>()[{start_region, end_region}].end())) {
+                            continue;
+                        }
+                        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(
+                            {start_region, age_i})] +=
+                            params.get<ImpactCommuters>() * strength * strength_commuter *
+                            pop[population.get_flat_index({start_region_commuter, age_j, InfectionState::Infected})];
+                    }
+                }
+                for (auto region = Region(0); region < n_regions; region++) {
+                    flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(
+                        {region, age_i})] += pop[population.get_flat_index({region, age_j, InfectionState::Infected})];
+                    flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(
+                        {region, age_i})] *=
+                        coeffStoI * y[population.get_flat_index({region, age_j, InfectionState::Susceptible})];
                 }
             }
 
-            for (auto i = Region(0); i < n_regions; i++) {
-                flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>({i, age})] +=
-                    pop[population.get_flat_index({i, age, InfectionState::Infected})];
-                flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>({i, age})] *=
-                    coeffStoI * y[population.get_flat_index({i, age, InfectionState::Susceptible})];
-                flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>({i, age})] =
+            for (auto region = Region(0); region < n_regions; region++) {
+                flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>({region, age_i})] =
                     (1.0 / params.get<TimeInfected>()) *
-                    y[population.get_flat_index({i, age, InfectionState::Infected})];
+                    y[population.get_flat_index({region, age_i, InfectionState::Infected})];
             }
         }
     }
