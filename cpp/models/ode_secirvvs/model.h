@@ -552,6 +552,7 @@ class Simulation;
 */
 template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
 FP get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Vector<FP>>& y);
+
 /**
  * specialization of compartment model simulation for the SECIRVVS model.
  * @tparam FP floating point type, e.g., double.
