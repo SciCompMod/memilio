@@ -120,8 +120,7 @@ public:
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val =
                     (1 + params.template get<Seasonality<FP>>() *
-                             sin(3.141592653589793 *
-                                 (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                             sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5)));
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
@@ -420,12 +419,11 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
             t_idx)[sim.get_model().populations.get_flat_index({i, InfectionState::InfectedCritical})];
     }
 
-    double season_val                        = (1 + params.template get<Seasonality<FP>>() *
-                                 sin(pi * (std::fmod((sim.get_model().parameters.template get<StartDay>() +
-                                                      sim.get_result().get_time(t_idx)),
-                                                                            365.0) /
-                                               182.5 +
-                                           0.5)));
+    double season_val =
+        (1 + params.template get<Seasonality<FP>>() *
+                 sin(pi *
+                     ((sim.get_model().parameters.template get<StartDay>() + sim.get_result().get_time(t_idx)) / 182.5 +
+                      0.5)));
     ContactMatrixGroup const& contact_matrix = sim.get_model().parameters.template get<ContactPatterns<FP>>();
 
     Eigen::MatrixXd cont_freq_eff(num_groups, num_groups);

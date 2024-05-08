@@ -194,8 +194,7 @@ public:
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val =
                     (1 + params.get<osecirvvs::Seasonality<ScalarType>>() *
-                             sin(3.141592653589793 *
-                                 (std::fmod((params.get<osecirvvs::StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                             sin(3.141592653589793 * ((params.get<osecirvvs::StartDay>() + t) / 182.5 + 0.5)));
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
