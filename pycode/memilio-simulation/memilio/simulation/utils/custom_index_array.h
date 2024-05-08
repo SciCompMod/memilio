@@ -37,6 +37,12 @@
 namespace pymio
 {
 
+template <typename T, typename = void>
+struct has_indices_attribute : std::false_type {};
+
+template <typename T>
+struct has_indices_attribute<T, std::void_t<decltype(std::declval<T>().size().indices)>> : std::true_type {};
+
 // Recursively bind the members of custom index array
 // that require a single Tag as a template argument.
 template <class C>
@@ -48,6 +54,11 @@ void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>&
 {
     std::string tname = pretty_name<T>();
     c.def(("size_" + tname).c_str(), &C::template size<T>);
+
+    // Only add if the Index is multidimensional, e.g. only when Index::indices exists, because it is used in resize
+    if constexpr (has_indices_attribute<C>::value){
+        c.def(("resize_" + tname).c_str(), &C::template resize<T>);
+    }
 
     // Catch warning ImportError: generic_type: type "" is already registered!
     try {
@@ -141,6 +152,9 @@ void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m, p
     c.def("size", [](const C& self) {
         return self.size(); //just a single index, no tuple
     });
+    c.def("resize", [](C& self, mio::Index<Tag> new_dims) {
+        self.resize(new_dims); //tuple of single indices
+    });
 }
 template <class C, class... Tags>
 std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m,
@@ -150,6 +164,10 @@ std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_Custo
     c.def("size", [](const C& self) {
         return self.size().indices; //tuple of single indices
     });
+    c.def("resize", [](C& self, mio::Index<Tags...> new_dims) {
+        self.resize(new_dims); //tuple of single indices
+    });
+    // c.def("resize", pybind11::overload_cast<mio::Index<Tags...>>(&C::resize));
 
     // Catch warning ImportError: generic_type: type "" is already registered!
     try {
@@ -173,7 +191,10 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
         }))
         .def("numel", &C::numel)
         .def(
-            "__getitem__", [](const C& self, Index const& idx) -> auto& { return self[idx]; },
+            "__getitem__",
+            [](const C& self, Index const& idx) -> auto& {
+                return self[idx];
+            },
             pybind11::return_value_policy::reference_internal)
         .def(
             "__getitem__",
@@ -183,11 +204,11 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
             },
             pybind11::return_value_policy::reference_internal)
         .def("__setitem__",
-             [](C& self, Index const& idx, double value) {
+             [](C& self, Index const& idx, Type value) {
                  self[idx] = value;
              })
         .def("__setitem__",
-             [](C& self, std::tuple<mio::Index<Tags>...> idx, double value) {
+             [](C& self, std::tuple<mio::Index<Tags>...> idx, Type value) {
                  self[{std::get<mio::Index<Tags>>(idx)...}] = value;
              })
         .def(
@@ -198,10 +219,12 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
             pybind11::keep_alive<0, 1>())
         .def("get_flat_index", &C::get_flat_index)
         //scalar assignment
-        .def("__setitem__", &assign_scalar<C, typename C::value_type, Tags...>)
-        //scalar assignment with conversion from double
-        //TODO: may need SFINAE in the future, only compiles if value type is convertible from double, e.g. UncertainValue
-        .def("__setitem__", &assign_scalar<C, double, Tags...>);
+        .def("__setitem__", &assign_scalar<C, Type, Tags...>);
+
+    //scalar assignment with conversion from double
+    if (std::is_convertible<Type, double>::value) {
+        c.def("__setitem__", &assign_scalar<C, double, Tags...>);
+    }
     //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
     //TODO: __getitem__. Is it ever necessary to store a reference to a slice?
 

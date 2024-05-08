@@ -68,6 +68,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
     pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
     py::class_<mio::abm::Parameters, mio::abm::ParametersBase>(m, "Parameters")
@@ -140,15 +141,16 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
              py::arg("age_groups"), py::arg("infection_states"));
 
-    py::class_<mio::abm::GenericTest>(m, "GenericTest").def(py::init<>());
-    py::class_<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
-    py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
+    pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
+        .value("Generic", mio::abm::TestType::Generic)
+        .value("Antigen", mio::abm::TestType::Antigen)
+        .value("PCR", mio::abm::TestType::PCR);
 
     py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
         .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
-                      const mio::abm::GenericTest&, double>(),
+                      const mio::abm::TestParameters&, double>(),
              py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"),
-             py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
+             py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
     py::class_<mio::abm::Vaccination>(m, "Vaccination")

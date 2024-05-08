@@ -102,8 +102,8 @@ TEST(TestPerson, setGetAssignedLocation)
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
-    auto test_params = mio::abm::TestParameters{1.01,1.01}; //100% safe test
+    auto rng         = mio::RandomNumberGenerator();
+    auto test_params = mio::abm::TestParameters{1.01, 1.01}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -128,7 +128,7 @@ TEST(TestPerson, quarantine)
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
                                        infection_parameters);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
-    
+
     person.get_tested(rng_person, t_morning, test_params);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
@@ -153,9 +153,8 @@ TEST(TestPerson, get_tested)
     auto susceptible    = mio::abm::Person(rng, loc, age_group_15_to_34);
     auto rng_suscetible = mio::abm::Person::RandomNumberGenerator(rng, susceptible);
 
-    auto pcr_test     = mio::abm::PCRTest();
-    auto antigen_test = mio::abm::AntigenTest();
-
+    auto pcr_parameters     = params.get<mio::abm::TestData>()[mio::abm::TestType::PCR];
+    auto antigen_parameters = params.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
     // Test pcr test
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
         mock_uniform_dist_pcr;
@@ -165,14 +164,14 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.95))
         .WillOnce(Return(0.6))
         .WillOnce(Return(0.999));
-    ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), true);
+    ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_parameters), true);
     ASSERT_EQ(infected.is_in_quarantine(t, params), true);
     infected.remove_quarantine();
-    ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), false);
+    ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_parameters), false);
     ASSERT_EQ(infected.is_in_quarantine(t, params), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), false);
+    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_parameters), false);
     ASSERT_EQ(susceptible.is_in_quarantine(t, params), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), true);
+    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_parameters), true);
     ASSERT_EQ(susceptible.is_in_quarantine(t, params), true);
     ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 
@@ -185,10 +184,10 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.95))
         .WillOnce(Return(0.6))
         .WillOnce(Return(0.999));
-    ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), true);
-    ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), true);
+    ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), true);
+    ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), false);
+    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), false);
+    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), true);
     ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 }
 

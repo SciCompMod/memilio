@@ -95,8 +95,7 @@ public:
     Damping(const Eigen::MatrixBase<ME>& m, DampingLevel level, DampingType type, SimulationTime t)
         : Base(m, level, type, t)
     {
-        assert((get_coeffs().array() >= 0.).all() && (get_coeffs().array() <= 1.).all() &&
-               "damping coefficient out of range");
+        assert((get_coeffs().array() <= 1.).all() && "damping coefficient out of range");
     }
 
     /**
@@ -556,8 +555,7 @@ void Dampings<D>::update_cache()
             //update active damping
             update_active_dampings(damping, active_by_type, sum_by_level);
             auto combined_damping = inclusive_exclusive_sum(sum_by_level);
-            assert((combined_damping.array() <= 1).all() && (combined_damping.array() >= 0).all() &&
-                   "unexpected error, accumulated damping out of range.");
+            assert((combined_damping.array() <= 1).all() && "unexpected error, accumulated damping out of range.");
             if (floating_point_equal(double(get<SimulationTime>(damping)),
                                      double(get<SimulationTime>(m_accumulated_dampings_cached.back())), 1e-15, 1e-15)) {
                 std::get<Matrix>(m_accumulated_dampings_cached.back()) = combined_damping;

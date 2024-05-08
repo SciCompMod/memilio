@@ -110,10 +110,11 @@ int main()
     auto probability           = 0.5;
     auto start_date            = mio::abm::TimePoint(0);
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
-    auto test_type             = mio::abm::AntigenTest();
+    auto test_type             = mio::abm::TestType::Antigen;
+    auto test_parameters       = world.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
-    auto testing_scheme_work =
-        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+    auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
+                                                         test_parameters, probability);
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.

@@ -126,9 +126,14 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, bool long_time)
 {
     //times
-    const double incubationTime            = 5.2;
-    const double serialIntervalMin         = 0.5 * 2.67 + 0.5 * 5.2;
-    const double serialIntervalMax         = 0.5 * 4.00 + 0.5 * 5.2;
+    // TimeExposed and TimeInfectedNoSymptoms are calculated as described in
+    // Khailaie et al. (https://doi.org/10.1186/s12916-020-01884-4)
+    // given SI_min = 3.935, SI_max = 4.6, INC = 5.2
+    const double timeExposedMin            = 2.67;
+    const double timeExposedMax            = 4.;
+    const double timeInfectedNoSymptomsMin = 1.2;
+    const double timeInfectedNoSymptomsMax = 2.53;
+
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
     const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
     const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
@@ -136,9 +141,9 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), incubationTime, incubationTime);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), serialIntervalMin,
-                                      serialIntervalMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeExposed>(), timeExposedMin, timeExposedMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedNoSymptoms>(), timeInfectedNoSymptomsMin,
+                                      timeInfectedNoSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
                                       timeInfectedSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), timeInfectedSevereMin,
@@ -256,7 +261,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(baseline,
+        BOOST_OUTCOME_TRY(auto&& baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
 
@@ -618,12 +623,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, get_graph(start_date, end_date, data_dir, late, masks, test, long_time));
+        BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, late, masks, test, long_time));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
+        BOOST_OUTCOME_TRY(auto&& loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
         params_graph = loaded;
     }
 
@@ -648,17 +653,17 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 
     auto save_single_run_result = mio::IOResult<void>(mio::success());
     auto ensemble               = parameter_study.run(
-        [&](auto&& graph) {
+                      [&](auto&& graph) {
             return draw_sample(graph, high);
-        },
-        [&](auto results_graph, auto&& run_idx) {
+                      },
+                      [&](auto results_graph, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
             auto params              = std::vector<mio::osecirvvs::Model>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
-                           });
+                                         });
 
             if (save_single_run_result && save_single_runs) {
                 save_single_run_result =
@@ -666,7 +671,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             }
             std::cout << "run " << run_idx << " complete." << std::endl;
             return std::make_pair(interpolated_result, params);
-        });
+                      });
 
     if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};

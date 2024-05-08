@@ -57,8 +57,8 @@ def run_secir_simulation(show_plot=True):
     for i in range(0, 3):
         Ai = AgeGroup(i)
 
-        model.parameters.IncubationTime[Ai] = 5.2
-        model.parameters.SerialInterval[Ai] = 4.2
+        model.parameters.TimeExposed[Ai] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[Ai] = 2.0
         model.parameters.TimeInfectedSymptoms[Ai] = 5.8
         model.parameters.TimeInfectedSevere[Ai] = 9.5
         model.parameters.TimeInfectedCritical[Ai] = 7.1
