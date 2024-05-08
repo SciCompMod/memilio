@@ -37,7 +37,7 @@
 namespace fs = boost::filesystem;
 
 // Assign the name to general age group.
-size_t num_age_groupss         = 6;
+size_t num_age_groupss        = 6;
 const auto age_group_0_to_4   = mio::AgeGroup(0);
 const auto age_group_5_to_14  = mio::AgeGroup(1);
 const auto age_group_15_to_34 = mio::AgeGroup(2);
@@ -75,7 +75,7 @@ void extrapolate_real_world_data(mio::osecir::Model& model, const std::string& i
 void determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date)
 {
     // estimate intial population by ODE compartiments
-    auto initial_graph     = get_graph(date, 1, input_dir);
+    auto initial_graph                     = get_graph(date, 1, input_dir);
     const size_t braunschweig_id           = 16; // Braunschweig has ID 16
     auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
@@ -247,7 +247,7 @@ mio::AgeGroup determine_age_group(uint32_t age)
     else if (age <= 79) {
         return age_group_60_to_79;
     }
-    else if (age > 79){
+    else if (age > 79) {
         return age_group_80_plus;
     }
     else {
@@ -425,7 +425,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         // Add the trip to the trip list person and location must exist at this point
         auto target_location = locations.find(target_location_id)->second;
-        
 
         auto it_person = persons.find(person_id);
 
@@ -452,10 +451,10 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             target_location); //This assumes that we only have in each tripchain only one location type for each person
         // if (locations.find(start_location_id) == locations.end()) {
         //     // For trips where the start location is not known use Home instead
-           
+
         // }
-        mio::abm::LocationId start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
-                              mio::abm::LocationType::Home};
+        mio::abm::LocationId start_location = {
+            it_person->second.get_assigned_location_index(mio::abm::LocationType::Home), mio::abm::LocationType::Home};
         world.get_trip_list().add_trip(mio::abm::Trip(
             it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location,
             start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
@@ -1119,15 +1118,15 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     // auto run_idx            = size_t(1); // The run index
     // auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
 
-//     int tid = -1;
-// #pragma omp parallel private(tid) // Start of parallel region: forks threads
-//     {
-//         tid = omp_get_thread_num(); // default is number of CPUs on machine
-//         printf("Hello World from thread = %d and rank = %d\n", tid, rank);
-//         if (tid == 0) {
-//             printf("Number of threads = %d\n", omp_get_num_threads());
-//         }
-//     } // ** end of the the parallel: joins threads
+    //     int tid = -1;
+    // #pragma omp parallel private(tid) // Start of parallel region: forks threads
+    //     {
+    //         tid = omp_get_thread_num(); // default is number of CPUs on machine
+    //         printf("Hello World from thread = %d and rank = %d\n", tid, rank);
+    //         if (tid == 0) {
+    //             printf("Number of threads = %d\n", omp_get_num_threads());
+    //         }
+    //     } // ** end of the the parallel: joins threads
 
     // Determine inital infection state distribution
     //Time this

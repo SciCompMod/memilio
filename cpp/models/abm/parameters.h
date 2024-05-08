@@ -711,24 +711,9 @@ struct ContactRates {
 };
 
 /**
- * @brief Average contact duration in days.
-*/
-struct ContactDuration {
-    using Type = ScalarType;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type(5. / 24 / 60); // 5 minutes
-    }
-    static std::string name()
-    {
-        return "ContactDuration";
-    }
-};
-
-/**
  * @brief Parameters of the Infection that depend on the Location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, ContactDuration>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
 
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.
