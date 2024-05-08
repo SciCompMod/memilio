@@ -24,7 +24,6 @@
 // Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak.
 
 #include "ad/ad.hpp"
-#include "ad/ad_spdlog_formatter.h"
 
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"

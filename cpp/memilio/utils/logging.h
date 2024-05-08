@@ -27,6 +27,7 @@
 #endif
 
 #include "memilio/utils/compiler_diagnostics.h"
+#include "ad/ad.hpp"
 
 // C4996: Some stdext functions used in spdlog 1.11 are marked as deprecated in version 19.38.33135.0 of MSVC. Maybe a future version of spdlog will fix this.
 MSVC_WARNING_DISABLE_PUSH(4996)
@@ -125,5 +126,31 @@ inline void log(LogLevel level, spdlog::string_view_t fmt, const Args&... args)
 }
 
 } // namespace mio
+
+template <>
+struct fmt::formatter<ad::gt1s<double>::type> {
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.end();
+    }
+    template <typename FormatContext>
+    auto format(const ad::gt1s<double>::type& input, FormatContext& ctx) -> decltype(ctx.out())
+    {
+        return format_to(ctx.out(), "{}", ad::value(input));
+    }
+};
+
+template <>
+struct fmt::formatter<ad::ga1s<double>::type> {
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.end();
+    }
+    template <typename FormatContext>
+    auto format(const ad::ga1s<double>::type& input, FormatContext& ctx) -> decltype(ctx.out())
+    {
+        return format_to(ctx.out(), "{}", ad::value(input));
+    }
+};
 
 #endif // LOGGING_H

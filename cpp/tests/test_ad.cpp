@@ -27,7 +27,6 @@
 #include "memilio/utils/time_series.h"
 
 #include "ad/ad.hpp"
-#include "ad/ad_spdlog_formatter.h"
 #include "boost/numeric/odeint.hpp"
 #include <gtest/gtest.h>
 

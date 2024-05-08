@@ -19,7 +19,6 @@
 */
 
 #include "ad/ad.hpp"
-#include "ad/ad_spdlog_formatter.h"
 
 #include "memilio/utils/compiler_diagnostics.h"
 #include "ode_seair/model.h"
