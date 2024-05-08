@@ -171,3 +171,71 @@ TEST(TestOdeSeair, compareWithPreviousRun)
         }
     }
 }
+
+// Test if check_constraints() work as expected.
+TEST(TestOdeSeair, testParameterConstraints)
+{ // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
+    mio::oseair::Parameters<> parameters;
+    double negative_value = -0.5;
+
+    // Check if default parameters are valid.
+    bool constraint_check = parameters.check_constraints();
+    EXPECT_FALSE(constraint_check);
+
+    // Check improper SocialDistancing.
+    parameters.get<mio::oseair::SocialDistancing<>>() = negative_value;
+    constraint_check                                  = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::SocialDistancing<>>() = 0.5;
+
+    // Check improper Quarantined.
+    parameters.get<mio::oseair::Quarantined<>>() = negative_value;
+    constraint_check                             = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::Quarantined<>>() = 0.5;
+
+    // Check improper TimeExposed.
+    parameters.get<mio::oseair::TimeExposed<>>() = 0;
+    constraint_check                             = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::TimeExposed<>>() = 3.1;
+
+    // Check improper RecoveryRateFromAsymptomatic.
+    parameters.get<mio::oseair::RecoveryRateFromAsymptomatic<>>() = negative_value;
+    constraint_check                                              = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::RecoveryRateFromAsymptomatic<>>() = 0.7 / 5.;
+
+    // Check improper TestingRate.
+    parameters.get<mio::oseair::TestingRate<>>() = negative_value;
+    constraint_check                             = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::TestingRate<>>() = 0.3 / 5.;
+
+    // Check improper RecoveryRate.
+    parameters.get<mio::oseair::RecoveryRate<>>() = negative_value;
+    constraint_check                              = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::RecoveryRate<>>() = 0.5 / 7.;
+
+    // Check improper DeathRate.
+    parameters.get<mio::oseair::DeathRate<>>() = negative_value;
+    constraint_check                           = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::DeathRate<>>() = 0.5 / 7.;
+
+    // Check improper TimeRecoveredInv.
+    parameters.get<mio::oseair::TimeRecoveredInv<>>() = negative_value;
+    constraint_check                                  = parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters.get<mio::oseair::TimeRecoveredInv<>>() = 0.;
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+
+    // Check with correct parameters.
+    constraint_check = parameters.check_constraints();
+    EXPECT_FALSE(constraint_check);
+}

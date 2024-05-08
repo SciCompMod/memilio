@@ -22,6 +22,7 @@
 #define ODESEAIR_PARAMETERS_H
 
 #include "memilio/utils/parameter_set.h"
+#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -180,11 +181,55 @@ public:
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
      * if constraints are not satisfied.
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
+     * @return Returns true if one constraint is not satisfied, otherwise false. 
      */
-    int check_constraints() const
+    bool check_constraints() const
     {
-        return 0;
+        if (this->template get<SocialDistancing<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter SocialDistancing smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<Quarantined<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter Quarantined smaller {:d}", 0);
+            return true;
+        }
+
+        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+        if (this->template get<TimeExposed<FP>>() < tol_times) {
+            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
+                      "note that unreasonably small compartment stays lead to massively increased run time. "
+                      "Consider to cancel and reset parameters.",
+                      this->template get<TimeExposed<FP>>(), tol_times);
+            return true;
+        }
+
+        if (this->template get<RecoveryRateFromAsymptomatic<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter RecoveryRateFromAsymptomatic smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<TestingRate<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestingRate smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<RecoveryRate<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter RecoveryRate smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<DeathRate<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter DeathRate smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<TimeRecoveredInv<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TimeRecoveredInv smaller {:d}", 0);
+            return true;
+        }
+
+        return false;
     }
 
 private:

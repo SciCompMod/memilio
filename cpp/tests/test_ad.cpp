@@ -22,9 +22,7 @@
 #include "ode_seair/parameters.h"
 #include "memilio/compartments/simulation.h"
 
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/time_series.h"
 
 #include "ad/ad.hpp"
 #include "boost/numeric/odeint.hpp"
@@ -168,7 +166,10 @@ TEST(Testad, ad_seair)
 
     auto result =
         mio::simulate<double, mio::oseair::Model<double>>(ad::value(t0), ad::value(tmax), ad::value(dt), model);
-    EXPECT_EQ(result.get_num_time_points(), adresult.get_num_time_points());
+
+    // As we have an adaptive method, we can also test the influence on the simulation time.
+    EXPECT_NEAR(ad::derivative(adresult.get_last_time()),
+                (result.get_last_time() - ad::value(adresult.get_last_time())) / h, 1e-3);
     for (int i = 0; i < (int)mio::oseair::InfectionState::Count; i++) {
         EXPECT_NEAR(ad::derivative(adresult.get_last_value()[i]),
                     (result.get_last_value()[i] - ad::value(adresult.get_last_value()[i])) / h, 1e-3);
