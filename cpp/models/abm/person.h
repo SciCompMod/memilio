@@ -127,7 +127,6 @@ public:
      * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
-     * @param[in] is_home_in_bs Whether the Person has a home in Braunschweig.
      */
     explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
                     uint32_t person_id = INVALID_PERSON_ID);

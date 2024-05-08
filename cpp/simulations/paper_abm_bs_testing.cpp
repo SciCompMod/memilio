@@ -460,7 +460,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
-    world.parameters.get<mio::abm::LogAgentIds>() = ids_in_bs;
+    // world.parameters.get<mio::abm::LogAgentIds>() = ids_in_bs;
 
     // //Some Data about the world:
     // //write how many persons are in each home
@@ -815,40 +815,40 @@ void set_local_parameters(mio::abm::World& world)
 /**
  * @brief Add testing strategies to the world.
 */
-void add_testing_strategies(mio::abm::World& world, bool school, bool work, bool symptomatic)
-{
-    // Tests in schools
-    auto testing_criteria_school = mio::abm::TestingCriteria();
+// void add_testing_strategies(mio::abm::World& world, bool school, bool work, bool symptomatic)
+// {
+//     // Tests in schools
+//     auto testing_criteria_school = mio::abm::TestingCriteria();
 
-    auto testing_min_time = mio::abm::days(7);
-    auto start_date       = mio::abm::TimePoint(0);
-    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
-    auto test_type        = mio::abm::AntigenTest();
-    auto probability      = mio::UncertainValue();
-    assign_uniform_distribution(probability, 0.5, 0.5);
+//     auto testing_min_time = mio::abm::days(7);
+//     auto start_date       = mio::abm::TimePoint(0);
+//     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+//     // auto test_type        = mio::abm::AntigenTest();
+//     auto probability = mio::UncertainValue();
+//     assign_uniform_distribution(probability, 0.5, 0.5);
 
-    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
-                                                         end_date, test_type, probability.draw_sample());
-    if (school)
-        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
+//     // auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
+//     //                                                      end_date, probability.draw_sample());
+//     // if (school)
+//     //     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
 
-    // Tests in work places
-    auto testing_criteria_work = mio::abm::TestingCriteria();
+//     // Tests in work places
+//     auto testing_criteria_work = mio::abm::TestingCriteria();
 
-    assign_uniform_distribution(probability, 0.5, 0.5);
-    auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
-                                                       test_type, probability.draw_sample());
-    if (work)
-        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+//     assign_uniform_distribution(probability, 0.5, 0.5);
+//     // auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
+//     //                                                    test_type, probability.draw_sample());
+//     // if (work)
+//     //     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
-    // Test when symptomatic
-    auto testing_criteria_symptomatic = mio::abm::TestingCriteria({}, {mio::abm::InfectionState::InfectedSymptoms});
-    auto testing_scheme_symptomatic =
-        mio::abm::TestingScheme(testing_criteria_symptomatic, testing_min_time, start_date, end_date, test_type, 0.7);
+//     // Test when symptomatic
+//     // auto testing_criteria_symptomatic = mio::abm::TestingCriteria({}, {mio::abm::InfectionState::InfectedSymptoms});
+//     // auto testing_scheme_symptomatic =
+//     //     mio::abm::TestingScheme(testing_criteria_symptomatic, testing_min_time, start_date, end_date, test_type, 0.7);
 
-    if (symptomatic)
-        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Home, testing_scheme_symptomatic);
-}
+//     // if (symptomatic)
+//     //     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Home, testing_scheme_symptomatic);
+// }
 
 /**
  * Create a sampled simulation with start time t0.
@@ -884,7 +884,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     //3. testen in schulen und Arbeitsplätzen (unabh. von Alter, 1x am Tag, unabh. von InfectionState) ab Tag 0
     //4. 2.+3.
 
-    add_testing_strategies(world, false, false, false);
+    // add_testing_strategies(world, false, false, false);
 }
 
 template <typename T>
@@ -1101,7 +1101,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 235000;
+    auto max_num_persons = 23000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1270,8 +1270,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir  = "C:\\Users\\korf_sa\\Documents\\rep\\data";
-    std::string result_dir = input_dir + "\\results";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
 

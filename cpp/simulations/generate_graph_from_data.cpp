@@ -113,8 +113,9 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecir::IncubationTime>(), incubationTime, incubationTime);
-    array_assign_uniform_distribution(params.get<mio::osecir::SerialInterval>(), serialIntervalMin, serialIntervalMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed>(), incubationTime, incubationTime);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedNoSymptoms>(), serialIntervalMin,
+                                      serialIntervalMax);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
                                       timeInfectedSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSevere>(), timeInfectedSevereMin,
@@ -185,10 +186,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(baseline,
+        BOOST_OUTCOME_TRY(auto&& baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        BOOST_OUTCOME_TRY(minimum,
+        BOOST_OUTCOME_TRY(auto&& minimum,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
@@ -221,7 +222,7 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
     auto population_data_path =
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
 
-    BOOST_OUTCOME_TRY(node_ids, mio::get_node_ids(population_data_path, true));
+    BOOST_OUTCOME_TRY(auto&& node_ids, mio::get_node_ids(population_data_path, true));
     std::vector<mio::osecir::Model> nodes(node_ids.size(), mio::osecir::Model(num_groups));
     for (auto& node : nodes) {
         node.parameters = params;
