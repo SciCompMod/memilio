@@ -127,6 +127,7 @@ TEST(Testad, ad_odeint)
     EXPECT_NEAR(ad::derivative(x[1]), (ad::value(x_compare[1]) - ad::value(x[1])) / h, 1e-4);
 }
 
+// Check that ad correctly takes the derivative of an ODE model (according to a parameter).
 TEST(Testad, ad_seair)
 {
     using FP = typename ad::gt1s<double>::type; // AD data type for scalar forward mode.
@@ -135,6 +136,7 @@ TEST(Testad, ad_seair)
     FP tmax = 0.1;
     FP dt   = 0.1;
 
+    // Define model with AD data type.
     mio::oseair::Model<FP> admodel;
 
     // Set initial values.
@@ -151,10 +153,12 @@ TEST(Testad, ad_seair)
 
     auto adresult = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, admodel);
 
-    // We want to compare AD derivatives with difference quotient.
+    // We want to compare AD derivatives with a difference quotient.
+    // Therefore, define a model with double data type with a small pertubation of the parameter TestingRate.
     const double h = 1e-4;
     mio::oseair::Model<double> model;
 
+    // Set same initial values as above.
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}]  = 450.;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]      = 100.;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}] = 200.;
@@ -162,14 +166,18 @@ TEST(Testad, ad_seair)
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}]    = 100.;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Dead)}]         = 100.;
 
-    model.parameters.get<mio::oseair::TestingRate<double>>() = 0.2 + h;
+    // Small pertubation of the parameter TestingRate.
+    model.parameters.get<mio::oseair::TestingRate<double>>() =
+        ad::value(admodel.parameters.get<mio::oseair::TestingRate<FP>>()) + h;
 
     auto result =
         mio::simulate<double, mio::oseair::Model<double>>(ad::value(t0), ad::value(tmax), ad::value(dt), model);
 
+    // Check that the derivative calculated with ad is close to the result obtained with a difference quotient.
     // As we have an adaptive method, we can also test the influence on the simulation time.
     EXPECT_NEAR(ad::derivative(adresult.get_last_time()),
                 (result.get_last_time() - ad::value(adresult.get_last_time())) / h, 1e-3);
+    // Derivative of the compartment sizes.
     for (int i = 0; i < (int)mio::oseair::InfectionState::Count; i++) {
         EXPECT_NEAR(ad::derivative(adresult.get_last_value()[i]),
                     (result.get_last_value()[i] - ad::value(adresult.get_last_value()[i])) / h, 1e-3);
