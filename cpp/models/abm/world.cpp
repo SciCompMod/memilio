@@ -47,8 +47,7 @@ Person& World::add_person(const LocationId id, AgeGroup age)
 {
     assert(age.get() < parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(
-        std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
+    m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
     person.set_assigned_location(m_cemetery_id);
     get_individualized_location(id).add_person(person);
@@ -129,14 +128,18 @@ void World::migration(TimePoint t, TimeSpan dt)
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip        = m_trip_list.get_next_trip(weekend);
-            auto& person      = m_persons[trip.person_id];
-            auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
+            auto& trip             = m_trip_list.get_next_trip(weekend);
+            auto& person           = m_persons[trip.person_id];
+            auto& current_location = person->get_location();
+            auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location, trip.trip_mode);
+                    if (target_location != current_location &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        person->apply_mask_intervention(personal_rng, target_location);
+                        person->migrate_to(target_location);
+                    }
                 }
             }
             m_trip_list.increase_index();
