@@ -46,13 +46,13 @@ namespace mio
  * Derived StateAgeFunctions can be used for two types of functionality. 
  *  a) Monotonously decreasing functions describing the share of individuals that have not yet transitioned to the next
  *     #InfectionState. These functions are denoted as #TransitionDistributions since 1 - TransitionDistribution 
- *     represents a cumulative distribution function.
+ *     represents a cumulative distribution function. Such functions are also called survival functions.
  *  b) Arbitrary non-negative functions used for parameters such as TransmissionProbabilityOnContact.
  * 
  * Derived classes must implement the eval method which implements the actual function that is evaluated at some state age.
  * This function can depend on the parameter 'scale' to scale the function and on the parameter 'location' to shift the
  * function. Location should be a positive number to fulfill the characteristics of a TransitionDistribution and 
- * shift has to be positive.
+ * scale has to be positive.
  * For a Function F we normally use these parameters at state age x as F(x,location,scale)=F((x-location)/scale). 
  * These two parameters are optional and a derived class does not have to use them.
  * Additionally there is one parameter which specifies the distribution.
@@ -70,26 +70,26 @@ namespace mio
  * The base class implementation uses the fact that the StateAgeFunction is a survival function 
  * (i.e. 1-CDF for any cumulative distribution function CDF). 
  * Therefore, the base class implementation should only be used for StateAgeFunction%s of type a).
- * For some derived classes there is a more efficient way (see e.g., ExponentialDecay) to do this which is 
+ * For some derived classes there is a more efficient way (see e.g., ExponentialSurvivalFunction) to do this which is 
  * why it can be overridden. 
  *
- * See ExponentialDecay, SmootherCosine and ConstantFunction for examples of derived classes.
+ * See ExponentialSurvivalFunction, SmootherCosine and ConstantFunction for examples of derived classes.
  */
 struct StateAgeFunction {
 
     /**
      * @brief Constructs a new StateAgeFunction object
      * 
-     * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_distribution_parameter Specifies the initial distribution parameter of the function.
+     * @param[in] init_location A parameter to shift the function. 
+     * @param[in] init_scale A parameter to scale the function. Parameter has to be positive.
      */
-    StateAgeFunction(ScalarType init_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
-        : m_parameter{init_parameter}
+    StateAgeFunction(ScalarType init_distribution_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
+        : m_distribution_parameter{init_distribution_parameter}
         , m_location{init_location}
         , m_scale{init_scale}
         , m_mean{-1.} // Initialize mean as not set.
-        , m_mean_tol{-1.} // Initialize tolerance for computation of mean as not set.
         , m_support_max{-1.} // Initialize support maximum as not set.
-        , m_support_tol{-1.} // Initialize tolerance for computation of support as not set.
     {
         if (m_scale <= 0) {
             log_error("The scale parameter of a StateAgeFunction has to be positive. Set scale to 1.");
@@ -127,8 +127,9 @@ struct StateAgeFunction {
      */
     bool operator==(const StateAgeFunction& other) const
     {
-        return (typeid(*this).name() == typeid(other).name() && m_parameter == other.get_parameter() &&
-                m_location == other.get_location() && m_scale == other.get_scale());
+        return (typeid(*this).name() == typeid(other).name() &&
+                m_distribution_parameter == other.get_distribution_parameter() && m_location == other.get_location() &&
+                m_scale == other.get_scale());
     }
 
     /**
@@ -141,36 +142,34 @@ struct StateAgeFunction {
     virtual ScalarType eval(ScalarType state_age) = 0;
 
     /**
-     * @brief Get the m_parameter object.
+     * @brief Get the m_distribution_parameter object.
      * 
-     * Can be used to access the m_parameter object, which specifies the used function.
+     * Can be used to access the m_distribution_parameter object, which specifies the used function.
      * 
      * @return ScalarType 
      */
-    ScalarType get_parameter() const
+    ScalarType get_distribution_parameter() const
     {
-        return m_parameter;
+        return m_distribution_parameter;
     }
 
     /**
-     * @brief Set the m_parameter object.
+     * @brief Set the m_distribution_parameter object.
      * 
-     * Can be used to set the m_parameter object, which specifies the used function.
+     * Can be used to set the m_distribution_parameter object, which specifies the used function.
      * The maximum support of a function may be costly to evaluate. In order to not always reevaluate or recompute the
      * support when the user asks for it, a cached value is used. If m_support_max is set to -1, the cached value is
      * deleted and a recomputation is done the next time the user asks for the support. As the support (potentially)
-     * depends on the m_parameter object, the cached value has to be deleted. For details see get_support_max().
+     * depends on the m_distribution_parameter object, the cached value has to be deleted. For details see get_support_max().
      * The same applies to the m_mean object. See get_mean().
      *
-     *@param[in] new_parameter New parameter for StateAgeFunction.
+     *@param[in] new_distribution_parameter New parameter for StateAgeFunction.
      */
-    void set_parameter(ScalarType new_parameter)
+    void set_distribution_parameter(ScalarType new_distribution_parameter)
     {
-        m_parameter   = new_parameter;
-        m_support_max = -1.;
-        m_support_tol = -1.;
-        m_mean        = -1.;
-        m_mean_tol    = -1.;
+        m_distribution_parameter = new_distribution_parameter;
+        m_support_max            = -1.;
+        m_mean                   = -1.;
     }
 
     /**
@@ -201,9 +200,7 @@ struct StateAgeFunction {
     {
         m_location    = new_location;
         m_support_max = -1.;
-        m_support_tol = -1.;
         m_mean        = -1.;
-        m_mean_tol    = -1.;
     }
 
     /**
@@ -238,9 +235,7 @@ struct StateAgeFunction {
         }
         m_scale       = new_scale;
         m_support_max = -1.;
-        m_support_tol = -1.;
         m_mean        = -1.;
-        m_mean_tol    = -1.;
     }
 
     /**
@@ -281,7 +276,7 @@ struct StateAgeFunction {
      * This basic implementation is only valid if the StateAgeFunction is of type a). Otherwise it should be overridden.
      *
      * For some specific derivations of StateAgeFunction%s there are more efficient ways to determine the 
-     * the mean value which is why this member function is virtual and can be overridden (see, e.g., ExponentialDecay).
+     * the mean value which is why this member function is virtual and can be overridden (see, e.g., ExponentialSurvivalFunction).
      * The mean value is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
      *
      * @param[in] dt Time step size used for the numerical integration. 
@@ -332,13 +327,13 @@ protected:
      */
     virtual StateAgeFunction* clone_impl() const = 0;
 
-    ScalarType m_parameter; ///< Parameter for function in derived class.
+    ScalarType m_distribution_parameter; ///< Parameter for function in derived class.
     ScalarType m_location; ///< Location parameter for function in derived class.
     ScalarType m_scale; ///< Scale parameter for function in derived class.
     ScalarType m_mean; ///< Mean value of the function.
-    ScalarType m_mean_tol; ///< Tolerance for computation of the mean.
+    ScalarType m_mean_tol{-1}; ///< Tolerance for computation of the mean (initialize as not set).
     ScalarType m_support_max; ///< Maximum of the support of the function.
-    ScalarType m_support_tol; ///< Tolerance for computation of the support.
+    ScalarType m_support_tol{-1}; ///< Tolerance for computation of the support (initialize as not set).
 };
 
 /**************************************
@@ -348,24 +343,24 @@ protected:
 /**
  * @brief Class that defines an exponential decay function depending on the state age.
  */
-struct ExponentialDecay : public StateAgeFunction {
+struct ExponentialSurvivalFunction : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new ExponentialDecay object.
+     * @brief Constructs a new ExponentialSurvivalFunction object.
      * 
-     * @param[in] init_parameter Specifies the initial function parameter of the function.
-     * @param[in] init_location Location paramter to shift the exponentialdecay function. 
+     * @param[in] init_distribution_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_location Location paramter to shift the ExponentialSurvivalFunction function. 
      *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
      */
-    ExponentialDecay(ScalarType init_parameter, ScalarType init_location = 0)
-        : StateAgeFunction(init_parameter, init_location)
+    ExponentialSurvivalFunction(ScalarType init_distribution_parameter, ScalarType init_location = 0)
+        : StateAgeFunction(init_distribution_parameter, init_location)
     {
     }
 
     /**
      * @brief Defines exponential decay function depending on state_age.
      *
-     * m_parameter defines how fast the exponential function decays.
+     * m_distribution_parameter defines how fast the exponential function decays.
      * 
      * @param[in] state_age Time at which the function is evaluated.
      * @return Evaluation of the function at state_age. 
@@ -375,7 +370,7 @@ struct ExponentialDecay : public StateAgeFunction {
         if (state_age <= m_location) {
             return 1;
         }
-        return std::exp(-m_parameter * (state_age - m_location));
+        return std::exp(-m_distribution_parameter * (state_age - m_location));
     }
 
     /**
@@ -383,51 +378,54 @@ struct ExponentialDecay : public StateAgeFunction {
      * 
      * For the exponential distribution, the mean value is the reciprocal of the function parameter.
      *
-     * @param[in] dt Time step size used for the numerical integration (unused for ExponentialDecay). 
+     * @param[in] dt Time step size used for the numerical integration (unused for ExponentialSurvivalFunction). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
-     *  (unused for ExponentialDecay). 
+     *  (unused for ExponentialSurvivalFunction). 
      * @return ScalarType mean value.
      */
     ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) override
     {
         unused(dt);
         unused(tol);
-        return 1. / m_parameter + m_location;
+        return 1. / m_distribution_parameter + m_location;
     }
 
 protected:
     /**
-     * @brief Implements clone for ExponentialDecay.
+     * @brief Implements clone for ExponentialSurvivalFunction.
      * 
      * @return Pointer to StateAgeFunction.
      */
     StateAgeFunction* clone_impl() const override
     {
-        return new ExponentialDecay(*this);
+        return new ExponentialSurvivalFunction(*this);
     }
 };
 
 /**
  * @brief Class that defines an smoother_cosine function depending on the state age.
+ * This function is a StateAgeFunction of type a) and can therefore be seen as a survival function.
  */
 struct SmootherCosine : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new SmootherCosine object
+     * @brief Constructs a new SmootherCosine object.
+     *
+     * This function is a StateAgeFunction of type a) and can therefore be seen as a survival function.
      * 
-     * @param[in] init_parameter specifies the initial parameter of the function.
+     * @param[in] init_distribution_parameter specifies the initial parameter of the function.
      * @param[in] init_location Location paramter to shift the SmootherCosine function. 
      *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
      */
-    SmootherCosine(ScalarType init_parameter, ScalarType init_location = 0)
-        : StateAgeFunction(init_parameter, init_location)
+    SmootherCosine(ScalarType init_distribution_parameter, ScalarType init_location = 0)
+        : StateAgeFunction(init_distribution_parameter, init_location)
     {
     }
 
     /**
      * @brief Defines smoother cosine function depending on state_age.
      *
-     * Used function goes through points (0+m_location,1) and (m_parameter+m_location,0) and is 
+     * Used function goes through points (0+m_location,1) and (m_distribution_parameter+m_location,0) and is 
      *  interpolated in between using a smoothed cosine function.
      * 
      * @param[in] state_age Time at which the function is evaluated.
@@ -438,7 +436,7 @@ struct SmootherCosine : public StateAgeFunction {
         if (state_age <= m_location) {
             return 1.;
         }
-        return smoother_cosine(state_age - m_location, 0.0, m_parameter, 1.0, 0.0);
+        return smoother_cosine(state_age - m_location, 0.0, m_distribution_parameter, 1.0, 0.0);
     }
 
     /**
@@ -454,14 +452,14 @@ struct SmootherCosine : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        m_support_max = m_parameter + m_location;
+        m_support_max = m_distribution_parameter + m_location;
         return m_support_max;
     }
 
     /**
      * @brief Computes the mean value of the function. 
      * 
-     * For the associated distribution to SmootherCosine, the mean value is 0.5 * m_parameter + m_location.
+     * For the associated distribution to SmootherCosine, the mean value is 0.5 * m_distribution_parameter + m_location.
      *
      * @param[in] dt Time step size used for the numerical integration (unused for SmootherCosine). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
@@ -472,7 +470,7 @@ struct SmootherCosine : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        return 0.5 * m_parameter + m_location;
+        return 0.5 * m_distribution_parameter + m_location;
     }
 
 protected:
@@ -523,15 +521,16 @@ struct GammaSurvivalFunction : public StateAgeFunction {
         if (state_age <= m_location) {
             return 1;
         }
-        boost::math::gamma_distribution<ScalarType, boost::math::policies::policy<>> gamma(m_parameter, m_scale);
+        boost::math::gamma_distribution<ScalarType, boost::math::policies::policy<>> gamma(m_distribution_parameter,
+                                                                                           m_scale);
         return boost::math::cdf(boost::math::complement(gamma, state_age - m_location));
     }
 
     /**
      * @brief Computes the mean value of the function. 
      * 
-     * For the gamma distribution, the mean value is m_parameter*m_scale+m_location, 
-     * where m_parameter is the shape parameter.
+     * For the gamma distribution, the mean value is m_distribution_parameter*m_scale+m_location, 
+     * where m_distribution_parameter is the shape parameter.
      *
      * @param[in] dt Time step size used for the numerical integration (unused for GammaSurvivalFunction). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
@@ -542,7 +541,7 @@ struct GammaSurvivalFunction : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        return m_parameter * m_scale + m_location;
+        return m_distribution_parameter * m_scale + m_location;
     }
 
 protected:
@@ -568,14 +567,15 @@ struct LognormSurvivalFunction : public StateAgeFunction {
      * 
      * Location and scale parameters are according to these parameters in the python package scipy.
      *
-     * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_distribution_parameter Specifies the initial function parameter of the function.
      * @param[in] init_location Location parameter of LognormSurvivalFunction. The parameter can be
      *       used to shift the function. Should be non-negative to fulfill the conditions of a 
      *       StateAgeFunction.
      * @param[in] init_scale Scale parameter of LognormSurvivalFunction.
      */
-    LognormSurvivalFunction(ScalarType init_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
-        : StateAgeFunction(init_parameter, init_location, init_scale)
+    LognormSurvivalFunction(ScalarType init_distribution_parameter, ScalarType init_location = 0,
+                            ScalarType init_scale = 1)
+        : StateAgeFunction(init_distribution_parameter, init_location, init_scale)
     {
     }
 
@@ -590,7 +590,8 @@ struct LognormSurvivalFunction : public StateAgeFunction {
         if (state_age < m_location) {
             return 1;
         }
-        boost::math::lognormal_distribution<ScalarType, boost::math::policies::policy<>> logn(0., m_parameter);
+        boost::math::lognormal_distribution<ScalarType, boost::math::policies::policy<>> logn(0.,
+                                                                                              m_distribution_parameter);
         return boost::math::cdf(boost::math::complement(logn, (state_age - m_location) / m_scale));
     }
 
@@ -616,10 +617,10 @@ struct ConstantFunction : public StateAgeFunction {
     /**
      * @brief Constructs a new ConstantFunction object.
      * 
-     * @param init_parameter specifies value of the constant function.
+     * @param init_distribution_parameter specifies value of the constant function.
      */
-    ConstantFunction(ScalarType init_parameter)
-        : StateAgeFunction(init_parameter)
+    ConstantFunction(ScalarType init_distribution_parameter)
+        : StateAgeFunction(init_distribution_parameter)
     {
     }
 
@@ -634,7 +635,7 @@ struct ConstantFunction : public StateAgeFunction {
     ScalarType eval(ScalarType state_age) override
     {
         unused(state_age);
-        return m_parameter;
+        return m_distribution_parameter;
     }
 
     /**
@@ -678,7 +679,7 @@ struct ConstantFunction : public StateAgeFunction {
         unused(tol);
         log_warning("Attention: This function is not suited to be a TransitionDistribution. Do not call in case of "
                     "StateAgeFunctions of type b); see documentation of StateAgeFunction Base class.");
-        return m_parameter;
+        return m_distribution_parameter;
     }
 
 protected:
@@ -727,7 +728,7 @@ struct ErlangDensity : public StateAgeFunction {
         if (state_age < 0) {
             return 0;
         }
-        int shape = (int)m_parameter;
+        int shape = (int)m_distribution_parameter;
         return std::pow(state_age / m_scale, shape - 1) / (m_scale * boost::math::factorial<ScalarType>(shape - 1)) *
                std::exp(-state_age / m_scale);
     }
@@ -735,18 +736,18 @@ struct ErlangDensity : public StateAgeFunction {
     /**
      * @brief Computes the maximum of the support of the function. 
      * 
-     * For small time steps and small variance of the density it is possible that dt is returned with the function of StateAgeFunction.
-     * StateAgeFunction is designed for survival functions, not for densities.
-     * Therefore with this function we calculate the smallest time value t where function(tau)=0 for all tau>t.
+     * Calculates the smallest time value t where function(tau)=0 for all tau>t.
      *
      * @param[in] dt Time step size. 
      * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
      * @return ScalarType support_max
      */
     ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
-    { // We are looking for the smallest time value t where function(tau)=0 for all tau>t. Thus support max is bigger
-        //  than the mean.
-        ScalarType mean        = m_parameter * m_scale;
+    {
+        // We are looking for the smallest time value t where function(tau)=0 for all tau>t. Thus support max is bigger
+        // than the mean.
+        // We use, that the density is monotonically decreasing for tau>mean here.
+        ScalarType mean        = m_distribution_parameter * m_scale;
         ScalarType support_max = (ScalarType)dt * (int)(mean / dt);
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
@@ -764,7 +765,7 @@ struct ErlangDensity : public StateAgeFunction {
     /**
      * @brief Computes the mean value of the function. 
      * 
-     * For the Erlang distribution, the mean value is the m_parameter * m_scale. 
+     * For the Erlang distribution, the mean value is the m_distribution_parameter * m_scale. 
      *
      * @param[in] dt Time step size used for the numerical integration (unused for ErlangDensity). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance (unused for ErlangDensity). 
@@ -776,7 +777,7 @@ struct ErlangDensity : public StateAgeFunction {
         unused(tol);
         log_warning("Attention: This function is not suited to be a TransitionDistribution. Do not call in case of "
                     "StateAgeFunctions of type b); see documentation of StateAgeFunction Base class.");
-        return m_parameter * m_scale;
+        return m_distribution_parameter * m_scale;
     }
 
 protected:
@@ -803,8 +804,8 @@ protected:
  * 
  * Example from IDE-SECIR model:
  *
- * ExponentialDecay expdecay(1.0);
- * StateAgeFunctionWrapper prob(expdecay);
+ * ExponentialSurvivalFunction exponential(1.0);
+ * StateAgeFunctionWrapper prob(exponential);
  * model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
  *
  */
@@ -858,7 +859,7 @@ struct StateAgeFunctionWrapper {
     bool operator==(const StateAgeFunctionWrapper& other) const
     {
         return (m_function->get_state_age_function_type() == other.get_state_age_function_type() &&
-                m_function->get_parameter() == other.get_parameter() &&
+                m_function->get_distribution_parameter() == other.get_distribution_parameter() &&
                 m_function->get_location() == other.get_location() && m_function->get_scale() == other.get_scale());
     }
 
@@ -894,23 +895,23 @@ struct StateAgeFunctionWrapper {
     }
 
     /**
-     * @brief Get the m_parameter object of m_function.
+     * @brief Get the m_distribution_parameter object of m_function.
      * 
      * @return ScalarType 
      */
-    ScalarType get_parameter() const
+    ScalarType get_distribution_parameter() const
     {
-        return m_function->get_parameter();
+        return m_function->get_distribution_parameter();
     }
 
     /**
-     * @brief Set the m_parameter object of m_function. 
+     * @brief Set the m_distribution_parameter object of m_function. 
      * 
-     * @param[in] new_parameter New parameter for StateAgeFunction.
+     * @param[in] new_distribution_parameter New parameter for StateAgeFunction.
      */
-    void set_parameter(ScalarType new_parameter)
+    void set_distribution_parameter(ScalarType new_distribution_parameter)
     {
-        m_function->set_parameter(new_parameter);
+        m_function->set_distribution_parameter(new_distribution_parameter);
     }
 
     /**
