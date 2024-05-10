@@ -270,10 +270,12 @@ bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location&
     return true;
 }
 
-std::pair<ExposureType, TimePoint> Person::get_latest_protection() const
+std::pair<ExposureType, TimePoint> Person::get_latest_protection(TimePoint t) const
 {
     ExposureType latest_exposure_type = ExposureType::NoProtection;
-    TimePoint infection_time          = TimePoint(0);
+    TimePoint infection_time          = TimePoint(std::numeric_limits<uint32_t>::min());
+
+    // TODO: Check for latest infection or vaccination relative to TimePoint t
     if (!m_infections.empty()) {
         latest_exposure_type = ExposureType::NaturalInfection;
         infection_time       = m_infections.back().get_start_date();
@@ -287,7 +289,7 @@ std::pair<ExposureType, TimePoint> Person::get_latest_protection() const
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
 {
-    auto latest_protection = get_latest_protection();
+    auto latest_protection = get_latest_protection(t);
     // If there is no previous protection or vaccination, return 0.
     if (latest_protection.first == ExposureType::NoProtection) {
         return 0;

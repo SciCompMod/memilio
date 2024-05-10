@@ -471,7 +471,7 @@ public:
     /**
      * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
     */
-    std::pair<ExposureType, TimePoint> get_latest_protection() const;
+    std::pair<ExposureType, TimePoint> get_latest_protection(TimePoint t) const;
 
     /**
      * serialize this. 

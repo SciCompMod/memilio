@@ -300,14 +300,14 @@ TEST(TestPerson, getLatestProtection)
 
     auto t = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
-    auto latest_protection = person.get_latest_protection();
+    auto latest_protection = person.get_latest_protection(t);
     ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
     ASSERT_EQ(latest_protection.second.days(), t.days());
 
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
                                                  params, t, mio::abm::InfectionState::Exposed));
-    latest_protection = person.get_latest_protection();
+    latest_protection = person.get_latest_protection(t);
     ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
     ASSERT_EQ(latest_protection.second.days(), t.days());
 }
