@@ -275,7 +275,8 @@ std::pair<ExposureType, TimePoint> Person::get_latest_protection(TimePoint t) co
     ExposureType latest_exposure_type = ExposureType::NoProtection;
     TimePoint infection_time          = TimePoint(std::numeric_limits<uint32_t>::min());
 
-    // TODO: Check for latest infection or vaccination relative to TimePoint t
+    // TODO: Check for latest infection or vaccination relative to TimePoint t and delete unused
+    mio::unused(t);
     if (!m_infections.empty()) {
         latest_exposure_type = ExposureType::NaturalInfection;
         infection_time       = m_infections.back().get_start_date();
