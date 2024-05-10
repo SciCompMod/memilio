@@ -22,6 +22,9 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
+#include <chrono>
+#include <vector>
+#include <numeric>
 
 int main()
 {
@@ -89,17 +92,38 @@ int main()
     const auto TEST_DATA_DIR  = "/localdata1/code_2024/memilio/data/";
     // const auto results_dir                  = "/localdata1/code_2024/memilio/test";
     std::vector<mio::osecir::Model> models1 = {model};
-    auto status_export                      = mio::osecir::export_input_data_county_timeseries(
-        models1, TEST_DATA_DIR, {1001}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 1);
+    // auto status_export                      = mio::osecir::export_input_data_county_timeseries(
+    //     models1, TEST_DATA_DIR, {1001}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 1);
 
-    std::vector<mio::osecir::Model> models2 = {model};
-    auto read_result1                       = mio::osecir::read_input_data_county(models2, {2020, 12, 01}, {1001},
-                                                            std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                            TEST_DATA_DIR, 1, false);
+    auto vec_days = std::vector<int>{1, 5, 10, 20};
+    for (auto days : vec_days) {
+        auto times = std::vector<double>();
+        for (int i = 0; i < 20; ++i) {
+            auto start = std::chrono::high_resolution_clock::now();
 
-    mio::TimeSeries<double> secir = simulate(0.0, 1.0, 1.0, models2[0]);
+            // Call the function
+            auto status_export =
+                export_input_data_county_timeseries(models1, TEST_DATA_DIR, {1001}, {2020, 12, 01},
+                                                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, days);
 
-    std::cout << secir.get_value(0) << std::endl;
+            auto end                           = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> diff = end - start;
 
-    mio::unused(read_result1);
+            times.push_back(diff.count());
+            mio::unused(status_export);
+        }
+        double average_time = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
+        std::cout << "Average time to run function: " << average_time << "s for days = " << days << "\n";
+    }
+
+    // std::vector<mio::osecir::Model> models2 = {model};
+    // auto read_result1                       = mio::osecir::read_input_data_county(models2, {2020, 12, 01}, {1001},
+    //                                                         std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+    //                                                         TEST_DATA_DIR, 1, false);
+
+    // mio::TimeSeries<double> secir = simulate(0.0, 1.0, 1.0, models2[0]);
+
+    // std::cout << secir.get_value(0) << std::endl;
+
+    // mio::unused(read_result1);
 }
