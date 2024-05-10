@@ -225,7 +225,7 @@ class NPIRegression():
             directory = os.path.join(directory, 'Germany/')
             gd.check_dir(directory)
 
-            filepath = os.path.join(directory + 'clustered_npis.json')
+            filepath = os.path.join(directory + 'clustered_npis_xxx.json')
 
             if not os.path.exists(filepath):
 
@@ -510,25 +510,26 @@ class NPIRegression():
         self.read_data()
 
         # set up endogenous variable
-        self.df_variants.sort_values(['ID_County', 'Date'], inplace = True)
-        self.df_r.sort_values(['ID_County', 'Date'], inplace = True)
+        self.df_variants.sort_values(['ID_County', 'Date'], inplace=True)
+        self.df_r.sort_values(['ID_County', 'Date'], inplace=True)
         self.Y = self.df_r['R_eff']
         variants_considered = ['Other', 'B.1.617.2', 'B.1.1.7']
         # consider (known) variant data to r-value, so the effect does not have to be estimated in regression
         variants = self.df_variants.loc[:, variants_considered]/100
-        #add all variants not considered to 'Other' column (with an effect of 0% to wildtype)
-        variants['Other'] += self.df_variants.loc[:, ~self.df_variants.columns.isin(variants_considered)].iloc[:,2:-1].sum(axis=1)/100
-        variants['Other']*=1.
-        variants['B.1.1.7']*=1.3
-        variants['B.1.617.2']*=1.6
+        # add all variants not considered to 'Other' column (with an effect of 0% to wildtype)
+        variants['Other'] += self.df_variants.loc[:, ~
+                                                  self.df_variants.columns.isin(variants_considered)].iloc[:, 2:-1].sum(axis=1)/100
+        variants['Other'] *= 1.
+        variants['B.1.1.7'] *= 1.3
+        variants['B.1.617.2'] *= 1.6
         self.Y /= (variants.sum(axis=1))
 
         # add seasonality as a multiplicative factor (TODO: find values / other formula)
         # for now use simple cos
         beta0 = 1
         beta1 = 0.5
-        self.Y*=(beta0*(1+beta1*np.cos(2*np.pi*self.df_r.Date.dt.day_of_year.values/365)))
-
+        self.Y *= (beta0*(1+beta1*np.cos(2*np.pi *
+                   self.df_r.Date.dt.day_of_year.values/365)))
 
         # TODO: discuss which vaccination states we want to include
         self.used_vacc_states = list(self.all_vacc_states[0:3])
@@ -546,10 +547,10 @@ class NPIRegression():
                                              for vacc_state in self.used_vacc_states] +
                                             [self.df_regions[region_type]
                                              for region_type in self.region_types] +
-                                            #[self.df_seasonality['sin'], self.df_seasonality['cos']] +
+                                            # [self.df_seasonality['sin'], self.df_seasonality['cos']] +
                                             [self.df_agestructure[age_category]
                                              for age_category in self.age_categories] +
-                                            [self.df_npis[npi] for npi in self.used_npis]).transpose()# + [self.df_variants[variant] for variant in self.variants]).transpose()
+                                            [self.df_npis[npi] for npi in self.used_npis]).transpose()  # + [self.df_variants[variant] for variant in self.variants]).transpose()
 
     # define variables for regression according to input and fit model
 
@@ -582,7 +583,8 @@ class NPIRegression():
         self.set_up_model()
 
         # define variables that will be used in backward selection
-        regression_variables = self.used_vacc_states + self.region_types + self.age_categories + self.used_npis
+        regression_variables = self.used_vacc_states + \
+            self.region_types + self.age_categories + self.used_npis
 
         # counter for iterations in backward selection
         iteration = 0
@@ -879,17 +881,41 @@ class NPIRegression():
             plt.close()
 
 
+def investigate_influence_of_delay(counties, min_date, max_date, fine_resolution, delay_list, plot=True):
+
+    aic_initial_all = []
+    aic_final_all = []
+
+    for delay in delay_list:
+
+        npi_regression = NPIRegression(
+            counties, min_date, max_date, fine_resolution, delay)
+
+        df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
+            plot=False)
+
+        aic_initial_all.append(aic_initial)
+        aic_final_all.append(aic_final)
+
+    plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all)
+
+    if plot:
+        plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all)
+
+
 def plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all):
 
     fig, ax = plt.subplots()
 
-    ax.plot(delay_list, aic_initial_all)
-    ax.plot(delay_list, aic_final_all)
+    ax.plot(delay_list, aic_initial_all, label='Initial model')
+    ax.plot(delay_list, aic_final_all, label='Final model')
 
     ax.set_xticks(delay_list)
 
     ax.set_xlabel('Delay')
     ax.set_ylabel('AIC')
+
+    plt.legend()
 
     if not os.path.isdir(f'plots/delay'):
         os.makedirs(
@@ -909,22 +935,17 @@ def main():
 
     fine_resolution = 2
 
-    delay_list = [delay for delay in range(-10, 11)]
-    aic_initial_all = []
-    aic_final_all = []
+    npi_regression = NPIRegression(
+        counties, min_date, max_date, fine_resolution)
 
-    for delay in delay_list:
+    df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
+        plot=False)
 
-        npi_regression = NPIRegression(
-            counties, min_date, max_date, fine_resolution, delay)
-
-        df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
-            plot=False)
-
-        aic_initial_all.append(aic_initial)
-        aic_final_all.append(aic_final)
-
-    plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all)
+    investigate_delay = False
+    if investigate_delay:
+        delay_list = [delay for delay in range(-10, 11)]
+        investigate_influence_of_delay(
+            counties, min_date, max_date, fine_resolution, delay_list, plot=True)
 
 
 if __name__ == "__main__":
