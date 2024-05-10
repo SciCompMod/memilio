@@ -82,15 +82,14 @@ TEST(TestOdeSECIRVVS, overflow_vaccinations)
     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive}]            = 10.;
     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]  = 10.;
     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}] = 10.;
-    // model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>(0.0);
-    model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.0;
+    model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)]         = 0.0;
 
     // set vaccination rates higher than total population for each layer
     const size_t daily_vaccinations = 100;
-    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(tmax));
-    for (size_t i = 0; i < tmax; ++i) {
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(tmax + 1));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(tmax + 1));
+    model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(tmax + 1));
+    for (size_t i = 0; i <= tmax; ++i) {
         auto num_vaccinations = static_cast<double>((i + 1) * daily_vaccinations);
         model.parameters.get<mio::osecirvvs::DailyPartialVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
@@ -114,7 +113,6 @@ TEST(TestOdeSECIRVVS, overflow_vaccinations)
     auto flow_indx_booster_vaccination =
         model.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity>({mio::AgeGroup(0)});
-
     auto indx_S_naive =
         model.populations.get_flat_index({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive});
     auto indx_S_partial = model.populations.get_flat_index(
@@ -122,69 +120,66 @@ TEST(TestOdeSECIRVVS, overflow_vaccinations)
     auto indx_S_improved = model.populations.get_flat_index(
         {mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity});
 
-    // check that the number of vaccinated people is never higher than the number of susceptible people
-    EXPECT_NEAR(result[1].get_last_value()[flow_indx_partial_vaccination], result[0].get_value(1)[indx_S_naive], 1e-10);
-    EXPECT_NEAR(result[1].get_last_value()[flow_indx_full_vaccination], result[0].get_value(1)[indx_S_partial], 1e-10);
-    EXPECT_NEAR(result[1].get_last_value()[flow_indx_booster_vaccination], result[0].get_value(1)[indx_S_improved],
+    // check that the number of vaccinated people is never higher than the total number of susceptible people
+    EXPECT_NEAR(result[1].get_last_value()[flow_indx_partial_vaccination], result[0].get_value(0)[indx_S_naive], 1e-10);
+    EXPECT_NEAR(result[1].get_last_value()[flow_indx_full_vaccination], result[0].get_value(0)[indx_S_partial], 1e-10);
+    EXPECT_NEAR(result[1].get_last_value()[flow_indx_booster_vaccination], result[0].get_value(0)[indx_S_improved],
                 1e-10);
 }
 
-// TEST(TestOdeSECIRVVS, vaccination_rate)
-// {
-//     const double t0   = 0;
-//     const double tmax = 1;
-//     const double dt   = 1;
+TEST(TestOdeSECIRVVS, smooth_vaccination_rate)
+{
+    const ScalarType tmax = 2.;
 
-//     // init simple model
-//     mio::osecirvvs::Model model(1);
-//     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive}]            = 10.;
-//     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]  = 10.;
-//     model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}] = 10.;
+    // init simple model
+    mio::osecirvvs::Model model(1);
+    auto& daily_vaccinations = model.parameters.get<mio::osecirvvs::DailyPartialVaccination>();
+    daily_vaccinations.resize(mio::SimulationDay(tmax + 1));
 
-//     // set vaccination rates higher than total population for each layer
-//     const size_t daily_vaccinations = 100;
-//     const size_t num_days           = 100;
-//     model.parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(num_days));
-//     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(num_days));
-//     model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(num_days));
-//     for (size_t i = 0; i < num_days; ++i) {
-//         auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-//         model.parameters.get<mio::osecirvvs::DailyPartialVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-//             num_vaccinations;
-//         model.parameters.get<mio::osecirvvs::DailyFullVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-//             num_vaccinations;
-//         model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-//             num_vaccinations;
-//     }
+    daily_vaccinations[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
+    daily_vaccinations[{mio::AgeGroup(0), mio::SimulationDay(1)}] = 10;
+    daily_vaccinations[{mio::AgeGroup(0), mio::SimulationDay(2)}] = 110;
 
-//     // simulate one step with explicit Euler
-//     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-//     auto result     = simulate_flows(t0, tmax, dt, model, integrator);
+    const auto eps1 = 0.15;
 
-//     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
-//     auto flow_indx_partial_vaccination =
-//         model.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleNaive,
-//                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity>({mio::AgeGroup(0)});
-//     auto flow_indx_full_vaccination =
-//         model.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-//                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity>({mio::AgeGroup(0)});
-//     auto flow_indx_booster_vaccination =
-//         model.get_flat_flow_index<mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-//                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity>({mio::AgeGroup(0)});
+    // test when t is out of the range
+    Eigen::VectorXd result = model.vaccinations_at(5, daily_vaccinations, eps1);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_NEAR(result[0], 0, 1e-12);
 
-//     auto indx_S_naive =
-//         model.populations.get_flat_index({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive});
-//     auto indx_S_partial = model.populations.get_flat_index(
-//         {mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptiblePartialImmunity});
-//     auto indx_S_improved = model.populations.get_flat_index(
-//         {mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity});
+    // test when t i below the lower bound
+    result = model.vaccinations_at(0.5, daily_vaccinations, eps1);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_NEAR(result[0], 10, 1e-12);
 
-//     // check that the number of vaccinated people is never higher than the number of susceptible people
-//     EXPECT_NEAR(result[1].get_last_value()[flow_indx_partial_vaccination], result[0].get_value(1)[indx_S_naive], 1e-10);
-//     EXPECT_NEAR(result[1].get_last_value()[flow_indx_full_vaccination], result[0].get_value(1)[indx_S_partial], 1e-10);
-//     EXPECT_NEAR(result[1].get_last_value()[flow_indx_booster_vaccination], result[0].get_value(1)[indx_S_improved],
-//                 1e-10);
-// }
+    result = model.vaccinations_at(1.5, daily_vaccinations, eps1);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_NEAR(result[0], 100, 1e-12);
+
+    // test when t is withing the range of the smoothing
+    result = model.vaccinations_at(0.85, daily_vaccinations, eps1);
+    EXPECT_NEAR(result[0], 10.0, 1e-12);
+
+    result = model.vaccinations_at(0.90, daily_vaccinations, eps1);
+    EXPECT_NEAR(result[0], 32.5, 1e-12);
+
+    result = model.vaccinations_at(0.95, daily_vaccinations, eps1);
+    EXPECT_NEAR(result[0], 77.5, 1e-12);
+
+    result = model.vaccinations_at(1.0, daily_vaccinations, eps1);
+    EXPECT_NEAR(result[0], 100.0, 1e-12);
+
+    // Test also with a different epsilon
+    const auto eps2 = 0.4;
+    result          = model.vaccinations_at(0.6, daily_vaccinations, eps2);
+    EXPECT_NEAR(result[0], 10.0, 1e-12);
+
+    result = model.vaccinations_at(0.8, daily_vaccinations, eps2);
+    EXPECT_NEAR(result[0], 55, 1e-12);
+
+    result = model.vaccinations_at(1., daily_vaccinations, eps2);
+    EXPECT_NEAR(result[0], 100.0, 1e-12);
+}
 
 void assign_uniform_distribution(mio::UncertainValue& p, double min, double max, bool set_invalid_initial_value)
 {

@@ -135,12 +135,10 @@ public:
                              this->populations.get_from(pop, {i, InfectionState::InfectedCriticalImprovedImmunity});
         }
 
-        // get vaccinations with
-        // Eigen::VectorXd vaccinations_at(const CustomIndexArray<double, AgeGroup, SimulationDay>& daily_vaccinations,
-        // const Scalartype t, const ScalarType eps = 0.15) const
-        auto const& partial_vaccination = vaccinations_at(this->parameters.get<DailyPartialVaccination>(), t);
-
-        mio::unused(partial_vaccination);
+        // get vaccinations
+        auto const partial_vaccination = vaccinations_at(t, this->parameters.get<DailyPartialVaccination>());
+        auto const full_vaccination    = vaccinations_at(t, this->parameters.get<DailyFullVaccination>());
+        auto const booster_vaccination = vaccinations_at(t, this->parameters.get<DailyBoosterVaccination>());
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
@@ -272,54 +270,24 @@ public:
             }
 
             // vaccinations
-            const auto t_idx = SimulationDay((size_t)t);
-
-            // Calculates the number of vaccinations per layer for a specific day and age group.
-            // If the size of the `DailyPartialVaccination` array is smaller than the current day t then zero is returned.
-            // Otherwise, we differentiate between greater and equal SimulationDay(0) since the numbers are accumulated.
-            double first_vacc =
-                static_cast<size_t>(params.get<DailyPartialVaccination>().size<SimulationDay>()) > (size_t)t
-                    ? (t_idx > SimulationDay(0) ? params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] -
-                                                      params.template get<DailyPartialVaccination>()[{
-                                                          (AgeGroup)i, SimulationDay((size_t)t - 1)}]
-                                                : params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}])
-                    : 0;
-
-            double full_vacc =
-                static_cast<size_t>(params.get<DailyFullVaccination>().size<SimulationDay>()) > (size_t)t
-                    ? (t_idx > SimulationDay(0)
-                           ? params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
-                                 params
-                                     .template get<DailyFullVaccination>()[{(AgeGroup)i, SimulationDay((size_t)t - 1)}]
-                           : params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}])
-                    : 0;
-
-            double booster_vacc =
-                static_cast<size_t>(params.get<DailyBoosterVaccination>().size<SimulationDay>()) > (size_t)t
-                    ? (t_idx > SimulationDay(0) ? params.template get<DailyBoosterVaccination>()[{(AgeGroup)i, t_idx}] -
-                                                      params.template get<DailyBoosterVaccination>()[{
-                                                          (AgeGroup)i, SimulationDay((size_t)t - 1)}]
-                                                : params.template get<DailyBoosterVaccination>()[{(AgeGroup)i, t_idx}])
-                    : 0;
-
             flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::TemporaryImmunPartialImmunity>(
                 {i})] =
                 std::min(
                     y[SNi] -
                         flows[get_flat_flow_index<InfectionState::SusceptibleNaive, InfectionState::ExposedNaive>({i})],
-                    first_vacc);
+                    partial_vaccination[static_cast<size_t>(i)]);
 
             flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
                                       InfectionState::TemporaryImmunImprovedImmunity>({i})] =
                 std::min(y[SPIi] - flows[get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
                                                              InfectionState::ExposedPartialImmunity>({i})],
-                         full_vacc);
+                         full_vaccination[static_cast<size_t>(i)]);
 
             flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
                                       InfectionState::TemporaryImmunImprovedImmunity>({i})] =
                 std::min(y[SIIi] - flows[get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
                                                              InfectionState::ExposedImprovedImmunity>({i})],
-                         booster_vacc);
+                         booster_vaccination[static_cast<size_t>(i)]);
 
             // ICU capacity shortage is close
             // TODO: if this is used with vaccination model, it has to be adapted if CriticalPerSevere
@@ -571,17 +539,23 @@ public:
         }
     }
 
-    Eigen::VectorXd vaccinations_at(const CustomIndexArray<double, AgeGroup, SimulationDay>& daily_vaccinations,
-                                    const ScalarType t, const ScalarType eps = 0.15) const
+    Eigen::VectorXd vaccinations_at(const ScalarType t,
+                                    const CustomIndexArray<double, AgeGroup, SimulationDay>& daily_vaccinations,
+                                    const ScalarType eps = 0.15) const
     {
         auto const& params  = this->parameters;
         const ScalarType ub = (size_t)t + 1.0;
         const ScalarType lb = ub - eps;
 
         Eigen::VectorXd smoothed_vaccinations((size_t)params.get_num_groups());
+        smoothed_vaccinations.setZero();
 
         if (t > ub) {
             mio::log_warning("Vaccination time is out of bounds");
+        }
+
+        if (static_cast<size_t>(daily_vaccinations.size<SimulationDay>()) <= (size_t)t) {
+            return smoothed_vaccinations;
         }
         // check if t is in the range of the interval [lb,ub]
         if (t >= lb) {
@@ -589,11 +563,12 @@ public:
 
             // ToDo: Find a way to Iterate over all three vaccination types
             for (AgeGroup age = AgeGroup(0); age < params.get_num_groups(); age++) {
-                const auto num_vaccinations = daily_vaccinations[{age, SimulationDay((size_t)t + 1)}] -
-                                              daily_vaccinations[{age, SimulationDay((size_t)t)}];
-                const auto num_vaccinations_eps = daily_vaccinations[{age, SimulationDay((size_t)t - eps + 1)}] -
-                                                  daily_vaccinations[{age, SimulationDay((size_t)t - eps)}];
-                smoothed_vaccinations[(size_t)age] = smoother_cosine(t, lb, ub, num_vaccinations_eps, num_vaccinations);
+                const auto num_vaccinations_ub =
+                    daily_vaccinations[{age, SimulationDay(ub + 1)}] - daily_vaccinations[{age, SimulationDay(ub)}];
+                const auto num_vaccinations_lb =
+                    daily_vaccinations[{age, SimulationDay(lb + 1)}] - daily_vaccinations[{age, SimulationDay(lb)}];
+                smoothed_vaccinations[(size_t)age] =
+                    smoother_cosine(t, lb, ub, num_vaccinations_lb, num_vaccinations_ub);
             }
         }
         else {

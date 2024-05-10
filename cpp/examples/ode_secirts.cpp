@@ -108,13 +108,14 @@ int main()
     model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(num_days));
     model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>().resize(mio::SimulationDay(num_days));
     for (size_t i = 0; i < num_days; ++i) {
-        auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-        model.parameters.get<mio::osecirvvs::DailyPartialVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-            num_vaccinations;
-        model.parameters.get<mio::osecirvvs::DailyFullVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-            num_vaccinations;
-        model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-            num_vaccinations;
+        for (mio::AgeGroup j = 0; j < nb_groups; ++j) {
+            auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
+            model.parameters.get<mio::osecirvvs::DailyPartialVaccination>()[{j, mio::SimulationDay(i)}] =
+                num_vaccinations;
+            model.parameters.get<mio::osecirvvs::DailyFullVaccination>()[{j, mio::SimulationDay(i)}] = num_vaccinations;
+            model.parameters.get<mio::osecirvvs::DailyBoosterVaccination>()[{j, mio::SimulationDay(i)}] =
+                num_vaccinations;
+        }
     }
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecirvvs::ContactPatterns>();
