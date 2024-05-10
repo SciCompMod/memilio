@@ -20,6 +20,7 @@
 #ifndef MIO_EPI_LCT_INFECTION_STATE_H
 #define MIO_EPI_LCT_INFECTION_STATE_H
 
+#include "memilio/utils/index.h"
 #include <array>
 
 namespace mio
@@ -32,7 +33,7 @@ namespace mio
  *      The number of given template arguments must be equal to the entry Count from InfectionState.
  */
 template <class InfectionStates, int... Ns>
-class LctInfectionState
+class LctInfectionState : public Index<int>
 {
 public:
     using InfectionState = InfectionStates;

@@ -88,11 +88,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
