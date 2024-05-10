@@ -15,6 +15,8 @@ set(TESTSOURCES
     test_odesecir.cpp
     test_odesecirvvs.cpp
     test_odesecirts.cpp
+    test_sde_sir.cpp
+    test_sde_sirs.cpp
     test_mobility.cpp
     test_date.cpp
     test_eigen_util.cpp
@@ -36,6 +38,7 @@ set(TESTSOURCES
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
     test_abm_world.cpp
+    test_math_floating_point.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
     test_type_safe.cpp
@@ -53,11 +56,11 @@ set(TESTSOURCES
     test_mobility_io.cpp
     test_transform_iterator.cpp
     test_metaprogramming.cpp
-    test_ide_seir.cpp
     test_history.cpp
     test_utils.cpp
     abm_helpers.h
     abm_helpers.cpp
+    test_ide_seir.cpp
     test_ide_secir.cpp
     test_state_age_function.cpp
     distributions_helpers.h
@@ -73,6 +76,8 @@ if(MEMILIO_HAS_JSONCPP)
 set(TESTSOURCES ${TESTSOURCES}
 test_json_serializer.cpp
 test_epi_data_io.cpp
+test_lct_parameters_io.cpp
+test_ide_parameters_io.cpp
 )
 endif()
 

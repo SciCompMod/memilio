@@ -2,8 +2,8 @@
 
 This model is based on the Linear Chain Trick. 
 
-The Linear Chain Trick provides the option to use Erlang-distributed sojourn times in the compartments through the use of subcompartments. 
-The normal ODE models have (possibly unrealistic) exponentially distributed sojourn times.
+The Linear Chain Trick provides the option to use Erlang-distributed stay times in the compartments through the use of subcompartments. 
+The normal ODE models have (possibly unrealistic) exponentially distributed stay times.
 The LCT model can still be described by an ordinary differential equation system.
 
 For the concept see 
@@ -56,4 +56,8 @@ The notation of the compartments with indices here stands for subcompartments an
 ## Examples
 
 A simple example can be found at [LCT minimal example](../../examples/lct_secir.cpp).
+
+## Initialization 
+
+- The file [parameters_io](parameters_io.h) provides functionality to compute an initial value vector for the LCT-SECIR model based on real data.
 

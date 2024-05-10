@@ -515,9 +515,7 @@ struct AgeGroupGotoSchool {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a         = Type(num_agegroups, false);
-        a[AgeGroup(1)] = true;
-        return a;
+        return Type(num_agegroups, false);
     }
     static std::string name()
     {
@@ -532,10 +530,7 @@ struct AgeGroupGotoWork {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a         = Type(num_agegroups, false);
-        a[AgeGroup(2)] = true;
-        a[AgeGroup(3)] = true;
-        return a;
+        return Type(num_agegroups, false);
     }
     static std::string name()
     {

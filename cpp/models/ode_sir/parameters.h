@@ -21,9 +21,12 @@
 #ifndef SIR_PARAMETERS_H
 #define SIR_PARAMETERS_H
 
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
+#include "memilio/utils/custom_index_array.h"
 
 #include <vector>
 
@@ -40,10 +43,10 @@ namespace osir
      * @brief probability of getting infected from a contact
      */
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type(1.0);
+        return Type(size,1.0);
     }
     static std::string name()
     {
@@ -55,10 +58,10 @@ struct TransmissionProbabilityOnContact {
      * @brief the infectious time in day unit
      */
 struct TimeInfected {
-    using Type = UncertainValue;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue,AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return Type(6.0);
+        return Type(size,6.0);
     }
     static std::string name()
     {
@@ -70,10 +73,10 @@ struct TimeInfected {
      * @brief the contact patterns within the society are modelled using a ContactMatrix
      */
 struct ContactPatterns {
-    using Type = ContactMatrix;
-    static Type get_default()
+    using Type = UncertainContactMatrix;
+    static Type get_default(AgeGroup size)
     {
-        return Type{1};
+        return Type(1, static_cast<Eigen::Index>((size_t)size));
     }
     static std::string name()
     {
@@ -89,9 +92,15 @@ using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeInfect
 class Parameters : public ParametersBase
 {
 public:
-    Parameters()
-        : ParametersBase()
+    Parameters(AgeGroup num_agegroups)
+        : ParametersBase(num_agegroups)
+        , m_num_groups{num_agegroups}
     {
+    }
+
+    AgeGroup get_num_groups()
+    {
+        return m_num_groups;
     }
 
     /**
@@ -112,20 +121,23 @@ public:
         double tol_times = 1e-1;
 
         int corrected = false;
-        if (this->get<TimeInfected>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
-                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                        "and reset parameters.",
-                        this->get<TimeInfected>(), tol_times);
-            this->get<TimeInfected>() = tol_times;
-            corrected                 = true;
-        }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                        this->get<TransmissionProbabilityOnContact>(), 0.0);
-            this->get<TransmissionProbabilityOnContact>() = 0.0;
-            corrected                                     = true;
+
+        for(auto i = AgeGroup(0); i < AgeGroup(m_num_groups);i++){
+            if (this->get<TimeInfected>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                            "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                            "and reset parameters.",
+                            this->get<TimeInfected>()[i], tol_times);
+                this->get<TimeInfected>()[i] = tol_times;
+                corrected                 = true;
+            }
+            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                            this->get<TransmissionProbabilityOnContact>()[i], 0.0);
+                this->get<TransmissionProbabilityOnContact>() = 0.0;
+                corrected                                     = true;
+            }
         }
         return corrected;
     }
@@ -139,19 +151,22 @@ public:
     {
         double tol_times = 1e-1;
 
-        if (this->get<TimeInfected>() < tol_times) {
+        for(auto i = AgeGroup(0); i < AgeGroup(m_num_groups);i++){
+
+        if (this->get<TimeInfected>()[i] < tol_times) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
-                      this->get<TimeInfected>(), 0.0);
+                      this->get<TimeInfected>()[i], 0.0);
             return true;
         }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+        if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
+                this->get<TransmissionProbabilityOnContact>()[i], 0.0, 1.0);
             return true;
+        }
         }
         return false;
     }
@@ -159,6 +174,7 @@ public:
 private:
     Parameters(ParametersBase&& base)
         : ParametersBase(std::move(base))
+        , m_num_groups(get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
     {
     }
 
@@ -170,9 +186,11 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase::deserialize(io));
         return success(Parameters(std::move(base)));
     }
+private:
+    AgeGroup m_num_groups;
 };
 
 } // namespace osir

@@ -78,6 +78,7 @@ public:
      */
     OdeIntegrator(std::shared_ptr<IntegratorCore> core)
         : m_core(core)
+        , m_is_adaptive(false)
     {
     }
 
@@ -95,11 +96,13 @@ public:
 
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
-        m_core = integrator;
+        m_core        = integrator;
+        m_is_adaptive = false;
     }
 
 private:
     std::shared_ptr<IntegratorCore> m_core;
+    bool m_is_adaptive;
 };
 
 } // namespace mio
