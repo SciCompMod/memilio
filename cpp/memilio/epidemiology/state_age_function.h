@@ -54,7 +54,7 @@ namespace mio
  * function. Location should be a positive number to fulfill the characteristics of a TransitionDistribution and 
  * shift has to be positive.
  * For a Function F we normally use these parameters at state age x as F(x,location,scale)=F((x-location)/scale). 
- * A derived class does not have to use these two parameters.
+ * These two parameters are optional and a derived class does not have to use them.
  * Additionally there is one parameter which specifies the distribution.
  *
  * The derived classes must also implement the clone_impl method which allows to deepcopy the derived class.
@@ -92,7 +92,7 @@ struct StateAgeFunction {
         , m_support_tol{-1.} // Initialize tolerance for computation of support as not set.
     {
         if (m_scale <= 0) {
-            log_error("The scale Parameter of a  StateAgeFunction has to be positive. Set scale to 1.");
+            log_error("The scale parameter of a StateAgeFunction has to be positive. Set scale to 1.");
             m_scale = 1.;
         }
     }
@@ -461,7 +461,7 @@ struct SmootherCosine : public StateAgeFunction {
     /**
      * @brief Computes the mean value of the function. 
      * 
-     * For the associated distribution, the mean value is 0.5 * m_parameter + m_location.
+     * For the associated distribution to SmootherCosine, the mean value is 0.5 * m_parameter + m_location.
      *
      * @param[in] dt Time step size used for the numerical integration (unused for SmootherCosine). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
@@ -492,7 +492,7 @@ protected:
  * A survival function is defined as 1 - cumulative density function.
  * GammaSurvivalFunction is derived from StateAgeFunction.
  * The shape parameter of the Gamma function is the parameter of the StateAgeFunction. 
- * If shape is an unsigned Integer, the Gamma distribution is an Erlang function.
+ * If shape is an unsigned integer, the Gamma distribution simplifies to an Erlang distribution.
  */
 struct GammaSurvivalFunction : public StateAgeFunction {
 
@@ -531,7 +531,7 @@ struct GammaSurvivalFunction : public StateAgeFunction {
      * @brief Computes the mean value of the function. 
      * 
      * For the gamma distribution, the mean value is m_parameter*m_scale+m_location, 
-     *  where m_parameter is the shape parameter.
+     * where m_parameter is the shape parameter.
      *
      * @param[in] dt Time step size used for the numerical integration (unused for GammaSurvivalFunction). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
@@ -569,10 +569,10 @@ struct LognormSurvivalFunction : public StateAgeFunction {
      * Location and scale parameters are according to these parameters in the python package scipy.
      *
      * @param[in] init_parameter Specifies the initial function parameter of the function.
-     * @param[in] init_location Location paramter of LognormSurvivalFunction. The parameter can be
+     * @param[in] init_location Location parameter of LognormSurvivalFunction. The parameter can be
      *       used to shift the function. Should be non-negative to fulfill the conditions of a 
      *       StateAgeFunction.
-     * @param[in] init_scale Scale paramter of LognormSurvivalFunction.
+     * @param[in] init_scale Scale parameter of LognormSurvivalFunction.
      */
     LognormSurvivalFunction(ScalarType init_parameter, ScalarType init_location = 0, ScalarType init_scale = 1)
         : StateAgeFunction(init_parameter, init_location, init_scale)
@@ -694,12 +694,12 @@ protected:
 };
 
 /**
- * @brief Class that defines an Erlang density function with the parameters shape and scale depending on the state age.
+ * @brief Class that defines the probability density function corresponding to the Erlang distribution with the parameters shape and scale depending on the state age.
  * Class is needed for the initialization of the subcompartments for LCT model.
  * ErlangDensity is derived from StateAgeFunction. 
- * The shape parameter of the Erlang function is the parameter of the Stateagefunction. 
- * Attention: The density does not have the characteristics of a TransitionDistribution!!
- * The Function is of the StateAgeFunction-Type b).
+ * The shape parameter of the Erlang function is the parameter of the StateAgeFunction. 
+ * Attention: The density is not a survival function and does not have the characteristics of a TransitionDistribution!!
+ * The function is of the StateAgeFunction-Type b).
  */
 struct ErlangDensity : public StateAgeFunction {
 
@@ -736,7 +736,7 @@ struct ErlangDensity : public StateAgeFunction {
      * @brief Computes the maximum of the support of the function. 
      * 
      * For small time steps and small variance of the density it is possible that dt is returned with the function of StateAgeFunction.
-     * StateAgeFunction is designed for survialfunctions, not for densities.
+     * StateAgeFunction is designed for survival functions, not for densities.
      * Therefore with this function we calculate the smallest time value t where function(tau)=0 for all tau>t.
      *
      * @param[in] dt Time step size. 
@@ -764,7 +764,7 @@ struct ErlangDensity : public StateAgeFunction {
     /**
      * @brief Computes the mean value of the function. 
      * 
-     * For Erlang distribution, the mean value is the m_parameter * m_scale. 
+     * For the Erlang distribution, the mean value is the m_parameter * m_scale. 
      *
      * @param[in] dt Time step size used for the numerical integration (unused for ErlangDensity). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance (unused for ErlangDensity). 

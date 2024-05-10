@@ -115,7 +115,7 @@ TEST(TestStateAgeFunction, testSettersAndGettersForParameters)
     ScalarType testvalue_after  = 2.1;
 
     // Test getter and setter for function parameter.
-    // Only for GammaSurvivalfunction as setter and getter are equal for all derived classes.
+    // Only test for GammaSurvivalfunction as setter and getter are defined in the base class and thus equal for all derived classes.
     // Construct GammaSurvivalFunction with an invalid value for the scale parameter.
     mio::GammaSurvivalFunction gamma(testvalue_before, testvalue_before, -1);
     // Check if the invalid scale parameter is set to one.
@@ -167,23 +167,23 @@ TEST(TestStateAgeFunction, testGetSupportMax)
     EXPECT_NEAR(gamma.get_support_max(dt), 13, 1e-14);
     gamma.set_parameter(0.5);
     EXPECT_NEAR(gamma.get_support_max(dt), 11.5, 1e-14);
-    gamma.set_location(0);
+    gamma.set_location(0.0);
     EXPECT_NEAR(gamma.get_support_max(dt), 10.5, 1e-14);
-    gamma.set_scale(1);
+    gamma.set_scale(1.0);
     EXPECT_NEAR(gamma.get_support_max(dt), 21, 1e-14);
 
-    mio::LognormSurvivalFunction logn(0.1, 1, 0.5);
-    EXPECT_NEAR(logn.get_support_max(dt), 2, 1e-14);
+    mio::LognormSurvivalFunction logn(0.1, 1.0, 0.5);
+    EXPECT_NEAR(logn.get_support_max(dt), 2.0, 1e-14);
     logn.set_parameter(0.5);
     EXPECT_NEAR(logn.get_support_max(dt), 13.5, 1e-14);
-    logn.set_location(0);
+    logn.set_location(0.0);
     EXPECT_NEAR(logn.get_support_max(dt), 12.5, 1e-14);
     logn.set_scale(0.1);
     EXPECT_NEAR(logn.get_support_max(dt), 2.5, 1e-14);
 
     // Deactivate temporarily log output for next tests.
     // Errors are expected here as the ConstantFunction is not suited to be a TransitionDistribution.
-    // Support_max would be infinity here.
+    // Support_max would be infinity here but is set to -2.0 in the get_support_max() method.
     mio::set_log_level(mio::LogLevel::off);
 
     mio::ConstantFunction constfunc(1.0);
@@ -230,7 +230,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper2.get_support_max(dt));
     EXPECT_EQ(wrapper.get_mean(dt), wrapper2.get_mean(dt));
 
-    // check copy is true copy, not reference.
+    // Check copy is true copy, not reference.
     wrapper.set_parameter(1.5);
     EXPECT_NE(wrapper.get_parameter(), wrapper2.get_parameter());
     wrapper.set_parameter(1.0);
@@ -253,7 +253,7 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper4.get_support_max(dt));
     EXPECT_EQ(wrapper.get_mean(dt), wrapper4.get_mean(dt));
 
-    // check copy is true copy, not reference.
+    // Check copy is true copy, not reference.
     wrapper.set_scale(2.3);
     EXPECT_NE(wrapper.get_scale(), wrapper4.get_scale());
     wrapper.set_scale(3.0);
@@ -360,8 +360,8 @@ TEST(TestStateAgeFunction, testComparisonOperator)
     mio::StateAgeFunctionWrapper wrapper(gamma);
     mio::StateAgeFunctionWrapper wrapper2(gamma2);
     mio::StateAgeFunctionWrapper wrapper3(gamma3);
-    mio::StateAgeFunctionWrapper wrapper4(gamma3);
-    mio::StateAgeFunctionWrapper wrapper5(gamma3);
+    mio::StateAgeFunctionWrapper wrapper4(gamma4);
+    mio::StateAgeFunctionWrapper wrapper5(gamma5);
     mio::StateAgeFunctionWrapper wrapper6(smoothcos);
 
     EXPECT_TRUE(wrapper == wrapper2);
@@ -394,7 +394,7 @@ TEST(TestStateAgeFunction, testGamma)
             }
         }
     }
-    // Check if connection between Gammasurvivalfunction and ExponentialDecay (ExponentialSurvivalfunction) is fulfilled.
+    // Check if  GammaSurvivalFunction reduces to ExponentialDecay (ExponentialSurvivalfunction) with the appropriate choice of parameters.
     for (int r = 0; r < 4; r++) {
         mio::GammaSurvivalFunction gamma(1, 0, 1. / (rate[r]));
         mio::ExponentialDecay exp(rate[r]);
