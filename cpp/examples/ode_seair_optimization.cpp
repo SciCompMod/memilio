@@ -31,6 +31,15 @@
 #include "IpIpoptApplication.hpp"
 #include <fstream>
 
+// This program implements direct single shooting for the optimal control of
+// nonpharmazeutical intervation in pandemic ordinary differential equation models.
+// The socioeconomic are to be minmized using an objective functional which is the
+// weighted integral of the nonpharmazeutical interventions and testing costs.
+// In direct single shooting (also known as control vector parameterization) the
+// continuous control variables are paremeterized using a discretization such that
+// continuous optimal contorl prblem id transcribed in finite dimensional nonlinear
+// programming problem which is then solved by the interior point method IPOPT.
+
 class Seair_NLP : public Ipopt::TNLP
 {
 public:
