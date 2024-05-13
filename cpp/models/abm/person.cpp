@@ -273,18 +273,29 @@ bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location&
 std::pair<ExposureType, TimePoint> Person::get_latest_protection(TimePoint t) const
 {
     ExposureType latest_exposure_type = ExposureType::NoProtection;
-    TimePoint infection_time          = TimePoint(std::numeric_limits<uint32_t>::min());
+    TimePoint infection_time          = TimePoint(std::numeric_limits<int>::min());
 
-    // TODO: Check for latest infection or vaccination relative to TimePoint t and delete unused
-    mio::unused(t);
-    if (!m_infections.empty()) {
-        latest_exposure_type = ExposureType::NaturalInfection;
-        infection_time       = m_infections.back().get_start_date();
+    // Look for any Infection that happens before time t
+    for(const Infection& infection : m_infections) {
+        if (infection.get_start_date() <= t) {
+            latest_exposure_type = ExposureType::NaturalInfection;
+            infection_time       = infection.get_start_date();
+        } else {
+            break;
+        }
     }
-    if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
-        latest_exposure_type = m_vaccinations.back().exposure_type;
-        infection_time       = m_vaccinations.back().time;
+
+    // Look for any Vaccination that happens between the lastest Infection and time t
+    for(const Vaccination& vaccination : m_vaccinations) {
+        if (vaccination.time <= t && vaccination.time > infection_time) {
+            latest_exposure_type = vaccination.exposure_type;
+            infection_time       = vaccination.time;
+        } 
+        if (vaccination.time > t) {
+            break;
+        } 
     }
+  
     return std::make_pair(latest_exposure_type, infection_time);
 }
 
