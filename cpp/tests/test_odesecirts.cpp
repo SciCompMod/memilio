@@ -137,7 +137,7 @@ TEST(TestOdeSECIRTS, smooth_vaccination_rate)
     // init simple model
     mio::osecirts::Model model(1);
     auto& daily_vaccinations = model.parameters.get<mio::osecirts::DailyPartialVaccination>();
-    daily_vaccinations.resize(mio::SimulationDay(tmax + 1));
+    daily_vaccinations.resize(mio::SimulationDay(static_cast<size_t>(tmax + 1)));
 
     daily_vaccinations[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
     daily_vaccinations[{mio::AgeGroup(0), mio::SimulationDay(1)}] = 10;
