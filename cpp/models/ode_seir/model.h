@@ -67,30 +67,29 @@ public:
         const Index<AgeGroup> age_groups = reduce_index<Index<AgeGroup>>(this->populations.size());
         const auto& params               = this->parameters;
 
-        for (auto j : make_index_range(age_groups)) {
-            const size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-            const size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-            const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-            const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+        for (auto i : make_index_range(age_groups)) {
+            const size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            const size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
+            const size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
 
-            const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+            for (auto j : make_index_range(age_groups)) {
+                const size_t Sj = this->populations.get_flat_index({i, InfectionState::Susceptible});
+                const size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
+                const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-            for (auto i : make_index_range(age_groups)) {
-                const size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
-                const size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
-                const size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
-
+                const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
                 const double coeffStoE =
                     params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *
                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] * Nj_inv;
 
                 flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] +=
                     coeffStoE * y[Si] * y[Ij];
-                flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(i)] =
-                    (1.0 / params.template get<TimeExposed<FP>>()[i]) * y[Ei];
-                flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(i)] =
-                    (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
             }
+            flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(i)] =
+                (1.0 / params.template get<TimeExposed<FP>>()[i]) * y[Ei];
+            flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(i)] =
+                (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
         }
     }
 

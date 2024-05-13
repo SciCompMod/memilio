@@ -19,11 +19,10 @@
 */
 #include "benchmarks/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
-#include "memilio/epidemiology/age_group.h"
 #include "ode_seir/model.h"
 #include <string>
 
-const std::string config_path = "/localdata1/memilio-rh/cpp/benchmarks/simulation.config";
+const std::string config_path = "../../benchmarks/simulation.config";
 
 #include "memilio/compartments/simulation.h"
 #include "models/ode_seir/model.h"
@@ -49,8 +48,6 @@ class FlowlessModel
     using Base           = CompartmentalModel<ScalarType, oseir::InfectionState,
                                     mio::Populations<ScalarType, AgeGroup, oseir::InfectionState>,
                                     oseir::Parameters<ScalarType>>;
-    // using Base = CompartmentalModel<ScalarType, InfectionState, mio::Populations<ScalarType, AgeGroup, InfectionState>,
-    //                                 Parameters<ScalarType>>;
 
 public:
     FlowlessModel(const Populations& pop, const ParameterSet& params)
@@ -70,21 +67,20 @@ public:
         auto& params                     = this->parameters;
         const Index<AgeGroup> age_groups = reduce_index<Index<AgeGroup>>(this->populations.size());
 
-        for (auto j : mio::make_index_range(age_groups)) {
-            size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-            size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-            size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-            size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+        for (auto i : mio::make_index_range(age_groups)) {
+            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
+            size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
+            size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
 
-            const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+            for (auto j : make_index_range(age_groups)) {
 
-            for (auto i : make_index_range(age_groups)) {
+                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
+                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
+                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
-                size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
-                size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
-                size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
-
+                const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
                 const double coeffStoE =
                     params.template get<ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(t)(i.get(),
                                                                                                             j.get()) *
@@ -95,9 +91,9 @@ public:
                 dydt[Ei] += dummy_S;
             }
 
-            dydt[Ij] += (1.0 / params.get<TimeExposed<ScalarType>>()[j]) * y[Ej];
-            dydt[Ij] -= (1.0 / params.get<TimeInfected<ScalarType>>()[j]) * y[Ij];
-            dydt[Rj] = (1.0 / params.get<TimeInfected<ScalarType>>()[j]) * y[Ij];
+            dydt[Ii] += (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
+            dydt[Ii] -= (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
+            dydt[Ri] = (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
         }
     }
 };
