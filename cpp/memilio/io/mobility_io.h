@@ -66,7 +66,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
  * @param directory directory where files should be stored
  * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  */
-template <class Model, typename FP = double>
+template <typename FP, class Model>
 IOResult<void> write_graph(const Graph<Model, MigrationParameters<FP>>& graph, const std::string& directory,
                            int ioflags = IOF_None)
 {
