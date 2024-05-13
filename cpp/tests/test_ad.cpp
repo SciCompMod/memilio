@@ -77,8 +77,8 @@ TEST(Testad, ad_square)
 // algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp.
 
 // Define the rhs of the ODE x' = f(x), that should be solved using odeint.
-template <typename state_type, typename time_type>
-void harmonic_oscillator(const state_type& x, state_type& dxdt, const time_type /* t */)
+template <typename value_type, typename time_type>
+void harmonic_oscillator(const std::array<value_type, 2>& x, std::array<value_type, 2>& dxdt, const time_type /* t */)
 {
     const double damping = 0.15;
     dxdt[0]              = x[1];
@@ -91,8 +91,7 @@ TEST(Testad, ad_odeint)
     // The type of container used to hold the state vector.
     using value_type = ad_forward_t;
     using time_type  = value_type;
-    const size_t dimension = 2;
-    typedef std::array<value_type, dimension> state_type; // 2-dimensional vector
+    typedef std::array<value_type, 2> state_type; // 2-dimensional vector
 
     using error_stepper_type =
         boost::numeric::odeint::runge_kutta_cash_karp54<state_type, value_type, state_type, time_type>;
@@ -111,7 +110,7 @@ TEST(Testad, ad_odeint)
 
     boost::numeric::odeint::integrate_adaptive(
         boost::numeric::odeint::make_controlled<error_stepper_type>(abs_tol, rel_tol),
-        harmonic_oscillator<state_type, time_type>, x, t0, t_end, dt);
+        harmonic_oscillator<value_type, time_type>, x, t0, t_end, dt);
 
     // We want to compare AD derivatives with difference quotient.
     // To this end, we simulate again with a small perturbation of the initial value of x[0].
@@ -121,7 +120,7 @@ TEST(Testad, ad_odeint)
     x_compare[1] = 0.0;
     boost::numeric::odeint::integrate_adaptive(
         boost::numeric::odeint::make_controlled<error_stepper_type>(abs_tol, rel_tol),
-        harmonic_oscillator<state_type, time_type>, x_compare, t0, t_end, dt);
+        harmonic_oscillator<value_type, time_type>, x_compare, t0, t_end, dt);
 
     // Compare AD derivatives with a difference quotient.
     EXPECT_NEAR(ad::derivative(x[0]), (ad::value(x_compare[0]) - ad::value(x[0])) / h, 1e-4);
