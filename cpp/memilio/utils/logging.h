@@ -127,6 +127,10 @@ inline void log(LogLevel level, spdlog::string_view_t fmt, const Args&... args)
 
 } // namespace mio
 
+/**
+ * @brief The fmt::formatter class provides formatting capabilities for the ad::gt1s<double>::type 
+ * to help SPD log to handle it.
+ */
 template <>
 struct fmt::formatter<ad::gt1s<double>::type> {
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
@@ -140,6 +144,10 @@ struct fmt::formatter<ad::gt1s<double>::type> {
     }
 };
 
+/**
+ * @brief The fmt::formatter class provides formatting capabilities for the ad::ga1s<double>::type 
+ * to help SPD log to handle it.
+ */
 template <>
 struct fmt::formatter<ad::ga1s<double>::type> {
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
