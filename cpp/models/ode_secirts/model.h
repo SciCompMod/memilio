@@ -563,10 +563,10 @@ public:
 
             // ToDo: Find a way to Iterate over all three vaccination types
             for (AgeGroup age = AgeGroup(0); age < params.get_num_groups(); age++) {
-                const auto num_vaccinations_ub =
-                    daily_vaccinations[{age, SimulationDay(ub + 1)}] - daily_vaccinations[{age, SimulationDay(ub)}];
-                const auto num_vaccinations_lb =
-                    daily_vaccinations[{age, SimulationDay(lb + 1)}] - daily_vaccinations[{age, SimulationDay(lb)}];
+                const auto num_vaccinations_ub = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub + 1))}] -
+                                                 daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub))}];
+                const auto num_vaccinations_lb = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(lb + 1))}] -
+                                                 daily_vaccinations[{age, SimulationDay(static_cast<size_t>(lb))}];
                 smoothed_vaccinations[(size_t)age] =
                     smoother_cosine(t, lb, ub, num_vaccinations_lb, num_vaccinations_ub);
             }

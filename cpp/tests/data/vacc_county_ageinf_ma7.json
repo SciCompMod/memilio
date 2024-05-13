@@ -1,5 +1,1310 @@
 [
   {
+    "Date": "2020-10-01",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14093.5670993244,
+    "Vacc_completed": 1058.2133302677,
+    "Vacc_refreshed": 0,
+    "Vacc_refreshed_2": 0.0
+  },
+  {
+    "Date": "2020-10-02",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14094.6780758432,
+    "Vacc_completed": 1058.2386490178,
+    "Vacc_refreshed": 3.9480185817,
+    "Vacc_refreshed_2": 1.97400929085
+  },
+  {
+    "Date": "2020-10-03",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14102.3458622773,
+    "Vacc_completed": 1063.1811826304,
+    "Vacc_refreshed": 7.8235846725,
+    "Vacc_refreshed_2": 3.91179233625
+  },
+  {
+    "Date": "2020-10-04",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14106.0158477852,
+    "Vacc_completed": 1071.0829580916,
+    "Vacc_refreshed": 13.0365435255,
+    "Vacc_refreshed_2": 6.51827176275
+  },
+  {
+    "Date": "2020-10-05",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14115.8958402416,
+    "Vacc_completed": 1072.5136218055,
+    "Vacc_refreshed": 15.4582843201,
+    "Vacc_refreshed_2": 7.72914216005
+  },
+  {
+    "Date": "2020-10-06",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14116.0603009948,
+    "Vacc_completed": 1080.8706574256,
+    "Vacc_refreshed": 22.3037298829,
+    "Vacc_refreshed_2": 11.15186494145
+  },
+  {
+    "Date": "2020-10-07",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14124.4849162097,
+    "Vacc_completed": 1087.4957123195,
+    "Vacc_refreshed": 27.7666004775,
+    "Vacc_refreshed_2": 13.88330023875
+  },
+  {
+    "Date": "2020-10-08",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14132.812800891,
+    "Vacc_completed": 1094.2936630058,
+    "Vacc_refreshed": 29.4212640594,
+    "Vacc_refreshed_2": 14.7106320297
+  },
+  {
+    "Date": "2020-10-09",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14139.2772895404,
+    "Vacc_completed": 1100.1665827188,
+    "Vacc_refreshed": 29.4568827793,
+    "Vacc_refreshed_2": 14.72844138965
+  },
+  {
+    "Date": "2020-10-10",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14145.4868397119,
+    "Vacc_completed": 1105.3345419667,
+    "Vacc_refreshed": 34.7217238502,
+    "Vacc_refreshed_2": 17.3608619251
+  },
+  {
+    "Date": "2020-10-11",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14147.7480966959,
+    "Vacc_completed": 1111.2289166538,
+    "Vacc_refreshed": 34.771310214,
+    "Vacc_refreshed_2": 17.385655107
+  },
+  {
+    "Date": "2020-10-12",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14154.5204084505,
+    "Vacc_completed": 1114.7870563855,
+    "Vacc_refreshed": 41.8898823514,
+    "Vacc_refreshed_2": 20.9449411757
+  },
+  {
+    "Date": "2020-10-13",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14155.4472543415,
+    "Vacc_completed": 1124.6385432496,
+    "Vacc_refreshed": 48.6348857735,
+    "Vacc_refreshed_2": 24.31744288675
+  },
+  {
+    "Date": "2020-10-14",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14162.2764203336,
+    "Vacc_completed": 1128.54825128,
+    "Vacc_refreshed": 48.7694054724,
+    "Vacc_refreshed_2": 24.3847027362
+  },
+  {
+    "Date": "2020-10-15",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14163.6229511244,
+    "Vacc_completed": 1128.7143765883,
+    "Vacc_refreshed": 53.2059941772,
+    "Vacc_refreshed_2": 26.6029970886
+  },
+  {
+    "Date": "2020-10-16",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14170.704731349,
+    "Vacc_completed": 1138.0466956792,
+    "Vacc_refreshed": 59.0394633797,
+    "Vacc_refreshed_2": 29.51973168985
+  },
+  {
+    "Date": "2020-10-17",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14177.9754226866,
+    "Vacc_completed": 1144.8391611423,
+    "Vacc_refreshed": 68.7607294969,
+    "Vacc_refreshed_2": 34.38036474845
+  },
+  {
+    "Date": "2020-10-18",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14180.6917277285,
+    "Vacc_completed": 1145.8477444825,
+    "Vacc_refreshed": 68.9221667424,
+    "Vacc_refreshed_2": 34.4610833712
+  },
+  {
+    "Date": "2020-10-19",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14183.6510488722,
+    "Vacc_completed": 1148.5261706572,
+    "Vacc_refreshed": 74.1781085786,
+    "Vacc_refreshed_2": 37.0890542893
+  },
+  {
+    "Date": "2020-10-20",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14187.685478561,
+    "Vacc_completed": 1156.317724845,
+    "Vacc_refreshed": 82.4605426733,
+    "Vacc_refreshed_2": 41.23027133665
+  },
+  {
+    "Date": "2020-10-21",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14190.8756861073,
+    "Vacc_completed": 1158.3230049846,
+    "Vacc_refreshed": 85.9686058349,
+    "Vacc_refreshed_2": 42.98430291745
+  },
+  {
+    "Date": "2020-10-22",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14194.7125443701,
+    "Vacc_completed": 1162.8869701267,
+    "Vacc_refreshed": 86.9745448839,
+    "Vacc_refreshed_2": 43.48727244195
+  },
+  {
+    "Date": "2020-10-23",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14198.1736788429,
+    "Vacc_completed": 1172.5122981568,
+    "Vacc_refreshed": 87.3520867387,
+    "Vacc_refreshed_2": 43.67604336935
+  },
+  {
+    "Date": "2020-10-24",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14200.0337444888,
+    "Vacc_completed": 1173.9022323601,
+    "Vacc_refreshed": 96.1323881978,
+    "Vacc_refreshed_2": 48.0661940989
+  },
+  {
+    "Date": "2020-10-25",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14209.9091251899,
+    "Vacc_completed": 1180.4819879148,
+    "Vacc_refreshed": 102.8081520102,
+    "Vacc_refreshed_2": 51.4040760051
+  },
+  {
+    "Date": "2020-10-26",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14215.7510791988,
+    "Vacc_completed": 1187.6749019896,
+    "Vacc_refreshed": 111.0676626302,
+    "Vacc_refreshed_2": 55.5338313151
+  },
+  {
+    "Date": "2020-10-27",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14216.891975169,
+    "Vacc_completed": 1194.8246181318,
+    "Vacc_refreshed": 112.2172983632,
+    "Vacc_refreshed_2": 56.1086491816
+  },
+  {
+    "Date": "2020-10-28",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14226.1128719795,
+    "Vacc_completed": 1199.3288757923,
+    "Vacc_refreshed": 115.0035825103,
+    "Vacc_refreshed_2": 57.50179125515
+  },
+  {
+    "Date": "2020-10-29",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14234.2678640476,
+    "Vacc_completed": 1200.3667784603,
+    "Vacc_refreshed": 122.2552339507,
+    "Vacc_refreshed_2": 61.12761697535
+  },
+  {
+    "Date": "2020-10-30",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14236.1003192184,
+    "Vacc_completed": 1204.1967603181,
+    "Vacc_refreshed": 127.0429292216,
+    "Vacc_refreshed_2": 63.5214646108
+  },
+  {
+    "Date": "2020-10-31",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14242.538633822,
+    "Vacc_completed": 1212.5454877324,
+    "Vacc_refreshed": 134.6939665016,
+    "Vacc_refreshed_2": 67.3469832508
+  },
+  {
+    "Date": "2020-11-01",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14244.3387278104,
+    "Vacc_completed": 1213.6034702862,
+    "Vacc_refreshed": 136.0920891424,
+    "Vacc_refreshed_2": 68.0460445712
+  },
+  {
+    "Date": "2020-11-02",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14251.4120506037,
+    "Vacc_completed": 1216.4725302456,
+    "Vacc_refreshed": 140.2813449601,
+    "Vacc_refreshed_2": 70.14067248005
+  },
+  {
+    "Date": "2020-11-03",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14260.7111088561,
+    "Vacc_completed": 1223.9349650326,
+    "Vacc_refreshed": 144.4607939662,
+    "Vacc_refreshed_2": 72.2303969831
+  },
+  {
+    "Date": "2020-11-04",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14264.4310619138,
+    "Vacc_completed": 1230.2964929538,
+    "Vacc_refreshed": 149.281965675,
+    "Vacc_refreshed_2": 74.6409828375
+  },
+  {
+    "Date": "2020-11-05",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14264.8430243455,
+    "Vacc_completed": 1233.791799902,
+    "Vacc_refreshed": 152.843700775,
+    "Vacc_refreshed_2": 76.4218503875
+  },
+  {
+    "Date": "2020-11-06",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14270.6723528208,
+    "Vacc_completed": 1235.7852283109,
+    "Vacc_refreshed": 158.6087157945,
+    "Vacc_refreshed_2": 79.30435789725
+  },
+  {
+    "Date": "2020-11-07",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14276.398217781,
+    "Vacc_completed": 1244.1189399585,
+    "Vacc_refreshed": 161.780101215,
+    "Vacc_refreshed_2": 80.8900506075
+  },
+  {
+    "Date": "2020-11-08",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14282.7632141243,
+    "Vacc_completed": 1252.4246776385,
+    "Vacc_refreshed": 164.4087953839,
+    "Vacc_refreshed_2": 82.20439769195
+  },
+  {
+    "Date": "2020-11-09",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14285.2172118541,
+    "Vacc_completed": 1253.0967186007,
+    "Vacc_refreshed": 165.7333648079,
+    "Vacc_refreshed_2": 82.86668240395
+  },
+  {
+    "Date": "2020-11-10",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14288.3981413127,
+    "Vacc_completed": 1261.2285273698,
+    "Vacc_refreshed": 175.6751183454,
+    "Vacc_refreshed_2": 87.8375591727
+  },
+  {
+    "Date": "2020-11-11",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14296.6990830234,
+    "Vacc_completed": 1261.8928424603,
+    "Vacc_refreshed": 181.3746988194,
+    "Vacc_refreshed_2": 90.6873494097
+  },
+  {
+    "Date": "2020-11-12",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14304.9324135674,
+    "Vacc_completed": 1268.1858225933,
+    "Vacc_refreshed": 182.8207287588,
+    "Vacc_refreshed_2": 91.4103643794
+  },
+  {
+    "Date": "2020-11-13",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14312.7990335985,
+    "Vacc_completed": 1270.8693167453,
+    "Vacc_refreshed": 192.6352794711,
+    "Vacc_refreshed_2": 96.31763973555
+  },
+  {
+    "Date": "2020-11-14",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14316.0317804647,
+    "Vacc_completed": 1276.8328604136,
+    "Vacc_refreshed": 199.109084232,
+    "Vacc_refreshed_2": 99.554542116
+  },
+  {
+    "Date": "2020-11-15",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14317.8224126817,
+    "Vacc_completed": 1285.9345839202,
+    "Vacc_refreshed": 204.9564534429,
+    "Vacc_refreshed_2": 102.47822672145
+  },
+  {
+    "Date": "2020-11-16",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14319.969225103,
+    "Vacc_completed": 1292.0814432843,
+    "Vacc_refreshed": 209.3116185701,
+    "Vacc_refreshed_2": 104.65580928505
+  },
+  {
+    "Date": "2020-11-17",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14325.5010146205,
+    "Vacc_completed": 1296.8562638588,
+    "Vacc_refreshed": 214.164106287,
+    "Vacc_refreshed_2": 107.0820531435
+  },
+  {
+    "Date": "2020-11-18",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14334.64723979,
+    "Vacc_completed": 1299.2846390455,
+    "Vacc_refreshed": 215.8187786169,
+    "Vacc_refreshed_2": 107.90938930845
+  },
+  {
+    "Date": "2020-11-19",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14341.3416549169,
+    "Vacc_completed": 1307.3997120401,
+    "Vacc_refreshed": 220.1718442512,
+    "Vacc_refreshed_2": 110.0859221256
+  },
+  {
+    "Date": "2020-11-20",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14349.3146443239,
+    "Vacc_completed": 1309.8026404332,
+    "Vacc_refreshed": 222.9315364644,
+    "Vacc_refreshed_2": 111.4657682322
+  },
+  {
+    "Date": "2020-11-21",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14359.2839765392,
+    "Vacc_completed": 1313.6592234511,
+    "Vacc_refreshed": 226.6469703335,
+    "Vacc_refreshed_2": 113.32348516675
+  },
+  {
+    "Date": "2020-11-22",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14365.2176903694,
+    "Vacc_completed": 1319.2137305156,
+    "Vacc_refreshed": 227.7079880211,
+    "Vacc_refreshed_2": 113.85399401055
+  },
+  {
+    "Date": "2020-11-23",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14372.2949635005,
+    "Vacc_completed": 1325.3928078641,
+    "Vacc_refreshed": 234.0214496372,
+    "Vacc_refreshed_2": 117.0107248186
+  },
+  {
+    "Date": "2020-11-24",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14377.1100641854,
+    "Vacc_completed": 1326.7384263101,
+    "Vacc_refreshed": 242.1400638609,
+    "Vacc_refreshed_2": 121.07003193045
+  },
+  {
+    "Date": "2020-11-25",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14381.7559278649,
+    "Vacc_completed": 1329.4413693873,
+    "Vacc_refreshed": 246.2374710913,
+    "Vacc_refreshed_2": 123.11873554565
+  },
+  {
+    "Date": "2020-11-26",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14385.7162526455,
+    "Vacc_completed": 1338.1839321545,
+    "Vacc_refreshed": 252.0149200475,
+    "Vacc_refreshed_2": 126.00746002375
+  },
+  {
+    "Date": "2020-11-27",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14389.4326934411,
+    "Vacc_completed": 1345.9094675595,
+    "Vacc_refreshed": 256.9046042339,
+    "Vacc_refreshed_2": 128.45230211695
+  },
+  {
+    "Date": "2020-11-28",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14391.2007554132,
+    "Vacc_completed": 1348.71606757,
+    "Vacc_refreshed": 258.1776032516,
+    "Vacc_refreshed_2": 129.0888016258
+  },
+  {
+    "Date": "2020-11-29",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14394.8621297613,
+    "Vacc_completed": 1354.2416050796,
+    "Vacc_refreshed": 267.8589065036,
+    "Vacc_refreshed_2": 133.9294532518
+  },
+  {
+    "Date": "2020-11-30",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14398.3456243909,
+    "Vacc_completed": 1359.868800934,
+    "Vacc_refreshed": 270.9855298163,
+    "Vacc_refreshed_2": 135.49276490815
+  },
+  {
+    "Date": "2020-12-01",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14398.4645205246,
+    "Vacc_completed": 1363.0538159145,
+    "Vacc_refreshed": 275.840425604,
+    "Vacc_refreshed_2": 137.920212802
+  },
+  {
+    "Date": "2020-12-02",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14399.1657319944,
+    "Vacc_completed": 1365.5993182323,
+    "Vacc_refreshed": 277.5856365007,
+    "Vacc_refreshed_2": 138.79281825035
+  },
+  {
+    "Date": "2020-12-03",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14402.7230837573,
+    "Vacc_completed": 1368.6201543223,
+    "Vacc_refreshed": 286.3361695339,
+    "Vacc_refreshed_2": 143.16808476695
+  },
+  {
+    "Date": "2020-12-04",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14403.1500082752,
+    "Vacc_completed": 1371.4419603277,
+    "Vacc_refreshed": 291.9429549926,
+    "Vacc_refreshed_2": 145.9714774963
+  },
+  {
+    "Date": "2020-12-05",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14409.601025491,
+    "Vacc_completed": 1375.0385110041,
+    "Vacc_refreshed": 294.4838831323,
+    "Vacc_refreshed_2": 147.24194156615
+  },
+  {
+    "Date": "2020-12-06",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14412.5992098988,
+    "Vacc_completed": 1379.7282797993,
+    "Vacc_refreshed": 304.3709721295,
+    "Vacc_refreshed_2": 152.18548606475
+  },
+  {
+    "Date": "2020-12-07",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14412.7379664054,
+    "Vacc_completed": 1388.4437755617,
+    "Vacc_refreshed": 310.9469195789,
+    "Vacc_refreshed_2": 155.47345978945
+  },
+  {
+    "Date": "2020-12-08",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14413.0256783966,
+    "Vacc_completed": 1395.0228908154,
+    "Vacc_refreshed": 316.1322991564,
+    "Vacc_refreshed_2": 158.0661495782
+  },
+  {
+    "Date": "2020-12-09",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14418.5923400284,
+    "Vacc_completed": 1395.4421160716,
+    "Vacc_refreshed": 324.326203234,
+    "Vacc_refreshed_2": 162.163101617
+  },
+  {
+    "Date": "2020-12-10",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14427.1006875636,
+    "Vacc_completed": 1400.9550416303,
+    "Vacc_refreshed": 326.1675291407,
+    "Vacc_refreshed_2": 163.08376457035
+  },
+  {
+    "Date": "2020-12-11",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14428.1259159444,
+    "Vacc_completed": 1401.6589165675,
+    "Vacc_refreshed": 336.1473853823,
+    "Vacc_refreshed_2": 168.07369269115
+  },
+  {
+    "Date": "2020-12-12",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14429.6710322591,
+    "Vacc_completed": 1406.4316961423,
+    "Vacc_refreshed": 338.7341080527,
+    "Vacc_refreshed_2": 169.36705402635
+  },
+  {
+    "Date": "2020-12-13",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14435.5405186058,
+    "Vacc_completed": 1406.8193757343,
+    "Vacc_refreshed": 348.5515447081,
+    "Vacc_refreshed_2": 174.27577235405
+  },
+  {
+    "Date": "2020-12-14",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14440.6128511884,
+    "Vacc_completed": 1406.8790930463,
+    "Vacc_refreshed": 349.9224707035,
+    "Vacc_refreshed_2": 174.96123535175
+  },
+  {
+    "Date": "2020-12-15",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14448.1553470558,
+    "Vacc_completed": 1407.8576900416,
+    "Vacc_refreshed": 354.7521313753,
+    "Vacc_refreshed_2": 177.37606568765
+  },
+  {
+    "Date": "2020-12-16",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14456.4196110425,
+    "Vacc_completed": 1411.7530351787,
+    "Vacc_refreshed": 361.5526839017,
+    "Vacc_refreshed_2": 180.77634195085
+  },
+  {
+    "Date": "2020-12-17",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14466.1757833279,
+    "Vacc_completed": 1412.4941157515,
+    "Vacc_refreshed": 364.0766791828,
+    "Vacc_refreshed_2": 182.0383395914
+  },
+  {
+    "Date": "2020-12-18",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14472.9152722164,
+    "Vacc_completed": 1421.7399661156,
+    "Vacc_refreshed": 371.2418954122,
+    "Vacc_refreshed_2": 185.6209477061
+  },
+  {
+    "Date": "2020-12-19",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14474.3971159945,
+    "Vacc_completed": 1423.8796012137,
+    "Vacc_refreshed": 378.3445685688,
+    "Vacc_refreshed_2": 189.1722842844
+  },
+  {
+    "Date": "2020-12-20",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14482.9259977884,
+    "Vacc_completed": 1428.8212618966,
+    "Vacc_refreshed": 382.6712538747,
+    "Vacc_refreshed_2": 191.33562693735
+  },
+  {
+    "Date": "2020-12-21",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14491.6837567491,
+    "Vacc_completed": 1430.1481016913,
+    "Vacc_refreshed": 392.5489632959,
+    "Vacc_refreshed_2": 196.27448164795
+  },
+  {
+    "Date": "2020-12-22",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14499.5728298642,
+    "Vacc_completed": 1439.468906008,
+    "Vacc_refreshed": 397.6649554861,
+    "Vacc_refreshed_2": 198.83247774305
+  },
+  {
+    "Date": "2020-12-23",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14500.4884339857,
+    "Vacc_completed": 1447.6074532094,
+    "Vacc_refreshed": 404.4236802991,
+    "Vacc_refreshed_2": 202.21184014955
+  },
+  {
+    "Date": "2020-12-24",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14508.6628209678,
+    "Vacc_completed": 1449.1955087396,
+    "Vacc_refreshed": 413.1290507873,
+    "Vacc_refreshed_2": 206.56452539365
+  },
+  {
+    "Date": "2020-12-25",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14509.0177335192,
+    "Vacc_completed": 1457.0313439789,
+    "Vacc_refreshed": 418.6984801264,
+    "Vacc_refreshed_2": 209.3492400632
+  },
+  {
+    "Date": "2020-12-26",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14518.7925361684,
+    "Vacc_completed": 1462.4055060107,
+    "Vacc_refreshed": 419.6070699812,
+    "Vacc_refreshed_2": 209.8035349906
+  },
+  {
+    "Date": "2020-12-27",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14522.121758092,
+    "Vacc_completed": 1468.1811367429,
+    "Vacc_refreshed": 425.9772045183,
+    "Vacc_refreshed_2": 212.98860225915
+  },
+  {
+    "Date": "2020-12-28",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14528.5474917037,
+    "Vacc_completed": 1473.5164593205,
+    "Vacc_refreshed": 435.7810319021,
+    "Vacc_refreshed_2": 217.89051595105
+  },
+  {
+    "Date": "2020-12-29",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14536.5601109176,
+    "Vacc_completed": 1481.2704120463,
+    "Vacc_refreshed": 438.2410199432,
+    "Vacc_refreshed_2": 219.1205099716
+  },
+  {
+    "Date": "2020-12-30",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14542.1473955627,
+    "Vacc_completed": 1482.7064631605,
+    "Vacc_refreshed": 445.3488141502,
+    "Vacc_refreshed_2": 222.6744070751
+  },
+  {
+    "Date": "2020-12-31",
+    "ID_County": 1002,
+    "Age_RKI": "0-4",
+    "Vacc_partially": 14544.5952478081,
+    "Vacc_completed": 1486.0552178086,
+    "Vacc_refreshed": 446.1812966093,
+    "Vacc_refreshed_2": 223.09064830465
+  },
+  {
+    "Date": "2020-10-01",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10765.9941189788,
+    "Vacc_completed": 1603.3500569399,
+    "Vacc_refreshed": 0,
+    "Vacc_refreshed_2": 0.0
+  },
+  {
+    "Date": "2020-10-02",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10773.3717745702,
+    "Vacc_completed": 1605.3068408797,
+    "Vacc_refreshed": 3.6283182226,
+    "Vacc_refreshed_2": 1.8141591113
+  },
+  {
+    "Date": "2020-10-03",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10773.4956401429,
+    "Vacc_completed": 1610.6119068185,
+    "Vacc_refreshed": 6.1967396209,
+    "Vacc_refreshed_2": 3.09836981045
+  },
+  {
+    "Date": "2020-10-04",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10774.4184508751,
+    "Vacc_completed": 1613.016161978,
+    "Vacc_refreshed": 15.7069691534,
+    "Vacc_refreshed_2": 7.8534845767
+  },
+  {
+    "Date": "2020-10-05",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10780.8073818373,
+    "Vacc_completed": 1622.1917795654,
+    "Vacc_refreshed": 20.1697274397,
+    "Vacc_refreshed_2": 10.08486371985
+  },
+  {
+    "Date": "2020-10-06",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10785.5287460006,
+    "Vacc_completed": 1625.0602525893,
+    "Vacc_refreshed": 22.4671684217,
+    "Vacc_refreshed_2": 11.23358421085
+  },
+  {
+    "Date": "2020-10-07",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10790.1084610651,
+    "Vacc_completed": 1627.3787523231,
+    "Vacc_refreshed": 28.5217462646,
+    "Vacc_refreshed_2": 14.2608731323
+  },
+  {
+    "Date": "2020-10-08",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10796.2300309,
+    "Vacc_completed": 1630.4363483664,
+    "Vacc_refreshed": 35.3070676184,
+    "Vacc_refreshed_2": 17.6535338092
+  },
+  {
+    "Date": "2020-10-09",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10801.7222904172,
+    "Vacc_completed": 1638.725087864,
+    "Vacc_refreshed": 43.7679344272,
+    "Vacc_refreshed_2": 21.8839672136
+  },
+  {
+    "Date": "2020-10-10",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10804.7724722766,
+    "Vacc_completed": 1646.4905335365,
+    "Vacc_refreshed": 44.1718542676,
+    "Vacc_refreshed_2": 22.0859271338
+  },
+  {
+    "Date": "2020-10-11",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10814.3453353804,
+    "Vacc_completed": 1650.9992837124,
+    "Vacc_refreshed": 49.5204655539,
+    "Vacc_refreshed_2": 24.76023277695
+  },
+  {
+    "Date": "2020-10-12",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10821.6255112157,
+    "Vacc_completed": 1656.4335840831,
+    "Vacc_refreshed": 52.7009855172,
+    "Vacc_refreshed_2": 26.3504927586
+  },
+  {
+    "Date": "2020-10-13",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10830.9379325639,
+    "Vacc_completed": 1657.186187271,
+    "Vacc_refreshed": 56.5428649986,
+    "Vacc_refreshed_2": 28.2714324993
+  },
+  {
+    "Date": "2020-10-14",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10838.202902864,
+    "Vacc_completed": 1662.1470499364,
+    "Vacc_refreshed": 58.6277824858,
+    "Vacc_refreshed_2": 29.3138912429
+  },
+  {
+    "Date": "2020-10-15",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10840.8786753296,
+    "Vacc_completed": 1670.6860254071,
+    "Vacc_refreshed": 58.7593924743,
+    "Vacc_refreshed_2": 29.37969623715
+  },
+  {
+    "Date": "2020-10-16",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10843.7453960183,
+    "Vacc_completed": 1673.6372365137,
+    "Vacc_refreshed": 61.8595630166,
+    "Vacc_refreshed_2": 30.9297815083
+  },
+  {
+    "Date": "2020-10-17",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10849.1151892515,
+    "Vacc_completed": 1675.1066023109,
+    "Vacc_refreshed": 64.6020615007,
+    "Vacc_refreshed_2": 32.30103075035
+  },
+  {
+    "Date": "2020-10-18",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10850.9329685403,
+    "Vacc_completed": 1679.1505675366,
+    "Vacc_refreshed": 72.0237510859,
+    "Vacc_refreshed_2": 36.01187554295
+  },
+  {
+    "Date": "2020-10-19",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10854.4610677614,
+    "Vacc_completed": 1681.5473018047,
+    "Vacc_refreshed": 75.0145349272,
+    "Vacc_refreshed_2": 37.5072674636
+  },
+  {
+    "Date": "2020-10-20",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10858.0662824418,
+    "Vacc_completed": 1688.7179113019,
+    "Vacc_refreshed": 82.7641475111,
+    "Vacc_refreshed_2": 41.38207375555
+  },
+  {
+    "Date": "2020-10-21",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10867.8357803799,
+    "Vacc_completed": 1688.741478882,
+    "Vacc_refreshed": 92.1411476813,
+    "Vacc_refreshed_2": 46.07057384065
+  },
+  {
+    "Date": "2020-10-22",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10877.245759177,
+    "Vacc_completed": 1696.3354153291,
+    "Vacc_refreshed": 93.5350586202,
+    "Vacc_refreshed_2": 46.7675293101
+  },
+  {
+    "Date": "2020-10-23",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10878.9277486403,
+    "Vacc_completed": 1704.5169058825,
+    "Vacc_refreshed": 99.9257252117,
+    "Vacc_refreshed_2": 49.96286260585
+  },
+  {
+    "Date": "2020-10-24",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10881.5163902637,
+    "Vacc_completed": 1704.5184844203,
+    "Vacc_refreshed": 104.0563799981,
+    "Vacc_refreshed_2": 52.02818999905
+  },
+  {
+    "Date": "2020-10-25",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10882.0628121233,
+    "Vacc_completed": 1710.1811092467,
+    "Vacc_refreshed": 110.998904559,
+    "Vacc_refreshed_2": 55.4994522795
+  },
+  {
+    "Date": "2020-10-26",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10884.1868939764,
+    "Vacc_completed": 1711.6669667815,
+    "Vacc_refreshed": 119.5835613879,
+    "Vacc_refreshed_2": 59.79178069395
+  },
+  {
+    "Date": "2020-10-27",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10890.26315895,
+    "Vacc_completed": 1712.8219244738,
+    "Vacc_refreshed": 126.203975023,
+    "Vacc_refreshed_2": 63.1019875115
+  },
+  {
+    "Date": "2020-10-28",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10894.6858788747,
+    "Vacc_completed": 1721.7467435031,
+    "Vacc_refreshed": 135.9649739788,
+    "Vacc_refreshed_2": 67.9824869894
+  },
+  {
+    "Date": "2020-10-29",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10897.5575288795,
+    "Vacc_completed": 1721.7787127468,
+    "Vacc_refreshed": 145.614673399,
+    "Vacc_refreshed_2": 72.8073366995
+  },
+  {
+    "Date": "2020-10-30",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10903.1231721286,
+    "Vacc_completed": 1724.7269587992,
+    "Vacc_refreshed": 149.6717929743,
+    "Vacc_refreshed_2": 74.83589648715
+  },
+  {
+    "Date": "2020-10-31",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10911.1763853993,
+    "Vacc_completed": 1726.3071857535,
+    "Vacc_refreshed": 158.0496522084,
+    "Vacc_refreshed_2": 79.0248261042
+  },
+  {
+    "Date": "2020-11-01",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10919.5582023277,
+    "Vacc_completed": 1727.9236223535,
+    "Vacc_refreshed": 160.5751263702,
+    "Vacc_refreshed_2": 80.2875631851
+  },
+  {
+    "Date": "2020-11-02",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10920.4962369047,
+    "Vacc_completed": 1730.7211296321,
+    "Vacc_refreshed": 162.2038531114,
+    "Vacc_refreshed_2": 81.1019265557
+  },
+  {
+    "Date": "2020-11-03",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10930.0062994591,
+    "Vacc_completed": 1733.2273616859,
+    "Vacc_refreshed": 164.6178844659,
+    "Vacc_refreshed_2": 82.30894223295
+  },
+  {
+    "Date": "2020-11-04",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10931.0781786076,
+    "Vacc_completed": 1743.0639116966,
+    "Vacc_refreshed": 171.6949336111,
+    "Vacc_refreshed_2": 85.84746680555
+  },
+  {
+    "Date": "2020-11-05",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10936.2371584575,
+    "Vacc_completed": 1743.4973637943,
+    "Vacc_refreshed": 173.1954991423,
+    "Vacc_refreshed_2": 86.59774957115
+  },
+  {
+    "Date": "2020-11-06",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10937.1969149599,
+    "Vacc_completed": 1752.0043206175,
+    "Vacc_refreshed": 173.4521249531,
+    "Vacc_refreshed_2": 86.72606247655
+  },
+  {
+    "Date": "2020-11-07",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10942.5829785849,
+    "Vacc_completed": 1758.5438162851,
+    "Vacc_refreshed": 175.0971428389,
+    "Vacc_refreshed_2": 87.54857141945
+  },
+  {
+    "Date": "2020-11-08",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10945.8458051779,
+    "Vacc_completed": 1765.593119461,
+    "Vacc_refreshed": 184.781293552,
+    "Vacc_refreshed_2": 92.390646776
+  },
+  {
+    "Date": "2020-11-09",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10955.2619609788,
+    "Vacc_completed": 1766.7516696253,
+    "Vacc_refreshed": 194.3279051811,
+    "Vacc_refreshed_2": 97.16395259055
+  },
+  {
+    "Date": "2020-11-10",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10963.0529992794,
+    "Vacc_completed": 1774.4096958807,
+    "Vacc_refreshed": 199.3585168564,
+    "Vacc_refreshed_2": 99.6792584282
+  },
+  {
+    "Date": "2020-11-11",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10963.0740456643,
+    "Vacc_completed": 1776.7353479155,
+    "Vacc_refreshed": 200.2783085421,
+    "Vacc_refreshed_2": 100.13915427105
+  },
+  {
+    "Date": "2020-11-12",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10972.7647446192,
+    "Vacc_completed": 1786.1838226639,
+    "Vacc_refreshed": 202.522841172,
+    "Vacc_refreshed_2": 101.261420586
+  },
+  {
+    "Date": "2020-11-13",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10972.7950553291,
+    "Vacc_completed": 1788.5013884886,
+    "Vacc_refreshed": 205.1107008609,
+    "Vacc_refreshed_2": 102.55535043045
+  },
+  {
+    "Date": "2020-11-14",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10973.1049316279,
+    "Vacc_completed": 1790.2712267193,
+    "Vacc_refreshed": 214.0688577867,
+    "Vacc_refreshed_2": 107.03442889335
+  },
+  {
+    "Date": "2020-11-15",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10976.2696576646,
+    "Vacc_completed": 1797.8582422894,
+    "Vacc_refreshed": 219.0460187772,
+    "Vacc_refreshed_2": 109.5230093886
+  },
+  {
+    "Date": "2020-11-16",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10984.9161656634,
+    "Vacc_completed": 1801.5924446935,
+    "Vacc_refreshed": 227.656626047,
+    "Vacc_refreshed_2": 113.8283130235
+  },
+  {
+    "Date": "2020-11-17",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10994.063273181,
+    "Vacc_completed": 1802.6817444812,
+    "Vacc_refreshed": 235.6032823069,
+    "Vacc_refreshed_2": 117.80164115345
+  },
+  {
+    "Date": "2020-11-18",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 10996.8771305673,
+    "Vacc_completed": 1802.9071097171,
+    "Vacc_refreshed": 237.7242073629,
+    "Vacc_refreshed_2": 118.86210368145
+  },
+  {
+    "Date": "2020-11-19",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 11002.0527900673,
+    "Vacc_completed": 1809.5395950318,
+    "Vacc_refreshed": 241.3631599251,
+    "Vacc_refreshed_2": 120.68157996255
+  },
+  {
+    "Date": "2020-11-20",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 11007.1528572096,
+    "Vacc_completed": 1813.9025489723,
+    "Vacc_refreshed": 245.5305344153,
+    "Vacc_refreshed_2": 122.76526720765
+  },
+  {
+    "Date": "2020-11-21",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 11013.1337350258,
+    "Vacc_completed": 1821.5275057931,
+    "Vacc_refreshed": 250.3168579858,
+    "Vacc_refreshed_2": 125.1584289929
+  },
+  {
+    "Date": "2020-11-22",
+    "ID_County": 1002,
+    "Age_RKI": "5-14",
+    "Vacc_partially": 11015.6696905796,
+    "Vacc_completed": 1822.9598630397,
+    "Vacc_refreshed": 255.6335351411,
+    "Vacc_refreshed_2": 127.81676757055
+  },
+  {
     "Date": "2020-11-23",
     "ID_County": 1002,
     "Age_RKI": "5-14",
