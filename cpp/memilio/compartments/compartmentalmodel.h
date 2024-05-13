@@ -132,7 +132,7 @@ public:
      */
     Vector<FP> get_initial_values() const
     {
-        return populations.get_compartments().template cast<FP>();
+        return populations.get_compartments();
     }
 
     void apply_constraints()
