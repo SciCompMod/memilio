@@ -181,6 +181,8 @@ TEST(TestOdeSECIRTS, smooth_vaccination_rate)
     EXPECT_NEAR(result[0], 100.0, 1e-12);
 }
 
+namespace
+{
 void assign_uniform_distribution(mio::UncertainValue& p, double min, double max, bool set_invalid_initial_value)
 {
     auto invalid_initial = max == 0 ? 1.0 : max * 1.001;
@@ -206,6 +208,7 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
         assign_uniform_distribution(array[i], min, max, set_invalid_initial_value);
     }
 }
+} // namespace
 
 void set_synthetic_population_data(mio::osecirts::Model::Populations& populations, bool set_invalid_initial_value)
 {
@@ -416,6 +419,8 @@ void set_covid_parameters(mio::osecirts::Model::ParameterSet& params, bool set_i
                                 set_invalid_initial_value);
 }
 
+namespace
+{
 mio::osecirts::Model make_model(int num_age_groups, bool set_invalid_initial_value = false)
 {
     assert(num_age_groups <= 6 && "Provide more values in functions above to test more age groups.");
@@ -427,6 +432,7 @@ mio::osecirts::Model make_model(int num_age_groups, bool set_invalid_initial_val
     model.parameters.apply_constraints();
     return model;
 }
+} // namespace
 
 TEST(TestOdeSECIRTS, draw_sample_graph)
 {

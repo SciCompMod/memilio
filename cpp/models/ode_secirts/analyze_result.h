@@ -29,7 +29,7 @@
 
 namespace mio
 {
-namespace osecirvvs
+namespace osecirts
 {
 /**
     * @brief computes the p percentile of the parameters for each node.

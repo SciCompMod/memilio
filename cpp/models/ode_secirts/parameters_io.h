@@ -101,9 +101,9 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
     assert(scaling_factor_inf.size() == num_age_groups); //TODO: allow vector or scalar valued scaling factors
     assert(ConfirmedCasesDataEntry::age_group_names.size() == num_age_groups);
 
-    BOOST_OUTCOME_TRY(immunity_population, read_immunity_population(immunity_data_path, num_age_groups));
+    BOOST_OUTCOME_TRY(auto&& immunity_population, read_immunity_population(immunity_data_path, num_age_groups));
 
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
 
     std::vector<std::vector<int>> t_Exposed{model.size()};
     std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
@@ -491,10 +491,10 @@ template <class Model>
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                                    const std::string& immunity_data_path)
 {
-    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion));
 
     auto num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
-    BOOST_OUTCOME_TRY(immunity_population, read_immunity_population(immunity_data_path, num_age_groups));
+    BOOST_OUTCOME_TRY(auto&& immunity_population, read_immunity_population(immunity_data_path, num_age_groups));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
@@ -583,15 +583,16 @@ IOResult<void> export_input_data_county_timeseries(
     const std::string& immunity_data_path)
 {
     auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(immunity_population, details::read_immunity_population(immunity_data_path, num_age_groups));
+    BOOST_OUTCOME_TRY(auto&& immunity_population,
+                      details::read_immunity_population(immunity_data_path, num_age_groups));
 
     assert(scaling_factor_inf.size() == num_age_groups);
     assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
     assert(model.size() == region.size());
 
-    BOOST_OUTCOME_TRY(rki_data, read_confirmed_cases_data(confirmed_cases_path));
-    BOOST_OUTCOME_TRY(population_data, read_population_data(population_data_path));
-    BOOST_OUTCOME_TRY(divi_data, read_divi_data(divi_data_path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, read_confirmed_cases_data(confirmed_cases_path));
+    BOOST_OUTCOME_TRY(auto&& population_data, read_population_data(population_data_path));
+    BOOST_OUTCOME_TRY(auto&& divi_data, read_divi_data(divi_data_path));
 
     /* functionality copy from set_confirmed_cases_data() here splitted in params */
     /* which do not need to be reset for each day and compartments sizes that are */
@@ -872,7 +873,7 @@ IOResult<void> export_input_data_county_timeseries(
         }
 
         // read population basics
-        BOOST_OUTCOME_TRY(num_population, details::read_population_data(population_data, region));
+        BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data, region));
 
         for (size_t county = 0; county < region.size(); county++) {
             if (std::accumulate(num_population[county].begin(), num_population[county].end(), 0.0) > 0) {

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,10 +23,6 @@
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/model.h"
 
-#include <numeric>
-#include <algorithm>
-#include <iterator>
-
 namespace mio
 {
 namespace osecirvvs
@@ -37,73 +33,32 @@ void draw_sample_demographics(Model& model)
     model.parameters.get<ICUCapacity>().draw_sample();
     model.parameters.get<TestAndTraceCapacity>().draw_sample();
 
-    const static std::vector<InfectionState> naive_immunity_states = {
-        InfectionState::SusceptibleNaive,
-        InfectionState::ExposedNaive,
-        InfectionState::InfectedNoSymptomsNaive,
-        InfectionState::InfectedNoSymptomsNaiveConfirmed,
-        InfectionState::InfectedSymptomsNaive,
-        InfectionState::InfectedSymptomsNaiveConfirmed,
-        InfectionState::InfectedSevereNaive,
-        InfectionState::InfectedCriticalNaive,
-        InfectionState::DeadNaive,
-    };
-
-    const static std::vector<InfectionState> partial_immunity_states = {
-        InfectionState::SusceptiblePartialImmunity,        InfectionState::ExposedPartialImmunity,
-        InfectionState::InfectedNoSymptomsPartialImmunity, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
-        InfectionState::InfectedSymptomsPartialImmunity,   InfectionState::InfectedSymptomsPartialImmunityConfirmed,
-        InfectionState::InfectedSeverePartialImmunity,     InfectionState::InfectedCriticalPartialImmunity,
-        InfectionState::TemporaryImmunPartialImmunity,     InfectionState::DeadPartialImmunity,
-    };
-
-    const static std::vector<InfectionState> improved_immunity_states = {
-        InfectionState::SusceptibleImprovedImmunity,        InfectionState::ExposedImprovedImmunity,
-        InfectionState::InfectedNoSymptomsImprovedImmunity, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
-        InfectionState::InfectedSymptomsImprovedImmunity,   InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
-        InfectionState::InfectedSevereImprovedImmunity,     InfectionState::InfectedCriticalImprovedImmunity,
-        InfectionState::TemporaryImmunImprovedImmunity,     InfectionState::DeadImprovedImmunity,
-    };
-
-    // helper function to calculate the total population of a layer for a given age group
-    auto calculate_layer_total = [&model](const std::vector<InfectionState>& states, AgeGroup ageGroup) {
-        return std::accumulate(states.begin(), states.end(), 0.0,
-                               [&model, &ageGroup](double sum, const InfectionState& state) {
-                                   return sum + model.populations[{ageGroup, state}];
-                               });
-    };
-
-    // helper function to adjust the susceptible population of a layer for a given age group
-    auto adjust_susceptible_population = [&model](AgeGroup i, double diff, InfectionState susceptibleState) {
-        model.populations[{i, susceptibleState}] += diff;
-        if (model.populations[{i, susceptibleState}] < 0) {
-            mio::log_warning("Negative population in State " + std::to_string(static_cast<size_t>(susceptibleState)) +
-                             " for age group " + std::to_string(static_cast<size_t>(i)) + ". Setting to 0.");
-            model.populations[{i, susceptibleState}] = 0;
-        }
-    };
-
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
-
-        const double group_naive_total    = calculate_layer_total(naive_immunity_states, i);
-        const double group_partial_total  = calculate_layer_total(partial_immunity_states, i);
-        const double group_improved_total = calculate_layer_total(improved_immunity_states, i);
+        double group_total = model.populations.get_group_total(i);
 
         //sample initial compartments (with exceptions)
         for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
-            if (inf_state != InfectionState::DeadNaive && //not sampled, fixed from data
+            if (inf_state != InfectionState::SusceptibleNaive && //not sampled, fixed after sampling everything else
+                inf_state != InfectionState::DeadNaive && //not sampled, fixed from data
                 inf_state != InfectionState::DeadPartialImmunity && //not sampled, fixed from data
                 inf_state != InfectionState::DeadImprovedImmunity) { //not sampled, fixed from data
                 model.populations[{i, inf_state}].draw_sample();
             }
         }
-        const double diff_naive    = group_naive_total - calculate_layer_total(naive_immunity_states, i);
-        const double diff_partial  = group_partial_total - calculate_layer_total(partial_immunity_states, i);
-        const double diff_improved = group_improved_total - calculate_layer_total(improved_immunity_states, i);
 
-        adjust_susceptible_population(i, diff_naive, InfectionState::SusceptibleNaive);
-        adjust_susceptible_population(i, diff_partial, InfectionState::SusceptiblePartialImmunity);
-        adjust_susceptible_population(i, diff_improved, InfectionState::SusceptibleImprovedImmunity);
+        //set susceptibles so the total number stays the same as before sampling.
+        //if the new total without susceptibles is already bigger than the previous total
+        //subtract the overflow from SusceptibleImprovedImmunity, susceptibles will then be approximately zero.
+        model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
+        double diff                                              = model.populations.get_group_total(i) - group_total;
+        if (diff > 0) {
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -= diff;
+            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
+                log_error("Negative Compartment after sampling.");
+            }
+            assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
+        }
+        model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive}, group_total);
     }
 }
 
@@ -117,8 +72,6 @@ void draw_sample_infection(Model& model)
     model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<TimeTemporaryImmunityPI>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<TimeTemporaryImmunityII>()[AgeGroup(0)].draw_sample();
 
     model.parameters.get<ReducExposedPartialImmunity>()[AgeGroup(0)].draw_sample();
     model.parameters.get<ReducExposedImprovedImmunity>()[AgeGroup(0)].draw_sample();
@@ -174,7 +127,7 @@ void draw_sample(Model& model)
     model.apply_constraints();
 }
 
-Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph)
+Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high)
 {
     Graph<Model, MigrationParameters> sampled_graph;
 
@@ -185,6 +138,19 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
+
+    double delta_fac;
+    if (variant_high) {
+        delta_fac = 1.6;
+    }
+    else {
+        delta_fac = 1.4;
+    }
+
+    //infectiousness of virus variants is not sampled independently but depend on base infectiousness
+    for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
+        shared_params_model.parameters.template get<InfectiousnessNewVariant>()[i] = delta_fac;
+    }
 
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
@@ -199,14 +165,12 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         auto local_holidays     = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
         auto local_daily_v1     = node_model.parameters.template get<DailyPartialVaccination>();
         auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccination>();
-        auto local_daily_v3     = node_model.parameters.template get<DailyBoosterVaccination>();
         node_model.parameters   = shared_params_model.parameters;
         node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
         node_model.parameters.template get<DailyPartialVaccination>()               = local_daily_v1;
         node_model.parameters.template get<DailyFullVaccination>()                  = local_daily_v2;
-        node_model.parameters.template get<DailyBoosterVaccination>()               = local_daily_v3;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();
         node_model.apply_constraints();

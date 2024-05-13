@@ -28,8 +28,8 @@
 #include "test_data_dir.h"
 #include "gtest/gtest.h"
 #include "json/value.h"
-#include "ode_secirvvs/model.h"
-#include "ode_secirvvs/parameters_io.h"
+#include "ode_secirts/model.h"
+#include "ode_secirts/parameters_io.h"
 #include "memilio/utils/stl_util.h"
 #include "boost/optional/optional_io.hpp"
 #include <gmock/gmock-matchers.h>
@@ -390,16 +390,16 @@ TEST(TestEpiData, set_vaccination_data)
     auto num_days       = 9;
 
     std::vector<int> county_ids = {1001};
-    mio::osecirvvs::Model model(num_age_groups);
-    model.parameters.set<mio::osecirvvs::VaccinationGap>(3);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialVaccination>(1);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedVaccination>(2);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveBoosterImmunity>(1);
-    std::vector<mio::osecirvvs::Model> model_vector{model};
+    mio::osecirts::Model model(num_age_groups);
+    model.parameters.set<mio::osecirts::VaccinationGap>(3);
+    model.parameters.set<mio::osecirts::DaysUntilEffectivePartialVaccination>(1);
+    model.parameters.set<mio::osecirts::DaysUntilEffectiveImprovedVaccination>(2);
+    model.parameters.set<mio::osecirts::DaysUntilEffectiveBoosterImmunity>(1);
+    std::vector<mio::osecirts::Model> model_vector{model};
 
-    auto f = mio::osecirvvs::details::set_vaccination_data(model_vector,
-                                                           mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
-                                                           mio::Date(2022, 4, 15), county_ids, num_days);
+    auto f = mio::osecirts::details::set_vaccination_data(model_vector,
+                                                          mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
+                                                          mio::Date(2022, 4, 15), county_ids, num_days);
 
     auto expected_values_PI =
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 7, 10, 20, 15, 10, 5, 2, 15, 8, 0).finished();
@@ -410,11 +410,11 @@ TEST(TestEpiData, set_vaccination_data)
     auto expected_values_B =
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 5, 7, 9, 11, 13, 9, 7, 5, 5, 0).finished();
 
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyPartialVaccination>().array()),
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyPartialVaccination>().array()),
                 MatrixNear(print_wrap(expected_values_PI), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyFullVaccination>().array()),
                 MatrixNear(print_wrap(expected_values_II), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyBoosterVaccination>().array()),
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyBoosterVaccination>().array()),
                 MatrixNear(print_wrap(expected_values_B), 1e-8, 1e-8));
 }
 

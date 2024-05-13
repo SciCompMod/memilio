@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -59,43 +59,56 @@ IOResult<void> read_confirmed_cases_data(
     std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& num_Exposed,
     std::vector<std::vector<double>>& num_InfectedNoSymptoms, std::vector<std::vector<double>>& num_InfectedSymptoms,
     std::vector<std::vector<double>>& num_InfectedSevere, std::vector<std::vector<double>>& num_icu,
-    std::vector<std::vector<double>>& num_death, std::vector<std::vector<double>>& vnum_timm_i,
+    std::vector<std::vector<double>>& num_death, std::vector<std::vector<double>>& num_rec,
     const std::vector<std::vector<int>>& t_Exposed, const std::vector<std::vector<int>>& t_InfectedNoSymptoms,
     const std::vector<std::vector<int>>& t_InfectedSymptoms, const std::vector<std::vector<int>>& t_InfectedSevere,
-    const std::vector<std::vector<int>>& t_InfectedCritical, const std::vector<std::vector<int>>& vt_imm_interval_i,
-    const std::vector<std::vector<double>>& mu_C_R, const std::vector<std::vector<double>>& mu_I_H,
-    const std::vector<std::vector<double>>& mu_H_U, const std::vector<double>& scaling_factor_inf);
+    const std::vector<std::vector<int>>& t_InfectedCritical, const std::vector<std::vector<double>>& mu_C_R,
+    const std::vector<std::vector<double>>& mu_I_H, const std::vector<std::vector<double>>& mu_H_U,
+    const std::vector<double>& scaling_factor_inf);
 
 IOResult<void> read_confirmed_cases_data(
     const std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
     std::vector<std::vector<double>>& num_Exposed, std::vector<std::vector<double>>& num_InfectedNoSymptoms,
     std::vector<std::vector<double>>& num_InfectedSymptoms, std::vector<std::vector<double>>& num_InfectedSevere,
     std::vector<std::vector<double>>& num_icu, std::vector<std::vector<double>>& num_death,
-    std::vector<std::vector<double>>& vnum_timm_i, const std::vector<std::vector<int>>& t_Exposed,
+    std::vector<std::vector<double>>& num_rec, const std::vector<std::vector<int>>& t_Exposed,
     const std::vector<std::vector<int>>& t_InfectedNoSymptoms, const std::vector<std::vector<int>>& t_InfectedSymptoms,
     const std::vector<std::vector<int>>& t_InfectedSevere, const std::vector<std::vector<int>>& t_InfectedCritical,
-    const std::vector<std::vector<int>>& vt_imm_interval_i, const std::vector<std::vector<double>>& mu_C_R,
-    const std::vector<std::vector<double>>& mu_I_H, const std::vector<std::vector<double>>& mu_H_U,
-    const std::vector<double>& scaling_factor_inf);
-/**@}*/
-
-IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path,
-                                                                    const size_t& num_age_groups);
+    const std::vector<std::vector<double>>& mu_C_R, const std::vector<std::vector<double>>& mu_I_H,
+    const std::vector<std::vector<double>>& mu_H_U, const std::vector<double>& scaling_factor_inf);
 /**@}*/
 
 /**
-        * @brief sets infected and immun compartment(s) from a transformed RKI cases file into a Model.
+        * @brief Reads confirmed cases data and translates data of day t0-delay to recovered compartment,
+        * @param path Path to RKI confirmed cases file.
+        * @param vregion vector of keys of the region of interest     
+        * @param date Date for which the arrays are initialized
+        * @param num_rec output vector for number of people in the compartement recovered
+        * @param delay number of days in the past the are used to set recovered compartment.
+        * @see mio::read_confirmed_cases_data
+        * @{
+        */
+IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
+                                                       std::vector<int> const& vregion, Date date,
+                                                       std::vector<std::vector<double>>& vnum_rec, double delay = 14.);
+IOResult<void> read_confirmed_cases_data_fix_recovered(std::string const& path, std::vector<int> const& vregion,
+                                                       Date date, std::vector<std::vector<double>>& vnum_rec,
+                                                       double delay = 14.);
+/**@}*/
+
+/**
+        * @brief sets populations data from a transformed RKI cases file into a Model.
         * @param model vector of objects in which the data is set
         * @param path Path to transformed RKI cases file
         * @param region vector of keys of the region of interest
         * @param date Date for which the arrays are initialized
         * @param scaling_factor_inf factors by which to scale the confirmed cases of
-        * @param immunity_data_path Path to immunity data file
+        * rki data
         */
 template <class Model>
-IOResult<void>
-set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region, Date date,
-                         const std::vector<double>& scaling_factor_inf, const std::string& immunity_data_path)
+IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
+                                        std::vector<int> const& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf)
 {
     auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
     assert(scaling_factor_inf.size() == num_age_groups); //TODO: allow vector or scalar valued scaling factors
@@ -108,8 +121,6 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
     std::vector<std::vector<int>> t_InfectedSymptoms{model.size()};
     std::vector<std::vector<int>> t_InfectedSevere{model.size()};
     std::vector<std::vector<int>> t_InfectedCritical{model.size()};
-    std::vector<std::vector<int>> t_imm_interval1{model.size()};
-    std::vector<std::vector<int>> t_imm_interval2{model.size()};
 
     std::vector<std::vector<double>> mu_C_R{model.size()};
     std::vector<std::vector<double>> mu_I_H{model.size()};
@@ -117,28 +128,21 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
 
     std::vector<std::vector<double>> num_InfectedSymptoms(model.size());
     std::vector<std::vector<double>> num_death(model.size());
+    std::vector<std::vector<double>> num_rec(model.size());
     std::vector<std::vector<double>> num_Exposed(model.size());
     std::vector<std::vector<double>> num_InfectedNoSymptoms(model.size());
     std::vector<std::vector<double>> num_InfectedSevere(model.size());
     std::vector<std::vector<double>> num_icu(model.size());
-    std::vector<std::vector<double>> num_timm1(model.size());
-    std::vector<std::vector<double>> num_timm2(model.size());
-
-    std::vector<double> denom_E(num_age_groups, 0.0);
-    std::vector<double> denom_I_NS(num_age_groups, 0.0);
-    std::vector<double> denom_I_Sy(num_age_groups, 0.0);
-    std::vector<double> denom_I_Sev(num_age_groups, 0.0);
 
     /*----------- UNVACCINATED -----------*/
     for (size_t county = 0; county < model.size(); county++) {
         num_InfectedSymptoms[county]   = std::vector<double>(num_age_groups, 0.0);
         num_death[county]              = std::vector<double>(num_age_groups, 0.0);
+        num_rec[county]                = std::vector<double>(num_age_groups, 0.0);
         num_Exposed[county]            = std::vector<double>(num_age_groups, 0.0);
         num_InfectedNoSymptoms[county] = std::vector<double>(num_age_groups, 0.0);
         num_InfectedSevere[county]     = std::vector<double>(num_age_groups, 0.0);
         num_icu[county]                = std::vector<double>(num_age_groups, 0.0);
-        num_timm1[county]              = std::vector<double>(num_age_groups, 0.0);
-        num_timm2[county]              = std::vector<double>(num_age_groups, 0.0);
         for (size_t group = 0; group < num_age_groups; group++) {
 
             t_Exposed[county].push_back(
@@ -151,71 +155,34 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
                 std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
             t_InfectedCritical[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
-            t_imm_interval1[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeTemporaryImmunityPI>()[(AgeGroup)group]));
-            t_imm_interval2[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeTemporaryImmunityII>()[(AgeGroup)group]));
 
             mu_C_R[county].push_back(
                 model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
             mu_I_H[county].push_back(
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             mu_H_U[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
-
-            // calculate the denominators to split the reported case numbers to the different immunity layers.
-            denom_E[group] =
-                1 / (immunity_population[0][group] +
-                     immunity_population[1][group] *
-                         model[county].parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)group] +
-                     immunity_population[2][group] *
-                         model[county].parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)group]);
-
-            denom_I_NS[group] =
-                1 / (immunity_population[0][group] +
-                     immunity_population[1][group] *
-                         model[county].parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)group] +
-                     immunity_population[2][group] *
-                         model[county].parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)group]);
-
-            denom_I_Sy[group] =
-                1 /
-                (immunity_population[0][group] +
-                 immunity_population[1][group] *
-                     model[county].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[(AgeGroup)group] +
-                 immunity_population[2][group] *
-                     model[county].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[(AgeGroup)group]);
-
-            denom_I_Sev[group] =
-                1 /
-                (immunity_population[0][group] +
-                 immunity_population[1][group] *
-                     model[county]
-                         .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[(AgeGroup)group] +
-                 immunity_population[2][group] *
-                     model[county]
-                         .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[(AgeGroup)group]);
         }
     }
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data(
-        rki_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
-        num_death, num_timm1, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
-        t_imm_interval1, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(rki_data, region, date, num_Exposed, num_InfectedNoSymptoms,
+                                                num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
+                                                t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+                                                t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
         // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
-            model[county].populations[{AgeGroup(i), InfectionState::ExposedNaive}] =
-                immunity_population[0][i] * denom_E[i] * num_Exposed[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::ExposedNaive}] = num_Exposed[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsNaive}] =
-                immunity_population[0][i] * denom_I_NS[i] * num_InfectedNoSymptoms[county][i];
+                num_InfectedNoSymptoms[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsNaiveConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsNaive}] =
-                immunity_population[0][i] * denom_I_Sy[i] * num_InfectedSymptoms[county][i];
+                num_InfectedSymptoms[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsNaiveConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereNaive}] =
-                immunity_population[0][i] * denom_I_Sev[i] * num_InfectedSevere[county][i];
+                num_InfectedSevere[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::SusceptibleImprovedImmunity}] = num_rec[county][i];
         }
 
         // }
@@ -240,6 +207,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
 
         num_InfectedSymptoms[county]   = std::vector<double>(num_age_groups, 0.0);
         num_death[county]              = std::vector<double>(num_age_groups, 0.0);
+        num_rec[county]                = std::vector<double>(num_age_groups, 0.0);
         num_Exposed[county]            = std::vector<double>(num_age_groups, 0.0);
         num_InfectedNoSymptoms[county] = std::vector<double>(num_age_groups, 0.0);
         num_InfectedSevere[county]     = std::vector<double>(num_age_groups, 0.0);
@@ -281,38 +249,24 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
         }
     }
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data(
-        rki_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
-        num_death, num_timm1, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
-        t_imm_interval1, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(rki_data, region, date, num_Exposed, num_InfectedNoSymptoms,
+                                                num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
+                                                t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+                                                t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
         // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
-            model[county].populations[{AgeGroup(i), InfectionState::ExposedPartialImmunity}] =
-                immunity_population[1][i] *
-                model[county].parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)i] * denom_E[i] *
-                num_Exposed[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::ExposedPartialImmunity}] = num_Exposed[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsPartialImmunity}] =
-                immunity_population[1][i] *
-                model[county].parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)i] * denom_I_NS[i] *
                 num_InfectedNoSymptoms[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsPartialImmunity}] =
-                immunity_population[1][i] *
-                model[county].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[(AgeGroup)i] *
-                denom_I_Sy[i] * num_InfectedSymptoms[county][i];
+                num_InfectedSymptoms[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsPartialImmunityConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSeverePartialImmunity}] =
-                immunity_population[1][i] *
-                model[county].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[(AgeGroup)i] *
-                denom_I_Sev[i] * num_InfectedSevere[county][i];
-            // the += is necessary because we already set the previous vaccinated individuals
-            model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunPartialImmunity}] +=
-                immunity_population[1][i] *
-                model[county].parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)i] * denom_E[i] *
-                num_timm1[county][i];
+                num_InfectedSevere[county][i];
         }
         // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
@@ -336,6 +290,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
 
         num_InfectedSymptoms[county]   = std::vector<double>(num_age_groups, 0.0);
         num_death[county]              = std::vector<double>(num_age_groups, 0.0);
+        num_rec[county]                = std::vector<double>(num_age_groups, 0.0);
         num_Exposed[county]            = std::vector<double>(num_age_groups, 0.0);
         num_InfectedNoSymptoms[county] = std::vector<double>(num_age_groups, 0.0);
         num_InfectedSevere[county]     = std::vector<double>(num_age_groups, 0.0);
@@ -377,38 +332,24 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std
         }
     }
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data(
-        rki_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
-        num_death, num_timm2, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
-        t_imm_interval2, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(rki_data, region, date, num_Exposed, num_InfectedNoSymptoms,
+                                                num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
+                                                t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+                                                t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
         // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
-            model[county].populations[{AgeGroup(i), InfectionState::ExposedImprovedImmunity}] =
-                immunity_population[2][i] *
-                model[county].parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)i] * denom_E[i] *
-                num_Exposed[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::ExposedImprovedImmunity}] = num_Exposed[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsImprovedImmunity}] =
-                immunity_population[2][i] *
-                model[county].parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)i] * denom_I_NS[i] *
                 num_InfectedNoSymptoms[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsImprovedImmunity}] =
-                immunity_population[2][i] *
-                model[county].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[(AgeGroup)i] *
-                denom_I_Sy[i] * num_InfectedSymptoms[county][i];
+                num_InfectedSymptoms[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereImprovedImmunity}] =
-                immunity_population[2][i] *
-                model[county].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[(AgeGroup)i] *
-                denom_I_Sev[i] * num_InfectedSevere[county][i];
-            // the += is necessary because we already set the previous vaccinated individuals
-            model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunImprovedImmunity}] +=
-                immunity_population[2][i] *
-                model[county].parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)i] * denom_E[i] *
-                num_timm2[county][i];
+                num_InfectedSevere[county][i];
         }
         // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
@@ -486,46 +427,156 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
 /**@}*/
 
 template <class Model>
-IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                                   const std::string& immunity_data_path)
+IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::string& path_rki,
+                                   const std::vector<int>& vregion, Date date)
 {
     BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion));
 
     auto num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
-    BOOST_OUTCOME_TRY(immunity_population, read_immunity_population(immunity_data_path, num_age_groups));
+    std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
+
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data_fix_recovered(path_rki, vregion, date, num_rec, 14.));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
 
-                double SN  = num_population[region][size_t(i)] * immunity_population[0][size_t(i)];
-                double SPI = num_population[region][size_t(i)] * immunity_population[1][size_t(i)];
-                double SII = num_population[region][size_t(i)] - SN - SPI;
+                double S_v =
+                    std::min(model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
+                                 num_rec[region][size_t(i)],
+                             num_population[region][size_t(i)]);
+                double S_pv =
+                    std::max(model[region].parameters.template get<DailyPartialVaccination>()[{i, SimulationDay(0)}] -
+                                 model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}],
+                             0.0); // use std::max with 0
+                double S;
+                if (num_population[region][size_t(i)] - S_pv - S_v < 0.0) {
+                    log_warning("Number of vaccinated persons greater than population in county {}, age group {}.",
+                                region, size_t(i));
+                    S   = 0.0;
+                    S_v = num_population[region][size_t(i)] - S_pv;
+                }
+                else {
+                    S = num_population[region][size_t(i)] - S_pv - S_v;
+                }
+
+                double denom_E =
+                    1 / (S + S_pv * model[region].parameters.template get<ReducExposedPartialImmunity>()[i] +
+                         S_v * model[region].parameters.template get<ReducExposedImprovedImmunity>()[i]);
+                double denom_C =
+                    1 / (S + S_pv * model[region].parameters.template get<ReducExposedPartialImmunity>()[i] +
+                         S_v * model[region].parameters.template get<ReducExposedImprovedImmunity>()[i]);
+                double denom_I =
+                    1 / (S + S_pv * model[region].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[i] +
+                         S_v * model[region].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[i]);
+                double denom_HU =
+                    1 /
+                    (S +
+                     S_pv * model[region].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] +
+                     S_v * model[region].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i]);
+
+                model[region].populations[{i, InfectionState::ExposedNaive}] =
+                    S * model[region].populations[{i, InfectionState::ExposedNaive}] * denom_E;
+                model[region].populations[{i, InfectionState::ExposedPartialImmunity}] =
+                    S_pv * model[region].parameters.template get<ReducExposedPartialImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::ExposedPartialImmunity}] * denom_E;
+                model[region].populations[{i, InfectionState::ExposedImprovedImmunity}] =
+                    S_v * model[region].parameters.template get<ReducExposedImprovedImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::ExposedImprovedImmunity}] * denom_E;
+
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsNaive}] =
+                    S * model[region].populations[{i, InfectionState::InfectedNoSymptomsNaive}] * denom_C;
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] =
+                    S_pv * model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] * denom_C;
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] =
+                    S_v * model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] * denom_C;
+
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsNaiveConfirmed}] =
+                    S * model[region].populations[{i, InfectionState::InfectedNoSymptomsNaiveConfirmed}] * denom_C;
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] =
+                    S_pv * model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] *
+                    denom_C;
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] =
+                    S_v * model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] *
+                    denom_C;
+
+                model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] =
+                    S * model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] * denom_I;
+                model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] =
+                    S_pv * model[region].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] * denom_I;
+                model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] =
+                    S_v * model[region].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] * denom_I;
+
+                model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] =
+                    S * model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] * denom_I;
+                model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] =
+                    S_pv * model[region].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] * denom_I;
+                model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] =
+                    S_v * model[region].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] * denom_I;
+
+                model[region].populations[{i, InfectionState::InfectedSevereNaive}] =
+                    S * model[region].populations[{i, InfectionState::InfectedSevereNaive}] * denom_HU;
+                model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] =
+                    S_pv * model[region].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] * denom_HU;
+                model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] =
+                    S_v * model[region].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] * denom_HU;
+
+                model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] =
+                    S_pv * model[region].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
+                model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] =
+                    S_v * model[region].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
+                model[region].populations[{i, InfectionState::InfectedCriticalNaive}] =
+                    S * model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
 
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
-                    SII - (model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
-                           model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::DeadImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::TemporaryImmunImprovedImmunity}]);
+                    model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
+                    model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
+                    (model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
+                     model[region].populations[{i, InfectionState::InfectedSevereNaive}] +
+                     model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] +
+                     model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
+                     model[region].populations[{i, InfectionState::InfectedCriticalNaive}] +
+                     model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] +
+                     model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
+                     model[region].populations[{i, InfectionState::DeadNaive}] +
+                     model[region].populations[{i, InfectionState::DeadPartialImmunity}] +
+                     model[region].populations[{i, InfectionState::DeadImprovedImmunity}]);
 
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] = std::min(
-                    SII,
+                    S_v - model[region].populations[{i, InfectionState::ExposedImprovedImmunity}] -
+                        model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] -
+                        model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] -
+                        model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] -
+                        model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] -
+                        model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] -
+                        model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] -
+                        model[region].populations[{i, InfectionState::DeadImprovedImmunity}],
                     std::max(0.0, double(model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}])));
 
                 model[region].populations[{i, InfectionState::SusceptiblePartialImmunity}] = std::max(
                     0.0,
-                    SPI - model[region].populations[{i, InfectionState::ExposedPartialImmunity}] -
+                    S_pv - model[region].populations[{i, InfectionState::ExposedPartialImmunity}] -
                         model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] -
                         model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] -
                         model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
                         model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] -
                         model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
                         model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] -
-                        model[region].populations[{i, InfectionState::DeadPartialImmunity}] -
-                        model[region].populations[{i, InfectionState::TemporaryImmunPartialImmunity}]);
+                        model[region].populations[{i, InfectionState::DeadPartialImmunity}]);
 
                 model[region].populations.template set_difference_from_group_total<AgeGroup>(
                     {i, InfectionState::SusceptibleNaive}, num_population[region][size_t(i)]);
@@ -571,18 +622,14 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
     * @param divi_data_path path to divi data file
     * @param confirmed_cases_path path to confirmed cases file
     * @param population_data_path path to population data file
-    * @param immunity_data_path path to immunity data file
     */
 template <class Model>
 IOResult<void> export_input_data_county_timeseries(
     const std::vector<Model>& model, const std::string& dir, std::vector<int> const& region, Date start_date,
     const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days,
-    const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path,
-    const std::string& immunity_data_path)
+    const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path)
 {
     auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(immunity_population, details::read_immunity_population(immunity_data_path, num_age_groups));
-
     assert(scaling_factor_inf.size() == num_age_groups);
     assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
     assert(model.size() == region.size());
@@ -598,51 +645,46 @@ IOResult<void> export_input_data_county_timeseries(
     // data needs to be int, because access to data-specific confirmed cases
     // is done with these parameters. TODO: Rounding instead
     // of casting to int should be introduced in the future.
-    std::vector<std::vector<int>> t_InfectedNoSymptoms_n{model.size()};
-    std::vector<std::vector<int>> t_Exposed_n{model.size()};
-    std::vector<std::vector<int>> t_InfectedSymptoms_n{model.size()};
-    std::vector<std::vector<int>> t_InfectedSevere_n{model.size()};
-    std::vector<std::vector<int>> t_InfectedCritical_n{model.size()};
-    std::vector<std::vector<int>> t_imm_interval1{model.size()};
-    std::vector<std::vector<int>> t_imm_interval2{model.size()};
+    std::vector<std::vector<int>> t_InfectedNoSymptoms_uv{model.size()};
+    std::vector<std::vector<int>> t_Exposed_uv{model.size()};
+    std::vector<std::vector<int>> t_InfectedSymptoms_uv{model.size()};
+    std::vector<std::vector<int>> t_InfectedSevere_uv{model.size()};
+    std::vector<std::vector<int>> t_InfectedCritical_uv{model.size()};
 
-    std::vector<std::vector<double>> mu_C_R_n{model.size()};
-    std::vector<std::vector<double>> mu_I_H_n{model.size()};
-    std::vector<std::vector<double>> mu_H_U_n{model.size()};
+    std::vector<std::vector<double>> mu_C_R_uv{model.size()};
+    std::vector<std::vector<double>> mu_I_H_uv{model.size()};
+    std::vector<std::vector<double>> mu_H_U_uv{model.size()};
     // ICU data is not age-resolved. Use a partition of unity defined by
     // the age-dependent probability I->H->U divided by the sum over all
     // age groups of all of these probabilities.
-    std::vector<double> sum_mu_I_U_n(model.size(), 0);
-    std::vector<std::vector<double>> mu_I_U_n{model.size()};
+    std::vector<double> sum_mu_I_U_uv(model.size(), 0);
+    std::vector<std::vector<double>> mu_I_U_uv{model.size()};
 
     for (size_t county = 0; county < model.size(); county++) {
         for (size_t group = 0; group < num_age_groups; group++) {
 
-            t_Exposed_n[county].push_back(
+            t_Exposed_uv[county].push_back(
                 static_cast<int>(std::round(model[county].parameters.template get<TimeExposed>()[(AgeGroup)group])));
-            t_InfectedNoSymptoms_n[county].push_back(static_cast<int>(
+            t_InfectedNoSymptoms_uv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedNoSymptoms>()[(AgeGroup)group])));
-            t_InfectedSymptoms_n[county].push_back(static_cast<int>(
+            t_InfectedSymptoms_uv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group])));
-            t_InfectedSevere_n[county].push_back(static_cast<int>(
+            t_InfectedSevere_uv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
-            t_InfectedCritical_n[county].push_back(static_cast<int>(
+            t_InfectedCritical_uv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
-            t_imm_interval1[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeTemporaryImmunityPI>()[(AgeGroup)group]));
-            t_imm_interval2[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeTemporaryImmunityII>()[(AgeGroup)group]));
 
-            mu_C_R_n[county].push_back(
+            mu_C_R_uv[county].push_back(
                 model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
-            mu_I_H_n[county].push_back(
+            mu_I_H_uv[county].push_back(
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
-            mu_H_U_n[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
+            mu_H_U_uv[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
 
             /* begin: NOT in set_confirmed_cases_data() */
-            sum_mu_I_U_n[county] += model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
-                                    model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
-            mu_I_U_n[county].push_back(
+            sum_mu_I_U_uv[county] +=
+                model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
+            mu_I_U_uv[county].push_back(
                 model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)]);
             /* end: NOT in set_confirmed_cases_data() */
@@ -653,34 +695,34 @@ IOResult<void> export_input_data_county_timeseries(
     // data needs to be int, because access to data-specific confirmed cases
     // is done with these parameters. TODO: Rounding instead
     // of casting to int should be introduced in the future.
-    std::vector<std::vector<int>> t_InfectedNoSymptoms_pi{model.size()};
-    std::vector<std::vector<int>> t_Exposed_pi{model.size()};
-    std::vector<std::vector<int>> t_InfectedSymptoms_pi{model.size()};
-    std::vector<std::vector<int>> t_InfectedSevere_pi{model.size()};
-    std::vector<std::vector<int>> t_InfectedCritical_pi{model.size()};
+    std::vector<std::vector<int>> t_InfectedNoSymptoms_pv{model.size()};
+    std::vector<std::vector<int>> t_Exposed_pv{model.size()};
+    std::vector<std::vector<int>> t_InfectedSymptoms_pv{model.size()};
+    std::vector<std::vector<int>> t_InfectedSevere_pv{model.size()};
+    std::vector<std::vector<int>> t_InfectedCritical_pv{model.size()};
 
-    std::vector<std::vector<double>> mu_C_R_pi{model.size()};
-    std::vector<std::vector<double>> mu_I_H_pi{model.size()};
-    std::vector<std::vector<double>> mu_H_U_pi{model.size()};
+    std::vector<std::vector<double>> mu_C_R_pv{model.size()};
+    std::vector<std::vector<double>> mu_I_H_pv{model.size()};
+    std::vector<std::vector<double>> mu_H_U_pv{model.size()};
 
     // ICU data is not age-resolved. Use a partition of unity defined by
     // the age-dependent probability I->H->U divided by the sum over all
     // age groups of all of these probabilities.
-    std::vector<double> sum_mu_I_U_pi(model.size(), 0);
-    std::vector<std::vector<double>> mu_I_U_pi{model.size()};
+    std::vector<double> sum_mu_I_U_pv(model.size(), 0);
+    std::vector<std::vector<double>> mu_I_U_pv{model.size()};
     for (size_t county = 0; county < model.size(); county++) {
         for (size_t group = 0; group < num_age_groups; group++) {
 
             double reduc_t = model[0].parameters.template get<ReducTimeInfectedMild>()[(AgeGroup)group];
-            t_Exposed_pi[county].push_back(
+            t_Exposed_pv[county].push_back(
                 static_cast<int>(std::round(model[county].parameters.template get<TimeExposed>()[(AgeGroup)group])));
-            t_InfectedNoSymptoms_pi[county].push_back(static_cast<int>(std::round(
+            t_InfectedNoSymptoms_pv[county].push_back(static_cast<int>(std::round(
                 model[county].parameters.template get<TimeInfectedNoSymptoms>()[(AgeGroup)group] * reduc_t)));
-            t_InfectedSymptoms_pi[county].push_back(static_cast<int>(
+            t_InfectedSymptoms_pv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t)));
-            t_InfectedSevere_pi[county].push_back(static_cast<int>(
+            t_InfectedSevere_pv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
-            t_InfectedCritical_pi[county].push_back(static_cast<int>(
+            t_InfectedCritical_pv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             double exp_fact_part_immune =
@@ -693,23 +735,23 @@ IOResult<void> export_input_data_county_timeseries(
             double icu_fact_part_immune =
                 model[county]
                     .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[(AgeGroup)group];
-            mu_C_R_pi[county].push_back(
+            mu_C_R_pv[county].push_back(
                 (1 -
                  inf_fact_part_immune / exp_fact_part_immune *
                      (1 - model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group])));
-            mu_I_H_pi[county].push_back(
+            mu_I_H_pv[county].push_back(
                 hosp_fact_part_immune / inf_fact_part_immune *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             // transfer from H to U, D unchanged.
-            mu_H_U_pi[county].push_back(icu_fact_part_immune / hosp_fact_part_immune *
+            mu_H_U_pv[county].push_back(icu_fact_part_immune / hosp_fact_part_immune *
                                         model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
 
-            sum_mu_I_U_pi[county] +=
+            sum_mu_I_U_pv[county] +=
                 icu_fact_part_immune / hosp_fact_part_immune *
                 model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] * hosp_fact_part_immune /
                 inf_fact_part_immune *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
-            mu_I_U_pi[county].push_back(
+            mu_I_U_pv[county].push_back(
                 icu_fact_part_immune / hosp_fact_part_immune *
                 model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] * hosp_fact_part_immune /
                 inf_fact_part_immune *
@@ -721,33 +763,33 @@ IOResult<void> export_input_data_county_timeseries(
     // data needs to be int, because access to data-specific confirmed cases
     // is done with these parameters. TODO: Rounding instead
     // of casting to int should be introduced in the future.
-    std::vector<std::vector<int>> t_InfectedNoSymptoms_ii{model.size()};
-    std::vector<std::vector<int>> t_Exposed_ii{model.size()};
-    std::vector<std::vector<int>> t_InfectedSymptoms_ii{model.size()};
-    std::vector<std::vector<int>> t_InfectedSevere_ii{model.size()};
-    std::vector<std::vector<int>> t_InfectedCritical_ii{model.size()};
+    std::vector<std::vector<int>> t_InfectedNoSymptoms_fv{model.size()};
+    std::vector<std::vector<int>> t_Exposed_fv{model.size()};
+    std::vector<std::vector<int>> t_InfectedSymptoms_fv{model.size()};
+    std::vector<std::vector<int>> t_InfectedSevere_fv{model.size()};
+    std::vector<std::vector<int>> t_InfectedCritical_fv{model.size()};
 
-    std::vector<std::vector<double>> mu_C_R_ii{model.size()};
-    std::vector<std::vector<double>> mu_I_H_ii{model.size()};
-    std::vector<std::vector<double>> mu_H_U_ii{model.size()};
+    std::vector<std::vector<double>> mu_C_R_fv{model.size()};
+    std::vector<std::vector<double>> mu_I_H_fv{model.size()};
+    std::vector<std::vector<double>> mu_H_U_fv{model.size()};
     // ICU data is not age-resolved. Use a partition of unity defined by
     // the age-dependent probability I->H->U divided by the sum over all
     // age groups of all of these probabilities.
-    std::vector<double> sum_mu_I_U_ii(model.size(), 0);
-    std::vector<std::vector<double>> mu_I_U_ii{model.size()};
+    std::vector<double> sum_mu_I_U_fv(model.size(), 0);
+    std::vector<std::vector<double>> mu_I_U_fv{model.size()};
     for (size_t county = 0; county < model.size(); county++) {
         for (size_t group = 0; group < num_age_groups; group++) {
 
             double reduc_t = model[0].parameters.template get<ReducTimeInfectedMild>()[(AgeGroup)group];
-            t_Exposed_ii[county].push_back(
+            t_Exposed_fv[county].push_back(
                 static_cast<int>(std::round(model[county].parameters.template get<TimeExposed>()[(AgeGroup)group])));
-            t_InfectedNoSymptoms_ii[county].push_back(static_cast<int>(std::round(
+            t_InfectedNoSymptoms_fv[county].push_back(static_cast<int>(std::round(
                 model[county].parameters.template get<TimeInfectedNoSymptoms>()[(AgeGroup)group] * reduc_t)));
-            t_InfectedSymptoms_ii[county].push_back(static_cast<int>(
+            t_InfectedSymptoms_fv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t)));
-            t_InfectedSevere_ii[county].push_back(static_cast<int>(
+            t_InfectedSevere_fv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
-            t_InfectedCritical_ii[county].push_back(static_cast<int>(
+            t_InfectedCritical_fv[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             double reduc_immune_exp =
@@ -760,22 +802,22 @@ IOResult<void> export_input_data_county_timeseries(
             double reduc_immune_icu =
                 model[county]
                     .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[(AgeGroup)group];
-            mu_C_R_ii[county].push_back(
+            mu_C_R_fv[county].push_back(
                 (1 -
                  reduc_immune_inf / reduc_immune_exp *
                      (1 - model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group])));
-            mu_I_H_ii[county].push_back(
+            mu_I_H_fv[county].push_back(
                 reduc_immune_hosp / reduc_immune_inf *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             // transfer from H to U, D unchanged.
-            mu_H_U_ii[county].push_back(reduc_immune_icu / reduc_immune_hosp *
+            mu_H_U_fv[county].push_back(reduc_immune_icu / reduc_immune_hosp *
                                         model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
 
-            sum_mu_I_U_ii[county] +=
+            sum_mu_I_U_fv[county] +=
                 reduc_immune_icu / reduc_immune_hosp *
                 model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] * reduc_immune_hosp /
                 reduc_immune_inf * model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
-            mu_I_U_ii[county].push_back(
+            mu_I_U_fv[county].push_back(
                 reduc_immune_icu / reduc_immune_hosp *
                 model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] * reduc_immune_hosp /
                 reduc_immune_inf * model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)]);
@@ -788,74 +830,75 @@ IOResult<void> export_input_data_county_timeseries(
         auto date = offset_date_by_days(start_date, int(day));
 
         // unvaccinated
-        std::vector<std::vector<double>> num_Exposed_n(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedNoSymptoms_n(model.size(),
-                                                                  std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedSymptoms_n(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_Exposed_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedNoSymptoms_uv(model.size(),
+                                                                   std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptoms_uv(model.size(),
+                                                                 std::vector<double>(num_age_groups, 0.0));
         // potential TODO: these confirmed are only confirmed by commuting, set to zero here. Adapt if generalized!
-        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_n(model.size(),
-                                                                           std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_n(model.size(),
-                                                                         std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_uv(model.size(),
+                                                                            std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_uv(model.size(),
+                                                                          std::vector<double>(num_age_groups, 0.0));
         // end TODO
-        std::vector<std::vector<double>> num_InfectedSevere_n(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_death_n(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_rec_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSevere_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_death_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> dummy_timm(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_timm1(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_timm2(model.size(), std::vector<double>(num_age_groups, 0.0));
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
-            rki_data, region, date, num_Exposed_n, num_InfectedNoSymptoms_n, num_InfectedSymptoms_n,
-            num_InfectedSevere_n, dummy_icu, num_death_n, dummy_timm, t_Exposed_n, t_InfectedNoSymptoms_n,
-            t_InfectedSymptoms_n, t_InfectedSevere_n, t_InfectedCritical_n, t_imm_interval1, mu_C_R_n, mu_I_H_n,
-            mu_H_U_n, scaling_factor_inf));
+            rki_data, region, date, num_Exposed_uv, num_InfectedNoSymptoms_uv, num_InfectedSymptoms_uv,
+            num_InfectedSevere_uv, dummy_icu, num_death_uv, num_rec_uv, t_Exposed_uv, t_InfectedNoSymptoms_uv,
+            t_InfectedSymptoms_uv, t_InfectedSevere_uv, t_InfectedCritical_uv, mu_C_R_uv, mu_I_H_uv, mu_H_U_uv,
+            scaling_factor_inf));
 
         // partially vaccinated
-        std::vector<std::vector<double>> num_Exposed_pi(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedNoSymptoms_pi(model.size(),
+        std::vector<std::vector<double>> num_Exposed_pv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedNoSymptoms_pv(model.size(),
                                                                    std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedSymptoms_pi(model.size(),
+        std::vector<std::vector<double>> num_InfectedSymptoms_pv(model.size(),
                                                                  std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedSevere_pi(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSevere_pv(model.size(), std::vector<double>(num_age_groups, 0.0));
         // potential TODO: these confirmed are only confirmed by commuting, set to zero here. Adapt if generalized!
-        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_pi(model.size(),
+        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_pv(model.size(),
                                                                             std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_pi(model.size(),
+        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_pv(model.size(),
                                                                           std::vector<double>(num_age_groups, 0.0));
         // end TODO
         std::vector<std::vector<double>> dummy_death(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> dummy_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
         for (size_t county = 0; county < model.size(); county++) {
             dummy_death[county] = std::vector<double>(num_age_groups, 0.0);
             dummy_icu[county]   = std::vector<double>(num_age_groups, 0.0);
         }
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
-            rki_data, region, date, num_Exposed_pi, num_InfectedNoSymptoms_pi, num_InfectedSymptoms_pi,
-            num_InfectedSevere_pi, dummy_icu, dummy_death, num_timm1, t_Exposed_pi, t_InfectedNoSymptoms_pi,
-            t_InfectedSymptoms_pi, t_InfectedSevere_pi, t_InfectedCritical_pi, t_imm_interval1, mu_C_R_pi, mu_I_H_pi,
-            mu_H_U_pi, scaling_factor_inf));
+            rki_data, region, date, num_Exposed_pv, num_InfectedNoSymptoms_pv, num_InfectedSymptoms_pv,
+            num_InfectedSevere_pv, dummy_icu, dummy_death, dummy_rec, t_Exposed_pv, t_InfectedNoSymptoms_pv,
+            t_InfectedSymptoms_pv, t_InfectedSevere_pv, t_InfectedCritical_pv, mu_C_R_pv, mu_I_H_pv, mu_H_U_pv,
+            scaling_factor_inf));
 
         // fully vaccinated
-        std::vector<std::vector<double>> num_Exposed_ii(model.size(), std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedNoSymptoms_ii(model.size(),
+        std::vector<std::vector<double>> num_Exposed_fv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedNoSymptoms_fv(model.size(),
                                                                    std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedSymptoms_ii(model.size(),
+        std::vector<std::vector<double>> num_InfectedSymptoms_fv(model.size(),
                                                                  std::vector<double>(num_age_groups, 0.0));
         // potential TODO: these confirmed are only confirmed by commuting, set to zero here. Adapt if generalized!
-        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_ii(model.size(),
+        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_fv(model.size(),
                                                                             std::vector<double>(num_age_groups, 0.0));
-        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_ii(model.size(),
+        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_fv(model.size(),
                                                                           std::vector<double>(num_age_groups, 0.0));
         // end TODO
-        std::vector<std::vector<double>> num_InfectedSevere_ii(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSevere_fv(model.size(), std::vector<double>(num_age_groups, 0.0));
         for (size_t county = 0; county < model.size(); county++) {
+            dummy_rec[county]   = std::vector<double>(num_age_groups, 0.0);
             dummy_death[county] = std::vector<double>(num_age_groups, 0.0);
             dummy_icu[county]   = std::vector<double>(num_age_groups, 0.0);
         }
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
-            rki_data, region, date, num_Exposed_ii, num_InfectedNoSymptoms_ii, num_InfectedSymptoms_ii,
-            num_InfectedSevere_ii, dummy_icu, dummy_death, num_timm2, t_Exposed_ii, t_InfectedNoSymptoms_ii,
-            t_InfectedSymptoms_ii, t_InfectedSevere_ii, t_InfectedCritical_ii, t_imm_interval2, mu_C_R_ii, mu_I_H_ii,
-            mu_H_U_ii, scaling_factor_inf));
+            rki_data, region, date, num_Exposed_fv, num_InfectedNoSymptoms_fv, num_InfectedSymptoms_fv,
+            num_InfectedSevere_fv, dummy_icu, dummy_death, dummy_rec, t_Exposed_fv, t_InfectedNoSymptoms_fv,
+            t_InfectedSymptoms_fv, t_InfectedSevere_fv, t_InfectedCritical_fv, mu_C_R_fv, mu_I_H_fv, mu_H_U_fv,
+            scaling_factor_inf));
 
         // ICU only read for compartment InfectionState::InfectedCritical and then distributed later
         std::vector<double> dummy_icu2(model.size(), 0.0);
@@ -865,16 +908,20 @@ IOResult<void> export_input_data_county_timeseries(
         for (size_t county = 0; county < region.size(); county++) {
             for (size_t age = 0; age < num_age_groups; age++) {
                 num_icu[county][age] =
-                    scaling_factor_icu * dummy_icu2[county] * mu_I_U_n[county][age] / sum_mu_I_U_n[county];
+                    scaling_factor_icu * dummy_icu2[county] * mu_I_U_uv[county][age] / sum_mu_I_U_uv[county];
             }
         }
 
         // read population basics
         BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data, region));
 
+        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
+        BOOST_OUTCOME_TRY(details::read_confirmed_cases_data_fix_recovered(rki_data, region, date, num_rec, 14.));
+
         for (size_t county = 0; county < region.size(); county++) {
             if (std::accumulate(num_population[county].begin(), num_population[county].end(), 0.0) > 0) {
                 for (size_t age = 0; age < num_age_groups; age++) {
+
                     auto age_group_offset = age * (size_t)InfectionState::Count;
                     double S_v            = std::min(
                         model[county]
@@ -883,7 +930,7 @@ IOResult<void> export_input_data_county_timeseries(
                         num_population[county][age]);
                     double S_pv = std::max(
                         model[county]
-                                .parameters.template get<DailyFirstVaccination>()[{AgeGroup(age), SimulationDay(day)}] -
+                                .parameters.template get<DailyPartialVaccination>()[{AgeGroup(age), SimulationDay(day)}] -
                             model[county]
                                 .parameters.template get<DailyFullVaccination>()[{AgeGroup(age), SimulationDay(day)}],
                         0.0); // use std::max with 0
@@ -901,196 +948,235 @@ IOResult<void> export_input_data_county_timeseries(
 
                     double denom_E =
                         1 /
-                        (SN +
-                         SPI * model[county].parameters.template get<ReducExposedPartialImmunity>()[AgeGroup(age)] +
-                         SII * model[county].parameters.template get<ReducExposedImprovedImmunity>()[AgeGroup(age)]);
+                        (S +
+                         S_pv * model[county].parameters.template get<ReducExposedPartialImmunity>()[AgeGroup(age)] +
+                         S_v * model[county].parameters.template get<ReducExposedImprovedImmunity>()[AgeGroup(age)]);
                     double denom_C =
                         1 /
-                        (SN +
-                         SPI * model[county].parameters.template get<ReducExposedPartialImmunity>()[AgeGroup(age)] +
-                         SII * model[county].parameters.template get<ReducExposedImprovedImmunity>()[AgeGroup(age)]);
+                        (S +
+                         S_pv * model[county].parameters.template get<ReducExposedPartialImmunity>()[AgeGroup(age)] +
+                         S_v * model[county].parameters.template get<ReducExposedImprovedImmunity>()[AgeGroup(age)]);
                     double denom_I =
                         1 /
-                        (SN +
-                         SPI * model[county]
-                                   .parameters.template get<ReducInfectedSymptomsPartialImmunity>()[AgeGroup(age)] +
-                         SII * model[county]
+                        (S +
+                         S_pv * model[county]
+                                    .parameters.template get<ReducInfectedSymptomsPartialImmunity>()[AgeGroup(age)] +
+                         S_v * model[county]
                                    .parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(age)]);
                     double denom_HU =
-                        1 / (SN +
-                             SPI * model[county]
-                                       .parameters
-                                       .template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(age)] +
-                             SII * model[county]
+                        1 / (S +
+                             S_pv * model[county]
+                                        .parameters
+                                        .template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(age)] +
+                             S_v * model[county]
                                        .parameters
                                        .template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[AgeGroup(age)]);
 
                     extrapolated_rki[county][day]((size_t)InfectionState::ExposedNaive + age_group_offset) =
-                        SN * denom_E * num_Exposed_n[county][age];
+                        S * denom_E * num_Exposed_uv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity + age_group_offset) =
-                        SPI * model[county].parameters.template get<ReducExposedPartialImmunity>()[AgeGroup(age)] *
-                        denom_E * num_Exposed_pi[county][age];
+                        S_pv * model[county].parameters.template get<ReducExposedPartialImmunity>()[AgeGroup(age)] *
+                        denom_E * num_Exposed_pv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::ExposedImprovedImmunity + age_group_offset) =
-                        SII * model[county].parameters.template get<ReducExposedImprovedImmunity>()[AgeGroup(age)] *
-                        denom_E * num_Exposed_ii[county][age];
+                        S_v * model[county].parameters.template get<ReducExposedImprovedImmunity>()[AgeGroup(age)] *
+                        denom_E * num_Exposed_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaive + age_group_offset) =
-                        SN * denom_C * num_InfectedNoSymptoms_n[county][age];
+                        S * denom_C * num_InfectedNoSymptoms_uv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunity +
                                                   age_group_offset) =
-                        SPI * denom_C * num_InfectedNoSymptoms_pi[county][age];
+                        S_pv * denom_C * num_InfectedNoSymptoms_pv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunity +
                                                   age_group_offset) =
-                        SII * denom_C * num_InfectedNoSymptoms_ii[county][age];
+                        S_v * denom_C * num_InfectedNoSymptoms_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaiveConfirmed +
                                                   age_group_offset) =
-                        SN * denom_C * num_InfectedNoSymptomsConfirmed_n[county][age];
+                        S * denom_C * num_InfectedNoSymptomsConfirmed_uv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
                                                   age_group_offset) =
-                        SPI * denom_C * num_InfectedNoSymptomsConfirmed_pi[county][age];
+                        S_pv * denom_C * num_InfectedNoSymptomsConfirmed_pv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed +
                                                   age_group_offset) =
-                        SII * denom_C * num_InfectedNoSymptomsConfirmed_ii[county][age];
+                        S_v * denom_C * num_InfectedNoSymptomsConfirmed_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive + age_group_offset) =
-                        SN * denom_I * num_InfectedSymptoms_n[county][age];
+                        S * denom_I * num_InfectedSymptoms_uv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
                                                   age_group_offset) =
-                        SPI *
+                        S_pv *
                         model[county].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[AgeGroup(age)] *
-                        denom_I * num_InfectedSymptoms_pi[county][age];
+                        denom_I * num_InfectedSymptoms_pv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
                                                   age_group_offset) =
-                        SII *
+                        S_v *
                         model[county].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(age)] *
-                        denom_I * num_InfectedSymptoms_ii[county][age];
+                        denom_I * num_InfectedSymptoms_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed +
                                                   age_group_offset) =
-                        SN * denom_I * num_InfectedSymptomsConfirmed_n[county][age];
+                        S * denom_I * num_InfectedSymptomsConfirmed_uv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
                                                   age_group_offset) =
-                        SPI *
+                        S_pv *
                         model[county].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[AgeGroup(age)] *
-                        denom_I * num_InfectedSymptomsConfirmed_pi[county][age];
+                        denom_I * num_InfectedSymptomsConfirmed_pv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
                                                   age_group_offset) =
-                        SII *
+                        S_v *
                         model[county].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(age)] *
-                        denom_I * num_InfectedSymptomsConfirmed_ii[county][age];
+                        denom_I * num_InfectedSymptomsConfirmed_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) =
-                        SN * denom_HU * num_InfectedSevere_n[county][age];
+                        S * denom_HU * num_InfectedSevere_uv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
                                                   age_group_offset) =
-                        SPI *
+                        S_pv *
                         model[county]
                             .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(age)] *
-                        denom_HU * num_InfectedSevere_pi[county][age];
+                        denom_HU * num_InfectedSevere_pv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity +
                                                   age_group_offset) =
-                        SII *
+                        S_v *
                         model[county]
                             .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[AgeGroup(age)] *
-                        denom_HU * num_InfectedSevere_ii[county][age];
+                        denom_HU * num_InfectedSevere_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive + age_group_offset) =
-                        SN * denom_HU * num_icu[county][age];
+                        S * denom_HU * num_icu[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
                                                   age_group_offset) =
-                        SPI *
+                        S_pv *
                         model[county]
                             .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(age)] *
                         denom_HU * num_icu[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity +
                                                   age_group_offset) =
-                        SII *
+                        S_v *
                         model[county]
                             .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[AgeGroup(age)] *
                         denom_HU * num_icu[county][age];
 
-                    extrapolated_rki[county][day]((size_t)InfectionState::TemporaryImmunPartialImmunity +
-                                                  age_group_offset) =
-                        num_timm1[county][age] * immunity_population[0][size_t(age)];
-                    extrapolated_rki[county][day]((size_t)InfectionState::TemporaryImmunImprovedImmunity +
-                                                  age_group_offset) =
-                        num_timm2[county][age] * immunity_population[1][size_t(age)] +
-                        immunity_population[2][size_t(age)] * immunity_population[2][size_t(age)];
-
                     extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleImprovedImmunity +
                                                   age_group_offset) =
-                        SII -
-                        (extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
+                        model[county]
+                            .parameters.template get<DailyFullVaccination>()[{AgeGroup(age), SimulationDay(day)}] +
+                        num_rec_uv[county][age] -
+                        (extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed +
                                                        age_group_offset) +
                          extrapolated_rki[county][day](
+                             (size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed + age_group_offset) +
+                         extrapolated_rki[county][day](
                              (size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
+                                                       age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
                                                        age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity +
                                                        age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity +
-                                                       age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::TemporaryImmunImprovedImmunity +
                                                        age_group_offset));
 
                     extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleImprovedImmunity +
                                                   age_group_offset) =
                         std::min(
-                            SII - (extrapolated_rki[county][day](
-                                       (size_t)InfectionState::InfectedSymptomsImprovedImmunity + age_group_offset) +
-                                   extrapolated_rki[county][day](
-                                       (size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
-                                       age_group_offset) +
-                                   extrapolated_rki[county][day](
-                                       (size_t)InfectionState::InfectedSevereImprovedImmunity + age_group_offset) +
-                                   extrapolated_rki[county][day](
-                                       (size_t)InfectionState::InfectedCriticalImprovedImmunity + age_group_offset) +
-                                   extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity +
-                                                                 age_group_offset) +
-                                   extrapolated_rki[county][day](
-                                       (size_t)InfectionState::TemporaryImmunImprovedImmunity + age_group_offset)),
+                            S_v -
+                                extrapolated_rki[county][day]((size_t)InfectionState::ExposedImprovedImmunity +
+                                                              age_group_offset) -
+                                extrapolated_rki[county][day](
+                                    (size_t)InfectionState::InfectedNoSymptomsImprovedImmunity + age_group_offset) -
+                                extrapolated_rki[county][day](
+                                    (size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed +
+                                    age_group_offset) -
+                                extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
+                                                              age_group_offset) -
+                                extrapolated_rki[county][day](
+                                    (size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
+                                    age_group_offset) -
+                                extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity +
+                                                              age_group_offset) -
+                                extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity +
+                                                              age_group_offset) -
+                                extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity +
+                                                              age_group_offset),
                             std::max(0.0,
                                      double(extrapolated_rki[county][day](
                                          (size_t)InfectionState::SusceptibleImprovedImmunity + age_group_offset))));
 
-                    /////////////////
                     extrapolated_rki[county][day]((size_t)InfectionState::SusceptiblePartialImmunity +
                                                   age_group_offset) =
-                        SPI -
-                        (extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
+                        std::max(0.0,
+                                 S_pv -
+                                     extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity +
+                                                                   age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedNoSymptomsPartialImmunity + age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
+                                         age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedSymptomsPartialImmunity + age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
+                                         age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedSeverePartialImmunity + age_group_offset) -
+                                     extrapolated_rki[county][day](
+                                         (size_t)InfectionState::InfectedCriticalPartialImmunity + age_group_offset) -
+                                     extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity +
+                                                                   age_group_offset));
+
+                    extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleNaive + age_group_offset) =
+                        num_population[county][age] -
+                        (extrapolated_rki[county][day]((size_t)InfectionState::SusceptiblePartialImmunity +
                                                        age_group_offset) +
-                         extrapolated_rki[county][day](
-                             (size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::ExposedNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::ExposedPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::ExposedImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaive +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive +
                                                        age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
                                                        age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity + age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::TemporaryImmunImprovedImmunity +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity +
                                                        age_group_offset));
-
-                    extrapolated_rki[county][day]((size_t)InfectionState::SusceptiblePartialImmunity +
-                                                  age_group_offset) =
-                        std::min(SPI, std::max(0.0, double(extrapolated_rki[county][day](
-                                                        (size_t)InfectionState::SusceptiblePartialImmunity +
-                                                        age_group_offset))));
-
-                    /////////////////
-                    extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleNaive + age_group_offset) =
-                        SPI -
-                        (extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive +
-                                                       age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed +
-                                                       age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive +
-                                                       age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset));
-
-                    extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleNaive + age_group_offset) =
-                        std::min(SN, std::max(0.0, double(extrapolated_rki[county][day](
-                                                       (size_t)InfectionState::SusceptibleNaive + age_group_offset))));
 
                     // in set_confirmed_cases_data initilization, deaths are now set to 0. In order to visualize
                     // the extrapolated real number of deaths, they have to be set here. In the comparison of data
@@ -1100,7 +1186,7 @@ IOResult<void> export_input_data_county_timeseries(
                     // available here.
                     // Do only add deaths after substraction.
                     extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) =
-                        num_death_n[county][age];
+                        num_death_uv[county][age];
                 }
             }
             else {
@@ -1122,19 +1208,20 @@ IOResult<void> export_input_data_county_timeseries(
 }
 
 template <class Model>
-IOResult<void> export_input_data_county_timeseries(
-    std::vector<Model>&& model, const std::string& dir, std::vector<int> const& region, Date date,
-    const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days,
-    const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path,
-    bool set_vaccination_data, const std::string& vaccination_data_path, const std::string& immunity_data_path)
+IOResult<void>
+export_input_data_county_timeseries(std::vector<Model>&& model, const std::string& dir, std::vector<int> const& region,
+                                    Date date, const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                    int num_days, const std::string& divi_data_path,
+                                    const std::string& confirmed_cases_path, const std::string& population_data_path,
+                                    bool set_vaccination_data, const std::string& vaccination_data_path)
 {
     if (set_vaccination_data) {
         BOOST_OUTCOME_TRY(details::set_vaccination_data(model, vaccination_data_path, date, region, num_days));
     }
 
-    BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-        model, dir, region, date, scaling_factor_inf, scaling_factor_icu, num_days, divi_data_path,
-        confirmed_cases_path, population_data_path, immunity_data_path));
+    BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, region, date, scaling_factor_inf,
+                                                          scaling_factor_icu, num_days, divi_data_path,
+                                                          confirmed_cases_path, population_data_path));
 
     return success();
 }
@@ -1164,7 +1251,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>&&, const s
     * Estimates all compartments from available data using the model parameters, so the 
     * model parameters must be set before calling this function.
     * Uses data files that contain centered 7-day moving average.
-    * @param model Vector of SECIRS-type models, one per county.
+    * @param model Vector of SECIRVVS models, one per county.
     * @param date Date for which the data should be read.
     * @param county Ids of the counties.
     * @param scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
@@ -1192,11 +1279,10 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     }
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(
-        model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date, scaling_factor_inf,
-        path_join(dir, "pydata/Germany", "immunity_population.txt")));
+        model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(dir, "pydata/Germany", "county_current_population.json"), county,
-                                     path_join(dir, "pydata/Germany", "immunity_population.txt")));
+        details::set_population_data(model, path_join(dir, "pydata/Germany", "county_current_population.json"),
+                                     path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
@@ -1208,8 +1294,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
             export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf, scaling_factor_icu,
                                                 num_days, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
                                                 path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
-                                                path_join(dir, "pydata/Germany", "county_current_population.json"),
-                                                path_join(dir, "pydata/Germany", "immunity_population.txt")));
+                                                path_join(dir, "pydata/Germany", "county_current_population.json")));
     }
 
     return success();
@@ -1220,7 +1305,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     * Estimates all compartments from available data using the model parameters, so the 
     * model parameters must be set before calling this function.
     * Uses data files that contain centered 7-day moving average.
-    * @param model Vector of SECIRS-type models, one per county.
+    * @param model Vector of SECIRVVS models, one per county.
     * @param date Date for which the data should be read.
     * @param county Ids of the counties.
     * @param scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
@@ -1249,10 +1334,9 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     }
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
-                                                        date, scaling_factor_inf,
-                                                        path_join(data_dir, "immunity_population.txt")));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids,
-                                                   path_join(data_dir, "immunity_population.txt")));
+                                                        date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"),
+                                                   path_join(data_dir, "confirmed_cases.json"), node_ids, date));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
@@ -1263,7 +1347,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
             model, data_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
             path_join(data_dir, "critical_cases.json"), path_join(data_dir, "confirmed_cases.json"),
-            path_join(data_dir, "population_data.json"), path_join(data_dir, "immunity_population.txt")));
+            path_join(data_dir, "population_data.json")));
     }
 
     return success();

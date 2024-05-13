@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -21,7 +21,6 @@
 #include "ode_secirvvs/parameters_io.h"
 #include "memilio/geography/regions.h"
 #include "memilio/io/io.h"
-#include "ode_secirvvs/parameters.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -66,12 +65,12 @@ IOResult<void> read_confirmed_cases_data(
     std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_Exposed,
     std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
     std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
-    std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_timm_i,
+    std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec,
     const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
-    const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<int>>& vt_imm_interval_i,
-    const std::vector<std::vector<double>>& vmu_C_R, const std::vector<std::vector<double>>& vmu_I_H,
-    const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
+    const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
+    const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
+    const std::vector<double>& scaling_factor_inf)
 {
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
     return read_confirmed_cases_data(rki_data, vregion, date, vnum_Exposed, vnum_InfectedNoSymptoms,
@@ -85,12 +84,12 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<double>>& vnum_Exposed, std::vector<std::vector<double>>& vnum_InfectedNoSymptoms,
     std::vector<std::vector<double>>& vnum_InfectedSymptoms, std::vector<std::vector<double>>& vnum_InfectedSevere,
     std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
-    std::vector<std::vector<double>>& vnum_timm_i, const std::vector<std::vector<int>>& vt_Exposed,
+    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_Exposed,
     const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
-    const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<int>>& vt_imm_interval_i,
-    const std::vector<std::vector<double>>& vmu_C_R, const std::vector<std::vector<double>>& vmu_I_H,
-    const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
+    const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
+    const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
+    const std::vector<double>& scaling_factor_inf)
 {
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -125,26 +124,25 @@ IOResult<void> read_confirmed_cases_data(
             auto& t_InfectedSymptoms   = vt_InfectedSymptoms[region_idx];
             auto& t_InfectedSevere     = vt_InfectedSevere[region_idx];
             auto& t_InfectedCritical   = vt_InfectedCritical[region_idx];
-            auto& t_imm_interval_i     = vt_imm_interval_i[region_idx];
 
             auto& num_InfectedNoSymptoms = vnum_InfectedNoSymptoms[region_idx];
             auto& num_InfectedSymptoms   = vnum_InfectedSymptoms[region_idx];
+            auto& num_rec                = vnum_rec[region_idx];
             auto& num_Exposed            = vnum_Exposed[region_idx];
             auto& num_InfectedSevere     = vnum_InfectedSevere[region_idx];
             auto& num_death              = vnum_death[region_idx];
             auto& num_icu                = vnum_icu[region_idx];
-            auto& num_imm                = vnum_timm_i[region_idx];
 
             auto& mu_C_R = vmu_C_R[region_idx];
             auto& mu_I_H = vmu_I_H[region_idx];
             auto& mu_H_U = vmu_H_U[region_idx];
 
-            bool read_icu = false;
+            bool read_icu = false; // params.populations.get({age, SecirCompartments::U}) == 0;
 
             auto age = (size_t)entry.age_group;
             if (entry.date == offset_date_by_days(date, 0)) {
                 num_InfectedSymptoms[age] += scaling_factor_inf[age] * entry.num_confirmed;
-                num_imm[age] += entry.num_confirmed;
+                num_rec[age] += entry.num_confirmed;
             }
             if (entry.date == offset_date_by_days(date, t_InfectedNoSymptoms[age] + days_surplus)) {
                 num_InfectedNoSymptoms[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
@@ -173,9 +171,6 @@ IOResult<void> read_confirmed_cases_data(
                     num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
                 }
             }
-            if (entry.date == offset_date_by_days(date, 0 - t_imm_interval_i[age])) {
-                num_imm[age] -= entry.num_confirmed;
-            }
         }
     }
 
@@ -184,11 +179,101 @@ IOResult<void> read_confirmed_cases_data(
 
         auto& num_InfectedNoSymptoms = vnum_InfectedNoSymptoms[region_idx];
         auto& num_InfectedSymptoms   = vnum_InfectedSymptoms[region_idx];
+        auto& num_rec                = vnum_rec[region_idx];
         auto& num_Exposed            = vnum_Exposed[region_idx];
         auto& num_InfectedSevere     = vnum_InfectedSevere[region_idx];
         auto& num_death              = vnum_death[region_idx];
         auto& num_icu                = vnum_icu[region_idx];
-        auto& num_timm_i             = vnum_timm_i[region_idx];
+
+        size_t num_groups = ConfirmedCasesDataEntry::age_group_names.size();
+        for (size_t i = 0; i < num_groups; i++) {
+            // subtract infected confirmed cases which are not yet recovered
+            // and remove dark figure scaling factor
+            num_rec[i] -= num_InfectedSymptoms[i] / scaling_factor_inf[i];
+            num_rec[i] -= num_InfectedSevere[i] / scaling_factor_inf[i];
+            num_rec[i] -=
+                num_icu[i] /
+                scaling_factor_inf[i]; // TODO: this has to be adapted for scaling_factor_inf != 1 or != ***_icu
+            num_rec[i] -= num_death[i] / scaling_factor_inf[i];
+            auto try_fix_constraints = [region, i](double& value, double error, auto str) {
+                if (value < error) {
+                    // this should probably return a failure
+                    // but the algorithm is not robust enough to avoid large negative
+                    // values and there are tests that rely on it
+                    log_error("{:s} for age group {:s} is {:.4f} for region {:d}, "
+                              "exceeds expected negative value.",
+                              str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                    value = 0.0;
+                }
+                else if (value < 0) {
+                    log_info("{:s} for age group {:s} is {:.4f} for region {:d}, "
+                             "automatically corrected",
+                             str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                    value = 0.0;
+                }
+            };
+
+            try_fix_constraints(num_InfectedSymptoms[i], -5, "InfectedSymptoms");
+            try_fix_constraints(num_InfectedNoSymptoms[i], -5, "InfectedNoSymptoms");
+            try_fix_constraints(num_Exposed[i], -5, "Exposed");
+            try_fix_constraints(num_InfectedSevere[i], -5, "InfectedSevere");
+            try_fix_constraints(num_death[i], -5, "Dead");
+            try_fix_constraints(num_icu[i], -5, "InfectedCritical");
+            try_fix_constraints(num_rec[i], -20, "Recovered or vaccinated");
+        }
+    }
+
+    return success();
+}
+
+IOResult<void> read_confirmed_cases_data_fix_recovered(std::string const& path, std::vector<int> const& vregion,
+                                                       Date date, std::vector<std::vector<double>>& vnum_rec,
+                                                       double delay)
+{
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
+    return read_confirmed_cases_data_fix_recovered(rki_data, vregion, date, vnum_rec, delay);
+}
+
+IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
+                                                       std::vector<int> const& vregion, Date date,
+                                                       std::vector<std::vector<double>>& vnum_rec, double delay)
+{
+    auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    if (max_date_entry == rki_data.end()) {
+        log_error("RKI data is empty.");
+        return failure(StatusCode::InvalidValue, "RKI data is empty.");
+    }
+    auto max_date = max_date_entry->date;
+    if (max_date < date) {
+        log_error("Specified date does not exist in RKI data");
+        return failure(StatusCode::OutOfRange, "RKI data does not contain specified date.");
+    }
+
+    // shifts the initilization to the recent past if simulation starts
+    // around current day and data of the future would be required.
+    // Only needed for preinfection compartments, exposed and InfectedNoSymptoms.
+    auto days_surplus = get_offset_in_days(max_date, date) - 6; // 6 > T_E^C + T_C^I
+    if (days_surplus > 0) {
+        days_surplus = 0;
+    }
+
+    for (auto&& rki_entry : rki_data) {
+        auto it = std::find_if(vregion.begin(), vregion.end(), [&rki_entry](auto r) {
+            return r == 0 || get_region_id(rki_entry) == r;
+        });
+        if (it != vregion.end()) {
+            auto region_idx = size_t(it - vregion.begin());
+            if (rki_entry.date == offset_date_by_days(date, int(-delay))) {
+                vnum_rec[region_idx][size_t(rki_entry.age_group)] = rki_entry.num_confirmed;
+            }
+        }
+    }
+
+    for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
+        auto region   = vregion[region_idx];
+        auto& num_rec = vnum_rec[region_idx];
 
         size_t num_groups = ConfirmedCasesDataEntry::age_group_names.size();
         for (size_t i = 0; i < num_groups; i++) {
@@ -209,65 +294,11 @@ IOResult<void> read_confirmed_cases_data(
                     value = 0.0;
                 }
             };
-
-            const double tol_error = -1e-8;
-            try_fix_constraints(num_InfectedSymptoms[i], tol_error, "InfectedSymptoms");
-            try_fix_constraints(num_InfectedNoSymptoms[i], tol_error, "InfectedNoSymptoms");
-            try_fix_constraints(num_Exposed[i], tol_error, "Exposed");
-            try_fix_constraints(num_InfectedSevere[i], tol_error, "InfectedSevere");
-            try_fix_constraints(num_death[i], tol_error, "Dead");
-            try_fix_constraints(num_icu[i], tol_error, "InfectedCritical");
-            try_fix_constraints(num_timm_i[i], tol_error, "Recently Recovered");
+            try_fix_constraints(num_rec[i], 0, "Recovered");
         }
     }
 
     return success();
-}
-
-IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path,
-                                                                    const size_t& num_age_groups)
-{
-    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
-    return read_confirmed_cases_data_fix_recovered(rki_data, vregion, date, vnum_rec, delay);
-}
-
-IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
-                                                       std::vector<int> const& vregion, Date date,
-                                                       std::vector<std::vector<double>>& vnum_rec, double delay)
-{
-    auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
-        return a.date < b.date;
-    });
-    if (max_date_entry == rki_data.end()) {
-        log_error("RKI data is empty.");
-        return failure(StatusCode::InvalidValue, "RKI data is empty.");
-    }
-    if (immunity_file.is_open()) {
-        std::string tp;
-        int linenumber = 0;
-        while (linenumber < 3) {
-            getline(immunity_file, tp);
-            // Find the last character that is not a line ending
-            size_t lastChar = tp.find_last_not_of("\r\n");
-            // If such a character was found, reduce the string
-            if (lastChar != std::string::npos) {
-                tp = tp.substr(0, lastChar + 1);
-            }
-            auto line = split(tp, ' ');
-            for (size_t i = 0; i < num_age_groups; i++) {
-                ans[linenumber][i] = std::stod(line[i]);
-            }
-            linenumber++;
-        }
-        immunity_file.close(); //close the file object.
-    }
-
-    // assert that the sum of the cols is 1 (tolerance 1-10)
-    for (size_t i = 0; i < 6; ++i) {
-        assert(std::abs(ans[0][i] + ans[1][i] + ans[2][i] - 1.0) < 1e-10);
-    }
-
-    return ans;
 }
 
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
@@ -353,12 +384,11 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
 
     auto num_groups = model[0].parameters.get_num_groups();
 
-    auto days_until_effective_n =
-        (int)(double)model[0].parameters.get<DaysUntilEffectivePartialVaccination>()[AgeGroup(0)];
-    auto days_until_effective_pi =
-        (int)(double)model[0].parameters.get<DaysUntilEffectiveImprovedVaccination>()[AgeGroup(0)];
-    auto days_until_effective_ii =
-        (int)(double)model[0].parameters.get<DaysUntilEffectiveBoosterImmunity>()[AgeGroup(0)];
+    auto days_until_effective1 = (int)(double)model[0].parameters.get<DaysUntilEffectivePartialImmunity>()[AgeGroup(0)];
+    auto days_until_effective2 =
+        (int)(double)model[0].parameters.get<DaysUntilEffectiveImprovedImmunity>()[AgeGroup(0)];
+    auto vaccination_distance = (int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
+
     // iterate over regions (e.g., counties)
     for (size_t i = 0; i < model.size(); ++i) {
         // iterate over age groups in region
@@ -366,11 +396,9 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
 
             model[i].parameters.template get<DailyPartialVaccination>().resize(SimulationDay(num_days + 1));
             model[i].parameters.template get<DailyFullVaccination>().resize(SimulationDay(num_days + 1));
-            model[i].parameters.template get<DailyBoosterVaccination>().resize(SimulationDay(num_days + 1));
             for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
                 model[i].parameters.template get<DailyPartialVaccination>()[{g, d}] = 0.0;
                 model[i].parameters.template get<DailyFullVaccination>()[{g, d}]    = 0.0;
-                model[i].parameters.template get<DailyBoosterVaccination>()[{g, d}] = 0.0;
             }
         }
     }
@@ -382,10 +410,6 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         return failure(StatusCode::InvalidFileFormat, "Vaccination data file is empty.");
     }
     auto max_date = max_date_entry->date;
-    if (max_date < offset_date_by_days(date, num_days)) {
-        log_error("Vaccination data does not contain all dates. After the last day the data, vaccinations per day are "
-                  "set to 0.");
-    }
 
     for (auto&& vacc_data_entry : vacc_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
@@ -396,80 +420,75 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         auto date_df = vacc_data_entry.date;
         if (it != vregion.end()) {
             auto region_idx = size_t(it - vregion.begin());
-            AgeGroup age    = vacc_data_entry.age_group;
+            auto age        = vacc_data_entry.age_group;
 
-            // initialize the temporary immunity states
-            if (date_df >=
-                    offset_date_by_days(
-                        date,
-                        static_cast<int>(
-                            -model[region_idx].parameters.template get<TimeTemporaryImmunityPI>()[age] -
-                            model[region_idx].parameters.template get<DaysUntilEffectiveImprovedVaccination>()[age])) &&
-                date_df <=
-                    offset_date_by_days(
-                        date, static_cast<int>(
-                                  -model[region_idx]
-                                       .parameters.template get<DaysUntilEffectiveImprovedVaccination>()[age]))) {
-                model[region_idx].populations[{age, InfectionState::TemporaryImmunPartialImmunity}] +=
-                    vacc_data_entry.num_vaccinations_completed;
-            }
-
-            if (date_df >=
-                    offset_date_by_days(
-                        date,
-                        static_cast<int>(
-                            -model[region_idx].parameters.template get<TimeTemporaryImmunityII>()[age] -
-                            model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity>()[age])) &&
-                date_df <=
-                    offset_date_by_days(
-                        date, static_cast<int>(
-                                  -model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity>()[age]))
-
-            ) {
-                model[region_idx].populations[{age, InfectionState::TemporaryImmunImprovedImmunity}] +=
-                    vacc_data_entry.num_vaccinations_refreshed + vacc_data_entry.num_vaccinations_refreshed_2;
-            }
-
-            // get daily vaccinations for each layer
             for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
-                auto offset_first_date = offset_date_by_days(date, (int)d - days_until_effective_n);
+                int days_plus;
+                // In the following, second dose means previous 'full immunization', now 'Grundimmunisierung'.
+                // ---
+                // date: start_date of the simulation (Input from IO call read_input_data_county_vaccmodel())
+                // d: day of simulation, counted from 0 to num_days (for which we need (approximated) vaccination numbers)
+                // root[i]["Vacc_completed"]: accumulated number of total second doses up to day date_df;
+                //                               taken from input dataframe, single value, per county and age group
+                // ----
+                // An averaged distance between first and second doses (vaccination_distance) is assumed in the following
+                // and the first doses are computed based on the second doses given 'vaccination_distance' days later.
+                // ----
+                // a person whose second dose is reported at start_date + simulation_day - days_until_effective1 + vaccination_distance
+                // had the first dose on start_date + simulation_day - days_until_effective1. Furthermore, he/she has the full protection
+                // of the first dose at day X = start_date + simulation_day
+                // Storing its value in get<DailyPartialVaccination>() will eventually (in the simulation)
+                // transfer the difference (between get<DailyPartialVaccination>() at d and d-1) of
+                // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
+                auto offset_first_date =
+                    offset_date_by_days(date, (int)d - days_until_effective1 + vaccination_distance);
                 if (max_date >= offset_first_date) {
+                    // Option 1: considered offset_first_date is available in input data frame
                     if (date_df == offset_first_date) {
                         model[region_idx].parameters.template get<DailyPartialVaccination>()[{age, SimulationDay(d)}] =
-                            vacc_data_entry.num_vaccinations_partial;
+                            vacc_data_entry.num_vaccinations_completed;
                     }
                 }
-                else {
-                    if (date_df == offset_first_date) {
-                        model[region_idx].parameters.template get<DailyPartialVaccination>()[{age, SimulationDay(d)}] =
-                            0;
+                else { // offset_first_date > max_date
+                    // Option 2: considered offset_first_date is NOT available in input data frame
+                    // Here, a constant number of first and second doses is assumed, i.e.,
+                    // the the number of vaccinationes at day d (N days after max_date) will be:
+                    // total number of vaccinations up to day max_date + N * number of vaccinations ON max_date
+                    // (where the latter is computed as the difference between the total number at max_date and max_date-1)
+                    days_plus = get_offset_in_days(offset_first_date, max_date);
+                    if (date_df == offset_date_by_days(max_date, -1)) {
+                        model[region_idx].parameters.template get<DailyPartialVaccination>()[{age, SimulationDay(d)}] -=
+                            days_plus * vacc_data_entry.num_vaccinations_completed;
+                    }
+                    else if (date_df == max_date) {
+                        model[region_idx].parameters.template get<DailyPartialVaccination>()[{age, SimulationDay(d)}] +=
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
                     }
                 }
 
-                auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective_pi);
+                // a person whose second dose is reported at start_date + simulation_day - days_until_effective2
+                // has the full protection of the second dose at day X = start_date + simulation_day
+                // Storing its value in get<DailyFullVaccination>() will eventually (in the simulation)
+                // transfer the difference (between get<DailyFullVaccination>() at d and d-1) of
+                // N susceptible, partially vaccinated individuals to 'SusceptibleImprovedImmunity' state at day d; see secir_vaccinated.h
+                auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective2);
                 if (max_date >= offset_full_date) {
+                    // Option 1: considered offset_full_date is available in input data frame
                     if (date_df == offset_full_date) {
                         model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] =
                             vacc_data_entry.num_vaccinations_completed;
                     }
                 }
-                else {
-                    if (date_df == offset_first_date) {
-                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] = 0;
+                else { // offset_full_date > max_full_date
+                    // Option 2: considered offset_full_date is NOT available in input data frame
+                    days_plus = get_offset_in_days(offset_full_date, max_date);
+                    if (date_df == offset_date_by_days(max_date, -1)) {
+                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] -=
+                            days_plus * vacc_data_entry.num_vaccinations_completed;
                     }
-                }
-
-                auto offset_booster_date = offset_date_by_days(date, (int)d - days_until_effective_ii);
-                if (max_date >= offset_booster_date) {
-                    if (date_df == offset_booster_date) {
-                        model[region_idx].parameters.template get<DailyBoosterVaccination>()[{age, SimulationDay(d)}] =
-                            vacc_data_entry.num_vaccinations_refreshed + vacc_data_entry.num_vaccinations_refreshed_2;
-                    }
-                }
-                else {
-                    if (date_df == offset_first_date) {
-                        model[region_idx].parameters.template get<DailyBoosterVaccination>()[{age, SimulationDay(d)}] =
-                            0;
+                    else if (date_df == max_date) {
+                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
                     }
                 }
             }

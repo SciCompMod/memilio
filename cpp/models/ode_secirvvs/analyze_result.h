@@ -22,7 +22,6 @@
 
 #include "ode_secirvvs/model.h"
 #include "memilio/data/analyze_result.h"
-#include "ode_secirvvs/parameters.h"
 
 #include <functional>
 #include <vector>
@@ -66,7 +65,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     for (size_t node = 0; node < num_nodes; node++) {
         percentile[node].parameters.template get<DailyPartialVaccination>().resize(num_days);
         percentile[node].parameters.template get<DailyFullVaccination>().resize(num_days);
-        percentile[node].parameters.template get<DailyBoosterVaccination>().resize(num_days);
 
         for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             //Population
@@ -149,11 +147,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<VaccinationGap>()[i]; });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectivePartialVaccination>()[i];
+                    return model.parameters.template get<DaysUntilEffectivePartialImmunity>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectiveImprovedVaccination>()[i];
+                    return model.parameters.template get<DaysUntilEffectiveImprovedImmunity>()[i];
                 });
 
             for (auto day = SimulationDay(0); day < num_days; ++day) {
@@ -164,10 +162,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 param_percentil(
                     node, [ i, day ](auto&& model) -> auto& {
                         return model.parameters.template get<DailyFullVaccination>()[{i, day}];
-                    });
-                param_percentil(
-                    node, [ i, day ](auto&& model) -> auto& {
-                        return model.parameters.template get<DailyBoosterVaccination>()[{i, day}];
                     });
             }
             //virus variants
