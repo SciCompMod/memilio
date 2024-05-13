@@ -53,7 +53,7 @@ public:
     /**
      * @brief Create an Infection for a single Person.
      * Draws a random infection course.
-     * @param[inout] rng PersonalRandomNumberGenerator for the Person.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] virus Virus type of the Infection.
      * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] params Parameters of the Model.

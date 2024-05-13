@@ -136,7 +136,7 @@ public:
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
-     * @param[inout] rng PersonalRandomNumberGenerator for the Person being tested.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
@@ -213,7 +213,7 @@ public:
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
-     * @param[inout] rng PersonalRandomNumberGenerator for the Person being tested.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
