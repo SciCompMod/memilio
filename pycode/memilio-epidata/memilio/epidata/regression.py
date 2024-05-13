@@ -901,52 +901,6 @@ class NPIRegression():
             plt.close()
 
 
-def investigate_influence_of_delay(counties, min_date, max_date, fine_resolution, delay_list, plot=True):
-
-    aic_initial_all = []
-    aic_final_all = []
-
-    for delay in delay_list:
-
-        npi_regression = NPIRegression(
-            counties, min_date, max_date, fine_resolution, delay)
-
-        df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
-            plot=False)
-
-        aic_initial_all.append(aic_initial)
-        aic_final_all.append(aic_final)
-
-    plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all)
-
-    if plot:
-        plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all)
-
-
-def plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all):
-
-    fig, ax = plt.subplots()
-
-    ax.plot(delay_list, aic_initial_all, label='Initial model')
-    ax.plot(delay_list, aic_final_all, label='Final model')
-
-    ax.set_xticks(delay_list)
-
-    ax.set_xlabel('Delay')
-    ax.set_ylabel('AIC')
-
-    plt.legend()
-
-    if not os.path.isdir(f'plots/delay'):
-        os.makedirs(
-            f'plots/delay')
-    plt.tight_layout()
-    plt.savefig(f'plots/delay/aic.png', format='png',
-                dpi=500)
-
-    plt.close()
-
-
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
@@ -964,12 +918,6 @@ def main():
 
     df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
         plot=True)
-
-    investigate_delay = False
-    if investigate_delay:
-        delay_list = [delay for delay in range(-10, 11)]
-        investigate_influence_of_delay(
-            counties, min_date, max_date, fine_resolution, delay_list, plot=True)
 
 
 if __name__ == "__main__":
