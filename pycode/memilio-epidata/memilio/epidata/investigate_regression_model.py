@@ -12,6 +12,7 @@ from regression import NPIRegression
 from datetime import date, datetime
 import os
 import math
+import scipy
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -67,33 +68,70 @@ def plot_aic_for_delay(delay_list, aic_initial_all, aic_final_all):
     plt.close()
 
 
-def chow_test():
-    pass
+def compute_chow_statistic(results_ur1, results_ur2, results_r):
+    # TODO: is pseudo_rsquared a good choice?
+    pseudo_rsquared_ur1 = results_ur1.pseudo_rsquared()
+    pseudo_rsquared_ur2 = results_ur2.pseudo_rsquared()
+    pseudo_rsquared_r = results_r.pseudo_rsquared()
+
+    df_ur1 = results_ur1.df_model
+    df_ur2 = results_ur2.df_model
+    df_r = results_r.df_model
+
+    chow = ((pseudo_rsquared_r-pseudo_rsquared_ur1-pseudo_rsquared_ur2)/(df_r -
+            df_ur1-df_ur2)) / ((pseudo_rsquared_ur1+pseudo_rsquared_ur2)/(df_ur1+df_ur2))
+
+    pvalue = scipy.stats.f.cdf(chow, df_r-df_ur1-df_ur2, df_ur1+df_ur2)
+
+
+def apply_chow_test(counties, min_date, max_date, variant_change_date):
+    # model containing only first variant
+    unrestricted_model_1 = NPIRegression(
+        counties, min_date, variant_change_date, fine_resolution=2, delay=0, fixed_effects=False)
+    df_pvalues_ur1, results_ur1, aic_initial_ur1, aic_final_ur1 = unrestricted_model_1.backward_selection(
+        plot=True)
+
+    # model containing only second variant
+    unrestricted_model_2 = NPIRegression(
+        counties, variant_change_date, max_date, fine_resolution=2, delay=0, fixed_effects=False)
+    df_pvalues_ur2, results_ur2, aic_initial_ur2, aic_final_ur2 = unrestricted_model_2.backward_selection(
+        plot=True)
+
+    # model containing both variants
+    restricted_model = NPIRegression(
+        counties, min_date, max_date, fine_resolution=2, delay=0, fixed_effects=False)
+    df_pvalues_r, results_r, aic_initial_r, aic_final_r = restricted_model.backward_selection(
+        plot=True)
+
+    pvalue = compute_chow_statistic(results_ur1, results_ur2, results_r)
+
+    return pvalue
 
 
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
-    min_date = '2020-03-01'
-    max_date = '2020-05-01'
-
     fine_resolution = 2
-
-    delay = 0
-
-    fixed_effects = False
-
-    npi_regression = NPIRegression(
-        counties, min_date, max_date, fine_resolution, delay, fixed_effects)
-
-    df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
-        plot=True)
 
     investigate_delay = False
     if investigate_delay:
+        min_date = '2020-03-01'
+        max_date = '2020-05-01'
+
         delay_list = [delay for delay in range(-10, 11)]
         investigate_influence_of_delay(
             counties, min_date, max_date, fine_resolution, delay_list, plot=True)
+
+    do_chow_test = True
+    if do_chow_test:
+        # TODO: find out exact dates, these are rough estimates from plot
+        min_date = '2020-03-01'
+        max_date = '2021-07-01'
+        change_wildtype_alpha = '2021-02-01'
+        pvalue = apply_chow_test(
+            counties, min_date, max_date, change_wildtype_alpha)
+
+        print(f'P value for Chow test is {pvalue}.')
 
 
 if __name__ == "__main__":
