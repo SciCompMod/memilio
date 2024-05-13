@@ -94,7 +94,7 @@ void flow_sim(::benchmark::State& state)
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
-        mio::osecirvvs::Simulation<ScalarType,mio::FlowSimulation<ScalarType,Model>> sim(model, cfg.t0, cfg.dt);
+        mio::osecirvvs::Simulation<ScalarType, mio::FlowSimulation<ScalarType, Model>> sim(model, cfg.t0, cfg.dt);
         sim.set_integrator(I);
         // run sim
         sim.advance(cfg.t_max);

@@ -65,8 +65,8 @@ mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const Scala
             {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, pop_total);
     }
 
-    const size_t vacc_first                                      = 5;
-    const size_t vacc_full                                       = 5;
+    const size_t vacc_first                                                  = 5;
+    const size_t vacc_full                                                   = 5;
     model.parameters.get<mio::osecirvvs::ICUCapacity<ScalarType>>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
     model.parameters.get<mio::osecirvvs::DailyFirstVaccination<ScalarType>>().resize(mio::SimulationDay(tmax));
@@ -117,7 +117,9 @@ auto create_simulation()
 
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>, mio::MigrationEdge<ScalarType>> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>,
+               mio::MigrationEdge<ScalarType>>
+        g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
         g.nodes()[county_id].property.get_simulation().set_integrator(std::make_shared<Integrator>());
@@ -166,9 +168,11 @@ BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name(
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
 BENCHMARK_TEMPLATE(init_benchmark, mio::RKIntegratorCore<ScalarType>)->Name("Initialize Graph without simulation");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore<ScalarType>)->Name("Graph Simulation - simple explicit euler");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore<ScalarType>)
+    ->Name("Graph Simulation - simple explicit euler");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Graph Simulation - adapt_rk");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>)
+BENCHMARK_TEMPLATE(graph_sim_secirvvs,
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("Graph Simulation - rk_ck54 (boost)");
 // BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
 // ->Name("Graph Simulation - rk_dopri5 (boost)"); // TODO: reenable once boost bug is fixed
