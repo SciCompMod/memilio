@@ -86,9 +86,12 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
 
     // set vaccination rates higher than total population for each layer
     const size_t daily_vaccinations = 100;
-    model.parameters.get<mio::osecirts::DailyPartialVaccination>().resize(mio::SimulationDay(tmax + 1));
-    model.parameters.get<mio::osecirts::DailyFullVaccination>().resize(mio::SimulationDay(tmax + 1));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccination>().resize(mio::SimulationDay(tmax + 1));
+    model.parameters.get<mio::osecirts::DailyPartialVaccination>().resize(
+        mio::SimulationDay(static_cast<size_t>(tmax + 1)));
+    model.parameters.get<mio::osecirts::DailyFullVaccination>().resize(
+        mio::SimulationDay(static_cast<size_t>(tmax + 1)));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccination>().resize(
+        mio::SimulationDay(static_cast<size_t>(tmax + 1)));
     for (size_t i = 0; i <= tmax; ++i) {
         auto num_vaccinations = static_cast<double>((i + 1) * daily_vaccinations);
         model.parameters.get<mio::osecirts::DailyPartialVaccination>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
