@@ -348,13 +348,13 @@ TEST(TestStateAgeFunction, testComparisonOperator)
     mio::GammaSurvivalFunction gamma3(2, 0, 1);
     mio::GammaSurvivalFunction gamma4(0.5, 1.5, 1);
     mio::GammaSurvivalFunction gamma5(0.5, 0, 2);
-    mio::SmootherCosine smoothcos(0.5);
+    mio::LognormSurvivalFunction logn(0.5, 0, 1);
 
     EXPECT_TRUE(gamma == gamma2);
     EXPECT_FALSE(gamma == gamma3);
     EXPECT_FALSE(gamma == gamma4);
     EXPECT_FALSE(gamma == gamma5);
-    EXPECT_FALSE(gamma == smoothcos);
+    EXPECT_FALSE(gamma == logn);
 
     // Check that it also holds when a StateAgeFunctionWrapper is set with the respective functions
     mio::StateAgeFunctionWrapper wrapper(gamma);
@@ -362,7 +362,7 @@ TEST(TestStateAgeFunction, testComparisonOperator)
     mio::StateAgeFunctionWrapper wrapper3(gamma3);
     mio::StateAgeFunctionWrapper wrapper4(gamma4);
     mio::StateAgeFunctionWrapper wrapper5(gamma5);
-    mio::StateAgeFunctionWrapper wrapper6(smoothcos);
+    mio::StateAgeFunctionWrapper wrapper6(logn);
 
     EXPECT_TRUE(wrapper == wrapper2);
     EXPECT_FALSE(wrapper == wrapper3);
