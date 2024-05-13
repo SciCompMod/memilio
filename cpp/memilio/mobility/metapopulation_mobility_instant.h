@@ -528,14 +528,18 @@ template <typename FP, class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge<FP>>>
 make_migration_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MigrationEdge<FP>>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<FP, Sim>);
+    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
+                          static_cast<void (*)(FP, FP, MigrationEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+                              &apply_migration<FP, Sim>));
 }
 
 template <typename FP, class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge<FP>>>
 make_migration_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MigrationEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<FP, Sim>);
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
+                          static_cast<void (*)(FP, FP, MigrationEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+                              &apply_migration<FP, Sim>));
 }
 
 /** @} */
