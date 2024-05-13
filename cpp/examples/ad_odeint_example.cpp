@@ -20,6 +20,7 @@
 
 #include "ad/ad.hpp"
 #include "boost/numeric/odeint.hpp"
+#include <array>
 
 // This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
 // algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp.
@@ -30,7 +31,8 @@ using value_type = ad_forward_type;
 using time_type  = value_type;
 
 // The type of container used to hold the state vector
-typedef std::vector<value_type> state_type;
+const size_t dimension = 2; // dimension of ODE
+using state_type       = std::array<value_type, dimension>; // 2-dimensional vector
 
 double damping = 0.15;
 
@@ -50,7 +52,7 @@ using boost::numeric::odeint::make_controlled;
 
 int main()
 {
-    state_type x(2);
+    state_type x;
     x[0]                 = 1.0; // start at x=1.0, p=0.0
     x[1]                 = 0.0;
     ad::derivative(x[0]) = 1.0; // compute derivative with respect to x[0] (scalar tangent-linear mode)
@@ -70,7 +72,7 @@ int main()
     // We want to compare AD derivatives with difference quotient
     // To this end, we simulate again with a perturbation of the initial value of x[0]
     const double h        = 1e-3; // pertubation for finite differences
-    std::vector<double> y = {ad::value(x[0]), ad::value(x[1])};
+    std::array<double, dimension> y = {ad::value(x[0]), ad::value(x[1])};
     x[0]                  = 1.0 + h; // add perturbation to initial value of x[0]
     x[1]                  = 0.0;
 
