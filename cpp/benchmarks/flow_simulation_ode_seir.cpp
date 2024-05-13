@@ -36,16 +36,13 @@ using FlowModel = ::mio::oseir::Model<ScalarType>;
 
 using namespace oseir;
 
-// For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
-// For more details see the original implementation in:
-// https://github.com/SciCompMod/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_seir/model.h
+// For comparison benchmarks, the ODE-SEIR model has been adapted into
+// a compartmental model that does not rely on flows.
 class FlowlessModel
     : public CompartmentalModel<ScalarType, oseir::InfectionState,
                                 Populations<ScalarType, AgeGroup, oseir::InfectionState>, oseir::Parameters<ScalarType>>
 {
-    using InfectionState = oseir::InfectionState;
-    using Parameters     = oseir::Parameters<>;
-    using Base           = CompartmentalModel<ScalarType, oseir::InfectionState,
+    using Base = CompartmentalModel<ScalarType, oseir::InfectionState,
                                     mio::Populations<ScalarType, AgeGroup, oseir::InfectionState>,
                                     oseir::Parameters<ScalarType>>;
 
@@ -86,9 +83,8 @@ public:
                                                                                                             j.get()) *
                     params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * Nj_inv;
 
-                double dummy_S = y[Si] * y[Ij] * coeffStoE;
-                dydt[Si] -= dummy_S;
-                dydt[Ei] += dummy_S;
+                dydt[Si] -= y[Si] * y[Ij] * coeffStoE;
+                dydt[Ei] += y[Si] * y[Ij] * coeffStoE;
             }
 
             dydt[Ii] += (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
@@ -101,14 +97,14 @@ public:
 template <class Model>
 void setup_model(Model& model)
 {
-    double total_population = 10000;
-    const auto num_groups   = model.parameters.get_num_groups();
+    const double total_population = 10000.0;
+    const auto num_groups         = model.parameters.get_num_groups();
     for (AgeGroup i = 0; i < num_groups; i++) {
-        model.populations[{i, oseir::InfectionState::Exposed}]   = 100 / static_cast<double>((size_t)num_groups);
-        model.populations[{i, oseir::InfectionState::Infected}]  = 100 / static_cast<double>((size_t)num_groups);
-        model.populations[{i, oseir::InfectionState::Recovered}] = 100 / static_cast<double>((size_t)num_groups);
+        model.populations[{i, oseir::InfectionState::Exposed}]   = 100.0 / static_cast<size_t>(num_groups);
+        model.populations[{i, oseir::InfectionState::Infected}]  = 100.0 / static_cast<size_t>(num_groups);
+        model.populations[{i, oseir::InfectionState::Recovered}] = 100.0 / static_cast<size_t>(num_groups);
         model.populations[{i, oseir::InfectionState::Susceptible}] =
-            total_population / static_cast<double>((size_t)num_groups) -
+            total_population / static_cast<size_t>(num_groups) -
             model.populations[{i, oseir::InfectionState::Exposed}] -
             model.populations[{i, oseir::InfectionState::Infected}] -
             model.populations[{i, oseir::InfectionState::Recovered}];

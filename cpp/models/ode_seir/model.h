@@ -84,7 +84,7 @@ public:
                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] * Nj_inv;
 
                 flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] +=
-                    coeffStoE * y[Si] * y[Ij];
+                    coeffStoE * y[Si] * pop[Ij];
             }
             flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(i)] =
                 (1.0 / params.template get<TimeExposed<FP>>()[i]) * y[Ei];
