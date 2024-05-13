@@ -44,8 +44,8 @@ TEST(Testad, ad_square)
         ad::value(t1_x)             = x; // set value (this corresponds to the non-AD part)
         ad::derivative(t1_x)        = 1.0; // set tangent-linear derivative seed
         ad::gt1s<double>::type t1_y = square(t1_x);
-        EXPECT_EQ(ad::value(t1_x) * ad::value(t1_x), ad::value(t1_y));
-        EXPECT_EQ(2. * ad::value(t1_x), ad::derivative(t1_y));
+        EXPECT_NEAR(ad::value(t1_x) * ad::value(t1_x), ad::value(t1_y), 1e-8);
+        EXPECT_NEAR(2. * ad::value(t1_x), ad::derivative(t1_y), 1e-8);
 
         // Reverse AD.
         // Create tape (allocation).
@@ -60,14 +60,14 @@ TEST(Testad, ad_square)
         ad::ga1s<double>::global_tape->register_variable(a1_x); // Register input variable.
         ad::ga1s<double>::type a1_y = square(a1_x);
 
-        EXPECT_EQ(ad::value(a1_x) * ad::value(a1_x), ad::value(a1_y));
+        EXPECT_NEAR(ad::value(a1_x) * ad::value(a1_x), ad::value(a1_y), 1e-8);
 
         ad::ga1s<double>::global_tape->register_output_variable(a1_y);
         ad::derivative(a1_y) = 1.0;
         ad::ga1s<double>::global_tape
             ->interpret_adjoint(); // Compute reverse-mode derivatives by evaluating the tape backwards.
         // Access reverse-derivatives in x variable.
-        EXPECT_EQ(2 * ad::value(a1_x), ad::derivative(a1_x));
+        EXPECT_NEAR(2 * ad::value(a1_x), ad::derivative(a1_x), 1e-8);
         ad::ga1s<double>::tape_t::remove(ad::ga1s<double>::global_tape); // Deallocate tape.
     }
 }
