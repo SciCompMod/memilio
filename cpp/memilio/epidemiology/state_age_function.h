@@ -230,7 +230,7 @@ struct StateAgeFunction {
     void set_scale(ScalarType new_scale)
     {
         if (new_scale <= 0) {
-            log_error("The scale Parameter of a  StateAgeFunction has to be positive. Set scale to 1.");
+            log_error("The scale parameter of a StateAgeFunction has to be positive. Set scale to 1.");
             new_scale = 1;
         }
         m_scale       = new_scale;
@@ -276,7 +276,7 @@ struct StateAgeFunction {
      * This basic implementation is only valid if the StateAgeFunction is of type a). Otherwise it should be overridden.
      *
      * For some specific derivations of StateAgeFunction%s there are more efficient ways to determine the 
-     * the mean value which is why this member function is virtual and can be overridden (see, e.g., ExponentialSurvivalFunction).
+     * mean value which is why this member function is virtual and can be overridden (see, e.g., ExponentialSurvivalFunction).
      * The mean value is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
      *
      * @param[in] dt Time step size used for the numerical integration. 
@@ -341,7 +341,7 @@ protected:
 ***************************************/
 
 /**
- * @brief Class that defines an exponential decay function depending on the state age.
+ * @brief Class that defines the survival function corresponding to the exponential distribution depending on the state age.
  */
 struct ExponentialSurvivalFunction : public StateAgeFunction {
 
@@ -349,7 +349,7 @@ struct ExponentialSurvivalFunction : public StateAgeFunction {
      * @brief Constructs a new ExponentialSurvivalFunction object.
      * 
      * @param[in] init_distribution_parameter Specifies the initial function parameter of the function.
-     * @param[in] init_location Location paramter to shift the ExponentialSurvivalFunction function. 
+     * @param[in] init_location Location parameter to shift the ExponentialSurvivalFunction function. 
      *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
      */
     ExponentialSurvivalFunction(ScalarType init_distribution_parameter, ScalarType init_location = 0)
@@ -376,7 +376,7 @@ struct ExponentialSurvivalFunction : public StateAgeFunction {
     /**
      * @brief Computes the mean value of the function. 
      * 
-     * For the exponential distribution, the mean value is the reciprocal of the function parameter.
+     * For the exponential distribution, the mean value is the reciprocal of the distribution parameter and shifted with respect to the location parameter.
      *
      * @param[in] dt Time step size used for the numerical integration (unused for ExponentialSurvivalFunction). 
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
@@ -698,7 +698,7 @@ protected:
  * @brief Class that defines the probability density function corresponding to the Erlang distribution with the parameters shape and scale depending on the state age.
  * Class is needed for the initialization of the subcompartments for LCT model.
  * ErlangDensity is derived from StateAgeFunction. 
- * The shape parameter of the Erlang function is the parameter of the StateAgeFunction. 
+ * The shape parameter of the Erlang function is the distribution parameter of the StateAgeFunction. 
  * Attention: The density is not a survival function and does not have the characteristics of a TransitionDistribution!!
  * The function is of the StateAgeFunction-Type b).
  */
