@@ -66,7 +66,7 @@ endif()
 
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    message(STATUS "Downloading Boost library. This may several minutes. This is the time to get yourself a coffee. :-)")
+    message(STATUS "Downloading Boost library. This may take several minutes. This is the time to get yourself a coffee. :-)")
 
     include(FetchContent)
     FetchContent_Declare(boost
