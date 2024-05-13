@@ -91,12 +91,13 @@ TEST(Testad, ad_odeint)
     // The type of container used to hold the state vector.
     using value_type = ad_forward_t;
     using time_type  = value_type;
-    typedef std::vector<value_type> state_type;
+    const size_t dimension = 2;
+    typedef std::array<value_type, dimension> state_type; // 2-dimensional vector
 
     using error_stepper_type =
         boost::numeric::odeint::runge_kutta_cash_karp54<state_type, value_type, state_type, time_type>;
 
-    state_type x(2);
+    state_type x;
     x[0]                 = 1.0; // Start at x=1.0, y=0.0.
     x[1]                 = 0.0;
     ad::derivative(x[0]) = 1.0; // Compute derivative with respect to x[0] (scalar tangent-linear mode).
@@ -115,7 +116,7 @@ TEST(Testad, ad_odeint)
     // We want to compare AD derivatives with difference quotient.
     // To this end, we simulate again with a small perturbation of the initial value of x[0].
     const double h = 1e-3;
-    state_type x_compare(2);
+    state_type x_compare;
     x_compare[0] = 1.0 + h;
     x_compare[1] = 0.0;
     boost::numeric::odeint::integrate_adaptive(
