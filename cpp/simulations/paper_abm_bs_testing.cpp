@@ -193,7 +193,7 @@ void split_line(std::string string, std::vector<int32_t>* row)
             return longLatToInt(s);
         }
         else if (s == "null") {
-            return 10; // This shouldnt be too often, just assume a short time after 12:00 o'clock for now
+            return 43200; // This shouldnt be too often, we will take 12 o'clock as default
         }
         else {
             return std::stoi(s);
@@ -587,7 +587,7 @@ void set_parameters(mio::abm::Parameters& params)
     };
 
     //Set other parameters
-    params.get<mio::abm::MaskProtection>()           = 0.66;
+    params.get<mio::abm::MaskProtection>()           = 0.66; //all masks have a 0.66 protection factor for now
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
 }
 
@@ -932,7 +932,7 @@ void write_log_to_file_trip_data(const T& history)
 
             int start_index = movement_data_index - 1;
             using Type      = std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
-                                    mio::abm::ActivityType, mio::abm::InfectionState>;
+                                         mio::abm::ActivityType, mio::abm::InfectionState>;
             while (!std::binary_search(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
                                        movement_data[movement_data_index][trip_index],
                                        [](const Type& v1, const Type& v2) {
@@ -1181,8 +1181,84 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Advance the world to tmax
         // sim.advance(tmax, historyPersonInf, historyInfectionPerLocationType, historyInfectionPerAgeGroup,
         //             historyPersonInfDelta, historyInfectionStatePerAgeGroup);
+
+        //// Advance the world with respective npis
+        //1. testing schemes in schools
+        auto testing_min_time_school = mio::abm::days(7);
+        auto probability_school      = 1.0;
+        auto start_date_test_school  = mio::abm::TimePoint(42); // 2021-04-12
+        auto end_date_test_school    = mio::abm::TimePoint(tmax); // 2021-05-30
+        auto test_type_school        = mio::abm::TestType::Antigen; // Antigen test
+        auto test_parameters         = world.parameters.get<mio::abm::TestData>()[test_type_school]; // Test parameters
+        auto testing_criteria_school = mio::abm::TestingCriteria();
+        auto testing_scheme_school =
+            mio::abm::TestingScheme(testing_criteria_school, testing_min_time_school, start_date_test_school,
+                                    end_date_test_school, test_parameters, probability_school);
+        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
+
+        //2. testing schemes in work places for 35% of random workplaces
+        auto location_it = world.get_locations();
+        std::vector<int> work_location_ids;
+        for (auto& location : location_it) {
+            if (location.get_type() == mio::abm::LocationType::Work) {
+                work_location_ids.push_back(location.get_index());
+            }
+        }
+        //take 35% of work locations
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(work_location_ids.begin(), work_location_ids.end(), g);
+        auto num_work_locations = (int)(0.35 * work_location_ids.size());
+        std::vector<int> work_location_ids_35(work_location_ids.begin(),
+                                              work_location_ids.begin() + num_work_locations);
+        auto testing_min_time_work = mio::abm::days(1);
+        auto probability_work      = 1.0;
+        auto start_date_test_work  = mio::abm::TimePoint(0);
+        auto end_date_test_work    = mio::abm::TimePoint(tmax);
+        auto test_type_work        = mio::abm::TestType::Antigen; // Antigen test
+        auto test_parameters_work  = world.parameters.get<mio::abm::TestData>()[test_type_work]; // Test parameters
+        auto testing_criteria_work = mio::abm::TestingCriteria();
+        auto testing_scheme_work =
+            mio::abm::TestingScheme(testing_criteria_work, testing_min_time_work, start_date_test_work,
+                                    end_date_test_work, test_parameters_work, probability_work);
+        for (auto& location : location_it) {
+            if (std::find(work_location_ids_35.begin(), work_location_ids_35.end(), location.get_index()) !=
+                work_location_ids_35.end()) {
+                world.get_testing_strategy().add_testing_scheme(location.get_type(), testing_scheme_work);
+            }
+        }
+
+        //3. Mask schemes for all locations
+        //First set all locations to have mask usage, we need ffp2 masks
+        for (auto& location : location_it) {
+            location.set_required_mask(mio::abm::MaskType::FFP2);
+            if (location.get_type() == mio::abm::LocationType::Home) {
+                location.set_npi_active(false);
+            }
+            else {
+                location.set_npi_active(true);
+            }
+        }
+
+        sim.advance(mio::abm::TimePoint(42), historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
+                    historyInfectionPerAgeGroup);
+        for (auto& location : location_it) {
+            if (location.get_type() != mio::abm::LocationType::School) {
+                location.set_npi_active(false);
+            }
+        }
+        sim.advance(mio::abm::TimePoint(72), historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
+                    historyInfectionPerAgeGroup);
+        for (auto& location : location_it) {
+            if (location.get_type() != mio::abm::LocationType::School) {
+                location.set_npi_active(true);
+            }
+        }
         sim.advance(tmax, historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
                     historyInfectionPerAgeGroup);
+
+        ////Advance till here
+
         // Stop the clock after sim.advance and calculate the duration
         // auto stop2     = std::chrono::high_resolution_clock::now();
         // auto duration2 = std::chrono::duration<double>(stop2 - start2);

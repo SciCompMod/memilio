@@ -42,6 +42,30 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
+void Location::add_damping(TimePoint t_begin, double p)
+{
+    temp_npi_damping.emplace_back(t_begin, p);
+}
+
+bool Location::entry_allowed(const mio::abm::TimePoint t) const
+{
+    if (temp_npi_damping.empty()) {
+        return true;
+    }
+    else {
+        // We want to go through the npi vector and get the last entry that is smaller than t
+        auto it = std::upper_bound(temp_npi_damping.begin(), temp_npi_damping.end(), t,
+                                   [](TimePoint t, const std::pair<TimePoint, double>& p) {
+                                       return t < p.first;
+                                   });
+        //then we want to access the second element of it, draw a random number between 0 and 1 and check if it is smaller than the damping factor
+        //get a random number between 0 and 1 without m_rng
+        // double random_number = mio::UniformDistribution<double>::get_instance()();
+        // return random_number > it->second;
+        return true;
+    }
+}
+
 Location Location::copy_location_without_persons(size_t num_agegroups)
 {
     Location copy_loc  = Location(*this);

@@ -249,7 +249,7 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    path = "./results"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:

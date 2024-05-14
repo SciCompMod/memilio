@@ -449,7 +449,7 @@ struct TestData {
     {
         Type default_val                 = Type({TestType::Count});
         default_val[{TestType::Generic}] = TestParameters{0.9, 0.99};
-        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88};
+        default_val[{TestType::Antigen}] = TestParameters{0.65, 0.99};
         default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99};
         return default_val;
     }
