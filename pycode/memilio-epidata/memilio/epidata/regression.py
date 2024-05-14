@@ -588,12 +588,7 @@ class NPIRegression():
 
         return results
 
-    # do backward selection to find out which NPIs have significant impact on R value
-    def backward_selection(self, plot=False):
-
-        # initial set of NPIs
-        # use fine_resolution=0 for now for simplicity
-
+    def regression_with_all_variables(self, plot=False):
         # set up regression model
         self.set_up_model()
 
@@ -606,17 +601,15 @@ class NPIRegression():
                 self.region_types + ['sin', 'cos'] + \
                 self.age_categories + self.used_npis + self.variants
 
-        # counter for iterations in backward selection
-        iteration = 0
         # do regression with all NPIs
         results = self.do_regression(regression_variables)
         # store pvalues in dataframe
         self.df_pvalues = pd.DataFrame({"pvalues": results.pvalues})
         # always keep variable 'const' in regression model
-        fixed_variables = ['const']
+        self.fixed_variables = ['const']
         # add column with column names to df
         self.df_pvalues.insert(
-            1, "columns", fixed_variables + regression_variables)
+            1, "columns", self.fixed_variables + regression_variables)
         # append coefficients and lower and upper boundary of confidence intervals to df_pvalues
         self.df_pvalues.insert(2, "coeffs", list(results.params))
         self.df_pvalues.insert(
@@ -629,16 +622,28 @@ class NPIRegression():
         # TODO: check if there are NaNs from other variables such as variants
         self.df_pvalues.dropna(inplace=True)
 
-        self.plot_confidence_intervals(iteration)
+        if plot:
+            self.plot_confidence_intervals(iteration=0)
 
         # compute AIC and BIC as reference for later
-        aic_initial = results.aic
-        bic_initial = results.bic_llf
+        aic = results.aic
+        bic = results.bic_llf
+
+        return self.df_pvalues, results, aic, bic
+
+    # do backward selection to find out which NPIs have significant impact on R value
+
+    def backward_selection(self, plot=False):
+
+        self.df_pvalues, results, aic_initial, bic_initial = self.regression_with_all_variables()
 
         aic_min = aic_initial
         bic_min = bic_initial
         print('AIC init: ', aic_min)
         print('BIC init: ', bic_min)
+
+        # counter for iterations in backward selection
+        iteration = 0
 
         # count how often an NPI was selected by highest p value but not removed due to unclear AIC/BIC in a row
         counter_not_removed = 0
@@ -647,7 +652,7 @@ class NPIRegression():
         removed_list = []
 
         # TODO: think about how to decide when backwards selection is "done"
-        while (counter_not_removed < 7) and (len(self.df_pvalues) > 5+len(fixed_variables)):
+        while (counter_not_removed < 7) and (len(self.df_pvalues) > 5+len(self.fixed_variables)):
             iteration += 1
 
             # choose NPI of interest which is chosen according to the n-th highest pvalue
@@ -668,7 +673,7 @@ class NPIRegression():
 
             # do new regression and compute AIC and BIC
             # [num_fixed_variables:] because we do want to keep 'const' in regression model
-            num_fixed_variables = len(fixed_variables)
+            num_fixed_variables = len(self.fixed_variables)
             results = self.do_regression(list(
                 df_view['columns'][num_fixed_variables:]))
 

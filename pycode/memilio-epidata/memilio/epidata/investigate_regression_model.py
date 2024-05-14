@@ -88,19 +88,19 @@ def apply_chow_test(counties, min_date, max_date, variant_change_date):
     # model containing only first variant
     unrestricted_model_1 = NPIRegression(
         counties, min_date, variant_change_date, fine_resolution=2, delay=0, fixed_effects=False)
-    df_pvalues_ur1, results_ur1, aic_initial_ur1, aic_final_ur1 = unrestricted_model_1.backward_selection(
+    df_pvalues_ur1, results_ur1, aic_initial_ur1, aic_final_ur1 = unrestricted_model_1.regression_with_all_variables(
         plot=True)
 
     # model containing only second variant
     unrestricted_model_2 = NPIRegression(
         counties, variant_change_date, max_date, fine_resolution=2, delay=0, fixed_effects=False)
-    df_pvalues_ur2, results_ur2, aic_initial_ur2, aic_final_ur2 = unrestricted_model_2.backward_selection(
+    df_pvalues_ur2, results_ur2, aic_initial_ur2, aic_final_ur2 = unrestricted_model_2.regression_with_all_variables(
         plot=True)
 
     # model containing both variants
     restricted_model = NPIRegression(
         counties, min_date, max_date, fine_resolution=2, delay=0, fixed_effects=False)
-    df_pvalues_r, results_r, aic_initial_r, aic_final_r = restricted_model.backward_selection(
+    df_pvalues_r, results_r, aic_initial_r, aic_final_r = restricted_model.regression_with_all_variables(
         plot=True)
 
     pvalue = compute_chow_statistic(results_ur1, results_ur2, results_r)
@@ -132,6 +132,7 @@ def main():
             counties, min_date, max_date, change_wildtype_alpha)
 
         print(f'P value for Chow test is {pvalue}.')
+        print(0)
 
 
 if __name__ == "__main__":
