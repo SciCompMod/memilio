@@ -386,7 +386,7 @@ void Model::set_populations_before_simulation()
         // add first timepoint to m_populations at last time from m_transitions
         m_populations.add_time_point<Eigen::VectorXd>(
             m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = m_deaths;
+        m_populations[m_transitions.get_last_time()][Eigen::Index(InfectionState::Dead)] = m_deaths;
     }
 }
 
