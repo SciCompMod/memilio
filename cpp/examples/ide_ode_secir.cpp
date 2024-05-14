@@ -45,17 +45,17 @@ int main()
 {
 
     // Here we decide what exactly we want to do in the example below
-    bool print_to_terminal = false;
+    bool print_to_terminal = true;
     bool save_result       = true;
-    bool ide_simulation    = true;
-    int dt_ode_exponent    = 4;
-    int dt_ide_exponent    = 2;
+    bool ide_simulation    = false;
+    int dt_ode_exponent    = 6;
+    int dt_ide_exponent    = 0;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
     int setting = 6;
 
     // General set up.
     ScalarType t0       = 0;
-    ScalarType tmax     = 70.00;
+    ScalarType tmax     = 40.00;
     ScalarType dt_ode   = pow(10, -dt_ode_exponent);
     ScalarType dt_ide   = pow(10, -dt_ide_exponent);
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
@@ -259,12 +259,9 @@ int main()
                             [(int)mio::osecir::InfectionState::Dead];
         }
 
-        bool need_flow_init = true;
-
         // Initialize model.
         mio::isecir::Parameters parameters;
-        mio::isecir::Model model_ide(std::move(init_transitions), N, deaths, total_infections, parameters,
-                                     need_flow_init);
+        mio::isecir::Model model_ide(std::move(init_transitions), N, deaths, total_infections, parameters);
 
         // Set working parameters.
 
@@ -273,35 +270,39 @@ int main()
 
         // To compare with the ODE model we use ExponentialDecay functions as TransitionDistributions
         // We set the parameters so that they correspond to the above ODE model
-        mio::ExponentialDecay expdecay(10.0);
-        mio::StateAgeFunctionWrapper delaydistribution(expdecay);
+        mio::ExponentialSurvivalFunction exponential(10.0);
+        mio::StateAgeFunctionWrapper delaydistribution(exponential);
         std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
         // ExposedToInfectedNoSymptoms
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_parameter(
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_distribution_parameter(
             1 / model_ode.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]);
         // InfectedNoSymptomsToInfectedSymptoms
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(
-            1 / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]);
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+            .set_distribution_parameter(
+                1 / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]);
         // InfectedNoSymptomsToRecovered
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_parameter(
-            1 / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]);
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]
+            .set_distribution_parameter(
+                1 / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]);
         // InfectedSymptomsToInfectedSevere
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_parameter(
-            1 / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
+            .set_distribution_parameter(
+                1 / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
         // InfectedSymptomsToRecovered
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_parameter(
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_distribution_parameter(
             1 / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
         // InfectedSevereToInfectedCritical
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_parameter(
-            1 / model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]);
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]
+            .set_distribution_parameter(1 /
+                                        model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]);
         // InfectedSevereToRecovered
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_parameter(
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_distribution_parameter(
             1 / model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]);
         // InfectedCriticalToDead]
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_parameter(
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_distribution_parameter(
             1 / model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0]);
         // InfectedCriticalToRecovered
-        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_distribution_parameter(
             1 / model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0]);
 
         model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
@@ -349,7 +350,7 @@ int main()
 
         model_ide.check_constraints(dt_ide);
 
-        model_ide.set_populations_before_simulation();
+        // model_ide.set_populations_before_simulation();
 
         if (setting == 15 || setting == 16 || setting == 25) {
             model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] =
@@ -365,7 +366,7 @@ int main()
 
         // Carry out simulation
         std::cout << "Simulating now \n";
-        mio::isecir::Simulation sim(model_ide, t0_ide, dt_ide);
+        mio::isecir::Simulation sim(model_ide, dt_ide);
         sim.advance(tmax);
 
         mio::TimeSeries<ScalarType> secihurd_ide       = sim.get_result();
@@ -373,34 +374,35 @@ int main()
 
         if (print_to_terminal) {
             secihurd_ide.print_table();
+            secihurd_ide_flows.print_table();
         }
 
-        std::cout << "Initialization method: " << sim.get_model().get_initialization_method() << "\n";
+        std::cout << "Initialization method: " << sim.get_model().get_initialization_method_compartments() << "\n";
 
-        std::cout << "Compartments at last time step of ODE:\n";
-        std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
-        for (Eigen::Index j = 0; j < secihurd_ode.get_num_elements(); ++j) {
-            std::cout << "  |  " << std::fixed << std::setprecision(8) << secihurd_ode.get_last_value()[j];
-        }
+        // std::cout << "Compartments at last time step of ODE:\n";
+        // std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
+        // for (Eigen::Index j = 0; j < secihurd_ode.get_num_elements(); ++j) {
+        //     std::cout << "  |  " << std::fixed << std::setprecision(8) << secihurd_ode.get_last_value()[j];
+        // }
+        // std::cout << "\n" << std::endl;
+
+        // std::cout << "Compartments at last time step of IDE:\n";
+        // std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
+        // for (Eigen::Index j = 0; j < secihurd_ide.get_num_elements(); ++j) {
+        //     std::cout << "  |  " << std::fixed << std::setprecision(8) << secihurd_ide.get_last_value()[j];
+        // }
         std::cout << "\n" << std::endl;
 
-        std::cout << "Compartments at last time step of IDE:\n";
-        std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
-        for (Eigen::Index j = 0; j < secihurd_ide.get_num_elements(); ++j) {
-            std::cout << "  |  " << std::fixed << std::setprecision(8) << secihurd_ide.get_last_value()[j];
-        }
-        std::cout << "\n" << std::endl;
+        // if (save_result) {
 
-        if (save_result) {
-
-            auto save_result_status_ide = mio::save_result(
-                {secihurd_ide}, {0}, 1,
-                "../../results/result_ide_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
-                    std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
-            auto save_result_status_ide_flows = mio::save_result(
-                {secihurd_ide_flows}, {0}, 1,
-                "../../results/result_ide_flows_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
-                    std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
-        }
+        //     auto save_result_status_ide = mio::save_result(
+        //         {secihurd_ide}, {0}, 1,
+        //         "../../results/result_ide_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
+        //             std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
+        //     auto save_result_status_ide_flows = mio::save_result(
+        //         {secihurd_ide_flows}, {0}, 1,
+        //         "../../results/result_ide_flows_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
+        //             std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
+        // }
     }
 }

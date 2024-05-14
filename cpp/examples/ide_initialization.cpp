@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "ide_secir/infection_state.h"
 #include "ide_secir/simulation.h"
 #include "ide_secir/parameters_io.h"
