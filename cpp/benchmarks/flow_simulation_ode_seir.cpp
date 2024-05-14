@@ -47,14 +47,8 @@ class FlowlessModel
                                     oseir::Parameters<ScalarType>>;
 
 public:
-    FlowlessModel(const Populations& pop, const ParameterSet& params)
-        : Base(pop, params)
-    {
-    }
-
     FlowlessModel(int num_agegroups)
-        : FlowlessModel(Populations({AgeGroup(num_agegroups), InfectionState::Count}),
-                        ParameterSet(AgeGroup(num_agegroups)))
+        : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
     {
     }
 
@@ -83,8 +77,8 @@ public:
                                                                                                             j.get()) *
                     params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * Nj_inv;
 
-                dydt[Si] -= y[Si] * y[Ij] * coeffStoE;
-                dydt[Ei] += y[Si] * y[Ij] * coeffStoE;
+                dydt[Si] -= y[Si] * pop[Ij] * coeffStoE;
+                dydt[Ei] += y[Si] * pop[Ij] * coeffStoE;
             }
 
             dydt[Ii] += (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
