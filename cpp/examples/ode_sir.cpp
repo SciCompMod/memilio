@@ -24,6 +24,8 @@
 #include "ode_sir/infection_state.h"
 #include "ode_sir/model.h"
 #include "ode_sir/parameters.h"
+#include <fstream>
+#include <stdio.h>
 
 int main()
 {
@@ -37,24 +39,23 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::osir::Model model;
+    mio::osir::Model model(1);
 
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Susceptible)}] =
-        total_population -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::osir::InfectionState>(mio::osir::InfectionState::Recovered)}];
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 1000;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}] = 1000;
+    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] =
+        total_population - model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}];
     model.parameters.set<mio::osir::TimeInfected>(2);
-    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::osir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::osir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.set<mio::osir::TransmissionProbabilityOnContact>(0.5);
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osir::ContactPatterns>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(2.7);
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
     model.check_constraints();
 
-    auto sir = simulate(t0, tmax, dt, model, integrator);
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    auto sir        = simulate(t0, tmax, dt, model, integrator);
 
     bool print_to_terminal = true;
 

@@ -67,7 +67,6 @@ setup(
             'getdividata = memilio.epidata.getDIVIData:main',
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
-            'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
             'getcommutermobility = memilio.epidata.getCommuterMobility:main',
             'getvaccinationdata = memilio.epidata.getVaccinationData:main',
             'gethospitalizationdata = memilio.epidata.getHospitalizationData:main'

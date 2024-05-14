@@ -213,7 +213,7 @@ private:
         // Calculate number of people in each subcomaprtment.
         for (int j = 0; j < num_infectionstates; j++) {
             // For subcompartment number j+1, shape parameter j+1 is needed.
-            erlang.set_parameter(j + 1);
+            erlang.set_distribution_parameter(j + 1);
 
             // Determine relevant calculation area and corresponding index.
             calc_time       = erlang.get_support_max(m_dt, m_tol);
