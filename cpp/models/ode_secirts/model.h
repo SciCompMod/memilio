@@ -539,6 +539,17 @@ public:
         }
     }
 
+    /**
+    * @brief Calculates smoothed vaccinations for a given time point.
+    *
+    * This function calculates the number of vaccinations for each age group at a given time t, 
+    * based on daily vaccinations data. The smoothing is done using a cosine function.
+    *
+    * @param t The time in the simulation.
+    * @param daily_vaccinations The daily vaccinations data, indexed by age group and simulation day.
+    * @param eps [Default: 0.15] The smoothing factor used in the cosine smoothing function.
+    * @return A vector containing the number of vaccinations for each age group at time t.
+    */
     Eigen::VectorXd vaccinations_at(const ScalarType t,
                                     const CustomIndexArray<double, AgeGroup, SimulationDay>& daily_vaccinations,
                                     const ScalarType eps = 0.15) const

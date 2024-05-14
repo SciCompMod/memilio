@@ -505,17 +505,15 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 double SPI = num_population[region][size_t(i)] * immunity_population[1][size_t(i)];
                 double SII = num_population[region][size_t(i)] - SN - SPI;
 
-                model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
-                    SII - (model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
-                           model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::DeadImprovedImmunity}] +
-                           model[region].populations[{i, InfectionState::TemporaryImmunImprovedImmunity}]);
-
-                model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] = std::min(
-                    SII,
-                    std::max(0.0, double(model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}])));
+                model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] = std::max(
+                    0.0,
+                    double(SII -
+                           (model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+                            model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
+                            model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
+                            model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
+                            model[region].populations[{i, InfectionState::DeadImprovedImmunity}] +
+                            model[region].populations[{i, InfectionState::TemporaryImmunImprovedImmunity}])));
 
                 model[region].populations[{i, InfectionState::SusceptiblePartialImmunity}] = std::max(
                     0.0,
