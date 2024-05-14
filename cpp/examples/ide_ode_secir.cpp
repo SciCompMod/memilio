@@ -47,9 +47,11 @@ int main()
     // Here we decide what exactly we want to do in the example below
     bool print_to_terminal = true;
     bool save_result       = true;
-    bool ide_simulation    = false;
-    int dt_ode_exponent    = 6;
-    int dt_ide_exponent    = 0;
+    // directory where results will be stored
+    std::string result_dir = "./results";
+    bool ide_simulation    = true;
+    int dt_ode_exponent    = 2;
+    int dt_ide_exponent    = 2;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
     int setting = 6;
 
@@ -216,13 +218,17 @@ int main()
     std::cout << "\n";
 
     if (save_result) {
+        // create directory "results" if not existent yet
+        boost::filesystem::path res_dir("./results");
+        boost::filesystem::create_directory(res_dir);
+
         auto save_result_status_ode =
             mio::save_result({secihurd_ode}, {0}, 1,
-                             "../../results/result_ode_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
+                             result_dir + "/result_ode_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
                                  std::to_string(setting) + ".h5");
         auto save_result_status_ode_flows =
             mio::save_result({secihurd_ode_flows}, {0}, 1,
-                             "../../results/result_ode_flows_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
+                             result_dir + "/result_ode_flows_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
                                  std::to_string(setting) + ".h5");
     }
 
@@ -393,16 +399,16 @@ int main()
         // }
         std::cout << "\n" << std::endl;
 
-        // if (save_result) {
+        if (save_result) {
 
-        //     auto save_result_status_ide = mio::save_result(
-        //         {secihurd_ide}, {0}, 1,
-        //         "../../results/result_ide_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
-        //             std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
-        //     auto save_result_status_ide_flows = mio::save_result(
-        //         {secihurd_ide_flows}, {0}, 1,
-        //         "../../results/result_ide_flows_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
-        //             std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
-        // }
+            auto save_result_status_ide = mio::save_result(
+                {secihurd_ide}, {0}, 1,
+                result_dir + "/result_ide_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
+                    std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
+            auto save_result_status_ide_flows = mio::save_result(
+                {secihurd_ide_flows}, {0}, 1,
+                result_dir + "/result_ide_flows_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
+                    std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
+        }
     }
 }
