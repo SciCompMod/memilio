@@ -43,8 +43,8 @@ namespace lsecir
  * @tparam NumInfectedSevere The number of subcompartents used for the InfectedSevere compartment.
  * @tparam NumInfectedCritical The number of subcompartents used for the InfectedCritical compartment.
  */
-template <unsigned int NumExposed, unsigned int NumInfectedNoSymptoms, unsigned int NumInfectedSymptoms,
-          unsigned int NumInfectedSevere, unsigned int NumInfectedCritical>
+template <int NumExposed, int NumInfectedNoSymptoms, int NumInfectedSymptoms, int NumInfectedSevere,
+          int NumInfectedCritical>
 class Model
 {
 
@@ -75,7 +75,7 @@ public:
             log_error("Size of the initial values does not match subcompartments.");
             return true;
         }
-        for (unsigned int i = 0; i < LctState::Count; i++) {
+        for (int i = 0; i < LctState::Count; i++) {
             if (m_initial_values[i] < 0) {
                 log_warning(
                     "Initial values for one subcompartment are less than zero. Simulation results are not realistic.");
@@ -281,6 +281,17 @@ public:
     Eigen::VectorXd get_initial_values()
     {
         return m_initial_values;
+    }
+
+    /**
+     * @brief Sets the initial values for the model.
+     *
+     * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
+     */
+    void set_initial_values(Eigen::VectorXd init)
+    {
+        m_initial_values = init;
+        m_N0             = m_initial_values.sum();
     }
 
     Parameters parameters{}; ///< Parameters of the model.

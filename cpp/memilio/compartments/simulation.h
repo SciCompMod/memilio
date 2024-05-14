@@ -25,7 +25,6 @@
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/euler.h"
 
 namespace mio
 {
@@ -189,14 +188,15 @@ using is_compartment_model_simulation =
                                   is_compartment_model<typename Sim::Model>::value)>;
 
 /**
- * @brief simulate simulates a compartmental model
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model: An instance of a compartmental model
- * @return a TimeSeries to represent the final simulation result
- * @tparam Model a compartment model type
- * @tparam Sim a simulation type that can simulate the model.
+ * @brief Run a Simulation of a CompartmentalModel.
+ * @param[in] t0 Start time.
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of a CompartmentalModel.
+ * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
+ * @return A TimeSeries to represent the final Simulation result
+ * @tparam Model The particular Model derived from CompartmentModel to simulate.
+ * @tparam Sim A Simulation that can simulate the model.
  */
 template <class Model, class Sim = Simulation<Model>>
 TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,

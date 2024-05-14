@@ -4,7 +4,7 @@ The MEmilio C++ library contains the implementation of the epidemiological model
 
 Directory structure:
 - memilio: framework for developing epidemiological models with, e.g., interregional mobility implementations, nonpharmaceutical interventions (NPIs), and  mathematical, programming, and IO utilities.
-- models: implementation of concrete models (ODE and ABM)
+- models: implementation of concrete models (ODE, IDE, LCT and ABM)
 - simulations: simulation applications that were used to generate the scenarios and data for publications
 - examples: small applications that help with using the framework and models
 - tests: unit tests for framework and models.
@@ -28,7 +28,7 @@ The following table lists the dependencies that are used. Most of them are requi
 |---------|----------|----------|-----------------------|-------|
 | spdlog  | 1.11.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
 | Eigen   | 3.3.9    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
-| Boost   | 1.75.0   | Yes      | Yes (.tar.gz archive) | https://www.boost.org/ |
+| Boost   | 1.84.0   | Yes      | Yes (git repo)        | https://github.com/boostorg/boost |
 | JsonCpp | 1.9.5    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |

@@ -7,6 +7,8 @@ add_library(ide_secir
     parameters.h
     initialize_from_ode.h
     initialize_from_ode.cpp
+    parameters_io.h
+    parameters_io.cpp
 )
 target_link_libraries(ide_secir PUBLIC memilio)
 target_include_directories(ide_secir PUBLIC
