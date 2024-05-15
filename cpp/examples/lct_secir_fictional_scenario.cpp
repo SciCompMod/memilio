@@ -41,7 +41,7 @@
 #include <iostream>
 
 // necessary because num_subcompartments is used as a template argument and has ti be
-constexpr int num_subcompartments = 3;
+constexpr int num_subcompartments = 20;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
@@ -131,7 +131,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     return init;
 }
 
-mio::IOResult<void> simulate_ide_model(ScalarType R0, std::string save_dir = "", ScalarType tmax = 10)
+mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
 {
     // Initialize model.
     mio::isecir::Model model_ide(std::move(get_initial_flows()), simulation_parameter["total_population"],
@@ -246,7 +246,7 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, std::string save_dir = "",
 * @param[in] tmax End time of the simulation.
 * @returns Any io errors that happen during saving the results.
 */
-mio::IOResult<void> simulate_lct_model(ScalarType R0, std::string save_dir = "", ScalarType tmax = 10)
+mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
 {
     using Model = mio::lsecir::Model<num_subcompartments, num_subcompartments, num_subcompartments, num_subcompartments,
                                      num_subcompartments>;
@@ -279,6 +279,7 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, std::string save_dir = "",
 
     // Get initialization vector for LCT model with num_subcompartments subcompartments.
     mio::lsecir::Initializer<Model> initializer(std::move(get_initial_flows()), model);
+    initializer.set_tol_for_support_max(1e-6);
     auto status = initializer.compute_initialization_vector(simulation_parameter["total_population"],
                                                             simulation_parameter["deaths"],
                                                             simulation_parameter["total_confirmed_cases"]);
@@ -311,18 +312,21 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, std::string save_dir = "",
 
 int main()
 {
-    ScalarType R0 = 2.;
+    // Options used: For R0=2 epidemic peak use tmax=150,
+    // for R0=4 epidemic peak use tmax = 75.
+    // For short things: 10 days and R0=0.5 or 2
+    ScalarType R0 = 0.5;
     // Paths are valid if file is executed eg in memilio/build/bin.
     // Folders have to exist beforehand.
-    std::string save_dir = "../../data/simulation_lct/riseR02long/";
+    std::string save_dir = "../../data/simulation_lct/dropR0short/";
 
-    auto result = simulate_lct_model(R0, save_dir, 150);
+    auto result = simulate_lct_model(R0, 10, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
 
-    result = simulate_ide_model(R0, save_dir, 150);
+    /*result = simulate_ide_model(R0, 10, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
@@ -331,17 +335,17 @@ int main()
     R0       = 4.;
     save_dir = "../../data/simulation_lct/riseR04long/";
 
-    result = simulate_lct_model(R0, save_dir, 75);
+    result = simulate_lct_model(R0, 75,save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
 
-    result = simulate_ide_model(R0, save_dir, 75);
+    result = simulate_ide_model(R0, 75,save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
-    }
+    } */
 
     return 0;
 }
