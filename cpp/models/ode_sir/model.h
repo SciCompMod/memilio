@@ -42,6 +42,11 @@ class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, In
     using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
 
 public:
+    Model(const Populations& pop, const ParameterSet& params)
+        : Base(pop, params)
+    {
+    }
+    
     Model(int num_agegroups)
         : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
     {
