@@ -91,7 +91,7 @@ target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(lct_secir_fictional lct_secir_fictional_scenario.cpp)
-target_link_libraries(lct_secir_fictional PRIVATE memilio lct_secir)
+target_link_libraries(lct_secir_fictional PRIVATE memilio lct_secir ide_secir)
 target_compile_options(lct_secir_fictional PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(history_example history.cpp)
