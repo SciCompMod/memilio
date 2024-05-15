@@ -91,7 +91,7 @@ TEST(Testad, ad_odeint)
     // The type of container used to hold the state vector.
     using value_type = ad_forward_t;
     using time_type  = value_type;
-    typedef std::array<value_type, 2> state_type; // 2-dimensional vector
+    using state_type = std::array<value_type, 2>; // 2-dimensional vector
 
     using error_stepper_type =
         boost::numeric::odeint::runge_kutta_cash_karp54<state_type, value_type, state_type, time_type>;
