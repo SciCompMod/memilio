@@ -437,19 +437,19 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const int intervention
     }
 
     auto migrating_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                       mio::osecirvvs::InfectionState::ExposedNaive,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
-                                       mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunPartialImmunity,
+                                   mio::osecirvvs::InfectionState::TemporaryImmunImprovedImmunity};
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
@@ -627,11 +627,11 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         count_inf_counties++;
                     }
                 }
-                std::cout << "hotspots: ";
-                for (size_t i = 0; i < hotspot_ids.size(); ++i) {
-                    std::cout << hotspot_ids[i] << " ";
-                }
-                std::cout << "\n";
+                // std::cout << "hotspots: ";
+                // for (size_t i = 0; i < hotspot_ids.size(); ++i) {
+                //     std::cout << hotspot_ids[i] << " ";
+                // }
+                // std::cout << "\n";
                 std::cout << "num counties infected " << count_inf_counties << std::endl;
                 double population_in_non_hotspot_regions = pop_Germany - population_in_hotspot_regions;
 
@@ -674,14 +674,14 @@ mio::IOResult<void> run(const fs::path& data_dir, std::string result_dir)
                         auto params              = std::vector<mio::osecirvvs::Model>();
                         params.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                                     std::back_inserter(params), [](auto&& node) {
+                                       std::back_inserter(params), [](auto&& node) {
                                            return node.property.get_simulation().get_model();
                                        });
 
                         auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
                         flows.reserve(results_graph.nodes().size());
                         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                                     std::back_inserter(flows), [](auto&& node) {
+                                       std::back_inserter(flows), [](auto&& node) {
                                            auto& flow_node         = node.property.get_simulation().get_flows();
                                            auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
                                            return interpolated_flows;

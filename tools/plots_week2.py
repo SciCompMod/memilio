@@ -21,6 +21,8 @@ sns.set_style("darkgrid")
 opacity = 0.15
 lineWidth = 2
 fontsize = 28
+legendsize = 24
+ticks = 20
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 
@@ -57,8 +59,8 @@ def get_num_more_than_x(path, comp, x):
 
 def plot_icu_occupancy_per_scenario(path_results, indx_comp, interventions, regions,  tnt_factors, plot_flows, title, num_runs):
     for intervention in interventions:
-        results = []
         for region in regions:
+            results = []
             for tnt_factor in tnt_factors:
                 data_p25 = []
                 data_p50 = []
@@ -96,36 +98,141 @@ def plot_icu_occupancy_per_scenario(path_results, indx_comp, interventions, regi
                     "data_p75": data_p75[median_runs]
                 }
                 results.append(entry)
-    # Plotting
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+            # Plotting
+            fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 
-    ax.set_title(title)
-    ax.set_xlabel("Time [days]")
-    ax.set_ylabel("Number of Individuals")
-    ax.grid(True)
-    color_indx = 0
-    for entry in results:
-        linestyle = '--'
-        linewidth = 3
-        color = colors[color_indx]
-        num_counties_inf = 40 if entry['region'] == regions[0] else 80
-        tnt_fact = 1 if entry['tnt_factor'] == tnt_factors[0] else 10
+            plt.xticks(fontsize=ticks)
+            plt.yticks(fontsize=ticks)
 
-        ax.plot(
-            entry["data_p25"], label=f"Counties Infected: {num_counties_inf}, TNT: {tnt_fact} p25",
-            linewidth=linewidth, linestyle=linestyle, color=color)
-        ax.plot(
-            entry["data_p75"], label=f"Counties Infected: {num_counties_inf}, TNT: {tnt_fact} p75",
-            linewidth=linewidth, linestyle='--', color=color)
-        ax.fill_between(
-            np.arange(0, len(entry["data_p25"])), entry["data_p25"], entry["data_p75"], color=color, alpha=opacity)
-        color_indx += 1
-    ax.legend()
-    plt.tight_layout()
-    # plt.show()
-    plt.savefig(
-        os.path.join(plot_path, f"{title}.png"))
-    plt.clf()
+            # ax.set_title(title)
+            ax.set_xlabel("Time [days]", fontsize=fontsize)
+            ax.set_ylabel("Number of Individuals", fontsize=fontsize)
+            ax.grid(True)
+            color_indx = 0
+            for entry in results:
+                linestyle = '--'
+                linewidth = 3
+                color = colors[color_indx]
+                num_counties_inf = 40 if entry['region'] == regions[0] else 80
+
+                # transform tnt factor to float
+                tnt_fact_str = ''.join(
+                    filter(lambda ch: ch.isdigit() or ch == '.', entry['tnt_factor']))
+                tnt_fact = round(float(tnt_fact_str), 1)
+
+                label = "No testing capacities"
+                if tnt_fact > 0.0:
+                    label = "Testing capacities"
+
+                ax.plot(
+                    entry["data_p25"],
+                    linewidth=linewidth, linestyle=linestyle, color=color)
+                ax.plot(
+                    entry["data_p75"],
+                    linewidth=linewidth, linestyle='--', color=color)
+                ax.plot(
+                    entry["data_p50"], label=label,
+                    linewidth=linewidth, linestyle='-', color=color)
+                ax.fill_between(
+                    np.arange(0, len(entry["data_p25"])), entry["data_p25"], entry["data_p75"], color=color, alpha=opacity)
+                color_indx += 1
+            ax.legend(fontsize=legendsize)
+            plt.tight_layout()
+            plt.yscale('log')
+            # plt.show()
+            plt.savefig(
+                os.path.join(plot_path, f"{title}_Counties_{num_counties_inf}.png"))
+            plt.clf()
+
+
+def get_num_more_than_x(path, comp, x):
+    f = h5py.File(path, 'r')
+    count = np.zeros(f['1001']['Total'].shape[0])
+    # iteriere über alle keys in f
+    for key in f.keys():
+        group = f[key]
+        total = group['Total'][()]
+        comp_simulated = np.sum(total[:, comp], axis=1)
+        # prüfe jeden Eintrag von comp_simulated, ob er größer als x ist.
+        count += np.where(comp_simulated > x, 1, 0)
+    f.close()
+
+    return count[1:]
+
+
+def plot_num_counties_more_than_x(x, path_results, indx_comp, interventions, regions,  tnt_factors, plot_flows, title, num_runs):
+    for intervention in interventions:
+        for region in regions:
+            results = []
+            for tnt_factor in tnt_factors:
+                data_p50 = []
+                for run in range(num_runs):
+                    flows_add = ""
+                    if plot_flows:
+                        flows_add = "flows"
+                    path = os.path.join(
+                        path_results, intervention, region, tnt_factor + str(run), flows_add, "p50", "Results.h5")
+                    data_p50.append(get_num_more_than_x(path, indx_comp, x))
+
+                data_p50 = np.sort(data_p50, axis=0)
+
+                if plot_flows:
+                    data_p50 = np.diff(data_p50, axis=1)
+
+                entry = {
+                    "intervention": intervention,
+                    "region": region,
+                    "tnt_factor": tnt_factor,
+                    "min_data": data_p50[0],
+                    "max_data": data_p50[num_runs - 1]
+                }
+                results.append(entry)
+
+            # Plotting
+            fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+            # ax.set_title(title)
+            ax.set_xlabel("Time [days]", fontsize=fontsize)
+            ax.set_ylabel("Number counties", fontsize=fontsize)
+
+            plt.xticks(fontsize=ticks)
+            plt.yticks(fontsize=ticks)
+
+            # ax.set_ylim(0, 100)
+            # ax.set_yscale('log')
+            ax.grid(True)
+            count_entry = 0
+            for entry in results:
+                linestyle = '--'
+                linewidth = 3
+                color = colors[count_entry]
+
+                num_counties_inf = 40 if entry['region'] == regions[0] else 80
+                # transform tnt factor to float
+                tnt_fact_str = ''.join(
+                    filter(lambda ch: ch.isdigit() or ch == '.', entry['tnt_factor']))
+                tnt_fact = round(float(tnt_fact_str), 1)
+
+                label = "No testing capacities"
+                if tnt_fact > 0.0:
+                    label = "Testing capacities"
+
+                ax.plot(
+                    entry["max_data"], label=label + " max",
+                    linewidth=linewidth, linestyle=linestyle, color=color)
+                ax.plot(
+                    entry["min_data"], label=label + " min",
+                    linewidth=linewidth, linestyle='--', color=color)
+                ax.fill_between(
+                    np.arange(0, len(entry["max_data"])), entry["min_data"], entry["max_data"], color=color, alpha=opacity)
+
+                count_entry += 1
+
+            ax.legend(fontsize=legendsize, loc='upper left')
+            plt.tight_layout()
+            plt.savefig(
+                os.path.join(plot_path, f"week2_num_infected_{region}.png"))
+            plt.clf()
 
 
 if __name__ == '__main__':
@@ -134,7 +241,7 @@ if __name__ == '__main__':
     plot_flows = False
 
     # num samples
-    num_runs = 1
+    num_runs = 5
 
     # create dir plots in path_results
     plot_path = os.path.join(path_results, "plots", "2d")
@@ -144,7 +251,7 @@ if __name__ == '__main__':
     interventions = ["No_intervention"]
     regions_with_inf = ["40_with_infected_counties",
                         "80_with_infected_counties"]
-    tnt_fact = ["tnt_fac_1.000000", "tnt_fac_10.000000"]
+    tnt_fact = ["tnt_fac_0.000000",  "tnt_fac_1.000000"]
 
     #  choose compartments, we want to plot
     infected_compartments = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
@@ -162,17 +269,20 @@ if __name__ == '__main__':
 
     all_comp = np.arange(0, 29, 1)
 
-    # plot_icu_occupancy_per_scenario(path_results, infected_compartments,
-    #                                 interventions, regions_with_inf,  tnt_fact, plot_flows, "Total Infected", num_runs)
+    plot_num_counties_more_than_x(10.0, path_results, infected_compartments,
+                                  interventions, regions_with_inf,  tnt_fact, plot_flows, "Infected People", num_runs)
 
-    # plot_icu_occupancy_per_scenario(path_results, icu,
-    #                                 interventions, regions_with_inf,  tnt_fact, plot_flows, "ICU Occupancy", num_runs)
+    plot_icu_occupancy_per_scenario(path_results, infected_compartments,
+                                    interventions, regions_with_inf,  tnt_fact, plot_flows, "Total Infected", num_runs)
 
-    # plot_icu_occupancy_per_scenario(path_results, hosp,
-    #                                 interventions, regions_with_inf,  tnt_fact, plot_flows, "Hospitalized Individuals", num_runs)
+    plot_icu_occupancy_per_scenario(path_results, icu,
+                                    interventions, regions_with_inf,  tnt_fact, plot_flows, "ICU Occupancy", num_runs)
 
-    # plot_icu_occupancy_per_scenario(path_results, flows_hu,
-    #                                 interventions, regions_with_inf,  tnt_fact, True, "ICU Admissions", num_runs)
+    plot_icu_occupancy_per_scenario(path_results, hosp,
+                                    interventions, regions_with_inf,  tnt_fact, plot_flows, "Hospitalized Individuals", num_runs)
+
+    plot_icu_occupancy_per_scenario(path_results, flows_hu,
+                                    interventions, regions_with_inf,  tnt_fact, True, "ICU Admissions", num_runs)
 
     plot_icu_occupancy_per_scenario(path_results, flows_se,
-                                    interventions, regions_with_inf,  tnt_fact, True, "tranmissions", num_runs)
+                                    interventions, regions_with_inf,  tnt_fact, True, "Transmissions", num_runs)
