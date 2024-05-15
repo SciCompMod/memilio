@@ -40,6 +40,12 @@ std::string pretty_name<mio::osir::InfectionState>()
     return "InfectionState";
 }
 
+template <>
+std::string pretty_name<mio::AgeGroup>()
+{
+    return "AgeGroup";
+}
+
 } // namespace pymio
 
 PYBIND11_MODULE(_simulation_osir, m)
@@ -64,15 +70,15 @@ PYBIND11_MODULE(_simulation_osir, m)
     pymio::bind_ParameterSet<mio::osir::ParametersBase, pymio::EnablePickling::Required>(m, "ParametersBase");
 
     pymio::bind_class<mio::osir::Parameters, pymio::EnablePickling::Required, mio::osir::ParametersBase>(m, "Parameters")
-        .def(py::init<>())
+        .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::osir::Parameters::check_constraints);
 
-    using Populations = mio::Populations<mio::osir::InfectionState>;
+    using SirPopulations = mio::Populations<mio::AgeGroup, mio::osir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::osir::Model::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters, pymio::EnablePickling::Never>(m, "ModelBase");
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, SirPopulations, mio::osir::Parameters, pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<mio::osir::Model, pymio::EnablePickling::Required,
-               mio::CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters>>(m, "Model")
-        .def(py::init<>());
+               mio::CompartmentalModel<mio::osir::InfectionState, SirPopulations, mio::osir::Parameters>>(m, "Model")
+        .def(py::init<int>(), py::arg("num_agegroups"));
 
     m.def(
         "simulate",
