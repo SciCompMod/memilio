@@ -251,7 +251,7 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     using Model = mio::lsecir::Model<num_subcompartments, num_subcompartments, num_subcompartments, num_subcompartments,
                                      num_subcompartments>;
     using LctState = Model::LctState;
-    // Initialize model and perform simulation.
+    // Initialize model.
     Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
 
     // Define parameters used for simulation and initialization.
