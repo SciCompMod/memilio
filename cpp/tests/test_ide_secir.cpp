@@ -639,8 +639,8 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     // All TransitionDistribution%s are ExponentialDecay functions.
     // For all TransitionDistribution%s init_parameter=2 is used except for InfectedCriticalToRecovered
     // where init_parameter=3 is used.
-    mio::ExponentialDecay expdecay(4.0);
-    mio::StateAgeFunctionWrapper delaydistribution(expdecay);
+    mio::SmootherCosine smoothcos(4.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(3.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
