@@ -267,7 +267,7 @@ public:
      */
     void add_damping(TimePoint t, double p);
 
-    bool entry_allowed(const mio::abm::TimePoint t) const;
+    bool entry_allowed(Person::RandomNumberGenerator& rng,const mio::abm::TimePoint t) const;
 
     /**
      * @brief Set the required type of mask for entering this Location.
@@ -431,7 +431,7 @@ private:
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
-    std::vector<std::tuple<mio::abm::TimePoint, double>>
+    std::vector<std::pair<mio::abm::TimePoint, double>>
         temp_npi_damping; ///< Temporary storage for NPI dampings. //TODO: delete these and implement better
 };
 

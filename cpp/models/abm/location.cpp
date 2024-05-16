@@ -47,7 +47,7 @@ void Location::add_damping(TimePoint t_begin, double p)
     temp_npi_damping.emplace_back(t_begin, p);
 }
 
-bool Location::entry_allowed(const mio::abm::TimePoint t) const
+bool Location::entry_allowed(Person::RandomNumberGenerator& rng,const mio::abm::TimePoint t) const
 {
     if (temp_npi_damping.empty()) {
         return true;
@@ -60,9 +60,8 @@ bool Location::entry_allowed(const mio::abm::TimePoint t) const
                                    });
         //then we want to access the second element of it, draw a random number between 0 and 1 and check if it is smaller than the damping factor
         //get a random number between 0 and 1 without m_rng
-        // double random_number = mio::UniformDistribution<double>::get_instance()();
-        // return random_number > it->second;
-        return true;
+        ScalarType random_number = UniformDistribution<double>::get_instance()(rng,0.0,1.0);
+        return random_number > it->second;
     }
 }
 
