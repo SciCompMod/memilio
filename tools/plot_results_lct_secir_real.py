@@ -17,12 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-"""@plot_results_lct_secir.py
+"""@plot_results_lct_secir_real.py
 Functions to plot and compare results of simulations with different kind of models,
-eg LCT, IDE or ODE SECIR models without division in agegroups.
+eg LCT, IDE or ODE SECIR models without division in agegroups with real data.
 
-The data to be plotted should be stored in a '../data/simulation_lct' folder as .h5 files.
-Data could be generated eg by executing the file ./cpp/examples/lct_secir_initializations.cpp.
+The data to be plotted should be stored in a '../data/simulation_lct/real' folder as .h5 files.
+Data could be generated eg by executing the file ./cpp/examples/lct_secir_real_senarios.cpp.
 """
 
 import h5py
@@ -46,9 +46,9 @@ parameters = {
     'TimeInfectedSevere': 11.634346,
     'TimeInfectedCritical': 17.476959,
     'RecoveredPerInfectedNoSymptoms':  0.206901,
-    'start_date': pd.Timestamp('2020.06.01'),
-    'end_date': pd.Timestamp('2020.06.01')+pd.DateOffset(days=45),
-    'scaleConfirmed': 1.
+    'start_date': pd.Timestamp('2020.10.01'),
+    'end_date': pd.Timestamp('2020.10.01')+pd.DateOffset(days=45),
+    'scaleConfirmed': 2.
 }
 
 # Define color and style to be used while plotting for different models to make plots consistent.
@@ -138,12 +138,12 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
         plt.plot(range(num_days), data_rki_ma['Deaths'],
                  linestyle='dashed',  color='grey', linewidth=1.2)
         compartment_idx = 7
-        labely = "deaths"
+        labely = "Deaths"
     else:
         plt.plot(range(num_days), data_rki_ma['InfectedSymptoms'],
                  linestyle='dashed', color='grey', linewidth=1.2)
         compartment_idx = 3
-        labely = "number of people in I"
+        labely = "Number of people in I"
 
     # Add simulation results to plot.
     for file in range(len(files)):
@@ -168,7 +168,7 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
                  linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
         h5file.close()
 
-    plt.xlabel('date', fontsize=16)
+    plt.xlabel('Date', fontsize=16)
     plt.ylabel(labely, fontsize=16)
     plt.yticks(fontsize=9)
     plt.xlim(left=0, right=num_days-1)
@@ -259,7 +259,7 @@ if __name__ == '__main__':
         __file__), "..", "data", "simulation_lct")
 
     # Defines which simulation case should be plotted.
-    case = 1
+    case = 2
 
     if case == 1:
         # Attention: also change values in the dictionary parameters!
@@ -271,7 +271,7 @@ if __name__ == '__main__':
                                   os.path.join(os.path.dirname(
                                       __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
                                   legendplot=list(["real data", "ODE", "LCT3", "LCT10", "LCT20"]), 
-                                  deaths=False, filename_plot="compare_infected_real_2020_6_1")
+                                  deaths=False, filename_plot="real_infected_2020_6_1")
         
         plot_new_infections_real([os.path.join(data_dir, "real", "real_lct1_2020_6_1"), 
                                   os.path.join(data_dir, "real", "real_lct3_2020_6_1"), 
@@ -280,10 +280,10 @@ if __name__ == '__main__':
                                  os.path.join(os.path.dirname(
                                      __file__), "..", "data", "pydata", "Germany", "cases_all_germany_all_dates.json"),
                                  legendplot=list(["real data", "ODE", "LCT3", "LCT10", "LCT20"]), 
-                                 filename_plot="compare_new_infections_real_2020_6_1")
+                                 filename_plot="real_new_infections_2020_6_1")
         
     elif case == 2:
-        # Attention: also change values in the dictionary parameters!
+        # Attention: Also change values in the dictionary parameters!
         # Compare simulation results for a real situation starting on 01.10.2020.
         compare_compartments_real([os.path.join(data_dir, "real", "real_lct1_2020_10_1"), 
                                    os.path.join(data_dir, "real", "real_lct3_2020_10_1"), 
@@ -291,7 +291,7 @@ if __name__ == '__main__':
                                   os.path.join(os.path.dirname(
                                       __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
                                   legendplot=list(["real data", "ODE", "LCT3", "LCT10"]), 
-                                  deaths=False, filename_plot="compare_infected_real_2020_10_1")
+                                  deaths=False, filename_plot="real_infected_2020_10_1")
         
         plot_new_infections_real([os.path.join(data_dir, "real", "real_lct1_2020_10_1"),
                                   os.path.join(data_dir, "real", "real_lct3_2020_10_1"), 
@@ -299,4 +299,4 @@ if __name__ == '__main__':
                                  os.path.join(os.path.dirname(
                                      __file__), "..", "data", "pydata", "Germany", "cases_all_germany_all_dates.json"),
                                  legendplot=list(["real data", "ODE", "LCT3", "LCT10"]), 
-                                 filename_plot="compare_new_infections_real_2020_10_1")
+                                 filename_plot="real_new_infections_2020_10_1")

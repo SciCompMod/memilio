@@ -18,12 +18,13 @@
 # limitations under the License.
 #############################################################################
 
-"""@plot_results_lct_secir.py
+"""@plot_results_lct_secir_fictional.py
 Functions to plot and compare results of simulations with different kind of models,
 eg LCT, IDE or ODE SECIR models without division in agegroups.
+To compare with real data, use the script plot_results_lct_secir_real.py.
 
 The data to be plotted should be stored in a '../data/simulation_lct' folder as .h5 files.
-Data could be generated eg by executing the file ./cpp/examples/lct_secir_initializations.cpp.
+Data could be generated eg by executing the file ./cpp/examples/lct_secir_fictional_scenario.cpp.
 """
 
 import h5py

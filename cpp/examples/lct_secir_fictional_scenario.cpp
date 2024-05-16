@@ -40,7 +40,7 @@
 #include <map>
 #include <iostream>
 
-// necessary because num_subcompartments is used as a template argument and has ti be
+// Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
 constexpr int num_subcompartments = 20;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
@@ -62,6 +62,10 @@ std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
                                                           {"CriticalPerSevere", 0.173176},
                                                           {"DeathsPerCritical", 0.217177}};
 
+/** @brief Returns contact matrix in relation to defined R0.
+* Contacts are defined such that R0 equals 1 at the beginning of the simulation and jumps to R0 in 
+* the time interval [1.9,2.0].
+*/
 mio::UncertainContactMatrix get_contact_matrix(ScalarType R0)
 {
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
@@ -82,6 +86,9 @@ mio::UncertainContactMatrix get_contact_matrix(ScalarType R0)
     return mio::UncertainContactMatrix(contact_matrix);
 }
 
+/** @brief Returns transitions that can be used to inizialize an IDE model or 
+*    to calcuate initial values for a LCT model.
+*/
 mio::TimeSeries<ScalarType> get_initial_flows()
 {
     // The initialization vector for the LCT model is calculated by defining transitions.
@@ -131,6 +138,17 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     return init;
 }
 
+/** 
+* @brief Perform a fictive simulation with realistic parameters and contacts with an IDE model,
+*  such that the reproduction number is approximately 1 at the beginning and rising or dropping at simulationtime 2.
+*   
+*  Global parameter num_subcompartmentsNumber is also used for some distributions of the IDE model.
+*   
+* @param[in] R0 Define R0 from simulationtime 2 on. Please use a number > 0.
+* @param[in] tmax End time of the simulation.
+* @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
+* @returns Any io errors that happen during saving the results.
+*/
 mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
 {
     // Initialize model.
@@ -236,26 +254,22 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
 * @brief Perform a fictive simulation with realistic parameters and contacts, such that the reproduction number 
 *   is approximately 1 at the beginning and rising or dropping at simulationtime 2.
 *   
-*   This scenario should enable a comparison of the qualitative behavior of different models.
+*   This scenario should enable a comparison of the qualitative behavior of different LCT models.
 *   
 * @param[in] R0 Define R0 from simulationtime 2 on. Please use a number > 0.
-* @param[in] num_subcompartments Number of subcompartments for each compartment where subcompartments make sense. 
-*        Number is also used for some distributions of the IDE model.
-*        Set num_subcompartments = 0 to use subcompartments with an expected sojourn time of approximately 1.
-* @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @param[in] tmax End time of the simulation.
+* @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @returns Any io errors that happen during saving the results.
 */
 mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
 {
+    // Initialize model.
     using Model = mio::lsecir::Model<num_subcompartments, num_subcompartments, num_subcompartments, num_subcompartments,
                                      num_subcompartments>;
     using LctState = Model::LctState;
-    // Initialize model.
     Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
 
     // Define parameters used for simulation and initialization.
-
     model.parameters.get<mio::lsecir::TimeExposed>()            = simulation_parameter["TimeExposed"];
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = simulation_parameter["TimeInfectedNoSymptoms"];
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = simulation_parameter["TimeInfectedSymptoms"];
