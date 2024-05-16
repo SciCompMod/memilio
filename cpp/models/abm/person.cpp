@@ -112,6 +112,18 @@ void Person::add_new_infection(Infection&& inf)
     m_infections.push_back(std::move(inf));
 }
 
+void Person::add_new_vaccination(Vaccination&& vacc)
+{
+    // Find the correct insertion point
+    auto it = std::lower_bound(m_vaccinations.begin(), m_vaccinations.end(), vacc.time,
+                               [](const Vaccination& a, const TimePoint& b) {
+                                   return a.time < b;
+                               });
+
+    // Insert the new vaccination at the found position
+    m_vaccinations.emplace(it, std::move(vacc));
+}
+
 Location& Person::get_location()
 {
     return *m_location;
@@ -273,30 +285,31 @@ bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location&
 std::pair<ExposureType, TimePoint> Person::get_latest_protection(TimePoint t) const
 {
     ExposureType latest_exposure_type = ExposureType::NoProtection;
-    TimePoint infection_time          = TimePoint(std::numeric_limits<int>::min());
+    TimePoint latest_time             = TimePoint(std::numeric_limits<int>::min());
 
-    // Look for any Infection that happens before time t
-    for(const Infection& infection : m_infections) {
-        if (infection.get_start_date() <= t) {
+    // Use reverse iterators to start from the most recent infection
+    for (auto it = m_infections.rbegin(); it != m_infections.rend(); ++it) {
+        if (it->get_start_date() <= t) {
             latest_exposure_type = ExposureType::NaturalInfection;
-            infection_time       = infection.get_start_date();
-        } else {
-            break;
+            latest_time          = it->get_start_date();
+            break; // Stop once we find the latest infection before time t
         }
     }
 
-    // Look for any Vaccination that happens between the lastest Infection and time t
-    for(const Vaccination& vaccination : m_vaccinations) {
-        if (vaccination.time <= t && vaccination.time > infection_time) {
-            latest_exposure_type = vaccination.exposure_type;
-            infection_time       = vaccination.time;
-        } 
-        if (vaccination.time > t) {
-            break;
-        } 
+    // Look for any Vaccination that happens after the latest Infection and before time t
+    for (auto it = m_vaccinations.rbegin(); it != m_vaccinations.rend(); ++it) {
+        if (it->time <= t) {
+            if (it->time > latest_time) {
+                latest_exposure_type = it->exposure_type;
+                latest_time          = it->time;
+            }
+        }
+        else {
+            break; // Stop once we find a vaccination after time t
+        }
     }
-  
-    return std::make_pair(latest_exposure_type, infection_time);
+
+    return std::make_pair(latest_exposure_type, latest_time);
 }
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
