@@ -154,10 +154,11 @@ def compute_error_norm_tmax(groundtruth, results, timesteps_ide, flows=False):
 def plot_convergence(errors, timesteps_ide, setting, flows=False, compartment=None, save=False):
 
     if flows:
-        secir_dict = {0: 'S->E', 1: 'E->C', 2: 'C->I', 3: 'C->R', 4: 'I->H',
-                      5: 'I->R', 6: 'H->U', 7: 'H->R', 8: 'U->D', 9: 'U->R'}
-        compartments = ['S->E', 'E->C', 'C->I', 'C->R', 'I->H',
-                        'I->R', 'H->U', 'H->R',  'U->D',  'U->R']
+        secir_dict = {0: r"$\sigma_S^E$", 1: r"$\sigma_E^C$", 2: r"$\sigma_C^I$", 3: r"$\sigma_C^R$", 4: r"$\sigma_I^H$",
+                      5: r"$\sigma_I^R$", 6: r"$\sigma_H^U$", 7: r"$\sigma_H^R$", 8: r"$\sigma_U^D$", 9: r"$\sigma_U^R$"}
+
+        compartments = [r"$\sigma_S^E$", r"$\sigma_E^C$", r"$\sigma_C^I$", r"$\sigma_C^R$", r"$\sigma_I^H$",
+                        r"$\sigma_I^R$", r"$\sigma_H^U$", r"$\sigma_H^R$", r"$\sigma_U^D$", r"$\sigma_U^R$"]
     else:
         secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                       5: 'ICU', 6: 'Recovered', 7: 'Dead'}
@@ -165,6 +166,8 @@ def plot_convergence(errors, timesteps_ide, setting, flows=False, compartment=No
 
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
+
+    # Plot only one compartment.
     if compartment != None:
 
         print('Need to uncomment')
@@ -198,6 +201,7 @@ def plot_convergence(errors, timesteps_ide, setting, flows=False, compartment=No
         # else:
         #     plt.show()
 
+    # Plot all compartments.
     else:
         if flows:
             fig, ax = plt.subplots(5, 2, sharex=True)
@@ -245,7 +249,7 @@ def plot_convergence(errors, timesteps_ide, setting, flows=False, compartment=No
             else:
                 if not os.path.isdir('plots/compartments'):
                     os.makedirs('plots/compartments')
-                plt.savefig(f'plots/compartments/convergence_all_setting={setting}.png', format='png',
+                plt.savefig(f'plots/compartments/convergence_all_compartments_setting={setting}.png', format='png',
                             dpi=500)
 
         # plt.show()
@@ -357,7 +361,7 @@ def main():
     errors = compute_error_norm_tmax(
         groundtruth, results, timesteps_ide, flows=flows)
 
-    plot_convergence(errors, timesteps_ide, setting, flows=flows, save=True)
+    plot_convergence(errors, timesteps_ide, setting, flows=False, save=True)
 
     # print_initial_values(groundtruth, results, dt_ode, timesteps_ide)
 

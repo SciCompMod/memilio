@@ -35,8 +35,8 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
 {
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // use scale_timesteps to get from index wrt ODE timestep to index wrt IDE timestep
-    // here we assume that we solve the ODE model on a finer scale (or equal scale) than the IDE model
+    // Use scale_timesteps to get from index wrt ODE timestep to index wrt IDE timestep.
+    // Here we assume that we solve the ODE model on a finer scale (or equal scale) than the IDE model.
 
     if (dt_comparison < 1e-10) {
         dt_comparison = dt_reference;
@@ -44,13 +44,13 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
 
     ScalarType scale_timesteps = dt_comparison / dt_reference;
 
-    // compute index variables with respect to dt_big
+    // Compute index variables with respect to dt_big.
     Eigen::Index t_window_index = Eigen::Index(std::ceil(t_window / dt_comparison));
     Eigen::Index t_max_index    = Eigen::Index(std::ceil(t_max / dt_comparison));
 
     Eigen::Index flows_start_index = t_max_index - t_window_index + 1;
 
-    // add time points to TimeSeries containing flows
+    // Add time points to TimeSeries containing flows.
     for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
         flows.add_time_point(i * dt_comparison, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
         flows.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] +=
@@ -140,10 +140,11 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model& model_ode, mio::
     std::cout << "Computing initial flows. \n";
 
     // get (global) support_max to determine how many flows in the past we have to compute
-    ScalarType global_support_max = model_ide.get_global_support_max(dt_ide);
+    // ScalarType global_support_max = model_ide.get_global_support_max(dt_ide);
 
-    get_flows_from_ode_compartments(model_ode, secihurd_ode, model_ide.m_transitions, t0_ide, global_support_max,
-                                    dt_ode, dt_ide);
+    // Use t_window=t0_ide to get flows from t0 onwards.
+
+    get_flows_from_ode_compartments(model_ode, secihurd_ode, model_ide.m_transitions, t0_ide, t0_ide, dt_ode, dt_ide);
 }
 
 } // namespace isecir

@@ -48,8 +48,8 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, flows=True, save=True):
         files = [os.path.join(data_dir, f"result_ode_flows_dt={dt_ode}_setting{setting}"), os.path.join(
             data_dir, f"result_ide_flows_dt={dt_ide}_init_dt_ode={dt_ode}_setting{setting}")]
 
-        secir_dict = {0: 'S->E', 1: 'E->C', 2: 'C->I', 3: 'C->R', 4: 'I->H',
-                      5: 'I->R', 6: 'H->U', 7: 'H->R', 8: 'U->D', 9: 'U->R'}
+        secir_dict = {0: r"$\sigma_S^E$", 1: r"$\sigma_E^C$", 2: r"$\sigma_C^I$", 3: r"$\sigma_C^R$", 4: r"$\sigma_I^H$",
+                      5: r"$\sigma_I^R$", 6: r"$\sigma_H^U$", 7: r"$\sigma_H^R$", 8: r"$\sigma_U^D$", 9: r"$\sigma_U^R$"}
 
         fig, axs = plt.subplots(5, 2, sharex='all', num='Compare files')
         num_plots = 10
