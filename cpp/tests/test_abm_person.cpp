@@ -304,11 +304,17 @@ TEST(TestPerson, getLatestProtection)
     ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
     ASSERT_EQ(latest_protection.second.days(), t.days());
 
-    t = mio::abm::TimePoint(40 * 24 * 60 * 60);
+    t = mio::abm::TimePoint(10 * 24 * 60 * 60);
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
                                                  params, t, mio::abm::InfectionState::Exposed));
     latest_protection = person.get_latest_protection(t);
     ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
+    ASSERT_EQ(latest_protection.second.days(), t.days());
+
+    t = mio::abm::TimePoint(20 * 24 * 60 * 60);
+    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
+    latest_protection = person.get_latest_protection(mio::abm::TimePoint(20 * 24 * 60 * 60 + 1));
+    ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
     ASSERT_EQ(latest_protection.second.days(), t.days());
 }
 
@@ -326,4 +332,19 @@ TEST(Person, rng)
     p_rng();
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
     ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
+}
+
+TEST(TestPerson, addNewVaccination)
+{
+    auto rng                    = mio::RandomNumberGenerator();
+    auto location               = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person                 = mio::abm::Person(rng, location, age_group_15_to_34);
+
+    auto t1 = mio::abm::TimePoint(0);
+    auto t2 = mio::abm::TimePoint(7 * 24 * 60 * 60);
+    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t1);
+    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t2);
+    auto vaccinations = person.get_vaccinations();
+    ASSERT_EQ(vaccinations[0].time, t1);
+    ASSERT_EQ(vaccinations[1].time, t2);
 }

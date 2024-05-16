@@ -215,6 +215,12 @@ public:
     void add_new_infection(Infection&& inf);
 
     /**
+     * @brief Adds a new Vaccination to the list of Vaccination%s that is sorted in vaccination time.
+     * @param[in] vacc The new Vaccination.
+     */
+    void add_new_vaccination(Vaccination&& vacc);
+
+    /**
      * @brief Get the AgeGroup of this Person.
      * @return AgeGroup of the Person.
      */
