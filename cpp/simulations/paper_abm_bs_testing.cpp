@@ -1240,6 +1240,49 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             }
         }
 
+        //4. Dampings for all kinds of places
+        for (auto& location : location_it) {
+            if (location.get_type() == mio::abm::LocationType::School)
+            {
+                location.add_damping(mio::abm::TimePoint(0), 0.5); // from 2021-03-01
+                location.add_damping(mio::abm::TimePoint(14), 0.0); // from 2021-03-15
+                location.add_damping(mio::abm::TimePoint(42), 0.5); // from 2021-04-12 till 2021-05-30 (end)
+            }
+            if(location.get_type() == mio::abm::LocationType::BasicsShop)
+            {
+                location.add_damping(mio::abm::TimePoint(14), 0.8); // from 2021-03-15
+            }
+        }
+        
+        //5. add capacity limits to some locations
+        //first we need two lists, one for 50% of random social event locations and the other list for the other 50%
+        std::vector<int> social_event_location_ids_small;
+        std::vector<int> social_event_location_ids_big;
+        for (auto& location : location_it) {
+            if (location.get_type() == mio::abm::LocationType::SocialEvent) {
+                social_event_location_ids_small.push_back(location.get_index());
+            }
+        }
+        //take 50% of social event locations
+        std::shuffle(social_event_location_ids_small.begin(), social_event_location_ids_small.end(), g);
+        auto num_social_event_locations_small = (int)(0.5 * social_event_location_ids_small.size());
+        social_event_location_ids_big.insert(social_event_location_ids_big.end(), social_event_location_ids_small.begin(),
+                                             social_event_location_ids_small.begin() + num_social_event_locations_small);
+        social_event_location_ids_small.erase(social_event_location_ids_small.begin(),
+                                              social_event_location_ids_small.begin() + num_social_event_locations_small);
+
+        //add capacity limits on day one 
+        for (auto& location : location_it) {
+            if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
+                          location.get_index()) != social_event_location_ids_small.end()) {
+                location.set_capacity(10,0);
+            }
+            if (std::find(social_event_location_ids_big.begin(), social_event_location_ids_big.end(),
+                          location.get_index()) != social_event_location_ids_big.end()) {
+                location.set_capacity(0,0);
+            }
+        }
+
         sim.advance(mio::abm::TimePoint(42), historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
                     historyInfectionPerAgeGroup);
         for (auto& location : location_it) {
@@ -1346,7 +1389,7 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir  = "C:\\Users\\korf_sa\\Documents\\rep\\data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
