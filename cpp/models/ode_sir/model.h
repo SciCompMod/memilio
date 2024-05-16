@@ -42,6 +42,11 @@ class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, In
     using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
 
 public:
+    Model(const Populations& pop, const ParameterSet& params)
+        : Base(pop, params)
+    {
+    }
+    
     Model(int num_agegroups)
         : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
     {
@@ -79,6 +84,36 @@ public:
             dydt[Ri] = (1.0 / params.get<TimeInfected>()[i]) * y[Ii];
 
         }
+    }
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Model");
+        obj.add_element("Parameters", parameters);
+        obj.add_element("Populations", populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Model> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Model");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(
+            io,
+            [](auto&& par_, auto&& pop_) {
+                return Model{pop_, par_};
+            },
+            par, pop);
     }
 };
 

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "mobility/metapopulation_mobility_instant.h"
+#include "pybind_util.h"
 
 #include "pybind11/eigen.h"
 
@@ -28,7 +29,7 @@ namespace pymio
 
 void bind_migration_parameters(py::module_& m, std::string const& name)
 {
-    py::class_<mio::MigrationParameters>(m, name.c_str())
+    bind_class<mio::MigrationParameters, EnablePickling::IfAvailable>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const mio::MigrationCoefficientGroup&>(), py::arg("coeffs"))
         .def_property(
@@ -41,7 +42,7 @@ void bind_migration_parameters(py::module_& m, std::string const& name)
 
 void bind_migration_parameter_edge(py::module_& m, std::string const& name)
 {
-    py::class_<mio::Edge<mio::MigrationParameters>>(m, name.c_str())
+    bind_class<mio::Edge<mio::MigrationParameters>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("start_node_idx",
                                [](const mio::Edge<mio::MigrationParameters>& self) {
                                    return self.start_node_idx;
@@ -60,7 +61,7 @@ void bind_migration_parameter_edge(py::module_& m, std::string const& name)
 
 void bind_migration(py::module_& m, std::string const& name)
 {
-    py::class_<mio::MigrationEdge>(m, name.c_str())
+    bind_class<mio::MigrationEdge, EnablePickling::IfAvailable>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const mio::MigrationParameters&>(), py::arg("params"))
         .def_property_readonly(
@@ -73,7 +74,7 @@ void bind_migration(py::module_& m, std::string const& name)
 
 void bind_migration_edge(py::module_& m, std::string const& name)
 {
-    py::class_<mio::Edge<mio::MigrationEdge>>(m, name.c_str())
+    bind_class<mio::Edge<mio::MigrationEdge>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("start_node_idx",
                                [](const mio::Edge<mio::MigrationEdge>& self) {
                                    return self.start_node_idx;

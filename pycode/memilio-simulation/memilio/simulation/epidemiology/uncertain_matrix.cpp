@@ -22,6 +22,7 @@
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/damping_sampling.h"
+#include "pybind_util.h"
 
 #include <pybind11/stl.h>
 
@@ -32,7 +33,7 @@ namespace pymio
 
 void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
 {
-    py::class_<mio::UncertainContactMatrix>(m, name.c_str())
+    bind_class<mio::UncertainContactMatrix, EnablePickling::Required>(m, name.c_str())
         .def(py::init<>())
         .def(py::init<const mio::ContactMatrixGroup&>())
         .def_property(
