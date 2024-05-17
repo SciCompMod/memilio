@@ -20,6 +20,7 @@ set(TESTSOURCES
     test_date.cpp
     test_eigen_util.cpp
     test_odesecir_ageres.cpp
+    test_odeseair.cpp
     test_parameter_studies.cpp
     test_graph.cpp
     test_graph_simulation.cpp
@@ -70,6 +71,7 @@ set(TESTSOURCES
     sanitizers.cpp
     test_lct_secir.cpp
     test_glct_secir.cpp
+    test_ad.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
@@ -90,7 +92,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir lct_secir glct_secir abm gtest_main)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ode_seair ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files

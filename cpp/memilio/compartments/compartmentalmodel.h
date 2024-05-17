@@ -61,6 +61,7 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
 /**
  * @brief CompartmentalModel is a template for a compartmental model for an
  * array of initial populations and a parameter set
+ * @tparam FP floating point type, e.g., double
  *
  * The Populations must be a concrete class derived from the Populations template,
  * i.e. a multi-dimensional array of compartment populations where each dimension
@@ -72,13 +73,12 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
  * studies
  *
  */
-template <class Comp, class Pop, class Params>
+template <typename FP, class Comp, class Pop, class Params>
 struct CompartmentalModel {
 public:
     using Compartments = Comp;
     using Populations  = Pop;
     using ParameterSet = Params;
-
     /**
      * @brief CompartmentalModel default constructor
      */
@@ -95,8 +95,9 @@ public:
     virtual ~CompartmentalModel()                            = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                                 double /*t*/, Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
+    virtual void get_derivatives(Eigen::Ref<const Vector<FP>>, Eigen::Ref<const Vector<FP>> /*y*/, FP /*t*/,
+                                 Eigen::Ref<Vector<FP>> /*dydt*/) const {};
+
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
      *
@@ -117,8 +118,8 @@ public:
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
-    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                              Eigen::Ref<Eigen::VectorXd> dydt) const
+    void eval_right_hand_side(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
+                              Eigen::Ref<Vector<FP>> dydt) const
     {
         dydt.setZero();
         this->get_derivatives(pop, y, t, dydt);
@@ -129,7 +130,7 @@ public:
      * This can be used as initial conditions in an ODE solver
      * @return the initial populatoins
      */
-    Eigen::VectorXd get_initial_values() const
+    Vector<FP> get_initial_values() const
     {
         return populations.get_compartments();
     }
@@ -159,34 +160,38 @@ public:
  * If the eval_right_hand_side member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function.
  * Otherwise the template is invalid.
+ * @tparam FP, floating point type, e.g., double.
  * @tparam M a type that has a eval_right_hand_side member function, e.g. a compartment model type.
  */
-template <class M>
-using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right_hand_side(
-    std::declval<Eigen::Ref<const Eigen::VectorXd>>(), std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
-    std::declval<double>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+template <typename FP, class M>
+using eval_right_hand_side_expr_t =
+    decltype(std::declval<const M&>().eval_right_hand_side(std::declval<Eigen::Ref<const Vector<FP>>>(),
+                                                           std::declval<Eigen::Ref<const Vector<FP>>>(),
+                                                           std::declval<FP>(), std::declval<Eigen::Ref<Vector<FP>>>()));
 
 /**
  * detect the get_initial_values member function of a compartment model.
  * If the detect_initial_values member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function.
  * Otherwise the template is invalid.
+ * @tparam FP, floating point type, e.g., double.
  * @tparam M a type that has a get_initial_values member function, e.g. a compartment model type.
  */
-template <class M>
-using get_initial_values_expr_t =
-    decltype(std::declval<Eigen::VectorXd&>() = std::declval<const M&>().get_initial_values());
+template <typename FP, class M>
+using get_initial_values_expr_t = decltype(std::declval<Vector<FP>&>() = std::declval<const M&>().get_initial_values());
 
 /**
  * Template meta function to check if a type is a valid compartment model. 
  * Defines a static constant of name `value`. 
  * The constant `value` will be equal to true if M is a valid compartment model type.
  * Otherwise, `value` will be equal to false.
- * @tparam Sim a type that may or may not be a compartment model.
+ * @tparam FP, floating point type, e.g., double.
+ * @tparam M a type that may or may not be a compartment model.
  */
-template <class M>
-using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
-                                                           is_expression_valid<get_initial_values_expr_t, M>::value)>;
+template <typename FP, class M>
+using is_compartment_model =
+    std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, FP, M>::value &&
+                                  is_expression_valid<get_initial_values_expr_t, FP, M>::value)>;
 
 } // namespace mio
 

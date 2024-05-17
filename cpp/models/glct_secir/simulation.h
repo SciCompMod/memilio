@@ -45,13 +45,14 @@ public:
      *
      * Per default Runge Kutta Cash Karp 54 solver is used. 
      * Use function set_integrator() to set a different integrator.
-     * @param[in] model An instance of a LCT model.
+     * @param[in] model An instance of a GLCT model.
      * @param[in] t0 The Start time, usually 0.
      * @param[in] dt Initial step size of integration.
      */
     Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
         : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+              std::make_shared<
+                  mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(m_integratorCore)
         , m_result(t0, m_model->get_initial_values())
@@ -63,7 +64,7 @@ public:
      *
      * @param[in] integrator Core integrator that should be used for simulation.
      */
-    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    void set_integrator(std::shared_ptr<IntegratorCore<ScalarType>> integrator)
     {
         m_integratorCore = std::move(integrator);
         m_integrator.set_integrator(m_integratorCore);
@@ -74,7 +75,7 @@ public:
      *
      * @return Reference to the core integrator used in the simulation
      */
-    IntegratorCore& get_integrator()
+    IntegratorCore<ScalarType>& get_integrator()
     {
         return *m_integratorCore;
     }
@@ -84,7 +85,7 @@ public:
      *
      * @return Reference to the core integrator used in the simulation
      */
-    IntegratorCore const& get_integrator() const
+    IntegratorCore<ScalarType> const& get_integrator() const
     {
         return *m_integratorCore;
     }
@@ -159,9 +160,9 @@ public:
     }
 
 private:
-    std::shared_ptr<IntegratorCore> m_integratorCore; ///< InteratorCore used for Simulation.
+    std::shared_ptr<IntegratorCore<ScalarType>> m_integratorCore; ///< InteratorCore used for Simulation.
     std::unique_ptr<Model> m_model; ///< GLCT-model the simulation should be performed with.
-    OdeIntegrator m_integrator; ///< OdeIntegrator used to perform simulation.
+    OdeIntegrator<ScalarType> m_integrator; ///< OdeIntegrator used to perform simulation.
     TimeSeries<ScalarType> m_result; ///< The simulation results.
     ScalarType m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
 };
@@ -179,7 +180,7 @@ private:
  */
 template <class Model, class Sim = Simulation<Model>>
 TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model,
-                                std::shared_ptr<IntegratorCore> integrator = nullptr)
+                                std::shared_ptr<IntegratorCore<ScalarType>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
