@@ -81,8 +81,8 @@ runs:
     - name: Build
       shell: bash
       run: |
-        export CCACHE_LOGFILE=$(pwd)/.ccache.log
         cd cpp
+        export CCACHE_LOGFILE=$(pwd)/.ccache.log
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
