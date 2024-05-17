@@ -400,9 +400,8 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
 
         ScalarType state_age = (num_time_points - 1 - i) * dt;
         ScalarType season_val =
-            1 +
-            parameters.get<Seasonality>() *
-                sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+            1 + parameters.get<Seasonality>() *
+                    sin(3.141592653589793 * ((parameters.get<StartDay>() + current_time) / 182.5 + 0.5));
         m_forceofinfection +=
             season_val * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *

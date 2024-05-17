@@ -62,11 +62,14 @@ std::string pretty_name<mio::SimulationDay>()
 
 PYBIND11_MODULE(_simulation, m)
 {
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
-    pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
+    pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
+        .def(py::init<size_t>());
 
     pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
-    pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Never, mio::Index<mio::SimulationDay>>(m, "SimulationDay").def(py::init<size_t>());
+    pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Never, mio::Index<mio::SimulationDay>>(m,
+                                                                                                        "SimulationDay")
+        .def(py::init<size_t>());
 
     pymio::bind_date(m, "Date");
 
@@ -84,11 +87,13 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_value(m, "UncertainValue");
 
-    auto contact_matrix_class = pymio::bind_class<mio::ContactMatrix, pymio::EnablePickling::Required>(m, "ContactMatrix");
+    auto contact_matrix_class =
+        pymio::bind_class<mio::ContactMatrix, pymio::EnablePickling::Required>(m, "ContactMatrix");
     pymio::bind_damping_expression_members(contact_matrix_class);
     contact_matrix_class.def_property_readonly("num_groups", &mio::ContactMatrix::get_num_groups);
 
-    auto contact_matrix_group_class = pymio::bind_class<mio::ContactMatrixGroup, pymio::EnablePickling::Required>(m, "ContactMatrixGroup");
+    auto contact_matrix_group_class =
+        pymio::bind_class<mio::ContactMatrixGroup, pymio::EnablePickling::Required>(m, "ContactMatrixGroup");
     pymio::bind_damping_expression_group_members(contact_matrix_group_class);
     contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
 
@@ -96,16 +101,21 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_contact_matrix(m, "UncertainContactMatrix");
 
-    auto migration_damping_class = pymio::bind_class<mio::VectorDamping, pymio::EnablePickling::Required>(m, "MigrationDamping");
+    auto migration_damping_class =
+        pymio::bind_class<mio::VectorDamping, pymio::EnablePickling::Required>(m, "MigrationDamping");
     pymio::bind_damping_members(migration_damping_class);
 
-    auto migration_dampings_class = pymio::bind_class<mio::VectorDampings, pymio::EnablePickling::Required>(m, "MigrationDampings");
+    auto migration_dampings_class =
+        pymio::bind_class<mio::VectorDampings, pymio::EnablePickling::Required>(m, "MigrationDampings");
     pymio::bind_dampings_members(migration_dampings_class);
 
-    auto migration_coeffs_class = pymio::bind_class<mio::MigrationCoefficients, pymio::EnablePickling::Required>(m, "MigrationCoefficients");
+    auto migration_coeffs_class =
+        pymio::bind_class<mio::MigrationCoefficients, pymio::EnablePickling::Required>(m, "MigrationCoefficients");
     pymio::bind_damping_expression_members(migration_coeffs_class);
 
-    auto migration_coeff_group_class = pymio::bind_class<mio::MigrationCoefficientGroup, pymio::EnablePickling::Required>(m, "MigrationCoefficientGroup");
+    auto migration_coeff_group_class =
+        pymio::bind_class<mio::MigrationCoefficientGroup, pymio::EnablePickling::Required>(m,
+                                                                                           "MigrationCoefficientGroup");
     pymio::bind_damping_expression_group_members(migration_coeff_group_class);
 
     pymio::bind_dynamicNPI_members(m, "DynamicNPIs");

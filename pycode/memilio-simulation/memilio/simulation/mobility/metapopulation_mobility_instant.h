@@ -32,7 +32,7 @@ namespace pymio
 template <class Simulation>
 void bind_MigrationGraph(pybind11::module_& m, std::string const& name)
 {
-    using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+    using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>;
     bind_class<G, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<>())
         .def(
@@ -42,7 +42,7 @@ void bind_MigrationGraph(pybind11::module_& m, std::string const& name)
             },
             pybind11::arg("id"), pybind11::arg("model"), pybind11::arg("t0") = 0.0, pybind11::arg("dt") = 0.1,
             pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>,
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters<double>&>,
              pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>,
              pybind11::return_value_policy::reference_internal)
@@ -124,13 +124,13 @@ void bind_SimulationNode(pybind11::module_& m, std::string const& name)
 template <class Model>
 void bind_ModelGraph(pybind11::module_& m, std::string const& name)
 {
-    using G = mio::Graph<Model, mio::MigrationParameters>;
+    using G = mio::Graph<Model, mio::MigrationParameters<double>>;
     bind_class<G, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<>())
         .def("add_node", &G::template add_node<const Model&>, pybind11::arg("id"), pybind11::arg("model"),
              pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>, pybind11::arg("start_node_idx"),
-             pybind11::arg("end_node_idx"), pybind11::arg("migration_parameters"),
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters<double>&>,
+             pybind11::arg("start_node_idx"), pybind11::arg("end_node_idx"), pybind11::arg("migration_parameters"),
              pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>,
              pybind11::return_value_policy::reference_internal)
