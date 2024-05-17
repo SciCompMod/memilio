@@ -69,6 +69,7 @@ set(TESTSOURCES
     temp_file_register.h
     sanitizers.cpp
     test_lct_secir.cpp
+    test_glct_secir.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
@@ -89,7 +90,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir lct_secir abm gtest_main)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir lct_secir glct_secir abm gtest_main)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files
