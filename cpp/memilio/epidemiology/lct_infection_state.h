@@ -31,12 +31,12 @@ namespace mio
  * @tparam Ns Number of subcompartments for each infection state defined in InfectionState. 
  *      The number of given template arguments must be equal to the entry Count from InfectionState.
  */
-template <class InfectionStates, unsigned int... Ns>
+template <class InfectionStates, int... Ns>
 class LctInfectionState
 {
 public:
     using InfectionState = InfectionStates;
-    static_assert((unsigned int)InfectionState::Count == sizeof...(Ns),
+    static_assert((size_t)InfectionState::Count == sizeof...(Ns),
                   "The number of integers provided as template parameters must be "
                   "the same as the entry Count of InfectionState.");
 
@@ -46,10 +46,10 @@ public:
      * @brief Gets the number of subcompartments in an infection state.
      *
      * @tparam State: Infection state for which the number of subcompartments should be returned.   
-     * @return Number of subcompartments for State.
+     * @return Number of subcompartments for State. Returned value is always at least one.
      */
     template <InfectionState State>
-    static constexpr unsigned int get_num_subcompartments()
+    static constexpr int get_num_subcompartments()
     {
         static_assert(State < InfectionState::Count, "State must be a a valid InfectionState.");
         return m_subcompartment_numbers[(int)State];
@@ -61,23 +61,24 @@ public:
      * In a simulation, the number of individuals in the subcompartments are stored in vectors. 
      * Accordingly, the index of the first subcompartment of State in such a vector is returned.
      * @tparam State: Infection state for which the index should be returned.    
-     * @return Index of the first subcompartment for a vector with one entry per subcompartment.
+     * @return Index of the first subcompartment for a vector with one entry per subcompartment. 
+     *      Returned value is always non-negative.
      */
     template <InfectionState State>
-    static constexpr unsigned int get_first_index()
+    static constexpr int get_first_index()
     {
         static_assert(State < InfectionState::Count, "State must be a a valid InfectionState.");
-        unsigned int index = 0;
+        int index = 0;
         for (int i = 0; i < (int)(State); i++) {
             index = index + m_subcompartment_numbers[i];
         }
         return index;
     }
 
-    static constexpr unsigned int Count{(... + Ns)};
+    static constexpr int Count{(... + Ns)};
 
 private:
-    static constexpr const std::array<unsigned int, sizeof...(Ns)> m_subcompartment_numbers{
+    static constexpr const std::array<int, sizeof...(Ns)> m_subcompartment_numbers{
         Ns...}; ///< Vector which defines the number of subcompartments for each infection state of InfectionState.
 };
 

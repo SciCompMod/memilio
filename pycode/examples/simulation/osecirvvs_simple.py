@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 
 from memilio.simulation import AgeGroup, Damping, SimulationDay
-from memilio.simulation.osecirvvs import InfectionState
+from memilio.simulation.osecirvvs import InfectionState, interpolate_simulation_result
 from memilio.simulation.osecirvvs import Model, simulate
 
 
@@ -152,7 +152,7 @@ def run_secirvvs_simulation(show_plot=True):
     result = simulate(t0, tmax, dt, model)
 
     # # interpolate results
-    # result = interpolate_simulation_result(result)
+    result = interpolate_simulation_result(result)
 
     print(result.get_last_value())
 
