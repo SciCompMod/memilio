@@ -460,7 +460,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
-    // world.parameters.get<mio::abm::LogAgentIds>() = ids_in_bs;
+    world.parameters.get<mio::abm::LogAgentIds>() = ids_in_bs;
 
     // //Some Data about the world:
     // //write how many persons are in each home

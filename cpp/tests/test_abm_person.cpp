@@ -299,7 +299,7 @@ TEST(TestPerson, getLatestProtection)
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     auto t = mio::abm::TimePoint(0);
-    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
+    person.add_new_vaccination(mio::abm::Vaccination(mio::abm::ExposureType::GenericVaccine, t));
     auto latest_protection = person.get_latest_protection(t);
     ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
     ASSERT_EQ(latest_protection.second.days(), t.days());
@@ -312,7 +312,7 @@ TEST(TestPerson, getLatestProtection)
     ASSERT_EQ(latest_protection.second.days(), t.days());
 
     t = mio::abm::TimePoint(20 * 24 * 60 * 60);
-    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
+    person.add_new_vaccination(mio::abm::Vaccination(mio::abm::ExposureType::GenericVaccine, t));
     latest_protection = person.get_latest_protection(mio::abm::TimePoint(20 * 24 * 60 * 60 + 1));
     ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
     ASSERT_EQ(latest_protection.second.days(), t.days());
@@ -336,14 +336,14 @@ TEST(Person, rng)
 
 TEST(TestPerson, addNewVaccination)
 {
-    auto rng                    = mio::RandomNumberGenerator();
-    auto location               = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person                 = mio::abm::Person(rng, location, age_group_15_to_34);
+    auto rng      = mio::RandomNumberGenerator();
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person   = mio::abm::Person(rng, location, age_group_15_to_34);
 
     auto t1 = mio::abm::TimePoint(0);
     auto t2 = mio::abm::TimePoint(7 * 24 * 60 * 60);
-    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t1);
-    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t2);
+    person.add_new_vaccination(mio::abm::Vaccination(mio::abm::ExposureType::GenericVaccine, t1));
+    person.add_new_vaccination(mio::abm::Vaccination(mio::abm::ExposureType::GenericVaccine, t2));
     auto vaccinations = person.get_vaccinations();
     ASSERT_EQ(vaccinations[0].time, t1);
     ASSERT_EQ(vaccinations[1].time, t2);

@@ -669,7 +669,7 @@ using ParametersBase =
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
                  AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
-                 TestData>;
+                 TestData, LogAgentIds>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

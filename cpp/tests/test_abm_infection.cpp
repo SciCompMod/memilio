@@ -121,7 +121,7 @@ TEST(TestInfection, getInfectionState)
     EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection1.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
 
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 1;
+    params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 1;
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(1))
@@ -228,7 +228,7 @@ TEST(TestInfection, getPersonalProtectiveFactor)
 
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person   = mio::abm::Person(rng, location, age_group_15_to_34);
-    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0));
+    person.add_new_vaccination(mio::abm::Vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0)));
     auto latest_protection = person.get_latest_protection(mio::abm::TimePoint(0));
 
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
