@@ -36,7 +36,7 @@ void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
 {
     bind_Range<decltype(std::declval<mio::DynamicNPIs<double>>().get_thresholds())>(m, "_ThresholdRange");
     using C = mio::DynamicNPIs<double>;
-    pybind11::class_<C>(m, name.c_str())
+    bind_class<C, EnablePickling::Required>(m, name.c_str())
         .def(pybind11::init<>())
         .def_property(
             "interval",

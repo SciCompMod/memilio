@@ -66,7 +66,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
 template <class Simulation>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
+    pymio::bind_class<mio::ParameterStudy<Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>&, double, double,
@@ -214,9 +214,11 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .value("DeadPartialImmunity", mio::osecirvvs::InfectionState::DeadPartialImmunity)
         .value("DeadImprovedImmunity", mio::osecirvvs::InfectionState::DeadImprovedImmunity);
 
-    pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase<double>>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase<double>, pymio::EnablePickling::Required>(m,
+                                                                                                      "ParametersBase");
 
-    py::class_<mio::osecirvvs::Parameters<double>, mio::osecirvvs::ParametersBase<double>>(m, "Parameters")
+    pymio::bind_class<mio::osecirvvs::Parameters<double>, pymio::EnablePickling::Required,
+                      mio::osecirvvs::ParametersBase<double>>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
         .def_property(
             "commuter_nondetection",
@@ -257,10 +259,10 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     pymio::bind_Population(m, "Population", mio::Tag<mio::osecirvvs::Model<double>::Populations>{});
 
     pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations,
-                                   mio::osecirvvs::Parameters<double>>(m, "ModelBase");
-    py::class_<mio::osecirvvs::Model<double>,
-               mio::CompartmentalModel<double, mio::osecirvvs::InfectionState, SecirvvsPopulations,
-                                       mio::osecirvvs::Parameters<double>>>(m, "Model")
+                                   mio::osecirvvs::Parameters<double>, pymio::EnablePickling::Never>(m, "ModelBase");
+    pymio::bind_class<mio::osecirvvs::Model<double>, pymio::EnablePickling::Required,
+                      mio::CompartmentalModel<double, mio::osecirvvs::InfectionState, SecirvvsPopulations,
+                                              mio::osecirvvs::Parameters<double>>>(m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecirvvs::Simulation<>>(m, "Simulation");

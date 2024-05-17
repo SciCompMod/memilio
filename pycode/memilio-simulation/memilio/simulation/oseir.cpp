@@ -69,19 +69,22 @@ PYBIND11_MODULE(_simulation_oseir, m)
         .value("Infected", mio::oseir::InfectionState::Infected)
         .value("Recovered", mio::oseir::InfectionState::Recovered);
 
-    pymio::bind_ParameterSet<mio::oseir::ParametersBase<double>>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::oseir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    py::class_<mio::oseir::Parameters<double>, mio::oseir::ParametersBase<double>>(m, "Parameters")
+    pymio::bind_class<mio::oseir::Parameters<double>, pymio::EnablePickling::Required,
+                      mio::oseir::ParametersBase<double>>(m, "Parameters", py::module_local{})
+
         .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::oseir::Parameters<double>::check_constraints);
 
     using SeirPopulations = mio::Populations<double, mio::AgeGroup, mio::oseir::InfectionState>;
-    pymio::bind_Population(m, "SeirPopulations", mio::Tag<mio::oseir::Model<double>::Populations>{});
-
-    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, SeirPopulations, mio::oseir::Parameters<double>>(
-        m, "ModelBase");
-    py::class_<mio::oseir::Model<double>, mio::CompartmentalModel<double, mio::oseir::InfectionState, SeirPopulations,
-                                                                  mio::oseir::Parameters<double>>>(m, "Model")
+    pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, SeirPopulations, mio::oseir::Parameters<double>,
+                                   pymio::EnablePickling::Never>(m, "ModelBase");
+    pymio::bind_class<
+        mio::oseir::Model<double>, pymio::EnablePickling::Required,
+        mio::CompartmentalModel<double, mio::oseir::InfectionState, SeirPopulations, mio::oseir::Parameters<double>>>(
+        m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     m.def(

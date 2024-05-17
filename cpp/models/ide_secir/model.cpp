@@ -60,12 +60,17 @@ void Model::compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_Infec
                                            Eigen::Index idx_IncomingFlow, int idx_TransitionDistribution1,
                                            int idx_TransitionDistribution2)
 {
-    ScalarType sum = 0;
-
+    ScalarType sum       = 0;
+    ScalarType calc_time = 0;
     // Determine relevant calculation area and corresponding index.
-    ScalarType calc_time =
-        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt, m_tol),
-                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt, m_tol));
+    if ((1 - parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1]) > 0) {
+        calc_time =
+            std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt, m_tol),
+                     parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt, m_tol));
+    }
+    else {
+        calc_time = parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt, m_tol);
+    }
 
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 

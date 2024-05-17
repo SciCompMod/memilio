@@ -39,7 +39,6 @@ class FlowlessModel : public CompartmentalModel<ScalarType, osecirvvs::Infection
                                                 osecirvvs::Parameters<ScalarType>>
 {
     using InfectionState = osecirvvs::InfectionState;
-    using Parameters     = osecirvvs::Parameters<>;
     using Base           = CompartmentalModel<ScalarType, osecirvvs::InfectionState,
                                     mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
                                     osecirvvs::Parameters<ScalarType>>;

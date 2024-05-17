@@ -28,7 +28,7 @@ namespace pymio
 
 void bind_uncertain_value(py::module_& m, std::string const& name)
 {
-    pymio::pybind_pickle_class<mio::UncertainValue<double>>(m, name.c_str())
+    bind_class<mio::UncertainValue<double>, EnablePickling::Required>(m, name.c_str())
         .def(py::init<ScalarType>(), py::arg("value") = 0.0)
         .def_property(
             "value",

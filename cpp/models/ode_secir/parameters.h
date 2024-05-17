@@ -173,8 +173,8 @@ struct TimeInfectedCritical {
 };
 
 /**
-* @brief probability of getting infected from a contact
-*/
+ * @brief probability of getting infected from a contact
+ */
 template <typename FP = double>
 struct TransmissionProbabilityOnContact {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -189,8 +189,8 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-* @brief the relative InfectedNoSymptoms infectability
-*/
+ * @brief the relative InfectedNoSymptoms infectability
+ */
 template <typename FP = double>
 struct RelativeTransmissionNoSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -205,8 +205,8 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
-* @brief the percentage of asymptomatic cases in the SECIR model
-*/
+ * @brief the percentage of asymptomatic cases in the SECIR model
+ */
 template <typename FP = double>
 struct RecoveredPerInfectedNoSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -221,8 +221,8 @@ struct RecoveredPerInfectedNoSymptoms {
 };
 
 /**
-* @brief the risk of infection from symptomatic cases in the SECIR model
-*/
+ * @brief the risk of infection from symptomatic cases in the SECIR model
+ */
 template <typename FP = double>
 struct RiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -237,8 +237,8 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
-* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
-*/
+ * @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+ */
 template <typename FP = double>
 struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -253,8 +253,8 @@ struct MaxRiskOfInfectionFromSymptomatic {
 };
 
 /**
-* @brief the percentage of hospitalized patients per infected patients in the SECIR model
-*/
+ * @brief the percentage of hospitalized patients per infected patients in the SECIR model
+ */
 template <typename FP = double>
 struct SeverePerInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -269,8 +269,8 @@ struct SeverePerInfectedSymptoms {
 };
 
 /**
-* @brief the percentage of ICU patients per hospitalized patients in the SECIR model
-*/
+ * @brief the percentage of ICU patients per hospitalized patients in the SECIR model
+ */
 template <typename FP = double>
 struct CriticalPerSevere {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -285,8 +285,8 @@ struct CriticalPerSevere {
 };
 
 /**
-* @brief the percentage of dead patients per ICU patients in the SECIR model
-*/
+ * @brief the percentage of dead patients per ICU patients in the SECIR model
+ */
 template <typename FP = double>
 struct DeathsPerCritical {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;

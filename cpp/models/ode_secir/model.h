@@ -62,14 +62,17 @@ class Model : public FlowModel<FP, InfectionState, Populations<FP, AgeGroup, Inf
     using Base = FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>;
 
 public:
-    Model(const typename Base::Populations& pop, const typename Base::ParameterSet& params)
+    using typename Base::ParameterSet;
+    using typename Base::Populations;
+
+    Model(const Populations& pop, const ParameterSet& params)
         : Base(pop, params)
     {
     }
 
     Model(int num_agegroups)
-        : Model(typename Base::Populations({mio::AgeGroup(num_agegroups), InfectionState::Count}),
-                typename Base::ParameterSet(mio::AgeGroup(num_agegroups)))
+        : Model(Populations({mio::AgeGroup(num_agegroups), InfectionState::Count}),
+                ParameterSet(mio::AgeGroup(num_agegroups)))
     {
     }
 
@@ -225,8 +228,8 @@ public:
     static IOResult<Model> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Model");
-        auto par = obj.expect_element("Parameters", Tag<typename Base::ParameterSet>{});
-        auto pop = obj.expect_element("Populations", Tag<typename Base::Populations>{});
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
         return apply(
             io,
             [](auto&& par_, auto&& pop_) {

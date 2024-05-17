@@ -66,7 +66,7 @@ void bind_Population(pybind11::module_& m, std::string const& name,
     catch (std::runtime_error& e) {
     }
 
-    pybind11::class_<C, Base> c(m, name.c_str());
+    decltype(auto) c = bind_class<C, EnablePickling::Required, Base>(m, name.c_str());
     c.def(pybind11::init([](mio::Index<Cats...> const& sizes, double val) {
          return C(sizes, val);
      }))

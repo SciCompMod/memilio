@@ -55,9 +55,16 @@ class Model
     using Base = FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>;
 
 public:
+    using typename Base::ParameterSet;
+    using typename Base::Populations;
+
+    Model(const Populations& pop, const ParameterSet& params)
+        : Base(pop, params)
+    {
+    }
+
     Model(int num_agegroups)
-        : Base(typename Base::Populations({AgeGroup(num_agegroups), InfectionState::Count}),
-               typename Base::ParameterSet(AgeGroup(num_agegroups)))
+        : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
     {
     }
 
@@ -196,6 +203,36 @@ public:
 
         auto result = linear_interpolation(t_value, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
         return mio::success(static_cast<ScalarType>(result));
+    }
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Model");
+        obj.add_element("Parameters", this->parameters);
+        obj.add_element("Populations", this->populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Model> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Model");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(
+            io,
+            [](auto&& par_, auto&& pop_) {
+                return Model{pop_, par_};
+            },
+            par, pop);
     }
 };
 

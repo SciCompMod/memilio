@@ -32,13 +32,13 @@ namespace mio
 namespace oseir
 {
 
-/*******************************************
-      * Define Parameters of the SEIR model *
-    *******************************************/
+/***************************************
+ * Define Parameters of the SEIR model *
+ ***************************************/
 
 /**
-     * @brief probability of getting infected from a contact
-     */
+ * @brief probability of getting infected from a contact
+ */
 template <typename FP = double>
 struct TransmissionProbabilityOnContact {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -53,8 +53,8 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-     * @brief the latent time in day unit
-     */
+ * @brief the latent time in day unit
+ */
 template <typename FP = double>
 struct TimeExposed {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -69,8 +69,8 @@ struct TimeExposed {
 };
 
 /**
-     * @brief the infectious time in day unit
-     */
+ * @brief the infectious time in day unit
+ */
 template <typename FP = double>
 struct TimeInfected {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
@@ -212,7 +212,7 @@ public:
 private:
     Parameters(ParametersBase<FP>&& base)
         : ParametersBase<FP>(std::move(base))
-        , m_num_groups(get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
+        , m_num_groups(this->template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
     {
     }
 

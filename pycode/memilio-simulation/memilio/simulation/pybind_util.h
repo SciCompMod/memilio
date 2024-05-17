@@ -22,19 +22,37 @@
 
 #include "memilio/math/matrix_shape.h"
 #include "pickle_serializer.h"
+#include "memilio/io/json_serializer.h"
 #include "memilio/io/io.h"
+#include "memilio/utils/metaprogramming.h"
+#include "memilio/math/eigen_util.h"
 
 #include "pybind11/pybind11.h"
 
 namespace pymio
 {
 
-//bind class and add pickling based on memilio serialization framework
+// Enum for controlling pickling support behavior
+enum class EnablePickling {
+    Never,      // Pickling support is disabled.
+    IfAvailable, // Pickling support is enabled if the class matches SFINEA-clause of `serialize_internal` 
+    Required    // Pickling support is required, and an error is raised if not available.
+};
+
+// Tag dispatch to convert value into type
+template <EnablePickling F>
+struct PicklingTag {};
+
+// Detect serialization by matching a `serialize_internal` function
+template <class IOContext, class T>
+using serialize_internal_t = decltype(mio::serialize_internal(std::declval<IOContext&>(), std::declval<T&>()));
+template <class IOContext, class T>
+using has_serialize_internal = mio::is_expression_valid<serialize_internal_t, IOContext, T>;
+
 template <class T, class... Args>
-decltype(auto) pybind_pickle_class(pybind11::module_& m, const char* name)
+void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 {
-    decltype(auto) pickle_class = pybind11::class_<T, Args...>(m, name);
-    pickle_class.def(pybind11::pickle(
+    cls.def(pybind11::pickle(
         [](const T& object) { // __getstate__
             auto tuple = mio::serialize_pickle(object);
             if (tuple) {
@@ -53,8 +71,89 @@ decltype(auto) pybind_pickle_class(pybind11::module_& m, const char* name)
                 throw std::runtime_error(object.error().formatted_message());
             }
         }));
-    return pickle_class;
 }
+
+/**
+ * Call binding for a class with bind_class<...>(...).
+ * Strategy for pickling is deduced depending on the EnablePickling value.
+ * Compile-time errors originating from this function are likely due to issues with the serialization of the given class in the C++ library.
+ * 
+ * Here's a small guideline on when to use each strategy:
+ * 
+ * 1. Use EnablePickling::Never for classes:
+ *    - Containing sensitive or non-serializable data.
+ *    - With complex ownership semantics, especially when serializing the object might lead to unintended side effects.
+ *    - Where pickling/unpickling is not feasible or doesn't make sense.
+ * 
+ * 2. Use EnablePickling::IfAvailable for classes:
+ *    - That are generic and may become picklable in the future or in specific use cases.
+ *    - When you want to allow pickling if the necessary serialization functions are provided in the future.
+ * 
+ *    Important Note:
+ *    This strategy attempts to deduce if serialization is possible during compile-time by checking for a matching serialize_internal function.
+ *    The C++ library does not check pickling for every class during compile-time, which can result in classes unexpectedly lacking serialization support.
+ *    This approach does not account for subclasses contained within the class you intend to pickle. As a result, classes can be deduced as serializable even if they are not, 
+ *    leading to a compile-time error. In such cases, it may be either an error in the C++ class implementation or the class should not be serializable and should use the EnablePickling::Never strategy during binding.
+ * 
+ * 3. Use EnablePickling::Required for classes:
+ *    - That are intended to be used with pickling, and it's critical to have pickling support.
+ *    - When you want to ensure serialization in the C++ library.
+ * 
+ * @{
+ */
+template<class T, EnablePickling F, class... Args>
+struct BindClassHelper
+{
+private:
+    template <class... Options>
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/, Options&&... options) const {
+        auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
+        return cls;
+    }
+
+    template <class... Options>
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::IfAvailable> /*tags*/, Options&&... options) const {
+        auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
+        // Bind the class depending on its features
+        if constexpr (has_serialize_internal<mio::PickleSerializer, T>::value) {
+            pybind_pickle_class<T, Args...>(cls);
+        }
+        return cls;
+    }
+
+    template <class... Options>
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Required> /*tags*/, Options&&... options) const {
+        auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
+        pybind_pickle_class<T, Args...>(cls);
+        return cls;
+    }
+
+public:
+    template <class... Options>
+    auto operator()(pybind11::module& m, std::string const& name, Options&&... options) const {
+        return _bind_class(m, name, PicklingTag<F>{}, std::forward<Options>(options)...);
+    }
+};
+
+/**
+ * bind_class is defined as a function-like object using the overloaded call operator of BindClassHelper.
+ * It is a nibloid, that means:
+ *      - Explicit template argument lists may not be specified when calling it.
+ *      - It is visible to argument-dependent lookup, because it is a function object.
+ *      - When it is found by normal unqualified lookup for the name to the left of the function-call operator, it inhibits argument-dependent lookup.
+ * In this case, nibloid is used to have a function-like structure with two template parameter packs, by hiding one inside the operator of BindClassHelper.
+ * The first template parameter pack 'Args' needs to be defined explicitly, while the second template parameter pack 'Options' is deduced automatically.
+ * @tparam T class for binding
+ * @tparam F value of enum EnablePickling defining pickling behaviour
+ * @tparam Args base class of T.
+ * @param m the pybind11 module.
+ * @param name of the class in python.
+ * @param options optional arguments for pybind11::class_.
+ * @return instance of pybind class_.
+ */
+template<class T, EnablePickling F, class... Args>
+constexpr BindClassHelper<T, F, Args...> bind_class;
+/**@}*/
 
 template <typename T>
 T check_and_throw(mio::IOResult<T>& result)
@@ -130,9 +229,10 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    pybind11::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    bind_class<Iterator, EnablePickling::Never>(m, (std::string("_Iter") + class_name).c_str())
         .def(
-            "__next__", [](Iterator & self) -> auto&& {
+            "__next__",
+            [](Iterator& self) -> auto&& {
                 if (self.iter_pair.first != self.iter_pair.second) {
                     auto&& ref = *self.iter_pair.first;
                     ++self.iter_pair.first;
@@ -143,7 +243,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
             pybind11::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    pybind11::class_<Range>(m, class_name.c_str())
+    bind_class<Range, EnablePickling::Never>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {
@@ -151,7 +251,10 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
             },
             pybind11::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
         .def(
-            "__getitem__", [](Range & self, size_t idx) -> auto&& { return self[idx]; },
+            "__getitem__",
+            [](Range& self, size_t idx) -> auto&& {
+                return self[idx];
+            },
             pybind11::return_value_policy::reference_internal)
         .def("__len__", &Range::size);
 }
@@ -187,7 +290,7 @@ auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args
     //not meant to be used directly by users, so name starts with _
     struct Values {
     };
-    pybind11::class_<Values>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
+    bind_class<Values, EnablePickling::Never>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
         .def("__iter__",
              [](Values& /*self*/) {
                  return E(0);

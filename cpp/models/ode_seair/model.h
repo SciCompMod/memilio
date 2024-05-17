@@ -38,8 +38,11 @@ class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Population
     using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
 
 public:
+    using typename Base::ParameterSet;
+    using typename Base::Populations;
+
     Model()
-        : Base(mio::Populations<FP, InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
+        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
     {
     }
 

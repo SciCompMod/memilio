@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "mobility/metapopulation_mobility_instant.h"
+#include "pybind_util.h"
 
 #include "pybind11/eigen.h"
 
@@ -28,7 +29,7 @@ namespace pymio
 
 void bind_migration_parameters(py::module_& m, std::string const& name)
 {
-    py::class_<mio::MigrationParameters<double>>(m, name.c_str())
+    bind_class<mio::MigrationParameters<double>, EnablePickling::IfAvailable>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const mio::MigrationCoefficientGroup&>(), py::arg("coeffs"))
         .def_property(
@@ -41,7 +42,7 @@ void bind_migration_parameters(py::module_& m, std::string const& name)
 
 void bind_migration_parameter_edge(py::module_& m, std::string const& name)
 {
-    py::class_<mio::Edge<mio::MigrationParameters<double>>>(m, name.c_str())
+    bind_class<mio::Edge<mio::MigrationParameters<double>>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("start_node_idx",
                                [](const mio::Edge<mio::MigrationParameters<double>>& self) {
                                    return self.start_node_idx;
@@ -51,23 +52,29 @@ void bind_migration_parameter_edge(py::module_& m, std::string const& name)
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property", [](const mio::Edge<mio::MigrationEdge<double>>& self) -> auto& { return self.property; },
+            "property",
+            [](const mio::Edge<mio::MigrationEdge<double>>& self) -> auto& {
+                return self.property;
+            },
             py::return_value_policy::reference_internal);
 }
 
 void bind_migration(py::module_& m, std::string const& name)
 {
-    py::class_<mio::MigrationEdge<double>>(m, name.c_str())
+    bind_class<mio::MigrationEdge<double>, EnablePickling::IfAvailable>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const mio::MigrationParameters<double>&>(), py::arg("params"))
         .def_property_readonly(
-            "parameters", [](const mio::MigrationEdge<double>& self) -> auto& { return self.get_parameters(); },
+            "parameters",
+            [](const mio::MigrationEdge<double>& self) -> auto& {
+                return self.get_parameters();
+            },
             py::return_value_policy::reference_internal);
 }
 
 void bind_migration_edge(py::module_& m, std::string const& name)
 {
-    py::class_<mio::Edge<mio::MigrationEdge<double>>>(m, name.c_str())
+    bind_class<mio::Edge<mio::MigrationEdge<double>>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("start_node_idx",
                                [](const mio::Edge<mio::MigrationEdge<double>>& self) {
                                    return self.start_node_idx;
@@ -77,7 +84,10 @@ void bind_migration_edge(py::module_& m, std::string const& name)
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property", [](const mio::Edge<mio::MigrationEdge<double>>& self) -> auto& { return self.property; },
+            "property",
+            [](const mio::Edge<mio::MigrationEdge<double>>& self) -> auto& {
+                return self.property;
+            },
             py::return_value_policy::reference_internal);
 }
 
