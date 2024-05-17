@@ -81,6 +81,7 @@ runs:
     - name: Build
       shell: bash
       run: |
+        export CCACHE_LOGFILE=$(pwd)/.ccache.log
         cd cpp
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
@@ -116,4 +117,10 @@ runs:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build.tar.gz
+        retention-days: 1
+    - name: Upload ccache log
+      uses: actions/upload-artifact@v4
+      with:
+        name: ccachelog-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        path: cpp/.ccache.log
         retention-days: 1
