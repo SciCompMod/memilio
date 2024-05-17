@@ -658,8 +658,8 @@ struct ConstantFunction : public StateAgeFunction {
         unused(tol);
         m_support_max = -2.;
 
-        log_error("This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
-                  "of type b); see documentation of StateAgeFunction Base class.");
+        log_error("This function is not suited to be a TransitionDistribution. Do not call in case of "
+                  "StateAgeFunctions of type b); see documentation of StateAgeFunction Base class.");
 
         return m_support_max;
     }

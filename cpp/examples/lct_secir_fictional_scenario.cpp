@@ -66,7 +66,7 @@ std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
 * Contacts are defined such that R0 equals 1 at the beginning of the simulation and jumps to R0 in 
 * the time interval [1.9,2.0].
 */
-mio::UncertainContactMatrix get_contact_matrix(ScalarType R0)
+mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
 {
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     if (R0 <= 1.) {
@@ -83,7 +83,7 @@ mio::UncertainContactMatrix get_contact_matrix(ScalarType R0)
         contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
     }
 
-    return mio::UncertainContactMatrix(contact_matrix);
+    return mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 }
 
 /** @brief Returns transitions that can be used to inizialize an IDE model or 
@@ -305,8 +305,8 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     // Perform simulation.
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(
         0, tmax, 0.1, model,
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
-                                                                                                         0.1));
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+            1e-10, 1e-5, 0, 0.1));
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
 

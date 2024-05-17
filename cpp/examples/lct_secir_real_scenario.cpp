@@ -380,7 +380,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::lsecir::
     }
 
     // Set ContactPatterns in parameters.
-    parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
+    parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix<ScalarType>(contact_matrices);
 
     return mio::success();
 }
@@ -446,8 +446,8 @@ mio::IOResult<void> simulate(std::string const& path, std::map<std::string, Scal
     // Perform Simulation.
     mio::TimeSeries<ScalarType> result_lct = mio::lsecir::simulate(
         0, mio::get_offset_in_days(end_date, start_date), 0.1, model,
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
-                                                                                                         0.1));
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+            1e-10, 1e-5, 0, 0.1));
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations_lct = model.calculate_populations(result_lct);
 

@@ -67,23 +67,26 @@ PYBIND11_MODULE(_simulation_osir, m)
         .value("Infected", mio::osir::InfectionState::Infected)
         .value("Recovered", mio::osir::InfectionState::Recovered);
 
-    pymio::bind_ParameterSet<mio::osir::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    py::class_<mio::osir::Parameters, mio::osir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::osir::Parameters<double>, pymio::EnablePickling::Required,
+                      mio::osir::ParametersBase<double>>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
-        .def("check_constraints", &mio::osir::Parameters::check_constraints);
+        .def("check_constraints", &mio::osir::Parameters<double>::check_constraints);
 
-    using SirPopulations = mio::Populations<mio::AgeGroup, mio::osir::InfectionState>;
-    pymio::bind_Population(m, "SirPopulations", mio::Tag<mio::osir::Model::Populations>{});
-
-    pymio::bind_CompartmentalModel<mio::osir::InfectionState, SirPopulations, mio::osir::Parameters>(m, "ModelBase");
-    py::class_<mio::osir::Model,
-               mio::CompartmentalModel<mio::osir::InfectionState, SirPopulations, mio::osir::Parameters>>(m, "Model")
+    using SirPopulations = mio::Populations<double, mio::AgeGroup, mio::osir::InfectionState>;
+    pymio::bind_Population(m, "Population", mio::Tag<mio::osir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, SirPopulations, mio::osir::Parameters<double>,
+                                   pymio::EnablePickling::Never>(m, "ModelBase");
+    pymio::bind_class<
+        mio::osir::Model<double>, pymio::EnablePickling::Required,
+        mio::CompartmentalModel<double, mio::osir::InfectionState, SirPopulations, mio::osir::Parameters<double>>>(
+        m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     m.def(
         "simulate",
-        [](double t0, double tmax, double dt, const mio::osir::Model& model) {
+        [](double t0, double tmax, double dt, const mio::osir::Model<double>& model) {
             return mio::simulate(t0, tmax, dt, model);
         },
         "Simulates a osir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
