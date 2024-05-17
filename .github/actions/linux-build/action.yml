@@ -77,6 +77,8 @@ runs:
       with:
         save: ${{ github.ref_name == 'main' || github.ref_name == '994/merge' || github.ref_name == '305-ccache-in-CI' }} # only save on main branch to minimize space
         key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        restore-keys: 
+          - linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
     - name: Build
       shell: bash
       run: |
