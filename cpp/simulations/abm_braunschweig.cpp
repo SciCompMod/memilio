@@ -997,8 +997,9 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(2); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
-    auto run_idx         = size_t(1); // The run index
-    auto max_num_persons = 1000;
+    auto run_idx            = size_t(1); // The run index
+    auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+    auto max_num_persons    = 1000;
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
@@ -1024,14 +1025,15 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         // Push result of the simulation back to the result vector
         ensemble_results.push_back(temp_sim_result);
         // Option to save the current run result to file
-        if (save_single_runs) {
+        if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            save_result_result = save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string());
+            save_result_result  = save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string());
         }
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);
         ++run_idx;
     }
+    BOOST_OUTCOME_TRY(save_result_result);
     return mio::success();
 }
 
