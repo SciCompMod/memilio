@@ -447,16 +447,6 @@ public:
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const;
 
     /**
-     * @brief Add a new #Vaccination
-     * @param[in] v ExposureType (i. e. vaccine) the person takes.  
-     * @param[in] t TimePoint of the Vaccination.
-    */
-    void add_new_vaccination(ExposureType v, TimePoint t)
-    {
-        m_vaccinations.push_back(Vaccination(v, t));
-    }
-
-    /**
      * @brief Get the transport mode the Person used to get to its current Location.
      * @return TransportMode the Person used to get to its current Location.
     */
