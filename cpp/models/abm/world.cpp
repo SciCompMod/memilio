@@ -136,7 +136,8 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                     if (target_location != current_location &&
-                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        target_location.get_number_persons() < target_location.get_capacity().persons &&
+                        target_location.entry_allowed(personal_rng, t)) {
                         person->apply_mask_intervention(personal_rng, target_location);
                         person->migrate_to(target_location);
                     }
