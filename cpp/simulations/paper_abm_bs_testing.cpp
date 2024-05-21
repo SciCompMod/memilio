@@ -33,6 +33,7 @@
 #include "generate_graph_from_data.cpp"
 #include "memilio/utils/miompi.h"
 #include "memilio/io/binary_serializer.h"
+#include "memilio/io/epi_data.h"
 
 namespace fs = boost::filesystem;
 
@@ -153,6 +154,27 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
         }
     }
 }
+
+/**
+ * @brief assign an vaccination state to each person according to real world data read in through the ODE secir model.
+ * 
+ * @param input 
+ * @return int 
+ */
+// void assign_vaccination_state(mio::abm::World& world, const std::string& filename)
+// {
+//     //Read in file with vaccination data
+//     auto vacc_data = mio::read_vaccination_data(filename).value();
+//     for (auto& vacc_entry : vacc_data) {
+//         // we want to filter out branschweig
+//         if (vacc_entry.county_id == mio::regions::DistrictId(3101)) {
+//             //for every date we want to vaccinate a person within the age group
+//                 }
+//     }
+//     //
+
+//     mio::unused(vacc_data, world);
+// }
 
 int stringToMinutes(const std::string& input)
 {
@@ -880,6 +902,9 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     // Assign an infection state to each person.
     assign_infection_state(world, t0);
 
+    // Assign vaccination status to each person.
+    // assign_vaccination_state(world, (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").generic_string());
+
     //auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
@@ -1239,6 +1264,37 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             if (std::find(work_location_ids_35.begin(), work_location_ids_35.end(), location.get_index()) !=
                 work_location_ids_35.end()) {
                 sim.get_world().get_testing_strategy().add_testing_scheme(location.get_type(), testing_scheme_work);
+            }
+        }
+
+        //2.5 plus testing schemes at 20% of basics shops
+        std::vector<int> basics_shop_location_ids;
+        for (auto& location : location_it) {
+            if (location.get_type() == mio::abm::LocationType::BasicsShop) {
+                basics_shop_location_ids.push_back(location.get_index());
+            }
+        }
+        //take 20% of basics shop locations
+        std::shuffle(basics_shop_location_ids.begin(), basics_shop_location_ids.end(), g);
+        auto num_basics_shop_locations = (int)(0.2 * basics_shop_location_ids.size());
+        std::vector<int> basics_shop_location_ids_20(basics_shop_location_ids.begin(),
+                                                     basics_shop_location_ids.begin() + num_basics_shop_locations);
+        auto testing_min_time_basics_shop = mio::abm::days(2);
+        auto probability_basics_shop      = 1.0;
+        auto start_date_test_basics_shop  = mio::abm::TimePoint(mio::abm::days(14).seconds());
+        auto end_date_test_basics_shop    = mio::abm::TimePoint(tmax);
+        auto test_type_basics_shop        = mio::abm::TestType::Antigen; // Antigen test
+        auto test_parameters_basics_shop =
+            sim.get_world().parameters.get<mio::abm::TestData>()[test_type_basics_shop]; // Test parameters
+        auto testing_criteria_basics_shop = mio::abm::TestingCriteria();
+        auto testing_scheme_basics_shop   = mio::abm::TestingScheme(
+            testing_criteria_basics_shop, testing_min_time_basics_shop, start_date_test_basics_shop,
+            end_date_test_basics_shop, test_parameters_basics_shop, probability_basics_shop);
+        for (auto& location : location_it) {
+            if (std::find(basics_shop_location_ids_20.begin(), basics_shop_location_ids_20.end(),
+                          location.get_index()) != basics_shop_location_ids_20.end()) {
+                sim.get_world().get_testing_strategy().add_testing_scheme(location.get_type(),
+                                                                          testing_scheme_basics_shop);
             }
         }
 
