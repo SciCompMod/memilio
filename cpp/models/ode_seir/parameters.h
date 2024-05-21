@@ -20,29 +20,28 @@
 #ifndef SEIR_PARAMETERS_H
 #define SEIR_PARAMETERS_H
 
-#include "memilio/utils/uncertain_value.h"
-#include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/utils/parameter_set.h"
+#include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/custom_index_array.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-
-#include <vector>
+#include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/utils/parameter_set.h"
 
 namespace mio
 {
 namespace oseir
 {
 
-/*******************************************
-      * Define Parameters of the SEIR model *
-    *******************************************/
+/***************************************
+ * Define Parameters of the SEIR model *
+ ***************************************/
 
 /**
-     * @brief probability of getting infected from a contact
-     */
+ * @brief probability of getting infected from a contact
+ */
+template <typename FP = double>
 struct TransmissionProbabilityOnContact {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type(size, 1.);
@@ -54,13 +53,14 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-     * @brief the latent time in day unit
-     */
+ * @brief the latent time in day unit
+ */
+template <typename FP = double>
 struct TimeExposed {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size,5.2);
+        return Type(size, 5.2);
     }
     static std::string name()
     {
@@ -69,13 +69,14 @@ struct TimeExposed {
 };
 
 /**
-     * @brief the infectious time in day unit
-     */
+ * @brief the infectious time in day unit
+ */
+template <typename FP = double>
 struct TimeInfected {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size,6.0);
+        return Type(size, 6.0);
     }
     static std::string name()
     {
@@ -84,10 +85,11 @@ struct TimeInfected {
 };
 
 /**
-     * @brief the contact patterns within the society are modelled using a ContactMatrix
-     */
+ * @brief the contact patterns within the society are modelled using a ContactMatrix
+ */
+template <class FP = ScalarType>
 struct ContactPatterns {
-    using Type = UncertainContactMatrix;
+    using Type = UncertainContactMatrix<FP>;
     static Type get_default(AgeGroup size)
     {
         return Type(1, static_cast<Eigen::Index>((size_t)size));
@@ -98,16 +100,19 @@ struct ContactPatterns {
     }
 };
 
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
+template <typename FP = double>
+using ParametersBase =
+    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>, ContactPatterns<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-class Parameters : public ParametersBase
+template <typename FP = double>
+class Parameters : public ParametersBase<FP>
 {
 public:
     Parameters(AgeGroup num_agegroups)
-        : ParametersBase(num_agegroups)
+        : ParametersBase<FP>(num_agegroups)
         , m_num_groups{num_agegroups}
     {
     }
@@ -136,29 +141,32 @@ public:
 
         int corrected = false;
 
-        for(auto i =AgeGroup(0); i < AgeGroup(m_num_groups);++i){
-            if (this->get<TimeExposed>()[i] < tol_times) {
-                log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
-                            "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                            "and reset parameters.",
-                            this->get<TimeExposed>()[i], tol_times);
-                this->get<TimeExposed>()[i] = tol_times;
-                corrected                = true;
+        for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
+            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
+                log_warning(
+                    "Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
+                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                    "and reset parameters.",
+                    this->template get<TimeExposed<FP>>()[i], tol_times);
+                this->template get<TimeExposed<FP>>()[i] = tol_times;
+                corrected                                = true;
             }
-            if (this->get<TimeInfected>()[i] < tol_times) {
-                log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
-                            "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                            "and reset parameters.",
-                            this->get<TimeInfected>()[i], tol_times);
-                this->get<TimeInfected>()[i] = tol_times;
-                corrected                 = true;
+            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
+                log_warning(
+                    "Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                    "and reset parameters.",
+                    this->template get<TimeInfected<FP>>()[i], tol_times);
+                this->template get<TimeInfected<FP>>()[i] = tol_times;
+                corrected                                 = true;
             }
-            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
-                this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                            this->get<TransmissionProbabilityOnContact>()[i], 0.0);
-                this->get<TransmissionProbabilityOnContact>()[i] = 0.0;
-                corrected                                     = true;
+            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
+                log_warning(
+                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                    this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] = 0.0;
+                corrected                                                     = true;
             }
         }
         return corrected;
@@ -173,36 +181,38 @@ public:
     {
         const double tol_times = 1e-1;
 
-        for(auto i = AgeGroup(0); i < m_num_groups; i++){
-        if (this->get<TimeExposed>()[i] < tol_times) {
-            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->get<TimeExposed>()[i], 0.0);
-            return true;
+        for (auto i = AgeGroup(0); i < m_num_groups; i++) {
+            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
+                log_error(
+                    "Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
+                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                    "and reset parameters.",
+                    this->template get<TimeExposed<FP>>()[i], 0.0);
+                return true;
+            }
+            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
+                log_error(
+                    "Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                    "and reset parameters.",
+                    this->template get<TimeInfected<FP>>()[i], 0.0);
+                return true;
+            }
+            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
+                          "greater {:.4f}",
+                          this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
+                return true;
+            }
         }
-        if (this->get<TimeInfected>()[i] < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->get<TimeInfected>()[i], 0.0);
-            return true;
-        }
-        if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
-            log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->get<TransmissionProbabilityOnContact>()[i], 0.0, 1.0);
-            return true;
-        }
-    }
-    return false;
+        return false;
     }
 
 private:
-    Parameters(ParametersBase&& base)
-        : ParametersBase(std::move(base))
-        , m_num_groups(get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
+    Parameters(ParametersBase<FP>&& base)
+        : ParametersBase<FP>(std::move(base))
+        , m_num_groups(this->template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
     {
     }
 
@@ -214,9 +224,10 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(auto&& base, ParametersBase::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
+
 private:
     AgeGroup m_num_groups;
 };
