@@ -178,6 +178,24 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     return mio::success();
 }
 
+/**
+ * Set feedback parameters
+ * @param params Object that the parameters will be added to.
+ * @returns Currently generates no errors.
+ */
+mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params)
+{
+    params.get<mio::osecir::ICUCapacity>()            = 35;
+    params.get<mio::osecir::CutOffGamma>()            = 45;
+    params.get<mio::osecir::EpsilonContacts>()        = 0.1;
+    params.get<mio::osecir::BlendingFactorLocal>()    = 0.5;
+    params.get<mio::osecir::BlendingFactorRegional>() = 0.5;
+    params.get<mio::osecir::ContactReductionMin>()    = {0.0, 0.0, 0.0, 0.0};
+    params.get<mio::osecir::ContactReductionMax>()    = {0.5, 0.5, 0.5, 0.5};
+
+    return mio::success();
+}
+
 static const std::map<ContactLocation, std::string> contact_locations = {{ContactLocation::Home, "home"},
                                                                          {ContactLocation::School, "school_pf_eig"},
                                                                          {ContactLocation::Work, "work"},
@@ -209,6 +227,18 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
     return mio::success();
 }
 
+void set_state_ids(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& graph)
+{
+    for (auto& node : graph.nodes()) {
+        int id = node.id;
+        // get the first digit of the node id
+        while (id >= 10) {
+            id /= 10;
+        }
+        node.property.parameters.get<mio::osecir::StateID>() = id;
+    }
+}
+
 /**
  * Create the input graph for the parameter study.
  * Reads files from the data directory.
@@ -227,38 +257,40 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     mio::osecir::Parameters params(num_age_groups);
     params.get<mio::osecir::StartDay>() = start_day;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
+    BOOST_OUTCOME_TRY(set_feedback_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
 
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 7.5 / 100000.;
-    // auto migrating_compartments  = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-    //                                mio::osecir::InfectionState::InfectedNoSymptoms,
-    //                                mio::osecir::InfectionState::InfectedSymptoms,
-    //                                mio::osecir::InfectionState::Recovered};
+    auto migrating_compartments  = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                   mio::osecir::InfectionState::InfectedNoSymptoms,
+                                   mio::osecir::InfectionState::InfectedSymptoms,
+                                   mio::osecir::InfectionState::Recovered};
 
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
-    // const auto& read_function_edges = mio::read_mobility_plain;
-    const auto& node_id_function = mio::get_node_ids;
+    const auto& read_function_edges = mio::read_mobility_plain;
+    const auto& node_id_function    = mio::get_node_ids;
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
                        mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
                        decltype(node_id_function)>;
-    // const auto& set_edge_function =
-    //     mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
-    //                    mio::osecir::InfectionState, decltype(read_function_edges)>;
+    const auto& set_edge_function =
+        mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
+                       mio::osecir::InfectionState, decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(
         set_node_function(params, start_date, end_date, data_dir,
                           mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, 0, false, true));
-    // BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
-    //                                     read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
+    set_state_ids(params_graph);
     return mio::success(params_graph);
 }
 
@@ -288,7 +320,7 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
     const auto start_date   = mio::Date(2020, 10, 1);
     const auto num_days_sim = 80.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
+    const auto num_runs     = 50;
 
     //create or load graph
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
@@ -302,8 +334,9 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
     });
 
     //run parameter study
-    auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
-        params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+    auto parameter_study =
+        mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
+            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
 
     // parameter_study.get_rng().seed(
     //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
@@ -330,9 +363,18 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                                return node.property.get_simulation().get_model();
                            });
 
+            auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
+            flows.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(flows),
+                           [](auto&& node) {
+                               auto& flow_node         = node.property.get_simulation().get_flows();
+                               auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
+                               return interpolated_flows;
+                           });
+
             std::cout << "run " << run_idx << " done" << std::endl;
 
-            return std::make_pair(std::move(interpolated_result), std::move(params));
+            return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows));
         });
 
     if (ensemble.size() > 0) {
@@ -340,11 +382,26 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
         ensemble_params.reserve(ensemble.size());
+        auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_flows.reserve(ensemble.size());
         for (auto&& run : ensemble) {
-            ensemble_results.emplace_back(std::move(run.first));
-            ensemble_params.emplace_back(std::move(run.second));
+            ensemble_results.emplace_back(std::move(std::get<0>(run)));
+            ensemble_params.emplace_back(std::move(std::get<1>(run)));
+            ensemble_flows.emplace_back(std::move(std::get<2>(run)));
         }
         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, false));
+
+        auto result_dir_run_flows = result_dir / "flows";
+        if (mio::mpi::is_root()) {
+            boost::filesystem::path dir(result_dir_run_flows);
+            bool created_flow_dir = boost::filesystem::create_directories(dir);
+
+            if (created_flow_dir) {
+                mio::log_info("Directory '{:s}' was created.", dir.string());
+            }
+            printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
+        }
+        BOOST_OUTCOME_TRY(save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
     }
 
     return mio::success();

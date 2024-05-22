@@ -361,13 +361,6 @@ public:
         for (size_t loc = 0; loc < locations; ++loc) {
             ScalarType reduc_fac_location = params.template get<ContactReductionMin>()[loc];
             if (perceived_risk_contacts > threshold_softplus) {
-                std::cout << "linear part "
-                          << (params.template get<ContactReductionMax>()[loc] -
-                              params.template get<ContactReductionMin>()[loc]) *
-                                 params.template get<EpsilonContacts>()
-                          << std::endl;
-                std::cout << "exp " << std::exp(perceived_risk_contacts / params.template get<EpsilonContacts>())
-                          << std::endl;
                 reduc_fac_location =
                     (params.template get<ContactReductionMax>()[loc] -
                      params.template get<ContactReductionMin>()[loc]) *

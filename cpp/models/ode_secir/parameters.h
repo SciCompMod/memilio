@@ -464,7 +464,7 @@ struct BlendingFactorLocal {
     using Type = double;
     static Type get_default(AgeGroup)
     {
-        return 0.6;
+        return 0.5;
     }
     static std::string name()
     {
@@ -476,7 +476,7 @@ struct BlendingFactorRegional {
     using Type = double;
     static Type get_default(AgeGroup)
     {
-        return 0.6;
+        return 0.5;
     }
     static std::string name()
     {
