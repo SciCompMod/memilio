@@ -190,7 +190,7 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct")
 
-    case=4
+    case=6
     
     if case==1:
         ### Compare simulation results of different LCT models with a rise of R0 and a long simulation time.
@@ -268,5 +268,41 @@ if __name__ == '__main__':
                             os.path.join(data_dir, "dropR0short", "fictional_lct_0.5_20")],
                             4100, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20"]), 
                             filename_plot="new_infections_lct_drop0.5")
+    elif case==5:
+        ### Compare simulation results of different LCT, GLCT and IDE models with a rise of R0 and a long simulation time.
+        ## R0=2.0.
+        plot_new_infections([os.path.join(data_dir, "riseR02long", "fictional_lct_2.0_1_long"), 
+                            os.path.join(data_dir, "riseR02long", "fictional_lct_2.0_3_long"),  
+                            os.path.join(data_dir, "riseR02long", "fictional_lct_2.0_10_long"), 
+                            os.path.join(data_dir, "riseR02long", "fictional_ide_2.0_3_long"),  
+                            os.path.join(data_dir, "riseR02long", "fictional_ide_2.0_10_long"),
+                            os.path.join(data_dir, "riseR02long", "fictional_glct_2.0_3_long"),  
+                            os.path.join(data_dir, "riseR02long", "fictional_glct_2.0_10_long")],
+                            2e6, legendplot=list(["ODE", "LCT3", "LCT10", "IDE3", "IDE10","GLCT3", "GLCT10"]),  
+                            filename_plot="new_infections_glct_rise2long")
+        compare_all_compartments([os.path.join(data_dir, "riseR02long", "fictional_lct_2.0_1_long"), 
+                                os.path.join(data_dir, "riseR02long", "fictional_lct_2.0_3_long"),  
+                                os.path.join(data_dir, "riseR02long", "fictional_lct_2.0_10_long"), 
+                                os.path.join(data_dir, "riseR02long", "fictional_ide_2.0_3_long"),  
+                                os.path.join(data_dir, "riseR02long", "fictional_ide_2.0_10_long"),
+                                os.path.join(data_dir, "riseR02long", "fictional_glct_2.0_3_long"),  
+                            os.path.join(data_dir, "riseR02long", "fictional_glct_2.0_10_long")],
+                                legendplot=list(["ODE", "LCT3", "LCT10", "IDE3", "IDE10","GLCT3", "GLCT10"]),    
+                                filename_plot="compartments_glct_rise2long")
+    elif case==6:
+        ### Compare simulation results of different LCT models with a drop of R0 to 0.5.
+        plot_new_infections([os.path.join(data_dir, "dropR0short", "fictional_glct_0.5_3"), 
+                            os.path.join(data_dir, "dropR0short", "fictional_glct_0.5_10"),  
+                            os.path.join(data_dir, "dropR0short", "fictional_ide_0.5_3"), 
+                            os.path.join(data_dir, "dropR0short", "fictional_ide_0.5_10")],
+                            4100, legendplot=list(["GLCT3", "GLCT10", "IDE3","IDE10"]), 
+                            filename_plot="new_infections_glct_drop0.5")
+        compare_all_compartments([os.path.join(data_dir, "dropR0short", "fictional_glct_0.5_3"), 
+                            os.path.join(data_dir, "dropR0short", "fictional_glct_0.5_10"),  
+                            os.path.join(data_dir, "dropR0short", "fictional_ide_0.5_3"), 
+                            os.path.join(data_dir, "dropR0short", "fictional_ide_0.5_10")],
+                            legendplot=list(["GLCT3", "GLCT10", "IDE3","IDE10"]), 
+                            filename_plot="compartments_glct_drop0.5")
+          
           
           

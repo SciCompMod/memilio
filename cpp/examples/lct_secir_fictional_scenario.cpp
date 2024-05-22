@@ -41,7 +41,7 @@
 #include <iostream>
 
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 20;
+constexpr int num_subcompartments = 10;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
@@ -93,7 +93,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 {
     // The initialization vector for the LCT model is calculated by defining transitions.
     // Create TimeSeries with num_transitions elements.
-    int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization of transitions.
@@ -238,6 +238,8 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
+        auto interpolated_result = mio::interpolate_simulation_result(sim.get_result(), 0.1);
+        interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
         std::string R0string     = std::to_string(R0);
         std::string filename_ide = save_dir + "fictional_ide_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
                                    std::to_string(num_subcompartments);
@@ -311,6 +313,8 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
 
     if (!save_dir.empty()) {
+        auto interpolated_result = mio::interpolate_simulation_result(populations, 0.1);
+        interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
         std::string R0string = std::to_string(R0);
         std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
                                std::to_string(num_subcompartments);
@@ -334,18 +338,18 @@ int main()
     // Folders have to exist beforehand.
     std::string save_dir = "../../data/simulation_lct/dropR0short/";
 
-    auto result = simulate_lct_model(R0, 10, save_dir);
+    /*auto result = simulate_lct_model(R0, 10, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }*/
+
+    auto result = simulate_ide_model(R0, 10, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
-
-    /*result = simulate_ide_model(R0, 10, save_dir);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        return -1;
-    }
-
+    /*
     R0       = 4.;
     save_dir = "../../data/simulation_lct/riseR04long/";
 
