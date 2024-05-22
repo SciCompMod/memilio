@@ -18,6 +18,7 @@
 # limitations under the License.
 #############################################################################
 import os
+import json
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib as mpl
@@ -37,11 +38,12 @@ pd.options.mode.copy_on_write = True
 
 mpl.use('Qtagg')
 
+
 @dataclass
 class scored_cluster:
-    sc1: float # correlation-based cluster
-    sc2: float # silhouette score
-    clustering: np.ndarray # index to clustering array
+    sc1: float  # correlation-based cluster
+    sc2: float  # silhouette score
+    clustering: np.ndarray  # index to clustering array
 
 
 def evaluate_clustering(corr_mat, corr_mat_pairw_dist, idx_to_cluster_idx, indices_all):
@@ -61,9 +63,11 @@ def evaluate_clustering(corr_mat, corr_mat_pairw_dist, idx_to_cluster_idx, indic
     """
     # store indices of clusters
     idx_orig = np.array(range(len(idx_to_cluster_idx)))
-    clusters = [idx_orig[idx_to_cluster_idx == i] for i in range(idx_to_cluster_idx.max()+1)]
+    clusters = [idx_orig[idx_to_cluster_idx == i]
+                for i in range(idx_to_cluster_idx.max()+1)]
     # store remaining/perpendicular indices for all clusters
-    clusters_perp = [idx_orig[idx_to_cluster_idx != i] for i in range(idx_to_cluster_idx.max()+1)]
+    clusters_perp = [idx_orig[idx_to_cluster_idx != i]
+                     for i in range(idx_to_cluster_idx.max()+1)]
 
     ssc = np.nan
     # own score on diagonal and offdiagonal correlation values
@@ -76,16 +80,16 @@ def evaluate_clustering(corr_mat, corr_mat_pairw_dist, idx_to_cluster_idx, indic
         corr_offdiag = np.append(corr_offdiag, abs(
             corr_mat[np.ix_(clusters[ii], clusters_perp[ii])].flatten()))
 
-    step_width=0.02
+    step_width = 0.02
     nb_steps = int(1/step_width)
     corr_thresholds = np.linspace(0+step_width, 1, nb_steps)
     # p_offdiag should increase fast to 1 if cluster is good
     p_offdiag = np.array([len(np.where(corr_offdiag <= corr_thresholds[i])[0])
-                      for i in range(len(corr_thresholds))]) / len(corr_offdiag)
+                          for i in range(len(corr_thresholds))]) / len(corr_offdiag)
     # p_diag should be 1 for most time steps and only decrease fast at the end if cluster is good
     p_diag = np.array([len(np.where(corr_diag >= corr_thresholds[i])[0])
-                         for i in range(len(corr_thresholds))]) / len(corr_diag)
-    
+                       for i in range(len(corr_thresholds))]) / len(corr_diag)
+
     corr_clustering_score = (p_diag.sum() + p_offdiag.sum()) / (2 * nb_steps)
 
     # silhouette score
@@ -95,13 +99,14 @@ def evaluate_clustering(corr_mat, corr_mat_pairw_dist, idx_to_cluster_idx, indic
 
         # TODO: Do we want to compute the silhouette score on the distance of npis_corr or abs(npis_corr)?
         # Otherwise formulated: How do we work with negative correlations for the correlation distance? -1 = 1 ?
-        sample_silhouette_values = silhouette_samples(corr_mat_pairw_dist, idx_to_cluster_idx, metric="precomputed")
-        ssc = silhouette_score(corr_mat_pairw_dist, idx_to_cluster_idx, metric="precomputed")
+        sample_silhouette_values = silhouette_samples(
+            corr_mat_pairw_dist, idx_to_cluster_idx, metric="precomputed")
+        ssc = silhouette_score(corr_mat_pairw_dist,
+                               idx_to_cluster_idx, metric="precomputed")
 
         # TODO: Check this is really always true!
         if ssc != np.sum(sample_silhouette_values)/len(sample_silhouette_values):
             print('Error: Average not the same as computed score....')
-
 
     # return clusters and mean silhouette coefficient
     return [corr_clustering_score, ssc]
@@ -185,7 +190,7 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
         # use the given weight to flatten the dendrogram
         npi_idx_to_cluster_idx = hierarchy.fcluster(
             cluster_hierarch, weight, criterion='distance')
-        
+
         # start clustering labels with zero
         if npi_idx_to_cluster_idx.min() == 1:
             npi_idx_to_cluster_idx -= 1
@@ -193,13 +198,15 @@ def flatten_hierarch_clustering(corr_mat, corr_mat_pairw_dist, cluster_hierarch,
         # evaluate clustering
         scores = evaluate_clustering(
             corr_mat, corr_mat_pairw_dist, npi_idx_to_cluster_idx, npi_indices_all)
-        
-        scored_clusterings.append(scored_cluster(scores[0], scores[1], npi_idx_to_cluster_idx))
+
+        scored_clusterings.append(scored_cluster(
+            scores[0], scores[1], npi_idx_to_cluster_idx))
 
     # TODO: get best clustering
     pos_best_clustering_1 = np.nanargmax([s.sc1 for s in scored_clusterings])
     pos_best_clustering_2 = np.nanargmax([s.sc2 for s in scored_clusterings])
-    pos_best_clustering_12 = np.nanargmax([s.sc1/scored_clusterings[pos_best_clustering_1].sc1 + s.sc2/scored_clusterings[pos_best_clustering_1].sc2 for s in scored_clusterings])
+    pos_best_clustering_12 = np.nanargmax([s.sc1/scored_clusterings[pos_best_clustering_1].sc1 +
+                                          s.sc2/scored_clusterings[pos_best_clustering_1].sc2 for s in scored_clusterings])
     return scored_clusterings[pos_best_clustering_1].clustering
 
 
@@ -212,16 +219,17 @@ def silhouette(pairw_dist_mat, cluster_labels):
     plt.figure()
 
     for clustering in cluster_labels:
-        
+
         # get number of clusters (naming starting with 0,1,2...)
         n_clusters = clustering.max()+1
 
         # Check for clusterings where every sample is in their own cluster or where all samples are in one cluster.
         # In that case we cannot use silhouette_samples because we have to satisfy cluster numbers to be in '2 to n_samples - 1 (inclusive)'
         if (len(np.unique(clustering)) < len(clustering)) and (len(clustering) == pairw_dist_mat.shape[0]) and \
-                    (len(np.unique(clustering)) > 1):
+                (len(np.unique(clustering)) > 1):
 
-            sample_silhouette_values = silhouette_samples(pairw_dist_mat, clustering, metric="precomputed")
+            sample_silhouette_values = silhouette_samples(
+                pairw_dist_mat, clustering, metric="precomputed")
 
             y_lower = 10
             for i in range(n_clusters):
@@ -263,18 +271,18 @@ def silhouette(pairw_dist_mat, cluster_labels):
             )
             plt.tight_layout()
             plt.savefig('figures/silhouette_plot.png')
-            #plt.show()
+            # plt.show()
 
         else:
-            print("Dimension mismatch.") 
+            print("Dimension mismatch.")
 
     return sample_silhouette_values
 
 
 def analyze_npi_data(
         read_data, make_plot, fine_resolution, npis, directory, file_format,
-        npi_codes_considered, abs_correlation, cluster_function):
-    
+        npi_codes_considered, abs_correlation, cluster_function, manual_rki_clustering=False):
+
     # TODO: Error in custom plot list
     make_plot = False
 
@@ -441,6 +449,11 @@ def analyze_npi_data(
 
         npi_codes_used = np.asarray(df_npis_used.iloc[:, 2:].columns)
 
+        if manual_rki_clustering:
+            write_cluster_rki(df_npis, cluster_function,
+                              npis_corr, directory, npi_codes_used)
+            return
+
         # compute hierarchical clustering (via best-suited method)
         compare_methods = False
         if compare_methods:
@@ -458,11 +471,13 @@ def analyze_npi_data(
             max_coph_dist = coph_dist_mat.max()
             # TODO: Discuss why npis_corr is used as input and not corr_pairwdist
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(
+                    corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist
                  for wg in np.linspace(0.01, 1, 500)])
 
-            samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, label=method)
+            samples = silhouette(distance.squareform(
+                corr_pairwdist), npi_idx_to_cluster_idx, label=method)
 
             # ward
             method = 'ward'
@@ -475,10 +490,12 @@ def analyze_npi_data(
             hierarchy.dendrogram(cluster_hierarch)
             max_coph_dist = coph_dist_mat.max()
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(
+                    corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist for wg in np.linspace(0.01, 1, 500)])
 
-            samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, label=method)
+            samples = silhouette(distance.squareform(
+                corr_pairwdist), npi_idx_to_cluster_idx, label=method)
 
             # average
             method = 'average'
@@ -491,14 +508,16 @@ def analyze_npi_data(
             hierarchy.dendrogram(cluster_hierarch)
             max_coph_dist = coph_dist_mat.max()
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(
+                    corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist
                  for wg in np.linspace(0.01, 1, 500)])
 
-            samples = silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx, method=method)
+            samples = silhouette(distance.squareform(
+                corr_pairwdist), npi_idx_to_cluster_idx, method=method)
             # end compare_methods
 
-        else: # simplified, centroid had less clusters in example
+        else:  # simplified, centroid had less clusters in example
             method = 'centroid'
             cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
                 corr_pairwdist,
@@ -508,22 +527,26 @@ def analyze_npi_data(
             plt.title(method)
             hierarchy.dendrogram(cluster_hierarch)
             plt.savefig('figures/dendrogram.png')
-            #plt.show()
+            # plt.show()
             max_coph_dist = coph_dist_mat.max()
 
             npi_idx_to_cluster_idx = flatten_hierarch_clustering(
-                npis_corr_mat, distance.squareform(corr_pairwdist), cluster_hierarch,
+                npis_corr_mat, distance.squareform(
+                    corr_pairwdist), cluster_hierarch,
                 [wg * max_coph_dist
-                for wg in np.linspace(0.2, 1, 500)], method) # TODO reset to 0.01 to 1 with 500 samples
+                 for wg in np.linspace(0.2, 1, 500)], method)  # TODO reset to 0.01 to 1 with 500 samples
 
-            silhouette(distance.squareform(corr_pairwdist), npi_idx_to_cluster_idx)
+            silhouette(distance.squareform(
+                corr_pairwdist), npi_idx_to_cluster_idx)
 
-        cluster_dict = dict() # TODO: Remove because not used? or use to write output?
-        cluster_codes = [[] for i in range(len(np.unique(npi_idx_to_cluster_idx)))]
-        cluster_desc = [[] for i in range(len(np.unique(npi_idx_to_cluster_idx)))]
+        cluster_dict = dict()  # TODO: Remove because not used? or use to write output?
+        cluster_codes = [[]
+                         for i in range(len(np.unique(npi_idx_to_cluster_idx)))]
+        cluster_desc = [[]
+                        for i in range(len(np.unique(npi_idx_to_cluster_idx)))]
         for i in range(len(npi_idx_to_cluster_idx)):
             cluster_dict[npi_codes_used[i]
-                         ] = "CM_" + str(npi_idx_to_cluster_idx[i]).zfill(3) # use CM for "Cluster Massnahme"
+                         ] = "CM_" + str(npi_idx_to_cluster_idx[i]).zfill(3)  # use CM for "Cluster Massnahme"
             cluster_codes[npi_idx_to_cluster_idx
                           [i]].append(npi_codes_used[i])
             cluster_desc[npi_idx_to_cluster_idx
@@ -537,7 +560,8 @@ def analyze_npi_data(
             df_npis_clustered["CM_" + str(i).zfill(3)
                               ] = cluster_function(df_npis[cluster_codes[i]], axis=1)
 
-        npis_corr_cluster = df_npis_clustered.iloc[:, 2:].corr() # TODO why were 2 and 4 clustered in the example??
+        # TODO why were 2 and 4 clustered in the example??
+        npis_corr_cluster = df_npis_clustered.iloc[:, 2:].corr()
         # npis_corr_cluster[abs(npis_corr_cluster)<0.25] = 0
         plt.figure()
         plt.imshow(npis_corr_cluster, cmap=cmap, vmin=vmin, vmax=1)
@@ -573,7 +597,8 @@ def analyze_npi_data(
         plt.title('Correlation of reordered NPIs')
         plt.colorbar()
 
-        write_clustered_npis(df_npis, cluster_function, cluster_codes, npis_corr_mat, directory, npi_codes_used)
+        write_clustered_npis(df_npis, cluster_function, cluster_codes,
+                             npis_corr_mat, directory, npi_codes_used)
 
         # npi_indices_all = set(range(npis_corr.shape[0]))
         # for i in [40]:#[10, 20, 40, 80, 160]:
@@ -617,37 +642,88 @@ def analyze_npi_data(
                 plt.tight_layout()
                 j += 1
 
+
 def write_clustered_npis(df_npis, cluster_function, cluster_codes, npis_corr, directory, npi_codes_used):
     cluster_dict = dict()
-    #only compute cluster with more than two items
-    cluster_to_combine = [item for item in cluster_codes if len(item)>1]
+    # only compute cluster with more than two items
+    cluster_to_combine = [item for item in cluster_codes if len(item) > 1]
     name_id = 0
     for cl in cluster_to_combine:
         # get index of cluster items to check if they are negative or positive correlated
-        cluster_idx = [np.where(npi_codes_used == cl_code)[0][0] for cl_code in cl]
+        cluster_idx = [np.where(npi_codes_used == cl_code)[0][0]
+                       for cl_code in cl]
         for id_npi in cluster_idx:
             if npis_corr[cluster_idx[0], id_npi] < 0:
                 # switch npis 0 -> 1 and 1 -> 0
                 npi_to_switch = npi_codes_used[id_npi]
-                df_npis[npi_to_switch]-=1
-                df_npis[npi_to_switch]*=-1
+                df_npis[npi_to_switch] -= 1
+                df_npis[npi_to_switch] *= -1
         # copy values and delete item from dataframe
         values = [df_npis[cl_code].values for cl_code in cl]
-        df_npis.drop(cl, axis=1, inplace = True)
-        #name clusters #TODO: how? For now cluster_0,1,2...
+        df_npis.drop(cl, axis=1, inplace=True)
+        # name clusters #TODO: how? For now cluster_0,1,2...
         cluster_name = 'cluster_' + str(name_id)
         # write cluster names in a dict (and to json) to reconstruct clusters after regression
         cluster_dict[cluster_name] = cl
         # TODO: how should the cluster values for the regression be calculated
         cluster_value = cluster_function(np.array(values), axis=0)
         df_npis[cluster_name] = cluster_value
-        name_id+=1
-    #write npis with clusters
+        name_id += 1
+    # write npis with clusters
     filename = 'clustered_npis'
     file_format = 'json'
     gd.write_dataframe(df_npis, directory, filename, file_format)
-    #write cluster dict
+    # write cluster dict
     filename = 'cluster_description'
+    with open(directory+filename, 'w') as f:
+        print(cluster_dict, file=f)
+
+
+def write_cluster_rki(df_npis, cluster_function,  npis_corr, directory, npi_codes_used):
+    cluster_dict = dict()
+    # only compute cluster with more than two items
+    # Read the JSON file
+    with open(os.path.join(directory, 'npi_clustering_rki_manual.json')) as json_file:
+        data = json.load(json_file)
+
+    # Convert JSON data to a DataFrame
+    df_rki_clustering = pd.DataFrame.from_dict(
+        data, orient='index').transpose()
+
+    cluster_codes = [list(item) for sublist in df_rki_clustering.values.tolist()
+                     for item in sublist]
+    # remove empty lists from cluster_codes
+    cluster_codes = [x for x in cluster_codes if x]
+
+    cluster_to_combine = [item for item in cluster_codes if len(item) > 1]
+    name_id = 0
+    for cl in cluster_to_combine:
+        # get index of cluster items to check if they are negative or positive correlated if they have been used
+        cluster_idx = [np.where(npi_codes_used == cl_code)
+                       for cl_code in cl if np.where(npi_codes_used == cl_code)[0].size > 0]
+        for id_npi in cluster_idx:
+            if npis_corr[cluster_idx[0], id_npi] < 0:
+                # switch npis 0 -> 1 and 1 -> 0
+                npi_to_switch = npi_codes_used[id_npi]
+                df_npis[npi_to_switch] -= 1
+                df_npis[npi_to_switch] *= -1
+        # copy values and delete item from dataframe
+        values = [df_npis[cl_code].values for cl_code in cl]
+        df_npis.drop(cl, axis=1, inplace=True)
+        # name clusters #TODO: how? For now cluster_0,1,2...
+        cluster_name = 'cluster_' + str(name_id)
+        # write cluster names in a dict (and to json) to reconstruct clusters after regression
+        cluster_dict[cluster_name] = cl
+        # TODO: how should the cluster values for the regression be calculated
+        cluster_value = cluster_function(np.array(values), axis=0)
+        df_npis[cluster_name] = cluster_value
+        name_id += 1
+    # write npis with clusters
+    filename = 'clustered_npis_rki'
+    file_format = 'json'
+    gd.write_dataframe(df_npis, directory, filename, file_format)
+    # write cluster dict
+    filename = 'cluster_description_rki'
     with open(directory+filename, 'w') as f:
         print(cluster_dict, file=f)
 
@@ -661,8 +737,9 @@ def main():
     file_format = 'json'
     npi_codes_considered = ['M01a_010', 'M01a_020',
                             'M01a_100', 'M01a_110', 'M01a_120']
-    analyze_npi_data(True, True, fine_resolution, npis_final,
-                     directory, file_format, False, True, np.mean)
+
+    analyze_npi_data(read_data=True, make_plot=True, fine_resolution=fine_resolution, npis=npis_final,
+                     directory=directory, file_format=file_format, npi_codes_considered=False, abs_correlation=True, cluster_function=np.mean, manual_rki_clustering=True)
 
 
 if __name__ == "__main__":
