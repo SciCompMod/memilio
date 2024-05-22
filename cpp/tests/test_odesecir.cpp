@@ -1143,6 +1143,245 @@ TEST(Secir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
+// test Feedback Simulation
+TEST(FeedbackSimulationTest, CalculateGlobalIcuOccupancy)
+{
+    const double t0      = 0.0;
+    const double dt      = 1.0;
+    const int num_groups = 2;
+
+    // model 1
+    mio::osecir::Model model1(num_groups);
+    Eigen::VectorXd icu_day = Eigen::VectorXd::Zero(2);
+    for (int t = -50; t <= 0; ++t) {
+        for (size_t i = 0; i < num_groups; i++) {
+            icu_day(i) = (100 + t);
+        }
+        model1.parameters.get<mio::osecir::ICUOccupancyLocal>().add_time_point(t, icu_day);
+    }
+    auto feedback_sim_1 = mio::osecir::FeedbackSimulation<>(model1, t0, dt);
+
+    // model 2
+    mio::osecir::Model model2(num_groups);
+    for (int t = -50; t <= 0; ++t) {
+        for (size_t i = 0; i < num_groups; i++) {
+            icu_day(i) = (200 + t);
+        }
+        model2.parameters.get<mio::osecir::ICUOccupancyLocal>().add_time_point(t, icu_day);
+    }
+
+    auto feedback_sim_2       = mio::osecir::FeedbackSimulation<>(model2, t0, dt);
+    auto global_icu_occupancy = feedback_sim_1.calculate_global_icu_occupancy();
+
+    // Überprüfen Sie die Dimensionen der zurückgegebenen Matrix
+    EXPECT_EQ(global_icu_occupancy.rows(),
+              model2.parameters.get<mio::osecir::ICUOccupancyLocal>().get_num_time_points());
+    EXPECT_EQ(global_icu_occupancy.cols(), num_groups);
+
+    // compare if data is equal
+    for (auto t = 0; t < global_icu_occupancy.rows(); ++t) {
+        for (auto i = 0; i < num_groups; ++i) {
+            EXPECT_EQ(global_icu_occupancy(t, i),
+                      model1.parameters.get<mio::osecir::ICUOccupancyLocal>().get_value(t)(i) +
+                          model2.parameters.get<mio::osecir::ICUOccupancyLocal>().get_value(t)(i));
+        }
+    }
+}
+
+TEST(FeedbackSimulationTest, CalculateRegionalIcuOccupancy)
+{
+    const double t0      = 0.0;
+    const double dt      = 1.0;
+    const int num_groups = 2;
+
+    mio::osecir::Model model(num_groups);
+    Eigen::VectorXd icu_day = Eigen::VectorXd::Zero(2);
+    for (int t = -50; t <= 0; ++t) {
+        for (size_t i = 0; i < num_groups; i++) {
+            icu_day(i) = (100 + t);
+        }
+        model.parameters.get<mio::osecir::ICUOccupancyLocal>().add_time_point(t, icu_day);
+    }
+    model.parameters.get<mio::osecir::StateID>() = 1;
+    auto feedback_sim_1                          = mio::osecir::FeedbackSimulation<>(model, t0, dt);
+
+    model.parameters.get<mio::osecir::StateID>() = 1;
+    auto feedback_sim_2                          = mio::osecir::FeedbackSimulation<>(model, t0, dt);
+
+    model.parameters.get<mio::osecir::StateID>() = 2;
+    auto feedback_sim_3                          = mio::osecir::FeedbackSimulation<>(model, t0, dt);
+
+    auto regional_icu_occupancy = feedback_sim_1.calculate_regional_icu_occupancy();
+    // check dimensions of the returned matrix
+    EXPECT_EQ(regional_icu_occupancy.rows(),
+              model.parameters.get<mio::osecir::ICUOccupancyLocal>().get_num_time_points());
+    EXPECT_EQ(regional_icu_occupancy.cols(), num_groups);
+
+    // compare if data is equal
+    for (auto t = 0; t < regional_icu_occupancy.rows(); ++t) {
+        for (auto i = 0; i < num_groups; ++i) {
+            EXPECT_EQ(regional_icu_occupancy(t, i),
+                      model.parameters.get<mio::osecir::ICUOccupancyLocal>().get_value(t)(i) * 2);
+        }
+    }
+
+    regional_icu_occupancy = feedback_sim_2.calculate_regional_icu_occupancy();
+    for (auto t = 0; t < regional_icu_occupancy.rows(); ++t) {
+        for (auto i = 0; i < num_groups; ++i) {
+            EXPECT_EQ(regional_icu_occupancy(t, i),
+                      model.parameters.get<mio::osecir::ICUOccupancyLocal>().get_value(t)(i) * 2);
+        }
+    }
+
+    regional_icu_occupancy = feedback_sim_3.calculate_regional_icu_occupancy();
+    for (auto t = 0; t < regional_icu_occupancy.rows(); ++t) {
+        for (auto i = 0; i < num_groups; ++i) {
+            EXPECT_EQ(regional_icu_occupancy(t, i),
+                      model.parameters.get<mio::osecir::ICUOccupancyLocal>().get_value(t)(i));
+        }
+    }
+}
+
+TEST(FeedbackSimulationTest, AddIcuOccupancy)
+{
+    const double t0      = 0.0;
+    const double dt      = 1.0;
+    const int num_groups = 2;
+
+    constexpr double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20,
+                     nb_icu_t0 = 10, nb_rec_t0 = 10, nb_dead_t0 = 0;
+
+    mio::osecir::Model model(num_groups);
+    for (auto age = 0; age < num_groups; ++age) {
+        model.populations.set_total(nb_total_t0);
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedNoSymptoms}]          = nb_car_t0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedSymptoms}]            = nb_inf_t0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedSevere}]              = nb_hosp_t0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedCritical}]            = nb_icu_t0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::Recovered}]                   = nb_rec_t0;
+        model.populations[{mio::AgeGroup(age), mio::osecir::InfectionState::Dead}]                        = nb_dead_t0;
+        model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
+                                                    nb_total_t0);
+    }
+
+    for (int t = -50; t <= 0; ++t) {
+        Eigen::VectorXd icu_day = Eigen::VectorXd::Zero(2);
+        for (size_t i = 0; i < num_groups; i++) {
+            icu_day(i) = (100 + t);
+        }
+        model.parameters.get<mio::osecir::ICUOccupancyLocal>().add_time_point(t, icu_day);
+    }
+    model.parameters.get<mio::osecir::ICUCapacity>() = 1000;
+    auto feedback_sim                                = mio::osecir::FeedbackSimulation<>(model, t0, dt);
+    auto num_time_points = model.parameters.get<mio::osecir::ICUOccupancyLocal>().get_num_time_points();
+
+    feedback_sim.advance(t0 + 1.0);
+    EXPECT_EQ(feedback_sim.get_model_ptr()->parameters.get<mio::osecir::ICUOccupancyLocal>().get_num_time_points(),
+              num_time_points + 1);
+
+    for (int age = 0; age < num_groups; ++age) {
+        auto indx_icu_naive =
+            model.populations.get_flat_index({(mio::AgeGroup)age, mio::osecir::InfectionState::InfectedCritical});
+        EXPECT_EQ(feedback_sim.get_model_ptr()->parameters.get<mio::osecir::ICUOccupancyLocal>().get_last_value()(age),
+                  feedback_sim.get_result().get_last_value()(indx_icu_naive) / model.populations.get_total() * 100000);
+    }
+}
+
+TEST(FeedbackSimulationTest, CalcRiskPerceived)
+{
+    const double t0      = 0.0;
+    const double dt      = 1.0;
+    const int num_groups = 2;
+
+    mio::osecir::Model model(num_groups);
+    model.parameters.template get<mio::osecir::CutOffGamma>()            = 2;
+    model.parameters.template get<mio::osecir::BlendingFactorLocal>()    = 0.5;
+    model.parameters.template get<mio::osecir::BlendingFactorRegional>() = 0.5;
+    model.parameters.template get<mio::osecir::ICUCapacity>()            = 10;
+
+    model.parameters.template get<mio::osecir::ICUOccupancyLocal>().add_time_point(-1, Eigen::VectorXd::Constant(2, 0));
+    model.parameters.template get<mio::osecir::ICUOccupancyLocal>().add_time_point(0, Eigen::VectorXd::Constant(2, 0));
+    auto feedback_sim = mio::osecir::FeedbackSimulation<>(model, t0, dt);
+
+    Eigen::MatrixXd icu_regional(2, 2);
+    Eigen::MatrixXd icu_national(2, 2);
+    icu_regional << 0, 0, 0, 0;
+    icu_national << 0, 0, 0, 0;
+
+    double a  = 2.0;
+    double b  = 1.0;
+    auto risk = feedback_sim.calc_risk_perceived(a, b, icu_regional, icu_national);
+    EXPECT_NEAR(risk, 0.0, 1e-12);
+
+    feedback_sim.get_model_ptr()->parameters.template get<mio::osecir::ICUOccupancyLocal>().add_time_point(
+        1, Eigen::VectorXd::Constant(2, .5));
+    feedback_sim.get_model_ptr()->parameters.template get<mio::osecir::ICUOccupancyLocal>().add_time_point(
+        2, Eigen::VectorXd::Constant(2, .5));
+    feedback_sim.get_model_ptr()->parameters.template get<mio::osecir::ICUCapacity>() = 1;
+    // Resize icu_regional and icu_national to shape (4,2)
+    icu_regional.resize(4, 2);
+    icu_national.resize(4, 2);
+    icu_regional << 0, 0, 0, 0, 0.5, 0.5, 0.5, 0.5;
+    icu_national << 0, 0, 0, 0, 0.5, 0.5, 0.5, 0.5;
+
+    risk               = feedback_sim.calc_risk_perceived(a, b, icu_regional, icu_national);
+    ScalarType gamma_0 = std::pow(b, a) * std::pow(0, a - 1) * std::exp(-b * 0) / std::tgamma(a); // gamma for day 0
+    ScalarType gamma_1 = std::pow(b, a) * std::pow(1, a - 1) * std::exp(-b * 1) / std::tgamma(a); // gamma for day 1
+    EXPECT_NEAR(risk, gamma_0 + gamma_1, 1e-12);
+}
+
+class MockFeedbackSimulation : public mio::osecir::FeedbackSimulation<mio::Simulation<mio::osecir::Model>>
+{
+public:
+    using FeedbackSimulation::FeedbackSimulation;
+
+    MOCK_METHOD(double, calc_risk_perceived,
+                (double a, double b, Eigen::Ref<Eigen::MatrixXd> icu_regional,
+                 Eigen::Ref<Eigen::MatrixXd> icu_national),
+                (const, override));
+};
+
+TEST(FeedbackSimulationTest, FeedbackContacts)
+{
+    const double t0      = 0.0;
+    const double dt      = 1.0;
+    const int num_groups = 2;
+
+    // Create a model with some initial parameters
+    mio::osecir::Model model(num_groups);
+    model.parameters.get<mio::osecir::ContactReductionMax>() = {1.0};
+    model.parameters.get<mio::osecir::ContactReductionMin>() = {0.5};
+    model.parameters.get<mio::osecir::ICUCapacity>()         = 10.0;
+    model.parameters.get<mio::osecir::EpsilonContacts>()     = 0.1;
+    model.parameters.get<mio::osecir::alphaGammaContacts>()  = 2.0;
+    model.parameters.get<mio::osecir::betaGammaContacts>()   = 2.0;
+    const auto damping_size = model.parameters.get<mio::osecir::ContactPatterns>().get_dampings().size();
+
+    // Create a MockFeedbackSimulation object
+    MockFeedbackSimulation feedback_sim(model, t0, dt);
+    EXPECT_CALL(feedback_sim, calc_risk_perceived(2.0, 2.0, testing::_, testing::_))
+        .WillRepeatedly(testing::Return(0.0));
+
+    Eigen::MatrixXd icu_regional = Eigen::MatrixXd::Zero(1, num_groups);
+    Eigen::MatrixXd icu_national = Eigen::MatrixXd::Zero(1, num_groups);
+    feedback_sim.feedback_contacts(t0, icu_regional, icu_national);
+
+    auto& contact_pattern = feedback_sim.get_model_ptr()->parameters.get<mio::osecir::ContactPatterns>();
+    EXPECT_EQ(contact_pattern.get_dampings().size(), damping_size + 1);
+    EXPECT_NEAR(contact_pattern.get_dampings().back().get_value().value(),
+                model.parameters.get<mio::osecir::ContactReductionMin>()[0], 1e-12);
+
+    EXPECT_CALL(feedback_sim, calc_risk_perceived(2.0, 2.0, testing::_, testing::_))
+        .WillRepeatedly(testing::Return(1.0));
+    feedback_sim.feedback_contacts(t0, icu_regional, icu_national);
+    EXPECT_EQ(contact_pattern.get_dampings().size(), damping_size + 2);
+    EXPECT_NEAR(contact_pattern.get_dampings().back().get_value().value(),
+                model.parameters.get<mio::osecir::ContactReductionMax>()[0], 1e-12);
+}
+
 #if defined(MEMILIO_HAS_JSONCPP)
 
 TEST(Secir, read_population_data_one_age_group)

@@ -318,7 +318,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
     for (auto&& entry : divi_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
             return r == 0 || r == get_region_id(entry);
-             });
+        });
         auto date_df = entry.date;
         if (it != vregion.end() && date_df == date) {
             auto region_idx      = size_t(it - vregion.begin());
@@ -392,10 +392,11 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
+    constexpr size_t num_federal_states = 16;
     std::vector<double> sum_mu_I_U(vregion.size(), 0);
     std::vector<std::vector<double>> mu_I_U{model.size()};
+    const auto num_groups = model[0].parameters.get_num_groups();
     for (size_t region = 0; region < vregion.size(); region++) {
-        auto num_groups = model[region].parameters.get_num_groups();
         for (auto i = AgeGroup(0); i < num_groups; i++) {
             sum_mu_I_U[region] += model[region].parameters.get<CriticalPerSevere>()[i] *
                                   model[region].parameters.get<SeverePerInfectedSymptoms>()[i];
@@ -404,13 +405,88 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
         }
     }
     std::vector<double> num_icu(model.size(), 0.0);
-    BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date, num_icu));
 
+    // Get the number of groups
+    const size_t num_groups_val = num_groups.get();
+
+    // Iterate over the days
+    for (int offset_day = -model[0].parameters.get<CutOffGamma>(); offset_day <= 0; offset_day++) {
+        // Initialize ICU occupancy vectors
+        Eigen::VectorXd icu_occupancy_national(num_groups_val);
+        std::vector<Eigen::VectorXd> icu_occupancy_regional(num_federal_states, Eigen::VectorXd::Zero(num_groups_val));
+
+        // Read DIVI data for the given date
+        auto date_icu = offset_date_by_days(date, offset_day);
+        BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date_icu, num_icu));
+
+        // Iterate over the regions
+        for (size_t region = 0; region < vregion.size(); region++) {
+            // Check if the CutOffGamma is set equal for all models
+            if (model[0].parameters.get<CutOffGamma>() != model[region].parameters.get<CutOffGamma>()) {
+                log_error("CutOffGamma is not equal for all models.");
+            }
+
+            // Get the federal state ID of the county
+            auto state_id = regions::get_state_id(vregion[region]).get() == 0 ? regions::StateId(1)
+                                                                              : regions::get_state_id(vregion[region]);
+
+            // Initialize local ICU occupancy vector
+            Eigen::VectorXd icu_occupancy_local(num_groups_val);
+
+            // Calculate local ICU occupancy for each age group
+            for (size_t age = 0; age < num_groups_val; age++) {
+                icu_occupancy_local[age] =
+                    scaling_factor_icu * num_icu[region] * mu_I_U[region][age] / sum_mu_I_U[region];
+                icu_occupancy_regional[state_id.get() - 1][age] += icu_occupancy_local[age];
+                icu_occupancy_national[age] += icu_occupancy_local[age];
+            }
+            model[region].parameters.get<ICUOccupancyLocal>().add_time_point(offset_day, icu_occupancy_local);
+        }
+        // Add the calculated ICU occupancy to the model parameters
+        for (size_t region = 0; region < vregion.size(); region++) {
+            auto state_id = regions::get_state_id(vregion[region]).get() == 0 ? regions::StateId(1)
+                                                                              : regions::get_state_id(vregion[region]);
+            model[region].parameters.get<ICUOccupancyRegional>().add_time_point(
+                offset_day, icu_occupancy_regional[state_id.get() - 1]);
+            model[region].parameters.get<ICUOccupancyNational>().add_time_point(offset_day, icu_occupancy_national);
+        }
+    }
+
+    // save the ICU occupancy in a file
+    // for (size_t region = 0; region < vregion.size(); region++) {
+    //     std::stringstream output1;
+    //     std::stringstream output2;
+    //     std::stringstream output3;
+    //     model[region].parameters.get<ICUOccupancyLocal>().print_table({}, 12, 4, output1);
+    //     model[region].parameters.get<ICUOccupancyRegional>().print_table({}, 12, 4, output2);
+    //     model[region].parameters.get<ICUOccupancyNational>().print_table({}, 12, 4, output3);
+
+    //     std::string results_dir = "/localdata1/code_2024/memilio/test";
+
+    //     std::ofstream file1(results_dir + "/icu_occupancy_local_" + std::to_string(vregion[region]) + ".txt");
+    //     file1 << output1.str();
+    //     file1.close();
+
+    //     auto state_id = regions::get_state_id(vregion[region]);
+    //     std::ofstream file2(results_dir + "/icu_occupancy_regional_" + std::to_string(state_id.get()) + ".txt");
+    //     file2 << output2.str();
+    //     file2.close();
+
+    //     std::ofstream file3(results_dir + "/icu_occupancy_national.txt");
+    //     file3 << output3.str();
+    //     file3.close();
+    // }
+
+    BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date, num_icu));
     for (size_t region = 0; region < vregion.size(); region++) {
-        auto num_groups = model[region].parameters.get_num_groups();
         for (auto i = AgeGroup(0); i < num_groups; i++) {
             model[region].populations[{i, InfectionState::InfectedCritical}] =
                 scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
+
+            if (std::abs(model[region].populations[{i, InfectionState::InfectedCritical}] -
+                         model[region].parameters.get<ICUOccupancyLocal>().get_last_value()[i.get()]) > 1e-9) {
+                log_error("ICU occupancy is not set correctly.");
+            }
         }
     }
 

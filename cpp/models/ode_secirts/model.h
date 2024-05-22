@@ -687,6 +687,223 @@ public:
         }
     }
 
+    // void feedback_vaccinations(double t)
+    // {
+    //     auto& params                    = this->get_model().parameters;
+    //     auto& pop                       = this->get_model().populations;
+    //     const double perceived_risk_vac = calc_risk_perceived(params.template get<alphaGammaVaccination>(),
+    //                                                           params.template get<betaGammaVaccination>());
+    //     const auto& last_value          = this->get_result().get_last_value();
+    //     const auto pop_total            = pop.get_total();
+
+    //     std::cout << "risk: " << perceived_risk_vac << std::endl;
+
+    //     if (t < 1) {
+    //         for (size_t age = 0; age < (size_t)params.get_num_groups(); ++age) {
+    //             params.template get<DailyPartialVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] = 0;
+    //             params.template get<DailyFullVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}]    = 0;
+    //             params.template get<DailyBoosterVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] = 0;
+    //         }
+    //     }
+
+    //     constexpr auto sensitivity_vac = 0.1;
+
+    //     for (size_t age = 0; age < (size_t)params.get_num_groups(); ++age) {
+    //         const auto s_naive = last_value[pop.get_flat_index({(AgeGroup)age, InfectionState::SusceptibleNaive})];
+    //         const auto s_pi =
+    //             last_value[pop.get_flat_index({(AgeGroup)age, InfectionState::SusceptiblePartialImmunity})];
+    //         const auto s_ii =
+    //             last_value[pop.get_flat_index({(AgeGroup)age, InfectionState::SusceptibleImprovedImmunity})];
+
+    //         double vac_rate_first_current   = params.template get<InitialVaccinationRateFirst>()[(AgeGroup)age];
+    //         double vac_rate_full_current    = params.template get<InitialVaccinationRateFull>()[(AgeGroup)age];
+    //         double vac_rate_booster_current = params.template get<InitialVaccinationRateBooster>()[(AgeGroup)age];
+    //         if (t - 1 >= 0) {
+    //             vac_rate_first_current +=
+    //                 params.template get<DailyPartialVaccination>()[{(AgeGroup)age, mio::SimulationDay(t - 1)}] /
+    //                 pop_total;
+    //             vac_rate_full_current +=
+    //                 params.template get<DailyFullVaccination>()[{(AgeGroup)age, mio::SimulationDay(t - 1)}] / pop_total;
+    //             vac_rate_booster_current +=
+    //                 params.template get<DailyBoosterVaccination>()[{(AgeGroup)age, mio::SimulationDay(t - 1)}] /
+    //                 pop_total;
+    //         }
+
+    //         const auto feedback               = (1 - std::exp(-sensitivity_vac * perceived_risk_vac));
+    //         const auto vac_rate_first_willing = params.template get<WillignessToVaccinateFirstMin>()[(AgeGroup)age] +
+    //                                             (params.template get<WillignessToVaccinateFirstMax>()[(AgeGroup)age] -
+    //                                              params.template get<WillignessToVaccinateFirstMin>()[(AgeGroup)age]) *
+    //                                                 feedback;
+
+    //         const auto vac_rate_full_willing = params.template get<WillignessToVaccinateFullMin>()[(AgeGroup)age] +
+    //                                            (params.template get<WillignessToVaccinateFullMax>()[(AgeGroup)age] -
+    //                                             params.template get<WillignessToVaccinateFullMin>()[(AgeGroup)age]) *
+    //                                                feedback;
+
+    //         const auto vac_rate_booster_willing =
+    //             params.template get<WillignessToVaccinateBoosterMin>()[(AgeGroup)age] +
+    //             (params.template get<WillignessToVaccinateBoosterMax>()[(AgeGroup)age] -
+    //              params.template get<WillignessToVaccinateBoosterMin>()[(AgeGroup)age]) *
+    //                 feedback;
+
+    //         double vac_daily_first =
+    //             t >= 1 ? params.template get<DailyPartialVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t - 1)}]
+    //                    : 0;
+    //         double vac_daily_full =
+    //             t >= 1 ? params.template get<DailyFullVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t - 1)}]
+    //                    : 0;
+    //         double vac_daily_booster =
+    //             t >= 1 ? params.template get<DailyBoosterVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t - 1)}]
+    //                    : 0;
+
+    //         if (vac_rate_first_willing > vac_rate_first_current) {
+    //             vac_daily_first +=
+    //                 std::min(s_naive, s_naive / (params.template get<DelayTimeFirstVaccination>()) *
+    //                                       params.template get<EpsilonVaccination>() *
+    //                                       std::log(std::exp((vac_rate_first_willing - vac_rate_first_current) /
+    //                                                             params.template get<EpsilonVaccination>() +
+    //                                                         1)));
+    //         }
+    //         if (vac_rate_full_willing > vac_rate_full_current) {
+    //             vac_daily_full += std::min(s_pi, s_pi / (params.template get<DelayTimeFullVaccination>()) *
+    //                                                  params.template get<EpsilonVaccination>() *
+    //                                                  std::log(std::exp((vac_rate_full_willing - vac_rate_full_current) /
+    //                                                                        params.template get<EpsilonVaccination>() +
+    //                                                                    1)));
+    //         }
+    //         if (vac_rate_booster_willing > vac_rate_booster_current) {
+    //             vac_daily_booster +=
+    //                 std::min(s_ii, s_ii / (params.template get<DelayTimeBoosterVaccination>()) *
+    //                                    params.template get<EpsilonVaccination>() *
+    //                                    std::log(std::exp((vac_rate_booster_willing - vac_rate_booster_current) /
+    //                                                          params.template get<EpsilonVaccination>() +
+    //                                                      1)));
+    //         }
+    //         params.template get<DailyPartialVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] =
+    //             vac_daily_first;
+
+    //         params.template get<DailyFullVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] = vac_daily_full;
+
+    //         params.template get<DailyBoosterVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] =
+    //             vac_daily_booster;
+
+    //         if (params.template get<InitialVaccinationRateFirst>()[(AgeGroup)age] + vac_daily_first / pop_total >
+    //             vac_rate_first_willing) {
+    //             params.template get<DailyPartialVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] =
+    //                 (vac_rate_first_willing - params.template get<InitialVaccinationRateFirst>()[(AgeGroup)age]) *
+    //                 pop_total;
+    //         }
+    //         if (params.template get<InitialVaccinationRateFull>()[(AgeGroup)age] + vac_daily_full / pop_total >
+    //             vac_rate_full_willing) {
+    //             params.template get<DailyFullVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] =
+    //                 (vac_rate_full_willing - params.template get<InitialVaccinationRateFull>()[(AgeGroup)age]) *
+    //                 pop_total;
+    //         }
+    //         if (params.template get<InitialVaccinationRateBooster>()[(AgeGroup)age] + vac_daily_booster / pop_total >
+    //             vac_rate_booster_willing) {
+    //             params.template get<DailyBoosterVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] =
+    //                 (vac_rate_booster_willing - params.template get<InitialVaccinationRateBooster>()[(AgeGroup)age]) *
+    //                 pop_total;
+    //         }
+
+    //         if (vac_rate_first_current <
+    //             params.template get<InitialVaccinationRateFull>()[(AgeGroup)age] +
+    //                 params.template get<DailyFullVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] /
+    //                     pop_total) {
+    //             params.template get<DailyFullVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] =
+    //                 params.template get<DailyPartialVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}];
+    //         }
+
+    //         if (vac_rate_full_current <
+    //             params.template get<InitialVaccinationRateBooster>()[(AgeGroup)age] +
+    //                 params.template get<DailyBoosterVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] /
+    //                     pop_total) {
+    //             params.template get<DailyBoosterVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}] =
+    //                 params.template get<DailyFullVaccination>()[{(mio::AgeGroup)age, mio::SimulationDay(t)}];
+    //         }
+
+    //         if (age == 0) {
+    //             std::cout << "t = " << t << ": vac_rate_first_current = " << vac_rate_first_current
+    //                       << " / vac_rate_full_current = " << vac_rate_full_current
+    //                       << " / vac_rate_booster_current = " << vac_rate_booster_current << "\n";
+
+    //             std::cout << "t = " << t << ": vac_daily_first = " << vac_daily_first
+    //                       << " / vac_daily_full = " << vac_daily_full << " / vac_daily_booster = " << vac_daily_booster
+    //                       << "\n";
+    //         }
+    //     }
+    // }
+
+    void feedback_contacts(double t)
+    {
+        auto& params           = this->get_model().parameters;
+        const size_t locations = params.template get<ContactReductionMax>().size();
+        double perceived_risk_contacts =
+            calc_risk_perceived(params.template get<alphaGammaContacts>(), params.template get<betaGammaContacts>());
+
+        for (size_t i = 0; i < locations; ++i) {
+            auto const reduc_fac_location =
+                (params.template get<ContactReductionMax>()[i] - params.template get<ContactReductionMin>()[i]) /
+                    params.template get<ICUCapacity>() * params.template get<EpsilonContacts>() *
+                    std::log(std::exp((params.template get<ICUCapacity>() - perceived_risk_contacts) /
+                                      params.template get<EpsilonContacts>()) +
+                             1) +
+                params.template get<ContactReductionMax>()[i];
+
+            params.template get<ContactPatterns>().get_dampings().push_back(mio::DampingSampling(
+                mio::UncertainValue(0.5), mio::DampingLevel(int(reduc_fac_location)), mio::DampingType(0),
+                mio::SimulationTime(t), std::vector<size_t>(1, size_t(0)),
+                Eigen::VectorXd::Constant(Eigen::Index(params.get_num_groups().get()), reduc_fac_location)));
+        }
+    }
+
+    ScalarType calc_risk_perceived(const ScalarType a, const ScalarType b) const
+    {
+        // TODO: Stronly depens on the step size. Should make it independent of the step size. Maybe Interpolate the icu.
+        const auto& icu_occupancy    = this->get_model().parameters.template get<ICUOccupancyLocal>();
+        const size_t num_time_points = icu_occupancy.get_num_time_points();
+        const size_t n =
+            std::min(static_cast<size_t>(num_time_points), this->get_model().parameters.template get<CutOffGamma>());
+        ScalarType perceived_risk = 0.0;
+
+        // calculate the perceived risk for each day
+        for (size_t i = num_time_points - n; i < num_time_points; ++i) {
+            const size_t day       = i - (num_time_points - n);
+            const ScalarType gamma = std::pow(b, a) * std::pow(day, a - 1) * std::exp(-b * day) / std::tgamma(a);
+
+            // multiply the gamma function with the icu occupancy
+            perceived_risk += icu_occupancy.get_value(i).sum() * gamma;
+        }
+
+        // Summarize the perceived risk and return it
+        return perceived_risk;
+    }
+
+    void add_icu_occupancy(double t)
+    {
+        auto& params           = this->get_model().parameters;
+        size_t num_groups      = (size_t)params.get_num_groups();
+        const auto& last_value = this->get_result().get_last_value();
+
+        // store the number of icu patients per age group
+        Eigen::VectorXd icu_occupancy(num_groups);
+        for (size_t age = 0; age < num_groups; ++age) {
+            auto indx_icu_naive =
+                this->get_model().populations.get_flat_index({(AgeGroup)age, InfectionState::InfectedCriticalNaive});
+            auto indx_icu_partial = this->get_model().populations.get_flat_index(
+                {(AgeGroup)age, InfectionState::InfectedCriticalPartialImmunity});
+            auto indx_icu_improved = this->get_model().populations.get_flat_index(
+                {(AgeGroup)age, InfectionState::InfectedCriticalImprovedImmunity});
+            icu_occupancy[age] =
+                last_value[indx_icu_naive] + last_value[indx_icu_partial] + last_value[indx_icu_improved];
+        }
+
+        // add the icu occpancy per 100'000 inhabitants to the table
+        // TODO: Maybe scale by the total population in the corresponding age group
+        icu_occupancy = icu_occupancy / this->get_model().populations.get_total() * 100000;
+        params.template get<ICUOccupancyLocal>().add_time_point(t, icu_occupancy);
+    }
+
     /**
      * @brief advance simulation to tmax.
      * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.
@@ -713,6 +930,13 @@ public:
             auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
             if (dt_eff >= 1.0) {
                 dt_eff = 1.0;
+            }
+
+            if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
+                // TODO: Vil sogar jedes mal hinzufügen und bei Zugriff interpolieren
+                this->add_icu_occupancy(t);
+                // this->feedback_vaccinations(t);
+                this->feedback_contacts(t);
             }
 
             BaseT::advance(t + dt_eff);
@@ -759,6 +983,8 @@ public:
         // reset TransmissionProbabilityOnContact. This is important for the graph simulation where the advance
         // function is called multiple times for the same model.
         this->get_model().parameters.template get<TransmissionProbabilityOnContact>() = base_infectiousness;
+
+        this->get_model().parameters.template get<ICUOccupancyLocal>().print_table();
 
         return this->get_result().get_last_value();
     }

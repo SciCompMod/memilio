@@ -334,12 +334,176 @@ struct TestAndTraceCapacity {
     }
 };
 
+/**
+* @brief Daily local ICU occupancy aggregated for each age group.
+*/
+struct ICUOccupancyLocal {
+    using Type = mio::TimeSeries<ScalarType>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size.get());
+    }
+    static std::string name()
+    {
+        return "ICUOccupancyLocal";
+    }
+};
+
+/**
+* @brief Daily regional ICU occupancy aggregated for each age group.
+*/
+struct ICUOccupancyRegional {
+    using Type = mio::TimeSeries<ScalarType>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size.get());
+    }
+    static std::string name()
+    {
+        return "ICUOccupancyRegional";
+    }
+};
+
+/**
+* @brief Daily national ICU occupancy aggregated for each age group.
+*/
+struct ICUOccupancyNational {
+    using Type = mio::TimeSeries<ScalarType>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size.get());
+    }
+    static std::string name()
+    {
+        return "ICUOccupancyNational";
+    }
+};
+
+/**
+* @brief shape parameter of the gamma distribution for the contacts.
+*/
+struct alphaGammaContacts {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return 6.;
+    }
+    static std::string name()
+    {
+        return "alphaGammaContacts";
+    }
+};
+
+/**
+* @brief scale parameter of the gamma distribution for the contacts.
+*/
+struct betaGammaContacts {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return .4;
+    }
+    static std::string name()
+    {
+        return "betaGammaContacts";
+    }
+};
+
+/**
+* @brief number of days in the past we consider for the gamma distribution.
+*/
+struct CutOffGamma {
+    using Type = size_t;
+    static Type get_default(AgeGroup)
+    {
+        return 45;
+    }
+    static std::string name()
+    {
+        return "CutOffGamma";
+    }
+};
+
+struct ContactReductionMax {
+    using Type = std::vector<double>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(1, 1.0);
+    }
+    static std::string name()
+    {
+        return "ContactReductionMax";
+    }
+};
+
+struct ContactReductionMin {
+    using Type = std::vector<double>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(1, 0.0);
+    }
+    static std::string name()
+    {
+        return "ContactReductionMin";
+    }
+};
+
+struct EpsilonContacts {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return 0.1;
+    }
+    static std::string name()
+    {
+        return "EpsilonContacts";
+    }
+};
+
+struct BlendingFactorLocal {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return 0.6;
+    }
+    static std::string name()
+    {
+        return "BlendingFactorLocal";
+    }
+};
+
+struct BlendingFactorRegional {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return 0.6;
+    }
+    static std::string name()
+    {
+        return "BlendingFactorRegional";
+    }
+};
+
+struct StateID {
+    using Type = size_t;
+    static Type get_default(AgeGroup)
+    {
+        return 1;
+    }
+    static std::string name()
+    {
+        return "StateID";
+    }
+};
+
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
                  TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical>;
+                 CriticalPerSevere, DeathsPerCritical, ICUOccupancyLocal, ICUOccupancyRegional, ICUOccupancyNational,
+                 alphaGammaContacts, betaGammaContacts, CutOffGamma, ContactReductionMax, ContactReductionMin,
+                 EpsilonContacts, BlendingFactorLocal, BlendingFactorRegional, StateID>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

@@ -636,19 +636,330 @@ struct InfectiousnessNewVariant {
     }
 };
 
-using ParametersBase =
-    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
-                 TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
-                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
-                 RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialVaccination,
-                 DaysUntilEffectiveImprovedVaccination, DaysUntilEffectiveBoosterImmunity, DailyFullVaccination,
-                 DailyBoosterVaccination, DailyPartialVaccination, ReducExposedPartialImmunity,
-                 ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
-                 ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
-                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, StartDayNewVariant,
-                 InfectiousnessNewVariant, TimeWaningPartialImmunity, TimeWaningImprovedImmunity,
-                 TimeTemporaryImmunityPI, TimeTemporaryImmunityII>;
+/**
+* @brief Daily local ICU occupancy aggregated for each age group.
+*/
+struct ICUOccupancyLocal {
+    using Type = mio::TimeSeries<ScalarType>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size.get());
+    }
+    static std::string name()
+    {
+        return "ICUOccupancyLocal";
+    }
+};
+
+/**
+* @brief Daily regional ICU occupancy aggregated for each age group.
+*/
+struct ICUOccupancyRegional {
+    using Type = mio::TimeSeries<ScalarType>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size.get());
+    }
+    static std::string name()
+    {
+        return "ICUOccupancyRegional";
+    }
+};
+
+/**
+* @brief Daily national ICU occupancy aggregated for each age group.
+*/
+struct ICUOccupancyNational {
+    using Type = mio::TimeSeries<ScalarType>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size.get());
+    }
+    static std::string name()
+    {
+        return "ICUOccupancyNational";
+    }
+};
+
+/**
+* @brief shape parameter of the gamma distribution for the vaccinations.
+*/
+// struct alphaGammaVaccination {
+//     using Type = double;
+//     static Type get_default(AgeGroup)
+//     {
+//         return 4.;
+//     }
+//     static std::string name()
+//     {
+//         return "alphaGammaVaccination";
+//     }
+// };
+
+// /**
+// * @brief scale parameter of the gamma distribution for the vaccinations.
+// */
+// struct betaGammaVaccination {
+//     using Type = double;
+//     static Type get_default(AgeGroup)
+//     {
+//         return .7;
+//     }
+//     static std::string name()
+//     {
+//         return "betaGammaVaccination";
+//     }
+// };
+
+/**
+* @brief shape parameter of the gamma distribution for the contacts.
+*/
+struct alphaGammaContacts {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return 6.;
+    }
+    static std::string name()
+    {
+        return "alphaGammaContacts";
+    }
+};
+
+/**
+* @brief scale parameter of the gamma distribution for the contacts.
+*/
+struct betaGammaContacts {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return .4;
+    }
+    static std::string name()
+    {
+        return "betaGammaContacts";
+    }
+};
+
+/**
+* @brief number of days in the past we consider for the gamma distribution.
+*/
+struct CutOffGamma {
+    using Type = size_t;
+    static Type get_default(AgeGroup)
+    {
+        return 45;
+    }
+    static std::string name()
+    {
+        return "CutOffGamma";
+    }
+};
+
+struct ContactReductionMax {
+    using Type = std::vector<double>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(1, 1.0);
+    }
+    static std::string name()
+    {
+        return "ContactReductionMax";
+    }
+};
+
+struct ContactReductionMin {
+    using Type = std::vector<double>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(1, 0.0);
+    }
+    static std::string name()
+    {
+        return "ContactReductionMin";
+    }
+};
+
+// struct DelayTimeFirstVaccination {
+//     using Type = double;
+//     static Type get_default(AgeGroup)
+//     {
+//         return 7.0;
+//     }
+//     static std::string name()
+//     {
+//         return "DelayTimeFirstVaccination";
+//     }
+// };
+
+// struct DelayTimeFullVaccination {
+//     using Type = double;
+//     static Type get_default(AgeGroup)
+//     {
+//         return 7.0;
+//     }
+//     static std::string name()
+//     {
+//         return "DelayTimeFullVaccination";
+//     }
+// };
+
+// struct DelayTimeBoosterVaccination {
+//     using Type = double;
+//     static Type get_default(AgeGroup)
+//     {
+//         return 7.0;
+//     }
+//     static std::string name()
+//     {
+//         return "DelayTimeBoosterVaccination";
+//     }
+// };
+
+// struct EpsilonVaccination {
+//     using Type = double;
+//     static Type get_default(AgeGroup)
+//     {
+//         return 1.;
+//     }
+//     static std::string name()
+//     {
+//         return "EpsilonVaccination";
+//     }
+// };
+
+struct EpsilonContacts {
+    using Type = double;
+    static Type get_default(AgeGroup)
+    {
+        return 10.0;
+    }
+    static std::string name()
+    {
+        return "EpsilonContacts";
+    }
+};
+
+// struct WillignessToVaccinateFirstMax {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 1.);
+//     }
+//     static std::string name()
+//     {
+//         return "WillignessToVaccinateFirstMax";
+//     }
+// };
+
+// struct WillignessToVaccinateFullMax {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 1.);
+//     }
+//     static std::string name()
+//     {
+//         return "WillignessToVaccinateFullMax";
+//     }
+// };
+
+// struct WillignessToVaccinateBoosterMax {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 1.);
+//     }
+//     static std::string name()
+//     {
+//         return "WillignessToVaccinateBoosterMax";
+//     }
+// };
+// struct WillignessToVaccinateFirstMin {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 0.);
+//     }
+//     static std::string name()
+//     {
+//         return "WillignessToVaccinateFirstMin";
+//     }
+// };
+
+// struct WillignessToVaccinateFullMin {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 0.);
+//     }
+//     static std::string name()
+//     {
+//         return "WillignessToVaccinateFullMin";
+//     }
+// };
+
+// struct WillignessToVaccinateBoosterMin {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 0.);
+//     }
+//     static std::string name()
+//     {
+//         return "WillignessToVaccinateBoosterMin";
+//     }
+// };
+
+// struct InitialVaccinationRateFirst {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 0.);
+//     }
+//     static std::string name()
+//     {
+//         return "InitialVaccinationRateFirst";
+//     }
+// };
+
+// struct InitialVaccinationRateFull {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 0.);
+//     }
+//     static std::string name()
+//     {
+//         return "InitialVaccinationRateFull";
+//     }
+// };
+
+// struct InitialVaccinationRateBooster {
+//     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+//     static Type get_default(AgeGroup size)
+//     {
+//         return Type(size, 0.);
+//     }
+//     static std::string name()
+//     {
+//         return "InitialVaccinationRateBooster";
+//     }
+// };
+
+using ParametersBase = ParameterSet<
+    StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms, TimeExposed,
+    TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
+    TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
+    RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms, CriticalPerSevere,
+    DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialVaccination, DaysUntilEffectiveImprovedVaccination,
+    DaysUntilEffectiveBoosterImmunity, DailyFullVaccination, DailyBoosterVaccination, DailyPartialVaccination,
+    ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
+    ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
+    ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, StartDayNewVariant,
+    InfectiousnessNewVariant, TimeWaningPartialImmunity, TimeWaningImprovedImmunity, TimeTemporaryImmunityPI,
+    TimeTemporaryImmunityII, ICUOccupancyLocal, ICUOccupancyRegional, ICUOccupancyNational, alphaGammaContacts,
+    betaGammaContacts, CutOffGamma, ContactReductionMax, ContactReductionMin, EpsilonContacts>;
 
 /**
  * @brief Parameters of the age-resolved SECIRS-type model with high temporary immunity upon immunization and waning immunity over
