@@ -63,7 +63,7 @@ std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"CriticalPerSevere", 0.173176},
                                                           {"DeathsPerCritical", 0.217177}};
 
-mio::UncertainContactMatrix get_contact_matrix(ScalarType R0)
+mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
 {
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     if (R0 <= 1.) {
@@ -268,42 +268,43 @@ void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax
                                                     simulation_parameter["total_population"]);
 
     // Set working parameters.
-    model_ode.parameters.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0] = simulation_parameter["TimeExposed"];
-    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["TimeExposed"];
+    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["TimeInfectedNoSymptoms"];
-    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["TimeInfectedSymptoms"];
-    model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["TimeInfectedSevere"];
-    model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["TimeInfectedCritical"];
 
     // Set probabilities that determine proportion between compartments.
-    model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["RecoveredPerInfectedNoSymptoms"];
-    model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["SeverePerInfectedSymptoms"];
-    model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["CriticalPerSevere"];
-    model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["DeathsPerCritical"];
 
     // Further model parameters.
-    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["TransmissionProbabilityOnContact"];
-    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["RelativeTransmissionNoSymptoms"];
-    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0] =
+    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["RiskOfInfectionFromSymptomatic"];
     // Choose TestAndTraceCapacity very large so that riskFromInfectedSymptomatic = RiskOfInfectionFromSymptomatic.
-    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<ScalarType>::max();
+    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
     // Choose ICUCapacity very large so that CriticalPerSevereAdjusted = CriticalPerSevere and deathsPerSevereAdjusted = 0.
-    model_ode.parameters.get<mio::osecir::ICUCapacity>() = std::numeric_limits<ScalarType>::max();
+    model_ode.parameters.get<mio::osecir::ICUCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
 
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
-    model_ode.parameters.set<mio::osecir::Seasonality>(simulation_parameter["Seasonality"]);
+    model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
 
-    model_ode.parameters.get<mio::osecir::ContactPatterns>() = get_contact_matrix(R0);
+    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = get_contact_matrix(R0);
 
     model_ode.check_constraints();
 
