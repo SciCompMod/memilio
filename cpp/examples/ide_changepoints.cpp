@@ -45,6 +45,7 @@ constexpr int num_subcompartments = 20;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
+                                                          {"changepoint", 2.0},
                                                           {"dt_flows", 0.1},
                                                           {"total_population", 83155031.},
                                                           {"total_confirmed_cases", 341223.},
@@ -308,13 +309,13 @@ void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax
 
     model_ode.check_constraints();
 
-    // auto integrator =
-    //     std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>();
-    // integrator->set_dt_min(simulation_parameter["dt_flows"]);
-    // integrator->set_dt_max(simulation_parameter["dt_flows"]);
+    auto integrator =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+    integrator->set_dt_min(simulation_parameter["dt_flows"]);
+    integrator->set_dt_max(simulation_parameter["dt_flows"]);
 
-    std::vector<mio::TimeSeries<ScalarType>> results_ode =
-        simulate_flows(simulation_parameter["t0"], tmax, simulation_parameter["dt_flows"], model_ode);
+    std::vector<mio::TimeSeries<ScalarType>> results_ode = mio::osecir::simulate_flows<ScalarType>(
+        simulation_parameter["t0"], tmax, simulation_parameter["dt_flows"], model_ode, integrator);
 
     // flows_ode.print_table();
 

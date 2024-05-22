@@ -27,9 +27,8 @@ def plot_changepoint(files, legendplot, flows=True, save=True, save_dir='plots/'
         data = h5file[list(h5file.keys())[0]]
 
         if flows:
-            if len(data['Total'][0]) == 10:
-                # As there should be only one Group, total is the simulation result
-                total = data['Total'][:, :]
+            # As there should be only one Group, total is the simulation result
+            total = data['Total'][:, :]
         else:
             if len(data['Total'][0]) == 8:
                 # As there should be only one Group, total is the simulation result
@@ -44,8 +43,17 @@ def plot_changepoint(files, legendplot, flows=True, save=True, save_dir='plots/'
         indices = np.where(dates >= 0)
         # plot data
         if flows:
-            ax.plot(dates[indices], total[indices, 1][0]/0.1, label=legendplot[file],
-                    color=colors[file], linestyle=linestyles[file])
+            # ODE
+            if file == 0:
+                # transform cumulative flows to flows absolute flows
+                # then transform from flows over time interval to flows at time points
+                ax.plot(dates[indices[0][1:]], np.diff(total[indices[0], 0])/np.diff(dates[indices[0]]), label=legendplot[file],
+                        color=colors[file], linestyle=linestyles[file])
+            # IDE
+            elif file == 1:
+                # transform from flows over time interval to flows at time points
+                ax.plot(dates[indices[0][1:]], total[indices[0][1:], 0]/np.diff(dates[indices[0]]), label=legendplot[file],
+                        color=colors[file], linestyle=linestyles[file])
         else:
             incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
             ax.plot(dates[indices[0][1:]], incidence, label=legendplot[file],
@@ -80,22 +88,22 @@ def plot_changepoint(files, legendplot, flows=True, save=True, save_dir='plots/'
 if __name__ == '__main__':
     # Path to simulation results
     data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "results")
+        __file__), "..", "results/")
 
-    legendplot = list(["IDE", "ODE"])
+    legendplot = list(["ODE", "IDE"])
 
-    plot_changepoint([os.path.join(data_dir, f"fictional_ide_0.5_20_flows"),
-                      os.path.join(data_dir, f"fictional_ode_0.5_20_flows")],
-                     legendplot, flows=True, save=True, save_dir='plots/')
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_flows"),
+                      os.path.join(data_dir, f"fictional_ide_0.5_20_flows")],
+                     legendplot, flows=True, save=True, save_dir='plots/changepoints/')
 
-    plot_changepoint([os.path.join(data_dir, f"fictional_ide_0.5_20_compartments"),
-                      os.path.join(data_dir, f"fictional_ode_0.5_20_compartments")],
-                     legendplot, flows=False, save=True, save_dir='plots/')
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_compartments"),
+                      os.path.join(data_dir, f"fictional_ide_0.5_20_compartments")],
+                     legendplot, flows=False, save=True, save_dir='plots/changepoints/')
 
-    plot_changepoint([os.path.join(data_dir, f"fictional_ide_2.0_20_flows"),
-                      os.path.join(data_dir, f"fictional_ode_2.0_20_flows")],
-                     legendplot, flows=True, save=True, save_dir='plots/')
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_flows"),
+                      os.path.join(data_dir, f"fictional_ide_2.0_20_flows")],
+                     legendplot, flows=True, save=True, save_dir='plots/changepoints/')
 
-    plot_changepoint([os.path.join(data_dir, f"fictional_ide_2.0_20_compartments"),
-                      os.path.join(data_dir, f"fictional_ode_2.0_20_compartments")],
-                     legendplot, flows=False, save=True, save_dir='plots/')
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_compartments"),
+                      os.path.join(data_dir, f"fictional_ide_2.0_20_compartments")],
+                     legendplot, flows=False, save=True, save_dir='plots/changepoints/')
