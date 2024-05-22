@@ -18,6 +18,7 @@ import matplotlib.cm as cmx
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import h5py
+from scipy.ndimage.filters import gaussian_filter1d
 
 
 def main(path, n_runs):
@@ -65,20 +66,16 @@ def main(path, n_runs):
 
 def plot_infection_per_location_type(df):
     # Calculate moving average for all location types
-    df['MA_Home'] = df.Home.rolling(10, min_periods=1).mean()
-    df['MA_School'] = df.School.rolling(10, min_periods=1).mean()
-    df['MA_Work'] = df.Work.rolling(10, min_periods=1).mean()
-    df['MA_SocialEvent'] = df.SocialEvent.rolling(10, min_periods=1).mean()
-    df['MA_BasicsShop'] = df.BasicsShop.rolling(10, min_periods=1).mean()
-    df['MA_Hospital'] = df.Hospital.rolling(10, min_periods=1).mean()
-    df['MA_ICU'] = df.ICU.rolling(10, min_periods=1).mean()
-    df['MA_Car'] = df.Car.rolling(10, min_periods=1).mean()
-    df['MA_PublicTransport'] = df.PublicTransport.rolling(
-        10, min_periods=1).mean()
-    df['MA_Cemetery'] = df.Cemetery.rolling(10, min_periods=1).mean()
+    df['MA_Home'] = gaussian_filter1d(df.Home.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['MA_School'] = gaussian_filter1d(df.School.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['MA_Work'] =  gaussian_filter1d(df.Work.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['MA_SocialEvent'] =  gaussian_filter1d(df.SocialEvent.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['MA_BasicsShop'] =  gaussian_filter1d(df.BasicsShop.rolling(24*3, min_periods=1).mean(), sigma=15)
 
-    df.plot(x='Time', y=['MA_Home', 'MA_School','MA_Work',  'MA_SocialEvent', 'MA_BasicsShop',
-            'MA_Hospital', 'MA_ICU', 'MA_Car', 'MA_PublicTransport', 'MA_Cemetery'], figsize=(10, 6))
+    df.plot(x='Time', y=['MA_Home', 'MA_School','MA_Work',  'MA_SocialEvent', 'MA_BasicsShop'], figsize=(10, 6))
+    
+
+
 
     # Subplots of individual location types
     # fig, axs = plt.subplots(5, 2, constrained_layout=True)

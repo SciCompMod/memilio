@@ -58,7 +58,13 @@ bool Location::entry_allowed(Person::RandomNumberGenerator& rng, const mio::abm:
                                    [](TimePoint t, const std::pair<TimePoint, double>& p) {
                                        return t < p.first;
                                    });
-        //then we want to access the second element of it, draw a random number between 0 and 1 and check if it is smaller than the damping factor
+        //we need the one entry before the upper bound
+        if (it == temp_npi_damping.begin()) {
+            return true;
+        }
+        else {
+            --it;
+        }
         //get a random number between 0 and 1 without m_rng
         ScalarType random_number = UniformDistribution<double>::get_instance()(rng, 0.0, 1.0);
         return random_number < it->second;
