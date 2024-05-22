@@ -27,6 +27,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
+#include "memilio/data/analyze_result.h"
 
 #include <vector>
 
@@ -176,5 +177,6 @@ int main()
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, tmax, 0.5, model);
     // Calculate the distribution in the InfectionState%s without subcompartments of the result and print it.
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_populations(result);
-    population_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    auto interpolated_result = mio::interpolate_simulation_result(population_no_subcompartments, 0.1);
+    interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 }

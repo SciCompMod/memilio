@@ -18,11 +18,11 @@
 * limitations under the License.
 */
 
-#ifndef LCT_SECIR_MODEL_H
-#define LCT_SECIR_MODEL_H
+#ifndef GLCT_SECIR_MODEL_H
+#define GLCT_SECIR_MODEL_H
 
-#include "lct_secir/parameters.h"
-#include "lct_secir/infection_state.h"
+#include "glct_secir/parameters.h"
+#include "glct_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
@@ -31,11 +31,11 @@
 
 namespace mio
 {
-namespace lsecir
+namespace glsecir
 {
 
 /**
- * @brief Class that defines an LCT-SECIR model.
+ * @brief Class that defines an GLCT-SECIR model.
  *
  * @tparam NumExposed The number of subcompartents used for the Exposed compartment.
  * @tparam NumInfectedNoSymptoms The number of subcompartents used for the InfectedNoSymptoms compartment. 
@@ -54,7 +54,7 @@ public:
                           NumInfectedCritical, 1, 1>; ///< This class specifies the number of subcompartments.
 
     /**
-     * @brief Constructor to create an LCT SECIR Model.
+     * @brief Constructor to create an GLCT SECIR Model.
      *
      * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
      * @param[in, out] parameters_init Specifies Parameters necessary for the Model. 
@@ -82,14 +82,15 @@ public:
                 return true;
             }
         }
+        log_warning("Test if sizes of the parameters are fitting to number of subcompartments missing.");
 
         return parameters.check_constraints();
     }
 
     /**
-     * @brief Evaulates the right-hand-side f of the LCT dydt = f(y, t).
+     * @brief Evaulates the right-hand-side f of the GLCT dydt = f(y, t).
      *
-     * The LCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
+     * The GLCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
      * y is a vector containing number of individuals for each (sub-) compartment.
      * This function evaluates the right-hand-side f of the ODE and can be used in an ODE solver.
      * @param[in] y the current state of the model
@@ -100,16 +101,14 @@ public:
     {
         dydt.setZero();
 
-        ScalarType C     = 0;
-        ScalarType I     = 0;
-        ScalarType dummy = 0;
-
         // Calculate sum of all subcompartments for InfectedNoSymptoms.
-        C = y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
+        ScalarType InfectedNoSymptoms_sum =
+            y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                       LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
                 .sum();
         // Calculate sum of all subcompartments for InfectedSymptoms.
-        I = y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+        ScalarType InfectedSymptoms_sum =
+            y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                       LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
                 .sum();
 
@@ -119,97 +118,111 @@ public:
         dydt[0] = -y[0] / (m_N0 - y[LctState::template get_first_index<InfectionState::Dead>()]) * season_val *
                   parameters.get<TransmissionProbabilityOnContact>() *
                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(0, 0) *
-                  (parameters.get<RelativeTransmissionNoSymptoms>() * C +
-                   parameters.get<RiskOfInfectionFromSymptomatic>() * I);
+                  (parameters.get<RelativeTransmissionNoSymptoms>() * InfectedNoSymptoms_sum +
+                   parameters.get<RiskOfInfectionFromSymptomatic>() * InfectedSymptoms_sum);
 
         // Exposed.
-        dydt[1] = -dydt[0];
-        for (Eigen::Index i = 0; i < LctState::template get_num_subcompartments<InfectionState::Exposed>(); i++) {
-            // Dummy stores the value of the flow from dydt[1 + i] to dydt[2 + i].
-            // 1+i is always the index of a (sub-)compartment of E and 2+i can also be the index of the first (sub-)compartment of C.
-            dummy = LctState::template get_num_subcompartments<InfectionState::Exposed>() *
-                    (1 / parameters.get<TimeExposed>()) * y[1 + i];
-            // Subtract flow from dydt[1 + i] and add to dydt[2 + i].
-            dydt[1 + i] = dydt[1 + i] - dummy;
-            dydt[2 + i] = dummy;
-        }
+        dydt.segment(LctState::template get_first_index<InfectionState::Exposed>(),
+                     LctState::template get_num_subcompartments<InfectionState::Exposed>()) -=
+            dydt[0] * parameters.get<StartingProbabilitiesExposed>();
+        dydt.segment(LctState::template get_first_index<InfectionState::Exposed>(),
+                     LctState::template get_num_subcompartments<InfectionState::Exposed>()) +=
+            parameters.get<TransitionMatrixExposed>().transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::Exposed>(),
+                      LctState::template get_num_subcompartments<InfectionState::Exposed>());
 
         // InfectedNoSymptoms.
-        for (Eigen::Index i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
-             i++) {
-            dummy = LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() *
-                    (1 / parameters.get<TimeInfectedNoSymptoms>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i];
-            dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i + 1] = dummy;
-        }
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()) =
+            -(parameters.get<TransitionMatrixExposed>() *
+              Eigen::VectorXd::Ones(LctState::template get_num_subcompartments<InfectionState::Exposed>()))
+                 .transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::Exposed>(),
+                      LctState::template get_num_subcompartments<InfectionState::Exposed>()) *
+            parameters.get<StartingProbabilitiesInfectedNoSymptoms>();
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()) +=
+            parameters.get<TransitionMatrixInfectedNoSymptoms>().transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
 
         // InfectedSymptoms.
-        // Flow from last (sub-) compartment of InfectedNoSymptoms must be split between InfectedSymptoms_1 and Recovered.
-        dydt[LctState::template get_first_index<InfectionState::Recovered>()] =
-            dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>()] *
-            parameters.get<RecoveredPerInfectedNoSymptoms>();
-        dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>()] =
-            dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>()] *
-            (1 - parameters.get<RecoveredPerInfectedNoSymptoms>());
-
-        for (Eigen::Index i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
-             i++) {
-            dummy = LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() *
-                    (1 / parameters.get<TimeInfectedSymptoms>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i];
-            dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i + 1] = dummy;
-        }
+        // Store intermediate result (the sum of all flows from the previous compartment) to reuse it for
+        // the Recovered compartment.
+        ScalarType flows_from_previous_comp =
+            -(parameters.get<TransitionMatrixInfectedNoSymptoms>() *
+              Eigen::VectorXd::Ones(LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()))
+                 .transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()) =
+            (1 - parameters.get<RecoveredPerInfectedNoSymptoms>()) * flows_from_previous_comp *
+            parameters.get<StartingProbabilitiesInfectedSymptoms>();
+        // Add remaining flow to Recovered compartment.
+        dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
+            parameters.get<RecoveredPerInfectedNoSymptoms>() * flows_from_previous_comp;
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()) +=
+            parameters.get<TransitionMatrixInfectedSymptoms>().transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>());
 
         // InfectedSevere.
-        dydt[LctState::template get_first_index<InfectionState::Recovered>()] =
-            dydt[LctState::template get_first_index<InfectionState::Recovered>()] +
-            dydt[LctState::template get_first_index<InfectionState::InfectedSevere>()] *
-                (1 - parameters.get<SeverePerInfectedSymptoms>());
-        dydt[LctState::template get_first_index<InfectionState::InfectedSevere>()] =
-            dydt[LctState::template get_first_index<InfectionState::InfectedSevere>()] *
-            parameters.get<SeverePerInfectedSymptoms>();
-        for (Eigen::Index i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedSevere>();
-             i++) {
-            dummy = LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() *
-                    (1 / parameters.get<TimeInfectedSevere>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedSevere>() + i];
-            dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i + 1] = dummy;
-        }
+        // Store intermediate result to reuse it for Recovered compartment.
+        flows_from_previous_comp =
+            -(parameters.get<TransitionMatrixInfectedSymptoms>() *
+              Eigen::VectorXd::Ones(LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()))
+                 .transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>());
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()) =
+            parameters.get<SeverePerInfectedSymptoms>() * flows_from_previous_comp *
+            parameters.get<StartingProbabilitiesInfectedSevere>();
+        // Add remaining flow to Recovered compartment.
+        dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
+            (1 - parameters.get<SeverePerInfectedSymptoms>()) * flows_from_previous_comp;
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()) +=
+            parameters.get<TransitionMatrixInfectedSevere>().transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedSevere>());
 
         // InfectedCritical.
-        dydt[LctState::template get_first_index<InfectionState::Recovered>()] =
-            dydt[LctState::template get_first_index<InfectionState::Recovered>()] +
-            dydt[LctState::template get_first_index<InfectionState::InfectedCritical>()] *
-                (1 - parameters.get<CriticalPerSevere>());
-        dydt[LctState::template get_first_index<InfectionState::InfectedCritical>()] =
-            dydt[LctState::template get_first_index<InfectionState::InfectedCritical>()] *
-            parameters.get<CriticalPerSevere>();
-        for (Eigen::Index i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() - 1;
-             i++) {
-            dummy = LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-                    (1 / parameters.get<TimeInfectedCritical>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedCritical>() + i];
-            dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i + 1] = dummy;
-        }
-        // Last flow from InfectedCritical has to be divided between Recovered and Dead.
-        // Must be calculated separately in order not to overwrite the already calculated values ​​for Recovered.
-        dummy = LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-                (1 / parameters.get<TimeInfectedCritical>()) *
-                y[LctState::template get_first_index<InfectionState::Recovered>() - 1];
-        dydt[LctState::template get_first_index<InfectionState::Recovered>() - 1] =
-            dydt[LctState::template get_first_index<InfectionState::Recovered>() - 1] - dummy;
-        dydt[LctState::template get_first_index<InfectionState::Recovered>()] =
-            dydt[LctState::template get_first_index<InfectionState::Recovered>()] +
-            (1 - parameters.get<DeathsPerCritical>()) * dummy;
-        dydt[LctState::template get_first_index<InfectionState::Dead>()] = parameters.get<DeathsPerCritical>() * dummy;
+        // Store intermediate result to reuse it for Recovered compartment.
+        flows_from_previous_comp =
+            -(parameters.get<TransitionMatrixInfectedSevere>() *
+              Eigen::VectorXd::Ones(LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()))
+                 .transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedSevere>());
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedCritical>()) =
+            parameters.get<CriticalPerSevere>() * flows_from_previous_comp *
+            parameters.get<StartingProbabilitiesInfectedCritical>();
+        // Add remaining flow to Recovered compartment.
+        dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
+            (1 - parameters.get<CriticalPerSevere>()) * flows_from_previous_comp;
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
+                     LctState::template get_num_subcompartments<InfectionState::InfectedCritical>()) +=
+            parameters.get<TransitionMatrixInfectedCritical>().transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedCritical>());
+
+        // Dead.
+        // Store intermediate result to reuse it for Recovered compartment.
+        flows_from_previous_comp =
+            -(parameters.get<TransitionMatrixInfectedCritical>() *
+              Eigen::VectorXd::Ones(LctState::template get_num_subcompartments<InfectionState::InfectedCritical>()))
+                 .transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
+                      LctState::template get_num_subcompartments<InfectionState::InfectedCritical>());
+        dydt[LctState::template get_first_index<InfectionState::Dead>()] =
+            parameters.get<DeathsPerCritical>() * flows_from_previous_comp;
+        // Add remaining flow to Recovered compartment.
+        dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
+            (1 - parameters.get<DeathsPerCritical>()) * flows_from_previous_comp;
     }
 
     /**
@@ -301,7 +314,7 @@ private:
         0}; ///< Total population size at time t_0 for the considered region (inclusive initial value for Dead).
 };
 
-} // namespace lsecir
+} // namespace glsecir
 } // namespace mio
 
-#endif // LCTSECIR_MODEL_H
+#endif // GLCTSECIR_MODEL_H
