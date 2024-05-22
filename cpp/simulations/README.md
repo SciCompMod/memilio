@@ -1,6 +1,7 @@
 # Simulations #
 
 This folder provides three spatially resolved simulations. There are two graph-ODE (or metapopulation) models using one ODE model for each county and realizing inter-county mobility via a graph approach. An agent-based model (abm) using German statistical data is also included.
+The Parameters `TimeExposed` and `TimeInfectedNoSymptoms` can be derived from the serial interval and incubation period, as delineated by Khailaie and Mitra et al. (https://doi.org/10.1186/s12916-020-01884-4).
 
 - 2020_npis_wildtype: Focus on a SECIR model using parameters for Sars-CoV-2 wild type variant and
 implementing static nonpharmaceutical interventions (NPIs) as well as dynamic NPIs. Dynamic NPIs

@@ -2,8 +2,8 @@
 
 This model is based on the Linear Chain Trick. 
 
-The Linear Chain Trick provides the option to use Erlang-distributed sojourn times in the compartments through the use of subcompartments. 
-The normal ODE models have (possibly unrealistic) exponentially distributed sojourn times.
+The Linear Chain Trick provides the option to use Erlang-distributed stay times in the compartments through the use of subcompartments. 
+The normal ODE models have (possibly unrealistic) exponentially distributed stay times.
 The LCT model can still be described by an ordinary differential equation system.
 
 For the concept see 
@@ -35,11 +35,11 @@ Below is an overview of the model architecture and its compartments.
 | $\xi_{I_{Sy}}$               | `RiskOfInfectionFromSymptomatic`                | Proportion of infected people with symptomps who are not isolated. |
 | $N$                         | `m_N0`   | Total population. |
 | $D$                         |  `D`  | Number of death people. |
-| $n_E$                         |  Defined via `InfectionState`  | Number of subcompartments of the Exposed compartment. |
-| $n_{NS}$                         |  Defined via `InfectionState`  | Number of subcompartments of the InfectedNoSymptoms compartment. |
-| $n_{Sy}$                         |  Defined via `InfectionState`  | Number of subcompartments of the InfectedSymptoms compartment. |
-| $n_{Sev}$                         | Defined via `InfectionState`  | Number of subcompartments of the InfectedSevere compartment.|
-| $n_{Cr}$                         |  Defined via `InfectionState`  | Number of subcompartments of the InfectedCritical compartment. |
+| $n_E$                         |  `NumExposed`  | Number of subcompartments of the Exposed compartment. |
+| $n_{NS}$                         |  `NumInfectedNoSymptoms`  | Number of subcompartments of the InfectedNoSymptoms compartment. |
+| $n_{Sy}$                         |  `NumInfectedSymptoms`  | Number of subcompartments of the InfectedSymptoms compartment. |
+| $n_{Sev}$                         |`NumInfectedSevere`  | Number of subcompartments of the InfectedSevere compartment.|
+| $n_{Cr}$                         |  `NumInfectedCritical`  | Number of subcompartments of the InfectedCritical compartment. |
 | $T_E$                    |  `TimeExposed`               | Average time in days an individual stays in the Exposed compartment. |
 | $T_{I_{NS}}$                    |  `TimeInfectedNoSymptoms`               | Average time in days an individual stays in the InfectedNoSymptoms compartment. |
 | $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Average time  in days an individual stays in the InfectedSymptoms compartment. |
@@ -56,4 +56,8 @@ The notation of the compartments with indices here stands for subcompartments an
 ## Examples
 
 A simple example can be found at [LCT minimal example](../../examples/lct_secir.cpp).
+
+## Initialization 
+
+- The file [parameters_io](parameters_io.h) provides functionality to compute an initial value vector for the LCT-SECIR model based on real data.
 

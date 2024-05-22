@@ -2,9 +2,9 @@ add_library(lct_secir
     infection_state.h
     model.h
     model.cpp
-    simulation.h
-    simulation.cpp    
+    simulation.h    
     parameters.h
+    parameters_io.h
 )
 target_link_libraries(lct_secir PUBLIC memilio)
 target_include_directories(lct_secir PUBLIC

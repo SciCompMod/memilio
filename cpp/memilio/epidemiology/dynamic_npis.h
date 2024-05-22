@@ -32,6 +32,7 @@ namespace mio
  * represents non-pharmaceutical interventions (NPI) that are activated during the simulation if
  * some value (e.g. infections) exceeds specified thresholds.
  */
+template <typename FP = double>
 class DynamicNPIs
 {
 public:
@@ -40,7 +41,7 @@ public:
      * @param threshold the threshold that may be exceeded.
      * @param dampings the NPIs
      */
-    void set_threshold(double threshold, const std::vector<DampingSampling>& dampings)
+    void set_threshold(double threshold, const std::vector<DampingSampling<FP>>& dampings)
     {
         insert_sorted_replace(m_thresholds, std::make_pair(threshold, dampings), [](auto& t1, auto& t2) {
             return t1.first > t2.first;
@@ -173,7 +174,7 @@ public:
     static IOResult<DynamicNPIs> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("DynamicNPIs");
-        auto t   = obj.expect_list("Thresholds", Tag<std::pair<double, std::vector<DampingSampling>>>{});
+        auto t   = obj.expect_list("Thresholds", Tag<std::pair<double, std::vector<DampingSampling<FP>>>>{});
         auto d   = obj.expect_element("Duration", Tag<SimulationTime>{});
         auto i   = obj.expect_element("Interval", Tag<SimulationTime>{});
         auto b   = obj.expect_element("BaseValue", Tag<double>{});
@@ -193,7 +194,7 @@ public:
     }
 
 private:
-    std::vector<std::pair<double, std::vector<DampingSampling>>> m_thresholds;
+    std::vector<std::pair<double, std::vector<DampingSampling<FP>>>> m_thresholds;
     SimulationTime m_duration{14.0};
     SimulationTime m_interval{3.0};
     double m_base{1.0};
@@ -217,7 +218,7 @@ std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, Damping
 {
     std::vector<size_t> indices;
     for (size_t i = 0; i < damping_expr.get_dampings().size(); ++i) {
-        auto& d = damping_expr.get_dampings()[i];
+        const auto d = damping_expr.get_dampings()[i];
         if (d.get_level() == lvl && d.get_type() == type && double(d.get_time()) > double(begin) &&
             double(d.get_time()) < double(end)) {
             indices.push_back(i);
@@ -277,8 +278,8 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  * @param end end of the time span that the NPIs will be active for.
  * @param make_matrix function to make a matrix of the same shape as the damping expression, see e.g. make_contact_damping_matrix
  */
-template <class DampingExprGroup, class MakeMatrix>
-void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vector<DampingSampling>& npis,
+template <class DampingExprGroup, class MakeMatrix, typename FP = double>
+void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vector<DampingSampling<FP>>& npis,
                             SimulationTime begin, SimulationTime end, MakeMatrix&& make_matrix)
 {
     for (auto& npi : npis) {
@@ -320,7 +321,7 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
     for (auto& damping_expr : damping_expr_group) {
         //go from the back so indices aren't invalidated when dampings are removed
         //use indices to loop instead of reverse iterators because removing invalidates the current iterator
-        for (auto i = size_t(0); i < damping_expr.get_dampings().size() - 1; ++i) {
+        for (auto i = int(0); i < int(damping_expr.get_dampings().size()) - 1; ++i) {
             auto it = damping_expr.get_dampings().rbegin() + i;
 
             //look for previous damping of the same type/level

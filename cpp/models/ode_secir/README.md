@@ -20,11 +20,11 @@ Below is an overview of the model architecture and its compartments.
 | $\phi$                      |  `ContactPatterns`               | Matrix of daily contact rates / number of daily contacts between different age groups. |
 | $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in one of the susceptible compartments. |
 | $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion of nonsymptomatically infected people who are not isolated. |
-| $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of infected people with symptomps who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
+| $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of infected people with symptoms who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
 | $N_j$                         | `Nj`   | Total population of age group $j$. |
 | $D_i$                         |  `Di`  | Number of death people of age group $i$. |
-| $\frac{1}{T_{E}}$                    |  `rateE`               | Reciprocal of the time in days an individual stays in the Exposed compartment  (Computed from `SerialInterval` and `IncubationPeriod`). |
-| $\frac{1}{T_{I_{NS}}}$                    |  `rateINS`               | Reciprocal of the time in days an individual stays in the InfectedNoSymptoms compartment (Computed from `SerialInterval` and `IncubationPeriod`). |
+| $T_{E}$                    |  `TimeExposed`               | Time in days an individual stays in the Exposed compartment. |
+| $T_{I_{NS}}$                    |  `TimeInfectedNoSymptoms`               | Time in days an individual stays in the InfectedNoSymptoms compartment. |
 | $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Time in days an individual stays in the InfectedSymptoms compartment. |
 | $T_{I_{Sev}}$                       |  `TimeInfectedSevere`               | Time in days an individual stays in the InfectedSevere compartment. |
 | $T_{I_{Cr}}$                       |  `TimeInfectedCritical`               | Time in days an individual stays in the InfectedCritical compartment. |
