@@ -558,8 +558,6 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::TestData>()[mio::abm::TestType::PCR]     = pcr_test_values;
     params.get<mio::abm::TestData>()[mio::abm::TestType::Antigen] = antigen_test_values;
     params.get<mio::abm::TestData>()[mio::abm::TestType::Generic] = generic_test_values;
-    auto test_parameters = params.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
-    mio::unused(test_parameters);
 
     // Set percentage parameters
     params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.75;
@@ -1071,37 +1069,38 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
         return std::make_pair(curr_time, sum);
     }
 };
+#ifdef MEMILIO_ENABLE_MPI
+template <typename T>
+T gather_results(int rank, int num_procs, int num_runs, T ensemble_vec)
+{
+    auto gathered_ensemble_vec = T{};
 
-// template <typename T>
-// T gather_results(int rank, int num_procs, int num_runs, T ensemble_vec)
-// {
-//     auto gathered_ensemble_vec = T{};
+    if (rank == 0) {
+        gathered_ensemble_vec.reserve(num_runs);
+        std::copy(ensemble_vec.begin(), ensemble_vec.end(), std::back_inserter(gathered_ensemble_vec));
+        for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
+            int bytes_size;
+            MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mio::mpi::get_world(), MPI_STATUS_IGNORE);
+            mio::ByteStream bytes(bytes_size);
+            MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mio::mpi::get_world(), MPI_STATUS_IGNORE);
 
-//     if (rank == 0) {
-//         gathered_ensemble_vec.reserve(num_runs);
-//         std::copy(ensemble_vec.begin(), ensemble_vec.end(), std::back_inserter(gathered_ensemble_vec));
-//         for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
-//             int bytes_size;
-//             MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mio::mpi::get_world(), MPI_STATUS_IGNORE);
-//             mio::ByteStream bytes(bytes_size);
-//             MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mio::mpi::get_world(), MPI_STATUS_IGNORE);
-
-//             auto src_ensemble_results = mio::deserialize_binary(bytes, mio::Tag<decltype(ensemble_vec)>{});
-//             if (!src_ensemble_results) {
-//                 mio::log_error("Error receiving ensemble results from rank {}.", src_rank);
-//             }
-//             std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
-//                       std::back_inserter(gathered_ensemble_vec));
-//         }
-//     }
-//     else {
-//         auto bytes      = mio::serialize_binary(ensemble_vec);
-//         auto bytes_size = int(bytes.data_size());
-//         MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mio::mpi::get_world());
-//         MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mio::mpi::get_world());
-//     }
-//     return gathered_ensemble_vec;
-// }
+            auto src_ensemble_results = mio::deserialize_binary(bytes, mio::Tag<decltype(ensemble_vec)>{});
+            if (!src_ensemble_results) {
+                mio::log_error("Error receiving ensemble results from rank {}.", src_rank);
+            }
+            std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
+                      std::back_inserter(gathered_ensemble_vec));
+        }
+    }
+    else {
+        auto bytes      = mio::serialize_binary(ensemble_vec);
+        auto bytes_size = int(bytes.data_size());
+        MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mio::mpi::get_world());
+        MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mio::mpi::get_world());
+    }
+    return gathered_ensemble_vec;
+}
+#endif
 
 std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
 {
@@ -1136,7 +1135,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 23000;
+    auto max_num_persons = 50000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1184,7 +1183,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groupss);
         create_sampled_world(world, input_dir, t0, max_num_persons);
-        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = 7;
+        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = 10;
         // Stop the clock after create_sampled_world and calculate the duration
         // auto stop1     = std::chrono::high_resolution_clock::now();
         // auto duration1 = std::chrono::duration<double>(stop1 - start1);
@@ -1508,7 +1507,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 6;
+        num_runs = 3;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 
