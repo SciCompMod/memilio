@@ -29,9 +29,10 @@ namespace mio
 {
 namespace isecir
 {
-void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSeries<ScalarType> compartments,
-                                     mio::TimeSeries<ScalarType>& flows, ScalarType t_max, ScalarType t_window,
-                                     ScalarType dt_reference, ScalarType dt_comparison)
+void get_flows_from_ode_compartments(mio::osecir::Model<ScalarType>& model_ode,
+                                     mio::TimeSeries<ScalarType> compartments, mio::TimeSeries<ScalarType>& flows,
+                                     ScalarType t_max, ScalarType t_window, ScalarType dt_reference,
+                                     ScalarType dt_comparison)
 {
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -72,12 +73,13 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
     for (int i = flows_start_index; i <= t_max_index; i++) {
         flows[i -
               flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-            (1 - model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]) *
+            (1 -
+             model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]) *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] +
              flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]);
         flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
-            (model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]) *
+            (model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]) *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] +
              flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]);
@@ -87,13 +89,13 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
     // flow from I to H and from I to R for -global_support_max, ..., 0
     for (int i = flows_start_index; i <= t_max_index; i++) {
         flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
-            model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0] *
+            model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] +
              flows[i - flows_start_index]
                   [Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]);
         flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
-            (1 - model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]) *
+            (1 - model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]) *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] +
              flows[i - flows_start_index]
@@ -103,13 +105,13 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
     // flow from H to U and from H to R for -global_support_max, ..., 0
     for (int i = flows_start_index; i <= t_max_index; i++) {
         flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)] =
-            model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0] *
+            model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0] *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedSevere)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedSevere)] +
              flows[i - flows_start_index]
                   [Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)]);
         flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
-            (1 - model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]) *
+            (1 - model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]) *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedSevere)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedSevere)] +
              flows[i - flows_start_index]
@@ -119,13 +121,13 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
     // flow from U to D and from U to R for -global_support_max, ..., 0
     for (int i = flows_start_index; i <= t_max_index; i++) {
         flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] =
-            model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0] *
+            model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0] *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedCritical)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedCritical)] +
              flows[i - flows_start_index]
                   [Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)]);
         flows[i - flows_start_index][Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)] =
-            (1 - model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]) *
+            (1 - model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]) *
             (compartments[scale_timesteps * (i - 1)][Eigen::Index(mio::osecir::InfectionState::InfectedCritical)] -
              compartments[scale_timesteps * i][Eigen::Index(mio::osecir::InfectionState::InfectedCritical)] +
              flows[i - flows_start_index]
@@ -133,7 +135,7 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
     }
 }
 
-void compute_initial_flows_for_ide_from_ode(mio::osecir::Model& model_ode, mio::isecir::Model& model_ide,
+void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& model_ode, mio::isecir::Model& model_ide,
                                             mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
                                             ScalarType dt_ode, ScalarType dt_ide)
 {

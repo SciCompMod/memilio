@@ -49,9 +49,10 @@ namespace isecir
 * @param[in] dt_reference Reference time step size (coming from ODE simulation).
 * @param[in] dt_comparison Time step size. Default is dt_reference. 
 */
-void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSeries<ScalarType> compartments,
-                                     mio::TimeSeries<ScalarType>& flows, ScalarType t_max, ScalarType t_window,
-                                     ScalarType dt_reference, ScalarType dt_comparison = 0.);
+void get_flows_from_ode_compartments(mio::osecir::Model<ScalarType>& model_ode,
+                                     mio::TimeSeries<ScalarType> compartments, mio::TimeSeries<ScalarType>& flows,
+                                     ScalarType t_max, ScalarType t_window, ScalarType dt_reference,
+                                     ScalarType dt_comparison = 0.);
 
 /**
 * @brief Computes the inital flows that are needed for an IDE simulation given we have the compartments from an ODE 
@@ -70,7 +71,7 @@ void get_flows_from_ode_compartments(mio::osecir::Model& model_ode, mio::TimeSer
 * @param[in] dt_ode Time step size of ODE simulation.
 * @param[in] dt_ide Time step size of IDE simulation. 
 */
-void compute_initial_flows_for_ide_from_ode(mio::osecir::Model& model_ode, mio::isecir::Model& model_ide,
+void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& model_ode, mio::isecir::Model& model_ide,
                                             mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
                                             ScalarType dt_ode, ScalarType dt_ide);
 
