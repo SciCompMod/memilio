@@ -60,11 +60,14 @@ public:
      * @param[out] ytp1 Set to the approximated value of y at time t + dt.
      *     (If adaptive, this time may be smaller, but it is at least t + dt_min, at most t + dt_max.
      *      Note that the increment on t may be different from the returned value of dt.)
-     * @return Always true for nonadaptive methods.
+     * @param[in] force_step_size This value may be ignored by non adaptive integrators. False by default.
+     *     (If adaptive, setting this to true allows making integration steps with any dt, ignoring the restriction to
+     *      [dt_min, dt_max]. This is meant to enable making a final integration step that is smaller than dt_min.)
+     * @return Always true for non adaptive methods.
      *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
     virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt,
-                      Eigen::Ref<Vector<FP>> ytp1) const = 0;
+                      Eigen::Ref<Vector<FP>> ytp1, bool force_step_size = false) const = 0;
 };
 
 /**
@@ -110,6 +113,7 @@ public:
         results.reserve(results.get_num_time_points() + num_steps);
 
         bool step_okay = true;
+        bool last_step = false;
 
         FP dt_copy; // used to check whether step sizing is adaptive
         FP dt_restore = 0; // used to restore dt if dt was decreased to reach tmax
@@ -123,11 +127,12 @@ public:
             if (dt > tmax - t) {
                 dt_restore = dt;
                 dt         = tmax - t;
+                last_step  = true;
             }
             dt_copy = dt;
 
             results.add_time_point();
-            step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
+            step_okay &= m_core->step(f, results[i], t, dt, results[i + 1], last_step);
             results.get_last_time() = t;
 
             // if dt has been changed (even slighly) by step, register the current m_core as adaptive

@@ -78,14 +78,14 @@ public:
     * @param[out] ytp1 The approximated value of y(t_{k+1}).
     */
     bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Vector<FP> const> yt, FP& t, FP& dt,
-              Eigen::Ref<Vector<FP>> ytp1) const override
+              Eigen::Ref<Vector<FP>> ytp1, bool force_step_size = false) const override
     {
         using boost::numeric::odeint::fail;
         using std::max;
         assert(0 <= m_dt_min);
         assert(m_dt_min <= m_dt_max);
 
-        if (dt < m_dt_min || dt > m_dt_max) {
+        if ((dt < m_dt_min || dt > m_dt_max) && !force_step_size) {
             mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
                              m_dt_max);
         }
@@ -99,7 +99,7 @@ public:
         // or a strictly smaller value on fail.
         // stop only on a successful step or a failed step size adaption (w.r.t. the minimal step size m_dt_min)
         while (step_result == fail && is_dt_valid) {
-            if (dt < m_dt_min) {
+            if (dt < m_dt_min && !force_step_size) {
                 is_dt_valid = false;
                 dt          = m_dt_min;
             }
@@ -123,7 +123,7 @@ public:
 
         dt = max(dt, m_dt_min);
         // check whether the last step failed (which means that m_dt_min was still too large to suffice tolerances)
-        if (step_result == fail) {
+        if (step_result == fail || force_step_size) {
             // adaptive stepping failed, but we still return the result of the last attempt
             t += m_dt_min;
             return false;

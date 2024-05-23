@@ -210,7 +210,7 @@ public:
      * @param[out] ytp1 approximated value y(t+1)
      */
     bool step(const DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1) const override
+              Eigen::Ref<Eigen::VectorXd> ytp1, bool force_step_size = false) const override
     {
         assert(0 <= m_dt_min);
         assert(m_dt_min <= m_dt_max);
@@ -264,7 +264,7 @@ public:
             // calculate mixed tolerance
             m_eps = m_abs_tol + ytp1.array().abs() * m_rel_tol;
 
-            converged = (m_error_estimate <= m_eps).all(); // convergence criterion
+            converged = (m_error_estimate <= m_eps).all() || force_step_size; // convergence criterion
 
             if (converged || dt_is_invalid) {
                 // if sufficiently exact, return ytp1, which currently contains the lower order approximation

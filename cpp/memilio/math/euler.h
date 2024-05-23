@@ -42,8 +42,8 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt,
-              Eigen::Ref<Vector<FP>> ytp1) const override
+    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt, Eigen::Ref<Vector<FP>> ytp1,
+              bool = false) const override
     {
         // we are misusing the next step y as temporary space to store the derivative
         f(yt, t, ytp1);

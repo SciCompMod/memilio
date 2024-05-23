@@ -238,7 +238,7 @@ public:
     }
     MOCK_METHOD(bool, step,
                 (const mio::DerivFunction<double>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
-                 Eigen::Ref<Eigen::VectorXd> ytp1),
+                 Eigen::Ref<Eigen::VectorXd> ytp1, bool force_step_size),
                 (const));
 };
 
@@ -288,18 +288,18 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     {
         testing::InSequence seq;
 
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(1), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(2.));
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(2), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(4.));
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(4), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8.));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(1), _, _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(2.));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(2), _, _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(4.));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(4), _, _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8.));
         //last step of first advance call
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3), _))
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3), _, _))
             .Times(1)
             .WillRepeatedly(DoStepAndIncreaseStepsize(6.)); //this stepsize should not be stored!
         //continue on the second advance call with correct stepsize
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(8), _)).Times(1).WillOnce(DoStepAndReduceStepsize(3.5));
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3.5), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(8), _, _)).Times(1).WillOnce(DoStepAndReduceStepsize(3.5));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3.5), _, _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8));
         //last step of second advance call
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(6), _)).Times(1);
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(6), _, _)).Times(1);
     }
 
     auto f = [](auto&&, auto&&, auto&&) {};
@@ -332,11 +332,11 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
 
     {
         testing::InSequence seq;
-        EXPECT_CALL(*mock_core, step(_, Eq(y0), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
-        EXPECT_CALL(*mock_core, step(_, Eq(y0 + dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
-        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 2 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
-        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 3 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
-        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 4 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0), _, _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + dy), _, _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 2 * dy), _, _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 3 * dy), _, _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 4 * dy), _, _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
     }
 
     integrator.advance(f, 4 * dt0, dt, result);
