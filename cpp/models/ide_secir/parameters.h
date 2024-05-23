@@ -28,6 +28,7 @@
 #include "memilio/math/smoother.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/age_group.h"
 
 #include <memory>
 #include <vector>
@@ -199,9 +200,14 @@ using ParametersBase =
 class Parameters : public ParametersBase
 {
 public:
-    Parameters()
-        : ParametersBase()
+    Parameters() Parameters(AgeGroup num_agegroups)
+        : ParametersBase(num_agegroups)
+        , m_num_groups{num_agegroups}
     {
+    }
+    AgeGroup get_num_groups() const
+    {
+        return m_num_groups;
     }
 
     /**
@@ -339,11 +345,19 @@ public:
 private:
     Parameters(ParametersBase&& base)
         : ParametersBase(std::move(base))
+        , m_num_groups(get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
     {
     }
-};
 
-} // namespace isecir
+private:
+    AgeGroup m_num_groups;
+    double m_commuter_nondetection    = 0.0;
+    double m_start_commuter_detection = 0.0;
+    double m_end_commuter_detection   = 0.0;
+};
+}; // namespace isecir
+
+} // namespace mio
 } // namespace mio
 
 #endif // IDE_SECIR_PARAMS_H
