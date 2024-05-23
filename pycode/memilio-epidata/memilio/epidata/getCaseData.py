@@ -55,19 +55,12 @@ def check_for_completeness(df: pd.DataFrame, run_checks: bool, merge_berlin: boo
    If data is incomplete the data is downloaded from another source.
    Note: There is no check if data for every day and every county is available (which can happen).
 
-    Parameters
-    ----------
-    df: pd.Dataframe
-        Dataframe to check
-    merge_berlin: bool
-        True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
-    merge_eisenach: bool
-        True or False. Defines if Eisenbach districts are kept separated or get merged. Default defined in defaultDict.
-    run_checks: bool
+    @param df pd.Dataframe. Dataframe to check
+    @param merge_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    @param merge_eisenach: bool True or False. Defines if Eisenbach districts are kept separated or get merged. Default defined in defaultDict.
+    @param run_checks: bool
 
-    Returns
-    -------
-        Boolean to say if data is complete or not
+    @return Boolean to say if data is complete or not
    """
     if run_checks:
         if not df.empty:
@@ -98,17 +91,10 @@ def fetch_case_data(
     The file is read in or stored at the folder "out_folder"/Germany/.
     To store and change the data we use pandas.
 
-    Parameters
-    ----------
-    read_data: bool
-        Defines if data is read from file or downloaded. Default defined in defaultDict.
-    out_folder: str
-        Folder where data is written to. Default defined in defaultDict.
+    @param read_data bool. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
 
-    Returns
-    -------
-    df: pd.Dataframe
-        Dataframe containing the downloaded case data
+    @return df pd.Dataframe. Dataframe containing the downloaded case data
     """
     logger = logging.getLogger(__name__)
     conf = gd.Conf(out_folder, **kwargs)
@@ -195,18 +181,11 @@ def preprocess_case_data(
     - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
         different file names are used.
 
-    Parameters
-    ----------
-    raw_df: pd.Dataframe.
-        Contains the downloaded or read raw case data
-    split_berlin: bool
-        Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
-    rep_date: bool
-        Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+    @param raw_df pd.Dataframe. Contains the downloaded or read raw case data
+    @param split_berlin bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
 
-    Returns
-    -------
-    df: pd.Dataframe
+    @return df pd.Dataframe
     """
     logger = logging.getLogger(__name__)
     logger.info("Pre-processing the Case data.")
@@ -312,26 +291,20 @@ def write_case_data(
 
     Parameters
     ----------
-    df: pd.DataFrame
+    @param df: pd.DataFrame
         Processed dataframe
-    file_format: str
+    @param file_format: str
         File format which is used for writing the data. Default defined in defaultDict.
-    out_folder: str
+    @param out_folder: str
         Folder where data is written to. Default defined in defaultDict.
-    start_date: date
+    @param start_date: date
         Date of first date in dataframe. Default 2020-01-01.
-    end_date: date
-        Date of last date in dataframe. Default defined in defaultDict.
-    impute_dates: bool
-        True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    moving_average: int
-        Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict.
-    split_berlin: bool
-        True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
-    rep_date: bool
-        True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    files: list
-        List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
+    @param end_date: date. Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average: int Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param split_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date: bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+    @param files: list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -466,7 +439,7 @@ def get_case_data(
     rep_date: bool = dd.defaultDict['rep_date'],
     files: str or list = 'All',
     **kwargs
-):
+) -> None:
     """! Downloads the case data and provides different kind of structured data
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
@@ -513,6 +486,7 @@ def get_case_data(
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param files List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
+    @return None
     """
     raw_df = fetch_case_data(
         read_data=read_data,
@@ -545,9 +519,6 @@ def main():
     logger.setLevel(logging.DEBUG)
     arg_dict = gd.cli("cases")
     get_case_data(**arg_dict)
-    # raw_df = fetch_case_data(**arg_dict)
-    # prep_df = preprocess_case_data(raw_df=raw_df)
-    # write_case_data(df=prep_df, **arg_dict)
 
 
 if __name__ == "__main__":
