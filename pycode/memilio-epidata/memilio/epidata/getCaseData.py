@@ -115,7 +115,8 @@ def fetch_case_data(
                          interactive=conf.interactive)
         complete = check_for_completeness(df, run_checks, merge_eisenach=True)
     except Exception as ex:
-        logger.exception(f"The data could not be downloaded. The following exception was thrown:\n{ex}")
+        logger.exception(
+            f"The data could not be downloaded. The following exception was thrown:\n{ex}")
         pass
     if complete:
         if not read_data:
@@ -305,6 +306,8 @@ def write_case_data(
     @param split_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date: bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param files: list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
+
+    @return None
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -345,18 +348,16 @@ def write_case_data(
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                      [IdBundesland], {dd.EngEng["idState"]
-                                       : geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                       [IdLandkreis], {dd.EngEng["idCounty"]
-                                       : df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(
-                df[dd.EngEng["gender"]].unique())},
+                           df[dd.EngEng["gender"]].unique())},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_gender': [[dateToUse, IdBundesland, Geschlecht],
                              {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
@@ -371,8 +372,7 @@ def write_case_data(
                               ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                    [Altersgruppe], {dd.EngEng["ageRKI"]
-                                     : df[dd.EngEng["ageRKI"]].unique()},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
                           {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
@@ -486,6 +486,7 @@ def get_case_data(
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param files List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
+
     @return None
     """
     raw_df = fetch_case_data(
