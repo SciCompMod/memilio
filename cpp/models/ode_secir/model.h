@@ -321,10 +321,13 @@ public:
         : BaseT(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
-        m_model_ptr = std::make_shared<Model>(model); // Modell in einen shared_ptr umwandeln
+        m_model_ptr = std::make_shared<Model>(model);
         m_models.push_back(m_model_ptr);
     }
 
+    /**
+     * @brief Destructor for FeedbackSimulation.
+     */
     ~FeedbackSimulation()
     {
         auto it = std::find(m_models.begin(), m_models.end(), m_model_ptr);
@@ -341,6 +344,13 @@ public:
     {
     }
 
+    /**
+     * @brief Adjusts contact patterns based on ICU occupancy feedback.
+     * 
+     * @param t Current simulation time.
+     * @param icu_regional Regional ICU occupancy data.
+     * @param icu_national National ICU occupancy data.
+     */
     void feedback_contacts(double t, Eigen::Ref<Eigen::MatrixXd> icu_regional, Eigen::Ref<Eigen::MatrixXd> icu_national)
     {
         auto& params                            = m_model_ptr->parameters;
@@ -375,6 +385,15 @@ public:
         }
     }
 
+    /**
+     * @brief Calculates the perceived risk based on ICU occupancy data.
+     * 
+     * @param a Parameter alpha for the gamma distribution.
+     * @param b Parameter beta for the gamma distribution.
+     * @param icu_regional Regional ICU occupancy data.
+     * @param icu_national National ICU occupancy data.
+     * @return The perceived risk.
+     */
     virtual ScalarType calc_risk_perceived(const ScalarType a, const ScalarType b,
                                            Eigen::Ref<Eigen::MatrixXd> icu_regional,
                                            Eigen::Ref<Eigen::MatrixXd> icu_national)
@@ -409,6 +428,11 @@ public:
         return perceived_risk;
     }
 
+    /**
+     * @brief Adds ICU occupancy data at a given time point.
+     * 
+     * @param t The current time point.
+     */
     void add_icu_occupancy(double t)
     {
         auto& params           = m_model_ptr->parameters;
@@ -426,6 +450,11 @@ public:
         params.template get<ICUOccupancyLocal>().add_time_point(t, icu_occupancy);
     }
 
+    /**
+     * @brief Calculates the global ICU occupancy from all models.
+     * 
+     * @return The global ICU occupancy data.
+     */
     Eigen::MatrixXd calculate_global_icu_occupancy()
     {
         const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
@@ -444,6 +473,11 @@ public:
         return global_icu_occupancy;
     }
 
+    /**
+     * @brief Calculates the regional ICU occupancy for the same state ID as the current model.
+     * 
+     * @return The regional ICU occupancy data.
+     */
     Eigen::MatrixXd calculate_regional_icu_occupancy()
     {
         const auto state_id          = m_model_ptr->parameters.template get<StateID>();
@@ -465,11 +499,22 @@ public:
         return regional_icu_occupancy;
     }
 
+    /**
+     * @brief Get the perceived risk time series.
+     * 
+     * @return The perceived risk time series.
+     */
     auto& get_perceived_risk() const
     {
         return m_perceived_risk;
     }
 
+    /**
+     * @brief Advances the simulation to a specified time.
+     * 
+     * @param tmax The maximum time to advance to.
+     * @return The last value of the simulation result.
+     */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
         auto& dyn_npis         = m_model_ptr->parameters.template get<DynamicNPIsInfectedSymptoms>();
@@ -518,17 +563,23 @@ public:
         return this->get_result().get_last_value();
     }
 
+    /**
+     * @brief Get the model pointer.
+     * 
+     * @return The model pointer.
+     */
     std::shared_ptr<Model> get_model_ptr() const
     {
         return m_model_ptr;
     }
 
 private:
-    double m_t_last_npi_check;
-    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), mio::SimulationTime(0)};
-    std::shared_ptr<Model> m_model_ptr;
-    inline static std::vector<std::shared_ptr<Model>> m_models;
-    mio::TimeSeries<ScalarType> m_perceived_risk = mio::TimeSeries<ScalarType>((int)1);
+    double m_t_last_npi_check; ///< Time of the last NPI check.
+    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(),
+                                                       mio::SimulationTime(0)}; ///< Dynamic NPI data.
+    std::shared_ptr<Model> m_model_ptr; ///< Pointer to the model.
+    inline static std::vector<std::shared_ptr<Model>> m_models; ///< List of model pointers.
+    mio::TimeSeries<ScalarType> m_perceived_risk = mio::TimeSeries<ScalarType>((int)1); ///< Perceived risk time series.
 };
 
 /**
