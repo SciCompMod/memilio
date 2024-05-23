@@ -83,6 +83,8 @@ runs:
       run: |
         cd cpp
         export CCACHE_LOGFILE=$(pwd)/.ccache.log
+        export CCACHE_DEBUG=1
+        export CCACHE_DEBUGDIR=$(pwd)/.ccache.debugdir
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
@@ -123,4 +125,10 @@ runs:
       with:
         name: ccachelog-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/.ccache.log
+        retention-days: 1
+    - name: Upload ccache debugdir
+      uses: actions/upload-artifact@v4
+      with:
+        name: ccachedebug-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        path: cpp/.ccache.debugdir
         retention-days: 1
