@@ -26,13 +26,14 @@
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/logging.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include <string>
 #include <map>
 #include <iostream>
 
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 3;
+constexpr int num_subcompartments = 10;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
@@ -112,38 +113,42 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 /** 
 * @brief 
 *   
-* @param[in] R0 Define R0 from simulationtime 2 on. Please use a number > 0.
 * @returns Iniutal value vecotr.
 */
-Eigen::VectorXd calculate_inital_values(ScalarType R0)
+void calculate_inital_values()
 {
     // Initialize model.
-    using Model = mio::lsecir::Model<num_subcompartments, num_subcompartments, num_subcompartments, num_subcompartments,
-                                     num_subcompartments>;
+    using Model    = mio::lsecir::Model<num_subcompartments, num_subcompartments, num_subcompartments, 1, 1>;
     using LctState = Model::LctState;
-    Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
+    mio::lsecir::Parameters parameters_lct;
 
     // Define parameters used for simulation and initialization.
-    model.parameters.get<mio::lsecir::TimeExposed>()            = simulation_parameter["TimeExposed"];
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = simulation_parameter["TimeInfectedNoSymptoms"];
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = simulation_parameter["TimeInfectedSymptoms"];
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = simulation_parameter["TimeInfectedSevere"];
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()   = simulation_parameter["TimeInfectedCritical"];
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() =
+    parameters_lct.get<mio::lsecir::TimeExposed>() = simulation_parameter["TimeExposed"];
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>() =
+        simulation_parameter["TimeInfectedNoSymptomsToInfectedSymptoms"];
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>() =
+        simulation_parameter["TimeInfectedSymptomsToInfectedSevere"];
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere>() =
+        simulation_parameter["TimeInfectedSevereToInfectedCritical"];
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical>() = simulation_parameter["TimeInfectedCriticalToDead"];
+    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>() =
         simulation_parameter["TransmissionProbabilityOnContact"];
 
-    model.parameters.get<mio::lsecir::ContactPatterns>() = get_contact_matrix(R0);
+    mio::ContactMatrixGroup& contact_matrix = parameters_lct.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
 
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() =
+    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>() =
         simulation_parameter["RelativeTransmissionNoSymptoms"];
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() =
+    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() =
         simulation_parameter["RiskOfInfectionFromSymptomatic"];
-    model.parameters.get<mio::lsecir::Seasonality>() = simulation_parameter["Seasonality"];
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() =
+    parameters_lct.get<mio::lsecir::Seasonality>() = simulation_parameter["Seasonality"];
+    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() =
         simulation_parameter["RecoveredPerInfectedNoSymptoms"];
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>() = simulation_parameter["SeverePerInfectedSymptoms"];
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()         = simulation_parameter["CriticalPerSevere"];
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()         = simulation_parameter["DeathsPerCritical"];
+    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>() = simulation_parameter["SeverePerInfectedSymptoms"];
+    parameters_lct.get<mio::lsecir::CriticalPerSevere>()         = simulation_parameter["CriticalPerSevere"];
+    parameters_lct.get<mio::lsecir::DeathsPerCritical>()         = simulation_parameter["DeathsPerCritical"];
+
+    Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)), std::move(parameters_lct));
 
     // Get initialization vector for LCT model with num_subcompartments subcompartments.
     mio::lsecir::Initializer<Model> initializer(std::move(get_initial_flows()), model);
@@ -152,70 +157,127 @@ Eigen::VectorXd calculate_inital_values(ScalarType R0)
                                                             simulation_parameter["deaths"],
                                                             simulation_parameter["total_confirmed_cases"]);
     if (status) {
-        return mio::failure(mio::StatusCode::InvalidValue,
-                            "One ofthe model constraints are not fulfilled using the initialization method.");
+        mio::log_error("One of the model constraints are not fulfilled using the initialization method.");
     }
+    auto result_not_Recovered = model.get_initial_values();
 
-    // Perform simulation.
-    mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(
-        0, tmax, 0.1, model,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            1e-10, 1e-5, 0, 0.1));
-    // Calculate result without division in subcompartments.
-    mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
+    // --- Other initial values. ---
+    // As initializer only uses the incoming flows, we can calculate remaining results at one time.
+    // InfectedCriticalToRecovered.
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>() =
+        simulation_parameter["TimeInfectedNoSymptomsToRecovered"];
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>() = simulation_parameter["TimeInfectedSymptomsToRecovered"];
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere>()   = simulation_parameter["TimeInfectedSevereToRecovered"];
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical>() = simulation_parameter["TimeInfectedCriticalToRecovered"];
+    Model modelToRecovered(std::move(Eigen::VectorXd::Zero(LctState::Count)), std::move(parameters_lct));
 
-    if (!save_dir.empty()) {
-        auto interpolated_result = mio::interpolate_simulation_result(populations, 0.1);
-        interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
-        std::string R0string = std::to_string(R0);
-        std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
-                               std::to_string(num_subcompartments);
-        if (tmax > 50) {
-            filename = filename + "_long";
-        }
-        filename                               = filename + ".h5";
-        mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
+    // Get initialization vector.
+    mio::lsecir::Initializer<Model> initializerToRecovered(std::move(get_initial_flows()), modelToRecovered);
+    initializerToRecovered.set_tol_for_support_max(1e-6);
+    status = initializerToRecovered.compute_initialization_vector(simulation_parameter["total_population"],
+                                                                  simulation_parameter["deaths"],
+                                                                  simulation_parameter["total_confirmed_cases"]);
+    auto result_ToRecovered = modelToRecovered.get_initial_values();
+
+    if (status) {
+        mio::log_error("One of the model constraints are not fulfilled using the initialization method.");
     }
+    // All of the components are calculated, now print result.
+    ScalarType recovered    = simulation_parameter["total_confirmed_cases"] - simulation_parameter["deaths"];
+    ScalarType Susceptibles = simulation_parameter["total_population"] - simulation_parameter["deaths"];
+    // Exposed.
+    std::cout << "  Exposed" << std::endl;
+    for (int i = LctState::get_first_index<LctState::InfectionState::Exposed>();
+         i < LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>(); i++) {
+        std::cout << std::fixed << std::setprecision(8) << result_not_Recovered[i] << ", ";
+    }
+    Susceptibles -= result_not_Recovered
+                        .segment(LctState::get_first_index<LctState::InfectionState::Exposed>(), num_subcompartments)
+                        .sum();
+    // InfectedNoSymptoms.
+    std::cout << "\n  InfectedNoSymptomsToInfectedSymptoms" << std::endl;
+    for (int i = LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>();
+         i < LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>(); i++) {
+        std::cout << std::fixed << std::setprecision(8)
+                  << (1 - simulation_parameter["RecoveredPerInfectedNoSymptoms"]) * result_not_Recovered[i] << ", ";
+    }
+    Susceptibles -=
+        (1 - simulation_parameter["RecoveredPerInfectedNoSymptoms"]) *
+        result_not_Recovered
+            .segment(LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>(), num_subcompartments)
+            .sum();
+    std::cout << "\n  InfectedNoSymptomsToRecovered" << std::endl;
+    for (int i = LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>();
+         i < LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>(); i++) {
+        std::cout << std::fixed << std::setprecision(8)
+                  << simulation_parameter["RecoveredPerInfectedNoSymptoms"] * result_ToRecovered[i] << ", ";
+    }
+    Susceptibles -=
+        simulation_parameter["RecoveredPerInfectedNoSymptoms"] *
+        result_ToRecovered
+            .segment(LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>(), num_subcompartments)
+            .sum();
+    // InfectedSymptoms.
+    std::cout << "\n  InfectedSymptomsToInfectedSevere" << std::endl;
+    for (int i = LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>();
+         i < LctState::get_first_index<LctState::InfectionState::InfectedSevere>(); i++) {
+        std::cout << std::fixed << std::setprecision(8)
+                  << simulation_parameter["SeverePerInfectedSymptoms"] * result_not_Recovered[i] << ", ";
+    }
+    ScalarType dummy =
+        simulation_parameter["SeverePerInfectedSymptoms"] *
+        result_not_Recovered
+            .segment(LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>(), num_subcompartments)
+            .sum();
+    Susceptibles -= dummy;
+    recovered -= dummy;
+    std::cout << "\n  InfectedSymptomsToRecovered" << std::endl;
+    for (int i = LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>();
+         i < LctState::get_first_index<LctState::InfectionState::InfectedSevere>(); i++) {
+        std::cout << std::fixed << std::setprecision(8)
+                  << (1 - simulation_parameter["SeverePerInfectedSymptoms"]) * result_ToRecovered[i] << ", ";
+    }
+    dummy = (1 - simulation_parameter["SeverePerInfectedSymptoms"]) *
+            result_ToRecovered
+                .segment(LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>(), num_subcompartments)
+                .sum();
+    Susceptibles -= dummy;
+    recovered -= dummy;
+    // InfectedSevere.
+    std::cout << "\n  InfectedSevereToInfectedCritical" << std::endl;
+    dummy = simulation_parameter["CriticalPerSevere"] *
+            result_not_Recovered[LctState::get_first_index<LctState::InfectionState::InfectedSevere>()];
+    std::cout << std::fixed << std::setprecision(8) << dummy << ", ";
+    Susceptibles -= dummy;
+    recovered -= dummy;
+    std::cout << "\n  InfectedSevereToRecovered" << std::endl;
+    dummy = (1 - simulation_parameter["CriticalPerSevere"]) *
+            result_ToRecovered[LctState::get_first_index<LctState::InfectionState::InfectedSevere>()];
+    std::cout << std::fixed << std::setprecision(8) << dummy << ", ";
+    Susceptibles -= dummy;
+    recovered -= dummy;
+    // InfectedCritical.
+    std::cout << "\n  InfectedCriticalToDead" << std::endl;
+    dummy = simulation_parameter["DeathsPerCritical"] *
+            result_not_Recovered[LctState::get_first_index<LctState::InfectionState::InfectedCritical>()];
+    std::cout << std::fixed << std::setprecision(8) << dummy << ", ";
+    Susceptibles -= dummy;
+    recovered -= dummy;
+    std::cout << "\n  InfectedCriticalToRecovered" << std::endl;
+    dummy = (1 - simulation_parameter["DeathsPerCritical"]) *
+            result_ToRecovered[LctState::get_first_index<LctState::InfectionState::InfectedCritical>()];
 
-    return mio::success();
+    std::cout << std::fixed << std::setprecision(8) << dummy << ", ";
+    Susceptibles -= dummy;
+    recovered -= dummy;
+    Susceptibles -= recovered;
+    // Recovered, Dead, Susceptibles.
+    std::cout << "\n  Recovered " << std::fixed << std::setprecision(8) << recovered << ", " << std::endl;
+    std::cout << "  Dead " << std::fixed << std::setprecision(8) << simulation_parameter["deaths"] << "; " << std::endl;
+    std::cout << "  Susceptibles " << std::fixed << std::setprecision(8) << Susceptibles << ", " << std::endl;
 }
 
 int main()
 {
-    // Options used: For R0=2 epidemic peak use tmax=150,
-    // for R0=4 epidemic peak use tmax = 75.
-    // For short things: 10 days and R0=0.5 or 2
-    ScalarType R0 = 0.5;
-    // Paths are valid if file is executed eg in memilio/build/bin.
-    // Folders have to exist beforehand.
-    std::string save_dir = "../../data/simulation_lct/dropR0short/";
-
-    /*auto result = simulate_lct_model(R0, 10, save_dir);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        return -1;
-    }*/
-
-    auto result = simulate_ide_model(R0, 10, save_dir);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        return -1;
-    }
-    /*
-    R0       = 4.;
-    save_dir = "../../data/simulation_lct/riseR04long/";
-
-    result = simulate_lct_model(R0, 75,save_dir);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        return -1;
-    }
-
-    result = simulate_ide_model(R0, 75,save_dir);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        return -1;
-    } */
-
-    return 0;
+    calculate_inital_values();
 }

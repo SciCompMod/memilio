@@ -290,7 +290,7 @@ if __name__ == '__main__':
                                 legendplot=list(["ODE", "LCT3", "LCT10", "IDE3", "IDE10","GLCT3", "GLCT10"]),    
                                 filename_plot="compartments_glct_rise2long")
     elif case==6:
-        ### Compare simulation results of different LCT models with a drop of R0 to 0.5.
+        ### Compare simulation results of GLCT nd IDE models with a drop of R0 to 0.5.
         plot_new_infections([os.path.join(data_dir, "dropR0short", "fictional_glct_0.5_3"), 
                             os.path.join(data_dir, "dropR0short", "fictional_glct_0.5_10"),  
                             os.path.join(data_dir, "dropR0short", "fictional_ide_0.5_3"), 

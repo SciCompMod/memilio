@@ -41,7 +41,7 @@
 #include <iostream>
 
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 10;
+constexpr int num_subcompartments = 3;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
@@ -173,7 +173,7 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
     mio::ExponentialSurvivalFunction expInfectedCriticalToDeath(1. / 14.88, 1);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
         expInfectedCriticalToDeath);
-    expInfectedCriticalToDeath.set_distribution_parameter(1 / 16.92);
+    expInfectedCriticalToDeath.set_distribution_parameter(1. / 16.92);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
         expInfectedCriticalToDeath);
 
@@ -193,9 +193,9 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
                                                                       6.30662 / num_subcompartments);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
         erlangInfectedSymptomsToInfectedSevere);
-    erlangInfectedSymptomsToInfectedSevere.set_scale(7. / num_subcompartments);
+    mio::GammaSurvivalFunction erlangInfectedSymptomsToRecovered(num_subcompartments, 0, 7. / num_subcompartments);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
-        erlangInfectedSymptomsToInfectedSevere);
+        erlangInfectedSymptomsToRecovered);
 
     model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
