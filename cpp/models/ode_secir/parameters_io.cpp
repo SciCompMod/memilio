@@ -452,31 +452,6 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
         }
     }
 
-    // save the ICU occupancy in a file
-    // for (size_t region = 0; region < vregion.size(); region++) {
-    //     std::stringstream output1;
-    //     std::stringstream output2;
-    //     std::stringstream output3;
-    //     model[region].parameters.get<ICUOccupancyLocal>().print_table({}, 12, 4, output1);
-    //     model[region].parameters.get<ICUOccupancyRegional>().print_table({}, 12, 4, output2);
-    //     model[region].parameters.get<ICUOccupancyNational>().print_table({}, 12, 4, output3);
-
-    //     std::string results_dir = "/localdata1/code_2024/memilio/test";
-
-    //     std::ofstream file1(results_dir + "/icu_occupancy_local_" + std::to_string(vregion[region]) + ".txt");
-    //     file1 << output1.str();
-    //     file1.close();
-
-    //     auto state_id = regions::get_state_id(vregion[region]);
-    //     std::ofstream file2(results_dir + "/icu_occupancy_regional_" + std::to_string(state_id.get()) + ".txt");
-    //     file2 << output2.str();
-    //     file2.close();
-
-    //     std::ofstream file3(results_dir + "/icu_occupancy_national.txt");
-    //     file3 << output3.str();
-    //     file3.close();
-    // }
-
     BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date, num_icu));
     for (size_t region = 0; region < vregion.size(); region++) {
         for (auto i = AgeGroup(0); i < num_groups; i++) {

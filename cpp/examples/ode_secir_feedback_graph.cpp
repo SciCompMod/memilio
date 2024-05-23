@@ -320,7 +320,7 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
     const auto start_date   = mio::Date(2020, 10, 1);
     const auto num_days_sim = 80.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 50;
+    const auto num_runs     = 5;
 
     //create or load graph
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
@@ -372,9 +372,19 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                                return interpolated_flows;
                            });
 
+            // save the perceived risk for each run
+            auto risks = std::vector<mio::TimeSeries<ScalarType>>{};
+            risks.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(risks),
+                           [](auto&& node) {
+                               auto& risk = node.property.get_simulation().get_perceived_risk();
+                               return mio::interpolate_simulation_result(risk);
+                           });
+
             std::cout << "run " << run_idx << " done" << std::endl;
 
-            return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows));
+            return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows),
+                                   std::move(risks));
         });
 
     if (ensemble.size() > 0) {
@@ -384,10 +394,13 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
         ensemble_params.reserve(ensemble.size());
         auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_flows.reserve(ensemble.size());
+        auto ensemble_risks = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_risks.reserve(ensemble.size());
         for (auto&& run : ensemble) {
             ensemble_results.emplace_back(std::move(std::get<0>(run)));
             ensemble_params.emplace_back(std::move(std::get<1>(run)));
             ensemble_flows.emplace_back(std::move(std::get<2>(run)));
+            ensemble_risks.emplace_back(std::move(std::get<3>(run)));
         }
         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, false));
 
@@ -402,6 +415,18 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
             printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
         }
         BOOST_OUTCOME_TRY(save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
+
+        auto result_dir_risk = result_dir / "risk";
+        if (mio::mpi::is_root()) {
+            boost::filesystem::path dir(result_dir_risk);
+            bool created_risk_dir = boost::filesystem::create_directories(dir);
+
+            if (created_risk_dir) {
+                mio::log_info("Directory '{:s}' was created.", dir.string());
+            }
+            printf("Saving Risk results to \"%s\".\n", result_dir_risk.c_str());
+        }
+        BOOST_OUTCOME_TRY(save_results(ensemble_risks, ensemble_params, county_ids, result_dir_risk, false));
     }
 
     return mio::success();
@@ -409,13 +434,6 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
 int main()
 {
-    //TODO: proper command line interface to set:
-    //- number of runs
-    //- start and end date (may be incompatible with runmode::load)
-    //- seeds
-    //- log level
-    //- ...
-
     mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
 
