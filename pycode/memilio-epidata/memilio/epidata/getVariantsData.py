@@ -113,16 +113,18 @@ def get_variants_data(read_data=dd.defaultDict['read_data'],
     df_out.sort_values('Date').reset_index(drop=True, inplace=True)
     return df_out
 
-# do sanitizing for variants 'Other' and 'B.1.617.2' because we assume that 'Other' is present 100%
-# until beginning of 2021
-
 
 def sanitize_data(df_variants):
+    # do sanitizing for variants 'Other' and 'B.1.617.2' because we assume that 'Other' is present 100%
+    # until beginning of 2021
     max_date_other_100 = df_variants[df_variants['Other']
                                      == 100.0]['Date'].max()
     df_variants.loc[df_variants['Date'] < max_date_other_100, 'Other'] = 100.0
     df_variants.loc[df_variants['Date'] <
                     max_date_other_100, 'B.1.617.2'] = 0.0
+
+    # smooth peak of alpha and delta in ~ May 2021
+    # tbd
 
 
 def plot_variants_data(df_variants, min_date='2020-03-01', max_date='2022-03-01', variants='wildtype_alpha_delta'):

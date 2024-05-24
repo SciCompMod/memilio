@@ -210,13 +210,18 @@ def compute_R_eff_old_method(counties, out_folder=dd.defaultDict['out_folder']):
 
 class NPIRegression():
 
-    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0, delay=0, fixed_effects=False):
+    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0, delay=0, fixed_effects=False, clustering=None, rki=False):
         self.counties = counties
         self.min_date = min_date
         self.max_date = max_date
         self.fine_resolution = fine_resolution
         self.delay = delay
         self.fixed_effects = fixed_effects
+        if clustering != None:
+            self.clustering = clustering
+        else:
+            self.clustering = 'clustering_xxx'
+        self.rki = rki
 
     # read data that is relevant for regression and store in dataframes
 
@@ -226,7 +231,16 @@ class NPIRegression():
             directory = os.path.join(directory, 'Germany/')
             gd.check_dir(directory)
 
-            filepath = os.path.join(directory + 'clustered_npis_xxx.json')
+            if self.rki:
+                filepath = os.path.join(directory + 'clustered_npis_rki.json')
+                self.clustering = 'clustered_npis_rki'
+
+                if not os.path.exists(filepath):
+                    print('Clustering analogous to RKI not found.')
+                    return
+
+            else:
+                filepath = os.path.join(directory + self.clustering + '.json')
 
             if not os.path.exists(filepath):
 
@@ -516,7 +530,7 @@ class NPIRegression():
         self.Y = self.df_r['R_eff']
         # if fixed effects is True, the R-value is adjusted by setting the effects of the variants and seasonality
         # as below
-        if self.fixed_effects:
+        if self.fixed_effects or self.rki:
             variants_considered = ['Other', 'B.1.617.2', 'B.1.1.7']
             # consider (known) variant data to r-value, so the effect does not have to be estimated in regression
             variants = self.df_variants.loc[:, variants_considered]/100
@@ -528,12 +542,13 @@ class NPIRegression():
             variants['B.1.617.2'] *= 1.6
             self.Y /= (variants.sum(axis=1))
 
-            # add seasonality as a multiplicative factor (TODO: find values / other formula)
-            # for now use simple cos
-            beta0 = 1
-            beta1 = 0.5
-            self.Y *= (beta0*(1+beta1*np.cos(2*np.pi *
-                                             self.df_r.Date.dt.day_of_year.values/365)))
+            if not self.rki:
+                # add seasonality as a multiplicative factor (TODO: find values / other formula)
+                # for now use simple cos
+                beta0 = 1
+                beta1 = 0.5
+                self.Y *= (beta0*(1+beta1*np.cos(2*np.pi *
+                                                 self.df_r.Date.dt.day_of_year.values/365)))
 
         # TODO: discuss which vaccination states we want to include
         self.used_vacc_states = list(self.all_vacc_states[0:3])
@@ -556,6 +571,11 @@ class NPIRegression():
                                                 [self.df_agestructure[age_category]
                                                  for age_category in self.age_categories] +
                                                 [self.df_npis[npi] for npi in self.used_npis]).transpose()  # + [self.df_variants[variant] for variant in self.variants]).transpose()
+        elif self.rki:
+            self.df_allvariables = pd.DataFrame([self.df_vaccinations[vacc_state]
+                                                 for vacc_state in self.used_vacc_states] +
+                                                [self.df_seasonality['sin'], self.df_seasonality['cos']] +
+                                                [self.df_npis[npi] for npi in self.used_npis]).transpose()
         else:
             self.df_allvariables = pd.DataFrame([self.df_vaccinations[vacc_state]
                                                  for vacc_state in self.used_vacc_states] +
@@ -596,6 +616,10 @@ class NPIRegression():
         if self.fixed_effects:
             regression_variables = self.used_vacc_states + \
                 self.region_types + self.age_categories + self.used_npis
+        elif self.rki:
+            regression_variables = self.used_vacc_states + \
+                ['sin', 'cos'] + \
+                self.used_npis
         else:
             regression_variables = self.used_vacc_states + \
                 self.region_types + ['sin', 'cos'] + \
@@ -652,7 +676,7 @@ class NPIRegression():
         removed_list = []
 
         # TODO: think about how to decide when backwards selection is "done"
-        while (counter_not_removed < 7) and (len(self.df_pvalues) > 5+len(self.fixed_variables)):
+        while (counter_not_removed < 3) and (len(self.df_pvalues) > 5+len(self.fixed_variables)):
             iteration += 1
 
             # choose NPI of interest which is chosen according to the n-th highest pvalue
@@ -781,11 +805,11 @@ class NPIRegression():
             ax.set_xlabel('Values of coefficients')
             ax.set_ylabel('Variables')
 
-            if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results'):
+            if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/{self.clustering}/regression_results'):
                 os.makedirs(
-                    f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results')
+                    f'plots/{self.min_date}to{self.max_date}/{self.clustering}/regression_results')
             plt.tight_layout()
-            plt.savefig(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results/regression_results_iteration_{iteration}_plot{plot_number}.png', format='png',
+            plt.savefig(f'plots/{self.min_date}to{self.max_date}/{self.clustering}/regression_results/regression_results_iteration_{iteration}_plot{plot_number}.png', format='png',
                         dpi=500)
 
             plt.close()
@@ -848,11 +872,11 @@ class NPIRegression():
         plt.legend(handles, labels, bbox_to_anchor=(1, 0), loc="lower right",
                    bbox_transform=fig.transFigure, ncol=1, fontsize=8)
 
-        if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/pvalues'):
+        if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/{self.clustering}/pvalues'):
             os.makedirs(
-                f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/pvalues')
+                f'plots/{self.min_date}to{self.max_date}/{self.clustering}/pvalues')
         plt.tight_layout()
-        plt.savefig(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/pvalues/pvalues_iteration_{iteration}.png', format='png',
+        plt.savefig(f'plots/{self.min_date}to{self.max_date}/{self.clustering}/pvalues/pvalues_iteration_{iteration}.png', format='png',
                     dpi=500)
 
         plt.close()
@@ -896,11 +920,11 @@ class NPIRegression():
                 ax.set_xlabel('Percentage of active county days')
                 ax.set_ylabel('NPIs')
 
-            if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results'):
+            if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/{self.clustering}/regression_results'):
                 os.makedirs(
-                    f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results')
+                    f'plots/{self.min_date}to{self.max_date}/{self.clustering}/regression_results')
             plt.tight_layout()
-            plt.savefig(f'plots/{self.min_date}to{self.max_date}/fine_resolution{self.fine_resolution}/regression_results/active_countydays_iteration_{iteration}_plot{plot_number}.png', format='png',
+            plt.savefig(f'plots/{self.min_date}to{self.max_date}/{self.clustering}/regression_results/active_countydays_iteration_{iteration}_plot{plot_number}.png', format='png',
                         dpi=500)
 
             plt.close()
@@ -918,8 +942,10 @@ def main():
 
     fixed_effects = False
 
+    clustering = 'clustered_npis.json'
+
     npi_regression = NPIRegression(
-        counties, min_date, max_date, fine_resolution, delay, fixed_effects)
+        counties, min_date, max_date, fine_resolution, delay, fixed_effects, clustering=None, rki=True)
 
     df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
         plot=True)
