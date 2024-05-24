@@ -47,8 +47,7 @@ def download_vaccination_data(read_data, filename, directory, interactive):
     url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Deutschland_Landkreise_COVID-19-Impfungen.csv"
     path = os.path.join(directory + filename + ".json")
     df_data = gd.get_file(path, url, read_data, param_dict={'dtype': {
-        'LandkreisId_Impfort': "string", 'Altersgruppe': "string", 'Impfschutz': int, 'Anzahl': int}},
-                          interactive=interactive)
+        'LandkreisId_Impfort': "string", 'Altersgruppe': "string", 'Impfschutz': int, 'Anzahl': int}}, interactive=interactive)
 
     return df_data
 
@@ -144,8 +143,8 @@ def sanitizing_average_regions(
                 [age_population[dd.EngEng['idCounty']].isin(counties_list)]
                 [[dd.EngEng['idCounty'],
                   age]])[age] / age_population.loc[
-                                    age_population[dd.EngEng['idCounty']].isin(counties_list)][
-                                    age].sum()
+                age_population[dd.EngEng['idCounty']].isin(counties_list)][
+                age].sum()
             # for each column: vaccinations = all vaccinations * population_ratios
             for column in column_names:
                 df_age.loc[df_age[dd.EngEng['idCounty']].isin(
@@ -223,16 +222,11 @@ def sanitizing_extrapolation_mobility(
         # federal state and age-group-specific sanitizing threshold minus
         # current vaccination ratio
         df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(
-            state_to_county[key]), ['cw' + age for age in age_groups]] = sanitizing_thresholds[stateidx] - \
-                                                                         df_fullsum.loc[
-                                                                             df_fullsum[dd.EngEng['idCounty']].isin(
-                                                                                 state_to_county[key]), ['r' + age for
-                                                                                                         age in
-                                                                                                         age_groups]].values
+            state_to_county[key]), ['cw' + age for age in age_groups]] = sanitizing_thresholds[stateidx] - df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(
+                state_to_county[key]), ['r' + age for age in age_groups]].values
         # replace negative numbers by zero, i.e., take maximum of 0 and value
         df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(
-            state_to_county[key]), ['cw' + age for age in age_groups]] = df_fullsum.loc[
-            df_fullsum[dd.EngEng['idCounty']].isin(
+            state_to_county[key]), ['cw' + age for age in age_groups]] = df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(
                 state_to_county[key]), ['cw' + age for age in age_groups]].mask(
             df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(
                 state_to_county[key]), ['cw' + age for age in age_groups]] < 0, 0)
@@ -240,15 +234,9 @@ def sanitizing_extrapolation_mobility(
         # compute equally the vaccination amount that is considered to be
         # distributed (or that can be accepted)
         df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(
-            state_to_county[key]), ['vd' + age for age in age_groups]] = df_fullsum.loc[
-                                                                             df_fullsum[dd.EngEng['idCounty']].isin(
-                                                                                 state_to_county[key]), [age for age in
-                                                                                                         age_groups]].values - \
-                                                                         sanitizing_thresholds[stateidx] * \
-                                                                         age_population.loc[
-                                                                             age_population[dd.EngEng['idCounty']].isin(
-                                                                                 state_to_county[
-                                                                                     key]), age_groups].values
+            state_to_county[key]), ['vd' + age for age in age_groups]] = df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(
+                state_to_county[key]), [age for age in age_groups]].values - sanitizing_thresholds[stateidx] * age_population.loc[age_population[dd.EngEng['idCounty']].isin(
+                    state_to_county[key]), age_groups].values
 
         stateidx += 1
 
@@ -262,8 +250,8 @@ def sanitizing_extrapolation_mobility(
 
         # get number of vaccinations to distribute of considered age group
         vacc_dist = df_fullsum.loc[ii,
-        ['vd' + age
-         for age in age_groups]]
+                                   ['vd' + age
+                                    for age in age_groups]]
 
         # get capacity weights for neihboring counties to distributed reported
         # vaccinations: access only rows which belong to neighboring
@@ -283,9 +271,7 @@ def sanitizing_extrapolation_mobility(
                     # maximum the neighbor takes before exceeding
                     # the average
                     vacc_nshare_max = df_fullsum.loc[
-                                          df_fullsum[dd.EngEng['idCounty']].isin(neighbors_mobility[id][0]), [
-                                              'vd' + age_groups[ageidx]]].reset_index().loc[:,
-                                      'vd' + age_groups[ageidx]].values
+                        df_fullsum[dd.EngEng['idCounty']].isin(neighbors_mobility[id][0]), ['vd' + age_groups[ageidx]]].reset_index().loc[:, 'vd' + age_groups[ageidx]].values
                     vacc_nshare_max[vacc_nshare_max > 0] = 0
                     # multiply capacity weight with commuter mobility weight and divide
                     # by sum of single products such that the sum of these weights
@@ -304,8 +290,7 @@ def sanitizing_extrapolation_mobility(
                         ageidx] / sum(neighbors_mobility[id][1][neighb_open] * cap_weight.values[neighb_open, ageidx])
                     # 4th step: scale according to non-distributed vaccinations
                     vacc_dist_weight[neighb_open] = (
-                                                            1 - sum(vacc_dist_weight[neighb_cap_reached])) * \
-                                                    vacc_dist_weight[neighb_open]
+                        1 - sum(vacc_dist_weight[neighb_cap_reached])) * vacc_dist_weight[neighb_open]
 
                     # potential vaccination distribution after iteration step
                     vacc_nshare_pot = vacc_dist_weight * vacc_dist[ageidx]
@@ -345,24 +330,23 @@ def sanitizing_extrapolation_mobility(
                 # to neighbor and decrease local vaccionations at the end
                 nidx = 0
                 for neighb_id in neighbors_mobility[id][0][order_dist][
-                    np.where(vacc_nshare_pot > 0)]:
-                    df_san.loc[(df_san[dd.EngEng['idCounty']] == neighb_id) &
-                               (df_san[dd.EngEng['ageRKI']] ==
-                                age_groups[ageidx]),
-                    column_names] += reduc_shares[nidx] * df_san.loc[(
-                                                                             df_san[dd.EngEng['idCounty']] == id) &
-                                                                     (df_san[dd.EngEng['ageRKI']] == age_groups[
-                                                                         ageidx]),
-                    column_names].values
+                        np.where(vacc_nshare_pot > 0)]:
+                    df_san.loc[
+                        (df_san[dd.EngEng['idCounty']] == neighb_id)
+                        & (df_san[dd.EngEng['ageRKI']] == age_groups[ageidx]),
+                        column_names] += (reduc_shares[nidx]
+                                          * df_san.loc[(df_san[dd.EngEng['idCounty']] == id)
+                                                       & (df_san[dd.EngEng['ageRKI']] == age_groups[ageidx]), column_names]
+                                          .values
+                                          )
                     nidx += 1
-                df_san.loc[(df_san[dd.EngEng['idCounty']] == id) &
-                           (df_san[dd.EngEng['ageRKI']] ==
-                            age_groups[ageidx]),
-                column_names] -= sum(reduc_shares) * df_san.loc[(
-                                                                        df_san[dd.EngEng['idCounty']] == id) &
-                                                                (df_san[dd.EngEng['ageRKI']] ==
-                                                                 age_groups[ageidx]),
-                column_names].values
+                df_san.loc[(df_san[dd.EngEng['idCounty']] == id)
+                           & (df_san[dd.EngEng['ageRKI']] == age_groups[ageidx]),
+                           column_names] -= (sum(reduc_shares)
+                                             * df_san.loc[(df_san[dd.EngEng['idCounty']] == id)
+                                                          & (df_san[dd.EngEng['ageRKI']] == age_groups[ageidx]), column_names]
+                                             .values
+                                             )
 
         if len(
                 np.where(np.isnan(df_san[column_names]) == True)[0]) > 0:
@@ -473,10 +457,8 @@ def extrapolate_age_groups_vaccinations(
 
         # test if number of vaccinations in current county are equal in old and new dataframe for random chosen date
         for vacc in column_names:
-            if total_county_df[total_county_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() - \
-                    vacc_df[vacc_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() > 1e-5:
-                gd.default_print("Error",
-                                 "Error in transformation...")
+            if total_county_df[total_county_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() - vacc_df[vacc_df[dd.EngEng['date']] == '2022-05-10'][vacc].sum() > 1e-5:
+                gd.default_print("Error", "Error in transformation...")
 
     # merge all county specific dataframes
     df_data_ageinf_county_cs = pd.concat(df_data_ageinf_county_cs)
@@ -535,8 +517,9 @@ def process_vaccination_data(
     end_date: date = dd.defaultDict['end_date'],
     moving_average: int = dd.defaultDict['moving_average'],
     sanitize_data: int = dd.defaultDict['sanitize_data']
-) -> tuple[Any, DataFrame | Any, Any, list[Any], DataFrame, bool, DataFrame, list[str], list[list[Any]],
-           Any, Any, DataFrame]:
+) -> Tuple[Any, dict]:
+    # -> tuple[Any, DataFrame | Any, Any, list[Any], DataFrame, bool, DataFrame, list[str], list[list[Any]],
+    # Any, Any, DataFrame]:
     """
     @param df_data pd.DataFrame a Dataframe containing processed vaccination data
     @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
@@ -544,15 +527,19 @@ def process_vaccination_data(
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param moving_average int. Integers >=0. Applies an 'moving_average'-days moving average on all time series
-	to smooth out effects of irregular reporting. Default defined in defaultDict.
-    	sanitize_data Value in {0,1,2,3}; Default: 1. For many counties, vaccination data is not correctly attributed to home locations of
+	    to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param sanitize_data int. Value in {0,1,2,3}; Default: 1. For many counties,
+        vaccination data is not correctly attributed to home locations of
     	vaccinated persons. If 'sanitize_data' is set to larger 0, this is corrected.
     	0: No sanitizing applied.
     	1: Averaging ratios over federal states.
     	2: Averaging ratios over intermediate regions.
-    	3: All counties with vaccination quotas of more than 'sanitizing_threshold' will be adjusted to the average of its
-    	federal state and remaining vaccinations will be distributed to closely connected neighboring regions using commuter mobility networks.
-    	The sanitizing threshold will be defined by the age group-specific average on the corresponding vaccination ratios on county and federal
+    	3: All counties with vaccination quotas of
+    	more than 'sanitizing_threshold' will be adjusted to the average of its
+    	federal state and remaining vaccinations will be distributed to
+    	closely connected neighboring regions using commuter mobility networks.
+    	The sanitizing threshold will be defined by the age group-specific
+    	average on the corresponding vaccination ratios on county and federal
     	state level.
 
     @return tuple and DataFrame
@@ -601,7 +588,7 @@ def process_vaccination_data(
         # remove leading zeros for ID_County (if not yet done)
         try:
             df_data[dd.EngEng['idCounty']
-            ] = df_data[dd.EngEng['idCounty']].astype(int)
+                    ] = df_data[dd.EngEng['idCounty']].astype(int)
         except ValueError:
             gd.default_print("Error", 'Data items in ID_County could not be converted to integer. '
                                       'Imputation and/or moving_average computation will FAIL.')
@@ -631,8 +618,7 @@ def process_vaccination_data(
             else:
                 extrapolate_agegroups = False
                 gd.default_print(
-                    "Error",
-                    "can not extrapolate provided age groups from vaccination data to infection number age groups.")
+                    "Error", "can not extrapolate provided age groups from vaccination data to infection number age groups.")
         min_age_old.append(max_age_all)
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
@@ -662,8 +648,7 @@ def process_vaccination_data(
             else:
                 extrapolate_agegroups = False
                 gd.default_print(
-                    "Error",
-                    "can not extrapolate provided age groups from vaccination data to infection number age groups.")
+                    "Error", "can not extrapolate provided age groups from vaccination data to infection number age groups.")
         min_age_pop.append(max_age_all)
 
         # new age groups, here taken from definition of RKI infection data
@@ -724,7 +709,7 @@ def process_vaccination_data(
             for assign_share in population_to_all_ages_share[i]:
                 # assign_share[0]: share / factor, assign_share[1]: column / age group
                 population_all_ages[str(min_all_ages[assign_share[1]])
-                ] += assign_share[0] * population[unique_age_groups_pop[i]]
+                                    ] += assign_share[0] * population[unique_age_groups_pop[i]]
 
         # rename last column and save total number per county
         population_all_ages.rename(
@@ -878,34 +863,46 @@ def process_vaccination_data(
             spinner.stop()
             gd.default_print('Info', 'Sanitizing deactivated.')
 
-    return (out_folder, df_data_agevacc_county_cs, vacc_column_names, unique_age_groups_old, population_old_ages,
-            extrapolate_agegroups, population_all_ages, unique_age_groups_new, age_old_to_all_ages_indices,
-            min_all_ages,
-            all_ages_to_age_new_share, population_new_ages)
+    dict_of_data = {
+        "df_data_agevacc_county_cs": df_data_agevacc_county_cs,
+        "vacc_column_names": vacc_column_names,
+        "unique_age_groups_old": unique_age_groups_old,
+        "population_old_ages": population_old_ages,
+        "extrapolate_agegroups": extrapolate_agegroups,
+        "population_all_ages": population_all_ages,
+        "unique_age_groups_new": unique_age_groups_new,
+        "age_old_to_all_ages_indices": age_old_to_all_ages_indices,
+        "population_new_ages": population_new_ages,
+        "all_ages_to_age_new_share": all_ages_to_age_new_share,
+        "min_all_ages": min_all_ages,
+    }
+    return out_folder, dict_of_data
 
 
-def write_vaccination_data(
-    df_data_agevacc_county_cs: pd.DataFrame,
-    vacc_column_names,
-    unique_age_groups_old,
-    population_old_ages,
-    extrapolate_agegroups: bool,
-    population_all_ages, unique_age_groups_new, age_old_to_all_ages_indices, min_all_ages,
-    all_ages_to_age_new_share,
-    population_new_ages,
-    file_format: str = dd.defaultDict['file_format'],
-    out_folder: str = dd.defaultDict['out_folder'],
-    impute_dates: bool = True,
-    moving_average: int = dd.defaultDict['moving_average'],
-) -> None:
+def write_vaccination_data(dict_data: dict,
+                           file_format: str = dd.defaultDict['file_format'],
+                           out_folder: str = dd.defaultDict['out_folder'],
+                           impute_dates: bool = dd.defaultDict['imputes_dates'],
+                           moving_average: int = dd.defaultDict['moving_average'],
+                           ) -> None:
     """
     Parameters
     ----------
-    @param df_data_agevacc_county_cs: pd.DataFrame a Dataframe containing processed vaccination data
+    @param dict_data dict. Contains various datasets or values
+        - df_data_agevacc_county_cs: pd.DataFrame a Dataframe containing processed vaccination data
+        - vacc_column_names
+        - unique_age_groups_old
+        - population_old_ages
+        - extrapolate_agegroups
+        - population_all_ages
+        - unique_age_groups_new
+        - age_old_to_all_ages_indices
+        - min_all_ages
+        - all_ages_to_age_new_share
+        - population_new_ages
+
     @param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder: str. Folder where data is written to. Default defined in defaultDict.
-    @param start_date: Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date: Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
         sanitize_data: Value in {0,1,2,3}; Default: 1. For many counties, vaccination data is not correctly attributed to home locations of
@@ -920,6 +917,17 @@ def write_vaccination_data(
 
     @return: none
     """
+    df_data_agevacc_county_cs = dict_data["df_data_agevacc_county_cs"]
+    vacc_column_names = dict_data["vacc_column_names"]
+    unique_age_groups_old = dict_data["unique_age_groups_old"]
+    population_old_ages = dict_data["population_old_ages"]
+    extrapolate_agegroups = dict_data["extrapolate_agegroups"]
+    population_all_ages = dict_data["population_all_ages"]
+    unique_age_groups_new = dict_data["unique_age_groups_new"]
+    age_old_to_all_ages_indices = dict_data["age_old_to_all_ages_indices"]
+    min_all_ages = dict_data["min_all_ages"]
+    all_ages_to_age_new_share = dict_data["all_ages_to_age_new_share"]
+    population_new_ages = dict_data["population_new_ages"]
 
     conf = gd.Conf(out_folder)
     out_folder = conf.path_to_use
@@ -1144,6 +1152,7 @@ def get_vaccination_data(
     end_date: date = dd.defaultDict['end_date'],
     moving_average: int = dd.defaultDict['moving_average'],
     sanitize_data: int = dd.defaultDict['sanitize_data'],
+    impute_dates: bool = dd.defaultDict['imputes_dates'],
     **kwargs
 ):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
@@ -1190,6 +1199,9 @@ def get_vaccination_data(
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
         state level.
+    @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+
+    @return None
     """
     raw_df = fetch_vaccination_data(
         read_data=read_data,
@@ -1205,17 +1217,12 @@ def get_vaccination_data(
         moving_average=moving_average,
         sanitize_data=sanitize_data
     )
-    write_vaccination_data(
-        file_format=file_format,
-        impute_dates=True,
-        moving_average=moving_average,
-        out_folder=process_df[0], df_data_agevacc_county_cs=process_df[1],
-        vacc_column_names=process_df[2], unique_age_groups_old=process_df[3],
-        population_old_ages=process_df[4], extrapolate_agegroups=process_df[5],
-        population_all_ages=process_df[6], unique_age_groups_new=process_df[7],
-        age_old_to_all_ages_indices=process_df[8], min_all_ages=process_df[9],
-        all_ages_to_age_new_share=process_df[10], population_new_ages=process_df[11]
-    )
+    write_vaccination_data(dict_data=process_df[1],
+                           file_format=file_format,
+                           impute_dates=impute_dates,
+                           moving_average=moving_average,
+                           out_folder=process_df[0]
+                           )
     pass
 
 
