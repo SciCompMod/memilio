@@ -77,9 +77,12 @@ def fetch_divi_data(
 
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
-        gd.default_print('Warning', "First data available on 2020-04-24. "
-                                    "You asked for " + start_date.strftime("%Y-%m-%d") +
-                         ". Changed it to 2020-04-24.")
+        gd.default_print(
+            'Warning',
+            "First data available on 2020-04-24. "
+            "You asked for " +
+            start_date.strftime("%Y-%m-%d") +
+            ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -143,7 +146,7 @@ def preprocess_divi_data(
         try:
             df[dd.EngEng['date']] = pd.to_datetime(
                 df[dd.EngEng['date']], format="%Y-%m-%d %H:%M:%S")
-        except:
+        except BaseException:
             raise gd.DataError(
                 "Time data can't be transformed to intended format")
 
@@ -323,10 +326,11 @@ def divi_data_sanity_checks(df: pd.DataFrame) -> None:
     # check if size of dataframe is not unusal
     # data colletion starts at 24.04.2020
     # TODO: Number of reporting counties get less with time.
-    # Maybe we should look for a new method to sanitize the size of the DataFrame.
+    # Maybe we should look for a new method to sanitize the size of the
+    # DataFrame.
     num_dates = (date.today() - date(2020, 4, 24)).days
-    min_num_data = 380*num_dates  # not all 400 counties report every day
-    max_num_data = 400*num_dates
+    min_num_data = 380 * num_dates  # not all 400 counties report every day
+    max_num_data = 400 * num_dates
     if (len(df) < min_num_data) or (len(df) > max_num_data):
         raise gd.DataError("Error: unexpected length of dataframe.")
 
