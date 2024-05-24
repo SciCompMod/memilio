@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
 #include "ode_secir/model.h"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/parameters.h"
@@ -35,32 +36,33 @@ int main()
     mio::osecir::Model model(num_groups);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 10000;
     model.parameters.set<mio::osecir::StartDay>(0);
-    model.parameters.set<mio::osecir::Seasonality>(0.2);
+    model.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.2);
 
-    model.parameters.get<mio::osecir::TimeExposed>()            = 3.2;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>() = 2.0;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms>()   = 5.8;
-    model.parameters.get<mio::osecir::TimeInfectedSevere>()     = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical>()   = 7.1;
+    model.parameters.get<mio::osecir::TimeExposed<ScalarType>>()            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>() = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()   = 5.8;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()     = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()   = 7.1;
 
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()  = 0.1;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>() = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>()              = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
+    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()  = 0.1;
+    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()    = 0.7;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()    = 0.09;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()    = 0.25;
+    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<ScalarType>>() = 0.45;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<ScalarType>>()              = 35;
+    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()         = 0.2;
+    model.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()                 = 0.25;
+    model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()                 = 0.3;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
 
     //two mostly identical groups
     auto model_group1 = model;
     auto model_group2 = model;
     //some contact restrictions in model_group1
-    mio::ContactMatrixGroup& contact_matrix_m1 = model_group1.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix_m1 =
+        model_group1.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix_m1[0].add_damping(0.7, mio::SimulationTime(15.));
 
     //infection starts in group 1
@@ -88,7 +90,7 @@ int main()
             model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
     }
 
-    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge> g;
+    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge<ScalarType>> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);

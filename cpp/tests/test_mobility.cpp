@@ -169,13 +169,13 @@ TEST(TestMobility, edgeApplyMigration)
 
 TEST(TestMobility, condense_m_mobility)
 {
-    using Model = mio::osecir::Model;
+    using Model = mio::osecir::Model<double>;
 
     //setup nodes
     const size_t num_groups = 1;
     Model model(num_groups);
     auto& params = model.parameters;
-    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns>());
+    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 10;
@@ -183,12 +183,12 @@ TEST(TestMobility, condense_m_mobility)
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 20;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
-    params.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.;
-    params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.;
-    params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.;
-    params.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.5;
-    params.get<mio::osecir::TimeExposed>()[(mio::AgeGroup)0]                      = 1.;
-    params.get<mio::osecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0]           = 1.;
+    params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)0]        = 0.5;
+    params.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]                      = 1.;
+    params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]           = 1.;
     params.apply_constraints();
 
     // get indices of INS and ISy compartments.

@@ -44,9 +44,9 @@
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
+void assign_uniform_distribution(mio::UncertainValue<double>& p, double min, double max)
 {
-    p = mio::UncertainValue(0.5 * (max + min));
+    p = mio::UncertainValue<double>(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -59,7 +59,7 @@ void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
  * @param max minimum of distribution for each element of array.
  */
 template <size_t N>
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>& array,
+void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
                                        const double (&min)[N], const double (&max)[N])
 {
     assert(N == array.numel());
@@ -75,8 +75,8 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>& array, double min,
-                                       double max)
+void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
+                                       double min, double max)
 {
     for (auto i = mio::AgeGroup(0); i < array.size<mio::AgeGroup>(); ++i) {
         assign_uniform_distribution(array[i], min, max);
@@ -89,7 +89,7 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-void set_covid_parameters(mio::osecir::Parameters& params)
+void set_covid_parameters(mio::osecir::Parameters<double>& params)
 {
     //times
     // TimeExposed and TimeInfectedNoSymptoms are calculated as described in
@@ -107,14 +107,14 @@ void set_covid_parameters(mio::osecir::Parameters& params)
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed>(), timeExposedMin, timeExposedMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedNoSymptoms>(), timeInfectedNoSymptomsMin,
-                                      timeInfectedNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed<double>>(), timeExposedMin, timeExposedMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedNoSymptoms<double>>(),
+                                      timeInfectedNoSymptomsMin, timeInfectedNoSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSymptoms<double>>(), timeInfectedSymptomsMin,
                                       timeInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSevere>(), timeInfectedSevereMin,
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSevere<double>>(), timeInfectedSevereMin,
                                       timeInfectedSevereMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedCritical>(), timeInfectedCriticalMin,
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedCritical<double>>(), timeInfectedCriticalMin,
                                       timeInfectedCriticalMax);
 
     //probabilities
@@ -137,28 +137,28 @@ void set_covid_parameters(mio::osecir::Parameters& params)
     const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
     const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
-    array_assign_uniform_distribution(params.get<mio::osecir::TransmissionProbabilityOnContact>(),
+    array_assign_uniform_distribution(params.get<mio::osecir::TransmissionProbabilityOnContact<double>>(),
                                       transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::RelativeTransmissionNoSymptoms>(),
+    array_assign_uniform_distribution(params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>(),
                                       relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::RiskOfInfectionFromSymptomatic>(),
+    array_assign_uniform_distribution(params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>(),
                                       riskOfInfectionFromSymptomaticMin, riskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>(),
+    array_assign_uniform_distribution(params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>(),
                                       maxRiskOfInfectionFromSymptomaticMin, maxRiskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>(),
+    array_assign_uniform_distribution(params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>(),
                                       recoveredPerInfectedNoSymptomsMin, recoveredPerInfectedNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::SeverePerInfectedSymptoms>(),
+    array_assign_uniform_distribution(params.get<mio::osecir::SeverePerInfectedSymptoms<double>>(),
                                       severePerInfectedSymptomsMin, severePerInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::CriticalPerSevere>(), criticalPerSevereMin,
+    array_assign_uniform_distribution(params.get<mio::osecir::CriticalPerSevere<double>>(), criticalPerSevereMin,
                                       criticalPerSevereMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::DeathsPerCritical>(), deathsPerCriticalMin,
+    array_assign_uniform_distribution(params.get<mio::osecir::DeathsPerCritical<double>>(), deathsPerCriticalMin,
                                       deathsPerCriticalMax);
 
     //sasonality
     const double seasonality_min = 0.1;
     const double seasonality_max = 0.3;
 
-    assign_uniform_distribution(params.get<mio::osecir::Seasonality>(), seasonality_min, seasonality_max);
+    assign_uniform_distribution(params.get<mio::osecir::Seasonality<double>>(), seasonality_min, seasonality_max);
 
     params.set<mio::osecir::StartDay>(0);
 }
@@ -168,7 +168,7 @@ void set_covid_parameters(mio::osecir::Parameters& params)
  * Same total populaton but different spread of infection in each county.
  * @param counties parameters for each county.
  */
-void set_synthetic_population_data(mio::osecir::Model& model)
+void set_synthetic_population_data(mio::osecir::Model<double>& model)
 {
     double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
            nb_rec_t0 = 0, nb_dead_t0 = 0;
@@ -188,7 +188,7 @@ void set_synthetic_population_data(mio::osecir::Model& model)
     }
 }
 
-std::vector<std::vector<size_t>> get_indices_of_symptomatic_and_nonsymptomatic(mio::osecir::Model& model)
+std::vector<std::vector<size_t>> get_indices_of_symptomatic_and_nonsymptomatic(mio::osecir::Model<double>& model)
 {
     std::vector<std::vector<size_t>> indices_save_edges(2);
     const auto num_groups = static_cast<size_t>(model.parameters.get_num_groups());
@@ -231,7 +231,7 @@ int main()
     const auto num_days_sim = 30.0;
     const auto num_runs     = 10;
 
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> params_graph;
 
     const int num_age_groups = 6;
     mio::osecir::Model model(num_age_groups);
@@ -241,7 +241,7 @@ int main()
 
     // set contact matrix
     const auto cont_freq                    = 10.0;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                       = mio::ContactMatrix(
         Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, (1. / num_age_groups) * cont_freq));
 
@@ -286,7 +286,7 @@ int main()
         [&](auto results_graph, auto&& run_id) {
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
 
-            auto params = std::vector<mio::osecir::Model>{};
+            auto params = std::vector<mio::osecir::Model<double>>{};
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
                            [](auto&& node) {
@@ -307,7 +307,7 @@ int main()
     if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_results.reserve(ensemble.size());
-        auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
+        auto ensemble_params = std::vector<std::vector<mio::osecir::Model<double>>>{};
         ensemble_params.reserve(ensemble.size());
         auto ensemble_edges = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_edges.reserve(ensemble.size());

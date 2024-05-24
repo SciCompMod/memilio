@@ -279,7 +279,7 @@ TEST(TestGraph, set_edges_saving_edges)
     const size_t num_groups = 6;
     mio::osecir::Model model(num_groups);
     model.populations[{mio::AgeGroup(3), mio::osecir::InfectionState::Exposed}] = 1;
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> params_graph;
     const fs::path& dir         = " ";
     auto migrating_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
@@ -314,7 +314,7 @@ TEST(TestGraph, set_edges_saving_edges)
     const auto& read_function_edges = mock_read_mobility;
 
     auto result =
-        mio::set_edges<MockContactLocation, mio::osecir::Model, mio::MigrationParameters,
+        mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MigrationParameters<double>,
                        mio::MigrationCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
             dir, params_graph, migrating_compartments, size_t(2), read_function_edges,
             std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, save_results_edges, indices_save_edges);

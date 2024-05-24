@@ -360,7 +360,7 @@ public:
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
      */
-    MigrationEdge(const MigrationParameters& params, const std::vector<std::vector<size_t>>& save_indices)
+    MigrationEdge(const MigrationParameters<FP>& params, const std::vector<std::vector<size_t>>& save_indices)
         : m_parameters(params)
         , m_migrated(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
@@ -437,6 +437,32 @@ private:
      */
     void condense_m_mobility(const double t);
 };
+
+template <typename FP>
+void MigrationEdge<FP>::condense_m_mobility(const double t)
+{
+    const size_t save_indices_size = this->m_save_indices.size();
+    if (save_indices_size > 0) {
+
+        const auto& last_value           = m_migrated.get_last_value();
+        Eigen::VectorXd condensed_values = Eigen::VectorXd::Zero(save_indices_size + 1);
+
+        // sum up the values of m_save_indices for each group (e.g. Age groups)
+        std::transform(this->m_save_indices.begin(), this->m_save_indices.end(), condensed_values.data(),
+                       [&last_value](const auto& indices) {
+                           return std::accumulate(indices.begin(), indices.end(), 0.0,
+                                                  [&last_value](double sum, auto i) {
+                                                      return sum + last_value[i];
+                                                  });
+                       });
+
+        // the last value is the sum of commuters
+        condensed_values[save_indices_size] = m_migrated.get_last_value().sum();
+
+        // Move the condensed values to the m_mobility_results time series
+        m_mobility_results.add_time_point(t, std::move(condensed_values));
+    }
+}
 
 /**
  * adjust number of migrated people when they return according to the model.

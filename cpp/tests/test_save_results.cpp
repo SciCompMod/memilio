@@ -296,8 +296,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto graph = mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1,
-                   mio::MigrationParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)),
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(num_groups * (size_t)mio::osecir::InfectionState::Count, 0.1),
                    indices_save_edges);
 
     auto num_runs        = 3;
@@ -419,11 +418,11 @@ TEST(TestSaveResult, save_edges)
     ;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 10.;
-        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8.;
+        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2;
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.;
+        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 10.;
+        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = 100;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
@@ -434,21 +433,21 @@ TEST(TestSaveResult, save_edges)
         model.populations[{i, mio::osecir::InfectionState::Dead}]               = 0;
         model.populations.set_difference_from_total({i, mio::osecir::InfectionState::Susceptible}, pop_total);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.06;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i] = 0.06;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     // setup graph
-    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge> g;
+    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge<double>> g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1));
