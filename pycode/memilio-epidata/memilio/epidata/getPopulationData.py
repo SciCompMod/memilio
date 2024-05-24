@@ -413,6 +413,7 @@ def write_population_data(df_pop: pd.DataFrame,
 def get_population_data(read_data: bool = dd.defaultDict['read_data'],
                         file_format: str = dd.defaultDict['file_format'],
                         out_folder: str = dd.defaultDict['out_folder'],
+                        merge_eisenach: bool = True,
                         username='',
                         password='',
                         **kwargs
@@ -461,7 +462,7 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
     )
     preprocess_df = preprocess_population_data(
         df_pop_raw=raw_df,
-        merge_eisenach=True
+        merge_eisenach=merge_eisenach
     )
     write_population_data(
         df_pop=preprocess_df,
@@ -469,7 +470,6 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
         out_folder=out_folder,
         merge_eisenach=True
     )
-    pass
 
 
 def main():
