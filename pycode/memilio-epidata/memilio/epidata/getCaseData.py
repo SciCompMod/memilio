@@ -47,12 +47,11 @@ from memilio.epidata import progress_indicator
 pd.options.mode.copy_on_write = True
 
 
-def check_for_completeness(
-    df: pd.DataFrame,
-    run_checks: bool,
-    merge_berlin: bool = False,
-    merge_eisenach: bool = True
-):
+def check_for_completeness(df: pd.DataFrame,
+                           run_checks: bool,
+                           merge_berlin: bool = False,
+                           merge_eisenach: bool = True
+                           ):
     """! Checks if all counties are mentioned in the case data set
 
     This check had to be added due to incomplete data downloads
@@ -82,11 +81,10 @@ def check_for_completeness(
         return True
 
 
-def fetch_case_data(
-    read_data: bool = dd.defaultDict['read_data'],
-    out_folder: str = dd.defaultDict['out_folder'],
-    **kwargs
-) -> pd.DataFrame:
+def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
+                    out_folder: str = dd.defaultDict['out_folder'],
+                    **kwargs
+                    ) -> pd.DataFrame:
     """! Downloads the case data
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
@@ -142,7 +140,7 @@ def fetch_case_data(
                 "encoding": 'utf_8_sig'}, interactive=conf.interactive)
             complete = check_for_completeness(
                 df, run_checks, merge_eisenach=True)
-        except BaseException:
+        except:
             pass
         if not complete:
             gd.default_print(
@@ -157,7 +155,7 @@ def fetch_case_data(
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 complete = check_for_completeness(
                     df, run_checks, merge_eisenach=True)
-            except BaseException:
+            except:
                 pass
         if not complete:
             raise FileNotFoundError(
@@ -170,11 +168,10 @@ def fetch_case_data(
     return df
 
 
-def preprocess_case_data(
-    raw_df: pd.DataFrame,
-    split_berlin: bool = dd.defaultDict['split_berlin'],
-    rep_date: bool = dd.defaultDict['rep_date'],
-) -> pd.DataFrame:
+def preprocess_case_data(raw_df: pd.DataFrame,
+                         split_berlin: bool = dd.defaultDict['split_berlin'],
+                         rep_date: bool = dd.defaultDict['rep_date'],
+                         ) -> pd.DataFrame:
     """! Preprocessing of the case data
 
     While working with the data
@@ -251,14 +248,8 @@ def preprocess_case_data(
         df.loc[df.NeuGenesen < 0, [AnzahlGenesen]] = 0
 
         # get rid of unnecessary columns
-        df.drop(['NeuerFall',
-                 'NeuerTodesfall',
-                 'NeuGenesen',
-                 "IstErkrankungsbeginn",
-                 "Meldedatum",
-                 "Refdatum"],
-                axis=1,
-                inplace=True)
+        df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
+                 "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1, inplace=True)
 
         # merge Berlin counties
         if not split_berlin:
@@ -273,19 +264,18 @@ def preprocess_case_data(
     return df
 
 
-def write_case_data(
-    df: pd.DataFrame,
-    file_format: str = dd.defaultDict['file_format'],
-    out_folder: str = dd.defaultDict['out_folder'],
-    start_date: date = dd.defaultDict['start_date'],
-    end_date: date = dd.defaultDict['end_date'],
-    impute_dates: bool = dd.defaultDict['impute_dates'],
-    moving_average: int = dd.defaultDict['moving_average'],
-    split_berlin: bool = dd.defaultDict['split_berlin'],
-    rep_date: bool = dd.defaultDict['rep_date'],
-    files: str or list = 'All',
-    **kwargs,
-) -> None:
+def write_case_data(df: pd.DataFrame,
+                    file_format: str = dd.defaultDict['file_format'],
+                    out_folder: str = dd.defaultDict['out_folder'],
+                    start_date: date = dd.defaultDict['start_date'],
+                    end_date: date = dd.defaultDict['end_date'],
+                    impute_dates: bool = dd.defaultDict['impute_dates'],
+                    moving_average: int = dd.defaultDict['moving_average'],
+                    split_berlin: bool = dd.defaultDict['split_berlin'],
+                    rep_date: bool = dd.defaultDict['rep_date'],
+                    files: str or list = 'All',
+                    **kwargs,
+                    ) -> None:
     """! Writing the different case data file.
     Following data is generated and written to the mentioned filename
         - All infected (current and past) for whole germany are stored in "cases_infected"
@@ -351,6 +341,8 @@ def write_case_data(
     IdLandkreis = dd.GerEng['IdLandkreis']
     dateToUse = dd.EngEng['date']
 
+    # dict for all files
+    # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
     dict_files = {
         'infected': [dateToUse, {AnzahlFall: "sum"}, None, {}, ['Confirmed']],
         'deaths': [dateToUse, {AnzahlTodesfall: "sum"}, None, {}, ['Deaths']],
@@ -359,12 +351,14 @@ def write_case_data(
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]
+                          : geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]
+                           : df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(
@@ -401,8 +395,8 @@ def write_case_data(
     with progress_indicator.Spinner():
         for file in files:
             if file not in dict_files.keys():
-                raise gd.DataError(
-                    'Error: File ' + file + ' cannot be written.')
+                raise gd.DataError('Error: File ' + file +
+                                   ' cannot be written.')
             # split berlin is only relevant for county level
             if ('county' in file) and (split_berlin):
                 split_berlin_local = True
@@ -439,19 +433,18 @@ def write_case_data(
             gd.write_dataframe(df_local_cs, directory, filename, file_format)
 
 
-def get_case_data(
-    read_data: bool = dd.defaultDict['read_data'],
-    out_folder: str = dd.defaultDict['out_folder'],
-    file_format: str = dd.defaultDict['file_format'],
-    start_date: date = dd.defaultDict['start_date'],
-    end_date: date = dd.defaultDict['end_date'],
-    impute_dates: bool = dd.defaultDict['impute_dates'],
-    moving_average: int = dd.defaultDict['moving_average'],
-    split_berlin: bool = dd.defaultDict['split_berlin'],
-    rep_date: bool = dd.defaultDict['rep_date'],
-    files: str or list = 'All',
-    **kwargs
-) -> None:
+def get_case_data(read_data: bool = dd.defaultDict['read_data'],
+                  out_folder: str = dd.defaultDict['out_folder'],
+                  file_format: str = dd.defaultDict['file_format'],
+                  start_date: date = dd.defaultDict['start_date'],
+                  end_date: date = dd.defaultDict['end_date'],
+                  impute_dates: bool = dd.defaultDict['impute_dates'],
+                  moving_average: int = dd.defaultDict['moving_average'],
+                  split_berlin: bool = dd.defaultDict['split_berlin'],
+                  rep_date: bool = dd.defaultDict['rep_date'],
+                  files: str or list = 'All',
+                  **kwargs
+                  ) -> None:
     """! Wrapper function that downloads the case data and provides different kind of structured data into json files.
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
