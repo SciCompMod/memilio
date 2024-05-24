@@ -20,7 +20,7 @@ Below is an overview of the model architecture and its compartments.
 | $\phi$                      |  `ContactPatterns`               | Matrix of daily contact rates / number of daily contacts between different age groups. |
 | $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in one of the susceptible compartments. |
 | $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion of nonsymptomatically infected people who are not isolated. |
-| $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of infected people with symptomps who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
+| $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of infected people with symptoms who are not isolated (time-dependent if `TestAndTraceCapacity` used). |
 | $N_j$                         | `Nj`   | Total population of age group $j$. |
 | $D_i$                         |  `Di`  | Number of death people of age group $i$. |
 | $T_{E}$                    |  `TimeExposed`               | Time in days an individual stays in the Exposed compartment. |

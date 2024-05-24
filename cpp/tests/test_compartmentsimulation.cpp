@@ -37,7 +37,7 @@ TEST(TestCompartmentSimulation, integrator_uses_model_reference)
         double m_dydt = 1.0;
     };
 
-    auto sim = mio::Simulation<MockModel>(MockModel(), 0.0);
+    auto sim = mio::Simulation<double, MockModel>(MockModel(), 0.0);
     sim.advance(1.0);
 
     ASSERT_NEAR(sim.get_result().get_last_value()[0], 1.0, 1e-5);

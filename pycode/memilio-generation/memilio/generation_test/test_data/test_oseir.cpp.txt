@@ -37,6 +37,18 @@ namespace py = pybind11;
 namespace pymio{
 //specialization of pretty_name
 template <>
+std::string pretty_name<mio::oseir::FP>()
+{
+   return "FP";
+}
+
+template <>
+std::string pretty_name<mio::AgeGroup>()
+{
+   return "AgeGroup";
+}
+
+template <>
 std::string pretty_name<mio::oseir::InfectionState>()
 {
    return "InfectionState";
@@ -65,12 +77,12 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
 	.def("check_constraints", &mio::oseir::Parameters::check_constraints)
 	.def("apply_constraints", &mio::oseir::Parameters::apply_constraints);
 
-    using Populations = mio::Populations<mio::oseir::InfectionState>;
+    using Populations = mio::Populations<FP, AgeGroup, InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
     
-    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::oseir::Parameters>(m, "ModelBase");
-    py::class_<mio::oseir::Model, mio::FlowModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::oseir::Parameters, mio::TypeList<mio::Flow<mio::oseir::InfectionState::Susceptible, mio::oseir::InfectionState::Exposed>, mio::Flow<mio::oseir::InfectionState::Exposed, mio::oseir::InfectionState::Infected>, mio::Flow<mio::oseir::InfectionState::Infected, mio::oseir::InfectionState::Recovered>>>>(m, "Model")
-        .def(py::init<>());
+    pymio::bind_CompartmentalModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>>(m, "ModelBase");
+    py::class_<mio::oseir::Model, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>>(m, "Model")
+    ;
 
 
     

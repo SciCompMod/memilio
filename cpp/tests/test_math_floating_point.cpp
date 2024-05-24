@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "ad/ad.hpp"
 #include "memilio/math/floating_point.h"
 
 #include <gtest/gtest.h>
@@ -41,7 +42,7 @@ public:
     };
 };
 
-using FpTypes = ::testing::Types<float, double>;
+using FpTypes = ::testing::Types<float, double, ad::gt1s<double>::type>;
 
 TYPED_TEST_SUITE(TestMathFloatingPoint, FpTypes);
 
@@ -49,15 +50,16 @@ TYPED_TEST(TestMathFloatingPoint, abs_max)
 {
     TypeParam v1 = this->a, v2 = this->b;
     // check for maximum
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(v1, v2));
-    // check symmetry and signs
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(v2, v1));
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(v1, -v2));
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(-v2, v1));
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(-v1, v2));
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(v2, -v1));
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(-v1, -v2));
-    EXPECT_DOUBLE_EQ(v2, mio::abs_max(-v2, -v1));
+    EXPECT_TRUE(v2 == mio::abs_max(v1, v2));
+    // check symmetries and signs
+    EXPECT_TRUE(v2 == mio::abs_max(v2, v1));
+    // specify type for signed comparisions, as -v may be an intermediate
+    EXPECT_TRUE(v2 == mio::abs_max<TypeParam>(v1, -v2));
+    EXPECT_TRUE(v2 == mio::abs_max<TypeParam>(-v2, v1));
+    EXPECT_TRUE(v2 == mio::abs_max<TypeParam>(-v1, v2));
+    EXPECT_TRUE(v2 == mio::abs_max<TypeParam>(v2, -v1));
+    EXPECT_TRUE(v2 == mio::abs_max<TypeParam>(-v1, -v2));
+    EXPECT_TRUE(v2 == mio::abs_max<TypeParam>(-v2, -v1));
 }
 
 /**

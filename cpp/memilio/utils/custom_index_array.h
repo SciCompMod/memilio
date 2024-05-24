@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -323,6 +323,18 @@ public:
     size_t get_flat_index(Index const& index) const
     {
         return (Eigen::Index)flatten_index(index, m_dimensions);
+    }
+
+    /**
+     * @brief Set multiple entries to the same value.
+     * @param indices A list of indices to be set to the same value.
+     * @param value The value to set.
+     */
+    void set_multiple(const std::vector<typename CustomIndexArray<Typ, Tags...>::Index>& indices, const Typ& value)
+    {
+        for (const auto& index : indices) {
+            m_y[get_flat_index(index)] = value;
+        }
     }
 
 private:
