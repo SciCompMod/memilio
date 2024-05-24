@@ -168,7 +168,7 @@ def preprocess_case_data(
     split_berlin: bool = dd.defaultDict['split_berlin'],
     rep_date: bool = dd.defaultDict['rep_date'],
 ) -> pd.DataFrame:
-    """ Preprocessing of the case data
+    """! Preprocessing of the case data
 
     While working with the data
     - the column names are changed to english depending on defaultDict
@@ -273,8 +273,7 @@ def write_case_data(
     files: str or list = 'All',
     **kwargs,
 ) -> None:
-    """
-    Writing the different case data file.
+    """! Writing the different case data file.
     Following data is generated and written to the mentioned filename
         - All infected (current and past) for whole germany are stored in "cases_infected"
         - All deaths whole germany are stored in "cases_deaths"
@@ -438,7 +437,7 @@ def get_case_data(
     files: str or list = 'All',
     **kwargs
 ) -> None:
-    """! Downloads the case data and provides different kind of structured data
+    """! Wrapper function that downloads the case data and provides different kind of structured data into json files.
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
