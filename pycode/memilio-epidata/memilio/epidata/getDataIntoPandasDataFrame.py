@@ -366,7 +366,6 @@ def cli(what):
 
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'files'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
                 "population": ['Download population data from official sources', 'username'],
                 "commuter_official": ['Download commuter data from official sources'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],

@@ -4,22 +4,11 @@ This directory contains CMake configuration of the dependencies of the MEmilio C
 
 ## Bundled Dependencies
 
-Most dependencies of this project don't need to be installed manually. Dependencies are bundled in two different ways: cloning an external repository or as an archive included in the MEmilio project. Using the `MEMILIO_USE_BUNDLED_<XYZ>` CMake options (where `<XYZ>` is the name of the dependency), installed packages can be used instead of the bundled packages, using the usual `find_package` mechanism.
+Most dependencies of this project don't need to be installed manually. These dependencies are bundled by cloning an external repository. Using the `MEMILIO_USE_BUNDLED_<XYZ>` CMake options (where `<XYZ>` is the name of the dependency), installed packages can be used instead of the bundled packages, using the usual `find_package` mechanism.
 
 ### External Repositories
 
 The repository of the dependency is cloned during CMake configuration into the `<build>/_deps/<xyz>-src` directory. The dependency is then built together with the MEmilio project. The version of the package is set in the [thirdparty CMakeLists.txt](CMakeLists.txt). To upgrade the version, simply increase the version number there.
 
-### Archived (Boost)
-
-We currently bundle only a minimal extract of boost library as an archive that contains only the libraries of boost that we use. Currently, these libraries are filesystem, outcome, and optional, including transitive dependencies. The archive has been created using the boost tool `bcp`, see https://www.boost.org/doc/libs/1_72_0/tools/bcp/doc/html/index.html.
-
-To upgrade boost, follow these steps: 
-
-1. call `bcp` to copy the required files (see the `bcp` documentation for details)
-```bash
-./bcp optional outcome filesystem path_to_epi_source/cpp/thirdparty/boost_<version>
-```
-2. compress the folder into a `.tar.gz` archive and replace the existing archive in the repository.
-3. adapt the file `cpp/cmake/BuildBoost.cmake`. At least update the version number and archive name.
-   
+Note: Cloning the boost git repository can take a while. Especially for this dependency, it may be useful to set the `MEMILIO_USE_BUNDLED_BOOST` option to `OFF` if the package is already installed. The installed boost version must be at least version 1.76.0.
+ It is planned to offer the option to use a minimal extract of boost library as an archive included in the MEmilio project. With the minimal version of boost, only limited functionality of MEmilio can be used.
