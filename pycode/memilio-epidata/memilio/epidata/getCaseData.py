@@ -50,10 +50,10 @@ pd.options.mode.copy_on_write = True
 def check_for_completeness(df: pd.DataFrame, run_checks: bool, merge_berlin: bool = False, merge_eisenach: bool = True):
     """! Checks if all counties are mentioned in the case data set
 
-   This check had to be added due to incomplete data downloads
-   It is checked if all counties are part of the data.
-   If data is incomplete the data is downloaded from another source.
-   Note: There is no check if data for every day and every county is available (which can happen).
+    This check had to be added due to incomplete data downloads
+    It is checked if all counties are part of the data.
+    If data is incomplete the data is downloaded from another source.
+    Note: There is no check if data for every day and every county is available (which can happen).
 
     @param df pd.Dataframe. Dataframe to check
     @param merge_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
@@ -61,7 +61,7 @@ def check_for_completeness(df: pd.DataFrame, run_checks: bool, merge_berlin: boo
     @param run_checks: bool
 
     @return Boolean to say if data is complete or not
-   """
+    """
     if run_checks:
         if not df.empty:
             return geoger.check_for_all_counties(
