@@ -157,7 +157,17 @@ int main()
         Eigen::Index(mio::abm::InfectionState::Count)};
 
     // Run the simulation until tmax with the history object.
-    sim.advance(tmax, historyTimeSeries);
+    mio::abm::TimePoint t = t0;
+    while (t < tmax) {
+        sim.advance(t, historyTimeSeries);
+        t += mio::abm::hours(1);
+
+        //Your code, e.g.:
+        // auto locations = sim.get.locations()
+        // for each location, get persons at location
+        // YOUR SIMULATION here
+        // we do: sim.get_world().change_people_to_infection_state(person_ids) to change the infection state of people
+    }
 
     // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
