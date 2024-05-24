@@ -48,10 +48,10 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def fetch_divi_data(
-    read_data: bool =dd.defaultDict['read_data'],
-    out_folder: str =dd.defaultDict['out_folder'],
-    file_format: str =dd.defaultDict['file_format'],
-    start_date: date =date(2020, 4, 24),
+    read_data: bool = dd.defaultDict['read_data'],
+    out_folder: str = dd.defaultDict['out_folder'],
+    file_format: str = dd.defaultDict['file_format'],
+    start_date: date = date(2020, 4, 24),
     **kwargs
 ) -> Tuple[pd.DataFrame, date]:
     """
@@ -64,22 +64,13 @@ def fetch_divi_data(
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
     The downloaded dataframe is written to the file "FullData_DIVI".
 
-    Parameters
-    ----------
-    read_data: bool
-        True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    file_format: str
-        File format which is used for writing the data. Default defined in defaultDict.
-    out_folder: str
-        Folder where data is written to. Default defined in defaultDict.
-    start_date: date
-        The first date in dataframe. Default defined in defaultDict.
-    ***kwargs
+    @param read_data bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
+    @param start_date date. The first date in dataframe. Default defined in defaultDict.
+    @param ***kwargs
 
-    Returns
-    -------
-    Tuple[df_raw, start_date]: Tuple
-        Contains the fetched data as well as the adjusted starting date
+    @return Tuple[df_raw, start_date] Tuple. Contains the fetched data as well as the adjusted starting date
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -117,37 +108,26 @@ def fetch_divi_data(
 
 def preprocess_divi_data(
     df_raw: pd.DataFrame,
-    out_folder: str =dd.defaultDict['out_folder'],
-    start_date: date =date(2020, 4, 24),
-    end_date: date =dd.defaultDict['end_date'],
-    impute_dates: bool =dd.defaultDict['impute_dates'],
-    moving_average: int =dd.defaultDict['moving_average'],
+    out_folder: str = dd.defaultDict['out_folder'],
+    start_date: date = date(2020, 4, 24),
+    end_date: date = dd.defaultDict['end_date'],
+    impute_dates: bool = dd.defaultDict['impute_dates'],
+    moving_average: int = dd.defaultDict['moving_average'],
     **kwargs
 ) -> pd.DataFrame:
     """
     Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
-    Parameters
-    ----------
-    df_raw
-    out_folder: str
-        Folder where data is written to. Default defined in defaultDict.
-    start_date: date
-        The first date in dataframe. Default defined in defaultDict.
-    end_date: date
-       The last date in dataframe. Default defined in defaultDict.
-    impute_dates: bool
-        Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    moving_average: int
-        Integers >=0.Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    kwargs
+    @param df_raw pd.DataFrame
+    @param out_folder str  Folder where data is written to. Default defined in defaultDict.
+    @param start_date date  The first date in dataframe. Default defined in defaultDict.
+    @param end_date date The last date in dataframe. Default defined in defaultDict.
+    @param impute_dates bool  Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average int  Integers >=0.Applies an 'moving_average'-days moving average on all time seriesto smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param **kwargs
 
-    Returns
-    -------
-    df: pd.DataFrame
-        processed divi data
+    @return df pd.DataFrame  processed divi data
     """
     conf = gd.Conf(out_folder, **kwargs)
 
@@ -184,7 +164,8 @@ def preprocess_divi_data(
     countyid_to_stateid = geoger.get_countyid_to_stateid_map()
     for county_id in df.loc[df.isna().any(axis=1), dd.EngEng['idCounty']].unique():
         state_id = countyid_to_stateid[county_id]
-        df.loc[df[dd.EngEng['idCounty']] == county_id, dd.EngEng['idState']] = state_id
+        df.loc[df[dd.EngEng['idCounty']] == county_id,
+               dd.EngEng['idState']] = state_id
 
     # extract subframe of dates
     df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
@@ -206,23 +187,13 @@ def write_divi_data(
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
     for counties, states and whole Germany, respectively.
 
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Dataframe containing processed divi data
-    file_format: str
-        File format which is used for writing the data. Default defined in defaultDict.
-    out_folder: str
-        Folder where data is written to. Default defined in defaultDict.
-    impute_dates: bool
-        True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    moving_average: int
-        Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param df pd.DataFrame. Dataframe containing processed divi data
+    @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
+    @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
 
-    Returns
-    -------
-    None
+    @return None
     """
 
     directory = os.path.join(out_folder, 'Germany/')
