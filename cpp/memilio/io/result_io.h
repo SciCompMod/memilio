@@ -125,7 +125,6 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
  * @brief Save the results of the edges for a single graph simulation run.
  * @param result Simulation results per edge of the graph.
  * @param ids Identifiers for the start and end node of the edges.
- * @param num_groups Number of groups in the results.
  * @param filename Name of file
  * @return Any io errors that occur during writing of the files. 
  */
@@ -135,8 +134,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
 /**
  * Save the results for the Edges obtained from the function condense_m_mobility.
  * @param ensemble_edges Simulation results for each run for each edge.
- * @param num_groups Number of age groups used simulation.
- * @param ids Identifiers for the start and end node of the edges.
+ * @param pairs_edges Identifiers for the start and end node of the edges.
  * @param result_dir Top level directory for all results of the parameter study.
  * @param save_single_runs [Default: true] Defines if single run results are written.
  * @param save_single_runs [Default: true] Defines if percentiles are written.

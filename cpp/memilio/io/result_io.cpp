@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 #include "memilio/io/result_io.h"
-#include <cstddef>
 
 #ifdef MEMILIO_HAS_HDF5
 
