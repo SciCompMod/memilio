@@ -47,7 +47,12 @@ from memilio.epidata import progress_indicator
 pd.options.mode.copy_on_write = True
 
 
-def check_for_completeness(df: pd.DataFrame, run_checks: bool, merge_berlin: bool = False, merge_eisenach: bool = True):
+def check_for_completeness(
+    df: pd.DataFrame,
+    run_checks: bool,
+    merge_berlin: bool = False,
+    merge_eisenach: bool = True
+):
     """! Checks if all counties are mentioned in the case data set
 
     This check had to be added due to incomplete data downloads
@@ -131,18 +136,20 @@ def fetch_case_data(
         try:
             url = "https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
-            # utf_8_sig can identify those bytes as one sign and display it correctly
+            # utf_8_sig can identify those bytes as one sign and display it
+            # correctly
             df = gd.get_file(path, url, False, param_dict={
                 "encoding": 'utf_8_sig'}, interactive=conf.interactive)
             complete = check_for_completeness(
                 df, run_checks, merge_eisenach=True)
-        except:
+        except BaseException:
             pass
         if not complete:
             gd.default_print(
                 "Info", "Case data is still incomplete. Trying a third source.")
             try:
-                # If the data on github is not available we download the case data from rki from covid-19 datahub
+                # If the data on github is not available we download the case
+                # data from rki from covid-19 datahub
                 url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" + \
                       "items/f10774f1c63e40168479a1feb6c7ca74/data"
                 df = gd.get_file(path, url, False, param_dict={
@@ -150,7 +157,7 @@ def fetch_case_data(
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 complete = check_for_completeness(
                     df, run_checks, merge_eisenach=True)
-            except:
+            except BaseException:
                 pass
         if not complete:
             raise FileNotFoundError(
@@ -228,7 +235,7 @@ def preprocess_case_data(
             try:
                 df[dd.EngEng['date']] = pd.to_datetime(
                     df[dd.EngEng['date']], format="%Y-%m-%d")
-            except:
+            except BaseException:
                 raise gd.DataError(
                     "Time data can't be transformed to intended format")
 
@@ -244,8 +251,14 @@ def preprocess_case_data(
         df.loc[df.NeuGenesen < 0, [AnzahlGenesen]] = 0
 
         # get rid of unnecessary columns
-        df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
-                 "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1, inplace=True)
+        df.drop(['NeuerFall',
+                 'NeuerTodesfall',
+                 'NeuGenesen',
+                 "IstErkrankungsbeginn",
+                 "Meldedatum",
+                 "Refdatum"],
+                axis=1,
+                inplace=True)
 
         # merge Berlin counties
         if not split_berlin:
@@ -327,7 +340,8 @@ def write_case_data(
     if isinstance(files, str):
         files = [files]
     # dict for all files
-    # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
+    # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols,
+    # mod_cols]
     Altersgruppe = dd.GerEng['Altersgruppe']
     Geschlecht = dd.GerEng['Geschlecht']
     AnzahlFall = dd.GerEng['AnzahlFall']
@@ -387,9 +401,10 @@ def write_case_data(
     with progress_indicator.Spinner():
         for file in files:
             if file not in dict_files.keys():
-                raise gd.DataError('Error: File '+file+' cannot be written.')
+                raise gd.DataError(
+                    'Error: File ' + file + ' cannot be written.')
             # split berlin is only relevant for county level
-            if ('county' in file) and (split_berlin == True):
+            if ('county' in file) and (split_berlin):
                 split_berlin_local = True
             else:
                 # dont append _split_berlin to filename on germany/state level
