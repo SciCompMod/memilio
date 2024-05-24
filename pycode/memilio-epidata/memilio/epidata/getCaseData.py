@@ -290,8 +290,6 @@ def write_case_data(
         - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
         - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
 
-    Parameters
-    ----------
     @param df: pd.DataFrame
         Processed dataframe
     @param file_format: str
