@@ -41,7 +41,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
-    , m_mask_compliance((uint32_t)LocationType::Count, 0.)
+    , m_compliance((uint32_t)InterventionType::Count, 1.)
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
@@ -187,7 +187,10 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
-            m_quarantine_start = t;
+            // If the Person comply to isolation, start the quarantine.
+            if (apply_isolation_intervention(rng)) {
+                m_quarantine_start = t;
+            }
             m_infections.back().set_detected();
             return true;
         }
@@ -203,7 +206,10 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         }
         // false positive
         else {
-            m_quarantine_start = t;
+            // If the Person comply to isolation, start the quarantine.
+            if (apply_isolation_intervention(rng)) {
+                m_quarantine_start = t;
+            }
             return true;
         }
     }
@@ -238,32 +244,51 @@ bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location&
 {
     if (target.get_npi_active() == false) {
         m_wears_mask = false;
-        if (get_mask_compliance(target.get_type()) > 0.) {
+        if (get_compliance(InterventionType::Mask) > 0.) {
             // draw if the person wears a mask even if not required
             ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
-            if (wear_mask < get_mask_compliance(target.get_type())) {
+            if (wear_mask < get_compliance(InterventionType::Mask)) {
                 m_wears_mask = true;
             }
         }
     }
     else {
         m_wears_mask = true;
-        if (get_mask_compliance(target.get_type()) < 0.) {
+        if (get_compliance(InterventionType::Mask) < 0.) {
             // draw if a person refuses to wear the required mask
             ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng, -1., 0.);
-            if (wear_mask > get_mask_compliance(target.get_type())) {
+            if (wear_mask > get_compliance(InterventionType::Mask)) {
                 m_wears_mask = false;
             }
             return false;
         }
         if (m_wears_mask == true) {
-
-            if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
+            if ((static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) ||
+                (m_mask.get_type() == MaskType::FFP2 && m_mask.get_time_used() > hours(8)) ||
+                (m_mask.get_type() == MaskType::Surgical)) {
                 m_mask.change_mask(target.get_required_mask());
             }
         }
     }
     return true;
+}
+
+bool Person::apply_test_intervention(RandomNumberGenerator& rng)
+{
+    ScalarType do_test = UniformDistribution<double>::get_instance()(rng, -1., 0.);
+    if (do_test <= get_compliance(InterventionType::Testing)) {
+        return true;
+    }
+    return false;
+}
+
+bool Person::apply_isolation_intervention(RandomNumberGenerator& rng)
+{
+    ScalarType isolate = UniformDistribution<double>::get_instance()(rng, -1., 0.);
+    if (isolate <= get_compliance(InterventionType::Isolation)) {
+        return true;
+    }
+    return false;
 }
 
 std::pair<ExposureType, TimePoint> Person::get_latest_protection() const

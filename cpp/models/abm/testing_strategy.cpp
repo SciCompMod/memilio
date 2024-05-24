@@ -173,6 +173,11 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
         return true;
     }
 
+    // If the Person does not comply to test intervention, the Person enters the Location without test.
+    if (!person.apply_test_intervention(rng)) {
+        return true;
+    }
+
     //lookup schemes for this specific location as well as the location type
     //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
     for (auto loc_key : {LocationId{location.get_index(), location.get_type()},

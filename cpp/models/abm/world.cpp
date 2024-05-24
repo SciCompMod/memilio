@@ -19,6 +19,7 @@
 */
 #include "abm/world.h"
 #include "abm/location_type.h"
+#include "abm/intervention_type.h"
 #include "abm/mask_type.h"
 #include "abm/person.h"
 #include "abm/location.h"

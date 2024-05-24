@@ -61,9 +61,9 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         }
 
         //equal chance of (moderate) mask refusal and (moderate) mask eagerness
-        auto pct_mask_values = std::array{0.05 /*-1*/, 0.2 /*-0.5*/, 0.5 /*0*/, 0.2 /*0.5*/, 0.05 /*1*/};
-        auto mask_value      = -1 + 0.5 * mio::DiscreteDistribution<int>::get_instance()(prng, pct_mask_values);
-        person.set_mask_preferences({size_t(mio::abm::LocationType::Count), mask_value});
+        auto pct_compliance_values = std::array{0.05 /*-1*/, 0.2 /*-0.5*/, 0.5 /*0*/, 0.2 /*0.5*/, 0.05 /*1*/};
+        auto compliance_value      = -1 + 0.5 * mio::DiscreteDistribution<int>::get_instance()(prng, pct_mask_values);
+        person.set_compliance({size_t(mio::abm::InterventionType::Count), compliance_value});
     }
 
     //masks at locations

@@ -162,11 +162,13 @@ TEST(TestPerson, get_tested)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
         mock_uniform_dist_pcr;
     EXPECT_CALL(mock_uniform_dist_pcr.get_mock(), invoke)
-        .Times(4)
+        .Times(6)
         .WillOnce(Return(0.4))
+        .WillOnce(Return(0.8))
         .WillOnce(Return(0.95))
         .WillOnce(Return(0.6))
-        .WillOnce(Return(0.999));
+        .WillOnce(Return(0.999))
+        .WillOnce(Return(0.8));
     ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), true);
     ASSERT_EQ(infected.is_in_quarantine(t, params), true);
     infected.remove_quarantine();
@@ -182,11 +184,13 @@ TEST(TestPerson, get_tested)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
         mock_uniform_dist_antigen;
     EXPECT_CALL(mock_uniform_dist_antigen.get_mock(), invoke)
-        .Times(4)
+        .Times(6)
         .WillOnce(Return(0.4))
+        .WillOnce(Return(0.8))
         .WillOnce(Return(0.95))
         .WillOnce(Return(0.6))
-        .WillOnce(Return(0.999));
+        .WillOnce(Return(0.999))
+        .WillOnce(Return(0.8));
     ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), true);
     ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), false);
@@ -230,28 +234,23 @@ TEST(TestPerson, applyMaskIntervention)
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     target.set_npi_active(false);
+    person.set_compliance(mio::abm::InterventionType::Mask, 0.);
     person.apply_mask_intervention(rng_person, target);
     ASSERT_FALSE(person.get_wear_mask());
 
-    auto preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, 1.);
-    person.set_mask_preferences(preferences);
+    person.set_compliance(mio::abm::InterventionType::Mask, 1);
     person.apply_mask_intervention(rng_person, target);
-
     ASSERT_TRUE(person.get_wear_mask());
 
     target.set_npi_active(true);
     target.set_required_mask(mio::abm::MaskType::Surgical);
-    preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, 0.);
-    person.set_mask_preferences(preferences);
+    person.set_compliance(mio::abm::InterventionType::Mask, 0);
     person.apply_mask_intervention(rng_person, target);
-
     ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
     ASSERT_TRUE(person.get_wear_mask());
 
-    preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, -1.);
-    person.set_mask_preferences(preferences);
+    person.set_compliance(mio::abm::InterventionType::Mask, -1.);
     person.apply_mask_intervention(rng_person, target);
-
     ASSERT_FALSE(person.get_wear_mask());
 }
 
@@ -329,4 +328,14 @@ TEST(Person, rng)
     p_rng();
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
     ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
+}
+
+TEST(TestPerson, applyTestIntervention)
+{
+    
+}
+
+TEST(TestPerson, applyIsolationIntervention)
+{
+    
 }
