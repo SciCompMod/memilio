@@ -54,8 +54,7 @@ def fetch_divi_data(
     start_date: date = date(2020, 4, 24),
     **kwargs
 ) -> Tuple[pd.DataFrame, date]:
-    """
-    Downloads or reads the DIVI ICU data and writes them in different files.
+    """! Downloads or reads the DIVI ICU data and writes them in different files.
 
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
@@ -115,8 +114,7 @@ def preprocess_divi_data(
     moving_average: int = dd.defaultDict['moving_average'],
     **kwargs
 ) -> pd.DataFrame:
-    """
-    Processing of the downloaded data
+    """! Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
     @param df_raw pd.DataFrame
@@ -180,8 +178,8 @@ def write_divi_data(
     impute_dates: bool = dd.defaultDict['impute_dates'],
     moving_average: int = dd.defaultDict['moving_average'],
 ) -> None:
-    """
-    Write the divi data into json files
+    """! Write the divi data into json files
+
     Three kinds of structuring of the data are done.
     We obtain the chronological sequence of ICU and ICU_ventilated
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
