@@ -22,7 +22,7 @@ import unittest
 import numpy as np
 
 import memilio.simulation as mio
-from memilio.simulation.secir import Model
+from memilio.simulation.osecir import Model
 
 
 class Test_DynamicNPIs(unittest.TestCase):

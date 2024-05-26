@@ -30,7 +30,7 @@ from memilio.simulation.osir import (Model, interpolate_simulation_result,
 
 def run_osir_simulation():
     """
-    Runs the c++ osir model
+    Runs the c++ ODE SIR model
     """
 
     # Define population of age groups
@@ -77,6 +77,6 @@ def run_osir_simulation():
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         'osir_simple',
-        description='Simple example demonstrating the setup and simulation of the Osir model.')
+        description='Simple example demonstrating the setup and simulation of the ODE SIR model.')
     args = arg_parser.parse_args()
     run_osir_simulation()
