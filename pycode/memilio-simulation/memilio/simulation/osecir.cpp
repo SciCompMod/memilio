@@ -319,7 +319,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
 #endif // MEMILIO_HAS_JSONCPP
 
     m.def("interpolate_simulation_result",
-          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
+          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<mio::osecir::Simulation<>>));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
 
