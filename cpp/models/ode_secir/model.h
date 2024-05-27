@@ -320,6 +320,7 @@ public:
     FeedbackSimulation(Model const& model, double t0 = 0., double dt = 0.1)
         : BaseT(model, t0, dt)
         , m_t_last_npi_check(t0)
+        , m_perceived_risk((size_t)model.parameters.get_num_groups())
     {
         m_model_ptr = std::make_shared<Model>(model);
         m_models.push_back(m_model_ptr);
@@ -341,6 +342,7 @@ public:
         , m_t_last_npi_check(other.m_t_last_npi_check)
         , m_dynamic_npi(std::move(other.m_dynamic_npi))
         , m_model_ptr(std::move(other.m_model_ptr))
+        , m_perceived_risk(std::move(other.m_perceived_risk))
     {
     }
 
@@ -382,6 +384,11 @@ public:
             reduc_fac_location = std::min(reduc_fac_location, params.template get<ContactReductionMax>()[loc]);
 
             params.template get<ContactPatterns>().get_dampings().push_back(contact_reduction(reduc_fac_location));
+            this->get_model().parameters.template get<ContactPatterns>().get_dampings().push_back(
+                contact_reduction(reduc_fac_location));
+
+            this->get_model().parameters.template get<ContactPatterns>().make_matrix();
+            params.template get<ContactPatterns>().make_matrix();
         }
     }
 
@@ -421,7 +428,9 @@ public:
             // icu_occupancy_adjusted_rel = std::min(icu_occupancy_adjusted_rel, 1.0); Now limited later
             perceived_risk += icu_occupancy_adjusted_rel * gamma;
         }
-        perceived_risk = std::min(perceived_risk, 1.0);
+        perceived_risk  = std::min(perceived_risk, 1.0);
+        auto num_groups = (size_t)m_model_ptr->parameters.get_num_groups();
+        mio::unused(num_groups);
         m_perceived_risk.add_time_point(
             m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_last_time(),
             Eigen::VectorXd::Constant((size_t)m_model_ptr->parameters.get_num_groups(), perceived_risk));
@@ -593,7 +602,7 @@ private:
                                                        mio::SimulationTime(0)}; /// Dynamic NPI data.
     std::shared_ptr<Model> m_model_ptr; /// Pointer to the model.
     inline static std::vector<std::shared_ptr<Model>> m_models; /// List of model pointers.
-    mio::TimeSeries<ScalarType> m_perceived_risk = mio::TimeSeries<ScalarType>(6); /// Perceived risk time series.
+    mio::TimeSeries<ScalarType> m_perceived_risk; // = mio::TimeSeries<ScalarType>(6); /// Perceived risk time series.
 };
 
 /**

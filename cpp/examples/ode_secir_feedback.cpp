@@ -26,7 +26,7 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 200;
+    double tmax = 35;
     double dt   = 0.1;
 
     mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -49,7 +49,6 @@ int main()
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
@@ -74,10 +73,17 @@ int main()
     model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
     model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
 
+    model.parameters.get<mio::osecir::ICUCapacity>()            = 35;
+    model.parameters.get<mio::osecir::CutOffGamma>()            = 45;
+    model.parameters.get<mio::osecir::EpsilonContacts>()        = 0.1;
+    model.parameters.get<mio::osecir::BlendingFactorLocal>()    = 1. / 3.;
+    model.parameters.get<mio::osecir::BlendingFactorRegional>() = 1. / 3.;
+    model.parameters.get<mio::osecir::ContactReductionMin>()    = {0.50};
+    model.parameters.get<mio::osecir::ContactReductionMax>()    = {0.9};
+
     // init data also needs to be relative (per 100k population)
-    model.parameters.get<mio::osecir::ICUCapacity>() = 35;
-    auto& icu_occupancy                              = model.parameters.get<mio::osecir::ICUOccupancyLocal>();
-    Eigen::VectorXd icu_day                          = Eigen::VectorXd::Zero(1);
+    auto& icu_occupancy     = model.parameters.get<mio::osecir::ICUOccupancyLocal>();
+    Eigen::VectorXd icu_day = Eigen::VectorXd::Zero(1);
     for (int t = -50; t <= 0; ++t) {
         for (size_t i = 0; i < 1; i++) {
             icu_day(i) = (100 + t) / nb_total_t0 * 100'000;
