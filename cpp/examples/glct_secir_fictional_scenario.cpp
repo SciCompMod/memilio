@@ -20,6 +20,7 @@
 
 #include "glct_secir/model.h"
 #include "glct_secir/infection_state.h"
+#include "glct_secir/parameters.h"
 #include "glct_secir/simulation.h"
 
 #include "memilio/config.h"
@@ -38,13 +39,13 @@
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
 // Valid initialization vectors only available for 3 and 10 subcompartments.
 // For other numbers of subcompartments, an initialization vector is used but the result is maybe distorted.
-constexpr int num_subcompartments       = 10;
-constexpr int twice_num_subcompartments = 20;
+constexpr int num_subcompartments       = 3;
+constexpr int twice_num_subcompartments = 6;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"TimeExposed", 3.335},
                                                           {"TransmissionProbabilityOnContact", 0.0733271},
-                                                          {"RelativeTransmissionNoSymptoms", 1},
+                                                          {"RelativeTransmissionNoSymptoms", 1.},
                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                           {"Seasonality", 0.},
                                                           {"RecoveredPerInfectedNoSymptoms", 0.206901},
@@ -58,37 +59,37 @@ Eigen::VectorXd get_initialization_vector()
     using LctState = Model::LctState;
     Eigen::VectorXd init_subcomp(LctState::Count);
     if (num_subcompartments == 3) {
-        init_subcomp << 82787281.91474217, //Susceptibles
-            4303.67085026, 4500.14078333, 4503.17492126, //Exposed
-            1840.90579408, 1992.93581070, 1997.23121458, //InfectedNoSymptomsToInfectedSymptoms
-            2434.97473194, 2476.40769926, 2476.64345240, //InfectedNoSymptomsToRecovered
-            518.60478479, 531.03727818, 531.13738893, //InfectedSymptomsToInfectedSevere
-            6759.84063121, 6905.72812101, 6906.78451992, //InfectedSymptomsToRecovered
-            407.35141509, //InfectedSevereToInfectedCritical
-            2519.50154975, // InfectedSevereToRecovered
-            150.42109554, //InfectedCriticalToDead
-            612.06979345, //InfectedCriticalToRecovered
-            305670.52342214, // Recovered
-            9710.; //Dead
+        init_subcomp << 82786880.87971967, //Susceptibles
+            4501.15138702, 4503.17589402, 4503.17594660, // Exposed
+            1995.63097927, 1997.23640301, 1997.23677271, // InfectedNoSymptomsToInfectedSymptoms
+            2476.22539714, 2476.64393643, 2476.64356410, //  InfectedNoSymptomsToRecovered
+            531.01119455, 531.13743225, 531.13738356, //  InfectedSymptomsToInfectedSevere
+            6905.30655382, 6906.78534187, 6906.78459191, // InfectedSymptomsToRecovered
+            409.51336414, //InfectedSevereToInfectedCritical
+            2529.82777984, // InfectedSevereToRecovered
+            150.89097051, //InfectedCriticalToDead
+            613.76366884, //InfectedCriticalToRecovered
+            305496.84171871, //Recovered
+            9710.00000000; //  Dead
     }
     else if (num_subcompartments == 10) {
-        init_subcomp << 82787281.88445635, //Susceptibles
-            1158.51897206, 1340.87730762, 1350.90877838, 1350.96872769, 1350.95403397, 1350.95388294, 1350.95385110,
-            1350.95381731, 1350.95380805, 1350.95381955, //Exposed
-            452.82250980, 585.02006871, 598.96957226, 599.23553224, 599.17357658, 599.17088900, 599.17129201,
-            599.17128375, 599.17131584, 599.17129607, //InfectedNoSymptomsToInfectedSymptoms
-            701.87643325, 742.20746963, 742.99427615, 742.99496591, 742.99476755, 742.99472767, 742.99466380,
-            742.99464044, 742.99465060, 742.99461370, //  InfectedNoSymptomsToRecovered
-            147.04234391, 159.00804311, 159.34106425, 159.34160448, 159.34146269, 159.34146937, 159.34146829,
-            159.34145766, 159.34145193, 159.34145056, //  InfectedSymptomsToInfectedSevere
-            1927.55915593, 2068.51904896, 2072.03550124, 2072.04036303, 2072.03904531, 2072.03905911, 2072.03898416,
-            2072.03899500, 2072.03887676, 2072.03881779, //  InfectedSymptomsToRecovered
-            407.35141509, // InfectedSevereToInfectedCritical
-            2519.50154975, //InfectedSevereToRecovered
-            150.42109554, // InfectedCriticalToDead
-            612.06979345, //InfectedCriticalToRecovered
-            305670.48648263, //Recovered
-            9710.00000000; // Dead
+        init_subcomp << 82786880.85122260, //Susceptibles
+            1348.92959502, 1350.95296417, 1350.95395534, 1350.95393656, 1350.95391844, 1350.95390254, 1350.95388719,
+            1350.95387321, 1350.95385957, 1350.95384662, // Exposed
+            597.56641004, 599.16989113, 599.17132094, 599.17131635, 599.17131265, 599.17130876, 599.17130487,
+            599.17130154, 599.17129810, 599.17129482, //  InfectedNoSymptomsToInfectedSymptoms
+            742.57588476, 742.99474927, 742.99479428, 742.99476528, 742.99473822, 742.99471383, 742.99469033,
+            742.99466849, 742.99464776, 742.99462731, //  InfectedNoSymptomsToRecovered
+            159.21519311, 159.34144908, 159.34147749, 159.34147315, 159.34146915, 159.34146538, 159.34146192,
+            159.34145862, 159.34145549, 159.34145249, //  InfectedSymptomsToInfectedSevere
+            2070.55965000, 2072.03889013, 2072.03916970, 2072.03910523, 2072.03904662, 2072.03899265, 2072.03894331,
+            2072.03889426, 2072.03885019, 2072.03880558, //  InfectedSymptomsToRecovered
+            409.51336414, //  InfectedSevereToInfectedCritical
+            2529.82777984, //  InfectedSevereToRecovered
+            150.89097051, //  InfectedCriticalToDead
+            613.76366884, //  InfectedCriticalToRecovered
+            305496.80551313, //  Recovered
+            9710.00000000; //  Dead
     }
     else {
         Eigen::VectorXd vec_comp(8);
@@ -169,6 +170,7 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
 */
 mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
 {
+    std::cout << "Simulation with GLCT model and " << num_subcompartments << " subcompartments." << std::endl;
     // Initialize model.
     using Model = mio::glsecir::Model<num_subcompartments, twice_num_subcompartments, twice_num_subcompartments, 2, 2>;
     using LctState = Model::LctState;
@@ -179,8 +181,8 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
     model.parameters.get<mio::glsecir::StartingProbabilitiesExposed>() =
         mio::glsecir::StartingProbabilitiesExposed().get_default(
             LctState::get_num_subcompartments<LctState::InfectionState::Exposed>());
-    model.parameters.get<mio::glsecir::TransitionMatrixExposed>() = mio::glsecir::TransitionMatrixExposed().get_default(
-        LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(), 3.335);
+    model.parameters.get<mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms>() =
+        mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(num_subcompartments, 3.335);
 
     // InfectedNoSymptoms.
     Eigen::VectorXd StartingProbabilitiesInfectedNoSymptoms = Eigen::VectorXd::Zero(twice_num_subcompartments);
@@ -190,18 +192,10 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms>() =
         StartingProbabilitiesInfectedNoSymptoms;
 
-    Eigen::MatrixXd TransitionMatrixInfectedNoSymptoms =
-        Eigen::VectorXd::Constant(twice_num_subcompartments, -num_subcompartments / 1.865).asDiagonal();
-    TransitionMatrixInfectedNoSymptoms.diagonal(1).setConstant(num_subcompartments / 1.865);
-
-    for (int i = num_subcompartments; i < twice_num_subcompartments - 1; i++) {
-        TransitionMatrixInfectedNoSymptoms(i, i)     = -num_subcompartments / 8.865;
-        TransitionMatrixInfectedNoSymptoms(i, i + 1) = num_subcompartments / 8.865;
-    }
-    TransitionMatrixInfectedNoSymptoms(num_subcompartments - 1, num_subcompartments) = 0;
-    TransitionMatrixInfectedNoSymptoms(twice_num_subcompartments - 1, twice_num_subcompartments - 1) =
-        -num_subcompartments / 8.865;
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptoms>() = TransitionMatrixInfectedNoSymptoms;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() =
+        mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms().get_default(num_subcompartments, 1.865);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(num_subcompartments, 8.865);
 
     // InfectedSymptoms.
     Eigen::VectorXd StartingProbabilitiesInfectedSymptoms      = Eigen::VectorXd::Zero(twice_num_subcompartments);
@@ -209,18 +203,10 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
     StartingProbabilitiesInfectedSymptoms[num_subcompartments] = 1 - simulation_parameter["SeverePerInfectedSymptoms"];
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms>() = StartingProbabilitiesInfectedSymptoms;
 
-    Eigen::MatrixXd TransitionMatrixInfectedSymptoms =
-        Eigen::VectorXd::Constant(twice_num_subcompartments, -num_subcompartments / 6.30662).asDiagonal();
-    TransitionMatrixInfectedSymptoms.diagonal(1).setConstant(num_subcompartments / 6.30662);
-
-    for (int i = num_subcompartments; i < twice_num_subcompartments - 1; i++) {
-        TransitionMatrixInfectedSymptoms(i, i)     = -num_subcompartments / 7.;
-        TransitionMatrixInfectedSymptoms(i, i + 1) = num_subcompartments / 7.;
-    }
-    TransitionMatrixInfectedSymptoms(num_subcompartments - 1, num_subcompartments) = 0;
-    TransitionMatrixInfectedSymptoms(twice_num_subcompartments - 1, twice_num_subcompartments - 1) =
-        -num_subcompartments / 7.;
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptoms>() = TransitionMatrixInfectedSymptoms;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere().get_default(num_subcompartments, 6.30662);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(num_subcompartments, 7.);
 
     // InfectedSevere.
     Eigen::VectorXd StartingProbabilitiesInfectedSevere = Eigen::VectorXd::Zero(2);
@@ -228,10 +214,10 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
     StartingProbabilitiesInfectedSevere[1]              = 1 - simulation_parameter["CriticalPerSevere"];
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>() = StartingProbabilitiesInfectedSevere;
 
-    Eigen::MatrixXd TransitionMatrixInfectedSevere                       = Eigen::MatrixXd::Zero(2, 2);
-    TransitionMatrixInfectedSevere(0, 0)                                 = -1. / 9.36;
-    TransitionMatrixInfectedSevere(1, 1)                                 = -1. / 12.110701;
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevere>() = TransitionMatrixInfectedSevere;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(1, 9.36);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(1, 12.110701);
 
     // InfectedCritical.
     Eigen::VectorXd StartingProbabilitiesInfectedCritical = Eigen::VectorXd::Zero(2);
@@ -239,10 +225,10 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
     StartingProbabilitiesInfectedCritical[1]              = 1 - simulation_parameter["DeathsPerCritical"];
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical>() = StartingProbabilitiesInfectedCritical;
 
-    Eigen::MatrixXd TransitionMatrixInfectedCritical                       = Eigen::MatrixXd::Zero(2, 2);
-    TransitionMatrixInfectedCritical(0, 0)                                 = -1. / 15.88;
-    TransitionMatrixInfectedCritical(1, 1)                                 = -1. / 17.92;
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCritical>() = TransitionMatrixInfectedCritical;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(1, 15.88);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(1, 17.92);
 
     // Remaining parameters.
     model.parameters.get<mio::glsecir::ContactPatterns>() = get_contact_matrix(R0);
@@ -254,11 +240,6 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
     model.parameters.get<mio::glsecir::RiskOfInfectionFromSymptomatic>() =
         simulation_parameter["RiskOfInfectionFromSymptomatic"];
     model.parameters.get<mio::glsecir::Seasonality>() = simulation_parameter["Seasonality"];
-    model.parameters.get<mio::glsecir::RecoveredPerInfectedNoSymptoms>() =
-        simulation_parameter["RecoveredPerInfectedNoSymptoms"];
-    model.parameters.get<mio::glsecir::SeverePerInfectedSymptoms>() = simulation_parameter["SeverePerInfectedSymptoms"];
-    model.parameters.get<mio::glsecir::CriticalPerSevere>()         = simulation_parameter["CriticalPerSevere"];
-    model.parameters.get<mio::glsecir::DeathsPerCritical>()         = simulation_parameter["DeathsPerCritical"];
 
     model.set_initial_values(get_initialization_vector());
 
@@ -266,7 +247,7 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
     mio::TimeSeries<ScalarType> result = mio::glsecir::simulate(
         0, tmax, 0.1, model,
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            1e-10, 1e-5, 0.1, 0.1));
+            1e-10, 1e-5, 0.001, 0.001));
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
 
@@ -286,11 +267,11 @@ mio::IOResult<void> simulate_glct_model(ScalarType R0, ScalarType tmax, std::str
 
 int main()
 {
-    ScalarType R0 = 0.5;
+    ScalarType R0 = 2.;
     // Path is valid if file is executed eg in memilio/build/bin.
     // Folder has to exist beforehand.
-    std::string save_dir = "../../data/simulation_lct/dropR0short/";
-    //std::string save_dir = "../../data/simulation_lct/riseR02long/";
+    //std::string save_dir = "../../data/simulation_lct/dropR0short/";
+    std::string save_dir = "../../data/simulation_lct/riseR02short/";
 
     auto result = simulate_glct_model(R0, 10, save_dir);
     if (!result) {

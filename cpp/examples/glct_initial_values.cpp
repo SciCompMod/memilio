@@ -36,7 +36,7 @@
 constexpr int num_subcompartments = 10;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
-std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
+std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.001},
                                                           {"total_population", 83155031.},
                                                           {"total_confirmed_cases", 341223.},
                                                           {"deaths", 9710.},
@@ -104,7 +104,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     // Add initial time point to time series.
     init.add_time_point(-350, init_transitions);
     // Add further time points until time 0 with constant values.
-    while (init.get_last_time() < -1e-10) {
+    while (init.get_last_time() < -simulation_parameter["dt_flows"] + 1e-10) {
         init.add_time_point(init.get_last_time() + simulation_parameter["dt_flows"], init_transitions);
     }
     return init;
@@ -163,7 +163,6 @@ void calculate_inital_values()
 
     // --- Other initial values. ---
     // As initializer only uses the incoming flows, we can calculate remaining results at one time.
-    // InfectedCriticalToRecovered.
     parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>() =
         simulation_parameter["TimeInfectedNoSymptomsToRecovered"];
     parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>() = simulation_parameter["TimeInfectedSymptomsToRecovered"];

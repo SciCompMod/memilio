@@ -59,7 +59,7 @@ struct StartingProbabilitiesExposed {
 /**
  * @brief Transition Matrix of the Exposed compartment.
  */
-struct TransitionMatrixExposed {
+struct TransitionMatrixExposedToInfectedNoSymptoms {
     using Type = Eigen::MatrixXd;
     /**
      * @param[in] NumExposed Number of subcompartiments of the Exposed compartment.
@@ -73,7 +73,7 @@ struct TransitionMatrixExposed {
     }
     static std::string name()
     {
-        return "TransitionMatrixExposed";
+        return "TransitionMatrixExposedToInfectedNoSymptoms";
     }
 };
 
@@ -100,7 +100,7 @@ struct StartingProbabilitiesInfectedNoSymptoms {
 /**
  * @brief Transition Matrix of the InfectedNoSymptoms compartment.
  */
-struct TransitionMatrixInfectedNoSymptoms {
+struct TransitionMatrixInfectedNoSymptomsToInfectedSymptoms {
     using Type = Eigen::MatrixXd;
     /**
      * @param[in] NumInfectedNoSymptoms Number of subcompartiments of the InfectedNoSymptoms compartment.
@@ -117,7 +117,31 @@ struct TransitionMatrixInfectedNoSymptoms {
     }
     static std::string name()
     {
-        return "TransitionMatrixInfectedNoSymptoms";
+        return "TransitionMatrixInfectedNoSymptomsToInfectedSymptoms";
+    }
+};
+
+/**
+ * @brief Transition Matrix of the InfectedNoSymptoms compartment.
+ */
+struct TransitionMatrixInfectedNoSymptomsToRecovered {
+    using Type = Eigen::MatrixXd;
+    /**
+     * @param[in] NumInfectedNoSymptoms Number of subcompartiments of the InfectedNoSymptoms compartment.
+     * @param[in] TimeInfectedNoSymptoms Average time spent in InfectedNoSymptoms before developing Symptoms or recover
+     *       in day unit.
+     */
+    static Type get_default(int NumInfectedNoSymptoms, ScalarType TimeInfectedNoSymptoms = 1.)
+    {
+        Eigen::MatrixXd def =
+            Eigen::VectorXd::Constant(NumInfectedNoSymptoms, -NumInfectedNoSymptoms / TimeInfectedNoSymptoms)
+                .asDiagonal();
+        def.diagonal(1).setConstant(NumInfectedNoSymptoms / TimeInfectedNoSymptoms);
+        return def;
+    }
+    static std::string name()
+    {
+        return "TransitionMatrixInfectedNoSymptomsToInfectedSymptomsToRecovered";
     }
 };
 
@@ -144,23 +168,45 @@ struct StartingProbabilitiesInfectedSymptoms {
 /**
  * @brief Transition Matrix of the InfectedSymptoms compartment.
  */
-struct TransitionMatrixInfectedSymptoms {
+struct TransitionMatrixInfectedSymptomsToInfectedSevere {
     using Type = Eigen::MatrixXd;
     /**
      * @param[in] NumInfectedSymptoms Number of subcompartiments of the InfectedSymptoms compartment.
-     * @param[in] TimeInfectedSymptoms Average time spent in InfectedSymptoms before going to Hospital or recover 
+     * @param[in] TimeInfectedSymptomsToInfectedSevere Average time spent in InfectedSymptoms before going to Hospital or recover 
      *      in day unit.
      */
-    static Type get_default(int NumInfectedSymptoms, ScalarType TimeInfectedSymptoms = 1.5)
+    static Type get_default(int NumInfectedSymptoms, ScalarType TimeInfectedSymptomsToInfectedSevere = 1.5)
     {
         Eigen::MatrixXd def =
-            Eigen::VectorXd::Constant(NumInfectedSymptoms, -NumInfectedSymptoms / TimeInfectedSymptoms).asDiagonal();
-        def.diagonal(1).setConstant(NumInfectedSymptoms / TimeInfectedSymptoms);
+            Eigen::VectorXd::Constant(NumInfectedSymptoms, -NumInfectedSymptoms / TimeInfectedSymptomsToInfectedSevere)
+                .asDiagonal();
+        def.diagonal(1).setConstant(NumInfectedSymptoms / TimeInfectedSymptomsToInfectedSevere);
         return def;
     }
     static std::string name()
     {
-        return "TransitionMatrixInfectedSymptoms";
+        return "TransitionMatrixInfectedSymptomsToInfectedSevere";
+    }
+};
+
+struct TransitionMatrixInfectedSymptomsToRecovered {
+    using Type = Eigen::MatrixXd;
+    /**
+     * @param[in] NumInfectedSymptoms Number of subcompartiments of the InfectedSymptoms compartment.
+     * @param[in] TimeInfectedSymptomsToRecovered Average time spent in InfectedSymptoms before going to Hospital or recover 
+     *      in day unit.
+     */
+    static Type get_default(int NumInfectedSymptoms, ScalarType TimeInfectedSymptomsToRecovered = 1.5)
+    {
+        Eigen::MatrixXd def =
+            Eigen::VectorXd::Constant(NumInfectedSymptoms, -NumInfectedSymptoms / TimeInfectedSymptomsToRecovered)
+                .asDiagonal();
+        def.diagonal(1).setConstant(NumInfectedSymptoms / TimeInfectedSymptomsToRecovered);
+        return def;
+    }
+    static std::string name()
+    {
+        return "TransitionMatrixInfectedSymptomsToRecovered";
     }
 };
 
@@ -187,22 +233,46 @@ struct StartingProbabilitiesInfectedSevere {
 /**
  * @brief Transition Matrix of the InfectedSevere compartment.
  */
-struct TransitionMatrixInfectedSevere {
+struct TransitionMatrixInfectedSevereToInfectedCritical {
     using Type = Eigen::MatrixXd;
     /**
      * @param[in] NumInfectedSevere Number of subcompartiments of the InfectedSevere compartment.
-     * @param[in] TimeInfectedSevere Average time being in the Hospital before treated by ICU or recover in day unit.
+     * @param[in] TimeInfectedSevereToInfectedCritical Average time being in the Hospital before treated by ICU or recover in day unit.
      */
-    static Type get_default(int NumInfectedSevere, ScalarType TimeInfectedSevere = 1.)
+    static Type get_default(int NumInfectedSevere, ScalarType TimeInfectedSevereToInfectedCritical = 1.)
     {
         Eigen::MatrixXd def =
-            Eigen::VectorXd::Constant(NumInfectedSevere, -NumInfectedSevere / TimeInfectedSevere).asDiagonal();
-        def.diagonal(1).setConstant(NumInfectedSevere / TimeInfectedSevere);
+            Eigen::VectorXd::Constant(NumInfectedSevere, -NumInfectedSevere / TimeInfectedSevereToInfectedCritical)
+                .asDiagonal();
+        def.diagonal(1).setConstant(NumInfectedSevere / TimeInfectedSevereToInfectedCritical);
         return def;
     }
     static std::string name()
     {
-        return "TransitionMatrixInfectedSevere";
+        return "TransitionMatrixInfectedSevereToInfectedCritical";
+    }
+};
+
+/**
+ * @brief Transition Matrix of the InfectedSevere compartment.
+ */
+struct TransitionMatrixInfectedSevereToRecovered {
+    using Type = Eigen::MatrixXd;
+    /**
+     * @param[in] NumInfectedSevere Number of subcompartiments of the InfectedSevere compartment.
+     * @param[in] TimeInfectedSevereToRecovered  Average time being in the Hospital before treated by ICU or recover in day unit.
+     */
+    static Type get_default(int NumInfectedSevere, ScalarType TimeInfectedSevereToRecovered = 1.)
+    {
+        Eigen::MatrixXd def =
+            Eigen::VectorXd::Constant(NumInfectedSevere, -NumInfectedSevere / TimeInfectedSevereToRecovered)
+                .asDiagonal();
+        def.diagonal(1).setConstant(NumInfectedSevere / TimeInfectedSevereToRecovered);
+        return def;
+    }
+    static std::string name()
+    {
+        return "TransitionMatrixInfectedSevereToRecovered";
     }
 };
 
@@ -229,22 +299,46 @@ struct StartingProbabilitiesInfectedCritical {
 /**
  * @brief Transition Matrix of the InfectedCritical compartment.
  */
-struct TransitionMatrixInfectedCritical {
+struct TransitionMatrixInfectedCriticalToDead {
     using Type = Eigen::MatrixXd;
     /**
      * @param[in] NumInfectedCritical Number of subcompartiments of the InfectedCritical compartment.
-     * @param[in] TimeInfectedCritical Average time treated by ICU before dead or recover in day unit.
+     * @param[in] TimeInfectedCriticalToDead Average time treated by ICU before dead in day unit.
      */
-    static Type get_default(int NumInfectedCritical, ScalarType TimeInfectedCritical = 1.)
+    static Type get_default(int NumInfectedCritical, ScalarType TimeInfectedCriticalToDead = 1.)
     {
         Eigen::MatrixXd def =
-            Eigen::VectorXd::Constant(NumInfectedCritical, -NumInfectedCritical / TimeInfectedCritical).asDiagonal();
-        def.diagonal(1).setConstant(NumInfectedCritical / TimeInfectedCritical);
+            Eigen::VectorXd::Constant(NumInfectedCritical, -NumInfectedCritical / TimeInfectedCriticalToDead)
+                .asDiagonal();
+        def.diagonal(1).setConstant(NumInfectedCritical / TimeInfectedCriticalToDead);
         return def;
     }
     static std::string name()
     {
-        return "TransitionMatrixInfectedCritical";
+        return "TransitionMatrixInfectedCriticalToDead";
+    }
+};
+
+/**
+ * @brief Transition Matrix of the InfectedCritical compartment.
+ */
+struct TransitionMatrixInfectedCriticalToRecovered {
+    using Type = Eigen::MatrixXd;
+    /**
+     * @param[in] NumInfectedCritical Number of subcompartiments of the InfectedCritical compartment.
+     * @param[in] TimeInfectedCriticalToRecovered Average time treated by ICU before recovery in day unit.
+     */
+    static Type get_default(int NumInfectedCritical, ScalarType TimeInfectedCriticalToRecovered = 1.)
+    {
+        Eigen::MatrixXd def =
+            Eigen::VectorXd::Constant(NumInfectedCritical, -NumInfectedCritical / TimeInfectedCriticalToRecovered)
+                .asDiagonal();
+        def.diagonal(1).setConstant(NumInfectedCritical / TimeInfectedCriticalToRecovered);
+        return def;
+    }
+    static std::string name()
+    {
+        return "TransitionMatrixInfectedCriticalToRecovered";
     }
 };
 
@@ -312,66 +406,6 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
- * @brief The percentage of asymptomatic cases in the GLCT-SECIR model.
- */
-struct RecoveredPerInfectedNoSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
-    {
-        return 0.5;
-    }
-    static std::string name()
-    {
-        return "RecoveredPerInfectedNoSymptoms";
-    }
-};
-
-/**
- * @brief The percentage of hospitalized patients per infected patients in the GLCT-SECIR model.
- */
-struct SeverePerInfectedSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
-    {
-        return 0.5;
-    }
-    static std::string name()
-    {
-        return "SeverePerInfectedSymptoms";
-    }
-};
-
-/**
- * @brief The percentage of ICU patients per hospitalized patients in the GLCT-SECIR model.
- */
-struct CriticalPerSevere {
-    using Type = ScalarType;
-    static Type get_default()
-    {
-        return 0.5;
-    }
-    static std::string name()
-    {
-        return "CriticalPerSevere";
-    }
-};
-
-/**
- * @brief The percentage of dead patients per ICU patients in the GLCT-SECIR model.
- */
-struct DeathsPerCritical {
-    using Type = ScalarType;
-    static Type get_default()
-    {
-        return 0.1;
-    }
-    static std::string name()
-    {
-        return "DeathsPerCritical";
-    }
-};
-
-/**
  * @brief The start day in the GLCT-SECIR model.
  * The start day defines in which season the simulation is started.
  * If the start day is 180 and simulation takes place from t0=0 to
@@ -407,13 +441,15 @@ struct Seasonality {
 };
 
 using ParametersBase =
-    ParameterSet<StartingProbabilitiesExposed, TransitionMatrixExposed, StartingProbabilitiesInfectedNoSymptoms,
-                 TransitionMatrixInfectedNoSymptoms, StartingProbabilitiesInfectedSymptoms,
-                 TransitionMatrixInfectedSymptoms, StartingProbabilitiesInfectedSevere, TransitionMatrixInfectedSevere,
-                 StartingProbabilitiesInfectedCritical, TransitionMatrixInfectedCritical,
+    ParameterSet<StartingProbabilitiesExposed, TransitionMatrixExposedToInfectedNoSymptoms,
+                 StartingProbabilitiesInfectedNoSymptoms, TransitionMatrixInfectedNoSymptomsToInfectedSymptoms,
+                 TransitionMatrixInfectedNoSymptomsToRecovered, StartingProbabilitiesInfectedSymptoms,
+                 TransitionMatrixInfectedSymptomsToInfectedSevere, TransitionMatrixInfectedSymptomsToRecovered,
+                 StartingProbabilitiesInfectedSevere, TransitionMatrixInfectedSevereToInfectedCritical,
+                 TransitionMatrixInfectedSevereToRecovered, StartingProbabilitiesInfectedCritical,
+                 TransitionMatrixInfectedCriticalToDead, TransitionMatrixInfectedCriticalToRecovered,
                  TransmissionProbabilityOnContact, ContactPatterns, RelativeTransmissionNoSymptoms,
-                 RiskOfInfectionFromSymptomatic, RecoveredPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical, StartDay, Seasonality>;
+                 RiskOfInfectionFromSymptomatic, StartDay, Seasonality>;
 
 /**
  * @brief Parameters of an GLCT-SECIR model.
@@ -449,26 +485,6 @@ public:
 
         if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0 || this->get<RiskOfInfectionFromSymptomatic>() > 1.0) {
             log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<RecoveredPerInfectedNoSymptoms>() < 0.0 || this->get<RecoveredPerInfectedNoSymptoms>() > 1.0) {
-            log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<SeverePerInfectedSymptoms>() < 0.0 || this->get<SeverePerInfectedSymptoms>() > 1.0) {
-            log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<CriticalPerSevere>() < 0.0 || this->get<CriticalPerSevere>() > 1.0) {
-            log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<DeathsPerCritical>() < 0.0 || this->get<DeathsPerCritical>() > 1.0) {
-            log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
             return true;
         }
 

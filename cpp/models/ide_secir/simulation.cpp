@@ -35,9 +35,13 @@ void Simulation::advance(ScalarType tmax)
     mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
                   m_model->m_transitions.get_last_time(), tmax, m_dt);
     m_model->initial_compute_compartments(m_dt);
-
+    int counter = (int)m_model->m_transitions.get_last_time() + 1;
     // For every time step:
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
+        if (m_model->m_transitions.get_last_time() > counter) {
+            counter++;
+            mio::log_info("{} percent of the simulation done!", (m_model->m_transitions.get_last_time() / tmax));
+        }
 
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);

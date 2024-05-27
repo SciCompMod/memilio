@@ -44,7 +44,7 @@
 constexpr int num_subcompartments = 3;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
-std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
+std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.01},
                                                           {"total_population", 83155031.},
                                                           {"total_confirmed_cases", 341223.},
                                                           {"deaths", 9710.},
@@ -54,7 +54,7 @@ std::map<std::string, ScalarType> simulation_parameter = {{"dt_flows", 0.1},
                                                           {"TimeInfectedSevere", 11.634346},
                                                           {"TimeInfectedCritical", 17.476959},
                                                           {"TransmissionProbabilityOnContact", 0.0733271},
-                                                          {"RelativeTransmissionNoSymptoms", 1},
+                                                          {"RelativeTransmissionNoSymptoms", 1.},
                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                           {"Seasonality", 0.},
                                                           {"RecoveredPerInfectedNoSymptoms", 0.206901},
@@ -132,7 +132,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     // Add initial time point to time series.
     init.add_time_point(-350, init_transitions);
     // Add further time points until time 0 with constant values.
-    while (init.get_last_time() < -1e-10) {
+    while (init.get_last_time() < -simulation_parameter["dt_flows"] + 1e-10) {
         init.add_time_point(init.get_last_time() + simulation_parameter["dt_flows"], init_transitions);
     }
     return init;
@@ -151,6 +151,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 */
 mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
 {
+    std::cout << "Simulation with IDE model and " << num_subcompartments << " subcompartments." << std::endl;
     // Initialize model.
     mio::isecir::Model model_ide(std::move(get_initial_flows()), simulation_parameter["total_population"],
                                  simulation_parameter["deaths"], simulation_parameter["total_confirmed_cases"]);
@@ -162,7 +163,7 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
                                                                delaydistributioninit);
 
-    mio::ExponentialSurvivalFunction expInfectedSevereToInfectedCritical(1. / 9.36);
+    /*mio::ExponentialSurvivalFunction expInfectedSevereToInfectedCritical(1. / 9.36);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_state_age_function(
         expInfectedSevereToInfectedCritical);
 
@@ -175,9 +176,35 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
         expInfectedCriticalToDeath);
     expInfectedCriticalToDeath.set_distribution_parameter(1. / 16.92);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
-        expInfectedCriticalToDeath);
+        expInfectedCriticalToDeath);*/
+    mio::GammaSurvivalFunction erlang(num_subcompartments, 0, 3.335 / (double)num_subcompartments);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(erlang);
 
-    mio::GammaSurvivalFunction erlangExposedToInfectedNoSymptoms(num_subcompartments, 0, 3.335 / num_subcompartments);
+    erlang.set_scale(1.865 / (double)num_subcompartments);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+        .set_state_age_function(erlang);
+    erlang.set_scale(8.865 / (double)num_subcompartments);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
+        erlang);
+
+    erlang.set_scale(6.30662 / (double)num_subcompartments);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
+        erlang);
+    erlang.set_scale(7. / (double)num_subcompartments);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(erlang);
+
+    mio::ExponentialSurvivalFunction exp(1. / 9.36);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_state_age_function(
+        exp);
+    exp.set_distribution_parameter(1. / 12.110701);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(exp);
+
+    exp.set_distribution_parameter(1. / 15.88);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(exp);
+    exp.set_distribution_parameter(1. / 17.92);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(exp);
+
+    /*mio::GammaSurvivalFunction erlangExposedToInfectedNoSymptoms(num_subcompartments, 0, 3.335 / (double)num_subcompartments);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
         erlangExposedToInfectedNoSymptoms);
 
@@ -195,7 +222,7 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
         erlangInfectedSymptomsToInfectedSevere);
     mio::GammaSurvivalFunction erlangInfectedSymptomsToRecovered(num_subcompartments, 0, 7. / num_subcompartments);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
-        erlangInfectedSymptomsToRecovered);
+        erlangInfectedSymptomsToRecovered);*/
 
     model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
@@ -265,6 +292,7 @@ mio::IOResult<void> simulate_ide_model(ScalarType R0, ScalarType tmax, std::stri
 */
 mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
 {
+    std::cout << "Simulation with LCT model and " << num_subcompartments << " subcompartments." << std::endl;
     // Initialize model.
     using Model = mio::lsecir::Model<num_subcompartments, num_subcompartments, num_subcompartments, num_subcompartments,
                                      num_subcompartments>;
@@ -313,8 +341,8 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
 
     if (!save_dir.empty()) {
-        auto interpolated_result = mio::interpolate_simulation_result(populations, 0.1);
-        interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+        //auto interpolated_result = mio::interpolate_simulation_result(populations, 0.1);
+        //interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
         std::string R0string = std::to_string(R0);
         std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
                                std::to_string(num_subcompartments);
@@ -333,10 +361,10 @@ int main()
     // Options used: For R0=2 epidemic peak use tmax=150,
     // for R0=4 epidemic peak use tmax = 75.
     // For short things: 10 days and R0=0.5 or 2
-    ScalarType R0 = 0.5;
+    ScalarType R0 = 2.;
     // Paths are valid if file is executed eg in memilio/build/bin.
     // Folders have to exist beforehand.
-    std::string save_dir = "../../data/simulation_lct/dropR0short/";
+    std::string save_dir = "../../data/simulation_lct/riseR02long/";
 
     /*auto result = simulate_lct_model(R0, 10, save_dir);
     if (!result) {
@@ -344,7 +372,7 @@ int main()
         return -1;
     }*/
 
-    auto result = simulate_ide_model(R0, 10, save_dir);
+    auto result = simulate_ide_model(R0, 150, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
