@@ -18,6 +18,7 @@
 # limitations under the License.
 #############################################################################
 import os
+import ast
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib as mpl
@@ -651,6 +652,71 @@ def write_clustered_npis(df_npis, cluster_function, cluster_codes, npis_corr, di
     with open(directory+filename, 'w') as f:
         print(cluster_dict, file=f)
 
+def get_clustering_rki(directory, file_format):
+    # read in file
+    filename = 'npi_clustering_rki.txt'
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+    #read npis
+    df_npis = pd.read_csv(directory + 'germany_counties_npi_subcat' + ".csv")
+    npis = pd.read_json(os.path.join(directory, 'npis.json'))
+    npi_codes_considered = [
+        x for x in npis[dd.EngEng['npiCode']] if len(x.split('_')) == 2]
+    df_merged = df_npis.iloc[:, :2]
+    for subcode in npi_codes_considered:
+        # extract columns which have the subcode as part of the column
+        # name and sum over all these subcodes
+        df_merged[subcode] = df_npis.filter(
+            regex=subcode).sum(axis=1)
+    #copy date and county data
+    df_out = df_npis.loc[:,['Date', 'ID_County']]
+    with open(path, 'r') as file:
+        lines = file.readlines()
+    #read lines=maincodes
+    for line in lines:
+        name = line.split(':')[0]
+        codes = ast.literal_eval(line.split(':')[1])
+        ind = 1
+        for level in codes:
+            # if level is empty
+            if not len(level):
+                ind+=1
+                continue
+            else:
+                cluster_name = name + '; Level ' + str(ind)
+                df_out[cluster_name] = df_merged.loc[:, [column for column in df_merged.columns if column in level]].sum(axis=1).values
+                ind+=1
+    # merge maincodes as in rki
+    # Schools
+    for i in range(1,5): #=1,2,3,4
+        df_out['Schools; Level '+str(i)] = df_out["Primary Schools; Level "+str(i)]
+    # ps level 5 and not fes level 5
+    df_out['Schools; Level 5'] = df_out["Primary Schools; Level 5"]
+    df_out['Schools; Level 5']*=(df_out["Further Education Schools; Level 5"].replace([1,0],[0,1]))
+    # ps level 5 and fes level 5
+    df_out['Schools; Level 6'] = df_out["Primary Schools; Level 5"]
+    df_out['Schools; Level 6']*=(df_out["Further Education Schools; Level 5"])
+    # Public Events
+    for i in range(2,7): #=2,3,4,5,6
+        df_out['Public Events; Level '+str(i)] = df_out['Public Events Indoor; Level '+str(i)]
+    # Sports
+    for i in range(2,4): #=2,3
+        df_out['Sports; Level '+str(i)] = df_out['Sports Indoor; Level '+str(i)]
+    # indoor level 4 and not outdoor level 5
+    df_out['Sports; Level 4'] = df_out["Sports Indoor; Level 4"]
+    df_out['Sports; Level 4']*=(df_out["Sports Outdoor; Level 5"].replace([1,0],[0,1]))
+    # indoor level 4 and outdoor level 5
+    df_out['Sports; Level 5'] = df_out["Sports Indoor; Level 4"]
+    df_out['Sports; Level 5']*=(df_out["Sports Outdoor; Level 5"])
+    # drop old columns
+    for drop_name in ['Public Events Indoor', 'Public Events Outdoor', "Primary Schools", "Further Education Schools", "Sports Indoor", "Sports Outdoor"]:
+        for i in range(1,7):
+            try:
+                df_out.drop(drop_name + '; Level ' + str(i), inplace = True, axis=1)
+            except KeyError:
+                pass
+    return df_out
+
+
 
 def main():
     """! Main program entry."""
@@ -659,6 +725,7 @@ def main():
     npis_final = []
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
     file_format = 'json'
+    get_clustering_rki(directory, file_format)
     npi_codes_considered = ['M01a_010', 'M01a_020',
                             'M01a_100', 'M01a_110', 'M01a_120']
     analyze_npi_data(True, True, fine_resolution, npis_final,
