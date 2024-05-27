@@ -327,7 +327,7 @@ void create_assign_locations(mio::abm::World& world)
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
 
-    auto probability = mio:: UncertainValue<>();
+    auto probability = mio::UncertainValue<>();
     assign_uniform_distribution(probability, 0.5, 1.0);
 
     auto test_type      = mio::abm::AntigenTest();
@@ -622,6 +622,17 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]         = 0.035;
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]              = 0.052;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.0;
+
+    // Set mask protection according to bit.ly/MMWR7106
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.56}, {8, 0.56}}, hours);
+    };
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.66}, {8, 0.66}}, hours);
+    };
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.83}, {8, 0.83}}, hours);
+    };
 }
 
 /**

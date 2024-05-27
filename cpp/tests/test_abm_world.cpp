@@ -475,14 +475,20 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]           = 9.;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]        = 10.;
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]               = 0.3;
-    params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59]       = mio::abm::hours(4);
-    params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59]       = mio::abm::hours(8);
-    params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4]       = mio::abm::hours(3);
-    params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4]       = mio::abm::hours(6);
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
-    params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
+    params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59]         = mio::abm::hours(4);
+    params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59]         = mio::abm::hours(8);
+    params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4]         = mio::abm::hours(3);
+    params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4]         = mio::abm::hours(6);
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {6, 0.81}}, hours);
+    };
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {6, 0.81}}, hours);
+    };
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {6, 0.81}}, hours);
+    };
+    params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;
@@ -531,16 +537,6 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(30);
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(6);
-
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]     = 0.6;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     ASSERT_EQ(params.check_constraints(), true);

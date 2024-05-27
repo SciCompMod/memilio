@@ -283,13 +283,19 @@ TEST(TestPerson, getMaskProtectiveFactor)
     person_without.set_wear_mask(false);
 
     mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.56}, {6, 0.3}}, hours);
+    };
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.66}, {6, 0.4}}, hours);
+    };
+    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.83}, {6, 0.5}}, hours);
+    };
 
-    ASSERT_EQ(person_community.get_mask_protective_factor(params), 0.5);
-    ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
-    ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
+    ASSERT_EQ(person_community.get_mask_protective_factor(params), 0.56);
+    ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.66);
+    ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.83);
     ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
 }
 
