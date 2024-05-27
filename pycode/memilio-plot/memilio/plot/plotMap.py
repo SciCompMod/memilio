@@ -28,6 +28,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib.colors as mcolors
+from matplotlib.colors import SymLogNorm, LinearSegmentedColormap
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -291,7 +292,8 @@ def save_interactive(col, filename, map_data, scale_colors):
                      vmax=scale_colors[1]).save(filename)
 
 
-def plot_map(data: pd.DataFrame,
+def plot_map(norm: SymLogNorm,
+             data: pd.DataFrame,
              scale_colors: np.array([0, 1]),
              legend: list = [],
              title: str = '',
@@ -299,8 +301,7 @@ def plot_map(data: pd.DataFrame,
              output_path: str = '',
              fig_name: str = 'customPlot',
              dpi: int = 300,
-             outercolor='white',
-             log_scale=False):
+             outercolor='white'):
     """! Plots region-specific information onto a interactive html map and
     returning svg and png image. Allows the comparisons of a variable list of
     data sets.
@@ -316,10 +317,14 @@ def plot_map(data: pd.DataFrame,
     @param[in] fig_name Name of the figure created.
     @param[in] dpi Dots-per-inch value for the exported figure.
     @param[in] outercolor Background color of the plot image.
-    @param[in] log_scale Defines if the colorbar is plotted in log scale.
     """
     region_classifier = data.columns[0]
     region_data = data[region_classifier].to_numpy().astype(int)
+
+    colors = ["green", "yellow", "red", "purple"]
+    color_map = LinearSegmentedColormap.from_list("my_colormap", colors)
+
+    # color_map = 'tab20c'
 
     data_columns = data.columns[1:]
     # Read and filter map data.
@@ -372,32 +377,48 @@ def plot_map(data: pd.DataFrame,
     # Use top row for title.
     tax = fig.add_subplot(gs[0, :])
     tax.set_axis_off()
-    tax.set_title(title, fontsize=16)
+    tax.set_title(title, fontsize=18)
     if plot_colorbar:
-        # Prepare colorbar.
         cax = fig.add_subplot(gs[1, 0])
+        # log scale of colorbar.
+        # norm = mcolors.LogNorm(
+        #     vmin=scale_colors[0] if scale_colors[0] > 0 else 1e-13, vmax=scale_colors[1] if scale_colors[1] > 0 else 1e-13)
+
+        # # Create a ScalarMappable with the same Norm and Colormap as your data
+        # sm = plt.cm.ScalarMappable(cmap='plasma', norm=norm)
+        # sm.set_array([])
+
+        # # Create a new figure for the colorbar
+        # cbar_fig = plt.figure(figsize=(8, 3))
+        # plt.colorbar(sm, orientation='horizontal')
+        # plt.savefig(os.path.join(output_path, 'colorbar.png'), dpi=dpi)
+
     else:
         cax = None
-
-    if log_scale:
-        norm = mcolors.LogNorm(vmin=scale_colors[0], vmax=scale_colors[1])
 
     for i in range(len(data_columns)):
 
         ax = fig.add_subplot(gs[:, i+2])
-        if log_scale:
-            map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
-                          norm=norm)
-        elif cax is not None:
-            map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
-                          vmin=scale_colors[0], vmax=scale_colors[1])
+        if cax is not None:
+            # map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
+            #               vmin=scale_colors[0], vmax=scale_colors[1], cmap=color_map)
+            map_data.plot(data_columns[i], ax=ax,
+                          cax=cax, legend=False, norm=norm, cmap=color_map)
+            # cax.tick_params(labelsize=10)
         else:
             # Do not plot colorbar.
-            map_data.plot(data_columns[i], ax=ax, legend=False,
-                          vmin=scale_colors[0], vmax=scale_colors[1])
+            # map_data.plot(data_columns[i], ax=ax, legend=False,
+            #               vmin=scale_colors[0], vmax=scale_colors[1], cmap=color_map)
+            map_data.plot(data_columns[i], ax=ax,
+                          legend=False, norm=norm, cmap=color_map)
 
-        ax.set_title(legend[i], fontsize=12)
+        # ax.set_title(legend[i], fontsize=12)
         ax.set_axis_off()
 
-    plt.subplots_adjust(bottom=0.1)
-    plt.savefig(os.path.join(output_path, fig_name + '.png'), dpi=dpi)
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+    plt.savefig(os.path.join(output_path, fig_name + '.png'),
+                dpi=dpi, bbox_inches='tight', pad_inches=0)
+    plt.close(fig)
+
+    # plt.show()
