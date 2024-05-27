@@ -350,36 +350,6 @@ struct ICUOccupancyLocal {
 };
 
 /**
-* @brief Daily regional ICU occupancy aggregated for each age group.
-*/
-struct ICUOccupancyRegional {
-    using Type = mio::TimeSeries<ScalarType>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size.get());
-    }
-    static std::string name()
-    {
-        return "ICUOccupancyRegional";
-    }
-};
-
-/**
-* @brief Daily national ICU occupancy aggregated for each age group.
-*/
-struct ICUOccupancyNational {
-    using Type = mio::TimeSeries<ScalarType>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size.get());
-    }
-    static std::string name()
-    {
-        return "ICUOccupancyNational";
-    }
-};
-
-/**
 * @brief shape parameter of the gamma distribution for the contacts.
 */
 struct alphaGammaContacts {
@@ -501,9 +471,9 @@ using ParametersBase =
                  TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical, ICUOccupancyLocal, ICUOccupancyRegional, ICUOccupancyNational,
-                 alphaGammaContacts, betaGammaContacts, CutOffGamma, ContactReductionMax, ContactReductionMin,
-                 EpsilonContacts, BlendingFactorLocal, BlendingFactorRegional, StateID>;
+                 CriticalPerSevere, DeathsPerCritical, ICUOccupancyLocal, alphaGammaContacts, betaGammaContacts,
+                 CutOffGamma, ContactReductionMax, ContactReductionMin, EpsilonContacts, BlendingFactorLocal,
+                 BlendingFactorRegional, StateID>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

@@ -26,7 +26,7 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 50;
+    double tmax = 200;
     double dt   = 0.1;
 
     mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -74,12 +74,13 @@ int main()
     model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
     model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
 
+    // init data also needs to be relative (per 100k population)
     model.parameters.get<mio::osecir::ICUCapacity>() = 35;
     auto& icu_occupancy                              = model.parameters.get<mio::osecir::ICUOccupancyLocal>();
     Eigen::VectorXd icu_day                          = Eigen::VectorXd::Zero(1);
     for (int t = -50; t <= 0; ++t) {
         for (size_t i = 0; i < 1; i++) {
-            icu_day(i) = (100 + t);
+            icu_day(i) = (100 + t) / nb_total_t0 * 100'000;
         }
         icu_occupancy.add_time_point(t, icu_day);
     }

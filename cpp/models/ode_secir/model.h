@@ -423,13 +423,13 @@ public:
         }
         perceived_risk = std::min(perceived_risk, 1.0);
         m_perceived_risk.add_time_point(
-            m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_time(num_time_points - 1),
-            (Eigen::VectorXd(1) << perceived_risk).finished());
+            m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_last_time(),
+            Eigen::VectorXd::Constant((size_t)m_model_ptr->parameters.get_num_groups(), perceived_risk));
         return perceived_risk;
     }
 
     /**
-     * @brief Adds ICU occupancy data at a given time point.
+     * @brief Adds ICU occupancy data at a given time point. The icu occupancy is calculated per 100,000 inhabitants.
      * 
      * @param t The current time point.
      */
@@ -460,15 +460,22 @@ public:
         const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
         const size_t num_time_points = m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_num_time_points();
         Eigen::MatrixXd global_icu_occupancy = Eigen::MatrixXd::Zero(num_time_points, num_groups);
+        // We need the total population to calculate the global ICU occupancy as weights for the local ICU occupancy
+        ScalarType total_population = 0.0;
 
         for (const auto& model : m_models) {
             const auto& icu_occupancy_local = model->parameters.template get<ICUOccupancyLocal>();
+            const auto model_population     = model->populations.get_total();
+            total_population += model_population;
             for (size_t t = 0; t < num_time_points; ++t) {
                 for (size_t age = 0; age < num_groups; ++age) {
-                    global_icu_occupancy(t, age) += icu_occupancy_local.get_value(t)(age);
+                    global_icu_occupancy(t, age) += model_population * icu_occupancy_local.get_value(t)(age);
                 }
             }
         }
+
+        // Normalize the global ICU occupancy by the total population
+        global_icu_occupancy /= total_population;
 
         return global_icu_occupancy;
     }
@@ -484,17 +491,24 @@ public:
         const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
         const size_t num_time_points = m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_num_time_points();
         Eigen::MatrixXd regional_icu_occupancy = Eigen::MatrixXd::Zero(num_time_points, num_groups);
+        // We need the total population per region to calculate the regional ICU occupancy as weights for the local ICU occupancy
+        ScalarType regional_population = 0.0;
 
         for (const auto& model : m_models) {
             if (model->parameters.get<StateID>() == state_id) {
                 const auto& icu_occupancy_local = model->parameters.template get<ICUOccupancyLocal>();
+                const auto total_population     = model->populations.get_total();
+                regional_population += total_population;
                 for (size_t t = 0; t < num_time_points; ++t) {
                     for (size_t age = 0; age < num_groups; ++age) {
-                        regional_icu_occupancy(t, age) += icu_occupancy_local.get_value(t)(age);
+                        regional_icu_occupancy(t, age) += total_population * icu_occupancy_local.get_value(t)(age);
                     }
                 }
             }
         }
+
+        // Normalize the regional ICU occupancy by the total regional population
+        regional_icu_occupancy /= regional_population;
 
         return regional_icu_occupancy;
     }
@@ -574,12 +588,12 @@ public:
     }
 
 private:
-    double m_t_last_npi_check; ///< Time of the last NPI check.
+    double m_t_last_npi_check; /// Time of the last NPI check.
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(),
-                                                       mio::SimulationTime(0)}; ///< Dynamic NPI data.
-    std::shared_ptr<Model> m_model_ptr; ///< Pointer to the model.
-    inline static std::vector<std::shared_ptr<Model>> m_models; ///< List of model pointers.
-    mio::TimeSeries<ScalarType> m_perceived_risk = mio::TimeSeries<ScalarType>((int)1); ///< Perceived risk time series.
+                                                       mio::SimulationTime(0)}; /// Dynamic NPI data.
+    std::shared_ptr<Model> m_model_ptr; /// Pointer to the model.
+    inline static std::vector<std::shared_ptr<Model>> m_models; /// List of model pointers.
+    mio::TimeSeries<ScalarType> m_perceived_risk = mio::TimeSeries<ScalarType>(6); /// Perceived risk time series.
 };
 
 /**
