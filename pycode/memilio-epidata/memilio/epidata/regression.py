@@ -844,6 +844,8 @@ class NPIRegression():
                 self.df_pvalues['columns'][plotted_variables_begin: plotted_variables_end]), fontsize=5)
             axes[plot_number].invert_yaxis()
 
+            axes[plot_number].set_xlim(0,self.df_pvalues['pvalues'].max()*1.4)
+
         # get index of npi_of interest and change color of that bar
         index = self.df_pvalues.index.get_loc(
             variable_of_interest)

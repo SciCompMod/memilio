@@ -124,7 +124,26 @@ def sanitize_data(df_variants):
                     max_date_other_100, 'B.1.617.2'] = 0.0
 
     # smooth peak of alpha and delta in ~ May 2021
-    # tbd
+    # Data in week of 2021-04-26 and to 2021-05-09
+    before = df_variants[df_variants.Date=='2021-04-25']['B.1.617.2'].values
+    after = df_variants[df_variants.Date=='2021-05-11']['B.1.617.2'].values
+    new_value_1 = before+(after-before)/3
+    new_value_2 = after-(after-before)/3
+    old_value_1 = df_variants[df_variants.Date=='2021-05-01']['B.1.617.2'].values
+    old_value_2 = df_variants[df_variants.Date=='2021-05-05']['B.1.617.2'].values
+    diff_1 = old_value_1-new_value_1
+    diff_2 = old_value_2-new_value_2
+    # first week
+    for day in range(26,31):
+        df_variants.loc[df_variants.Date=='2021-04-'+str(day),'B.1.617.2']-=diff_1
+        df_variants.loc[df_variants.Date=='2021-04-'+str(day),'B.1.1.7']+=diff_1
+    for day in range(1,3):
+        df_variants.loc[df_variants.Date=='2021-05-0'+str(day),'B.1.617.2']-=diff_1
+        df_variants.loc[df_variants.Date=='2021-05-0'+str(day),'B.1.1.7']+=diff_1
+    #second week
+    for day in range(3,10):
+        df_variants.loc[df_variants.Date=='2021-05-0'+str(day),'B.1.617.2']-=diff_2
+        df_variants.loc[df_variants.Date=='2021-05-0'+str(day),'B.1.1.7']+=diff_2
 
 
 def plot_variants_data(df_variants, min_date='2020-03-01', max_date='2022-03-01', variants='wildtype_alpha_delta'):
@@ -133,6 +152,8 @@ def plot_variants_data(df_variants, min_date='2020-03-01', max_date='2022-03-01'
 
     df_variants = mdfs.extract_subframe_based_on_dates(
         df_variants, min_date, max_date)
+    
+    df_variants.sort_values('Date', inplace = True)
 
     if variants == 'all':
         ax.plot(df_variants.iloc[:, 0], df_variants.iloc[:,
