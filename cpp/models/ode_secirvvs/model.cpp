@@ -18,11 +18,3 @@
 * limitations under the License.
 */
 #include "ode_secirvvs/model.h"
-
-namespace mio
-{
-namespace osecirvvs
-{
-
-} // namespace osecirvvs
-} // namespace mio
