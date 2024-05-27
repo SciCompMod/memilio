@@ -727,20 +727,23 @@ def get_clustering_rki(directory, file_format):
         df_out['Public Events; Level '+str(i)] = df_out['Public Events Indoor; Level '+str(i)]
     # Sports
     for i in range(2,4): #=2,3
-        df_out['Sports; Level '+str(i)] = df_out['Sports Indoor; Level '+str(i)]
+        df_out['Sports; Level '+str(i)] = df_out['Indoor Sports; Level '+str(i)]
     # indoor level 4 and not outdoor level 5
-    df_out['Sports; Level 4'] = df_out["Sports Indoor; Level 4"]
-    df_out['Sports; Level 4']*=(df_out["Sports Outdoor; Level 5"].replace([1,0],[0,1]))
+    df_out['Sports; Level 4'] = df_out["Indoor Sports; Level 4"]
+    df_out['Sports; Level 4']*=(df_out["Outdoor Sports; Level 5"].replace([1,0],[0,1]))
     # indoor level 4 and outdoor level 5
-    df_out['Sports; Level 5'] = df_out["Sports Indoor; Level 4"]
-    df_out['Sports; Level 5']*=(df_out["Sports Outdoor; Level 5"])
+    df_out['Sports; Level 5'] = df_out["Indoor Sports; Level 4"]
+    df_out['Sports; Level 5']*=(df_out["Outdoor Sports; Level 5"])
     # drop old columns
-    for drop_name in ['Public Events Indoor', 'Public Events Outdoor', "Primary Schools", "Further Education Schools", "Sports Indoor", "Sports Outdoor"]:
+    for drop_name in ['Public Events Indoor', 'Public Events Outdoor', "Primary Schools", "Further Education Schools", "Indoor Sports", "Outdoor Sports"]:
         for i in range(1,7):
             try:
                 df_out.drop(drop_name + '; Level ' + str(i), inplace = True, axis=1)
             except KeyError:
                 pass
+    df_out = merge_cluster_rki(df_out, 'SKBG')
+    filename = 'cluster_rki'
+    gd.write_dataframe(df_out, directory, filename, 'json')
     return df_out
 
 
@@ -793,6 +796,38 @@ def write_cluster_rki(df_npis, cluster_function,  npis_corr, directory, npi_code
     with open(directory+filename, 'w') as f:
         print(cluster_dict, file=f)
 
+def merge_cluster_rki(df_rki, which):
+    merge_list = []
+    # define column names which have to be merged
+    if 'S' in which:
+        merge_list.append('Sports')
+    if 'K' in which:
+        merge_list.append('Cultural and Educational Institutions')
+    if 'B' in which:
+        merge_list.append('Accommodation')
+    if 'G' in which:
+        merge_list.append('Gastronomy')
+    if ('H' in which) or ('E' in which):
+        merge_list.append('Retail')
+    if 'D' in which:
+        merge_list.append('Services and Crafts')
+    column_names = [df_rki.filter(regex=name).columns.tolist() for name in merge_list]
+    # put values in new df
+    df_merge = pd.DataFrame()
+    df_max_stage = df_rki.loc[:, [code for m in column_names for code in m if code.endswith('5')]]
+    i = 0
+    for main_c in column_names:
+        df_merge[str(i)] = df_rki.loc[:, main_c].max(axis=1)
+        i+=1
+        # delete old columns
+        df_rki.drop(main_c, axis=1, inplace=True)
+    # merge if condition (max 1,2,3...) applies
+    for stage in range(1,len(which)+1):
+        df_rki[str(stage)+ ' of ' + which + ' max'] = (df_merge.sum(axis=1)<=stage).astype(int)
+        df_rki[str(stage)+ ' of '+ which + ' on second highest level'] = (df_max_stage.sum(axis=1)==stage).astype(int)
+    return df_rki
+
+
 
 def main():
     """! Main program entry."""
@@ -801,7 +836,7 @@ def main():
     npis_final = []
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
     file_format = 'json'
-    get_clustering_rki(directory, file_format)
+    df_rki = get_clustering_rki(directory, file_format)
     npi_codes_considered = ['M01a_010', 'M01a_020',
                             'M01a_100', 'M01a_110', 'M01a_120']
 
