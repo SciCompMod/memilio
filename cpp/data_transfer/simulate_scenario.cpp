@@ -341,7 +341,7 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     // add initial deaths to the DeadNaive compartment
-    BOOST_OUTCOME_TRY(node_ids, mio::get_node_ids(population_data_path, true));
+    BOOST_OUTCOME_TRY(auto&& node_ids, mio::get_node_ids(population_data_path, true));
     auto initial_deaths_cases = get_initial_deaths(data_dir, start_date, node_ids);
 
     for (size_t node_indx = 0; node_indx < node_ids.size(); ++node_indx) {
@@ -359,7 +359,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
 {
     //create or load graph
     mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>> params_graph;
-    BOOST_OUTCOME_TRY(created, get_graph(start_date, num_days_sim, data_dir));
+    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, data_dir));
     params_graph = created;
 
     std::vector<int> county_ids(params_graph.nodes().size());
