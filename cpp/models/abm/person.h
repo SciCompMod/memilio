@@ -414,7 +414,7 @@ public:
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
+    void apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
 
     /**
      * @brief Checks whether the Person do the required test at the target Location.

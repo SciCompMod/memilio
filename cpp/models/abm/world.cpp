@@ -89,10 +89,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                 if (target_location != current_location &&
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
-                    if (wears_mask) {
-                        person->migrate_to(target_location);
-                    }
+                    person->apply_mask_intervention(personal_rng, target_location);
+                    person->migrate_to(target_location);
                     return true;
                 }
             }
