@@ -22,11 +22,13 @@ def plot_risk_map(path_results, path_plots, days, percentile):
               days=days, min_val=0, max_val=1, filename="risk_map", relative=False, age_groups={0: '0-4'})
 
 
-def plot_icu_map(path_results, path_plots, days, percentile):
-    if not os.path.exists(path_plots):
-        os.makedirs(path_plots)
-    plot_maps(path_results, path_plots, compartments=[7], percentile=percentile,
-              days=days, min_val=0, max_val=50, filename="icu_map", relative=False)
+def plot_icu_map(path_results, path_plots, days, percentile, mode):
+    for mode in modes:
+        path = os.path.join(path_plots, mode)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        plot_maps(os.path.join(path_results, mode), path, compartments=[7], percentile=percentile,
+                days=days, min_val=0, max_val=50, filename="icu_map", relative=False)
 
 
 def create_colorbar(path_plots, norm):
@@ -129,10 +131,10 @@ def plot_maps(path_results, path_plots, compartments, percentile, days, min_val,
         progress_bar.update()
     progress_bar.close()
     print("max value: ", get_max_val)
-    return 0
 
 
 if __name__ == '__main__':
+    modes = ["NormalSim", "FeedbackSim"]
     path_results = "/localdata1/code_2024/memilio/results"
     path_plots = "/localdata1/code_2024/memilio/plots"
     num_days = 70
@@ -141,5 +143,5 @@ if __name__ == '__main__':
     percentile = "p50"
     days = list(range(0, num_days + 1, 10))
 
-    plot_risk_map(path_results, path_plots, days, percentile)
-    plot_icu_map(path_results, path_plots, days, percentile)
+    plot_risk_map(os.path.join(path_results, "FeedbackSim"), os.path.join(path_plots, "FeedbackSim"), days, percentile)
+    plot_icu_map(path_results, path_plots, days, percentile, modes)
