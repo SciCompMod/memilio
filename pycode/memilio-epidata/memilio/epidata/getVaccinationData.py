@@ -883,7 +883,7 @@ def process_vaccination_data(
 def write_vaccination_data(dict_data: dict,
                            file_format: str = dd.defaultDict['file_format'],
                            out_folder: str = dd.defaultDict['out_folder'],
-                           impute_dates: bool = dd.defaultDict['imputes_dates'],
+                           impute_dates: bool = dd.defaultDict['impute_dates'],
                            moving_average: int = dd.defaultDict['moving_average'],
                            ) -> None:
     """
@@ -1153,7 +1153,7 @@ def get_vaccination_data(
         end_date: date = dd.defaultDict['end_date'],
         moving_average: int = dd.defaultDict['moving_average'],
         sanitize_data: int = dd.defaultDict['sanitize_data'],
-        impute_dates: bool = dd.defaultDict['imputes_dates'],
+        impute_dates: bool = dd.defaultDict['impute_dates'],
         **kwargs
 ):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
