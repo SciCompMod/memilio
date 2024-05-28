@@ -1,16 +1,22 @@
 #!/bin/bash
+# Script for checking license at begin of files for bash.
+# Run with:
+#   chmod u+x check_for_license.sh
+#   ./check_for_license.sh
 
 # Change directory to the root of the Git repository
 cd "$(git rev-parse --show-cdup)"
 
 # Ignore list (directories or subdirectories to ignore)
-ignore_list=("cpp/memilio/ad" "_skbuild" "build" "thirdparty")
+ignore_list=("cpp/memilio/ad" "_skbuild" "build" "thirdparty", ".*")
 print_diff=false
+
+current_year=$(date +'%Y')
 
 # Define the multiline pattern for c++ files with regex for author and contact lines
 cpp_pattern=(
     "/\*"
-    "\* Copyright \(C\) 2020-2024 MEmilio"
+    "\* Copyright \(C\) 2020-$current_year MEmilio"
     "\*"
     "\* Authors:( .+( <[^@<>]+@[^@<>]+>)?(, .+( <[^@<>]+@[^@<>]+>)?)*)?"
     "\*"
@@ -33,7 +39,7 @@ cpp_pattern=(
 # Define the multiline pattern for python files with regex for author and contact lines
 py_pattern=(
     "#+"
-    "# Copyright \(C\) 2020-2024 MEmilio"
+    "# Copyright \(C\) 2020-$current_year MEmilio"
     "#"
     "# Authors:( .+( <[^@<>]+@[^@<>]+>)?(, .+( <[^@<>]+@[^@<>]+>)?)*)?"
     "#"
