@@ -290,7 +290,7 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
                           password='',
                           **kwargs
                           ) -> pd.DataFrame:
-    """! Downloads or reads the population data and writes them in different files.
+    """! Downloads or reads the population data.
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
