@@ -1242,7 +1242,6 @@ def get_vaccination_data(
                            moving_average=moving_average,
                            out_folder=out_folder,
                            )
-    pass
 
 
 def main():
