@@ -264,8 +264,95 @@ def add_home_is_in_bs_column(pd):
                 pd.at[index, 'home_in_bs'] = 1
     return pd
 
+def location_type_from_keys_and_values(key, value, intention):
 
-PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result.csv"
+    location_type = 'SocialEvent'
+    if key == 'home':
+        location_type= 'Home'
+    
+    if key == 'education':
+        location_type= 'School'
+
+    if key == 'amenity':
+        if value in ['fast_food', 'fuel', 'food_court']:
+            location_type= 'BasicsShop'  
+        if value in ['coworking_space','office', 'craft', 'fire_station', 'hospital', 'laboratory', 'office', 'research_institute']:
+            location_type= 'Work'
+        if value in ['school', 'kindergarten', 'university', 'college','childcare', 'language_school', 'music_school', 'prep_school']:
+            location_type= 'School'
+        else:
+            location_type= 'SocialEvent'
+        
+    if key == 'building':
+        if value in ['apartments', 'bungalow', 'cabin', 'detached', 'detached_house', 'dormitory', 'double_house', 'duplex', 'dwlling_house', 'farmhouse', 'house', 'houseboat', 'nursing_home', 'residential', 'semi' 'hotel', 'house', 'residential', 'semidetached_house', 'semi_detached', 'semidetached']:
+            location_type= 'Home'
+        if value in ['college', 'kindergarten']:
+            location_type= 'School'
+        if value in ['laboratory', "bakehouse", "bank", "barracks", "brewery", "car_repair", "car_wash", "civic", "clinic", "data_center", "embassy", "factory", "farm", "fire_station", "fuel_station", "government", "hospital", "industrial", "manufacture", "mortuary", "office", "police", "post_office", "presbytery", "prison", "public", "school", "shelter", "sports_centre", "sports_hall", "stable", "warehouse", "workshop"]:
+            location_type= 'Work'
+        if value in ["commercial", "fuel", "kiosk", "shop", "supermarket"]:
+            location_type= 'BasicShop'
+        else:
+            location_type= 'SocialEvent'
+    
+    if key == 'craft':
+        location_type= 'Work'
+    
+    if key == 'healthcare':
+        location_type= 'Work'
+
+    if key == 'historic':
+        location_type= 'SocialEvent'
+    
+    if key == 'landuse':
+        location_type= 'SocialEvent'
+
+    if key == 'leisure':
+        location_type= 'SocialEvent'
+    
+    if key == 'office':
+        location_type= 'Work'
+    
+    if key == 'shop':
+        location_type= 'BasicShop'
+    
+    if key == 'tourism':
+        if value in ['apartment', 'guest_house', 'guest_house;apartment']:
+            location_type= 'Home'
+        location_type= 'SocialEvent'
+    
+    if key == 'NaN':
+        if intention == 1:
+            location_type= 'Work'
+        if intention == 1:
+            location_type= 'School'
+        if intention == 3:
+            location_type= 'BasicShop'
+        if intention == 4:
+            location_type= 'SocialEvent'
+        if intention == 5:
+            location_type= 'BasicShop'
+        if intention == 6:
+            location_type= 'SocialEvent'
+        if intention == 7:
+            location_type= 'Home'
+
+    # map from location type string to int
+    location_type_dict = {'Home': 0, 'School': 2, 'Work': 1, 'BasicShop': 3, 'SocialEvent': 4}
+    return location_type_dict[location_type]
+        
+def assign_location_type(pd):
+    if 'location_type' in pd.columns:
+        print("Column 'location_type' is present in DataFrame.")
+        # nothing tbd
+    else:
+        print("Column 'location_type' is not present in DataFrame.")
+        pd['location_type'] = 'SocialEvent'
+        for index, row in pd.iterrows():
+            pd.at[index, 'location_type'] = location_type_from_keys_and_values( row['map_feature_key'], row['map_feature_value'], row['activity_end'])
+    return pd
+
+PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result_ffa8.csv"
 
 bd = pd.read_csv(PATH)
 
@@ -276,7 +363,7 @@ with open(PATH, 'r') as file:
     column_headers = [header.strip() for header in column_headers]
 
 # check if anythiong changed since writing this script
-if(column_headers[0:19] == ['puid', 'start_zone', 'end_zone', 'loc_id_start', 'loc_id_end', 'start_county', 'end_county', 'huid', 'trip_distance', 'start_time', 'travel_time_sec', 'lon_start', 'lat_start', 'lon_end', 'lat_end', 'travel_mode', 'activity_start', 'activity_end', 'age']):
+if(column_headers[0:21] == ['puid', 'start_zone', 'end_zone', 'loc_id_start', 'loc_id_end', 'start_county', 'end_county', 'huid', 'trip_distance', 'start_time', 'travel_time_sec', 'lon_start', 'lat_start', 'lon_end', 'lat_end', 'travel_mode', 'activity_start', 'activity_end', 'age','map_feature_key','map_feature_value']):
     print("Column headers are correct")
 else:
     print("Column headers are not correct")
@@ -287,8 +374,10 @@ bd_new = add_home_ids(bd_new)
 print('Home IDs set.')
 bd_new = add_school_ids(bd_new)
 print('School IDs set.')
-bd_new = add_external_ids(bd)
-print('External location IDs set.')
+# bd_new = add_external_ids(bd)
+# print('External location IDs set.')
+bd_new = assign_location_type(bd_new)
+print('Location types assigned.')
 
 # Write data back to disk
-bd_new.to_csv('modified_braunschweig_result.csv', index=False)
+bd_new.to_csv('braunschweig_result_ffa8_modified.csv', index=False)

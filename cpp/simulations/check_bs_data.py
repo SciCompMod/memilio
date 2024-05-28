@@ -15,7 +15,7 @@ else:
 
 ####### minimal sanity check on data #######
 bd = pd.read_csv(
-    '/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/modified_braunschweig_result_ffa7.csv', header=None, skiprows=1)
+    '/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result_ffa8_modified.csv', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 # bd.rename(
@@ -26,7 +26,7 @@ bd = pd.read_csv(
 bd.rename(
     columns={0: 'personID', 1: 'startZone', 2: 'destZone', 3: 'loc_id_start', 4: 'loc_id_end',
              5: 'countyStart', 6: 'countyEnd', 7: 'hhID', 8: 'tripDistance', 9: 'startTime', 10: 'travelTime' , 11: 'loCs', 12: 'laCs', 13: 'loCe', 14: 'laCe', 15: 'vehicleChoice', 16:
-             'ActivityBefore', 17: 'ActivityAfter',  18: 'age', 19:'home_in_bs'},
+             'ActivityBefore', 17: 'ActivityAfter',  18: 'age', 19: 'map_feature_key', 20: 'map_feature_value', 21: 'home_in_bs'},
     inplace=True)
 
 dict_leisure = {1: 'work', 2: 'education', 3: 'Shopping', 4: 'free time',
@@ -39,6 +39,19 @@ bd_same_loc = bd[['loc_id_end', 'ActivityAfter']].drop_duplicates()
 #count how many different activities are after the same location
 bd_same_loc = bd_same_loc.groupby(['loc_id_end']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
 
+
+# chek how many unique map_feature_keys and values are in the data
+map_feature_keys = bd[['map_feature_key']].drop_duplicates().size
+map_feature_values = bd[['map_feature_value']].drop_duplicates().size
+print('Number of unique map_feature_keys: ' + str(map_feature_keys) + '. Number of unique map_feature_values: ' + str(map_feature_values) + '. \n')
+# same for the tuple of both
+map_feature_keys_values = bd[['map_feature_key', 'map_feature_value']].drop_duplicates().size
+print('Number of unique map_feature_keys and values: ' + str(map_feature_keys_values) + '. \n')
+
+#check if persons go to different location_ids with the same activity_after
+bd_same_loc = bd[['personID', 'loc_id_end', 'ActivityAfter']].drop_duplicates()
+#count how many different activities are after the same location    
+bd_same_loc = bd_same_loc.groupby(['personID', 'loc_id_end']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
  
 # check if people do the same trip more than once
 trips = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime']]
