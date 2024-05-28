@@ -36,5 +36,4 @@ setup(
         ],
     },
     long_description='', test_suite='memilio.simulation_test',
-    package_data={"memilio.simulation": ["py.typed"],
-                  "memilio-stubs": ['simulation/*.pyi']},)
+    package_data={"memilio.simulation": ["py.typed"]})
