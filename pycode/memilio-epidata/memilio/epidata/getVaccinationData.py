@@ -477,7 +477,7 @@ def fetch_vaccination_data(
         impute_dates: bool = True,
         **kwargs
 ) -> pd.DataFrame:
-    """ Downloads or reads the vaccination data and writes them in different files.
+    """ Downloads or reads the vaccination data and writes the RKIVaccFull dataset
 
     @param read_data bool True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param out_folder str. Folder where data is written to. Default defined in defaultDict.
@@ -522,7 +522,11 @@ def process_vaccination_data(
 ) -> dict:
     # -> tuple[Any, DataFrame | Any, Any, list[Any], DataFrame, bool, DataFrame, list[str], list[list[Any]],
     # Any, Any, DataFrame]:
-    """
+    """! Processes downloaded raw data
+    While working with the data
+    - the column names are changed to English depending on defaultDict
+    - The column "Date" provides information on the date of each data point given in the corresponding columns.
+
     @param df_data pd.DataFrame a Dataframe containing processed vaccination data
     @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder str. Folder where data is written to. Default defined in defaultDict.
@@ -889,7 +893,18 @@ def write_vaccination_data(dict_data: dict,
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
                            ) -> None:
-    """
+    """! Writes the vaccination data
+    The data is exported in three different ways:
+        - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
+        - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
+        - all_county_ageinf_vacc: Resolved per county and infection data age group (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
+            - To do so getPopulationData is used and age group specific date from the original source
+                is extrapolated on the new age groups on county level.
+
+    - Missing dates are imputed for all data frames ('fillDates' is not optional but always executed).
+    - A central moving average of N days is optional.
+
+    - Start and end dates can be provided to define the length of the returned data frames.
     Parameters
     ----------
     @param dict_data dict. Contains various datasets or values
