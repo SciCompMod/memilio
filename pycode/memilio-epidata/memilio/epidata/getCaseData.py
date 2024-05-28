@@ -169,8 +169,10 @@ def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
 
 
 def preprocess_case_data(raw_df: pd.DataFrame,
+                         out_folder: str = dd.defaultDict['out_folder'],
                          split_berlin: bool = dd.defaultDict['split_berlin'],
                          rep_date: bool = dd.defaultDict['rep_date'],
+                         **kwargs,
                          ) -> pd.DataFrame:
     """! Preprocessing of the case data
 
@@ -186,6 +188,7 @@ def preprocess_case_data(raw_df: pd.DataFrame,
     - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
         different file names are used.
 
+    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param raw_df pd.Dataframe. Contains the downloaded or read raw case data
     @param split_berlin bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
@@ -195,8 +198,18 @@ def preprocess_case_data(raw_df: pd.DataFrame,
     logger = logging.getLogger(__name__)
     logger.info("Pre-processing the Case data.")
 
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+    filename = "CaseDataFull"
+
     with progress_indicator.Spinner(message='Preparing DataFrame'):
         df = raw_df.convert_dtypes()
+
+        if not no_raw:
+            gd.write_dataframe(df, directory, filename, "json")
 
         # store dict values in parameter to not always call dict itself
         AnzahlFall = dd.GerEng['AnzahlFall']
@@ -500,9 +513,11 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         **kwargs,
     )
     preprocess_df = preprocess_case_data(
+        out_folder=out_folder,
         raw_df=raw_df,
         split_berlin=split_berlin,
         rep_date=rep_date,
+        **kwargs
     )
     write_case_data(
         df=preprocess_df,
