@@ -103,7 +103,7 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
                          impute_dates: bool = dd.defaultDict['impute_dates'],
                          moving_average: int = dd.defaultDict['moving_average'],
                          **kwargs
-                         ) -> pd.DataFrame:
+                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """! Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
@@ -168,7 +168,7 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
     # extract subframe of dates
     df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
-    return df
+    return df, df_raw
 
 
 def write_divi_data(df: pd.DataFrame,
@@ -176,7 +176,7 @@ def write_divi_data(df: pd.DataFrame,
                     out_folder: str = dd.defaultDict['out_folder'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
-                    ) -> None:
+                    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """! Write the divi data into json files
 
     Three kinds of structuring of the data are done.
@@ -229,6 +229,7 @@ def write_divi_data(df: pd.DataFrame,
     filename = "germany_divi"
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_ger, directory, filename, file_format)
+    return df_counties, df_states, df_ger
 
 
 def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
@@ -264,7 +265,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
     """
-    raw_df = fetch_divi_data(
+    downloaded_data_df = fetch_divi_data(
         read_data=read_data,
         out_folder=out_folder,
         file_format=file_format,
@@ -272,8 +273,8 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         **kwargs
     )
 
-    preprocess_df = preprocess_divi_data(
-        df_raw=raw_df,
+    preprocess_df, df_raw = preprocess_divi_data(
+        df_raw=downloaded_data_df,
         out_folder=out_folder,
         start_date=start_date,
         end_date=end_date,
@@ -281,13 +282,14 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         moving_average=moving_average,
         **kwargs
     )
-    write_divi_data(
+    df_counties, df_states, df_ger = write_divi_data(
         df=preprocess_df,
         file_format=file_format,
         out_folder=out_folder,
         impute_dates=impute_dates,
         moving_average=moving_average
     )
+    return df_raw, df_counties, df_states, df_ger
 
 
 def divi_data_sanity_checks(df: pd.DataFrame) -> None:
