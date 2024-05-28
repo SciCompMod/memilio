@@ -357,7 +357,7 @@ public:
     {
         auto& params                            = m_model_ptr->parameters;
         const size_t locations                  = params.template get<ContactReductionMax>().size();
-        constexpr ScalarType threshold_softplus = 0.1;
+        constexpr ScalarType threshold_softplus = 0.5;
         double perceived_risk_contacts =
             calc_risk_perceived(params.template get<alphaGammaContacts>(), params.template get<betaGammaContacts>(),
                                 icu_regional, icu_national);
@@ -428,9 +428,7 @@ public:
             // icu_occupancy_adjusted_rel = std::min(icu_occupancy_adjusted_rel, 1.0); Now limited later
             perceived_risk += icu_occupancy_adjusted_rel * gamma;
         }
-        perceived_risk  = std::min(perceived_risk, 1.0);
-        auto num_groups = (size_t)m_model_ptr->parameters.get_num_groups();
-        mio::unused(num_groups);
+        perceived_risk = std::min(perceived_risk, 1.0);
         m_perceived_risk.add_time_point(
             m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_last_time(),
             Eigen::VectorXd::Constant((size_t)m_model_ptr->parameters.get_num_groups(), perceived_risk));

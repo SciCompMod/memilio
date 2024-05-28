@@ -8,6 +8,7 @@
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
 #include "ode_secir/parameters_io.h"
+#include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
@@ -190,8 +191,8 @@ mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params)
     params.get<mio::osecir::EpsilonContacts>()        = 0.1;
     params.get<mio::osecir::BlendingFactorLocal>()    = 0.5;
     params.get<mio::osecir::BlendingFactorRegional>() = 0.5;
-    params.get<mio::osecir::ContactReductionMin>()    = {0.0, 0.0, 0.0, 0.0};
-    params.get<mio::osecir::ContactReductionMax>()    = {0.25, 0.5, 0.5, 0.5};
+    params.get<mio::osecir::ContactReductionMin>()    = {0.6, 0.7, 0.3, 0.84};
+    params.get<mio::osecir::ContactReductionMax>()    = {0.8, 0.85, 0.5, 0.96};
 
     return mio::success();
 }
@@ -248,6 +249,173 @@ void set_state_ids(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& gra
 }
 
 /**
+ * Set NPIs.
+ * @param start_date start date of the simulation.
+ * @param end_date end date of the simulation.
+ * @param params Object that the NPIs will be added to.
+ * @returns Currently generates no errors.
+ */
+mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osecir::Parameters& params,
+                             const std::string& mode)
+{
+    auto& contacts         = params.get<mio::osecir::ContactPatterns>();
+    auto& contact_dampings = contacts.get_dampings();
+
+    //weights for age groups affected by an NPI
+    auto group_weights_all     = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
+    auto group_weights_seniors = Eigen::VectorXd::NullaryExpr(size_t(params.get_num_groups()), [](auto&& i) {
+        return i == 5 ? 1.0 : i == 4 ? 0.5 : 0.0; //65-80 only partially
+    });
+
+    //helper functions that create dampings for specific NPIs
+    auto contacts_at_home = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::Home)), t, {size_t(ContactLocation::Home)},
+                                    group_weights_all);
+    };
+    auto school_closure = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::SchoolClosure)), t,
+                                    {size_t(ContactLocation::School)}, group_weights_all);
+    };
+    auto home_office = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::HomeOffice)), t, {size_t(ContactLocation::Work)},
+                                    group_weights_all);
+    };
+    auto social_events = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+                                    {size_t(ContactLocation::Other)}, group_weights_all);
+    };
+    auto social_events_work = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+                                    {size_t(ContactLocation::Work)}, group_weights_all);
+    };
+    auto physical_distancing_home_school = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                    {size_t(ContactLocation::Home), size_t(ContactLocation::School)},
+                                    group_weights_all);
+    };
+    auto physical_distancing_work_other = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                    {size_t(ContactLocation::Work), size_t(ContactLocation::Other)}, group_weights_all);
+    };
+    auto senior_awareness = [=](auto t, auto min, auto max) {
+        auto v = mio::UncertainValue();
+        assign_uniform_distribution(v, min, max);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::SeniorAwareness)),
+                                    mio::DampingType(int(Intervention::SeniorAwareness)), t,
+                                    {size_t(ContactLocation::Home), size_t(ContactLocation::Other)},
+                                    group_weights_seniors);
+    };
+
+    //autumn enforced attention
+    auto start_autumn_date = mio::Date(2020, 10, 1);
+    if (start_autumn_date < end_date) {
+        auto start_autumn = mio::SimulationTime(mio::get_offset_in_days(start_autumn_date, start_date));
+        contact_dampings.push_back(contacts_at_home(start_autumn, 0.2, 0.4));
+        contact_dampings.push_back(physical_distancing_home_school(start_autumn, 0.2, 0.4));
+        contact_dampings.push_back(physical_distancing_work_other(start_autumn, 0.2, 0.4));
+    }
+
+    //autumn lockdown light
+    auto start_autumn_lockdown_date = mio::Date(2020, 11, 1);
+    if (start_autumn_lockdown_date < end_date) {
+        auto start_autumn_lockdown =
+            mio::SimulationTime(mio::get_offset_in_days(start_autumn_lockdown_date, start_date));
+        contact_dampings.push_back(contacts_at_home(start_autumn_lockdown, 0.4, 0.6));
+        contact_dampings.push_back(school_closure(start_autumn_lockdown, 0.0, 0.0));
+        contact_dampings.push_back(home_office(start_autumn_lockdown, 0.2, 0.3));
+        contact_dampings.push_back(social_events(start_autumn_lockdown, 0.6, 0.8));
+        contact_dampings.push_back(social_events_work(start_autumn_lockdown, 0.0, 0.1));
+        contact_dampings.push_back(physical_distancing_home_school(start_autumn_lockdown, 0.2, 0.4));
+        contact_dampings.push_back(physical_distancing_work_other(start_autumn_lockdown, 0.4, 0.6));
+        contact_dampings.push_back(senior_awareness(start_autumn_lockdown, 0.0, 0.0));
+    }
+
+    //winter lockdown
+    auto start_winter_lockdown_date = mio::Date(2020, 12, 16);
+    if (start_winter_lockdown_date < end_date) {
+        double min = 0.6, max = 0.8; //for strictest scenario: 0.8 - 1.0
+        auto start_winter_lockdown =
+            mio::SimulationTime(mio::get_offset_in_days(start_winter_lockdown_date, start_date));
+        contact_dampings.push_back(contacts_at_home(start_winter_lockdown, min, max));
+        contact_dampings.push_back(school_closure(start_winter_lockdown, 1.0, 1.0));
+        contact_dampings.push_back(home_office(start_winter_lockdown, 0.2, 0.3));
+        contact_dampings.push_back(social_events(start_winter_lockdown, min, max));
+        contact_dampings.push_back(social_events_work(start_winter_lockdown, 0.1, 0.2));
+        contact_dampings.push_back(physical_distancing_home_school(start_winter_lockdown, 0.2, 0.4));
+        contact_dampings.push_back(physical_distancing_work_other(start_winter_lockdown, min, max));
+        contact_dampings.push_back(senior_awareness(start_winter_lockdown, 0.0, 0.0));
+
+        //relaxing of restrictions over christmas days
+        auto xmas_date = mio::Date(2020, 12, 24);
+        auto xmas      = mio::SimulationTime(mio::get_offset_in_days(xmas_date, start_date));
+        contact_dampings.push_back(contacts_at_home(xmas, 0.0, 0.0));
+        contact_dampings.push_back(home_office(xmas, 0.4, 0.5));
+        contact_dampings.push_back(social_events(xmas, 0.4, 0.6));
+        contact_dampings.push_back(physical_distancing_home_school(xmas, 0.0, 0.0));
+        contact_dampings.push_back(physical_distancing_work_other(xmas, 0.4, 0.6));
+
+        // after christmas
+        auto after_xmas_date = mio::Date(2020, 12, 27);
+        auto after_xmas      = mio::SimulationTime(mio::get_offset_in_days(after_xmas_date, start_date));
+        contact_dampings.push_back(contacts_at_home(after_xmas, min, max));
+        contact_dampings.push_back(home_office(after_xmas, 0.2, 0.3));
+        contact_dampings.push_back(social_events(after_xmas, 0.6, 0.8));
+        contact_dampings.push_back(physical_distancing_home_school(after_xmas, 0.2, 0.4));
+        contact_dampings.push_back(physical_distancing_work_other(after_xmas, min, max));
+    }
+
+    //local dynamic NPIs (if we use the non feedback simulation mode)
+    if (std::strcmp(mode.c_str(), "NormalSim") == 0) {
+        auto& dynamic_npis        = params.get<mio::osecir::DynamicNPIsInfectedSymptoms>();
+        auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
+        dynamic_npi_dampings.push_back(
+            contacts_at_home(mio::SimulationTime(0), 0.6, 0.8)); // increased from [0.4, 0.6] in Nov
+        dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.25, 0.25)); // see paper
+        dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3)); // ...
+        dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.6, 0.8));
+        dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.1, 0.2));
+        dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.6, 0.8));
+        dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.6, 0.8));
+        dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
+        dynamic_npis.set_interval(mio::SimulationTime(3.0));
+        dynamic_npis.set_duration(mio::SimulationTime(14.0));
+        dynamic_npis.set_base_value(100'000);
+        dynamic_npis.set_threshold(200.0, dynamic_npi_dampings);
+    }
+
+    //school holidays (holiday periods are set per node, see set_nodes)
+    auto school_holiday_value = mio::UncertainValue();
+    assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
+    contacts.get_school_holiday_damping() =
+        mio::DampingSampling(school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
+                             mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime(0.0),
+                             {size_t(ContactLocation::School)}, group_weights_all);
+
+    return mio::success();
+}
+
+/**
  * Create the input graph for the parameter study.
  * Reads files from the data directory.
  * @param start_date start date of the simulation.
@@ -256,7 +424,7 @@ void set_state_ids(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& gra
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>>
-get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
+get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, const std::string& mode)
 {
     const auto start_day = mio::get_day_in_year(start_date);
 
@@ -266,6 +434,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     params.get<mio::osecir::StartDay>() = start_day;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_feedback_parameters(params));
+    BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, mode));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
 
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
@@ -325,48 +494,49 @@ enum class RunMode
  */
 mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
-    const auto start_date   = mio::Date(2020, 10, 1);
-    const auto num_days_sim = 200.0;
+    const auto start_date   = mio::Date(2020, 10, 15);
+    const auto num_days_sim = 100.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 100;
 
     auto const modes = {"NormalSim", "FeedbackSim"};
 
     //create or load graph
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-
-    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir));
-    params_graph = created;
-
-    std::vector<int> county_ids(params_graph.nodes().size());
-    std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
-        return n.id;
-    });
-
-    //run parameter study
-    auto parameter_study_feedback_sim =
-        mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
-            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-
-    auto parameter_study_sim = mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
-        params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-
-    // parameter_study.get_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    if (mio::mpi::is_root()) {
-        printf("Seeds: ");
-        for (auto s : parameter_study_feedback_sim.get_rng().get_seeds()) {
-            printf("%u, ", s);
-        }
-        for (auto s : parameter_study_sim.get_rng().get_seeds()) {
-            printf("%u, ", s);
-        }
-        printf("\n");
-    }
-
-    auto save_single_run_result = mio::IOResult<void>(mio::success());
-
     for (auto mode : modes) {
+        mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+
+        BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, mode));
+        params_graph = created;
+
+        std::vector<int> county_ids(params_graph.nodes().size());
+        std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+            return n.id;
+        });
+
+        //run parameter study
+        auto parameter_study_feedback_sim =
+            mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+
+        auto parameter_study_sim =
+            mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+
+        // parameter_study.get_rng().seed(
+        //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+        if (mio::mpi::is_root()) {
+            printf("Seeds: ");
+            for (auto s : parameter_study_feedback_sim.get_rng().get_seeds()) {
+                printf("%u, ", s);
+            }
+            for (auto s : parameter_study_sim.get_rng().get_seeds()) {
+                printf("%u, ", s);
+            }
+            printf("\n");
+        }
+
+        auto save_single_run_result = mio::IOResult<void>(mio::success());
+
         auto result_dir_mode = result_dir / mode;
         // create directory for results
         if (mio::mpi::is_root()) {
@@ -412,6 +582,26 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                                        return mio::interpolate_simulation_result(interpolated_risk);
                                    });
 
+                    const auto num_groups = (size_t)results_graph.nodes()[0]
+                                                .property.get_simulation()
+                                                .get_model()
+                                                .parameters.get_num_groups();
+                    auto r0 = std::vector<mio::TimeSeries<ScalarType>>{};
+                    r0.reserve(results_graph.nodes().size());
+                    std::transform(
+                        results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(r0),
+                        [num_groups](auto&& node) {
+                            auto r0_node   = mio::TimeSeries<ScalarType>(num_groups);
+                            auto r0_values = mio::osecir::get_reproduction_numbers(node.property.get_simulation());
+                            for (int i = 0; i < node.property.get_simulation().get_result().get_num_time_points();
+                                 i++) {
+                                r0_node.add_time_point(node.property.get_simulation().get_result().get_time(i),
+                                                       Eigen::VectorXd::Constant(num_groups, r0_values[i]));
+                            }
+                            auto interpolated_r0 = mio::interpolate_simulation_result(r0_node);
+                            return mio::interpolate_simulation_result(interpolated_r0);
+                        });
+
                     // for (size_t i = 0; i < results_graph.nodes().size(); i++) {
                     //     auto& node = results_graph.nodes()[i];
                     //     std::stringstream output1;
@@ -430,7 +620,7 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                     std::cout << "run " << run_idx << " done" << std::endl;
 
                     return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows),
-                                           std::move(risks));
+                                           std::move(risks), std::move(r0));
                 });
             if (ensemble.size() > 0) {
                 auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
@@ -441,11 +631,14 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                 ensemble_flows.reserve(ensemble.size());
                 auto ensemble_risks = std::vector<std::vector<mio::TimeSeries<double>>>{};
                 ensemble_risks.reserve(ensemble.size());
+                auto ensemble_r0 = std::vector<std::vector<mio::TimeSeries<double>>>{};
+                ensemble_r0.reserve(ensemble.size());
                 for (auto&& run : ensemble) {
                     ensemble_results.emplace_back(std::move(std::get<0>(run)));
                     ensemble_params.emplace_back(std::move(std::get<1>(run)));
                     ensemble_flows.emplace_back(std::move(std::get<2>(run)));
                     ensemble_risks.emplace_back(std::move(std::get<3>(run)));
+                    ensemble_r0.emplace_back(std::move(std::get<4>(run)));
                 }
                 BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir_mode, false));
 
@@ -473,6 +666,18 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                     printf("Saving Risk results to \"%s\".\n", result_dir_risk.c_str());
                 }
                 BOOST_OUTCOME_TRY(save_results(ensemble_risks, ensemble_params, county_ids, result_dir_risk, false));
+
+                auto result_dir_r0 = result_dir_mode / "r0";
+                if (mio::mpi::is_root()) {
+                    boost::filesystem::path dir(result_dir_r0);
+                    bool created_r0_dir = boost::filesystem::create_directories(dir);
+
+                    if (created_r0_dir) {
+                        mio::log_info("Directory '{:s}' was created.", dir.string());
+                    }
+                    printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
+                }
+                BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
             }
         }
         else if (std::strcmp(mode, "NormalSim") == 0) {
@@ -498,9 +703,30 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                                        auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
                                        return interpolated_flows;
                                    });
+
+                    const auto num_groups = (size_t)results_graph.nodes()[0]
+                                                .property.get_simulation()
+                                                .get_model()
+                                                .parameters.get_num_groups();
+                    auto r0 = std::vector<mio::TimeSeries<ScalarType>>{};
+                    r0.reserve(results_graph.nodes().size());
+                    std::transform(
+                        results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(r0),
+                        [num_groups](auto&& node) {
+                            auto r0_node   = mio::TimeSeries<ScalarType>(num_groups);
+                            auto r0_values = mio::osecir::get_reproduction_numbers(node.property.get_simulation());
+                            for (int i = 0; i < node.property.get_simulation().get_result().get_num_time_points();
+                                 i++) {
+                                r0_node.add_time_point(node.property.get_simulation().get_result().get_time(i),
+                                                       Eigen::VectorXd::Constant(num_groups, r0_values[i]));
+                            }
+                            auto interpolated_r0 = mio::interpolate_simulation_result(r0_node);
+                            return mio::interpolate_simulation_result(interpolated_r0);
+                        });
                     std::cout << "run " << run_idx << " done" << std::endl;
 
-                    return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows));
+                    return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows),
+                                           std::move(r0));
                 });
             if (ensemble.size() > 0) {
                 auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
@@ -509,10 +735,13 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                 ensemble_params.reserve(ensemble.size());
                 auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
                 ensemble_flows.reserve(ensemble.size());
+                auto ensemble_r0 = std::vector<std::vector<mio::TimeSeries<double>>>{};
+                ensemble_r0.reserve(ensemble.size());
                 for (auto&& run : ensemble) {
                     ensemble_results.emplace_back(std::move(std::get<0>(run)));
                     ensemble_params.emplace_back(std::move(std::get<1>(run)));
                     ensemble_flows.emplace_back(std::move(std::get<2>(run)));
+                    ensemble_r0.emplace_back(std::move(std::get<3>(run)));
                 }
                 BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir_mode, false));
 
@@ -528,6 +757,18 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                 }
                 BOOST_OUTCOME_TRY(
                     save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
+
+                auto result_dir_r0 = result_dir_mode / "r0";
+                if (mio::mpi::is_root()) {
+                    boost::filesystem::path dir(result_dir_r0);
+                    bool created_r0_dir = boost::filesystem::create_directories(dir);
+
+                    if (created_r0_dir) {
+                        mio::log_info("Directory '{:s}' was created.", dir.string());
+                    }
+                    printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
+                }
+                BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
             }
         }
     }
