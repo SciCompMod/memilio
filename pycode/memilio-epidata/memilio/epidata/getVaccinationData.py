@@ -474,14 +474,12 @@ def extrapolate_age_groups_vaccinations(
 def fetch_vaccination_data(
         read_data: str = dd.defaultDict['read_data'],
         out_folder: str = dd.defaultDict['out_folder'],
-        impute_dates: bool = True,
         **kwargs
 ) -> pd.DataFrame:
     """ Downloads or reads the vaccination data and writes the RKIVaccFull dataset
 
     @param read_data bool True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param out_folder str. Folder where data is written to. Default defined in defaultDict.
-    @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param ***kwargs
 
     @return pd.DataFrame fetched vaccination data
@@ -489,12 +487,6 @@ def fetch_vaccination_data(
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
-
-    # data for all dates is automatically added
-    if impute_dates == False:
-        gd.default_print(
-            'Warning', 'Setting impute_dates = True as data for all dates is automatically added.')
-        impute_dates = True
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -953,6 +945,12 @@ def write_vaccination_data(dict_data: dict,
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
+
+    # data for all dates is automatically added
+    if not impute_dates:
+        gd.default_print(
+            'Warning', 'Setting impute_dates = True as data for all dates is automatically added.')
+        impute_dates = True
 
     if conf.plot:
         # have a look extrapolated vaccination ratios (TODO: create plotting for production)
