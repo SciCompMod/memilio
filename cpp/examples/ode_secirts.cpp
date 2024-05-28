@@ -33,7 +33,7 @@ int main()
 
     mio::log_info("Simulating SECIRTS; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::osecirts::Model model(3);
+    mio::osecirts::Model<double> model(3);
     auto nb_groups = model.parameters.get_num_groups();
 
     for (mio::AgeGroup i = 0; i < nb_groups; i++) {
@@ -70,55 +70,55 @@ int main()
 
         // parameters
         //times
-        model.parameters.get<mio::osecirts::TimeExposed>()[i]                = 3.33;
-        model.parameters.get<mio::osecirts::TimeInfectedNoSymptoms>()[i]     = 1.87;
-        model.parameters.get<mio::osecirts::TimeInfectedSymptoms>()[i]       = 7;
-        model.parameters.get<mio::osecirts::TimeInfectedSevere>()[i]         = 6;
-        model.parameters.get<mio::osecirts::TimeInfectedCritical>()[i]       = 7;
-        model.parameters.get<mio::osecirts::TimeTemporaryImmunityPI>()[i]    = 60;
-        model.parameters.get<mio::osecirts::TimeTemporaryImmunityPI>()[i]    = 60;
-        model.parameters.get<mio::osecirts::TimeTemporaryImmunityII>()[i]    = 60;
-        model.parameters.get<mio::osecirts::TimeWaningPartialImmunity>()[i]  = 180;
-        model.parameters.get<mio::osecirts::TimeWaningImprovedImmunity>()[i] = 180;
+        model.parameters.get<mio::osecirts::TimeExposed<double>>()[i]                = 3.33;
+        model.parameters.get<mio::osecirts::TimeInfectedNoSymptoms<double>>()[i]     = 1.87;
+        model.parameters.get<mio::osecirts::TimeInfectedSymptoms<double>>()[i]       = 7;
+        model.parameters.get<mio::osecirts::TimeInfectedSevere<double>>()[i]         = 6;
+        model.parameters.get<mio::osecirts::TimeInfectedCritical<double>>()[i]       = 7;
+        model.parameters.get<mio::osecirts::TimeTemporaryImmunityPI<double>>()[i]    = 60;
+        model.parameters.get<mio::osecirts::TimeTemporaryImmunityII<double>>()[i]    = 60;
+        model.parameters.get<mio::osecirts::TimeWaningPartialImmunity<double>>()[i]  = 180;
+        model.parameters.get<mio::osecirts::TimeWaningImprovedImmunity<double>>()[i] = 180;
 
         //probabilities
-        model.parameters.get<mio::osecirts::TransmissionProbabilityOnContact>()[i]  = 0.15;
-        model.parameters.get<mio::osecirts::RelativeTransmissionNoSymptoms>()[i]    = 0.5;
-        model.parameters.get<mio::osecirts::RiskOfInfectionFromSymptomatic>()[i]    = 0.0;
-        model.parameters.get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.4;
-        model.parameters.get<mio::osecirts::RecoveredPerInfectedNoSymptoms>()[i]    = 0.2;
-        model.parameters.get<mio::osecirts::SeverePerInfectedSymptoms>()[i]         = 0.1;
-        model.parameters.get<mio::osecirts::CriticalPerSevere>()[i]                 = 0.1;
-        model.parameters.get<mio::osecirts::DeathsPerCritical>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirts::TransmissionProbabilityOnContact<double>>()[i]  = 0.15;
+        model.parameters.get<mio::osecirts::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.5;
+        model.parameters.get<mio::osecirts::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.0;
+        model.parameters.get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.4;
+        model.parameters.get<mio::osecirts::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.2;
+        model.parameters.get<mio::osecirts::SeverePerInfectedSymptoms<double>>()[i]         = 0.1;
+        model.parameters.get<mio::osecirts::CriticalPerSevere<double>>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirts::DeathsPerCritical<double>>()[i]                 = 0.1;
 
-        model.parameters.get<mio::osecirts::ReducExposedPartialImmunity>()[i]                     = 0.8;
-        model.parameters.get<mio::osecirts::ReducExposedImprovedImmunity>()[i]                    = 0.331;
-        model.parameters.get<mio::osecirts::ReducInfectedSymptomsPartialImmunity>()[i]            = 0.65;
-        model.parameters.get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity>()[i]           = 0.243;
-        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity>()[i]  = 0.1;
-        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] = 0.091;
-        model.parameters.get<mio::osecirts::ReducTimeInfectedMild>()[i]                           = 0.9;
+        model.parameters.get<mio::osecirts::ReducExposedPartialImmunity<double>>()[i]                     = 0.8;
+        model.parameters.get<mio::osecirts::ReducExposedImprovedImmunity<double>>()[i]                    = 0.331;
+        model.parameters.get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<double>>()[i]            = 0.65;
+        model.parameters.get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<double>>()[i]           = 0.243;
+        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[i]  = 0.1;
+        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[i] = 0.091;
+        model.parameters.get<mio::osecirts::ReducTimeInfectedMild<double>>()[i]                           = 0.9;
     }
 
-    model.parameters.get<mio::osecirts::ICUCapacity>()          = 100;
-    model.parameters.get<mio::osecirts::TestAndTraceCapacity>() = 0.0143;
-    const size_t daily_vaccinations                             = 10;
-    const size_t num_days                                       = 300;
-    model.parameters.get<mio::osecirts::DailyPartialVaccination>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyFullVaccination>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccination>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::ICUCapacity<double>>()          = 100;
+    model.parameters.get<mio::osecirts::TestAndTraceCapacity<double>>() = 0.0143;
+    const size_t daily_vaccinations                                     = 10;
+    const size_t num_days                                               = 300;
+    model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyFullVaccination<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccination<double>>().resize(mio::SimulationDay(num_days));
     for (size_t i = 0; i < num_days; ++i) {
         for (mio::AgeGroup j = 0; j < nb_groups; ++j) {
             auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-            model.parameters.get<mio::osecirts::DailyPartialVaccination>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyFullVaccination>()[{j, mio::SimulationDay(i)}] = num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyBoosterVaccination>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyFullVaccination<double>>()[{j, mio::SimulationDay(i)}] =
+                num_vaccinations;
+            model.parameters.get<mio::osecirts::DailyBoosterVaccination<double>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
         }
     }
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecirts::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
     const double cont_freq                  = 10;
     const double fact                       = 1.0 / (double)(size_t)nb_groups;
     contact_matrix[0] =
@@ -126,7 +126,7 @@ int main()
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
                                mio::SimulationTime(30.));
 
-    model.parameters.get<mio::osecirts::Seasonality>() = 0.2;
+    model.parameters.get<mio::osecirts::Seasonality<double>>() = 0.2;
 
     model.apply_constraints();
 

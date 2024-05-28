@@ -625,11 +625,11 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
         // iterate over age groups in region
         for (auto g = AgeGroup(0); g < num_groups; ++g) {
 
-            model[i].parameters.template get<DailyFirstVaccination<FP>>().resize(SimulationDay(num_days + 1));
+            model[i].parameters.template get<DailyPartialVaccination<FP>>().resize(SimulationDay(num_days + 1));
             model[i].parameters.template get<DailyFullVaccination<FP>>().resize(SimulationDay(num_days + 1));
             for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
-                model[i].parameters.template get<DailyFirstVaccination<FP>>()[{g, d}] = 0.0;
-                model[i].parameters.template get<DailyFullVaccination<FP>>()[{g, d}]  = 0.0;
+                model[i].parameters.template get<DailyPartialVaccination<FP>>()[{g, d}] = 0.0;
+                model[i].parameters.template get<DailyFullVaccination<FP>>()[{g, d}]    = 0.0;
             }
         }
     }
@@ -668,8 +668,8 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
                 // a person whose second dose is reported at start_date + simulation_day - days_until_effective1 + vaccination_distance
                 // had the first dose on start_date + simulation_day - days_until_effective1. Furthermore, he/she has the full protection
                 // of the first dose at day X = start_date + simulation_day
-                // Storing its value in get<DailyFirstVaccination>() will eventually (in the simulation)
-                // transfer the difference (between get<DailyFirstVaccination>() at d and d-1) of
+                // Storing its value in get<DailyPartialVaccination>() will eventually (in the simulation)
+                // transfer the difference (between get<DailyPartialVaccination>() at d and d-1) of
                 // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
                 auto offset_first_date =
                     offset_date_by_days(date, (int)d - days_until_effective1 + vaccination_distance);
@@ -677,7 +677,7 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
                     // Option 1: considered offset_first_date is available in input data frame
                     if (date_df == offset_first_date) {
                         model[region_idx]
-                            .parameters.template get<DailyFirstVaccination<FP>>()[{age, SimulationDay(d)}] =
+                            .parameters.template get<DailyPartialVaccination<FP>>()[{age, SimulationDay(d)}] =
                             vacc_data_entry.num_vaccinations_completed;
                     }
                 }
@@ -690,12 +690,12 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
                     days_plus = get_offset_in_days(offset_first_date, max_date);
                     if (date_df == offset_date_by_days(max_date, -1)) {
                         model[region_idx]
-                            .parameters.template get<DailyFirstVaccination<FP>>()[{age, SimulationDay(d)}] -=
+                            .parameters.template get<DailyPartialVaccination<FP>>()[{age, SimulationDay(d)}] -=
                             days_plus * vacc_data_entry.num_vaccinations_completed;
                     }
                     else if (date_df == max_date) {
                         model[region_idx]
-                            .parameters.template get<DailyFirstVaccination<FP>>()[{age, SimulationDay(d)}] +=
+                            .parameters.template get<DailyPartialVaccination<FP>>()[{age, SimulationDay(d)}] +=
                             (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
                     }
                 }

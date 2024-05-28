@@ -45,8 +45,9 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     auto num_runs   = ensemble_params.size();
     auto num_nodes  = ensemble_params[0].size();
     auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
-    auto num_days =
-        ensemble_params[0][0].parameters.template get<DailyPartialVaccination>().template size<mio::SimulationDay>();
+    auto num_days   = ensemble_params[0][0]
+                        .parameters.template get<DailyPartialVaccination<double>>()
+                        .template size<mio::SimulationDay>();
 
     std::vector<double> single_element_ensemble(num_runs);
 
@@ -64,9 +65,9 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
-        percentile[node].parameters.template get<DailyPartialVaccination>().resize(num_days);
-        percentile[node].parameters.template get<DailyFullVaccination>().resize(num_days);
-        percentile[node].parameters.template get<DailyBoosterVaccination>().resize(num_days);
+        percentile[node].parameters.template get<DailyPartialVaccination<double>>().resize(num_days);
+        percentile[node].parameters.template get<DailyFullVaccination<double>>().resize(num_days);
+        percentile[node].parameters.template get<DailyBoosterVaccination<double>>().resize(num_days);
 
         for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             //Population
@@ -78,120 +79,134 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             }
             // times
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeExposed>()[i]; });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeExposed<double>>()[i]; });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<TimeInfectedNoSymptoms>()[i];
+                    return model.parameters.template get<TimeInfectedNoSymptoms<double>>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSymptoms>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSymptoms<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSevere>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSevere<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedCritical>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedCritical<double>>()[i];
+                });
             //probs
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<TransmissionProbabilityOnContact>()[i];
+                    return model.parameters.template get<TransmissionProbabilityOnContact<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RelativeTransmissionNoSymptoms>()[i];
+                    return model.parameters.template get<RelativeTransmissionNoSymptoms<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RiskOfInfectionFromSymptomatic>()[i];
+                    return model.parameters.template get<RiskOfInfectionFromSymptomatic<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic>()[i];
+                    return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[i];
+                    return model.parameters.template get<RecoveredPerInfectedNoSymptoms<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<SeverePerInfectedSymptoms>()[i];
+                    return model.parameters.template get<SeverePerInfectedSymptoms<double>>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<CriticalPerSevere>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<CriticalPerSevere<double>>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerCritical>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<DeathsPerCritical<double>>()[i];
+                });
             //vaccinations
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ReducExposedPartialImmunity>()[i];
+                    return model.parameters.template get<ReducExposedPartialImmunity<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ReducExposedImprovedImmunity>()[i];
+                    return model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ReducInfectedSymptomsPartialImmunity>()[i];
+                    return model.parameters.template get<ReducInfectedSymptomsPartialImmunity<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[i];
+                    return model.parameters.template get<ReducInfectedSymptomsImprovedImmunity<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i];
+                    return model.parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i];
-                });
-            param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<ReducTimeInfectedMild>()[i]; });
-            param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<VaccinationGap>()[i]; });
-            param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectivePartialVaccination>()[i];
+                    return model.parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectiveImprovedVaccination>()[i];
+                    return model.parameters.template get<ReducTimeInfectedMild<double>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<VaccinationGap<double>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<DaysUntilEffectivePartialVaccination<double>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<DaysUntilEffectiveImprovedVaccination<double>>()[i];
                 });
 
             for (auto day = SimulationDay(0); day < num_days; ++day) {
                 param_percentil(
                     node, [ i, day ](auto&& model) -> auto& {
-                        return model.parameters.template get<DailyPartialVaccination>()[{i, day}];
+                        return model.parameters.template get<DailyPartialVaccination<double>>()[{i, day}];
                     });
                 param_percentil(
                     node, [ i, day ](auto&& model) -> auto& {
-                        return model.parameters.template get<DailyFullVaccination>()[{i, day}];
+                        return model.parameters.template get<DailyFullVaccination<double>>()[{i, day}];
                     });
                 param_percentil(
                     node, [ i, day ](auto&& model) -> auto& {
-                        return model.parameters.template get<DailyBoosterVaccination>()[{i, day}];
+                        return model.parameters.template get<DailyBoosterVaccination<double>>()[{i, day}];
                     });
             }
             //virus variants
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<InfectiousnessNewVariant>()[i];
+                    return model.parameters.template get<InfectiousnessNewVariant<double>>()[i];
                 });
         }
         // group independent params
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality<double>>(); });
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity<double>>(); });
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<ICUCapacity>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<ICUCapacity<double>>(); });
 
         for (size_t run = 0; run < num_runs; run++) {
 
             auto const& params = ensemble_params[run][node];
             single_element_ensemble[run] =
-                params.parameters.template get<ICUCapacity>() * params.populations.get_total();
+                params.parameters.template get<ICUCapacity<double>>() * params.populations.get_total();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-        percentile[node].parameters.template set<ICUCapacity>(
+        percentile[node].parameters.template set<ICUCapacity<double>>(
             single_element_ensemble[static_cast<size_t>(num_runs * p)]);
     }
     return percentile;
