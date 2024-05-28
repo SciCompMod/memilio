@@ -390,12 +390,12 @@ TEST(TestEpiData, set_vaccination_data)
     auto num_days       = 9;
 
     std::vector<int> county_ids = {1001};
-    mio::osecirts::Model model(num_age_groups);
-    model.parameters.set<mio::osecirts::VaccinationGap>(3);
-    model.parameters.set<mio::osecirts::DaysUntilEffectivePartialVaccination>(1);
-    model.parameters.set<mio::osecirts::DaysUntilEffectiveImprovedVaccination>(2);
-    model.parameters.set<mio::osecirts::DaysUntilEffectiveBoosterImmunity>(1);
-    std::vector<mio::osecirts::Model> model_vector{model};
+    mio::osecirts::Model<double> model(num_age_groups);
+    model.parameters.set<mio::osecirts::VaccinationGap<double>>(3);
+    model.parameters.set<mio::osecirts::DaysUntilEffectivePartialVaccination<double>>(1);
+    model.parameters.set<mio::osecirts::DaysUntilEffectiveImprovedVaccination<double>>(2);
+    model.parameters.set<mio::osecirts::DaysUntilEffectiveBoosterImmunity<double>>(1);
+    std::vector<mio::osecirts::Model<double>> model_vector{model};
 
     auto f = mio::osecirts::details::set_vaccination_data(model_vector,
                                                           mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
@@ -410,12 +410,15 @@ TEST(TestEpiData, set_vaccination_data)
     auto expected_values_B =
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 5, 7, 9, 11, 13, 9, 7, 5, 5, 0).finished();
 
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyPartialVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_PI), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyFullVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_II), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyBoosterVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_B), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyPartialVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_PI), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyFullVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_II), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyBoosterVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_B), 1e-8, 1e-8));
 }
 
 TEST(TestEpiData, vaccination_data)

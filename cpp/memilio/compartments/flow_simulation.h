@@ -26,14 +26,19 @@
 namespace mio
 {
 
-template <class M>
-class FlowSimulation : public Simulation<M>
+/**
+ * @brief A class for the simulation of a flow model.
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam M A FlowModel implementation.
+ */
+template <typename FP, class M>
+class FlowSimulation : public Simulation<FP, M>
 {
-    static_assert(is_flow_model<M>::value, "Template parameter must be a flow model.");
+    static_assert(is_flow_model<FP, M>::value, "Template parameter must be a flow model.");
 
 public:
     using Model = M;
-    using Base  = Simulation<M>;
+    using Base  = Simulation<FP, M>;
 
     /**
      * @brief Set up the simulation with an ODE solver.
@@ -41,7 +46,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
+    FlowSimulation(Model const& model, FP t0 = 0., FP dt = 0.1)
         : Base(model, t0, dt)
         , m_pop(model.get_initial_values().size())
         , m_flow_result(t0, model.get_initial_flows())
@@ -53,7 +58,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Vector<FP>> advance(FP tmax)
     {
         // the derivfunktion (i.e. the lambda passed to m_integrator.advance below) requires that there are at least
         // as many entries in m_flow_result as in Base::m_result
@@ -94,12 +99,12 @@ public:
      * For each simulated time step, the TimeSeries contains the value of each flow. 
      * @{
      */
-    TimeSeries<ScalarType>& get_flows()
+    TimeSeries<FP>& get_flows()
     {
         return m_flow_result;
     }
 
-    const TimeSeries<ScalarType>& get_flows() const
+    const TimeSeries<FP>& get_flows() const
     {
         return m_flow_result;
     }
@@ -127,10 +132,10 @@ protected:
         }
     }
 
-    Eigen::VectorXd m_pop; ///< pre-allocated temporary, used in right_hand_side()
+    Vector<FP> m_pop; ///< pre-allocated temporary, used in right_hand_side()
 
 private:
-    mio::TimeSeries<ScalarType> m_flow_result; ///< flow result of the simulation
+    mio::TimeSeries<FP> m_flow_result; ///< flow result of the simulation
 };
 
 /**
@@ -142,12 +147,13 @@ private:
  * @param[in] integrator Optionally override the IntegratorCore used by the FlowSimulation.
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
+ * @tparam FP a floating point type, e.g., double
  * @tparam Model The particular Model derived from FlowModel to simulate.
  * @tparam Sim A FlowSimulation that can simulate the model.
  */
-template <class Model, class Sim = FlowSimulation<Model>>
-std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model,
-                                                   std::shared_ptr<IntegratorCore> integrator = nullptr)
+template <typename FP, class Model, class Sim = FlowSimulation<FP, Model>>
+std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model const& model,
+                                           std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);

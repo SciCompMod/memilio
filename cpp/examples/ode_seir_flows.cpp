@@ -17,15 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/config.h"
-#include "memilio/utils/time_series.h"
+
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/utils/logging.h"
 
-#include <iostream>
 #include <vector>
 
 int main()
@@ -38,7 +36,7 @@ int main()
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::oseir::Model model(1);
+    mio::oseir::Model<double> model(1);
 
     constexpr double total_population                                            = 10000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
@@ -47,11 +45,12 @@ int main()
     model.populations.set_difference_from_group_total<mio::AgeGroup>(
         {mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}, total_population);
 
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected<double>>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
+    mio::ContactMatrixGroup& contact_matrix =
+        model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();

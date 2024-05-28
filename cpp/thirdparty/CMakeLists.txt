@@ -6,6 +6,7 @@ set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
+set(MEMILIO_IPOPT_VERSION "3.14.12")
 
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
@@ -51,9 +52,21 @@ else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
+# ## IPOPT (numerial optimization)
+if(MEMILIO_ENABLE_IPOPT)
+    message(STATUS "Downloading Ipopt library")
+
+    include(FetchContent)
+    FetchContent_Declare(Ipopt
+        GIT_REPOSITORY https://git.rwth-aachen.de/avt-svt/public/thirdparty/IpoptCmake.git
+        GIT_TAG ${MEMILIO_IPOPT_VERSION})
+
+    FetchContent_MakeAvailable(Ipopt)
+endif()
+
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    message(STATUS "Downloading Boost library. This may take some time.")
+    message(STATUS "Downloading Boost library. This may take several minutes. This is the time to get yourself a coffee. :-)")
 
     include(FetchContent)
     FetchContent_Declare(boost

@@ -19,7 +19,7 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_rec_t0 = 10;
     const size_t num_groups = 3;
 
-    mio::oseir::Model model(num_groups);
+    mio::oseir::Model<double> model(num_groups);
     double fact = 1.0 / num_groups;
 
     auto& params = model.parameters;
@@ -31,18 +31,18 @@ int main()
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::oseir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        model.parameters.get<mio::oseir::TimeExposed>()[i]                      = 5.2;
-        model.parameters.get<mio::oseir::TimeInfected>()[i]                     = 6;
-        model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>()[i] = 0.04;
+        model.parameters.get<mio::oseir::TimeExposed<double>>()[i]                      = 5.2;
+        model.parameters.get<mio::oseir::TimeInfected<double>>()[i]                     = 6;
+        model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<double>>()[i] = 0.04;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::oseir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::oseir::ContactPatterns<double>>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7), mio::SimulationTime(30.));
 
     model.apply_constraints();
 
-    mio::TimeSeries<double> seir = simulate(t0, tmax, dt, model);
+    auto seir = simulate(t0, tmax, dt, model);
 
     std::vector<std::string> vars = {"S", "E", "I", "R"};
     printf("Number of time points :%d\n", static_cast<int>(seir.get_num_time_points()));
@@ -57,6 +57,6 @@ int main()
             dummy += seir.get_last_value()[k + (size_t)mio::oseir::InfectionState::Count * (int)i];
         }
 
-        printf("\t %s_otal: %.0f\n", vars[k].c_str(), dummy);
+        printf("\t %s_Total: %.0f\n", vars[k].c_str(), dummy);
     }
 }
