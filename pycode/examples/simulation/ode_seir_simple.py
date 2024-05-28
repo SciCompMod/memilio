@@ -28,7 +28,7 @@ from memilio.simulation.oseir import (Model, interpolate_simulation_result,
                                       simulate)
 
 
-def run_oseir_simulation():
+def run_ode_seir_simulation():
     """
     Runs the c++ ODE SEIR model
     """
@@ -78,7 +78,7 @@ def run_oseir_simulation():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'oseir_simple',
+        'ode_seir_simple',
         description='Simple example demonstrating the setup and simulation of the ODE SEIR model.')
     args = arg_parser.parse_args()
-    run_oseir_simulation()
+    run_ode_seir_simulation()

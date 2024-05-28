@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2024 MEmilio
 #
-# Authors:
+# Authors: Maximilian Betz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -26,7 +26,7 @@ import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
 
 
-def run_mobility_example(plot_results=True):
+def run_ode_secir_mobility_simulation(plot_results=True):
     mio.set_log_level(mio.LogLevel.Warning)
 
     t0 = 0
@@ -94,10 +94,10 @@ def run_mobility_example(plot_results=True):
     model.apply_constraints()
     graph.add_node(id=1, model=model, t0=t0)
     mobility_coefficients = 0.1 * np.ones(model.populations.numel())
+    mobility_coefficients[osecir.InfectionState.Dead] = 0
     mobility_params = mio.MigrationParameters(mobility_coefficients)
     # one coefficient per (age group x compartment)
     graph.add_edge(0, 1, mobility_params)
-    # directed graph -> add both directions so coefficients can be different
     graph.add_edge(1, 0, mobility_params)
 
     # run simulation
@@ -140,7 +140,7 @@ def run_mobility_example(plot_results=True):
         ax.legend(loc='upper right', bbox_to_anchor=(1, 0.6))
         plt.yscale('log')
         fig.tight_layout
-        fig.savefig('Mobility_osecir_by_compartments.pdf')
+        fig.savefig('osecir_mobility_by_compartments.pdf')
 
         fig, ax = plt.subplots(5, 2, figsize=(12, 15))
         compartments = [
@@ -161,12 +161,12 @@ def run_mobility_example(plot_results=True):
 
         plt.subplots_adjust(hspace=0.5, bottom=0.1, top=0.9)
         fig.suptitle('Simulation results for each region in each compartment')
-        fig.savefig('Region_results_compartments.pdf')
+        fig.savefig('osecir_region_results_compartments.pdf')
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'migration',
-        description='Example demonstrating the setup and simulation of a geographically resolved ODE SECIHURD model with travel.')
+        'ode_secir_mobility',
+        description='Example demonstrating the setup and simulation of a geographically resolved ODE SECIHURD model with mobility.')
     args = arg_parser.parse_args()
-    run_mobility_example()
+    run_ode_secir_mobility_simulation()

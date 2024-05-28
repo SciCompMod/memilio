@@ -88,10 +88,10 @@ def run_migration_parameter_study():
     model.apply_constraints()
     graph.add_node(id=1, model=model)
     migration_coefficients = 0.1 * np.ones(model.populations.numel())
+    migration_coefficients[osecir.InfectionState.Dead] = 0
     migration_params = mio.MigrationParameters(migration_coefficients)
     # one coefficient per (age group x compartment)
     graph.add_edge(0, 1, migration_params)
-    # directed graph -> add both directions so coefficients can be different
     graph.add_edge(1, 0, migration_params)
 
     # process the result of one run
@@ -128,6 +128,6 @@ def run_migration_parameter_study():
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         'migration_parameter_study',
-        description='Example demonstrating setup of ensemble runs of a geographically resolved ODE SECIHURD model with travel.')
+        description='Example demonstrating setup of ensemble runs of a geographically resolved ODE SECIHURD model with mobility.')
     args = arg_parser.parse_args()
     run_migration_parameter_study()

@@ -31,7 +31,7 @@ from memilio.simulation.osecir import InfectionState as State
 from memilio.simulation.osecir import Model, Simulation, simulate
 
 
-def run_osecir_simulation(show_plot=True):
+def run_ode_secir_ageres_simulation(show_plot=True):
     """
     Runs the c++ ODE SECIHURD model using multiple age groups
     and plots the results
@@ -145,9 +145,9 @@ def run_osecir_simulation(show_plot=True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'osecir_ageres',
+        'ode_secir_ageres',
         description='Example demonstrating the setup and simulation of the ODE SECIHURD model with multiple age groups.')
     arg_parser.add_argument('-p', '--show_plot',
                             action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
-    run_osecir_simulation(**args.__dict__)
+    run_ode_secir_ageres_simulation(**args.__dict__)

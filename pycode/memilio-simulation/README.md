@@ -46,7 +46,7 @@ The package provides the following modules:
 - `memilio.simulation.osir`: ODE SIR model and simulation with demographic resolution, corresponds to the model in `cpp/models/ode_sir`.
 - `memilio.simulation.oseir`: ODE SEIR model and simulation with demographic resolution, corresponds to the model in `cpp/models/ode_seir`.
 - `memilio.simulation.osecir`: ODE SECIHURD model and simulation with demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secir`.
-- `memilio.simulation.osecirvvs`: ODE SECIHURD model extended with vaccinations and variants. Simulation includes demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secirvvs`.
+- `memilio.simulation.osecirvvs`: Extended ODE SECIHURD model to include vaccinations and multi-layered immunity, among other enhancements, with the ability to integrate new disease variants. Simulation includes demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secirvvs`.
 `memilio.simulation.abm`: Agent based model and simulation, corresponds to the model in `cpp/models/abm` (python model is incomplete and work in progress).
 
 Detailed documentation under construction. See the scripts in the examples directory for more information.

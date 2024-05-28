@@ -28,7 +28,7 @@ from memilio.simulation.osir import (Model, interpolate_simulation_result,
                                      simulate)
 
 
-def run_osir_simulation():
+def run_ode_sir_simulation():
     """
     Runs the c++ ODE SIR model
     """
@@ -76,7 +76,7 @@ def run_osir_simulation():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'osir_simple',
+        'ode_sir_simple',
         description='Simple example demonstrating the setup and simulation of the ODE SIR model.')
     args = arg_parser.parse_args()
-    run_osir_simulation()
+    run_ode_sir_simulation()

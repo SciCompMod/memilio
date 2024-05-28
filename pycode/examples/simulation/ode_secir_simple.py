@@ -31,7 +31,7 @@ from memilio.simulation.osecir import (Model, Simulation,
                                        interpolate_simulation_result, simulate)
 
 
-def run_osecir_simulation(show_plot=True):
+def run_ode_secir_simulation(show_plot=True):
     """
     Runs the c++ ODE SECIHURD model using one age group 
     and plots the results
@@ -151,9 +151,9 @@ def run_osecir_simulation(show_plot=True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'osecir_simple',
+        'ode_secir_simple',
         description='Simple example demonstrating the setup and simulation of the ODE SECIHURD model.')
     arg_parser.add_argument('-p', '--show_plot',
                             action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
-    run_osecir_simulation(**args.__dict__)
+    run_ode_secir_simulation(**args.__dict__)
