@@ -287,16 +287,18 @@ if __name__ == '__main__':
         # Compare simulation results for a real situation starting on 01.10.2020.
         compare_compartments_real([os.path.join(data_dir, "real", "real_lct1_2020_10_1"), 
                                    os.path.join(data_dir, "real", "real_lct3_2020_10_1"), 
-                                   os.path.join(data_dir, "real", "real_lct10_2020_10_1")],
+                                   os.path.join(data_dir, "real", "real_lct10_2020_10_1"),
+                                   os.path.join(data_dir, "real", "real_lct20_2020_10_1")],
                                   os.path.join(os.path.dirname(
                                       __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json"),
-                                  legendplot=list(["real data", "ODE", "LCT3", "LCT10"]), 
+                                  legendplot=list(["real data", "ODE", "LCT3", "LCT10", "LCT20"]), 
                                   deaths=False, filename_plot="real_infected_2020_10_1")
         
         plot_new_infections_real([os.path.join(data_dir, "real", "real_lct1_2020_10_1"),
                                   os.path.join(data_dir, "real", "real_lct3_2020_10_1"), 
-                                  os.path.join(data_dir, "real", "real_lct10_2020_10_1")],
+                                  os.path.join(data_dir, "real", "real_lct10_2020_10_1"),
+                                  os.path.join(data_dir, "real", "real_lct20_2020_10_1")],
                                  os.path.join(os.path.dirname(
                                      __file__), "..", "data", "pydata", "Germany", "cases_all_germany_all_dates.json"),
-                                 legendplot=list(["real data", "ODE", "LCT3", "LCT10"]), 
+                                 legendplot=list(["real data", "ODE", "LCT3", "LCT10", "LCT20"]), 
                                  filename_plot="real_new_infections_2020_10_1")
