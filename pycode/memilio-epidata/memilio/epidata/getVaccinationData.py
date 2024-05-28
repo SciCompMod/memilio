@@ -271,7 +271,8 @@ def sanitizing_extrapolation_mobility(
                     # maximum the neighbor takes before exceeding
                     # the average
                     vacc_nshare_max = df_fullsum.loc[
-                        df_fullsum[dd.EngEng['idCounty']].isin(neighbors_mobility[id][0]), ['vd' + age_groups[ageidx]]].reset_index().loc[:, 'vd' + age_groups[ageidx]].values
+                        df_fullsum[dd.EngEng['idCounty']].isin(neighbors_mobility[id][0]), [
+                            'vd' + age_groups[ageidx]]].reset_index().loc[:, 'vd' + age_groups[ageidx]].values
                     vacc_nshare_max[vacc_nshare_max > 0] = 0
                     # multiply capacity weight with commuter mobility weight and divide
                     # by sum of single products such that the sum of these weights
@@ -796,6 +797,7 @@ def process_vaccination_data(
             vacc_column_names,
             impute=impute_sanit, moving_average=moving_average_sanit,
             min_date=start_date, max_date=end_date)
+
     df_data_agevacc_county_cs = geoger.merge_df_counties_all(
         df_data_agevacc_county_cs,
         sorting=[dd.EngEng["idCounty"],
@@ -823,6 +825,7 @@ def process_vaccination_data(
     for countyid in df_data_agevacc_county_cs[dd.EngEng["idState"]].unique():
         df_data_agevacc_county_cs.loc[df_data_agevacc_county_cs[dd.EngEng["idState"]]
                                       == countyid, dd.EngEng["idState"]] = county_to_state[countyid]
+
     with progress_indicator.Spinner(message='Sanitizing') as spinner:
         if sanitize_data == 1 or sanitize_data == 2:
 
@@ -883,7 +886,7 @@ def process_vaccination_data(
 def write_vaccination_data(dict_data: dict,
                            file_format: str = dd.defaultDict['file_format'],
                            out_folder: str = dd.defaultDict['out_folder'],
-                           impute_dates: bool = dd.defaultDict['impute_dates'],
+                           impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
                            ) -> None:
     """
@@ -1153,7 +1156,7 @@ def get_vaccination_data(
         end_date: date = dd.defaultDict['end_date'],
         moving_average: int = dd.defaultDict['moving_average'],
         sanitize_data: int = dd.defaultDict['sanitize_data'],
-        impute_dates: bool = dd.defaultDict['impute_dates'],
+        impute_dates: bool = True,
         **kwargs
 ):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
