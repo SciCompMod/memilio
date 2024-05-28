@@ -32,6 +32,12 @@ endif()
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
+# Find the Python interpreter
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+# Specify the output directory for the stubs
+set(STUBS_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/memilio-stubs/simulation/")
+
 # build python extensions
 pybind11_add_module(_simulation_abm MODULE
     memilio/simulation/abm.cpp
@@ -53,6 +59,13 @@ pybind11_add_module(_simulation MODULE
 )
 target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)
+add_custom_command(
+    TARGET _simulation
+    POST_BUILD
+    COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen -o ${STUBS_OUTPUT_DIR} memilio._simulation
+    COMMAND ${CMAKE_COMMAND} -E copy ${STUBS_OUTPUT_DIR}/memilio/_simulation.pyi ${STUBS_OUTPUT_DIR}/__init__.pyi
+    COMMENT "Generating Python stubs for _simulation"
+)
 install(TARGETS _simulation LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation_osir MODULE
@@ -60,6 +73,13 @@ pybind11_add_module(_simulation_osir MODULE
 )
 target_link_libraries(_simulation_osir PRIVATE memilio ode_sir)
 target_include_directories(_simulation_osir PRIVATE memilio/simulation)
+add_custom_command(
+    TARGET _simulation_osir
+    POST_BUILD
+    COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen -o ${STUBS_OUTPUT_DIR} memilio._simulation_osir
+    COMMAND ${CMAKE_COMMAND} -E copy ${STUBS_OUTPUT_DIR}/memilio/_simulation_osir.pyi ${STUBS_OUTPUT_DIR}/osir.pyi
+    COMMENT "Generating Python stubs for _simulation_osir"
+)
 install(TARGETS _simulation_osir LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation_oseir MODULE
@@ -67,6 +87,14 @@ pybind11_add_module(_simulation_oseir MODULE
 )
 target_link_libraries(_simulation_oseir PRIVATE memilio ode_seir)
 target_include_directories(_simulation_oseir PRIVATE memilio/simulation)
+# Custom command to generate stubs
+add_custom_command(
+    TARGET _simulation_oseir
+    POST_BUILD
+    COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen -o ${STUBS_OUTPUT_DIR} memilio._simulation_oseir
+    COMMAND ${CMAKE_COMMAND} -E copy ${STUBS_OUTPUT_DIR}/memilio/_simulation_oseir.pyi ${STUBS_OUTPUT_DIR}/oseir.pyi
+    COMMENT "Generating Python stubs for _simulation_oseir"
+)
 install(TARGETS _simulation_oseir LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation_secir MODULE
@@ -74,6 +102,14 @@ pybind11_add_module(_simulation_secir MODULE
 )
 target_link_libraries(_simulation_secir PRIVATE memilio ode_secir)
 target_include_directories(_simulation_secir PRIVATE memilio/simulation)
+# Custom command to generate stubs
+add_custom_command(
+    TARGET _simulation_secir
+    POST_BUILD
+    COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen -o ${STUBS_OUTPUT_DIR} memilio._simulation_secir
+    COMMAND ${CMAKE_COMMAND} -E copy ${STUBS_OUTPUT_DIR}/memilio/_simulation_secir.pyi ${STUBS_OUTPUT_DIR}/secir.pyi
+    COMMENT "Generating Python stubs for _simulation_secir"
+)
 install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation_osecirvvs MODULE
@@ -81,4 +117,11 @@ pybind11_add_module(_simulation_osecirvvs MODULE
 )
 target_link_libraries(_simulation_osecirvvs PRIVATE memilio ode_secirvvs)
 target_include_directories(_simulation_osecirvvs PRIVATE memilio/simulation)
+add_custom_command(
+    TARGET _simulation_osecirvvs
+    POST_BUILD
+    COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen -o ${STUBS_OUTPUT_DIR} memilio._simulation_osecirvvs
+    COMMAND ${CMAKE_COMMAND} -E copy ${STUBS_OUTPUT_DIR}/memilio/_simulation_osecirvvs.pyi ${STUBS_OUTPUT_DIR}/osecirvvs.pyi
+    COMMENT "Generating Python stubs for _simulation_osecirvvs"
+)
 install(TARGETS _simulation_osecirvvs LIBRARY DESTINATION memilio)
