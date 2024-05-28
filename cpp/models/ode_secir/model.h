@@ -364,10 +364,10 @@ public:
 
         auto group_weights_all = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
 
-        auto contact_reduction = [=](auto val) {
+        auto contact_reduction = [=](auto val, size_t location) {
             auto v = mio::UncertainValue(val);
             return mio::DampingSampling(v, mio::DampingLevel(int(0)), mio::DampingType(int(0)), mio::SimulationTime(t),
-                                        {size_t(0)}, group_weights_all);
+                                        {location}, group_weights_all);
         };
 
         for (size_t loc = 0; loc < locations; ++loc) {
@@ -383,9 +383,9 @@ public:
 
             reduc_fac_location = std::min(reduc_fac_location, params.template get<ContactReductionMax>()[loc]);
 
-            params.template get<ContactPatterns>().get_dampings().push_back(contact_reduction(reduc_fac_location));
+            params.template get<ContactPatterns>().get_dampings().push_back(contact_reduction(reduc_fac_location, loc));
             this->get_model().parameters.template get<ContactPatterns>().get_dampings().push_back(
-                contact_reduction(reduc_fac_location));
+                contact_reduction(reduc_fac_location, loc));
 
             this->get_model().parameters.template get<ContactPatterns>().make_matrix();
             params.template get<ContactPatterns>().make_matrix();
@@ -679,8 +679,8 @@ double get_infections_relative(const FeedbackSimulation<Base>& sim, double /*t*/
 *@returns The computed reproduction number at the provided index time.
 */
 
-template <class Base>
-IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base>& sim)
+template <class Sim>
+IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Sim& sim)
 {
 
     if (!(t_idx < static_cast<size_t>(sim.get_result().get_num_time_points()))) {
@@ -883,8 +883,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 *@returns Eigen::Vector containing all reproduction numbers
 */
 
-template <class Base>
-Eigen::VectorXd get_reproduction_numbers(const Simulation<Base>& sim)
+template <class Sim>
+Eigen::VectorXd get_reproduction_numbers(const Sim& sim)
 {
     Eigen::VectorXd temp(sim.get_result().get_num_time_points());
     for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
@@ -900,8 +900,8 @@ Eigen::VectorXd get_reproduction_numbers(const Simulation<Base>& sim)
 *@tparam Base simulation type that uses a SECIR compartment model. see Simulation.
 *@returns The computed reproduction number at the provided time point, potentially using linear interpolation.
 */
-template <class Base>
-IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulation<Base>& sim)
+template <class Sim>
+IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Sim& sim)
 {
     if (t_value < sim.get_result().get_time(0) || t_value > sim.get_result().get_last_time()) {
         return mio::failure(mio::StatusCode::OutOfRange,
