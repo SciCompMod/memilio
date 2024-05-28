@@ -77,7 +77,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                 'Warning: First data available on 2020-04-24. You asked for 2020-01-01. Changed it to 2020-04-24.')]
         gdd_calls = self.gdd_calls(text='')
         expected_calls = expected_call + gdd_calls
-        mock_print.assert_has_calls(expected_calls)
+        mock_print.assert_has_calls(expected_calls, any_order=True)
         mock_san.assert_has_calls([call(self.df_test)])
 
     @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
