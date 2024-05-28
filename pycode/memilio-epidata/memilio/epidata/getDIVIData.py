@@ -50,9 +50,8 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 def fetch_divi_data(read_data: bool = dd.defaultDict['read_data'],
                     out_folder: str = dd.defaultDict['out_folder'],
                     file_format: str = dd.defaultDict['file_format'],
-                    start_date: date = date(2020, 4, 24),
                     **kwargs
-                    ) -> Tuple[pd.DataFrame, date]:
+                    ) -> pd.DataFrame:
     """! Downloads or reads the DIVI ICU data and writes them in different files.
 
     Available data starts from 2020-04-24.
@@ -74,16 +73,6 @@ def fetch_divi_data(read_data: bool = dd.defaultDict['read_data'],
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
 
-    # First csv data on 24-04-2020
-    if start_date < date(2020, 4, 24):
-        gd.default_print(
-            'Warning',
-            "First data available on 2020-04-24. "
-            "You asked for " +
-            start_date.strftime("%Y-%m-%d") +
-            ". Changed it to 2020-04-24.")
-        start_date = date(2020, 4, 24)
-
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
@@ -104,7 +93,7 @@ def fetch_divi_data(read_data: bool = dd.defaultDict['read_data'],
     else:
         gd.default_print(
             "Warning", "Sanity checks for DIVI data have not been executed.")
-    return df_raw, start_date
+    return df_raw
 
 
 def preprocess_divi_data(df_raw: pd.DataFrame,
@@ -128,6 +117,16 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
 
     @return df pd.DataFrame  processed divi data
     """
+    # First csv data on 24-04-2020
+    if start_date < date(2020, 4, 24):
+        gd.default_print(
+            'Warning',
+            "First data available on 2020-04-24. "
+            "You asked for " +
+            start_date.strftime("%Y-%m-%d") +
+            ". Changed it to 2020-04-24.")
+        start_date = date(2020, 4, 24)
+
     conf = gd.Conf(out_folder, **kwargs)
 
     if conf.checks is True:
@@ -265,7 +264,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
     """
-    raw_df, updated_start_date = fetch_divi_data(
+    raw_df = fetch_divi_data(
         read_data=read_data,
         out_folder=out_folder,
         file_format=file_format,
@@ -276,7 +275,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
     preprocess_df = preprocess_divi_data(
         df_raw=raw_df,
         out_folder=out_folder,
-        start_date=updated_start_date,
+        start_date=start_date,
         end_date=end_date,
         impute_dates=impute_dates,
         moving_average=moving_average,
@@ -289,7 +288,6 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         impute_dates=impute_dates,
         moving_average=moving_average
     )
-    pass
 
 
 def divi_data_sanity_checks(df: pd.DataFrame) -> None:
