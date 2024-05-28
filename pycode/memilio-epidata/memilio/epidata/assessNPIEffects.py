@@ -450,10 +450,10 @@ def analyze_npi_data(
 
         npi_codes_used = np.asarray(df_npis_used.iloc[:, 2:].columns)
 
-        if manual_rki_clustering:
-            write_cluster_rki(df_npis, cluster_function,
-                              npis_corr, directory, npi_codes_used)
-            return
+        # if manual_rki_clustering:
+        #     write_cluster_rki(df_npis, cluster_function,
+        #                       npis_corr, directory, npi_codes_used)
+        #     return
 
         # compute hierarchical clustering (via best-suited method)
         compare_methods = False
@@ -679,11 +679,12 @@ def write_clustered_npis(df_npis, cluster_function, cluster_codes, npis_corr, di
     with open(directory+filename, 'w') as f:
         print(cluster_dict, file=f)
 
+
 def get_clustering_rki(directory, file_format):
     # read in file
     filename = 'npi_clustering_rki.txt'
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
-    #read npis
+    # read npis
     df_npis = pd.read_csv(directory + 'germany_counties_npi_subcat' + ".csv")
     npis = pd.read_json(os.path.join(directory, 'npis.json'))
     npi_codes_considered = [
@@ -694,11 +695,11 @@ def get_clustering_rki(directory, file_format):
         # name and sum over all these subcodes
         df_merged[subcode] = df_npis.filter(
             regex=subcode).sum(axis=1)
-    #copy date and county data
-    df_out = df_npis.loc[:,['Date', 'ID_County']]
-    with open(path, 'r') as file:
+    # copy date and county data
+    df_out = df_npis.loc[:, ['Date', 'ID_County']]
+    with open(path) as file:
         lines = file.readlines()
-    #read lines=maincodes
+    # read lines=maincodes
     for line in lines:
         name = line.split(':')[0]
         codes = ast.literal_eval(line.split(':')[1])
@@ -706,39 +707,47 @@ def get_clustering_rki(directory, file_format):
         for level in codes:
             # if level is empty
             if not len(level):
-                ind+=1
+                ind += 1
                 continue
             else:
                 cluster_name = name + '; Level ' + str(ind)
-                df_out[cluster_name] = df_merged.loc[:, [column for column in df_merged.columns if column in level]].sum(axis=1).values
-                ind+=1
+                df_out[cluster_name] = df_merged.loc[:, [
+                    column for column in df_merged.columns if column in level]].sum(axis=1).values
+                ind += 1
     # merge maincodes as in rki
     # Schools
-    for i in range(1,5): #=1,2,3,4
-        df_out['Schools; Level '+str(i)] = df_out["Primary Schools; Level "+str(i)]
+    for i in range(1, 5):  # =1,2,3,4
+        df_out['Schools; Level ' +
+               str(i)] = df_out["Primary Schools; Level "+str(i)]
     # ps level 5 and not fes level 5
     df_out['Schools; Level 5'] = df_out["Primary Schools; Level 5"]
-    df_out['Schools; Level 5']*=(df_out["Further Education Schools; Level 5"].replace([1,0],[0,1]))
+    df_out['Schools; Level 5'] *= (
+        df_out["Further Education Schools; Level 5"].replace([1, 0], [0, 1]))
     # ps level 5 and fes level 5
     df_out['Schools; Level 6'] = df_out["Primary Schools; Level 5"]
-    df_out['Schools; Level 6']*=(df_out["Further Education Schools; Level 5"])
+    df_out['Schools; Level 6'] *= (
+        df_out["Further Education Schools; Level 5"])
     # Public Events
-    for i in range(2,7): #=2,3,4,5,6
-        df_out['Public Events; Level '+str(i)] = df_out['Public Events Indoor; Level '+str(i)]
+    for i in range(2, 7):  # =2,3,4,5,6
+        df_out['Public Events; Level ' +
+               str(i)] = df_out['Public Events Indoor; Level '+str(i)]
     # Sports
-    for i in range(2,4): #=2,3
-        df_out['Sports; Level '+str(i)] = df_out['Indoor Sports; Level '+str(i)]
+    for i in range(2, 4):  # =2,3
+        df_out['Sports; Level ' +
+               str(i)] = df_out['Indoor Sports; Level '+str(i)]
     # indoor level 4 and not outdoor level 5
     df_out['Sports; Level 4'] = df_out["Indoor Sports; Level 4"]
-    df_out['Sports; Level 4']*=(df_out["Outdoor Sports; Level 5"].replace([1,0],[0,1]))
+    df_out['Sports; Level 4'] *= (
+        df_out["Outdoor Sports; Level 5"].replace([1, 0], [0, 1]))
     # indoor level 4 and outdoor level 5
     df_out['Sports; Level 5'] = df_out["Indoor Sports; Level 4"]
-    df_out['Sports; Level 5']*=(df_out["Outdoor Sports; Level 5"])
+    df_out['Sports; Level 5'] *= (df_out["Outdoor Sports; Level 5"])
     # drop old columns
     for drop_name in ['Public Events Indoor', 'Public Events Outdoor', "Primary Schools", "Further Education Schools", "Indoor Sports", "Outdoor Sports"]:
-        for i in range(1,7):
+        for i in range(1, 7):
             try:
-                df_out.drop(drop_name + '; Level ' + str(i), inplace = True, axis=1)
+                df_out.drop(drop_name + '; Level ' +
+                            str(i), inplace=True, axis=1)
             except KeyError:
                 pass
     df_out = merge_cluster_rki(df_out, 'SKBG')
@@ -747,54 +756,53 @@ def get_clustering_rki(directory, file_format):
     return df_out
 
 
+# def write_cluster_rki(df_npis, cluster_function,  npis_corr, directory, npi_codes_used):
+#     cluster_dict = dict()
+#     # only compute cluster with more than two items
+#     # Read the JSON file
+#     with open(os.path.join(directory, 'npi_clustering_rki_manual.json')) as json_file:
+#         data = json.load(json_file)
 
-def write_cluster_rki(df_npis, cluster_function,  npis_corr, directory, npi_codes_used):
-    cluster_dict = dict()
-    # only compute cluster with more than two items
-    # Read the JSON file
-    with open(os.path.join(directory, 'npi_clustering_rki_manual.json')) as json_file:
-        data = json.load(json_file)
+#     # Convert JSON data to a DataFrame
+#     df_rki_clustering = pd.DataFrame.from_dict(
+#         data, orient='index').transpose()
 
-    # Convert JSON data to a DataFrame
-    df_rki_clustering = pd.DataFrame.from_dict(
-        data, orient='index').transpose()
+#     cluster_codes = [list(item) for sublist in df_rki_clustering.values.tolist()
+#                      for item in sublist]
+#     # remove empty lists from cluster_codes
+#     cluster_codes = [x for x in cluster_codes if x]
 
-    cluster_codes = [list(item) for sublist in df_rki_clustering.values.tolist()
-                     for item in sublist]
-    # remove empty lists from cluster_codes
-    cluster_codes = [x for x in cluster_codes if x]
-
-    cluster_to_combine = [item for item in cluster_codes if len(item) > 1]
-    name_id = 0
-    for cl in cluster_to_combine:
-        # get index of cluster items to check if they are negative or positive correlated if they have been used
-        cluster_idx = [np.where(npi_codes_used == cl_code)
-                       for cl_code in cl if np.where(npi_codes_used == cl_code)[0].size > 0]
-        for id_npi in cluster_idx:
-            if npis_corr[cluster_idx[0], id_npi] < 0:
-                # switch npis 0 -> 1 and 1 -> 0
-                npi_to_switch = npi_codes_used[id_npi]
-                df_npis[npi_to_switch] -= 1
-                df_npis[npi_to_switch] *= -1
-        # copy values and delete item from dataframe
-        values = [df_npis[cl_code].values for cl_code in cl]
-        df_npis.drop(cl, axis=1, inplace=True)
-        # name clusters #TODO: how? For now cluster_0,1,2...
-        cluster_name = 'cluster_' + str(name_id)
-        # write cluster names in a dict (and to json) to reconstruct clusters after regression
-        cluster_dict[cluster_name] = cl
-        # TODO: how should the cluster values for the regression be calculated
-        cluster_value = cluster_function(np.array(values), axis=0)
-        df_npis[cluster_name] = cluster_value
-        name_id += 1
-    # write npis with clusters
-    filename = 'clustered_npis_rki'
-    file_format = 'json'
-    gd.write_dataframe(df_npis, directory, filename, file_format)
-    # write cluster dict
-    filename = 'cluster_description_rki'
-    with open(directory+filename, 'w') as f:
-        print(cluster_dict, file=f)
+#     cluster_to_combine = [item for item in cluster_codes if len(item) > 1]
+#     name_id = 0
+#     for cl in cluster_to_combine:
+#         # get index of cluster items to check if they are negative or positive correlated if they have been used
+#         cluster_idx = [np.where(npi_codes_used == cl_code)
+#                        for cl_code in cl if np.where(npi_codes_used == cl_code)[0].size > 0]
+#         for id_npi in cluster_idx:
+#             if npis_corr[cluster_idx[0], id_npi] < 0:
+#                 # switch npis 0 -> 1 and 1 -> 0
+#                 npi_to_switch = npi_codes_used[id_npi]
+#                 df_npis[npi_to_switch] -= 1
+#                 df_npis[npi_to_switch] *= -1
+#         # copy values and delete item from dataframe
+#         values = [df_npis[cl_code].values for cl_code in cl]
+#         df_npis.drop(cl, axis=1, inplace=True)
+#         # name clusters #TODO: how? For now cluster_0,1,2...
+#         cluster_name = 'cluster_' + str(name_id)
+#         # write cluster names in a dict (and to json) to reconstruct clusters after regression
+#         cluster_dict[cluster_name] = cl
+#         # TODO: how should the cluster values for the regression be calculated
+#         cluster_value = cluster_function(np.array(values), axis=0)
+#         df_npis[cluster_name] = cluster_value
+#         name_id += 1
+#     # write npis with clusters
+#     filename = 'clustered_npis_rki'
+#     file_format = 'json'
+#     gd.write_dataframe(df_npis, directory, filename, file_format)
+#     # write cluster dict
+#     filename = 'cluster_description_rki'
+#     with open(directory+filename, 'w') as f:
+#         print(cluster_dict, file=f)
 
 def merge_cluster_rki(df_rki, which):
     merge_list = []
@@ -811,22 +819,25 @@ def merge_cluster_rki(df_rki, which):
         merge_list.append('Retail')
     if 'D' in which:
         merge_list.append('Services and Crafts')
-    column_names = [df_rki.filter(regex=name).columns.tolist() for name in merge_list]
+    column_names = [df_rki.filter(regex=name).columns.tolist()
+                    for name in merge_list]
     # put values in new df
     df_merge = pd.DataFrame()
-    df_max_stage = df_rki.loc[:, [code for m in column_names for code in m if code.endswith('5')]]
+    df_max_stage = df_rki.loc[:, [
+        code for m in column_names for code in m if code.endswith('5')]]
     i = 0
     for main_c in column_names:
         df_merge[str(i)] = df_rki.loc[:, main_c].max(axis=1)
-        i+=1
+        i += 1
         # delete old columns
         df_rki.drop(main_c, axis=1, inplace=True)
     # merge if condition (max 1,2,3...) applies
-    for stage in range(1,len(which)+1):
-        df_rki[str(stage)+ ' of ' + which + ' max'] = (df_merge.sum(axis=1)<=stage).astype(int)
-        df_rki[str(stage)+ ' of '+ which + ' on second highest level'] = (df_max_stage.sum(axis=1)==stage).astype(int)
+    for stage in range(1, len(which)+1):
+        df_rki[str(stage) + ' of ' + which +
+               ' max'] = (df_merge.sum(axis=1) <= stage).astype(int)
+        df_rki[str(stage) + ' of ' + which + ' on second highest level'] = (
+            df_max_stage.sum(axis=1) == stage).astype(int)
     return df_rki
-
 
 
 def main():
@@ -841,7 +852,7 @@ def main():
                             'M01a_100', 'M01a_110', 'M01a_120']
 
     analyze_npi_data(read_data=True, make_plot=True, fine_resolution=fine_resolution, npis=npis_final,
-                     directory=directory, file_format=file_format, npi_codes_considered=False, abs_correlation=True, cluster_function=np.mean, manual_rki_clustering=True)
+                     directory=directory, file_format=file_format, npi_codes_considered=False, abs_correlation=True, cluster_function=np.mean, manual_rki_clustering=False)
 
 
 if __name__ == "__main__":
