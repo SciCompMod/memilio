@@ -4,7 +4,7 @@ import sys
 import importlib.util
 
 # all current models
-models = ["osir", "oseir", "secir", "osecirvvs", "abm"]
+models = ["osir", "oseir", "osecir", "osecirvvs", "abm"]
 setup_content = f"""
 from setuptools import setup, find_packages
 
@@ -13,7 +13,7 @@ setup(
     version='0.1',
     packages=['memilio-stubs'],
     package_data={{
-        'memilio-stubs/simulation': ['*.pyi'],
+        'memilio-stubs': ['simulation/*.pyi'],
     }},
 )
 """
@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
     python_interpreter = sys.executable
 
-    # Check for needed packages. If it fails either pacakge is not installed or the wron python interpreter is detected.
-    # For later try setting python_interpreter with full path
+    # Check for needed packages. If it fails either pacakge is not installed or the wrong python interpreter is detected.
+    # For the latter try setting python_interpreter with full path
     if importlib.util.find_spec('pybind11_stubgen') is None:
         print('pybind11_stubgen is not installed')
         exit()
@@ -46,14 +46,14 @@ if __name__ == "__main__":
     # generate stubs and moce them into correct folder with right name
     # memilio-stubs/simulation module needs same structure as memilio/simulation
     subprocess.check_call(
-        [python_interpreter, '-m', 'pybind11_stubgen', '-o', output_dir, 'memilio._simulation'])
+        [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '-o', output_dir, 'memilio._simulation'])
     os.rename(os.path.join(output_module_dir, '_simulation.pyi'),
               os.path.join(output_dir, '__init__.pyi'))
 
     for model in models:
         module_name = "memilio._simulation_" + model
         subprocess.check_call(
-            [python_interpreter, '-m', 'pybind11_stubgen', '-o', output_dir, module_name])
+            [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '-o', output_dir, module_name])
         os.rename(os.path.join(output_module_dir, '_simulation_' + model + '.pyi'),
                   os.path.join(output_dir, model + '.pyi'))
 
