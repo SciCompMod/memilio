@@ -41,6 +41,7 @@ import matplotlib
 from io import BytesIO
 from zipfile import ZipFile
 from enum import Enum
+from pkg_resources import parse_version
 
 import pandas as pd
 
@@ -63,6 +64,12 @@ class Conf:
 
     v_level = 'Info'
     show_progr = False
+    if parse_version(pd.__version__) < parse_version('2.2'):
+        excel_engine = 'openpyxl'
+    else:
+        # calamine is faster, but cannot be used for pandas < 2.2
+        # also there are issues with pd >= 2.2 and openpyxl engine
+        excel_engine = 'calamine'
 
     def __init__(self, out_folder, **kwargs):
 
@@ -250,7 +257,8 @@ def get_file(
 
     @return pandas dataframe
     """
-    param_dict_excel = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
+    param_dict_excel = {"sheet_name": 0,
+                        "header": 0, "engine": Conf.excel_engine}
     param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
     param_dict_zip = {}
 
@@ -357,8 +365,7 @@ def cli(what):
     #                "start_date": ['divi']                 }
 
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
-                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'files'],
                 "population": ['Download population data from official sources', 'username'],
                 "commuter_official": ['Download commuter data from official sources'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],
@@ -439,6 +446,10 @@ def cli(what):
         parser.add_argument(
             '-sd', '--sanitize-data', type=int, default=dd.defaultDict['sanitize_data'], dest='sanitize_data',
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
+        )
+    if 'files' in what_list:
+        parser.add_argument(
+            '--files', nargs="*", default='All'
         )
 
     # add optional download options

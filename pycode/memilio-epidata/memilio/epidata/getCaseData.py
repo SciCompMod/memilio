@@ -245,7 +245,7 @@ def preprocess_case_data(raw_df: pd.DataFrame,
             try:
                 df[dd.EngEng['date']] = pd.to_datetime(
                     df[dd.EngEng['date']], format="%Y-%m-%d")
-            except BaseException:
+            except:
                 raise gd.DataError(
                     "Time data can't be transformed to intended format")
 
@@ -336,12 +336,12 @@ def write_case_data(df: pd.DataFrame,
     logger = logging.getLogger(__name__)
     logger.info("Writing the Case data.")
 
-    if files == 'All':
+    if (files == 'All') or (files == ['All']):
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
                  'all_state', 'infected_county', 'all_county', 'all_gender',
                  'all_state_gender', 'all_county_gender', 'all_age',
                  'all_state_age', 'all_county_age']
-    if files == 'Plot':
+    if (files == 'Plot') or (files == ['Plot']):
         # only consider plotable files
         files = ['infected', 'deaths', 'all_gender', 'all_age']
     # handle error of passing a string of one file instead of a list
@@ -374,8 +374,7 @@ def write_case_data(df: pd.DataFrame,
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                       [IdLandkreis], {dd.EngEng["idCounty"]
-                           : df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(

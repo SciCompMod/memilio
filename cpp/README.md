@@ -4,7 +4,7 @@ The MEmilio C++ library contains the implementation of the epidemiological model
 
 Directory structure:
 - memilio: framework for developing epidemiological models with, e.g., interregional mobility implementations, nonpharmaceutical interventions (NPIs), and  mathematical, programming, and IO utilities.
-- models: implementation of concrete models (ODE and ABM)
+- models: implementation of concrete models (ODE, IDE, LCT and ABM)
 - simulations: simulation applications that were used to generate the scenarios and data for publications
 - examples: small applications that help with using the framework and models
 - tests: unit tests for framework and models.
@@ -16,9 +16,9 @@ Directory structure:
 MEmilio C++ uses CMake as a build configuration system (https://cmake.org/)
 
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
-- GCC, versions 7.3.0 - 10.2.0
-- Clang, version 9.0
-- MSVC, versions 19.16.27045.0 (Visual Studio 2017) - 19.29.30133.0 (Visual Studio 2019)
+- GCC, versions 9.4 and 11.4
+- Clang, version 6.0 and 14.0
+- MSVC, versions 19.29 (Visual Studio 2019) - 19.38 (Visual Studio 2022)
 
 MEmilio C++ is regularly tested on gitlub runners using Ubuntu 18.04 and 20.04 and Windows Server 2016 and 2019. It is expected to run on any comparable Linux or Windows system. It is currently not tested on MacOS.
 
@@ -28,7 +28,7 @@ The following table lists the dependencies that are used. Most of them are requi
 |---------|----------|----------|-----------------------|-------|
 | spdlog  | 1.11.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
 | Eigen   | 3.3.9    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
-| Boost   | 1.75.0   | Yes      | Yes (.tar.gz archive) | https://www.boost.org/ |
+| Boost   | 1.84.0   | Yes      | Yes (git repo)        | https://github.com/boostorg/boost |
 | JsonCpp | 1.9.5    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
