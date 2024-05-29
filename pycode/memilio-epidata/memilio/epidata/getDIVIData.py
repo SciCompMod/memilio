@@ -176,6 +176,7 @@ def write_divi_data(df: pd.DataFrame,
                     out_folder: str = dd.defaultDict['out_folder'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
+                    to_dataset: bool = dd.defaultDict['to_dataset']
                     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """! Write the divi data into json files
 
@@ -189,7 +190,10 @@ def write_divi_data(df: pd.DataFrame,
     @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
-
+    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
+        If True - returns objects with dataframes
+        If False - write dataframes into files
+        Default defined in defaultDict.
     @return None
     """
 
@@ -204,9 +208,6 @@ def write_divi_data(df: pd.DataFrame,
     df_counties = geoger.merge_df_counties_all(
         df_counties, sorting=[dd.EngEng["idCounty"], dd.EngEng["date"]])
     # save
-    filename = "county_divi"
-    filename = gd.append_filename(filename, impute_dates, moving_average)
-    gd.write_dataframe(df_counties, directory, filename, file_format)
 
     # write data for states to file
     df_states = df.groupby(
@@ -217,18 +218,24 @@ def write_divi_data(df: pd.DataFrame,
     df_states.reset_index(inplace=True)
     df_states.sort_index(axis=1, inplace=True)
 
-    filename = "state_divi"
-    filename = gd.append_filename(filename, impute_dates, moving_average)
-    gd.write_dataframe(df_states, directory, filename, file_format)
-
     # write data for germany to file
     df_ger = df.groupby(["Date"]).agg({"ICU": "sum", "ICU_ventilated": "sum"})
     df_ger.reset_index(inplace=True)
     df_ger.sort_index(axis=1, inplace=True)
 
-    filename = "germany_divi"
-    filename = gd.append_filename(filename, impute_dates, moving_average)
-    gd.write_dataframe(df_ger, directory, filename, file_format)
+    if not to_dataset:
+        filename = "county_divi"
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_counties, directory, filename, file_format)
+
+        filename = "state_divi"
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_states, directory, filename, file_format)
+
+        filename = "germany_divi"
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_ger, directory, filename, file_format)
+
     return df_counties, df_states, df_ger
 
 
@@ -239,6 +246,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
                   end_date: date = dd.defaultDict['end_date'],
                   impute_dates: bool = dd.defaultDict['impute_dates'],
                   moving_average: int = dd.defaultDict['moving_average'],
+                  to_dataset: bool = dd.defaultDict['to_dataset'],
                   **kwargs
                   ):
     """! Downloads or reads the DIVI ICU data and writes them in different files.
@@ -264,6 +272,10 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
+        If True - returns objects with dataframes
+        If False - write dataframes into files
+        Default defined in defaultDict.
     """
     downloaded_data_df = fetch_divi_data(
         read_data=read_data,
@@ -287,7 +299,8 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         file_format=file_format,
         out_folder=out_folder,
         impute_dates=impute_dates,
-        moving_average=moving_average
+        moving_average=moving_average,
+        to_dataset=to_dataset
     )
     return df_raw, df_counties, df_states, df_ger
 
