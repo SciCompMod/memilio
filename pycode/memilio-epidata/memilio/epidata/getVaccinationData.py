@@ -884,7 +884,8 @@ def write_vaccination_data(dict_data: dict,
                            out_folder: str = dd.defaultDict['out_folder'],
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
-                           ) -> None:
+                           to_dataset: bool = dd.defaultDict['to_dataset']
+                           ) -> None or Tuple:
     """! Writes the vaccination data
     The data is exported in three different ways:
         - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
@@ -925,6 +926,10 @@ def write_vaccination_data(dict_data: dict,
         federal state and remaining vaccinations will be distributed to closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific average on the corresponding vaccination ratios on county and federal
         state level.
+    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
+        If True - returns objects with dataframes
+        If False - write dataframes into files
+        Default defined in defaultDict.
 
     @return: none
     """
@@ -965,23 +970,11 @@ def write_vaccination_data(dict_data: dict,
             dd.EngEng['idCounty'],
             population_old_ages, merge_2022=True)
 
-    # store data for all counties
-    filename = 'vacc_county_agevacc'
-    filename = gd.append_filename(filename, impute_dates, moving_average)
-    gd.write_dataframe(df_data_agevacc_county_cs,
-                       directory, filename, file_format)
-
-    # store data for all federal states: group information on date, state and age level
-    # (i.e., aggregate information of all counties per federal state)
-    filename = 'vacc_states_agevacc'
-    filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_agevacc_state_cs = df_data_agevacc_county_cs.groupby(
         [dd.EngEng['date'],
          dd.EngEng['idState'],
          dd.EngEng['ageRKI']]).agg(
         {column: "sum" for column in vacc_column_names}).reset_index()
-    gd.write_dataframe(df_data_agevacc_state_cs,
-                       directory, filename, file_format)
 
     # make plot of absolute numbers original age resolution
     if conf.plot:
@@ -1026,20 +1019,10 @@ def write_vaccination_data(dict_data: dict,
          dd.EngEng['idCounty']]).agg(
         {col_new: "sum" for col_new in vacc_column_names}).reset_index()
 
-    # store data for all counties
-    filename = 'vacc_county'
-    filename = gd.append_filename(filename, impute_dates, moving_average)
-    gd.write_dataframe(df_data_county_cs, directory, filename, file_format)
-
-    # store data for all federal states: group information on date, state and age level
-    # (i.e., aggregate information of all counties per federal state)
-    filename = 'vacc_states'
-    filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_state_cs = df_data_county_cs.groupby(
         [dd.EngEng['date'],
          dd.EngEng['idState']]).agg(
         {column: "sum" for column in vacc_column_names}).reset_index()
-    gd.write_dataframe(df_data_state_cs, directory, filename, file_format)
 
     ####### age resolved with extrapolation to other age groups #######
     # write data frame resolved per county and age (with age classes as
@@ -1055,23 +1038,11 @@ def write_vaccination_data(dict_data: dict,
 
     df_data_ageinf_county_cs.reset_index(drop=True, inplace=True)
 
-    # store data for all counties
-    filename = 'vacc_county_ageinf'
-    filename = gd.append_filename(filename, impute_dates, moving_average)
-    gd.write_dataframe(df_data_ageinf_county_cs,
-                       directory, filename, file_format)
-
-    # store data for all federal states: group information on date, state and age level
-    # (i.e., aggregate information of all counties per federal state)
-    filename = 'vacc_states_ageinf'
-    filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_ageinf_state_cs = df_data_ageinf_county_cs.groupby(
         [dd.EngEng['date'],
          dd.EngEng['idState'],
          dd.EngEng['ageRKI']]).agg(
         {column: "sum" for column in vacc_column_names}).reset_index()
-    gd.write_dataframe(df_data_ageinf_state_cs,
-                       directory, filename, file_format)
 
     # make plot of relative numbers of original and extrapolated age resolution
     if conf.plot:
@@ -1160,6 +1131,53 @@ def write_vaccination_data(dict_data: dict,
             ylabel='Number',
             fig_name="Germany_FullVacination_AgeExtr_Absolute")
 
+    if not to_dataset:
+        # store data for all counties
+        filename = 'vacc_county_agevacc'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_agevacc_county_cs,
+                           directory, filename, file_format)
+
+        # store data for all federal states: group information on date, state and age level
+        # (i.e., aggregate information of all counties per federal state)
+        filename = 'vacc_states_agevacc'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_agevacc_state_cs,
+                           directory, filename, file_format)
+
+        # store data for all counties
+        filename = 'vacc_county'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_county_cs, directory, filename, file_format)
+
+        # store data for all federal states: group information on date, state and age level
+        # (i.e., aggregate information of all counties per federal state)
+        filename = 'vacc_states'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_state_cs, directory, filename, file_format)
+
+        ####### age resolved with extrapolation to other age groups #######
+        # write data frame resolved per county and age (with age classes as
+        # provided in RKI infection tables: 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
+
+        # store data for all counties
+        filename = 'vacc_county_ageinf'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_ageinf_county_cs,
+                           directory, filename, file_format)
+
+        # store data for all federal states: group information on date, state and age level
+        # (i.e., aggregate information of all counties per federal state)
+        filename = 'vacc_states_ageinf'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_ageinf_state_cs,
+                           directory, filename, file_format)
+        return None
+    else:
+        return (df_data_agevacc_county_cs, df_data_agevacc_state_cs,
+                df_data_county_cs, df_data_state_cs,
+                df_data_ageinf_county_cs, df_data_ageinf_state_cs)
+
 
 def get_vaccination_data(
         read_data: str = dd.defaultDict['read_data'],
@@ -1169,6 +1187,7 @@ def get_vaccination_data(
         end_date: date = dd.defaultDict['end_date'],
         moving_average: int = dd.defaultDict['moving_average'],
         sanitize_data: int = dd.defaultDict['sanitize_data'],
+        to_dataset: bool = dd.defaultDict['to_dataset'],
         impute_dates: bool = True,
         **kwargs
 ):
@@ -1217,6 +1236,10 @@ def get_vaccination_data(
         average on the corresponding vaccination ratios on county and federal
         state level.
     @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
+        If True - returns objects with dataframes
+        If False - write dataframes into files
+        Default defined in defaultDict.
 
     @return None
     """
@@ -1234,12 +1257,13 @@ def get_vaccination_data(
         moving_average=moving_average,
         sanitize_data=sanitize_data
     )
-    write_vaccination_data(dict_data=process_df,
-                           file_format=file_format,
-                           impute_dates=impute_dates,
-                           moving_average=moving_average,
-                           out_folder=out_folder,
-                           )
+    silver_datasets = write_vaccination_data(dict_data=process_df,
+                                             file_format=file_format,
+                                             impute_dates=impute_dates,
+                                             moving_average=moving_average,
+                                             out_folder=out_folder,
+                                             to_dataset=to_dataset
+                                             )
 
 
 def main():
