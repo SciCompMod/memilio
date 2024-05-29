@@ -482,6 +482,13 @@ def cli(what):
         parser.add_argument(
             '--password', type=str
         )
+    if '--to_dataset' in sys.argv:
+        parser.add_argument(
+            '--to_dataset', type=bool,
+            help=f"To return saved dataframes as objects. Default is {dd.defaultDict['to_dataset']}.",
+            default=dd.defaultDict['to_dataset']
+        )
+
     args = vars(parser.parse_args())
 
     return args

@@ -51,7 +51,8 @@ defaultDict = {
     'file_format': 'json_timeasstring',
     'no_raw': False,
     'rep_date': False,
-    'sanitize_data': 1
+    'sanitize_data': 1,
+    'to_dataset': False
 }
 
 # The following dict EngEng makes sure that for all
