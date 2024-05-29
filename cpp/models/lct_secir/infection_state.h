@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef LCTSECIR_INFECTIONSTATE_H
-#define LCTSECIR_INFECTIONSTATE_H
+#ifndef LCT_SECIR_INFECTIONSTATE_H
+#define LCT_SECIR_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -46,4 +46,4 @@ enum class InfectionState
 } // namespace lsecir
 } // namespace mio
 
-#endif
+#endif // LCT_SECIR_INFECTIONSTATE_H

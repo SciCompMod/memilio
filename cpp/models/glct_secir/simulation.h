@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef GLCT_SECIR_SIMULATION_H
-#define GLCT_SECIR_SIMULATION_H
+#ifndef MIO_GLCT_SECIR_SIMULATION_H
+#define MIO_GLCT_SECIR_SIMULATION_H
 
 #include "glct_secir/model.h"
 #include "memilio/config.h"
@@ -194,4 +194,4 @@ TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, M
 } // namespace glsecir
 } // namespace mio
 
-#endif // GLCT_SECIR_SIMULATION_H
+#endif // MIO_GLCT_SECIR_SIMULATION_H

@@ -20,6 +20,7 @@
 
 #include "glct_secir/model.h"
 #include "glct_secir/infection_state.h"
+#include "glct_secir/parameters.h"
 #include "glct_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
@@ -35,7 +36,7 @@ int main()
     // Simple example to demonstrate how to run a simulation using an GLCT SECIR model.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
 
-    using Model    = mio::glsecir::Model<2, 3, 1, 1, 5>;
+    using Model    = mio::glsecir::Model<2, 6, 2, 2, 10>;
     using LctState = Model::LctState;
 
     ScalarType tmax = 10;
@@ -44,8 +45,15 @@ int main()
     // This method of defining the vector using a vector of vectors is a bit of overhead, but should remind you how
     // the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments.
     // It is also possible to define the initial value vector directly.
-    std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
-                                                                {50},  {10, 10, 5, 3, 2}, {20},         {10}};
+    std::vector<std::vector<ScalarType>> initial_populations = {
+        {750},
+        {30, 20},
+        {20 * 0.91, 10 * 0.91, 10 * 0.91, 20 * 0.09, 10 * 0.09, 10 * 0.09},
+        {50 * 0.2, 50 * 0.8},
+        {50 * 0.25, 50 * 0.75},
+        {10 * 0.3, 10 * 0.3, 5 * 0.3, 3 * 0.3, 2 * 0.3, 10 * 0.7, 10 * 0.7, 5 * 0.7, 3 * 0.7, 2 * 0.7},
+        {20},
+        {10}};
 
     // Assert that initial_populations has the right shape.
     if (initial_populations.size() != (size_t)LctState::InfectionState::Count) {
@@ -110,36 +118,62 @@ int main()
     model.parameters.get<mio::glsecir::StartingProbabilitiesExposed>() =
         mio::glsecir::StartingProbabilitiesExposed().get_default(
             LctState::get_num_subcompartments<LctState::InfectionState::Exposed>());
-    model.parameters.get<mio::glsecir::TransitionMatrixExposed>() = mio::glsecir::TransitionMatrixExposed().get_default(
-        LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(), 3.2);
+    model.parameters.get<mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms>() =
+        mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(), 3.2);
     // InfectedNoSymptoms.
+    Eigen::VectorXd StartingProbabilitiesInfectedNoSymptoms =
+        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>());
+    StartingProbabilitiesInfectedNoSymptoms[0] = 1 - 0.09;
+    StartingProbabilitiesInfectedNoSymptoms
+        [LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>() / 2.] = 0.09;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms>() =
-        mio::glsecir::StartingProbabilitiesInfectedNoSymptoms().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>());
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptoms>() =
-        mio::glsecir::TransitionMatrixInfectedNoSymptoms().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>(), 2.);
+        StartingProbabilitiesInfectedNoSymptoms;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() =
+        mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>() / 2., 2.);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>() / 2., 2.);
     // InfectedSymptoms.
-    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms>() =
-        mio::glsecir::StartingProbabilitiesInfectedSymptoms().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>());
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptoms>() =
-        mio::glsecir::TransitionMatrixInfectedSymptoms().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>(), 5.8);
+    Eigen::VectorXd StartingProbabilitiesInfectedSymptoms =
+        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>());
+    StartingProbabilitiesInfectedSymptoms[0] = 0.2;
+    StartingProbabilitiesInfectedSymptoms
+        [LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>() / 2.] = 1 - 0.2;
+    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms>() = StartingProbabilitiesInfectedSymptoms;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>() / 2., 5.8);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>() / 2., 5.8);
     // InfectedSevere.
-    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>() =
-        mio::glsecir::StartingProbabilitiesInfectedSevere().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>());
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevere>() =
-        mio::glsecir::TransitionMatrixInfectedSevere().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>(), 9.5);
+    Eigen::VectorXd StartingProbabilitiesInfectedSevere =
+        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>());
+    StartingProbabilitiesInfectedSevere[0]                                    = 0.25;
+    StartingProbabilitiesInfectedSevere[LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>() /
+                                        2.]                                   = 1 - 0.25;
+    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>() = StartingProbabilitiesInfectedSevere;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical>() =
+        mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>() / 2., 9.5);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedSevereToRecovered().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>() / 2., 9.5);
     // InfectedCritical.
-    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical>() =
-        mio::glsecir::StartingProbabilitiesInfectedCritical().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>());
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCritical>() =
-        mio::glsecir::TransitionMatrixInfectedCritical().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>(), 7.1);
+    Eigen::VectorXd StartingProbabilitiesInfectedCritical =
+        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>());
+    StartingProbabilitiesInfectedCritical[0] = 0.3;
+    StartingProbabilitiesInfectedCritical
+        [LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>() / 2.] = 1 - 0.3;
+    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical>() = StartingProbabilitiesInfectedCritical;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead>() =
+        mio::glsecir::TransitionMatrixInfectedCriticalToDead().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>() / 2., 7.1);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToRecovered>() =
+        mio::glsecir::TransitionMatrixInfectedCriticalToRecovered().get_default(
+            LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>() / 2., 7.1);
 
     model.parameters.get<mio::glsecir::TransmissionProbabilityOnContact>() = 0.05;
 
@@ -150,10 +184,6 @@ int main()
 
     model.parameters.get<mio::glsecir::RelativeTransmissionNoSymptoms>() = 0.7;
     model.parameters.get<mio::glsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
-    model.parameters.get<mio::glsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
-    model.parameters.get<mio::glsecir::SeverePerInfectedSymptoms>()      = 0.2;
-    model.parameters.get<mio::glsecir::CriticalPerSevere>()              = 0.25;
-    model.parameters.set<mio::glsecir::DeathsPerCritical>(0.3);
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::glsecir::simulate(0, tmax, 0.5, model);

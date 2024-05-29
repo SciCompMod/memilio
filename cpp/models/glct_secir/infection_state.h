@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef GLCTSECIR_INFECTIONSTATE_H
-#define GLCTSECIR_INFECTIONSTATE_H
+#ifndef MIO_GLCT_SECIR_INFECTIONSTATE_H
+#define MIO_GLCT_SECIR_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -46,4 +46,4 @@ enum class InfectionState
 } // namespace glsecir
 } // namespace mio
 
-#endif
+#endif // MIO_GLCT_SECIR_INFECTIONSTATE_H
