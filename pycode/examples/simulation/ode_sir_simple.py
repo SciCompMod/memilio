@@ -22,15 +22,15 @@ import argparse
 import numpy as np
 
 from memilio.simulation import AgeGroup, Damping
-from memilio.simulation.oseir import Index_InfectionState
-from memilio.simulation.oseir import InfectionState as State
-from memilio.simulation.oseir import (Model, interpolate_simulation_result,
-                                      simulate)
+from memilio.simulation.osir import Index_InfectionState
+from memilio.simulation.osir import InfectionState as State
+from memilio.simulation.osir import (Model, interpolate_simulation_result,
+                                     simulate)
 
 
-def run_oseir_simulation():
+def run_ode_sir_simulation():
     """
-    Runs the c++ oseir model
+    Runs the c++ ODE SIR model
     """
 
     # Define population of age groups
@@ -45,14 +45,12 @@ def run_oseir_simulation():
     A0 = AgeGroup(0)
 
     # Compartment transition duration
-    model.parameters.TimeExposed[A0] = 5.2
     model.parameters.TimeInfected[A0] = 6.
 
     # Compartment transition propabilities
     model.parameters.TransmissionProbabilityOnContact[A0] = 1.
 
     # Initial number of people in each compartment
-    model.populations[A0, State.Exposed] = 100
     model.populations[A0, State.Infected] = 50
     model.populations[A0, State.Recovered] = 10
     model.populations.set_difference_from_total(
@@ -78,7 +76,7 @@ def run_oseir_simulation():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'oseir_simple',
-        description='Simple example demonstrating the setup and simulation of the OSEIR model.')
+        'ode_sir_simple',
+        description='Simple example demonstrating the setup and simulation of the ODE SIR model.')
     args = arg_parser.parse_args()
-    run_oseir_simulation()
+    run_ode_sir_simulation()

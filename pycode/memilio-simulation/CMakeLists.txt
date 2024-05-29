@@ -76,9 +76,9 @@ add_pymio_module(_simulation_oseir
     SOURCES memilio/simulation/oseir.cpp
 )
 
-add_pymio_module(_simulation_secir
+add_pymio_module(_simulation_osecir
     LINKED_LIBRARIES memilio ode_secir
-    SOURCES memilio/simulation/secir.cpp
+    SOURCES memilio/simulation/osecir.cpp
 )
 
 add_pymio_module(_simulation_osecirvvs
