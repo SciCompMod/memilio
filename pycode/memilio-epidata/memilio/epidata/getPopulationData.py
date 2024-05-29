@@ -388,7 +388,7 @@ def write_population_data(df_pop: pd.DataFrame,
                           out_folder: str = dd.defaultDict['out_folder'],
                           file_format: str = dd.defaultDict['file_format'],
                           merge_eisenach: bool = True
-                          ) -> None:
+                          ) -> None or pd.DataFrame:
     """! Write the population data into json files
     Three kinds of structuring of the data are done.
     We obtain the chronological sequence of ICU and ICU_ventilated
