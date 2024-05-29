@@ -456,7 +456,7 @@ class VaccinationDataEntry
 public:
     static std::vector<const char*> age_group_names;
 
-    double num_vaccinations_completed;
+    double num_vaccinations_completed, num_vaccinations_partially;
     Date date;
     AgeGroup age_group;
     boost::optional<regions::StateId> state_id;
@@ -468,6 +468,7 @@ public:
     {
         auto obj                        = io.expect_object("VaccinationDataEntry");
         auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
+        auto num_vaccinations_partially = obj.expect_element("Vacc_partially", Tag<double>{});
         auto date                       = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
         auto state_id                   = obj.expect_optional("ID_State", Tag<regions::StateId>{});
@@ -475,7 +476,8 @@ public:
         auto district_id                = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return mio::apply(
             io,
-            [](auto nf, auto d, auto&& a_str, auto sid, auto cid, auto did) -> IOResult<VaccinationDataEntry> {
+            [](auto nf, auto nf2, auto d, auto&& a_str, auto sid, auto cid,
+               auto did) -> IOResult<VaccinationDataEntry> {
                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
                 auto a  = AgeGroup(0);
                 if (it != age_group_names.end()) {
@@ -484,9 +486,10 @@ public:
                 else {
                     return failure(StatusCode::InvalidValue, "Invalid vaccination data age group.");
                 }
-                return success(VaccinationDataEntry{nf, d, a, sid, cid, did});
+                return success(VaccinationDataEntry{nf, nf2, d, a, sid, cid, did});
             },
-            num_vaccinations_completed, date, age_group_str, state_id, county_id, district_id);
+            num_vaccinations_completed, num_vaccinations_partially, date, age_group_str, state_id, county_id,
+            district_id);
     }
 };
 

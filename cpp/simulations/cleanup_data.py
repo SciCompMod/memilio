@@ -379,5 +379,7 @@ print('School IDs set.')
 bd_new = assign_location_type(bd_new)
 print('Location types assigned.')
 
+# we need to delete the column map_feature_key and map_feature_value because we dont need them anymore
+bd_new = bd_new.drop(columns=['map_feature_key', 'map_feature_value'])
 # Write data back to disk
 bd_new.to_csv('braunschweig_result_ffa8_modified.csv', index=False)

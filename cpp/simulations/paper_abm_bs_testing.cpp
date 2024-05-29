@@ -61,6 +61,8 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
 mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
     {mio::AgeGroup(num_age_groupss), mio::osecir::InfectionState::Count}, 0.005};
 
+std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map;
+
 /**
  * Create extrapolation of real world data to compare with.
 */
@@ -155,26 +157,152 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
     }
 }
 
+size_t determine_age_group_from_rki(mio::AgeGroup age)
+{
+    if (age == mio::AgeGroup(0)) {
+        return 0;
+    }
+    else if (age == mio::AgeGroup(1)) {
+        return 1;
+    }
+    else if (age == mio::AgeGroup(2)) {
+        return 2;
+    }
+    else if (age == mio::AgeGroup(3)) {
+        return 3;
+    }
+    else if (age == mio::AgeGroup(4)) {
+        return 4;
+    }
+    else if (age == mio::AgeGroup(5)) {
+        return 5;
+    }
+    else {
+        return 2;
+    }
+}
+
+void prepare_vaccination_state(mio::Date simulation_end, const std::string& filename)
+{
+    // for saving previous day of vaccination
+    std::vector<std::pair<uint32_t, uint32_t>> vacc_vector_prev(num_age_groupss);
+    //inizialize the vector with 0
+    for (size_t i = 0; i < num_age_groupss; ++i) {
+        vacc_vector_prev[i] = std::make_pair(0, 0);
+    }
+
+    //Read in file with vaccination data
+    auto vacc_data = mio::read_vaccination_data(filename).value();
+    for (auto& vacc_entry : vacc_data) {
+        // we need ot filter out braunschweig with zip code 3101
+        if (vacc_entry.county_id.value() == mio::regions::CountyId(3101)) {
+            //we need the vaccination from the beginning till the end of the simulaiton (2021-05-30)
+            if (vacc_entry.date <= simulation_end && vacc_entry.date >= mio::Date(2020, 12, 01)) {
+                // if the date isn't in the map we need to add a vector of size num_age_groupss
+                if (vacc_map.find(vacc_entry.date) == vacc_map.end()) {
+                    vacc_map[vacc_entry.date] = std::vector<std::pair<uint32_t, uint32_t>>(num_age_groupss);
+                }
+                // we need to add the number of persons to the vector of the date, but these are cumulative so we need to substract the day before
+                vacc_map[vacc_entry.date][determine_age_group_from_rki(vacc_entry.age_group)].first =
+                    vacc_entry.num_vaccinations_partially -
+                    vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].first;
+                vacc_map[vacc_entry.date][determine_age_group_from_rki(vacc_entry.age_group)].second =
+                    vacc_entry.num_vaccinations_completed -
+                    vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].second;
+
+                //update the vector for the next iteration
+                vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].first =
+                    vacc_entry.num_vaccinations_partially;
+                vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].second =
+                    vacc_entry.num_vaccinations_completed;
+            }
+        }
+    }
+}
+
 /**
  * @brief assign an vaccination state to each person according to real world data read in through the ODE secir model.
  * 
  * @param input 
  * @return int 
  */
-// void assign_vaccination_state(mio::abm::World& world, const std::string& filename)
-// {
-//     //Read in file with vaccination data
-//     auto vacc_data = mio::read_vaccination_data(filename).value();
-//     for (auto& vacc_entry : vacc_data) {
-//         // we want to filter out branschweig
-//         if (vacc_entry.county_id == mio::regions::DistrictId(3101)) {
-//             //for every date we want to vaccinate a person within the age group
-//                 }
-//     }
-//     //
+void assign_vaccination_state(mio::abm::World& world, mio::Date simulation_beginning)
+{
+    // we check if we even have enough people to vaccinate in each respective age group
+    std::vector<size_t> num_persons_by_age(num_age_groupss);
+    for (auto& person : world.get_persons()) {
+        num_persons_by_age[determine_age_group_from_rki(person.get_age())]++;
+    }
+    //sum over all dates in the vacc_map to check if we have enough persons to vaccinate
+    std::vector<size_t> num_persons_by_age_vaccinate(num_age_groupss);
+    for (auto& vacc_entry : vacc_map) {
+        for (size_t age = 0; age < vacc_entry.second.size(); ++age) {
+            num_persons_by_age_vaccinate[age] += vacc_entry.second[age].first;
+        }
+    }
+    //check
+    for (size_t age = 0; age < num_persons_by_age.size(); ++age) {
+        if (num_persons_by_age[age] < num_persons_by_age_vaccinate[age]) {
+            mio::log_error(
+                "Not enough persons to vaccinate in age group we dont vaccinate if an age group is fully vaccinated! ",
+                age);
+        }
+    }
 
-//     mio::unused(vacc_data, world);
-// }
+    // save all persons with age groups
+    std::vector<std::vector<uint32_t>> persons_by_age(num_age_groupss);
+
+    for (auto& person : world.get_persons()) {
+        persons_by_age[person.get_age().get()].push_back(person.get_person_id());
+    }
+
+    // vaccinate random persons according to the data and we also beforehand need to keep a list of persons which are already vaccinated and their age to vaccinate them with the second dose
+
+    // first we need a vector with a list of ids of already vaccinated persons for each age group
+    std::vector<std::vector<uint32_t>> vaccinated_persons(num_age_groupss);
+    for (auto& vacc_entry : vacc_map) {
+        for (size_t age = 0; age < vacc_entry.second.size(); ++age) {
+            for (uint32_t i = 0; i < vacc_entry.second[age].first; ++i) {
+                if (persons_by_age[age].size() == 0) {
+                    mio::log_error("Not enough persons to vaccinate in age group we dont vaccinate if an age group is");
+                }
+                else {
+                    // select random person and assign Vaccination
+                    uint32_t id_rnd          = persons_by_age[age][mio::UniformIntDistribution<size_t>::get_instance()(
+                        world.get_rng(), 0U, persons_by_age[age].size() - 1)];
+                    mio::abm::Person& person = world.get_person(id_rnd);
+                    auto timePoint           = mio::abm::TimePoint(
+                        mio::get_offset_in_days(vacc_entry.first, simulation_beginning) * 24 * 60 * 60);
+                    person.add_new_vaccination(
+                        mio::abm::Vaccination(mio::abm::ExposureType::GenericVaccine, timePoint));
+                    persons_by_age[age].erase(
+                        std::remove(persons_by_age[age].begin(), persons_by_age[age].end(), id_rnd),
+                        persons_by_age[age].end());
+                    vaccinated_persons[age].push_back(id_rnd);
+                }
+            }
+            for (uint32_t i = 0; i < vacc_entry.second[age].second; ++i) {
+                if (vaccinated_persons[age].size() == 0) {
+                    mio::log_error("Not enough persons to vaccinate in age group we dont vaccinate if an age group is "
+                                   "fully vaccinated! ");
+                }
+                else {
+                    // select random already vaccinated person and assign Vaccination
+                    uint32_t id_rnd = vaccinated_persons[age][mio::UniformIntDistribution<size_t>::get_instance()(
+                        world.get_rng(), 0U, vaccinated_persons[age].size() - 1)];
+                    mio::abm::Person& person = world.get_person(id_rnd);
+                    auto timePoint           = mio::abm::TimePoint(
+                        mio::get_offset_in_days(vacc_entry.first, simulation_beginning) * 24 * 60 * 60);
+                    person.add_new_vaccination(
+                        mio::abm::Vaccination(mio::abm::ExposureType::GenericVaccine, timePoint));
+                    vaccinated_persons[age].erase(
+                        std::remove(vaccinated_persons[age].begin(), vaccinated_persons[age].end(), id_rnd),
+                        vaccinated_persons[age].end());
+                }
+            }
+        }
+    }
+}
 
 int stringToMinutes(const std::string& input)
 {
@@ -223,10 +351,13 @@ void split_line(std::string string, std::vector<int32_t>* row)
     });
 }
 
-mio::abm::LocationType get_location_type(uint32_t acitivity_end)
+mio::abm::LocationType get_location_type(const int location_type)
 {
     mio::abm::LocationType type;
-    switch (acitivity_end) {
+    switch (location_type) {
+    case 0:
+        type = mio::abm::LocationType::Home;
+        break;
     case 1:
         type = mio::abm::LocationType::Work;
         break;
@@ -237,13 +368,7 @@ mio::abm::LocationType get_location_type(uint32_t acitivity_end)
         type = mio::abm::LocationType::BasicsShop;
         break;
     case 4:
-        type = mio::abm::LocationType::SocialEvent; // Freizeit
-        break;
-    case 5:
-        type = mio::abm::LocationType::BasicsShop; // Private Erledigung
-        break;
-    case 6:
-        type = mio::abm::LocationType::SocialEvent; // Sonstiges
+        type = mio::abm::LocationType::SocialEvent;
         break;
     default:
         type = mio::abm::LocationType::Home;
@@ -393,7 +518,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         uint32_t home_id                                 = row[index["huid"]];
         int target_location_id                           = row[index["loc_id_end"]];
-        uint32_t activity_end                            = row[index["activity_end"]];
+        uint32_t location_type                           = row[index["location_type"]];
         mio::abm::GeographicalLocation location_long_lat = {(double)row[index["lon_end"]] / 1e+5,
                                                             (double)row[index["lat_end"]] / 1e+5};
         mio::abm::LocationId home;
@@ -412,7 +537,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             target_location_id); // Check if location already exists also for home which have the same id (home_id = target_location_id)
         if (it_location == locations.end()) {
             location = world.add_location(
-                get_location_type(activity_end),
+                get_location_type(location_type),
                 1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
             world.get_individualized_location(location).set_geographical_location(location_long_lat);
@@ -442,7 +567,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
         uint32_t trip_start     = row[index["start_time"]];
         uint32_t transport_mode = row[index["travel_mode"]];
-        uint32_t acticity_end   = row[index["activity_end"]];
+        uint32_t activity_end   = row[index["activity_end"]];
         bool home_in_bs         = true;
 
         // Add the trip to the trip list person and location must exist at this point
@@ -479,7 +604,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             it_person->second.get_assigned_location_index(mio::abm::LocationType::Home), mio::abm::LocationType::Home};
         world.get_trip_list().add_trip(mio::abm::Trip(
             it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location,
-            start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
+            start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(activity_end)));
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
     world.parameters.get<mio::abm::LogAgentIds>() = ids_in_bs;
@@ -885,7 +1010,7 @@ void set_local_parameters(mio::abm::World& world)
  * @param t0 The start time of the Simulation.
  */
 void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, const mio::abm::TimePoint& t0,
-                          int max_num_persons)
+                          int max_num_persons, mio::Date start_date_sim)
 {
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
 
@@ -893,15 +1018,15 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     set_local_parameters(world);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, (input_dir / "mobility/modified_braunschweig_result.csv").generic_string(), t0,
+    create_world_from_data(world, (input_dir / "mobility/braunschweig_result_ffa8_modified.csv").generic_string(), t0,
                            max_num_persons);
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, t0);
+    // assign_infection_state(world, t0);
 
     // Assign vaccination status to each person.
-    // assign_vaccination_state(world, (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").generic_string());
+    assign_vaccination_state(world, start_date_sim);
 
     //auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
@@ -1135,7 +1260,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 50000;
+    auto max_num_persons = 360000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1166,6 +1291,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     //Time this
     // auto start0 = std::chrono::high_resolution_clock::now();
     determine_initial_infection_states_world(input_dir, start_date);
+    prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
+                              (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
     // auto stop0     = std::chrono::high_resolution_clock::now();
     // auto duration0 = std::chrono::duration<double>(stop0 - start0);
     // std::cout << "Time taken by determine_initial_infection_states_world: " << duration0.count() << " seconds"
@@ -1177,12 +1304,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     // Loop over a number of runs
     for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
-
         // Start the clock before create_sampled_world
         // auto start1 = std::chrono::high_resolution_clock::now();
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groupss);
-        create_sampled_world(world, input_dir, t0, max_num_persons);
+        create_sampled_world(world, input_dir, t0, max_num_persons, start_date);
         world.parameters.get<mio::abm::InfectionRateFromViralShed>() = 10;
         // Stop the clock after create_sampled_world and calculate the duration
         // auto stop1     = std::chrono::high_resolution_clock::now();
@@ -1507,7 +1633,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 3;
+        num_runs = 1;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 
