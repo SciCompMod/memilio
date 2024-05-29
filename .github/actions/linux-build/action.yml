@@ -21,30 +21,14 @@ inputs:
     description: "Turn coverage on (ON or OFF, default OFF)"
     required: false
     default: "OFF"
-  sanitize-ub:
-    description: "Turn on UB sanitzer (ON or OFF, default OFF)"
-    required: false
-    default: "OFF"
-  sanitize-addr:
-    description: "Turn on address sanitzer (ON or OFF, default OFF)"
-    required: false
-    default: "OFF"
-  build-tests:
-    description: "Build tests"
-    required: false
-    default: "ON"
-  build-benchmarks:
-    description: "Build benchmarks"
+  sanitizers:
+    description: "Turn on sanitzers (ON or OFF, default OFF)"
     required: false
     default: "OFF"
   openmp:
     description: "Enable Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
     required: false
     default: "OFF"
-  enable-optimization:
-    description: "Enable optimization with Ipopt (ON or OFF, default ON)"
-    required: false
-    default: "ON"
 runs:
   using: "composite"
   steps:
@@ -71,22 +55,25 @@ runs:
             sudo apt-get -qq -y install clang-14
           fi
         fi
-    - name: ccache
+    - name: ccache 
       id: ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        save: ${{ github.ref_name == 'main' || github.ref_name == '994/merge' || github.ref_name == '305-ccache-in-CI' }} # only save on main branch to minimize space
-        max-size: ${{ inputs.config == 'Release' && '200M' || '1000M' }}
-        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'OFF' && 'nodep' || ''}}-${{ inputs.openmp == 'ON' && 'omp' || ''}}
-        #restore key must be unambiguous, i.e. no cache from a different build is used due to matching prefix
-        restore-keys: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'OFF' && 'nodep' || ''}}-${{ inputs.openmp == 'ON' && 'omp' || ''}}
+        # free total space for cache available on github is limited to 10GB, so only save on main branch;
+        # other branches will try to use cache from main, but branches that are too old won't benefit;
+        save: ${{ github.ref_name == 'main' }} 
+        # set enough space per build cache to keep a few previous versions to be used by older branches
+        # debug builds require more space
+        max-size: ${{ inputs.config == 'Release' && '200M' || '1G' }} 
+        # saves cache as `ccache-<key>-<timestamp>` (timestamp added automatically, key must be unique, github caches are never overwritten)
+        # key should be a composite of all options that affect the compilation
+        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-cov${{ inputs.coverage }}-dep${{ inputs.optional-dependencies }}-omp${{ inputs.openmp }}-san${{ inputs.sanitizers }}
+        # load most recent cache where a prefix of the key matches a restore-key, e.g. from the most recent nightly run of the same build
+        restore-keys: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-cov${{ inputs.coverage }}-dep${{ inputs.optional-dependencies }}-omp${{ inputs.openmp }}-san${{ inputs.sanitizers }}
     - name: Build
       shell: bash
       run: |
         cd cpp
-        export CCACHE_LOGFILE=$(pwd)/.ccache.log
-        export CCACHE_DEBUG=1
-        export CCACHE_DEBUGDIR=$(pwd)/.ccache.debugdir
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
@@ -108,7 +95,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_ENABLE_IPOPT=${{ inputs.enable-optimization }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
+        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
     - name: create build dir archive
       shell: bash
@@ -121,16 +108,4 @@ runs:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build.tar.gz
-        retention-days: 1
-    - name: Upload ccache log
-      uses: actions/upload-artifact@v4
-      with:
-        name: ccachelog-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
-        path: cpp/.ccache.log
-        retention-days: 1
-    - name: Upload ccache debugdir
-      uses: actions/upload-artifact@v4
-      with:
-        name: ccachedebug-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
-        path: cpp/.ccache.debugdir
         retention-days: 1
