@@ -132,9 +132,9 @@ public:
             }
 
             // ICU capacity shortage is close
-            double criticalPerSevereAdjusted =
-                smoother_cosine(icu_occupancy, 0.90 * params.get<ICUCapacity>(), params.get<ICUCapacity>(),
-                                params.get<CriticalPerSevere>()[i], 0);
+            double criticalPerSevereAdjusted = params.get<CriticalPerSevere>()[i];
+            // smoother_cosine(icu_occupancy, 0.90 * params.get<ICUCapacity>(), params.get<ICUCapacity>(),
+            //                 params.get<CriticalPerSevere>()[i], 0);
 
             double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 

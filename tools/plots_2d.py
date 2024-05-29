@@ -19,7 +19,7 @@ import seaborn as sns
 
 sns.set_style("darkgrid")
 
-start_date = "2020-10-01"
+start_date = "2020-10-15"
 total_pop = 83278910.0
 opacity = 0.15
 lineWidth = 2
@@ -71,60 +71,64 @@ def read_state_results_h5(path, comp, group_key='Total'):
 
 
 def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Individuals"):
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    num_data = len(ys)
 
-    # set days for x axis
+    # Set days for x-axis
     num_days = len(ys[0]) - 1
-    if type(ys[0]) is dict:
+    if isinstance(ys[0], dict):
         num_days = len(ys[0]['p25']) - 1
     start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_date_datetime = start_date_datetime + timedelta(days=num_days)
-    # alle Tage zwischen start_date_datetime und end_date_datetime
     days = pd.date_range(start_date_datetime, end_date_datetime)
-    weeks = pd.date_range(start=start_date_datetime,
-                          end=end_date_datetime, freq='7D')
     months = pd.date_range(start=start_date_datetime,
                            end=end_date_datetime, freq='MS')
 
-    # set ticks
-    # plt.xticks(weeks, weeks.strftime('%Y-%m-%d'), fontsize=ticks, rotation=45)
-    plt.xticks(months, months.strftime('%B %Y'), fontsize=ticks, rotation=45)
-    plt.yticks(fontsize=ticks)
+    # Creating subplots based on the number of data series
+    if num_data > 8:
+        fig, axes = plt.subplots(1, 2, figsize=(20, 10))
+    else:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+        axes = [ax]
 
-    if title != "":
-        ax.set_title(title, fontsize=fontsize)
+    for ax in axes:
+        # Set ticks and labels
+        ax.set_xticks(months)
+        ax.set_xticklabels(months.strftime('%B %Y'),
+                           fontsize=ticks, rotation=45)
+        ax.tick_params(axis='y', labelsize=ticks)  # Set y-axis tick size
 
-    ax.set_xlabel("Time [days]", fontsize=fontsize)
-    ax.set_ylabel(ylabel, fontsize=fontsize)
-    ax.grid(True)
-    if log_scale:
-        ax.set_yscale('log')
+        if title:
+            ax.set_title(title, fontsize=fontsize)
 
-    num_data = len(ys)
+        ax.set_xlabel("Time [days]", fontsize=fontsize)
+        ax.set_ylabel(ylabel, fontsize=fontsize)
+        ax.grid(True)
+        if log_scale:
+            ax.set_yscale('log')
+
+    # Plotting the data
     for indx_data in range(num_data):
         y = ys[indx_data]
-        if type(y) is dict:
-            ax.plot(days,
-                    y["p25"],
-                    linewidth=lineWidth, linestyle='--', color=colors[indx_data])
-            ax.plot(days,
-                    y["p75"],
-                    linewidth=lineWidth, linestyle='--', color=colors[indx_data])
-            ax.plot(days,
-                    y["p50"], label=labels[indx_data],
-                    linewidth=lineWidth, linestyle='-', color=colors[indx_data])
-            ax.fill_between(days, y["p25"], y["p75"],
-                            color=colors[indx_data], alpha=opacity)
+        ax = axes[indx_data % len(axes)]
+        if isinstance(y, dict):
+            ax.plot(days, y["p25"], linewidth=lineWidth,
+                    linestyle='--', color=colors[indx_data % len(colors)])
+            ax.plot(days, y["p75"], linewidth=lineWidth,
+                    linestyle='--', color=colors[indx_data % len(colors)])
+            ax.plot(days, y["p50"], label=labels[indx_data], linewidth=lineWidth,
+                    linestyle='-', color=colors[indx_data % len(colors)])
+            ax.fill_between(
+                days, y["p25"], y["p75"], color=colors[indx_data % len(colors)], alpha=opacity)
         else:
-            ax.plot(days, y, label=labels[indx_data],
-                    linewidth=lineWidth, linestyle='-', color=colors[indx_data])
+            ax.plot(days, y, label=labels[indx_data], linewidth=lineWidth,
+                    linestyle='-', color=colors[indx_data % len(colors)])
 
-    # pos neben dem plot rechts
-    ax.legend(fontsize=legendsize, loc='center left', bbox_to_anchor=(1, 0.5))
-    # plt.xlim(days[0], days[-1])
+    for ax in axes:
+        ax.legend(fontsize=legendsize, loc='center left',
+                  bbox_to_anchor=(1, 0.5))
+
     plt.tight_layout()
-    plt.savefig(
-        os.path.join(path_plots, f"plot_{title}.png"))
+    plt.savefig(os.path.join(path_plots, f"plot_{title}.png"))
     plt.clf()
     return 0
 
@@ -197,6 +201,22 @@ def plot_compartments(path_results, path_plots, modes, compartments, labels, tit
     return 0
 
 
+def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_scale=False):
+    if not os.path.exists(path_plots):
+        os.makedirs(path_plots)
+    plot_data = []
+    labels_modes = []
+    for mode in modes:
+        for index, compartment in enumerate(flow_indx):
+            labels_modes.append(labels[index] + f" {mode}")
+            path_results_mode = os.path.join(path_results, mode, "flows")
+            plot_data.append(get_results(
+                path_results_mode, compartment, results="total"))
+    plot(plot_data, labels_modes, path_plots, title=title,
+         log_scale=log_scale, ylabel="Number Individuals")
+    return 0
+
+
 def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=False):
     if not os.path.exists(path_plots):
         os.makedirs(path_plots)
@@ -218,7 +238,7 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
                 data[key][indx] = data[key][indx] / total_pop * 100_000
 
     # create dict with same shape and set constant value for ICU capacity
-    icu_capacity_val = 35
+    icu_capacity_val = 12
     icu_capacity = {key: [icu_capacity_val for _ in range(
         len(plot_data[0][key]))] for key in plot_data[0].keys()}
     plot_data.append(icu_capacity)
@@ -253,10 +273,16 @@ if __name__ == '__main__':
 
     icu_compartment = [[7]]
     infected_compartment = [[1, 2, 3, 4, 5, 6, 7]]
+    dead_compartment = [[9]]
+    flow_se = [[0]]
 
     plot_risk(path_results, path_plots)
     plot_compartments(path_results, path_plots, modes,
                       icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
     plot_compartments(path_results, path_plots, modes,
                       infected_compartment, [""], "Total Infected")
+    plot_compartments(path_results, path_plots, modes,
+                      dead_compartment, [""], "Total Deaths")
+    plot_flows(path_results, path_plots, modes,
+               flow_se, [""], "Daily Infections")
     plot_icu_comp(path_results, path_plots, modes, path_icu_data)

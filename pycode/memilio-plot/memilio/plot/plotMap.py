@@ -268,7 +268,7 @@ def scale_dataframe_relative(df, age_groups, df_population):
 
     def scale_row(elem):
         population_local_sum = df_population_agegroups[
-            df_population_agegroups['ID_County'] == int(elem[0])].iloc[
+            df_population_agegroups['ID_County'] == int(elem.iloc[0])].iloc[
                 :, 1:].sum(axis=1)
         return elem['Count'] / population_local_sum.values[0]
 
