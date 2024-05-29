@@ -61,7 +61,7 @@ runs:
       with:
         # free total space for cache available on github is limited to 10GB, so only save on main branch;
         # other branches will try to use cache from main, but branches that are too old won't benefit;
-        save: ${{ github.ref_name == 'main' }} 
+        save: ${{ github.ref_name == 'main' || github.ref_name == '305-ccache-in-CI' }} 
         # set enough space per build cache to keep a few previous versions to be used by older branches
         # debug builds require more space
         max-size: ${{ inputs.config == 'Release' && '200M' || '1G' }} 
