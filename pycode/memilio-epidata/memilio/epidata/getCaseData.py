@@ -287,8 +287,9 @@ def write_case_data(df: pd.DataFrame,
                     split_berlin: bool = dd.defaultDict['split_berlin'],
                     rep_date: bool = dd.defaultDict['rep_date'],
                     files: str or list = 'All',
+                    to_dataset: bool = dd.defaultDict['to_dataset'],
                     **kwargs,
-                    ) -> None:
+                    ) -> None or dict:
     """! Writing the different case data file.
     Following data is generated and written to the mentioned filename
         - All infected (current and past) for whole germany are stored in "cases_infected"
@@ -319,6 +320,10 @@ def write_case_data(df: pd.DataFrame,
     @param split_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date: bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param files: list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
+    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
+        If True - returns objects with dataframes
+        If False - write dataframes into files
+        Default defined in defaultDict.
 
     @return None
     """
@@ -364,8 +369,7 @@ def write_case_data(df: pd.DataFrame,
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                      [IdBundesland], {dd.EngEng["idState"]
-                          : geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
@@ -405,6 +409,8 @@ def write_case_data(df: pd.DataFrame,
                             dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                            ['Confirmed', 'Deaths', 'Recovered']]
     }
+    dict_of_datasets = dict()
+
     with progress_indicator.Spinner():
         for file in files:
             if file not in dict_files.keys():
@@ -443,7 +449,14 @@ def write_case_data(df: pd.DataFrame,
 
             df_local_cs = mdfs.extract_subframe_based_on_dates(
                 df_local_cs, start_date, end_date)
-            gd.write_dataframe(df_local_cs, directory, filename, file_format)
+            if not to_dataset:
+                gd.write_dataframe(df_local_cs, directory,
+                                   filename, file_format)
+            else:
+                dict_of_datasets.update({file: df_local_cs})
+
+    if to_dataset:
+        return dict_of_datasets
 
 
 def get_case_data(read_data: bool = dd.defaultDict['read_data'],
@@ -456,6 +469,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
                   split_berlin: bool = dd.defaultDict['split_berlin'],
                   rep_date: bool = dd.defaultDict['rep_date'],
                   files: str or list = 'All',
+                  to_dataset: bool = dd.defaultDict['to_dataset'],
                   **kwargs
                   ) -> None:
     """! Wrapper function that downloads the case data and provides different kind of structured data into json files.
@@ -504,6 +518,10 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param files List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
+    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
+        If True - returns objects with dataframes
+        If False - write dataframes into files
+        Default defined in defaultDict.
 
     @return None
     """
@@ -519,7 +537,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         rep_date=rep_date,
         **kwargs
     )
-    write_case_data(
+    datasets = write_case_data(
         df=preprocess_df,
         file_format=file_format,
         start_date=start_date,
@@ -530,6 +548,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         split_berlin=split_berlin,
         rep_date=rep_date,
         files=files,
+        to_dataset=to_dataset,
         **kwargs,
     )
 
