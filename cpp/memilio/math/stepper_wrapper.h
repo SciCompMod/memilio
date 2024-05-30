@@ -27,6 +27,8 @@
 #include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+
+#include <limits>
 // #include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp" // TODO: reenable once boost bug is fixed
 
 namespace mio
@@ -70,24 +72,27 @@ public:
     }
 
     /**
-    * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
-
-    * @param[in] yt Value of y at t_{k}, y(t_{k}).
-    * @param[in,out] t Current time step t_{k} for some k. Will be set to t_{k+1} in [t_{k} + dt_min, t_{k} + dt].
-    * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
-    * @param[out] ytp1 The approximated value of y(t_{k+1}).
-    */
+     * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
+     *
+     * @param[in] yt Value of y at t_{k}, y(t_{k}).
+     * @param[in,out] t Current time step t_{k} for some k. Will be set to t_{k+1} in [t_{k} + dt_min, t_{k} + dt].
+     * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
+     * @param[out] ytp1 The approximated value of y(t_{k+1}).
+     * @param[in] force_step_size Forces a step with exactly size dt.
+     */
     bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Vector<FP> const> yt, FP& t, FP& dt,
-              Eigen::Ref<Vector<FP>> ytp1, bool force_step_size = false) const override
+              Eigen::Ref<Vector<FP>> ytp1, const bool force_step_size = false) const override
     {
         using boost::numeric::odeint::fail;
         using std::max;
         assert(0 <= m_dt_min);
         assert(m_dt_min <= m_dt_max);
 
+        const FP dt_forced = dt;
         if ((dt < m_dt_min || dt > m_dt_max) && !force_step_size) {
             mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
                              m_dt_max);
+            dt = std::min(dt, m_dt_max);
         }
         // set initial values for exit conditions
         auto step_result = fail;
@@ -98,14 +103,14 @@ public:
         // make a integration step, adapting dt to a possibly larger value on success,
         // or a strictly smaller value on fail.
         // stop only on a successful step or a failed step size adaption (w.r.t. the minimal step size m_dt_min)
-        while (step_result == fail && is_dt_valid) {
+        do {
             if (dt < m_dt_min && !force_step_size) {
                 is_dt_valid = false;
                 dt          = m_dt_min;
             }
             // we use the scheme try_step(sys, in, t, out, dt) with sys=f, in=y(t_{k}), out=y(t_{k+1}).
             // this is similiar to do_step, but it can adapt the step size dt. If successful, it also updates t.
-
+            // note that the step_adjuster_type never allows or returns dt >= dt_max
             if constexpr (!is_fsal_stepper) { // prevent compile time errors with fsal steppers
                 step_result = m_stepper.try_step(
                     // reorder arguments of the DerivFunction f for the stepper
@@ -115,18 +120,18 @@ public:
                     },
                     m_yt, t, m_ytp1, dt);
             }
-        }
+        } while (step_result == fail && is_dt_valid && !force_step_size);
         // output the new value by copying it back to the reference
         ytp1 = m_ytp1;
-        // bound dt from below
-        // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min
-
-        dt = max(dt, m_dt_min);
+        // clamp dt (again)
+        // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min,
+        // and when forcing step size, dt may have been larger than m_dt_max
+        dt = std::clamp(dt, m_dt_min, m_dt_max);
         // check whether the last step failed (which means that m_dt_min was still too large to suffice tolerances)
-        if (step_result == fail || force_step_size) {
+        if (step_result == fail) {
             // adaptive stepping failed, but we still return the result of the last attempt
-            t += m_dt_min;
-            return false;
+            t += force_step_size ? dt_forced : dt;
+            return force_step_size;
         }
         else {
             // successfully made an integration step
@@ -157,8 +162,7 @@ public:
     /// @param dt_max sets the maximum step size
     void set_dt_max(FP dt_max)
     {
-        m_dt_max  = dt_max;
-        m_stepper = create_stepper();
+        m_dt_max = dt_max;
     }
 
 private:
@@ -167,7 +171,7 @@ private:
     {
         // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
         return Stepper(typename Stepper::error_checker_type(m_abs_tol, m_rel_tol),
-                       typename Stepper::step_adjuster_type(m_dt_max));
+                       typename Stepper::step_adjuster_type(std::numeric_limits<FP>::max())); // handle dt_max manually
     }
 
     FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.

@@ -67,7 +67,7 @@ public:
      *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
     virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt,
-                      Eigen::Ref<Vector<FP>> ytp1, bool force_step_size = false) const = 0;
+                      Eigen::Ref<Vector<FP>> ytp1, const bool force_step_size = false) const = 0;
 };
 
 /**
@@ -144,7 +144,7 @@ public:
 
         if (m_is_adaptive) {
             if (!step_okay) {
-                log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
+                log_warning("Adaptive step sizing failed. Forced at least one integration step of size dt_min.");
             }
             else if (fabs((tmax - t) / (tmax - t0)) > 1e-14) {
                 log_warning("Last time step too small. Could not reach tmax exactly.");

@@ -208,19 +208,22 @@ public:
      * @param[in,out] t current time
      * @param[in,out] dt current time step size h=dt
      * @param[out] ytp1 approximated value y(t+1)
+     * @param[in] force_step_size Forces a step with exactly size dt.
      */
     bool step(const DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1, bool force_step_size = false) const override
+              Eigen::Ref<Eigen::VectorXd> ytp1, const bool force_step_size = false) const override
     {
         assert(0 <= m_dt_min);
         assert(m_dt_min <= m_dt_max);
 
-        if (dt < m_dt_min || dt > m_dt_max) {
-            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
-                             m_dt_max);
-        }
+        if (!force_step_size) {
+            if (dt < m_dt_min || dt > m_dt_max) {
+                mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
+                                 m_dt_max);
+            }
 
-        dt = std::min(dt, m_dt_max);
+            dt = std::min(dt, m_dt_max);
+        }
 
         double t_eval; // shifted time for evaluating yt
         double dt_new; // updated dt
@@ -236,7 +239,7 @@ public:
         m_yt_eval = yt;
 
         while (!converged && !dt_is_invalid) {
-            if (dt < m_dt_min) {
+            if (dt < m_dt_min && !force_step_size) {
                 dt_is_invalid = true;
                 dt            = m_dt_min;
             }
