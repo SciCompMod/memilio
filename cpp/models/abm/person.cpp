@@ -41,7 +41,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
-    , m_compliance((uint32_t)InterventionType::Count, -1.)
+    , m_compliance((uint32_t)InterventionType::Count, 1.)
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
@@ -188,7 +188,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         // true positive
         if (random < params.sensitivity) {
             // If the Person comply to isolation, start the quarantine.
-            if (apply_isolation_intervention(rng)) {
+            if (is_apply_isolation_intervention(rng)) {
                 m_quarantine_start = t;
             }
             m_infections.back().set_detected();
@@ -207,7 +207,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         // false positive
         else {
             // If the Person comply to isolation, start the quarantine.
-            if (apply_isolation_intervention(rng)) {
+            if (is_apply_isolation_intervention(rng)) {
                 m_quarantine_start = t;
             }
             return true;
@@ -240,53 +240,37 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
     }
 }
 
-void Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location& target)
+bool Person::is_apply_mask_intervention(RandomNumberGenerator& rng, const Location& target)
 {
-    if (target.get_npi_active()) {
-        // If the targeted location requires the Person to wear mask
+    // Draw if the person wears a mask
+    ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
+    if (wear_mask <= get_compliance(InterventionType::Mask)) {
         m_wears_mask = true;
-        if (get_compliance(InterventionType::Mask) < 0.) {
-            // draw if a person refuses to wear the required mask
-            ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng, -1., 0.);
-            if (wear_mask > get_compliance(InterventionType::Mask)) {
-                m_wears_mask = false;
-            }
-        }
-    }
-    else {
-        // If the targeted location does NOT require the Person to wear mask
-        m_wears_mask = false;
-        if (get_compliance(InterventionType::Mask) > 0.) {
-            // draw if the person wears a mask even if not required
-            ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
-            if (wear_mask < get_compliance(InterventionType::Mask)) {
-                m_wears_mask = true;
-            }
-        }
-    }
-    // If the Person is wearing mask, they can switch to a more suitable mask for the targeted Location
-    if (m_wears_mask) {
-        if ((static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) ||
-            (m_mask.get_type() == MaskType::FFP2 && m_mask.get_time_used() > hours(8)) ||
-            (m_mask.get_type() == MaskType::Surgical)) {
+        // If the Person is wearing mask, they can switch to a more suitable mask for the targeted Location
+        if ((static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask()))) {
             m_mask.change_mask(target.get_required_mask());
         }
+        return true;
+    }
+    else {
+        m_wears_mask = false;
+        return false;
     }
 }
 
-bool Person::apply_test_intervention(RandomNumberGenerator& rng)
+bool Person::is_apply_test_intervention(RandomNumberGenerator& rng)
 {
-    ScalarType do_test = UniformDistribution<double>::get_instance()(rng, -1., 0.);
-    if (do_test > get_compliance(InterventionType::Testing)) {
+    ScalarType do_test = UniformDistribution<double>::get_instance()(rng);
+    if (do_test <= get_compliance(InterventionType::Testing)) {
         return true;
     }
     return false;
 }
 
-bool Person::apply_isolation_intervention(RandomNumberGenerator& rng)
+bool Person::is_apply_isolation_intervention(RandomNumberGenerator& rng)
 {
-    ScalarType isolate = UniformDistribution<double>::get_instance()(rng, -1., 0.);
-    if (isolate > get_compliance(InterventionType::Isolation)) {
+    ScalarType isolate = UniformDistribution<double>::get_instance()(rng);
+    if (isolate <= get_compliance(InterventionType::Isolation)) {
         return true;
     }
     return false;

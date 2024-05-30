@@ -27,7 +27,6 @@
 #include "abm/time.h"
 #include "abm/vaccine.h"
 #include "abm/intervention_type.h"
-#include "abm/mask_type.h"
 #include "abm/mask.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
@@ -414,21 +413,21 @@ public:
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    void apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
+    bool is_apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
 
     /**
      * @brief Checks whether the Person do the required test at the target Location.
      * @param[inout] rng RandomNumberGenerator of the Person.
      * @return Whether a Person do the required test at the target Location.
      */
-    bool apply_test_intervention(RandomNumberGenerator& rng);
+    bool is_apply_test_intervention(RandomNumberGenerator& rng);
 
     /**
      * @brief Checks whether the Person isolates after a positive test.
      * @param[inout] rng RandomNumberGenerator of the Person.
      * @return Whether a Person isolates after a positive test.
      */
-    bool apply_isolation_intervention(RandomNumberGenerator& rng);
+    bool is_apply_isolation_intervention(RandomNumberGenerator& rng);
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -443,7 +442,7 @@ public:
      * @brief Get the information if the Person is currently wearing a Mask.
      * @return True if the Person is currently wearing a Mask.
      */
-    bool get_wear_mask() const
+    bool is_wear_mask() const
     {
         return m_wears_mask;
     }
@@ -538,7 +537,7 @@ private:
     TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
-    std::vector<ScalarType> m_compliance; ///< Vector of compliance values for all #InterventionType%s.
+    std::vector<ScalarType> m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.

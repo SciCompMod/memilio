@@ -296,14 +296,14 @@ TEST(TestLocation, setRequiredMask)
     ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::FFP2);
 }
 
-TEST(TestLocation, setNPIActive)
+TEST(TestLocation, setIsMaskRequired)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    location.set_npi_active(false);
-    ASSERT_FALSE(location.get_npi_active());
+    location.set_is_mask_required(false);
+    ASSERT_FALSE(location.is_mask_required());
 
-    location.set_npi_active(true);
-    ASSERT_TRUE(location.get_npi_active());
+    location.set_is_mask_required(true);
+    ASSERT_TRUE(location.is_mask_required());
 }
 
 TEST(TestLocation, getGeographicalLocation)

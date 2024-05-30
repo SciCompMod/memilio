@@ -233,25 +233,21 @@ TEST(TestPerson, applyMaskIntervention)
     person.get_mask().change_mask(mio::abm::MaskType::Community);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
-    target.set_npi_active(false);
+    target.set_is_mask_required(false);
     person.set_compliance(mio::abm::InterventionType::Mask, 0.);
-    person.apply_mask_intervention(rng_person, target);
-    ASSERT_FALSE(person.get_wear_mask());
+    person.is_apply_mask_intervention(rng_person, target);
+    ASSERT_FALSE(person.is_wear_mask());
 
     person.set_compliance(mio::abm::InterventionType::Mask, 1);
-    person.apply_mask_intervention(rng_person, target);
-    ASSERT_TRUE(person.get_wear_mask());
+    person.is_apply_mask_intervention(rng_person, target);
+    ASSERT_TRUE(person.is_wear_mask());
 
-    target.set_npi_active(true);
+    target.set_is_mask_required(true);
     target.set_required_mask(mio::abm::MaskType::Surgical);
-    person.set_compliance(mio::abm::InterventionType::Mask, 0);
-    person.apply_mask_intervention(rng_person, target);
+    person.set_compliance(mio::abm::InterventionType::Mask, 1);
+    person.is_apply_mask_intervention(rng_person, target);
     ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
-    ASSERT_TRUE(person.get_wear_mask());
-
-    person.set_compliance(mio::abm::InterventionType::Mask, -1.);
-    person.apply_mask_intervention(rng_person, target);
-    ASSERT_FALSE(person.get_wear_mask());
+    ASSERT_TRUE(person.is_wear_mask());
 }
 
 TEST(TestPerson, setWearMask)
@@ -260,10 +256,10 @@ TEST(TestPerson, setWearMask)
     auto person = make_test_person(location);
 
     person.set_wear_mask(false);
-    ASSERT_FALSE(person.get_wear_mask());
+    ASSERT_FALSE(person.is_wear_mask());
 
     person.set_wear_mask(true);
-    ASSERT_TRUE(person.get_wear_mask());
+    ASSERT_TRUE(person.is_wear_mask());
 }
 
 TEST(TestPerson, getMaskProtectiveFactor)

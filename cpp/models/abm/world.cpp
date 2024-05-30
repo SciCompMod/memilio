@@ -86,12 +86,18 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto target_type       = rule(personal_rng, *person, t, dt, parameters);
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location);
-                    return true;
+            person->is_apply_mask_intervention(personal_rng, target_location);
+            // Check if the capacity of targeted Location is not reached
+            if (target_location != current_location &&
+                target_location.get_number_persons() < target_location.get_capacity().persons) {
+                // Check if the Person wears mask if required
+                if ((target_location.is_mask_required() && person->is_wear_mask()) ||
+                    !target_location.is_mask_required()) {
+                    // Perform TestingStrategy if required
+                    if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                        person->migrate_to(target_location);
+                        return true;
+                    }
                 }
             }
             return false;
@@ -132,9 +138,14 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    person->apply_mask_intervention(personal_rng, target_location);
-                    person->migrate_to(target_location, trip.trip_mode);
+                person->is_apply_mask_intervention(personal_rng, target_location);
+                // Check if the Person wears mask if required
+                if ((target_location.is_mask_required() && person->is_wear_mask()) ||
+                    !target_location.is_mask_required()) {
+                    // Perform TestingStrategy if required
+                    if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                        person->migrate_to(target_location, trip.trip_mode);
+                    }
                 }
             }
             m_trip_list.increase_index();

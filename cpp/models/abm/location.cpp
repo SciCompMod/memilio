@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/mask_type.h"
+#include "abm/intervention_type.h"
 #include "abm/mask.h"
 #include "abm/location.h"
 #include "abm/random_events.h"
@@ -37,7 +37,7 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     , m_parameters(num_agegroups)
     , m_cells(num_cells, num_agegroups)
     , m_required_mask(MaskType::Community)
-    , m_npi_active(false)
+    , m_is_mask_required(false)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
