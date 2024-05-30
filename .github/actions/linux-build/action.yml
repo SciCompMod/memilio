@@ -1,6 +1,8 @@
 name: "Linux Build"
 description: "Build the C++ library on Linux. Produces artifact build-cpp-linux-$compiler-$version-$config."
 inputs:
+  #take care to adapt the unique cache keys and artifact names below when adding new inputs that affect compilation
+  #keys also need to be adapted in the other jobs of the pipeline that use the artifacts
   config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
