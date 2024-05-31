@@ -112,8 +112,8 @@ public:
 
         results.reserve(results.get_num_time_points() + num_steps);
 
-        bool step_okay = true;
-        bool last_step = false;
+        bool is_step_sizing_okay = true;
+        bool last_step           = false;
 
         FP dt_copy; // used to check whether step sizing is adaptive
         FP dt_restore = 0; // used to restore dt if dt was decreased to reach tmax
@@ -132,7 +132,12 @@ public:
             dt_copy = dt;
 
             results.add_time_point();
-            step_okay &= m_core->step(f, results[i], t, dt, results[i + 1], last_step);
+            bool step_okay = m_core->step(f, results[i], t, dt, results[i + 1]);
+            if (!step_okay && last_step) {
+                dt        = tmax - t;
+                step_okay = m_core->step(f, results[i], t, dt, results[i + 1], true);
+            }
+            is_step_sizing_okay &= step_okay;
             results.get_last_time() = t;
 
             // if dt has been changed (even slighly) by step, register the current m_core as adaptive
@@ -143,7 +148,7 @@ public:
         dt = max(dt, dt_restore);
 
         if (m_is_adaptive) {
-            if (!step_okay) {
+            if (!is_step_sizing_okay) {
                 log_warning("Adaptive step sizing failed. Forced at least one integration step of size dt_min.");
             }
             else if (fabs((tmax - t) / (tmax - t0)) > 1e-14) {
