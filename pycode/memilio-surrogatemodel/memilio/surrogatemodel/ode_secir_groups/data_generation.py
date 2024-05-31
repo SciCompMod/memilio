@@ -30,9 +30,9 @@ from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (AgeGroup, Damping, LogLevel, set_log_level)
-from memilio.simulation.secir import (Index_InfectionState,
-                                      InfectionState, Model,
-                                      interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import (Index_InfectionState,
+                                       InfectionState, Model,
+                                       interpolate_simulation_result, simulate)
 
 
 def interpolate_age_groups(data_entry):

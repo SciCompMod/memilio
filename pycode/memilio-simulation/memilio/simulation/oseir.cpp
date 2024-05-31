@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+//Includes from pymio
 #include "pybind_util.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
@@ -26,9 +27,13 @@
 #include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
+
+//Includes from MEmilio
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "memilio/data/analyze_result.h"
+
+#include "pybind11/pybind11.h"
 
 namespace py = pybind11;
 
@@ -77,13 +82,13 @@ PYBIND11_MODULE(_simulation_oseir, m)
         .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::oseir::Parameters<double>::check_constraints);
 
-    using SeirPopulations = mio::Populations<double, mio::AgeGroup, mio::oseir::InfectionState>;
-    pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, SeirPopulations, mio::oseir::Parameters<double>,
+    using Populations = mio::Populations<double, mio::AgeGroup, mio::oseir::InfectionState>;
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::oseir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<
         mio::oseir::Model<double>, pymio::EnablePickling::Required,
-        mio::CompartmentalModel<double, mio::oseir::InfectionState, SeirPopulations, mio::oseir::Parameters<double>>>(
+        mio::CompartmentalModel<double, mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>>(
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
@@ -92,14 +97,14 @@ PYBIND11_MODULE(_simulation_oseir, m)
         [](double t0, double tmax, double dt, const mio::oseir::Model<double>& model) {
             return mio::simulate(t0, tmax, dt, model);
         },
-        "Simulates a oseir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an ODE SEIR from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.def(
         "simulate_flows",
         [](double t0, double tmax, double dt, const mio::oseir::Model<double>& model) {
             return mio::simulate_flows(t0, tmax, dt, model);
         },
-        "Simulates a oseir with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        "Simulates an ODE SEIR with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
 
     m.attr("__version__") = "dev";
