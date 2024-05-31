@@ -17,8 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "ide_secir/parameters.h"
+#include "ode_secir/model.h"
 #include "infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/logging.h"

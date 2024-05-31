@@ -40,7 +40,6 @@ namespace isecir
 /**********************************************
 * Define Parameters of the IDE-SECIHURD model *
 **********************************************/
-
 /**
  * @brief Transition distribution for each transition in #InfectionTransition.
  *
@@ -325,6 +324,7 @@ public:
         return false;
     }
 
+public:
     /**
      * deserialize an object of this class.
      * @see mio::deserialize

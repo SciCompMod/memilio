@@ -24,6 +24,7 @@
 #include "abm/virus_variant.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
+#include "ode_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 
@@ -53,6 +54,7 @@ public:
     * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialization.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
+
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
           const ParameterSet& Parameterset_init = ParameterSet());
 
