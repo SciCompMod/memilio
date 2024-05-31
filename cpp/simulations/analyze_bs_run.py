@@ -66,11 +66,11 @@ def main(path, n_runs):
 
 def plot_infection_per_location_type(df):
     # Calculate moving average for all location types
-    df['Home'] = gaussian_filter1d(df.Home.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['School'] = gaussian_filter1d(df.School.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['Work'] =  gaussian_filter1d(df.Work.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['SocialEvent'] =  gaussian_filter1d(df.SocialEvent.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['BasicsShop'] =  gaussian_filter1d(df.BasicsShop.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['Home'] = gaussian_filter1d(df.Home.rolling(24*3, min_periods=1).sum(), sigma=15)
+    df['School'] = gaussian_filter1d(df.School.rolling(24*3, min_periods=1).sum(), sigma=15)
+    df['Work'] =  gaussian_filter1d(df.Work.rolling(24*3, min_periods=1).sum(), sigma=15)
+    df['SocialEvent'] =  gaussian_filter1d(df.SocialEvent.rolling(24*3, min_periods=1).sum(), sigma=15)
+    df['BasicsShop'] =  gaussian_filter1d(df.BasicsShop.rolling(24*3, min_periods=1).sum(), sigma=15)
 
     df.plot(x='Time', y=['Home', 'School','Work',  'SocialEvent', 'BasicsShop'], figsize=(10, 6), title='Infections stratified according to location type')
    
@@ -246,7 +246,8 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
