@@ -577,7 +577,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         uint32_t transport_mode = row[index["travel_mode"]];
         uint32_t activity_end   = row[index["activity_end"]];
         bool home_in_bs         = row[index["home_in_bs"]];
-        home_in_bs              = false;
         // Add the trip to the trip list person and location must exist at this point
         auto target_location = locations.find(target_location_id)->second;
 
