@@ -1200,11 +1200,13 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
 
         // PRAGMA_OMP(parallel for)
         for (auto i = size_t(0); i < persons.size(); ++i) {
-            auto& p    = persons[i];
-            auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
-                         ((uint32_t)p.get_infection_state(curr_time));
-            // PRAGMA_OMP(atomic)
-            sum[index] += 1;
+            auto& p = persons[i];
+            if (p.get_should_be_logged()) {
+                auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+                             ((uint32_t)p.get_infection_state(curr_time));
+                // PRAGMA_OMP(atomic)
+                sum[index] += 1;
+            }
         }
         return std::make_pair(curr_time, sum);
     }
