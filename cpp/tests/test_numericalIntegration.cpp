@@ -315,7 +315,7 @@ public:
     MOCK_METHOD(bool, step,
                 (const mio::DerivFunction<double>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1, const bool force_step_size),
-                (const));
+                (const, override));
 };
 
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
