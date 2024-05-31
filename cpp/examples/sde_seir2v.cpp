@@ -26,67 +26,6 @@
 #include "sde_seir2v/simulation.h"
 #include "memilio/utils/random_number_generator.h"
 
-template <typename T>
-void print_to_file(const T& history, const std::vector<std::string>& column_labels = {}, const std::string filepath = "seir2v_output.txt")
-{
-    std::ofstream myfile(filepath);
-    for (size_t k = 0; k < static_cast<size_t>(history.get_num_elements()); k++) {
-        if (k < column_labels.size()) {
-            myfile << " ";
-            myfile <<  column_labels[k];
-        }
-        else {
-            myfile << " ";
-            myfile << "#" + std::to_string(k + 1);
-        }
-    }
-    // print values as table
-    auto num_points = static_cast<size_t>(history.get_num_time_points());
-    for (size_t i = 0; i < num_points; i++) {
-        myfile << "\n";
-        myfile << history.get_time(i);
-        auto res_i = history.get_value(i);
-        for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
-            myfile << " ";
-            myfile << res_i[j];
-        }
-    }
-    myfile << "\n";
-    myfile.close();
-}
-
-/*template <typename T>
-void print_to_file2(const T& history_pre, const T& history_post, const double tmid,  const std::vector<std::string>& column_labels = {}, const std::string filepath = "seir2v_output2.txt")
-{   
-    
-    std::vector<double> N;
-    std::vector<double> S_prob;
-    std::vector<double> E_prob;
-    std::vector<double> I_prob;
-    std::vector<double> R_prob;
-
-    std::vector<double> S;
-
-    //Set timepoints
-    std::vector<size_t> timepoints {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380}
-    auto num_points = static_cast<size_t>(history.get_num_time_points());
-
-    for (size_t it = 0; it < timepoints.size(); ++it)
-    {   
-        if (timepoints[it] < tmid) 
-        {
-            S.append(history_pre.get_value(timepoints[it])[0])
-        }
-    }
-    std::ofstream myfile(filepath);
-    for (size_t it = 0; it < S.size(); ++it){
-        myfile << " ";
-        myfile << S[it];
-    }
-    myfile << "\n";
-    myfile.close();
-}*/
-
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
@@ -153,8 +92,5 @@ int main()
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV1V2)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[9];
     auto ssirs2 = mio::sseir2v::simulate(tmid, tmax, dt, model);
 
-    //print_to_file(ssirs, {"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"}, "seir2v_1.txt");
     ssirs.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
-    //ssirs2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
-    getchar();
 }
