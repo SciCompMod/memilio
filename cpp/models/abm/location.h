@@ -267,7 +267,7 @@ public:
      */
     void add_damping(TimePoint t, double p);
 
-    bool entry_allowed(Person::RandomNumberGenerator& rng,const mio::abm::TimePoint t) const;
+    bool entry_allowed(Person::RandomNumberGenerator& rng, const mio::abm::TimePoint t) const;
 
     /**
      * @brief Set the required type of mask for entering this Location.

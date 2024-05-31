@@ -55,8 +55,8 @@ bool Location::entry_allowed(Person::RandomNumberGenerator& rng, const mio::abm:
     else {
         // We want to go through the npi vector and get the last entry that is smaller than t
         auto it = std::upper_bound(temp_npi_damping.begin(), temp_npi_damping.end(), t,
-                                   [](TimePoint t, const std::pair<TimePoint, double>& p) {
-                                       return t < p.first;
+                                   [](TimePoint tp, const std::pair<TimePoint, double>& p) {
+                                       return tp < p.first;
                                    });
         //we need the one entry before the upper bound
         if (it == temp_npi_damping.begin()) {
