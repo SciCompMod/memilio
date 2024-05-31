@@ -98,7 +98,7 @@ void assign_infection_state_prob(mio::abm::World& world, mio::abm::TimePoint t)
 
         auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
             rng, initial_infection_distribution.slice(person.get_age()).as_array().array()));
-        
+
         if (infection_state != mio::osecir::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.parameters, t, infection_state_map.at(infection_state)));
@@ -1589,7 +1589,7 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir  = "/Users/david/Documents/HZI/memilio/data";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
