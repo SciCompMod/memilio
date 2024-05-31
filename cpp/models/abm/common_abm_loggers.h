@@ -213,7 +213,7 @@ struct LogInfectionPerLocationType : mio::LogAlways {
         // Otherwise log accordingly
 
         for (auto&& person : sim.get_world().get_persons()) {
-            if ((person.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
+            if ((person.get_infection_state(prev_time) != mio::abm::InfectionState::Susceptible) &&
                 (person.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed) &&
                 person.get_should_be_logged()) {
                 sum[(int)(person.get_location().get_type())] += 1;

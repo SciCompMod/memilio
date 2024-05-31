@@ -139,7 +139,7 @@ TimePoint Infection::draw_infection_course_forward(Person::RandomNumberGenerator
         m_virus_variant, age}]; // time distribution parameters for current infection state
     InfectionState next_state{start_state}; // next state to enter
 
-    auto& uniform_dist = UniformDistribution<double>::get_instance();
+    auto& uniform_dist            = UniformDistribution<double>::get_instance();
     ScalarType p                  = 1; // uniform random draws from [0, 1]
     bool init_state               = false;
     TimePoint start_of_init_state = init_date;
@@ -165,9 +165,9 @@ TimePoint Infection::draw_infection_course_forward(Person::RandomNumberGenerator
 
         case InfectionState::Susceptible: {
             next_state  = InfectionState::Exposed;
-            time_period = days(0);
+            time_period = mio::abm::hours(0);
             init_state  = true;
-        }
+        } break;
         case InfectionState::Exposed: {
             // roll out how long until infected without symptoms
             time_in_state = params.get<IncubationPeriod>()[{m_virus_variant, age}];
