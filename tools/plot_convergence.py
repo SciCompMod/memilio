@@ -204,41 +204,42 @@ def plot_convergence(errors, timesteps_ide, setting, flows=False, compartment=No
     # Plot all compartments.
     else:
         if flows:
-            fig, ax = plt.subplots(5, 2, sharex=True)
+            fig, axs = plt.subplots(5, 2, sharex=True, figsize=(10, 10))
             num_plots = 10
         else:
-            fig, ax = plt.subplots(4, 2, sharex=True)
+            fig, axs = plt.subplots(4, 2, sharex=True, figsize=(10, 8))
             num_plots = 8
 
         for i in range(num_plots):
 
-            # plot comparison line for linear convergence
-            comparison = [500 * dt for dt in timesteps_ide]
-            ax[int(i/2), i % 2].plot(timesteps_ide, comparison, color='lightgray',
-                                     label=r"$\mathcal{O}(\Delta t)$")
-
             # plot results
-            ax[int(i/2), i % 2].plot(timesteps_ide,
-                                     errors[:, i], '-o', color=colors[0], label='Results')
+            axs[int(i/2), i % 2].plot(timesteps_ide,
+                                      errors[:, i], '-o', color=colors[1], label='Results')
+
+            # plot comparison line for linear convergence
+            factor = 50 * errors[0, i]
+            comparison = [factor * dt for dt in timesteps_ide]
+            axs[int(i/2), i % 2].plot(timesteps_ide, comparison, color='gray',
+                                      label=r"$\mathcal{O}(\Delta t)$")
 
             # adapt plots
-            ax[int(i/2), i % 2].set_xscale("log", base=10)
-            ax[int(i/2), i % 2].set_yscale("log", base=10)
+            axs[int(i/2), i % 2].set_xscale("log", base=10)
+            axs[int(i/2), i % 2].set_yscale("log", base=10)
 
-            ax[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
+            axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=10)
 
-            fig.supxlabel('Time step')
-            fig.supylabel(
-                r"$\Vert {K}_{IDE}(t_{max}) - {K}_{ODE}(t_{max})\Vert$")
+        fig.supxlabel('Time step')
+        fig.supylabel(
+            r"$\Vert {Z}_{IDE}(t_{max}) - {Z}_{ODE}(t_{max})\Vert$")
 
         # invert x axis only for one plot so that sharex=True and invert_xaxis work as intended
-        ax[0, 0].invert_xaxis()
+        axs[0, 0].invert_xaxis()
 
-        labels = [r"$\mathcal{O}(\Delta t)$", 'Results']
-        fig.legend(labels, loc='center right',
+        labels = ['Results', r"$\mathcal{O}(\Delta t)$", ]
+        fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
                    fancybox=False, shadow=False, ncol=1)
 
-        plt.tight_layout(rect=[0, 0, 0.83, 1])
+        # plt.tight_layout(rect=[0, 0, 0.83, 1])
 
         if save:
             if flows:
@@ -348,7 +349,7 @@ def main():
 
     dt_ode = '1e-4'
 
-    timesteps_ide = ['1e-2', '1e-3']  # , '1e-4'
+    timesteps_ide = ['1e-2', '1e-3', '1e-4']  # , '1e-4'
 
     flows = True
 
@@ -356,12 +357,12 @@ def main():
 
     results = read_data(data_dir, dt_ode, timesteps_ide, setting, flows=flows)
 
-    timesteps_ide = [1e-2, 1e-3]  # , 1e-4
+    timesteps_ide = [1e-2, 1e-3, 1e-4]  # , 1e-4
 
     errors = compute_error_norm_tmax(
         groundtruth, results, timesteps_ide, flows=flows)
 
-    plot_convergence(errors, timesteps_ide, setting, flows=False, save=True)
+    plot_convergence(errors, timesteps_ide, setting, flows=flows, save=True)
 
     # print_initial_values(groundtruth, results, dt_ode, timesteps_ide)
 

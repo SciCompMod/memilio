@@ -51,7 +51,8 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, flows=True, save=True):
         secir_dict = {0: r"$\sigma_S^E$", 1: r"$\sigma_E^C$", 2: r"$\sigma_C^I$", 3: r"$\sigma_C^R$", 4: r"$\sigma_I^H$",
                       5: r"$\sigma_I^R$", 6: r"$\sigma_H^U$", 7: r"$\sigma_H^R$", 8: r"$\sigma_U^D$", 9: r"$\sigma_U^R$"}
 
-        fig, axs = plt.subplots(5, 2, sharex='all', num='Compare files')
+        fig, axs = plt.subplots(
+            5, 2, sharex='all', num='Compare files', figsize=(10, 10))
         num_plots = 10
 
     else:
@@ -62,12 +63,17 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, flows=True, save=True):
         secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                       5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
-        fig, axs = plt.subplots(4, 2, sharex='all', num='Compare files')
+        fig, axs = plt.subplots(
+            4, 2, sharex='all', num='Compare files', figsize=(10, 8))
         num_plots = 8
 
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
     linestyles = ['-', '--']
+
+    # in our case t0_ide=35
+    t0_ide = 35
+
     # add results to plot
     for file in range(len(files)):
         # load data
@@ -93,14 +99,29 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, flows=True, save=True):
         dates = data['Time'][:]
 
         # plot data
-        if file == 0:
-            for i in range(num_plots):
-                axs[int(i/2), i % 2].plot(dates,
-                                          total[:, i]/float(dt_ode), label=legendplot[file], color=colors[file], linestyle=linestyles[file])
-        if file == 1:
-            for i in range(num_plots):
-                axs[int(i/2), i % 2].plot(dates,
-                                          total[:, i]/float(dt_ide), label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+        for i in range(num_plots):
+            axs[int(i/2), i % 2].axvline(t0_ide, color='gray')
+        if flows:
+            if file == 0:
+                for i in range(num_plots):
+                    axs[int(i/2), i % 2].plot(dates,
+                                              total[:, i]/float(dt_ode), label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+            if file == 1:
+                for i in range(num_plots):
+                    axs[int(i/2), i % 2].plot(dates,
+                                              total[:, i]/float(dt_ide), label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+
+        else:
+            if file == 0:
+                for i in range(num_plots):
+                    axs[int(i/2), i % 2].plot(dates,
+                                              total[:, i], label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+            if file == 1:
+
+                dates += t0_ide
+                for i in range(num_plots):
+                    axs[int(i/2), i % 2].plot(dates,
+                                              total[:, i], label=legendplot[file], color=colors[file], linestyle=linestyles[file])
 
         h5file.close()
 
@@ -108,6 +129,9 @@ def compare_results(dt_ode, dt_ide, setting, legendplot, flows=True, save=True):
     for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
         # axs[int(i/2), i % 2].set_ylim(bottom=0)
+        axs[int(i/2), i % 2].set_xticks([0, 10, 20, 30, 35, 40, 50, 60, 70])
+        axs[int(i/2), i % 2].set_xticklabels([0, 10,
+                                              20, 30, r'$ t_{0,IDE}$', 40, 50, 60, 70], fontsize=7)
         axs[int(i/2), i % 2].set_xlim(left=0)
         axs[int(i/2), i % 2].grid(True, linestyle='--')
         axs[int(i/2), i % 2].legend(fontsize=8)
@@ -143,7 +167,7 @@ if __name__ == '__main__':
 
     setting = 2
 
-    flows = True
+    flows = False
 
     # Plot comparison of ODE and IDE models
     compare_results(dt_ode, dt_ide, setting,

@@ -50,9 +50,12 @@ int main()
     // Directory where results will be stored.
     std::string result_dir = "../../results/";
 
+    // Decide if we want to run the IDE simulation or ust the ODE simulation for comparison.
     bool ide_simulation = true;
+
+    // Determine time step sizes for ODE and IDE simulations by exponent (to basis 10).
     int dt_ode_exponent = 4;
-    int dt_ide_exponent = 1;
+    int dt_ide_exponent = 4;
     // We use setting 2 as baseline, changes for other settings are in respective if statements
     int setting = 2;
 
