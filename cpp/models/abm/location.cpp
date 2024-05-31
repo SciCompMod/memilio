@@ -129,7 +129,7 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
                               local_indiv_expected_trans); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
             person.add_new_infection(Infection(rng, virus, age_receiver, global_params, t + dt / 2,
-                                               mio::abm::InfectionState::Exposed, person.get_latest_protection(t),
+                                               mio::abm::InfectionState::Susceptible, person.get_latest_protection(t),
                                                false)); // Starting time in first approximation
         }
     }

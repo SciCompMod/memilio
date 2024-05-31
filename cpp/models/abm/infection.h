@@ -63,7 +63,7 @@ public:
      * @param[in] detected [Default: false] If the Infection is detected.     
      */
     Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
-              TimePoint init_date, InfectionState init_state = InfectionState::Exposed,
+              TimePoint init_date, InfectionState init_state = InfectionState::Susceptible,
               std::pair<ExposureType, TimePoint> latest_exposure = {ExposureType::NoProtection, TimePoint(0)},
               bool detected                                      = false);
 
@@ -140,10 +140,11 @@ private:
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @return The TimePoint when the initial #InfectionState started.
      */
-    void draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                       TimePoint init_date, InfectionState start_state,
-                                       std::pair<ExposureType, TimePoint> latest_protection);
+    TimePoint draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                            TimePoint init_date, InfectionState start_state,
+                                            std::pair<ExposureType, TimePoint> latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.

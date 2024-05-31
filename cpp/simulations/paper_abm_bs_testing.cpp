@@ -59,7 +59,7 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
     {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
 mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
-    {mio::AgeGroup(num_age_groupss), mio::osecir::InfectionState::Count}, 0.005};
+    {mio::AgeGroup(num_age_groupss), mio::osecir::InfectionState::Count}, 0.5};
 
 std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map;
 
@@ -83,7 +83,6 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
     auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
 
-    //std::cout << initial_infection_distribution.array() << std::endl;
     // extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 90); // 90 days
 }
 
@@ -99,14 +98,8 @@ void assign_infection_state_prob(mio::abm::World& world, mio::abm::TimePoint t)
 
         auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
             rng, initial_infection_distribution.slice(person.get_age()).as_array().array()));
-        // std::cout << "INfection dist" << initial_infection_distribution.slice(person.get_age()).as_array().array() << std::endl;
-
-        //bool detected = false;
+        
         if (infection_state != mio::osecir::InfectionState::Susceptible) {
-            //if (infection_state == mio::osecir::InfectionState::InfectedNoSymptomsConfirmed ||
-            //    infection_state == mio::osecir::InfectionState::InfectedSymptomsConfirmed) {
-            //    detected = true;
-            //}
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.parameters, t, infection_state_map.at(infection_state)));
         }
@@ -1020,10 +1013,11 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     // Create the world object from statistical data.
     create_world_from_data(world, (input_dir / "mobility/braunschweig_result_ffa8_modified.csv").generic_string(), t0,
                            max_num_persons);
+
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
-    // assign_infection_state(world, t0);
+    assign_infection_state(world, t0);
 
     // Assign vaccination status to each person.
     assign_vaccination_state(world, start_date_sim);
@@ -1260,7 +1254,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 360000;
+    auto max_num_persons = 1000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1607,7 +1601,7 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir  = "/Users/david/Documents/HZI/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;

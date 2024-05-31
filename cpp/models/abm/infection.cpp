@@ -120,14 +120,17 @@ TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, A
                                            std::pair<ExposureType, TimePoint> latest_protection)
 {
     assert(age.get() < params.get_num_groups());
-    TimePoint start_date = draw_infection_course_backward(rng, age, params, init_date, init_state);
-    draw_infection_course_forward(rng, age, params, init_date, init_state, latest_protection);
+    TimePoint start_of_init_state =
+        draw_infection_course_forward(rng, age, params, init_date, init_state, latest_protection);
+    TimePoint start_date = draw_infection_course_backward(rng, age, params, start_of_init_state, init_state);
+
     return start_date;
 }
 
-void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age,
-                                              const Parameters& params, TimePoint init_date, InfectionState start_state,
-                                              std::pair<ExposureType, TimePoint> latest_exposure)
+TimePoint Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age,
+                                                   const Parameters& params, TimePoint init_date,
+                                                   InfectionState start_state,
+                                                   std::pair<ExposureType, TimePoint> latest_exposure)
 {
     assert(age.get() < params.get_num_groups());
     auto t = init_date;
@@ -135,30 +138,55 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
     auto time_in_state = params.get<IncubationPeriod>()[{
         m_virus_variant, age}]; // time distribution parameters for current infection state
     InfectionState next_state{start_state}; // next state to enter
-    m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, next_state));
+
     auto& uniform_dist = UniformDistribution<double>::get_instance();
-    ScalarType p; // uniform random draws from [0, 1]
+    ScalarType p                  = 1; // uniform random draws from [0, 1]
+    bool init_state               = false;
+    TimePoint start_of_init_state = init_date;
+
+    // helper lambda for init_state
+    auto determine_time_period = [&]() {
+        if (!init_state) {
+            // randomly initialize the infetion when it is not initialized at the time of transmission
+            p = uniform_dist(rng); // a random amount of time that has passed since begin of the initial InfectionState
+            auto time_draw      = time_in_state.get_distribution_instance()(rng, time_in_state.params);
+            time_period         = days(p * time_draw);
+            start_of_init_state = t - days((1 - p) * time_draw);
+            init_state          = true;
+        }
+        else {
+            time_period = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+        }
+    };
+
+    // randomly draw the rest of the InfectionState tree
     while ((next_state != InfectionState::Recovered && next_state != InfectionState::Dead)) {
         switch (next_state) {
+
+        case InfectionState::Susceptible: {
+            next_state  = InfectionState::Exposed;
+            time_period = days(0);
+            init_state  = true;
+        }
         case InfectionState::Exposed: {
             // roll out how long until infected without symptoms
             time_in_state = params.get<IncubationPeriod>()[{m_virus_variant, age}];
-            time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-            next_state    = InfectionState::InfectedNoSymptoms;
+            determine_time_period();
+            next_state = InfectionState::InfectedNoSymptoms;
         } break;
         case InfectionState::InfectedNoSymptoms: {
             // roll out next infection step
 
             p = uniform_dist(rng);
             if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}]) {
-                next_state    = InfectionState::InfectedSymptoms;
                 time_in_state = params.get<TimeInfectedNoSymptomsToSymptoms>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::InfectedSymptoms;
             }
             else {
-                next_state    = InfectionState::Recovered;
                 time_in_state = params.get<TimeInfectedNoSymptomsToRecovered>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::Recovered;
             }
         } break;
         case InfectionState::InfectedSymptoms: {
@@ -173,14 +201,14 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
             }
             if (p <
                 (1 - severity_protection_factor) * params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}]) {
-                next_state    = InfectionState::InfectedSevere;
                 time_in_state = params.get<TimeInfectedSymptomsToSevere>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::InfectedSevere;
             }
             else {
-                next_state    = InfectionState::Recovered;
                 time_in_state = params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::Recovered;
             }
         } break;
 
@@ -189,14 +217,14 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
 
             p = uniform_dist(rng);
             if (p < params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}]) {
-                next_state    = InfectionState::InfectedCritical;
                 time_in_state = params.get<TimeInfectedSevereToCritical>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::InfectedCritical;
             }
             else {
-                next_state    = InfectionState::Recovered;
                 time_in_state = params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::Recovered;
             }
         } break;
 
@@ -205,14 +233,14 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
 
             p = uniform_dist(rng);
             if (p < params.get<DeathsPerInfectedCritical>()[{m_virus_variant, age}]) {
-                next_state    = InfectionState::Dead;
                 time_in_state = params.get<TimeInfectedCriticalToDead>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::Dead;
             }
             else {
-                next_state    = InfectionState::Recovered;
                 time_in_state = params.get<TimeInfectedCriticalToRecovered>()[{m_virus_variant, age}];
-                time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
+                determine_time_period();
+                next_state = InfectionState::Recovered;
             }
         } break;
 
@@ -222,6 +250,7 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
         t = t + time_period;
         m_infection_course.push_back({t, next_state});
     }
+    return start_of_init_state;
 }
 
 TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerator& rng, AgeGroup age,
@@ -229,7 +258,7 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
                                                     InfectionState init_state)
 {
     assert(age.get() < params.get_num_groups());
-    auto start_date = init_date;
+    auto t = init_date;
     TimeSpan time_period{}; // time period for current infection state
     auto time_in_state = params.get<IncubationPeriod>()[{
         m_virus_variant, age}]; // time distribution parameters for current infection state
@@ -237,9 +266,12 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
     auto& uniform_dist = UniformDistribution<double>::get_instance();
     ScalarType p; // uniform random draws from [0, 1]
 
-    while ((previous_state != InfectionState::Exposed)) {
-        switch (previous_state) {
+    if (previous_state != InfectionState::Susceptible) {
+        m_infection_course.insert(m_infection_course.begin(), {t, previous_state});
+    }
 
+    while ((previous_state != InfectionState::Susceptible && previous_state != InfectionState::Exposed)) {
+        switch (previous_state) {
         case InfectionState::InfectedNoSymptoms: {
             time_in_state  = params.get<IncubationPeriod>()[{m_virus_variant, age}];
             time_period    = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
@@ -306,10 +338,10 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
         default:
             break;
         }
-        start_date = start_date - time_period;
-        m_infection_course.insert(m_infection_course.begin(), {start_date, previous_state});
+        t = t - time_period;
+        m_infection_course.insert(m_infection_course.begin(), {t, previous_state});
     }
-    return start_date;
+    return t;
 }
 
 } // namespace abm
