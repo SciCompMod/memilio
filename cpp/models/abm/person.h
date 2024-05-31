@@ -456,6 +456,22 @@ public:
     }
 
     /**
+     * @brief Sett if a Person should be logged
+     */
+    void set_should_be_logged(bool should_be_logged)
+    {
+        m_should_be_logged = should_be_logged;
+    }
+
+    /**
+     * @brief Get if a Person should be logged
+     */
+    bool get_should_be_logged() const
+    {
+        return m_should_be_logged;
+    }
+
+    /**
     * Get this persons RandomNumberGenerator counter.
     * @see mio::abm::Person::RandomNumberGenerator.
     */
@@ -522,6 +538,7 @@ private:
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    bool m_should_be_logged = true; ///< Flag to determine if the Person should be logged.
 };
 
 } // namespace abm

@@ -66,13 +66,14 @@ def main(path, n_runs):
 
 def plot_infection_per_location_type(df):
     # Calculate moving average for all location types
-    df['MA_Home'] = gaussian_filter1d(df.Home.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['MA_School'] = gaussian_filter1d(df.School.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['MA_Work'] =  gaussian_filter1d(df.Work.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['MA_SocialEvent'] =  gaussian_filter1d(df.SocialEvent.rolling(24*3, min_periods=1).mean(), sigma=15)
-    df['MA_BasicsShop'] =  gaussian_filter1d(df.BasicsShop.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['Home'] = gaussian_filter1d(df.Home.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['School'] = gaussian_filter1d(df.School.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['Work'] =  gaussian_filter1d(df.Work.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['SocialEvent'] =  gaussian_filter1d(df.SocialEvent.rolling(24*3, min_periods=1).mean(), sigma=15)
+    df['BasicsShop'] =  gaussian_filter1d(df.BasicsShop.rolling(24*3, min_periods=1).mean(), sigma=15)
 
-    df.plot(x='Time', y=['MA_Home', 'MA_School','MA_Work',  'MA_SocialEvent', 'MA_BasicsShop'], figsize=(10, 6))
+    df.plot(x='Time', y=['Home', 'School','Work',  'SocialEvent', 'BasicsShop'], figsize=(10, 6), title='Infections stratified according to location type')
+   
     
 
 
@@ -131,7 +132,6 @@ def plot_results(path):
     f.close()
 
     # real world
-    # TODO
     f = h5py.File(
         path + "/Results_rki.h5", 'r')
     group = f['3101']

@@ -26,7 +26,7 @@ bd = pd.read_csv(
 bd.rename(
     columns={0: 'personID', 1: 'startZone', 2: 'destZone', 3: 'loc_id_start', 4: 'loc_id_end',
              5: 'countyStart', 6: 'countyEnd', 7: 'hhID', 8: 'tripDistance', 9: 'startTime', 10: 'travelTime' , 11: 'loCs', 12: 'laCs', 13: 'loCe', 14: 'laCe', 15: 'vehicleChoice', 16:
-             'ActivityBefore', 17: 'ActivityAfter',  18: 'age', 19: 'map_feature_key', 20: 'map_feature_value', 21: 'home_in_bs'},
+             'ActivityBefore', 17: 'ActivityAfter',  18: 'age', 19: 'home_in_bs', 20:'loation_type'},
     inplace=True)
 
 dict_leisure = {1: 'work', 2: 'education', 3: 'Shopping', 4: 'free time',
@@ -38,6 +38,28 @@ dict_vehicle = {1: 'bicyle', 2: 'car_driver',
 bd_same_loc = bd[['loc_id_end', 'ActivityAfter']].drop_duplicates()
 #count how many different activities are after the same location
 bd_same_loc = bd_same_loc.groupby(['loc_id_end']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
+
+# we want to see how many persons do a trip to another home that is not theirs
+home_ids = bd[['hhID']].drop_duplicates()
+# trips where the destination is a home and the person does not live there
+trips_to_other_home = bd[['personID', 'hhID', 'loc_id_end']].loc[(bd['hhID']!=bd['loc_id_end']) & (bd['loc_id_end'].isin(home_ids['hhID']))]
+
+#check how many trips go to which location type
+location_types = bd.groupby(['loation_type']).size()
+location_types.plot(kind='bar')
+plt.xlabel('Location type')
+plt.ylabel('Number of trips')
+plt.title('Number of trips to different location types')
+plt.show()
+
+
+#check how many trips go to which location type
+location_types_activity_after = bd.groupby(['ActivityAfter']).size()
+location_types_activity_after.plot(kind='bar')
+plt.xlabel('Location type')
+plt.ylabel('Number of trips')
+plt.title('Number of trips to different location types')
+plt.show()
 
 
 # chek how many unique map_feature_keys and values are in the data

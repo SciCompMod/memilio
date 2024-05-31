@@ -644,21 +644,6 @@ struct AgeGroupGotoWork {
     }
 };
 
-/**
- * @brief The set of Agent Ids to be logged.
- */
-struct LogAgentIds {
-    using Type = std::unordered_set<uint32_t>;
-    static Type get_default(AgeGroup /*num_agegroups*/)
-    {
-        return {};
-    }
-    static std::string name()
-    {
-        return "LogAgentIds";
-    }
-};
-
 using ParametersBase =
     ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
@@ -669,7 +654,7 @@ using ParametersBase =
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
                  AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
-                 TestData, LogAgentIds>;
+                 TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

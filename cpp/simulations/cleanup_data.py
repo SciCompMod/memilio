@@ -264,7 +264,27 @@ def add_home_is_in_bs_column(pd):
                 pd.at[index, 'home_in_bs'] = 1
     return pd
 
-def location_type_from_keys_and_values(key, value, intention):
+
+
+
+def location_type_from_keys_and_values(key, value, intention, key_value_pairs_counts_with_activity_after):
+
+    most_probable_activity =  9999
+    # we need to save for each key and value pair the amount of different activityAfter values
+    if key_value_pairs_counts_with_activity_after[(key_value_pairs_counts_with_activity_after['map_feature_key'] == key) & (key_value_pairs_counts_with_activity_after['map_feature_value'] == value)].shape[0] != 0:
+        # get the differnt activity_after values
+        activity_after_values = key_value_pairs_counts_with_activity_after[(key_value_pairs_counts_with_activity_after['map_feature_key'] == key) & (key_value_pairs_counts_with_activity_after['map_feature_value'] == value)]
+        # get the most common activity_after value
+        most_common_activity_after = activity_after_values[activity_after_values['counts'] == activity_after_values['counts'].max()]['activity_end'].values[0]
+        # if work is one of the activity_after values we assume that the location is a work location if its bigger than 30% of the total counts
+        # see if work is in the activity_after values
+        if activity_after_values[activity_after_values['activity_end'] == 1].shape[0] != 0:
+            if (activity_after_values[activity_after_values['activity_end'] == 1]['counts'] > 0.3 * key_value_pairs_counts_with_activity_after[(key_value_pairs_counts_with_activity_after['map_feature_key'] == key) & (key_value_pairs_counts_with_activity_after['map_feature_value'] == value)]['counts'].sum()).values[0]:
+                    most_common_activity_after = 1
+        # map the most common activity_after value to a location type
+        most_probable_activity = most_common_activity_after
+
+
 
     location_type = 'SocialEvent'
     if key == 'home':
@@ -324,7 +344,7 @@ def location_type_from_keys_and_values(key, value, intention):
     if key == 'NaN':
         if intention == 1:
             location_type= 'Work'
-        if intention == 1:
+        if intention == 2:
             location_type= 'School'
         if intention == 3:
             location_type= 'BasicShop'
@@ -337,6 +357,22 @@ def location_type_from_keys_and_values(key, value, intention):
         if intention == 7:
             location_type= 'Home'
 
+    if most_probable_activity != 9999:
+        if most_probable_activity == 1:
+            location_type = 'Work'
+        if most_probable_activity == 2:
+            location_type = 'School'
+        if most_probable_activity == 3:
+            location_type = 'BasicShop'
+        if most_probable_activity == 4:
+            location_type = 'SocialEvent'
+        if most_probable_activity == 5:
+            location_type = 'BasicShop'
+        if most_probable_activity == 6:
+            location_type = 'SocialEvent'
+        if most_probable_activity == 7:
+            location_type = 'Home'
+
     # map from location type string to int
     location_type_dict = {'Home': 0, 'School': 2, 'Work': 1, 'BasicShop': 3, 'SocialEvent': 4}
     return location_type_dict[location_type]
@@ -348,8 +384,9 @@ def assign_location_type(pd):
     else:
         print("Column 'location_type' is not present in DataFrame.")
         pd['location_type'] = 'SocialEvent'
+        test_pd = pd[['activity_end', 'map_feature_key', 'map_feature_value']].groupby(['map_feature_key', 'map_feature_value','activity_end']).size().reset_index(name='counts')
         for index, row in pd.iterrows():
-            pd.at[index, 'location_type'] = location_type_from_keys_and_values( row['map_feature_key'], row['map_feature_value'], row['activity_end'])
+            pd.at[index, 'location_type'] = location_type_from_keys_and_values( row['map_feature_key'], row['map_feature_value'], row['activity_end'], test_pd)
     return pd
 
 PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result_ffa8.csv"
@@ -367,6 +404,7 @@ if(column_headers[0:21] == ['puid', 'start_zone', 'end_zone', 'loc_id_start', 'l
     print("Column headers are correct")
 else:
     print("Column headers are not correct")
+
 
 bd_new = add_home_is_in_bs_column(bd)
 print('Added flag for persons who live in Braunschweig.')
