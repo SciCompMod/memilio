@@ -94,14 +94,17 @@ void assign_infection_state_prob(mio::abm::World& world, mio::abm::TimePoint t)
 {
     // convert initial population to ABM initial infections
     for (auto& person : world.get_persons()) {
-        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        if (person.get_should_be_logged()) {
+            auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
 
-        auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
-            rng, initial_infection_distribution.slice(person.get_age()).as_array().array()));
+            auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
+                rng, initial_infection_distribution.slice(person.get_age()).as_array().array()));
 
-        if (infection_state != mio::osecir::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.parameters, t, infection_state_map.at(infection_state)));
+            if (infection_state != mio::osecir::InfectionState::Susceptible) {
+                person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                             world.parameters, t,
+                                                             infection_state_map.at(infection_state)));
+            }
         }
     }
 }
@@ -119,7 +122,9 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
     std::vector<std::vector<uint32_t>> persons_by_age(num_age_groupss);
 
     for (auto& person : world.get_persons()) {
-        persons_by_age[person.get_age().get()].push_back(person.get_person_id());
+        if (person.get_should_be_logged()) {
+            persons_by_age[person.get_age().get()].push_back(person.get_person_id());
+        }
     }
 
     for (size_t age = 0; age < num_age_groupss; ++age) {
@@ -985,7 +990,7 @@ void set_local_parameters(mio::abm::World& world)
 /**
  * @brief Add testing strategies to the world.
 */
-void add_testing_strategies(mio::abm::World& world, bool symptomatic)
+void add_testing_strategies(mio::abm::World& world, bool symptomatic, bool social_event)
 {
     if (symptomatic) {
         auto testing_min_time_symptomatic = mio::abm::days(7);
@@ -1000,6 +1005,19 @@ void add_testing_strategies(mio::abm::World& world, bool symptomatic)
             testing_criteria_symptomatic, testing_min_time_symptomatic, start_date_test_symptomatic,
             end_date_test_symptomatic, test_parameters, probability_symptomatic);
         world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Home, testing_scheme_symptomatic);
+    }
+    if (social_event) {
+        auto testing_min_time_socev = mio::abm::days(7);
+        auto probability_socev      = 0.5;
+        auto start_date_test_socev  = mio::abm::TimePoint(mio::abm::days(0).seconds());
+        auto end_date_test_socev    = mio::abm::TimePoint(mio::abm::days(90).seconds());
+        auto test_type_socev        = mio::abm::TestType::Antigen; // Antigen test
+        auto test_parameters        = world.parameters.get<mio::abm::TestData>()[test_type_socev]; // Test parameters
+        auto testing_criteria_socev = mio::abm::TestingCriteria();
+        auto testing_scheme_socev =
+            mio::abm::TestingScheme(testing_criteria_socev, testing_min_time_socev, start_date_test_socev,
+                                    end_date_test_socev, test_parameters, probability_socev);
+        world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme_socev);
     }
 }
 
@@ -1027,13 +1045,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     // Assign vaccination status to each person.
     assign_vaccination_state(world, start_date_sim);
 
-    // Verschiedene Fälle:
-    //1. ohne testing scheme
-    //2. testing scheme: Test bei Symptomen (unabh. von Location, 1x am Tag, InfectedSymptomatic, 70% der Bevölkerung) ab Tag 0
-    //3. testen in schulen und Arbeitsplätzen (unabh. von Alter, 1x am Tag, unabh. von InfectionState) ab Tag 0
-    //4. 2.+3.
-
-    add_testing_strategies(world, true);
+    add_testing_strategies(world, true, false);
 }
 
 template <typename T>
@@ -1572,8 +1584,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project/loki/memilio/memilio/data";
-    // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project/loki/memilio/memilio/data";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
