@@ -995,6 +995,7 @@ void set_local_parameters(mio::abm::World& world)
 void add_testing_strategies(mio::abm::World& world, bool symptomatic, bool social_event)
 {
     if (symptomatic) {
+        std::cout << "Adding symptomatic testing strategy" << std::endl;
         auto testing_min_time_symptomatic = mio::abm::days(7);
         auto probability_symptomatic      = 1.0;
         auto start_date_test_symptomatic  = mio::abm::TimePoint(mio::abm::days(0).seconds()); // 2021-04-12
@@ -1047,7 +1048,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     // Assign vaccination status to each person.
     assign_vaccination_state(world, start_date_sim);
 
-    add_testing_strategies(world, false, true);
+    add_testing_strategies(world, true, false);
 }
 
 template <typename T>
