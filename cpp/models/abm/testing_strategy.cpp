@@ -170,9 +170,9 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
                                    TimePoint t)
 {
     // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.
-    if (location.get_type() == mio::abm::LocationType::Home) {
-        return true;
-    }
+    // if (location.get_type() == mio::abm::LocationType::Home) {
+    //     return true;
+    // }
 
     //lookup schemes for this specific location as well as the location type
     //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
