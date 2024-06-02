@@ -18,7 +18,9 @@ import matplotlib.cm as cmx
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import h5py
-from scipy.ndimage.filters import gaussian_filter1d
+from datetime import datetime
+from matplotlib.dates import DateFormatter
+from scipy.ndimage import gaussian_filter1d
 
 
 def main(path, n_runs):
@@ -74,6 +76,8 @@ def plot_infection_per_location_type(df):
 
     df.plot(x='Time', y=['Home', 'School','Work',  'SocialEvent', 'BasicsShop'], figsize=(10, 6), title='Infections stratified according to location type')
    
+   # x axis should be titled Time in days
+    plt.xlabel('Time (days)')
     
 
 
@@ -146,7 +150,10 @@ def plot_results(path):
 def plot_infection_states(x, y50, y25, y75):
     plt.figure('Infection_states')
     plt.title('Infection states')
+
+    #set the x 
     color_plot = cmx.get_cmap('Set1').colors
+    
 
     states_plot = [1, 2, 3, 4, 5, 7]
     legend_plot = ['E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Dead']
@@ -156,11 +163,44 @@ def plot_infection_states(x, y50, y25, y75):
 
     plt.legend(legend_plot)
 
+   
+    # plt.show()
+
+    
+
     for i in states_plot:
         plt.fill_between(x, y50[:, i], y25[:, i],
                          alpha=0.5, color=color_plot[i])
         plt.fill_between(x, y50[:, i], y75[:, i],
                          alpha=0.5, color=color_plot[i])
+        
+       
+    #currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
+    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
+    xx = [start_date + pd.Timedelta(days=int(i)) for i in x]
+    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
+    #but just take every 10th date to make it more readable
+    plt.gca().set_xticks(x[::150])
+    plt.gca().set_xticklabels(xx[::150])
+    plt.gcf().autofmt_xdate()
+
+
+    plt.xlabel('Time')
+    plt.ylabel('Number of individuals')
+    plt.show()
+
+
+    
+
+
+
+
+
+
+
+
+
+
 
 
 def plot_infection_states_individual(x, y50, y25, y75, y_real):
@@ -173,7 +213,7 @@ def plot_infection_states_individual(x, y50, y25, y75, y_real):
     fig, ax = plt.subplots(3, 1)
 
     # Severe
-    ax[0].set_xlabel('time (s)')
+    ax[0].set_xlabel('time (days)')
     ax[0].plot(x, y50[:, [4]], color='tab:red', label='y50')
     ax[0].plot(x_real, y_real[:, [6]], color='tab:blue', label='y_real')
     ax[0].tick_params(axis='y')
@@ -182,7 +222,7 @@ def plot_infection_states_individual(x, y50, y25, y75, y_real):
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
     # Critical
-    ax[1].set_xlabel('time (s)')
+    ax[1].set_xlabel('time (days)')
     ax[1].plot(x, y50[:, [5]], color='tab:red', label='y50')
     ax[1].plot(x_real, y_real[:, [7]], color='tab:blue', label='y_real')
     ax[1].tick_params(axis='y')
@@ -191,7 +231,7 @@ def plot_infection_states_individual(x, y50, y25, y75, y_real):
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
     # Dead
-    ax[2].set_xlabel('time (s)')
+    ax[2].set_xlabel('time (days)')
     ax[2].plot(x, y50[:, [7]], color='tab:red', label='y50')
     ax[2].plot(x_real, y_real[:, [9]], color='tab:blue', label='y_real')
     ax[2].tick_params(axis='y')
