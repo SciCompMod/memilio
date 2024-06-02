@@ -1047,7 +1047,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     // Assign vaccination status to each person.
     assign_vaccination_state(world, start_date_sim);
 
-    // add_testing_strategies(world, true, false);
+    add_testing_strategies(world, true, false);
 }
 
 template <typename T>
