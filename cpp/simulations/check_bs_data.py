@@ -63,12 +63,12 @@ plt.show()
 
 
 # chek how many unique map_feature_keys and values are in the data
-map_feature_keys = bd[['map_feature_key']].drop_duplicates().size
-map_feature_values = bd[['map_feature_value']].drop_duplicates().size
-print('Number of unique map_feature_keys: ' + str(map_feature_keys) + '. Number of unique map_feature_values: ' + str(map_feature_values) + '. \n')
-# same for the tuple of both
-map_feature_keys_values = bd[['map_feature_key', 'map_feature_value']].drop_duplicates().size
-print('Number of unique map_feature_keys and values: ' + str(map_feature_keys_values) + '. \n')
+# map_feature_keys = bd[['map_feature_key']].drop_duplicates().size
+# map_feature_values = bd[['map_feature_value']].drop_duplicates().size
+# print('Number of unique map_feature_keys: ' + str(map_feature_keys) + '. Number of unique map_feature_values: ' + str(map_feature_values) + '. \n')
+# # same for the tuple of both
+# map_feature_keys_values = bd[['map_feature_key', 'map_feature_value']].drop_duplicates().size
+# print('Number of unique map_feature_keys and values: ' + str(map_feature_keys_values) + '. \n')
 
 #check if persons go to different location_ids with the same activity_after
 bd_same_loc = bd[['personID', 'loc_id_end', 'ActivityAfter']].drop_duplicates()
