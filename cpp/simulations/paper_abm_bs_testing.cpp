@@ -229,7 +229,9 @@ void assign_vaccination_state(mio::abm::World& world, mio::Date simulation_begin
     // we check if we even have enough people to vaccinate in each respective age group
     std::vector<size_t> num_persons_by_age(num_age_groupss);
     for (auto& person : world.get_persons()) {
-        num_persons_by_age[determine_age_group_from_rki(person.get_age())]++;
+        if (person.get_should_be_logged()) {
+            num_persons_by_age[determine_age_group_from_rki(person.get_age())]++;
+        }
     }
     //sum over all dates in the vacc_map to check if we have enough persons to vaccinate
     std::vector<size_t> num_persons_by_age_vaccinate(num_age_groupss);
