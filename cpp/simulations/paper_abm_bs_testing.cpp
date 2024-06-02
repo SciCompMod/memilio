@@ -243,9 +243,9 @@ void assign_vaccination_state(mio::abm::World& world, mio::Date simulation_begin
     //check
     for (size_t age = 0; age < num_persons_by_age.size(); ++age) {
         if (num_persons_by_age[age] < num_persons_by_age_vaccinate[age]) {
-            mio::log_error(
-                "Not enough persons to vaccinate in age group we dont vaccinate if an age group is fully vaccinated! ",
-                age);
+            // mio::log_error(
+            //     "Not enough persons to vaccinate in age group we dont vaccinate if an age group is fully vaccinated! ",
+            //     age);
         }
     }
 
@@ -264,7 +264,7 @@ void assign_vaccination_state(mio::abm::World& world, mio::Date simulation_begin
         for (size_t age = 0; age < vacc_entry.second.size(); ++age) {
             for (uint32_t i = 0; i < vacc_entry.second[age].first; ++i) {
                 if (persons_by_age[age].size() == 0) {
-                    mio::log_error("Not enough to vacc people 1st time");
+                    // mio::log_error("Not enough to vacc people 1st time");
                 }
                 else {
                     // select random person and assign Vaccination
@@ -283,7 +283,7 @@ void assign_vaccination_state(mio::abm::World& world, mio::Date simulation_begin
             }
             for (uint32_t i = 0; i < vacc_entry.second[age].second; ++i) {
                 if (vaccinated_persons[age].size() == 0) {
-                    mio::log_error("Not enough vaccinated people to vacc 2nd time! ");
+                    // mio::log_error("Not enough vaccinated people to vacc 2nd time! ");
                 }
                 else {
                     // select random already vaccinated person and assign Vaccination
@@ -1586,8 +1586,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project/loki/memilio/memilio/data";
-    // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project/loki/memilio/memilio/data";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
@@ -1613,7 +1613,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 1;
+        num_runs = 2;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 
