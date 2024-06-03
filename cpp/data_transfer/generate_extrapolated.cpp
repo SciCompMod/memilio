@@ -303,28 +303,27 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
+
+     auto population_data_path =
+         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
+
+     BOOST_OUTCOME_TRY(auto && node_ids, mio::get_node_ids(population_data_path, true));
+     std::vector<mio::osecirvvs::Model<double>> nodes(node_ids.size(), mio::osecirvvs::Model<double>(num_groups));
+     for (auto& node : nodes) {
+         node.parameters = params;
+     }
+
+     BOOST_OUTCOME_TRY(mio::osecirvvs::details::set_vaccination_data(
+         nodes, mio::path_join(data_dir.string(), "pydata/Germany", "vacc_county_ageinf_ma7.json"), start_date, node_ids,
+         num_days));
+
+     BOOST_OUTCOME_TRY(mio::osecirvvs::export_input_data_county_timeseries(
+         nodes, data_dir.string(), node_ids, start_date, scaling_factor_infected, scaling_factor_icu, num_days,
+         mio::path_join(data_dir.string(), "pydata/Germany", "county_divi_ma7.json"),
+         mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_ma7.json"),
+         mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json")));
+
     return mio::success(params_graph);
-
-    // auto population_data_path =
-    //     mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
-
-    // BOOST_OUTCOME_TRY(node_ids, mio::get_node_ids(population_data_path, true));
-    // std::vector<mio::osecirvvs::Model> nodes(node_ids.size(), mio::osecirvvs::Model<double>(num_groups));
-    // for (auto& node : nodes) {
-    //     node.parameters = params;
-    // }
-
-    // BOOST_OUTCOME_TRY(mio::osecirvvs::details::set_vaccination_data(
-    //     nodes, mio::path_join(data_dir.string(), "pydata/Germany", "vacc_county_ageinf_ma7.json"), start_date, node_ids,
-    //     num_days));
-
-    // BOOST_OUTCOME_TRY(mio::osecirvvs::export_input_data_county_timeseries(
-    //     nodes, data_dir.string(), node_ids, start_date, scaling_factor_infected, scaling_factor_icu, num_days,
-    //     mio::path_join(data_dir.string(), "pydata/Germany", "county_divi_ma7.json"),
-    //     mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_ma7.json"),
-    //     mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json")));
-
-    // return mio::success();
 }
 
 int main(int argc, char** argv)
