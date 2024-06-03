@@ -404,7 +404,7 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Cemetery);
     }
 
-    // Test if the NPI is applied and the Person cannot enter targeted location
+    // Test when the NPIs are applied, people cannot enter targeted location
     {
         auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt    = mio::abm::hours(1);
