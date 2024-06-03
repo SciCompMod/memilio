@@ -225,6 +225,276 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(school.get_number_persons(), 1);
         EXPECT_EQ(work.get_number_persons(), 1);
     }
+
+    {
+        auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
+        auto dt    = mio::abm::hours(2);
+        auto world = mio::abm::World(num_age_groups);
+        //setup so p1-p5 don't do transition
+        world.parameters
+            .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+            2 * dt.days();
+        world.parameters
+            .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+            2 * dt.days();
+        world.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+            2 * dt.days();
+        world.parameters.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+            2 * dt.days();
+
+        auto home_id     = world.add_location(mio::abm::LocationType::Home);
+        auto event_id    = world.add_location(mio::abm::LocationType::SocialEvent);
+        auto work_id     = world.add_location(mio::abm::LocationType::Work);
+        auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
+
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+            mock_uniform_dist;
+        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+            .Times(testing::AtLeast(8))
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillRepeatedly(testing::Return(1.0)); // this forces p1 and p3 to recover
+
+        auto& p1 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto& p2 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
+        auto& p3 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedSevere, t);
+        auto& p4 = add_test_person(world, hospital_id, age_group_5_to_14, mio::abm::InfectionState::Recovered, t);
+        auto& p5 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
+        p1.set_assigned_location(event_id);
+        p2.set_assigned_location(event_id);
+        p1.set_assigned_location(work_id);
+        p2.set_assigned_location(work_id);
+        p1.set_assigned_location(home_id);
+        p2.set_assigned_location(home_id);
+        p3.set_assigned_location(home_id);
+        p4.set_assigned_location(home_id);
+        p3.set_assigned_location(hospital_id);
+        p4.set_assigned_location(hospital_id);
+        p5.set_assigned_location(event_id);
+        p5.set_assigned_location(work_id);
+        p5.set_assigned_location(home_id);
+
+        mio::abm::TripList& data = world.get_trip_list();
+        mio::abm::Trip trip1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
+        mio::abm::Trip trip2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
+        mio::abm::Trip trip3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
+        data.add_trip(trip1);
+        data.add_trip(trip2);
+        data.add_trip(trip3);
+
+        data.use_weekday_trips_on_weekend();
+
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+            mock_exponential_dist;
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no infections
+
+        world.evolve(t, dt);
+
+        auto& event    = world.get_individualized_location(event_id);
+        auto& work     = world.get_individualized_location(work_id);
+        auto& home     = world.get_individualized_location(home_id);
+        auto& hospital = world.get_individualized_location(hospital_id);
+
+        EXPECT_EQ(p1.get_location(), work);
+        EXPECT_EQ(p2.get_location(), event);
+        EXPECT_EQ(p3.get_location(), hospital);
+        EXPECT_EQ(p4.get_location(), home);
+        EXPECT_EQ(p5.get_location(), event);
+        EXPECT_EQ(event.get_number_persons(), 2);
+        EXPECT_EQ(work.get_number_persons(), 1);
+        EXPECT_EQ(home.get_number_persons(), 1);
+        EXPECT_EQ(hospital.get_number_persons(), 1);
+
+        p1.migrate_to(home);
+        p2.migrate_to(home);
+        p5.migrate_to(home);
+
+        t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
+        world.get_trip_list().reset_index();
+
+        world.evolve(t, dt);
+
+        EXPECT_EQ(p1.get_location(), work);
+        EXPECT_EQ(p2.get_location(), event);
+        EXPECT_EQ(p3.get_location(), home);
+        EXPECT_EQ(p4.get_location(), home);
+        EXPECT_EQ(p5.get_location(), event);
+        EXPECT_EQ(event.get_number_persons(), 2);
+        EXPECT_EQ(work.get_number_persons(), 1);
+        EXPECT_EQ(home.get_number_persons(), 2);
+
+        bool weekend = true;
+        mio::abm::Trip tripweekend1(p1.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id);
+        mio::abm::Trip tripweekend2(p2.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id);
+        mio::abm::Trip tripweekend3(p5.get_person_id(),
+                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id);
+        data.add_trip(tripweekend1, weekend);
+        data.add_trip(tripweekend2, weekend);
+        data.add_trip(tripweekend3, weekend);
+
+        t += mio::abm::hours(1);
+
+        world.evolve(t, dt);
+
+        EXPECT_EQ(p1.get_location(), event);
+        EXPECT_EQ(p2.get_location(), home);
+        EXPECT_EQ(p3.get_location(), home);
+        EXPECT_EQ(p4.get_location(), home);
+        EXPECT_EQ(p5.get_location(), work);
+        EXPECT_EQ(event.get_number_persons(), 1);
+        EXPECT_EQ(work.get_number_persons(), 1);
+        EXPECT_EQ(home.get_number_persons(), 3);
+    }
+
+    // Test that a dead person cannot make a movement
+    {
+        auto t     = mio::abm::TimePoint(0);
+        auto dt    = mio::abm::days(1);
+        auto world = mio::abm::World(num_age_groups);
+
+        // Time to go from severe to critical infection is 1 day (dt).
+        world.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+            0.5;
+        // Time to go from critical infection to dead state is 1/2 day (0.5 * dt).
+        world.parameters.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.5;
+
+        auto home_id     = world.add_location(mio::abm::LocationType::Home);
+        auto work_id     = world.add_location(mio::abm::LocationType::Work);
+        auto icu_id      = world.add_location(mio::abm::LocationType::ICU);
+        auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
+        // Create a person that is dead at time t
+        auto& p_dead = add_test_person(world, icu_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
+        // Create a person that is severe at hospital and will be dead at time t + dt
+        auto& p_severe =
+            add_test_person(world, hospital_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
+        p_dead.set_assigned_location(icu_id);
+        p_dead.set_assigned_location(work_id);
+        p_dead.set_assigned_location(home_id);
+        p_severe.set_assigned_location(hospital_id);
+        p_severe.set_assigned_location(icu_id);
+        p_severe.set_assigned_location(home_id);
+
+        // Add trip to see if a dead person can move outside of cemetery by scheduled
+        mio::abm::TripList& trip_list = world.get_trip_list();
+        mio::abm::Trip trip1(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
+        mio::abm::Trip trip2(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        mio::abm::Trip trip3(p_severe.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        trip_list.add_trip(trip1);
+        trip_list.add_trip(trip2);
+        trip_list.add_trip(trip3);
+
+        // Check the dead person got burried and the severely infected person starts in Hospital
+        world.evolve(t, dt);
+        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
+        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Hospital);
+
+        // Check the dead person is still in Cemetery and the severely infected person dies and got burried
+        world.evolve(t + dt, dt);
+        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
+        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Cemetery);
+    }
+
+    // Test if the NPI is applied and the Person cannot enter targeted location
+    {
+        auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
+        auto dt    = mio::abm::hours(1);
+        auto world = mio::abm::World(num_age_groups);
+        auto rng   = mio::RandomNumberGenerator();
+        world.parameters
+            .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+            2 * dt.days();
+        world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+
+        auto home_id = world.add_location(mio::abm::LocationType::Home);
+        auto work_id = world.add_location(mio::abm::LocationType::Work);
+
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+            mock_uniform_dist;
+        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+            .Times(testing::AtLeast(8))
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillRepeatedly(testing::Return(1.0));
+
+        auto& p_complied =
+            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto& p_no_mask =
+            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto& p_no_test =
+            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto& p_no_isolation =
+            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto rng_p_complied     = mio::abm::Person::RandomNumberGenerator(rng, p_complied);
+        auto rng_p_no_mask      = mio::abm::Person::RandomNumberGenerator(rng, p_no_mask);
+        auto rng_p_no_test      = mio::abm::Person::RandomNumberGenerator(rng, p_no_test);
+        auto rng_p_no_isolation = mio::abm::Person::RandomNumberGenerator(rng, p_no_isolation);
+
+        p_complied.set_assigned_location(work_id);
+        p_complied.set_assigned_location(home_id);
+        p_no_mask.set_assigned_location(work_id);
+        p_no_mask.set_assigned_location(home_id);
+        p_no_test.set_assigned_location(work_id);
+        p_no_test.set_assigned_location(home_id);
+        p_no_isolation.set_assigned_location(work_id);
+        p_no_isolation.set_assigned_location(home_id);
+
+        auto& work = world.get_individualized_location(work_id);
+
+        auto testing_criteria = mio::abm::TestingCriteria(
+            {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
+        const auto testing_min_time = mio::abm::days(1);
+        const auto start_date       = mio::abm::TimePoint(0);
+        const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
+        const auto probability      = 0.8;
+        const auto test_type        = mio::abm::PCRTest();
+        auto testing_scheme =
+            mio::abm::TestingScheme({testing_criteria}, testing_min_time, start_date, end_date, test_type, probability);
+        mio::abm::TestingStrategy test_strategy =
+            mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
+        test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+            mock_exponential_dist;
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+
+        work.set_is_mask_required(true);
+        p_no_mask.set_compliance(mio::abm::InterventionType::Mask, 0.4);
+        p_no_test.set_compliance(mio::abm::InterventionType::Testing, 0.4);
+        p_no_isolation.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
+
+        world.evolve(t, dt);
+
+        // The complied person is allowed to be in location
+        EXPECT_EQ(p_complied.get_location(), work);
+
+        // The person, who does not wear mask, is not allowed to be in location
+        EXPECT_FALSE(p_no_mask.is_wear_mask());
+        EXPECT_NE(p_no_mask.get_location(), work);
+
+        // The person, who does not want test, is not allowed to be in location
+        EXPECT_NE(p_no_test.get_location(), work);
+
+        // The person does not want to isolate
+        ASSERT_EQ(test_strategy.run_strategy(rng_p_no_isolation, p_no_isolation, work, start_date),
+                  true); // Person tests and tests negative
+        EXPECT_FALSE(p_no_isolation.is_in_quarantine(t + dt, world.parameters));
+    }
 }
 
 TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)

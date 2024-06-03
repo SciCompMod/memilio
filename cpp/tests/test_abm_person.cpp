@@ -328,10 +328,54 @@ TEST(Person, rng)
 
 TEST(TestPerson, applyTestIntervention)
 {
-    
+    using testing::Return;
+    auto rng = mio::RandomNumberGenerator();
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+        mock_uniform_dist_antigen;
+    EXPECT_CALL(mock_uniform_dist_antigen.get_mock(), invoke)
+        .Times(6)
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8));
+
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
+    auto person     = make_test_person(home);
+    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+
+    person.set_compliance(mio::abm::InterventionType::Testing, 1);
+    ASSERT_TRUE(person.is_apply_test_intervention(rng_person));
+
+    person.set_compliance(mio::abm::InterventionType::Testing, 0.4);
+    ASSERT_FALSE(person.is_apply_test_intervention(rng_person));
 }
 
 TEST(TestPerson, applyIsolationIntervention)
 {
-    
+    using testing::Return;
+    auto rng = mio::RandomNumberGenerator();
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+        mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(6)
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8))
+        .WillOnce(Return(0.8));
+
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
+    auto person     = make_test_person(home);
+    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+
+    person.set_compliance(mio::abm::InterventionType::Isolation, 1);
+    ASSERT_TRUE(person.is_apply_isolation_intervention(rng_person));
+
+    person.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
+    ASSERT_FALSE(person.is_apply_isolation_intervention(rng_person));
 }
