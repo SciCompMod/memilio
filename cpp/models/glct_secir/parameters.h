@@ -484,7 +484,6 @@ public:
     bool check_constraints() const
     {
         // --- Parameters affecting the transmission of the virus. ---
-        log_warning("Tests for sum of alpha=1 and >0 missing and -A times vecotr(1) bigger than zero.");
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
@@ -621,7 +620,7 @@ public:
         // --- Check that we have no flows back from one compartment to the last (only in between of the subcompartments). ---
         if (((this->get<TransitionMatrixExposedToInfectedNoSymptoms>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning(
                 "Constraint check: The entries of TransitionMatrixExposedToInfectedNoSymptoms lead to a negative "
@@ -630,7 +629,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning("Constraint check: The entries of TransitionMatrixInfectedNoSymptomsToInfectedSymptoms lead to "
                         "a negative "
@@ -639,7 +638,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedNoSymptomsToRecovered>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedNoSymptomsToRecovered>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning(
                 "Constraint check: The entries of TransitionMatrixInfectedNoSymptomsToRecovered lead to a negative "
@@ -648,7 +647,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning(
                 "Constraint check: The entries of TransitionMatrixInfectedSymptomsToInfectedSevere lead to a negative "
@@ -657,7 +656,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedSymptomsToRecovered>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSymptomsToRecovered>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning(
                 "Constraint check: The entries of TransitionMatrixInfectedSymptomsToRecovered lead to a negative "
@@ -666,7 +665,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedSevereToInfectedCritical>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSevereToInfectedCritical>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning(
                 "Constraint check: The entries of TransitionMatrixInfectedSevereToInfectedCritical lead to a negative "
@@ -675,7 +674,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedSevereToRecovered>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSevereToRecovered>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning("Constraint check: The entries of TransitionMatrixInfectedSevereToRecovered lead to a negative "
                         "flow InfectedSevereToRecovered.");
@@ -683,7 +682,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedCriticalToDead>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedCriticalToDead>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning("Constraint check: The entries of TransitionMatrixInfectedCriticalToDead lead to a negative "
                         "flow InfectedCriticalToDead.");
@@ -691,7 +690,7 @@ public:
         }
         if (((this->get<TransitionMatrixInfectedCriticalToRecovered>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedCriticalToRecovered>().rows()))
-                 .array() < -1e-10)
+                 .array() > 1e-10)
                 .any()) {
             log_warning(
                 "Constraint check: The entries of TransitionMatrixInfectedCriticalToRecovered lead to a negative "
