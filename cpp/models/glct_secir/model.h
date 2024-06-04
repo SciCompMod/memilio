@@ -71,6 +71,7 @@ public:
      */
     bool check_constraints() const
     {
+        // --- Constraints regarding the initial values. ---
         if (!(LctState::Count == m_initial_values.size())) {
             log_error("Size of the initial values does not match subcompartments.");
             return true;
@@ -82,7 +83,38 @@ public:
                 return true;
             }
         }
-        log_warning("Test if sizes of the parameters are fitting to number of subcompartments missing.");
+
+        // --- Check that the dimensions are consistent. ---
+        if (LctState::template get_num_subcompartments<InfectionState::Exposed>() !=
+            parameters.get<StartingProbabilitiesExposed>().rows()) {
+            log_error("Dimension of the parameters does not match the number of subcompartments for the Exposed "
+                      "compartment.");
+            return true;
+        }
+        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() ==
+              parameters.get<StartingProbabilitiesInfectedNoSymptoms>().rows())) {
+            log_error("Dimension of the parameters does not match the number of subcompartments for the "
+                      "InfectedNoSymptoms compartment.");
+            return true;
+        }
+        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() ==
+              parameters.get<StartingProbabilitiesInfectedSymptoms>().rows())) {
+            log_error("Dimension of the parameters does not match the number of subcompartments for the "
+                      "InfectedSymptoms compartment.");
+            return true;
+        }
+        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() ==
+              parameters.get<StartingProbabilitiesInfectedSevere>().rows())) {
+            log_error("Dimension of the parameters does not match the number of subcompartments for the InfectedSevere "
+                      "compartment.");
+            return true;
+        }
+        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() ==
+              parameters.get<StartingProbabilitiesInfectedCritical>().rows())) {
+            log_error("Dimension of the parameters does not match the number of subcompartments for the "
+                      "InfectedCritical compartment.");
+            return true;
+        }
 
         return parameters.check_constraints();
     }

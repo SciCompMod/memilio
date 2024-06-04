@@ -24,6 +24,7 @@
 #include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/math/eigen.h"
+#include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/logging.h"
 
@@ -482,6 +483,7 @@ public:
      */
     bool check_constraints() const
     {
+        // --- Parameters affecting the transmission of the virus. ---
         log_warning("Tests for sum of alpha=1 and >0 missing and -A times vecotr(1) bigger than zero.");
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
@@ -505,13 +507,7 @@ public:
         }
 
         // --- Parameters affecting the phase-type distributions. ---
-        if (this->get<StartingProbabilitiesExposed>().rows() !=
-            this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()) {
-            log_error("Constraint check: Dimensions of StartingProbabilitiesExposed and "
-                      "TransitionMatrixExposedToInfectedNoSymptoms not matching.");
-            return true;
-        }
-
+        // --- Check that the dimensions are consistent. ---
         if ((this->get<TransitionMatrixExposedToInfectedNoSymptoms>().cols() !=
              this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()) ||
             (this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>().cols() !=
@@ -532,6 +528,174 @@ public:
              this->get<TransitionMatrixInfectedCriticalToRecovered>().rows())) {
             log_error("Constraint check: At least one of the matrices used for the TransitionMatrix parameters is not "
                       "quadratic.");
+            return true;
+        }
+
+        if (this->get<StartingProbabilitiesExposed>().rows() !=
+            this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()) {
+            log_error("Constraint check: Dimensions of StartingProbabilitiesExposed and "
+                      "TransitionMatrixExposedToInfectedNoSymptoms not matching.");
+            return true;
+        }
+
+        if (this->get<StartingProbabilitiesInfectedNoSymptoms>().rows() !=
+            this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>().rows() +
+                this->get<TransitionMatrixInfectedNoSymptomsToRecovered>().rows()) {
+            log_error("Constraint check: Dimensions of StartingProbabilitiesInfectedNoSymptoms and "
+                      "TransitionMatrices of InfectedNoSymptoms compartment are not matching.");
+            return true;
+        }
+
+        if (this->get<StartingProbabilitiesInfectedSymptoms>().rows() !=
+            this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>().rows() +
+                this->get<TransitionMatrixInfectedSymptomsToRecovered>().rows()) {
+            log_error("Constraint check: Dimensions of StartingProbabilitiesInfectedSymptoms and "
+                      "TransitionMatrices of InfectedSymptoms compartment are not matching.");
+            return true;
+        }
+
+        if (this->get<StartingProbabilitiesInfectedSevere>().rows() !=
+            this->get<TransitionMatrixInfectedSevereToInfectedCritical>().rows() +
+                this->get<TransitionMatrixInfectedSevereToRecovered>().rows()) {
+            log_error("Constraint check: Dimensions of StartingProbabilitiesInfectedSevere and "
+                      "TransitionMatrices of InfectedSevere compartment are not matching.");
+            return true;
+        }
+
+        if (this->get<StartingProbabilitiesInfectedCritical>().rows() !=
+            this->get<TransitionMatrixInfectedCriticalToDead>().rows() +
+                this->get<TransitionMatrixInfectedCriticalToRecovered>().rows()) {
+            log_error("Constraint check: Dimensions of StartingProbabilitiesInfectedCritical and "
+                      "TransitionMatrices of InfectedCritical compartment are not matching.");
+            return true;
+        }
+
+        // --- Check other restrictions. ---
+        if (!floating_point_equal(1., this->get<StartingProbabilitiesExposed>().sum())) {
+            log_warning("Constraint check: The vector StartingProbabilitiesExposed should add up to one.");
+            return true;
+        }
+        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedNoSymptoms>().sum())) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedNoSymptoms should add up to one.");
+            return true;
+        }
+        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedSymptoms>().sum())) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSymptoms should add up to one.");
+            return true;
+        }
+        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedSevere>().sum())) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSevere should add up to one.");
+            return true;
+        }
+        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedCritical>().sum())) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedCritical should add up to one.");
+            return true;
+        }
+
+        if ((this->get<StartingProbabilitiesExposed>().array() < -1e-10).any()) {
+            log_warning(
+                "Constraint check: The vector StartingProbabilitiesExposed should just have non-negative entries.");
+            return true;
+        }
+        if ((this->get<StartingProbabilitiesInfectedNoSymptoms>().array() < -1e-10).any()) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedNoSymptoms should just have "
+                        "non-negative entries.");
+            return true;
+        }
+        if ((this->get<StartingProbabilitiesInfectedSymptoms>().array() < -1e-10).any()) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSymptoms should just have "
+                        "non-negative entries.");
+            return true;
+        }
+        if ((this->get<StartingProbabilitiesInfectedSevere>().array() < -1e-10).any()) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSevere should just have "
+                        "non-negative entries.");
+            return true;
+        }
+        if ((this->get<StartingProbabilitiesInfectedCritical>().array() < -1e-10).any()) {
+            log_warning("Constraint check: The vector StartingProbabilitiesInfectedCritical should just have "
+                        "non-negative entries.");
+            return true;
+        }
+
+        // --- Check that we have no flows back from one compartment to the last (only in between of the subcompartments). ---
+        if (((this->get<TransitionMatrixExposedToInfectedNoSymptoms>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning(
+                "Constraint check: The entries of TransitionMatrixExposedToInfectedNoSymptoms lead to a negative "
+                "flow ExposedToInfectedNoSymptoms.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning("Constraint check: The entries of TransitionMatrixInfectedNoSymptomsToInfectedSymptoms lead to "
+                        "a negative "
+                        "flow InfectedNoSymptomsToInfectedSymptoms.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedNoSymptomsToRecovered>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedNoSymptomsToRecovered>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning(
+                "Constraint check: The entries of TransitionMatrixInfectedNoSymptomsToRecovered lead to a negative "
+                "flow InfectedNoSymptomsToRecovered.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning(
+                "Constraint check: The entries of TransitionMatrixInfectedSymptomsToInfectedSevere lead to a negative "
+                "flow InfectedSymptomsToInfectedSevere.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedSymptomsToRecovered>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSymptomsToRecovered>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning(
+                "Constraint check: The entries of TransitionMatrixInfectedSymptomsToRecovered lead to a negative "
+                "flow InfectedSymptomsToRecovered.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedSevereToInfectedCritical>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSevereToInfectedCritical>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning(
+                "Constraint check: The entries of TransitionMatrixInfectedSevereToInfectedCritical lead to a negative "
+                "flow InfectedSevereToInfectedCritical.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedSevereToRecovered>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedSevereToRecovered>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning("Constraint check: The entries of TransitionMatrixInfectedSevereToRecovered lead to a negative "
+                        "flow InfectedSevereToRecovered.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedCriticalToDead>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedCriticalToDead>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning("Constraint check: The entries of TransitionMatrixInfectedCriticalToDead lead to a negative "
+                        "flow InfectedCriticalToDead.");
+            return true;
+        }
+        if (((this->get<TransitionMatrixInfectedCriticalToRecovered>() *
+              Eigen::VectorXd::Ones(this->get<TransitionMatrixInfectedCriticalToRecovered>().rows()))
+                 .array() < -1e-10)
+                .any()) {
+            log_warning(
+                "Constraint check: The entries of TransitionMatrixInfectedCriticalToRecovered lead to a negative "
+                "flow InfectedCriticalToRecovered.");
             return true;
         }
 
