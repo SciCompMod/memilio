@@ -441,8 +441,6 @@ TEST(TestWorld, evolveMigration)
         auto& p_no_isolation =
             add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
         auto rng_p_complied     = mio::abm::Person::RandomNumberGenerator(rng, p_complied);
-        auto rng_p_no_mask      = mio::abm::Person::RandomNumberGenerator(rng, p_no_mask);
-        auto rng_p_no_test      = mio::abm::Person::RandomNumberGenerator(rng, p_no_test);
         auto rng_p_no_isolation = mio::abm::Person::RandomNumberGenerator(rng, p_no_isolation);
 
         p_complied.set_assigned_location(work_id);
@@ -493,7 +491,7 @@ TEST(TestWorld, evolveMigration)
         // The person does not want to isolate
         ASSERT_EQ(test_strategy.run_strategy(rng_p_no_isolation, p_no_isolation, work, start_date),
                   true); // Person tests and tests negative
-        EXPECT_FALSE(p_no_isolation.is_in_quarantine(t + dt, world.parameters));
+        EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, world.parameters));
     }
 }
 
