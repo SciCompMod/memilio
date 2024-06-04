@@ -440,7 +440,6 @@ TEST(TestWorld, evolveMigration)
             add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
         auto& p_no_isolation =
             add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-        auto rng_p_complied     = mio::abm::Person::RandomNumberGenerator(rng, p_complied);
         auto rng_p_no_isolation = mio::abm::Person::RandomNumberGenerator(rng, p_no_isolation);
 
         p_complied.set_assigned_location(work_id);
