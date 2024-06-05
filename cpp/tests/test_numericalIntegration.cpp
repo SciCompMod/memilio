@@ -18,13 +18,14 @@
 * limitations under the License.
 */
 #include "actions.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/logging.h"
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 #include <vector>
 #include <cmath>
@@ -417,4 +418,60 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
 
     integrator.advance(f, 4 * dt0, dt, result);
     integrator.advance(f, 5 * dt0, dt, result);
+}
+
+TEST(TestOdeIntegrator, integratorForcesLastStepSize)
+{
+    using testing::_;
+    using testing::Eq;
+
+    const double dt_min  = 0.7;
+    const double t_max   = 3.0; // this must not be intiger divisable by dt_min
+    const auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
+    auto integrator      = mio::OdeIntegrator<double>(mock_core);
+    auto y0              = Eigen::VectorXd::Constant(1, 0);
+    mio::TimeSeries<double> mock_result(0, y0), ref_result(0, y0);
+    auto f        = [](auto&&, auto&&, auto&&) {};
+    auto step_fct = [&](auto&&, auto&&, auto&& t, auto&& dt, auto&&, auto&& force_step_size) {
+        if (!force_step_size) {
+            auto dt_in = dt;
+            dt         = std::max(dt, dt_min);
+            t += dt;
+            return dt_in >= dt_min;
+        }
+        else {
+            t += dt;
+            return true;
+        }
+    };
+
+    // run a mock integration to examine whether only the last step is forced
+
+    {
+        testing::InSequence seq;
+        EXPECT_CALL(*mock_core, step(_, _, _, _, _, Eq(false))) // make time steps of size dt_min
+            .Times(int(t_max / dt_min) + 1)
+            .WillRepeatedly(testing::Invoke(step_fct));
+        EXPECT_CALL(*mock_core, step(_, _, _, _, _, Eq(true))) // make the last step with dt < dt_min
+            .Times(1)
+            .WillOnce(testing::Invoke(step_fct));
+    }
+    double dt = 0.5; // this is on purpose < dt_min
+    integrator.advance(f, t_max, dt, mock_result);
+
+    // run the same integration with a "real" core to check that the step_fct is not outdated
+
+    mio::set_log_level(mio::LogLevel::off);
+    const double tol = 1.0; // large enough such that it should not affect the test
+    dt               = 0.5; // this is on purpose < dt_min
+    integrator.set_integrator(std::make_shared<mio::DefaultIntegratorCore<double>>(tol, tol, dt_min, dt_min));
+    // note that the core is forced by dt_min==dt_max to make the same time step of dt_min, up until the last
+    integrator.advance(f, t_max, dt, ref_result);
+    mio::set_log_level(mio::LogLevel::warn);
+
+    // compare time steps taken by the mock step_fct and DefaultIntegratorCore::step
+    ASSERT_DOUBLE_EQ(mock_result.get_num_time_points(), ref_result.get_num_time_points());
+    for (Eigen::Index i = 0; i < mock_result.get_num_time_points(); i++) {
+        EXPECT_DOUBLE_EQ(mock_result.get_time(i), ref_result.get_time(i));
+    }
 }
