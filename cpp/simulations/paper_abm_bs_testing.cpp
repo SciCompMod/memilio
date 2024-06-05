@@ -1491,7 +1491,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             for (auto& location : location_it) {
                 if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
                               location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(4, 0);
+                    location.set_capacity(2, 0);
                 }
                 //90% of big social events get reopened and caopacity will be unlimited
                 int number_of_big_social_events = (int)(0.9 * social_event_location_ids_big.size());

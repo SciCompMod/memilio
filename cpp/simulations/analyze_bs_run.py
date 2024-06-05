@@ -288,8 +288,9 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    path = "/Users/david/Documents/HZI/memilio/data/results/"
+    # path = "/Users/david/Documents/HZI/memilio/data/results/"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
