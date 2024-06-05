@@ -113,7 +113,6 @@ public:
         results.reserve(results.get_num_time_points() + num_steps);
 
         bool is_step_sizing_okay = true;
-        bool last_step           = false;
 
         FP dt_copy; // used to check whether step sizing is adaptive
         FP dt_restore = 0; // used to restore dt if dt was decreased to reach tmax
@@ -127,21 +126,26 @@ public:
             if (dt > tmax - t) {
                 dt_restore = dt;
                 dt         = tmax - t;
-                last_step  = true;
             }
             dt_copy = dt;
 
             results.add_time_point();
             bool step_okay = m_core->step(f, results[i], t, dt, results[i + 1]);
-            if (!step_okay && last_step) {
-                dt        = tmax - t;
+
+            // if dt has been changed (even slighly) by step, register the current m_core as adaptive
+            m_is_adaptive |= !floating_point_equal(dt, dt_copy);
+
+            // catch case where dt_min of an adaptive stepper is larger than tmax - t
+            if (t > tmax) {
+                log_info("Forcing last step size.");
+                // reset time and step size
+                dt = dt_copy;
+                t  = tmax - dt_copy;
+                // recalculate the erroneous last step and overwrite its results
                 step_okay = m_core->step(f, results[i], t, dt, results[i + 1], true);
             }
             is_step_sizing_okay &= step_okay;
             results.get_last_time() = t;
-
-            // if dt has been changed (even slighly) by step, register the current m_core as adaptive
-            m_is_adaptive |= !floating_point_equal(dt, dt_copy);
         }
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
