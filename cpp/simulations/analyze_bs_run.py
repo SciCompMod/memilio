@@ -107,53 +107,51 @@ def plot_infection_per_age_group(df):
 
 def plot_results(path):
     # median / 50-percentile
-    f = h5py.File(
+    f_p50 = h5py.File(
         path+"/infection_state_per_age_group/p50/Results.h5", 'r')
 
     # Get the HDF5 group; key needs to be a group name from above
-    group = f['0']
+    # only one graph node saved
+    p50_bs = f_p50['0']
 
     # This assumes group[some_key_inside_the_group] is a dataset,
     # and returns a np.array:
-    time = group['Time'][()]
-    total_50 = group['Total'][()]
+    time = p50_bs['Time'][()]
+    total_50 = p50_bs['Total'][()]
 
-    # After you are done
-    f.close()
-
-    # 05-percentile
-    f = h5py.File(
+    # 25-percentile
+    f_p25 = h5py.File(
         path+"/infection_state_per_age_group/p25/Results.h5", 'r')
-    group = f['0']
-    total_25 = group['Total'][()]
-    f.close()
-
-    # 95-percentile
-    f = h5py.File(
+    p25_bs = f_p25['0']
+    total_25 = p25_bs['Total'][()]
+    # 75-percentile
+    f_p75 = h5py.File(
         path + "/infection_state_per_age_group/p75/Results.h5", 'r')
-    group = f['0']
-    total_75 = group['Total'][()]
-    f.close()
+    p75_bs = f_p75['0']
+    total_75 = p75_bs['Total'][()]
 
     # real world
-    f = h5py.File(
+    f_real = h5py.File(
         path + "/Results_rki.h5", 'r')
-    group = f['3101']
-    total_real = group['Total'][()]
-    f.close()
+    real_bs = f_real['3101']
+    total_real = real_bs['Total'][()]
+    
 
     plot_infection_states_individual(
-        time, total_50, total_25, total_75, total_real)
+        time, p50_bs, p25_bs, p75_bs, real_bs)
     plot_infection_states(time, total_50, total_25, total_75)
 
+    # After you are done
+    f_p50.close()
+    f_p25.close()
+    f_p75.close()
+    f_real.close()
 
 def plot_infection_states(x, y50, y25, y75):
     plt.figure('Infection_states')
     plt.title('Infection states')
 
-    #set the x 
-    color_plot = cmx.get_cmap('Set1').colors
-    
+    color_plot = cmx.get_cmap('Set1').colors    
 
     states_plot = [1, 2, 3, 4, 5, 7]
     legend_plot = ['E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Dead']
@@ -190,54 +188,58 @@ def plot_infection_states(x, y50, y25, y75):
     plt.show()
 
 
+def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
+
+    y_real_total = real_bs['Total'][()]
+    x_real = np.linspace(0, y_real_total.shape[0]-1, y_real_total.shape[0])
+
+    age_group_access = ['Group1', 'Group2', 'Group3', 'Group4', 'Group5', 'Group6', 'Total']
+
+    color_plot = cmx.get_cmap('Set1').colors
+
+    fig, ax = plt.subplots(3, len(age_group_access), constrained_layout = True)
+    fig.set_figwidth(20)
+    fig.set_figheight(9)
+    for j, count in zip(age_group_access, range(len(age_group_access))):
+        y50 = p50_bs[j][()]
+        y25 = p25_bs[j][()]
+        y75 = p75_bs[j][()]
+        y_real = real_bs[j][()]
+
+        # Severe
+        ax_severe = ax[0, count]
+        ax_severe.set_xlabel('time (days)')
+        ax_severe.plot(x, y50[:, 4], color=color_plot[count], label='y50')
+        ax_severe.plot(x_real, y_real[:, 6], '.', color=color_plot[count], label='y_real')
+        ax_severe.fill_between(x, y50[:, 4], y25[:, 4], alpha=0.5, color=color_plot[count])
+        ax_severe.fill_between(x, y50[:, 4], y75[:, 4], alpha=0.5, color=color_plot[count])
+        ax_severe.tick_params(axis='y')
+        ax_severe.title.set_text('Severe, Age{}'.format(j))
+        ax_severe.legend(['Simulation','Real'])
+
+        # Critical
+        ax_critical = ax[1, count]
+        ax_critical.set_xlabel('time (days)')
+        ax_critical.plot(x, y50[:, [5]], color=color_plot[count], label='y50')
+        ax_critical.plot(x_real, y_real[:, [7]], '.', color=color_plot[count], label='y_real')
+        ax_critical.fill_between(x, y50[:, 5], y25[:, 5], alpha=0.5, color=color_plot[count])
+        ax_critical.fill_between(x, y50[:, 5], y75[:, 5], alpha=0.5, color=color_plot[count])
+        ax_critical.tick_params(axis='y')
+        ax_critical.title.set_text('Critical, Age{}'.format(j))
+        ax_critical.legend(['Simulation','Real'])
+
+        # Dead
+        ax_dead = ax[2, count]
+        ax_dead.set_xlabel('time (days)')
+        ax_dead.plot(x, y50[:, [7]], color=color_plot[count], label='y50')
+        ax_dead.plot(x_real, y_real[:, [9]], '.', color=color_plot[count], label='y_real')
+        ax_dead.fill_between(x, y50[:, 7], y25[:, 7], alpha=0.5, color=color_plot[count])
+        ax_dead.fill_between(x, y50[:, 7], y75[:, 7], alpha=0.5, color=color_plot[count])
+        ax_dead.tick_params(axis='y')
+        ax_dead.title.set_text('Dead, Age{}'.format(j))
+        ax_dead.legend(['Simulation','Real'])
     
-
-
-
-
-
-
-
-
-
-
-
-
-def plot_infection_states_individual(x, y50, y25, y75, y_real):
-    # plt.figure('Infection_states_dead')
-    # # plt.plot(x, y50[:,[5,7]])
-    x_real = np.linspace(0, y_real.shape[0]-1, y_real.shape[0])
-    # plt.plot(x_real, y_real[:,[2]])
-    # plt.legend(['I_Crit', 'Dead'])
-
-    fig, ax = plt.subplots(3, 1)
-
-    # Severe
-    ax[0].set_xlabel('time (days)')
-    ax[0].plot(x, y50[:, [4]], color='tab:red', label='y50')
-    ax[0].plot(x_real, y_real[:, [6]], color='tab:blue', label='y_real')
-    ax[0].tick_params(axis='y')
-    ax[0].title.set_text('Severe')
-    ax[0].legend()
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-
-    # Critical
-    ax[1].set_xlabel('time (days)')
-    ax[1].plot(x, y50[:, [5]], color='tab:red', label='y50')
-    ax[1].plot(x_real, y_real[:, [7]], color='tab:blue', label='y_real')
-    ax[1].tick_params(axis='y')
-    ax[1].title.set_text('Critical')
-    ax[1].legend()
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-
-    # Dead
-    ax[2].set_xlabel('time (days)')
-    ax[2].plot(x, y50[:, [7]], color='tab:red', label='y50')
-    ax[2].plot(x_real, y_real[:, [9]], color='tab:blue', label='y_real')
-    ax[2].tick_params(axis='y')
-    ax[2].title.set_text('Dead')
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    ax[2].legend()
+    #fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
 
 
@@ -286,7 +288,7 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
+    path = "/Users/david/Documents/HZI/memilio/data/results/"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
