@@ -22,6 +22,7 @@
 
 #include "memilio/config.h"
 #include "memilio/math/integrator.h"
+#include "memilio/utils/compiler_diagnostics.h"
 
 namespace mio
 {
@@ -41,10 +42,12 @@ public:
      * @param[in,out] t current time step h=dt
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
+     * @param[in] force_step_size This argument is unused, as the step width is always fixed.
      */
     bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt, Eigen::Ref<Vector<FP>> ytp1,
-              const bool = false) const override
+              const bool force_step_size = false) const override
     {
+        mio::unused(force_step_size);
         // we are misusing the next step y as temporary space to store the derivative
         f(yt, t, ytp1);
         ytp1 = yt + dt * ytp1;
