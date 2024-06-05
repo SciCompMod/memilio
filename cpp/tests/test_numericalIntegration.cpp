@@ -470,7 +470,7 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
     mio::set_log_level(mio::LogLevel::warn);
 
     // compare time steps taken by the mock step_fct and DefaultIntegratorCore::step
-    ASSERT_DOUBLE_EQ(mock_result.get_num_time_points(), ref_result.get_num_time_points());
+    ASSERT_EQ(mock_result.get_num_time_points(), ref_result.get_num_time_points());
     for (Eigen::Index i = 0; i < mock_result.get_num_time_points(); i++) {
         EXPECT_DOUBLE_EQ(mock_result.get_time(i), ref_result.get_time(i));
     }
