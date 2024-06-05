@@ -736,7 +736,8 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.6;
 
     // Set infection parameters
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 1.0;
+
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 3.5;
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
@@ -1048,7 +1049,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     // Assign vaccination status to each person.
     assign_vaccination_state(world, start_date_sim);
 
-    add_testing_strategies(world, true, false);
+    // add_testing_strategies(world, true, false);
 }
 
 template <typename T>
@@ -1268,7 +1269,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 390000;
+    auto max_num_persons = 400000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1310,7 +1311,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groupss);
         create_sampled_world(world, input_dir, t0, max_num_persons, start_date);
-        world.parameters.get<mio::abm::InfectionRateFromViralShed>() = 3.5;
         // Stop the clock after create_sampled_world and calculate the duration
         auto stop1     = std::chrono::high_resolution_clock::now();
         auto duration1 = std::chrono::duration<double>(stop1 - start1);
