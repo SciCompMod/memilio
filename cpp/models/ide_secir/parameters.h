@@ -22,6 +22,7 @@
 
 #include "memilio/config.h"
 #include "memilio/math/floating_point.h"
+#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
@@ -49,12 +50,13 @@ namespace isecir
  */
 struct TransitionDistributions {
 
-    using Type = std::vector<StateAgeFunctionWrapper>;
-    static Type get_default()
+    using Type = CustomIndexArray<std::vector<StateAgeFunctionWrapper>, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
         SmootherCosine smoothcos(2.0);
         StateAgeFunctionWrapper delaydistribution(smoothcos);
-        return std::vector<StateAgeFunctionWrapper>((int)InfectionTransition::Count, delaydistribution);
+        std::vector<StateAgeFunctionWrapper> state_age_vector((int)InfectionTransition::Count, delaydistribution);
+        return Type(size, state_age_vector);
     }
 
     static std::string name()
@@ -69,14 +71,14 @@ struct TransitionDistributions {
 struct TransitionProbabilities {
     /*For consistency, also define TransitionProbabilities for each transition in #InfectionTransition. 
     Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
-    using Type = std::vector<ScalarType>;
-    static Type get_default()
+    using Type = CustomIndexArray<std::vector<ScalarType>, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
         std::vector<ScalarType> probs((int)InfectionTransition::Count, 0.5);
         // Set the following probablities to 1 as there is no other option to go anywhere else.
         probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;
         probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-        return probs;
+        return Type(size, probs);
     }
 
     static std::string name()
@@ -91,10 +93,10 @@ struct TransitionProbabilities {
 struct ContactPatterns {
     using Type = UncertainContactMatrix;
 
-    static Type get_default()
+    static Type get_default(AgeGroup size)
     {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
-        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, static_cast<Eigen::Index>((size_t)size));
+        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(static_cast<Eigen::Index>((size_t)size),static_cast<Eigen::Index>((size_t)size), 10.));
         return Type(contact_matrix);
     }
     static std::string name()
@@ -107,11 +109,12 @@ struct ContactPatterns {
 * @brief Probability of getting infected from a contact.
 */
 struct TransmissionProbabilityOnContact {
-    using Type = StateAgeFunctionWrapper;
-    static Type get_default()
+    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
-        return StateAgeFunctionWrapper(constfunc);
+        StateAgeFunctionWrapper  stateagewrapper= StateAgeFunctionWrapper(constfunc);
+        return Type(size, stateagewrapper);
     }
     static std::string name()
     {
@@ -123,11 +126,12 @@ struct TransmissionProbabilityOnContact {
 * @brief The relative InfectedNoSymptoms infectability.
 */
 struct RelativeTransmissionNoSymptoms {
-    using Type = StateAgeFunctionWrapper;
-    static Type get_default()
+    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
-        return StateAgeFunctionWrapper(constfunc);
+        StateAgeFunctionWrapper  stateagewrapper= StateAgeFunctionWrapper(constfunc);
+        return Type(size, stateagewrapper);
     }
     static std::string name()
     {
@@ -139,11 +143,12 @@ struct RelativeTransmissionNoSymptoms {
 * @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 struct RiskOfInfectionFromSymptomatic {
-    using Type = StateAgeFunctionWrapper;
-    static Type get_default()
+    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
-        return StateAgeFunctionWrapper(constfunc);
+        StateAgeFunctionWrapper  stateagewrapper= StateAgeFunctionWrapper(constfunc);
+        return Type(size, stateagewrapper);
     }
     static std::string name()
     {
@@ -162,7 +167,7 @@ struct RiskOfInfectionFromSymptomatic {
  */
 struct StartDay {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return 0.;
     }
@@ -179,7 +184,7 @@ struct StartDay {
  */
 struct Seasonality {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return Type(0.);
     }
@@ -200,7 +205,7 @@ using ParametersBase =
 class Parameters : public ParametersBase
 {
 public:
-    Parameters() Parameters(AgeGroup num_agegroups)
+    Parameters(AgeGroup num_agegroups) 
         : ParametersBase(num_agegroups)
         , m_num_groups{num_agegroups}
     {
@@ -351,13 +356,9 @@ private:
 
 private:
     AgeGroup m_num_groups;
-    double m_commuter_nondetection    = 0.0;
-    double m_start_commuter_detection = 0.0;
-    double m_end_commuter_detection   = 0.0;
 };
 }; // namespace isecir
 
-} // namespace mio
 } // namespace mio
 
 #endif // IDE_SECIR_PARAMS_H
