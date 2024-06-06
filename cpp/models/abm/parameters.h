@@ -544,11 +544,11 @@ using ParametersBase =
     ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, InwardMaskProtection, OutwardMaskProtection,
-                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
-                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
-                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
-                 SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 InfectivityDistributions, DetectInfection, InwardMaskProtection, AerosolTransmissionRates,
+                 LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
+                 GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
+                 AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor,
+                 HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
