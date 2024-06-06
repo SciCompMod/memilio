@@ -31,10 +31,10 @@ namespace ssirs
 {
 
 /// @brief A specialized Simulation for mio::ssirs::Model.
-class Simulation : public mio::Simulation<Model>
+class Simulation : public mio::Simulation<ScalarType, Model>
 {
 protected:
-    using mio::Simulation<Model>::set_integrator;
+    using mio::Simulation<ScalarType, Model>::set_integrator;
 
 public:
     /**
@@ -43,20 +43,20 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : mio::Simulation<Model>(model, t0, dt)
+    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+        : mio::Simulation<ScalarType, Model>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
         set_integrator(integrator);
     }
 
-    using mio::Simulation<Model>::Simulation;
+    using mio::Simulation<ScalarType, Model>::Simulation;
     /**
      * @brief advance simulation to tmax
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Vector<>> advance(ScalarType tmax)
     {
         return get_ode_integrator().advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
@@ -75,7 +75,7 @@ public:
  * @param[in] model An instance of mio::ssirs::Model.
  * @return A TimeSeries to represent the final simulation result
  */
-inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model)
+inline TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model)
 {
     model.check_constraints();
     Simulation sim(model, t0, dt);
@@ -84,10 +84,10 @@ inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model 
 }
 
 /// @brief A specialized FlowSimulation for mio::ssirs::Model.
-class FlowSimulation : public mio::FlowSimulation<Model>
+class FlowSimulation : public mio::FlowSimulation<ScalarType, Model>
 {
 protected:
-    using mio::FlowSimulation<Model>::set_integrator;
+    using mio::FlowSimulation<ScalarType, Model>::set_integrator;
 
 public:
     /**
@@ -96,10 +96,10 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : mio::FlowSimulation<Model>(model, t0, dt)
+    FlowSimulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+        : mio::FlowSimulation<ScalarType, Model>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
         set_integrator(integrator);
     }
 
@@ -108,7 +108,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Vector<>> advance(ScalarType tmax)
     {
         assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
@@ -139,7 +139,8 @@ public:
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
  */
-inline std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model)
+inline std::vector<TimeSeries<ScalarType>> simulate_flows(ScalarType t0, ScalarType tmax, ScalarType dt,
+                                                          Model const& model)
 {
     model.check_constraints();
     FlowSimulation sim(model, t0, dt);

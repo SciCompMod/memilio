@@ -44,7 +44,7 @@ namespace abm
  * @brief Time that a Person is infected but not yet infectious.
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -56,7 +56,7 @@ struct IncubationPeriod {
 };
 
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -68,7 +68,7 @@ struct InfectedNoSymptomsToSymptoms {
 };
 
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -80,7 +80,7 @@ struct InfectedNoSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -92,7 +92,7 @@ struct InfectedSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -104,7 +104,7 @@ struct InfectedSymptomsToSevere {
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -116,7 +116,7 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -128,7 +128,7 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -140,7 +140,7 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -152,7 +152,7 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -213,7 +213,7 @@ struct InfectivityDistributions {
  * @brief Probability that an Infection is detected.
  */
 struct DetectInfection {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -228,7 +228,7 @@ struct DetectInfection {
  * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 struct MaskProtection {
-    using Type = CustomIndexArray<UncertainValue, MaskType>;
+    using Type = CustomIndexArray< UncertainValue<>, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
         return Type({MaskType::Count}, 1.);
@@ -313,19 +313,34 @@ struct HighViralLoadProtectionFactor {
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
-    UncertainValue sensitivity;
-    UncertainValue specificity;
+     UncertainValue<> sensitivity;
+     UncertainValue<> specificity;
+};
 
-    TestParameters() = default;
-
-    TestParameters(UncertainValue input_sensitivity, UncertainValue input_specificity) {
-        sensitivity = input_sensitivity;
-        specificity = input_specificity;
+struct GenericTest {
+    using Type = TestParameters;
+    static Type get_default()
+    {
+        return Type{0.9, 0.99};
     }
+    static std::string name()
+    {
+        return "GenericTest";
+    }
+};
 
-    TestParameters(UncertainValue value) {
-        sensitivity = value;
-        sensitivity = value;
+/**
+ * @brief Reliability of an AntigenTest.
+ */
+struct AntigenTest : public GenericTest {
+    using Type = TestParameters;
+    static Type get_default()
+    {
+        return Type{0.8, 0.88};
+    }
+    static std::string name()
+    {
+        return "AntigenTest";
     }
 };
 
@@ -382,7 +397,7 @@ struct QuarantineDuration {
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 struct BasicShoppingRate {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    using Type = CustomIndexArray< UncertainValue<>, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
         return Type({size}, 1.0);
@@ -505,9 +520,7 @@ struct AgeGroupGotoSchool {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a         = Type(num_agegroups, false);
-        a[AgeGroup(1)] = true;
-        return a;
+        return Type(num_agegroups, false);
     }
     static std::string name()
     {
@@ -522,10 +535,7 @@ struct AgeGroupGotoWork {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a         = Type(num_agegroups, false);
-        a[AgeGroup(2)] = true;
-        a[AgeGroup(3)] = true;
-        return a;
+        return Type(num_agegroups, false);
     }
     static std::string name()
     {

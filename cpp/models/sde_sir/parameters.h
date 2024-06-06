@@ -38,7 +38,7 @@ namespace ssir
  * @brief probability of getting infected from a contact
  */
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue;
+    using Type = UncertainValue<>;
     static Type get_default()
     {
         return Type(1.0);
@@ -53,7 +53,7 @@ struct TransmissionProbabilityOnContact {
  * @brief the infectious time in day unit
  */
 struct TimeInfected {
-    using Type = UncertainValue;
+    using Type = UncertainValue<ScalarType>;
     static Type get_default()
     {
         return Type(6.0);
@@ -107,7 +107,7 @@ public:
      */
     bool apply_constraints()
     {
-        double tol_times = 1e-1;
+        ScalarType tol_times = 1e-1;
 
         int corrected = false;
         if (this->get<TimeInfected>() < tol_times) {
@@ -135,7 +135,7 @@ public:
      */
     bool check_constraints() const
     {
-        double tol_times = 1e-1;
+        ScalarType tol_times = 1e-1;
 
         if (this->get<TimeInfected>() < tol_times) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "

@@ -25,8 +25,6 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
 
-#include <vector>
-#include <array>
 #include <numeric>
 
 namespace mio
@@ -50,14 +48,15 @@ namespace mio
  *
  */
 
-template <class... Categories>
-class Populations : public CustomIndexArray<UncertainValue, Categories...>
+template <typename FP = ScalarType, class... Categories>
+class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
-    using Base  = CustomIndexArray<UncertainValue, Categories...>;
+    using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
     using Index = typename Base::Index;
 
-    template <class... Ts, typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
+    template <class... Ts,
+              typename std::enable_if_t<std::is_constructible<UncertainValue<FP>, Ts...>::value>* = nullptr>
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
     {
@@ -80,9 +79,9 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    inline Eigen::VectorXd get_compartments() const
+    inline Vector<FP> get_compartments() const
     {
-        return this->array().template cast<double>();
+        return this->array().template cast<FP>();
     }
 
     /**
@@ -253,8 +252,9 @@ public:
     void check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i] < 0) {
-                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, this->array()[i], 0);
+            FP value = this->array()[i];
+            if (value < 0.) {
+                log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
             }
         }
     }

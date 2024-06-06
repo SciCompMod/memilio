@@ -180,9 +180,9 @@ std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_Custo
 template <class Type, class... Tags>
 void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
 {
-    using C     = typename mio::CustomIndexArray<Type, Tags...>;
-    using Index = typename mio::CustomIndexArray<Type, Tags...>::Index;
-    pybind11::class_<C> c(m, name.c_str());
+    using C          = typename mio::CustomIndexArray<Type, Tags...>;
+    using Index      = typename mio::CustomIndexArray<Type, Tags...>::Index;
+    decltype(auto) c = bind_class<C, EnablePickling::Required>(m, name.c_str());
     c.def(pybind11::init([](Index const& sizes, Type const& val) {
          return C(sizes, val);
      }))
