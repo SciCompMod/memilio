@@ -222,109 +222,112 @@ public:
      */
     bool check_constraints() const
     {
-        // For parameters potentially depending on the infectious age, values are checked
-        // equidistantly on a realistic maximum window.
-        // Please note that this is an incomplete check on correctness.
-        size_t infectious_window_check = 50; // parameter defining minimal window on x-axis
-        for (size_t i = 0; i < infectious_window_check; i++) {
-            if (this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) < 0.0 ||
-                this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) > 1.0) {
-                log_error("Constraint check: TransmissionProbabilityOnContact smaller {:d} or larger {:d} at some "
-                          "time {:d}",
-                          0, 1, i);
+        for (auto j = AgeGroup(0); j < AgeGroup(m_num_groups), ++j)
+        {
+            // For parameters potentially depending on the infectious age, values are checked
+            // equidistantly on a realistic maximum window.
+            // Please note that this is an incomplete check on correctness.
+            size_t infectious_window_check = 50; // parameter defining minimal window on x-axis
+            for (size_t i = 0; i < infectious_window_check; i++) {
+                if (this->get<TransmissionProbabilityOnContact>()[j].eval((ScalarType)i) < 0.0 ||
+                    this->get<TransmissionProbabilityOnContact>()[j].eval((ScalarType)i) > 1.0) {
+                    log_error("Constraint check: TransmissionProbabilityOnContact smaller {:d} or larger {:d} at some "
+                            "time {:d}",
+                            0, 1, i);
+                    return true;
+                }
+            }
+
+            for (size_t i = 0; i < infectious_window_check; i++) {
+                if (this->get<RelativeTransmissionNoSymptoms>()[j].eval((ScalarType)i) < 0.0 ||
+                    this->get<RelativeTransmissionNoSymptoms>()[j].eval((ScalarType)i) > 1.0) {
+                    log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {:d} or larger {:d} at some "
+                            "time {:d}",
+                            0, 1, i);
+                    return true;
+                }
+            }
+
+            for (size_t i = 0; i < infectious_window_check; i++) {
+                if (this->get<RiskOfInfectionFromSymptomatic>()[j].eval((ScalarType)i) < 0.0 ||
+                    this->get<RiskOfInfectionFromSymptomatic>()[j].eval((ScalarType)i) > 1.0) {
+                    log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d} at some "
+                            "time {:d}",
+                            0, 1, i);
+                    return true;
+                }
+            }
+
+            for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
+                if (this->get<TransitionProbabilities>()[j][i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
+                    log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}", 0,
+                            1);
+                    return true;
+                }
+            }
+
+            if (!floating_point_equal(this->get<TransitionProbabilities>()[j][(int)InfectionTransition::SusceptibleToExposed],
+                                    1.0, 1e-14)) {
+                log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {:d}", 1);
                 return true;
             }
-        }
 
-        for (size_t i = 0; i < infectious_window_check; i++) {
-            if (this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) < 0.0 ||
-                this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) > 1.0) {
-                log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {:d} or larger {:d} at some "
-                          "time {:d}",
-                          0, 1, i);
+            if (!floating_point_equal(
+                    this->get<TransitionProbabilities>()[j][(int)InfectionTransition::ExposedToInfectedNoSymptoms], 1.0,
+                    1e-14)) {
+                log_error(
+                    "Constraint check: Parameter transition probability for ExposedToInfectedNoSymptoms unequal to {:d}",
+                    1);
                 return true;
             }
-        }
 
-        for (size_t i = 0; i < infectious_window_check; i++) {
-            if (this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) < 0.0 ||
-                this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) > 1.0) {
-                log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d} at some "
-                          "time {:d}",
-                          0, 1, i);
+            if (!floating_point_equal(
+                    this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
+                        this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedNoSymptomsToRecovered],
+                    1.0, 1e-14)) {
+                log_error("Constraint check: Sum of transition probability for InfectedNoSymptomsToInfectedSymptoms and "
+                        "InfectedNoSymptomsToRecovered not equal to {:d}",
+                        1);
                 return true;
             }
-        }
 
-        for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
-            if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
-                log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}", 0,
-                          1);
+            if (!floating_point_equal(
+                    this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
+                        this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedSymptomsToRecovered],
+                    1.0, 1e-14)) {
+                log_error("Constraint check: Sum of transition probability for InfectedSymptomsToInfectedSevere and "
+                        "InfectedSymptomsToRecovered not equal to {:d}",
+                        1);
                 return true;
             }
-        }
 
-        if (!floating_point_equal(this->get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed],
-                                  1.0, 1e-14)) {
-            log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {:d}", 1);
-            return true;
-        }
-
-        if (!floating_point_equal(
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms], 1.0,
-                1e-14)) {
-            log_error(
-                "Constraint check: Parameter transition probability for ExposedToInfectedNoSymptoms unequal to {:d}",
-                1);
-            return true;
-        }
-
-        if (!floating_point_equal(
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
-                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered],
-                1.0, 1e-14)) {
-            log_error("Constraint check: Sum of transition probability for InfectedNoSymptomsToInfectedSymptoms and "
-                      "InfectedNoSymptomsToRecovered not equal to {:d}",
-                      1);
-            return true;
-        }
-
-        if (!floating_point_equal(
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
-                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered],
-                1.0, 1e-14)) {
-            log_error("Constraint check: Sum of transition probability for InfectedSymptomsToInfectedSevere and "
-                      "InfectedSymptomsToRecovered not equal to {:d}",
-                      1);
-            return true;
-        }
-
-        if (!floating_point_equal(
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
-                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToRecovered],
-                1.0, 1e-14)) {
-            log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical and "
-                      "InfectedSevereToRecovered not equal to {:d}",
-                      1);
-            return true;
-        }
-
-        if (!floating_point_equal(
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
-                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToRecovered],
-                1.0, 1e-14)) {
-            log_error("Constraint check: Sum of transition probability for InfectedCriticalToDead and "
-                      "InfectedCriticalToRecovered not equal to {:d}",
-                      1);
-            return true;
-        }
-
-        /* The first entry of TransitionDistributions is not checked because the distribution S->E is never used 
-        (and it makes no sense to use the distribution). The support does not need to be valid.*/
-        for (size_t i = 1; i < (int)InfectionTransition::Count; i++) {
-            if (floating_point_less(this->get<TransitionDistributions>()[i].get_support_max(10), 0.0, 1e-14)) {
-                log_error("Constraint check: One function in TransitionDistributions has invalid support.");
+            if (!floating_point_equal(
+                    this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedSevereToInfectedCritical] +
+                        this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedSevereToRecovered],
+                    1.0, 1e-14)) {
+                log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical and "
+                        "InfectedSevereToRecovered not equal to {:d}",
+                        1);
                 return true;
+            }
+
+            if (!floating_point_equal(
+                    this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedCriticalToDead] +
+                        this->get<TransitionProbabilities>()[j][(int)InfectionTransition::InfectedCriticalToRecovered],
+                    1.0, 1e-14)) {
+                log_error("Constraint check: Sum of transition probability for InfectedCriticalToDead and "
+                        "InfectedCriticalToRecovered not equal to {:d}",
+                        1);
+                return true;
+            }
+
+            /* The first entry of TransitionDistributions is not checked because the distribution S->E is never used 
+            (and it makes no sense to use the distribution). The support does not need to be valid.*/
+            for (size_t i = 1; i < (int)InfectionTransition::Count; i++) {
+                if (floating_point_less(this->get<TransitionDistributions>()[j][i].get_support_max(10), 0.0, 1e-14)) {
+                    log_error("Constraint check: One function in TransitionDistributions has invalid support.");
+                    return true;
+                }
             }
         }
 
@@ -334,6 +337,7 @@ public:
         }
 
         return false;
+    
     }
 
     /**
