@@ -737,7 +737,7 @@ void set_parameters(mio::abm::Parameters& params)
 
     // Set infection parameters
 
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 4.5;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 3;
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
@@ -747,25 +747,25 @@ void set_parameters(mio::abm::Parameters& params)
 
     // Set protection level against an severe infection. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::SeverityProtectionFactor>() = [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
-                                                                              {30, 0.975},
-                                                                              {60, 0.977},
-                                                                              {90, 0.974},
-                                                                              {120, 0.963},
-                                                                              {150, 0.947},
-                                                                              {180, 0.93},
-                                                                              {210, 0.929},
-                                                                              {240, 0.923},
-                                                                              {270, 0.908},
-                                                                              {300, 0.893},
-                                                                              {330, 0.887},
-                                                                              {360, 0.887},
-                                                                              {360, 0.5}},
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.1967},
+                                                                              {30, 0.1975},
+                                                                              {60, 0.1977},
+                                                                              {90, 0.1974},
+                                                                              {120, 0.1963},
+                                                                              {150, 0.1947},
+                                                                              {180, 0.193},
+                                                                              {210, 0.1929},
+                                                                              {240, 0.1923},
+                                                                              {270, 0.1908},
+                                                                              {300, 0.1893},
+                                                                              {330, 0.1887},
+                                                                              {360, 0.1887},
+                                                                              {360, 0.15}},
                                                                              days);
     };
 
     //Set other parameters
-    params.get<mio::abm::MaskProtection>()           = 0.33; //all masks have a 0.66 protection factor for now
+    params.get<mio::abm::MaskProtection>()           = 0.5; //all masks have a 0.66 protection factor for now
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
 }
 
