@@ -765,7 +765,7 @@ void set_parameters(mio::abm::Parameters& params)
     };
 
     //Set other parameters
-    params.get<mio::abm::MaskProtection>()           = 0.5; //all masks have a 0.66 protection factor for now
+    params.get<mio::abm::MaskProtection>()           = 0.35; //all masks have a 0.66 protection factor for now
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
 }
 
