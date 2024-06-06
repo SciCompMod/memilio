@@ -139,7 +139,7 @@ def plot_results(path):
 
     plot_infection_states_individual(
         time, p50_bs, p25_bs, p75_bs, real_bs)
-    plot_infection_states(time, total_50, total_25, total_75)
+    plot_infection_states(time, total_50, total_25, total_75, total_real)
 
     # After you are done
     f_p50.close()
@@ -147,17 +147,22 @@ def plot_results(path):
     f_p75.close()
     f_real.close()
 
-def plot_infection_states(x, y50, y25, y75):
+def plot_infection_states(x, y50, y25, y75, y_real=None):
     plt.figure('Infection_states')
     plt.title('Infection states')
 
     color_plot = cmx.get_cmap('Set1').colors
 
     states_plot = [1, 2, 3, 4, 5, 7]
-    legend_plot = ['E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Dead']
+    legend_plot = ['E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Dead', 'real_infected']
 
     for i in states_plot:
         plt.plot(x, y50[:, i], color=color_plot[i])
+
+        #plot real data
+    if y_real is not None:
+        x_real = np.linspace(0, y_real.shape[0]-1, y_real.shape[0])
+        plt.plot(x_real, y_real[:,4], '.', color=color_plot[i+1])
 
     plt.legend(legend_plot)
 
@@ -288,9 +293,10 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    path = "/Users/david/Documents/HZI/memilio/data/results/"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
+    # path = r"C:\Users\korf_sa\Documents\rep\data\results"
+    path = r"C:\Users\korf_sa\Documents\rep\data\results_cluster\results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
