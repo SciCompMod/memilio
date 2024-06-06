@@ -294,7 +294,7 @@ struct HighViralLoadProtectionFactor {
 };
 
 /**
- * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
+ * @brief Effectiveness of a Mask of a certain MaskType% against an Infection% for the mask wearer.
  */
 struct InwardMaskProtection {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, MaskType>;
@@ -307,23 +307,6 @@ struct InwardMaskProtection {
     static std::string name()
     {
         return "InwardMaskProtection";
-    }
-};
-
-/**
- * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
- */
-struct OutwardMaskProtection {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, MaskType>;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type({MaskType::Count}, [](ScalarType /*hours*/) -> ScalarType {
-            return 1;
-        });
-    }
-    static std::string name()
-    {
-        return "OutwardMaskProtection";
     }
 };
 
