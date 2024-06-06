@@ -43,7 +43,7 @@ namespace abm
  * @brief Time that a Person is infected but not yet infectious.
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -55,7 +55,7 @@ struct IncubationPeriod {
 };
 
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -67,7 +67,7 @@ struct InfectedNoSymptomsToSymptoms {
 };
 
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -79,7 +79,7 @@ struct InfectedNoSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -91,7 +91,7 @@ struct InfectedSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -103,7 +103,7 @@ struct InfectedSymptomsToSevere {
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -115,7 +115,7 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -127,7 +127,7 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -139,7 +139,7 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -151,7 +151,7 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -212,7 +212,7 @@ struct InfectivityDistributions {
  * @brief Probability that an Infection is detected.
  */
 struct DetectInfection {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -296,7 +296,7 @@ struct HighViralLoadProtectionFactor {
 /**
  * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
-struct MaskProtection {
+struct InwardMaskProtection {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
@@ -306,7 +306,24 @@ struct MaskProtection {
     }
     static std::string name()
     {
-        return "MaskProtection";
+        return "InwardMaskProtection";
+    }
+};
+
+/**
+ * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
+ */
+struct OutwardMaskProtection {
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, MaskType>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({MaskType::Count}, [](ScalarType /*hours*/) -> ScalarType {
+            return 1;
+        });
+    }
+    static std::string name()
+    {
+        return "OutwardMaskProtection";
     }
 };
 
@@ -314,8 +331,8 @@ struct MaskProtection {
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
-     UncertainValue<> sensitivity;
-     UncertainValue<> specificity;
+    UncertainValue<> sensitivity;
+    UncertainValue<> specificity;
 };
 
 struct GenericTest {
@@ -394,7 +411,7 @@ struct QuarantineDuration {
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 struct BasicShoppingRate {
-    using Type = CustomIndexArray< UncertainValue<>, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
         return Type({size}, 1.0);
@@ -544,10 +561,11 @@ using ParametersBase =
     ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
-                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
-                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
-                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 InfectivityDistributions, DetectInfection, InwardMaskProtection, OutwardMaskProtection,
+                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
+                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
+                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
+                 SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

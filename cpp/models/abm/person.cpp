@@ -230,7 +230,7 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
         return 0.;
     }
     else {
-        return params.get<MaskProtection>()[m_mask.get_type()](m_mask.get_time_used().hours());
+        return params.get<InwardMaskProtection>()[m_mask.get_type()](m_mask.get_time_used().hours());
     }
 }
 

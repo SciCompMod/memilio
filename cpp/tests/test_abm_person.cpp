@@ -282,14 +282,14 @@ TEST(TestPerson, getMaskProtectiveFactor)
     auto person_without = make_test_person(location);
     person_without.set_wear_mask(false);
 
-    mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = [](ScalarType hours) -> ScalarType {
+    mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
+    params.get<mio::abm::InwardMaskProtection>()[{mio::abm::MaskType::Community}] = [](ScalarType hours) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.56}, {6, 0.3}}, hours);
     };
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}] = [](ScalarType hours) -> ScalarType {
+    params.get<mio::abm::InwardMaskProtection>()[{mio::abm::MaskType::Surgical}] = [](ScalarType hours) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.66}, {6, 0.4}}, hours);
     };
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}] = [](ScalarType hours) -> ScalarType {
+    params.get<mio::abm::InwardMaskProtection>()[{mio::abm::MaskType::FFP2}] = [](ScalarType hours) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.83}, {6, 0.5}}, hours);
     };
 

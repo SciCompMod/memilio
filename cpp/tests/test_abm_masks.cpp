@@ -54,7 +54,7 @@ TEST(TestMasks, changeMask)
     ASSERT_EQ(mask.get_time_used(), mio::abm::hours(0));
 }
 
-TEST(TestMasks, maskProtection)
+TEST(TestMasks, InwardMaskProtection)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Parameters params(num_age_groups);

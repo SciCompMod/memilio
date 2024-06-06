@@ -623,15 +623,21 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]              = 0.052;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.0;
 
-    // Set mask protection according to bit.ly/MMWR7106
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = [](ScalarType hours) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.56}, {8, 0.56}}, hours);
+    // Set inward mask protection synthesized from: http://dx.doi.org/10.15585/mmwr.mm7106e1, https://doi.org/10.1101/2021.04.07.21255097, https://doi.org/10.1038/d41586-020-02801-8
+    params.get<mio::abm::InwardMaskProtection>()[{mio::abm::MaskType::Community}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
+            {{0, 0.56}, {6, 0.52}, {12, 0.48}, {18, 0.44}, {24, 0.40}, {30, 0.36}, {36, 0.32}, {42, 0.28}, {48, 0.24}},
+            hours);
     };
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}] = [](ScalarType hours) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.66}, {8, 0.66}}, hours);
+    params.get<mio::abm::InwardMaskProtection>()[{mio::abm::MaskType::Surgical}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
+            {{0, 0.66}, {6, 0.63}, {12, 0.60}, {18, 0.57}, {24, 0.54}, {30, 0.51}, {36, 0.48}, {42, 0.45}, {48, 0.42}},
+            hours);
     };
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}] = [](ScalarType hours) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.83}, {8, 0.83}}, hours);
+    params.get<mio::abm::InwardMaskProtection>()[{mio::abm::MaskType::FFP2}] = [](ScalarType hours) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
+            {{0, 0.83}, {6, 0.80}, {12, 0.77}, {18, 0.74}, {24, 0.70}, {30, 0.67}, {36, 0.64}, {42, 0.61}, {48, 0.58}},
+            hours);
     };
 }
 
