@@ -737,7 +737,7 @@ void set_parameters(mio::abm::Parameters& params)
 
     // Set infection parameters
 
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 3;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 3.5;
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
