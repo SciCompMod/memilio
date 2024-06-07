@@ -737,7 +737,7 @@ void set_parameters(mio::abm::Parameters& params)
 
     // Set infection parameters
 
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 4.5;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 5.5;
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
@@ -1432,9 +1432,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 if (location.get_type() == mio::abm::LocationType::BasicsShop) {
                     location.add_damping(mio::abm::TimePoint(mio::abm::days(14).seconds()), 0.8); // from 2021-03-15
                 }
-                if (location.get_type() == mio::abm::LocationType::Work) {
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(14).seconds()), 0.8); // from 2021-03-15
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.6); // from 2021-03-15
+                if (location.get_type() == mio::abm::LocationType::Work ||
+                    location.get_type() == mio::abm::LocationType::BasicsShop) {
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(23).seconds()), 0.5); // from 2021-03-15
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.5); // from 2021-04-12
                 }
             }
 
