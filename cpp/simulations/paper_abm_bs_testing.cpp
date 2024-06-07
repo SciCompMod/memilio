@@ -718,8 +718,8 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.0075;
     params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.019;
     params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.0615;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.165;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.225;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.25;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.4;
 
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.075;
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.075;
@@ -737,7 +737,7 @@ void set_parameters(mio::abm::Parameters& params)
 
     // Set infection parameters
 
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 3.5;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 4;
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
@@ -1460,11 +1460,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             for (auto& location : location_it) {
                 if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
                               location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(20, 0);
+                    location.set_capacity(30, 0);
                 }
                 if (std::find(social_event_location_ids_big.begin(), social_event_location_ids_big.end(),
                               location.get_index()) != social_event_location_ids_big.end()) {
-                    location.set_capacity(5, 0);
+                    location.set_capacity(10, 0);
                 }
             }
             sim.advance(mio::abm::TimePoint(mio::abm::days(14).seconds()), historyInfectionStatePerAgeGroup,
@@ -1474,7 +1474,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             for (auto& location : location_it) {
                 if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
                               location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(10, 0);
+                    location.set_capacity(15, 0);
                 }
             }
             sim.advance(mio::abm::TimePoint(mio::abm::days(42).seconds()), historyInfectionStatePerAgeGroup,
@@ -1491,7 +1491,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             for (auto& location : location_it) {
                 if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
                               location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(2, 0);
+                    location.set_capacity(5, 0);
                 }
                 //90% of big social events get reopened and caopacity will be unlimited
                 int number_of_big_social_events = (int)(0.9 * social_event_location_ids_big.size());
