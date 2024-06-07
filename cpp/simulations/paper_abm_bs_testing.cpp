@@ -725,19 +725,19 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.075;
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.075;
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.15;
-    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.6;
-    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.8;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.55;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.7;
 
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.05;
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.05;
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.14;
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.28;
-    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.6;
-    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.8;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.55;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.7;
 
     // Set infection parameters
 
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 4;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 4.5;
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
@@ -765,7 +765,7 @@ void set_parameters(mio::abm::Parameters& params)
     };
 
     //Set other parameters
-    params.get<mio::abm::MaskProtection>()           = 0.35; //all masks have a 0.66 protection factor for now
+    params.get<mio::abm::MaskProtection>()           = 0.4; //all masks have a 0.66 protection factor for now
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
 }
 
@@ -1432,6 +1432,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 if (location.get_type() == mio::abm::LocationType::BasicsShop) {
                     location.add_damping(mio::abm::TimePoint(mio::abm::days(14).seconds()), 0.8); // from 2021-03-15
                 }
+                if (location.get_type() == mio::abm::LocationType::Work) {
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(14).seconds()), 0.8); // from 2021-03-15
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.6); // from 2021-03-15
+                }
             }
 
             // 5. add capacity limits to some locations
@@ -1474,12 +1478,12 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             for (auto& location : location_it) {
                 if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
                               location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(15, 0);
+                    location.set_capacity(10, 0);
                 }
             }
             sim.advance(mio::abm::TimePoint(mio::abm::days(42).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
-            std::cout << "day 42 finished" << std::endl;
+            std::cout << "day 42 finished" << std::endl; // date 2021-04-12
             for (auto& location : location_it) {
                 if (location.get_type() != mio::abm::LocationType::School) {
                     location.set_npi_active(false);
@@ -1491,7 +1495,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             for (auto& location : location_it) {
                 if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
                               location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(5, 0);
+                    location.set_capacity(2, 0);
                 }
                 //90% of big social events get reopened and caopacity will be unlimited
                 int number_of_big_social_events = (int)(0.9 * social_event_location_ids_big.size());
