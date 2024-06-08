@@ -1597,8 +1597,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    // std::string input_dir = "/p/project/loki/memilio/memilio/data";
-    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project/loki/memilio/memilio/data";
+    // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
