@@ -293,10 +293,10 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results"
-    path = r"C:\Users\korf_sa\Documents\rep\data\results_cluster\results"
+    # path = r"C:\Users\korf_sa\Documents\rep\data\results_cluster\results"
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
