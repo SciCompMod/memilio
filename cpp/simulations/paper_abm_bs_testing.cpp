@@ -765,7 +765,7 @@ void set_parameters(mio::abm::Parameters& params)
     };
 
     //Set other parameters
-    params.get<mio::abm::MaskProtection>()           = 0.4; //all masks have a 0.66 protection factor for now
+    params.get<mio::abm::MaskProtection>()           = 0.5; //all masks have a 0.66 protection factor for now
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
 }
 
@@ -1437,6 +1437,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                     location.add_damping(mio::abm::TimePoint(mio::abm::days(23).seconds()), 0.2); // from 2021-03-15
                     location.add_damping(mio::abm::TimePoint(mio::abm::days(30).seconds()), 0.8); // from 2021-04-12
                     location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.2); // from 2021-04-12
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(72).seconds()), 1.0); // from 2021-04-12
                 }
             }
 
@@ -1493,7 +1494,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             }
             // set infection from viral shed lower
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                2.5;
+                4.0;
             sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 72 finished (date 2021-05-10)" << std::endl;
@@ -1596,8 +1597,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project/loki/memilio/memilio/data";
-    // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project/loki/memilio/memilio/data";
+    std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     std::string result_dir = input_dir + "/results";
     size_t num_runs;
     bool save_single_runs = true;
