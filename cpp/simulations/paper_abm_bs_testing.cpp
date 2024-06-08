@@ -1434,8 +1434,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 }
                 if (location.get_type() == mio::abm::LocationType::Work ||
                     location.get_type() == mio::abm::LocationType::BasicsShop) {
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(23).seconds()), 0.5); // from 2021-03-15
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.5); // from 2021-04-12
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(23).seconds()), 0.2); // from 2021-03-15
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(30).seconds()), 0.8); // from 2021-04-12
+                    location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.2); // from 2021-04-12
                 }
             }
 
@@ -1490,6 +1491,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                     location.set_npi_active(false);
                 }
             }
+            // set infection from viral shed lower
+            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+                2.5;
             sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 72 finished (date 2021-05-10)" << std::endl;
@@ -1619,7 +1623,7 @@ int main(int argc, char** argv)
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
 
-        num_runs = 2;
+        num_runs = 1;
         printf("Running with number of runs = %d.\n", (int)num_runs);
     }
 
