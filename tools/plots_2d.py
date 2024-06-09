@@ -217,6 +217,46 @@ def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_sc
     return 0
 
 
+def plot_r0(path_results, path_plots, modes, percentile="p50"):
+    file_format = 'h5'
+    try:
+        population = pd.read_json(
+            'data/pydata/Germany/county_current_population.json')
+    # pandas>1.5 raise FileNotFoundError instead of ValueError
+    except (ValueError, FileNotFoundError):
+        print(
+            "Population data was not found. Download it from the internet.")
+        population = gpd.get_population_data(
+            read_data=False, file_format=file_format,
+            out_folder='data/pydata/Germany/', no_raw=True,
+            split_gender=False, merge_eisenach=True)
+
+    total_pop = population['Population'].sum()
+
+    r0_nums = []
+
+    for mode in modes:
+        r0_mode = []
+        path_results_mode = os.path.join(path_results, mode, "r0")
+        path = os.path.join(path_results_mode, percentile,  "Results.h5")
+        f = h5py.File(path, 'r')
+        num_days = f['1001']['Group1'].shape[0]
+        for day in range(num_days):
+            r0_val = 0
+            for key in f.keys():
+                group = f[key]
+                # search for key in population['ID_County]
+                indx_key = population.index[population['ID_County'] == int(
+                    key)]
+                r0_val += group['Group1'][()][day][0] * \
+                    population['Population'][indx_key].values[0] / total_pop
+            r0_mode.append(r0_val)
+        f.close()
+        r0_nums.append(r0_mode)
+
+    plot(r0_nums, modes, path_plots, title="R0", ylabel="R0")
+
+
 def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=False):
     if not os.path.exists(path_plots):
         os.makedirs(path_plots)
@@ -276,13 +316,15 @@ if __name__ == '__main__':
     dead_compartment = [[9]]
     flow_se = [[0]]
 
-    plot_risk(path_results, path_plots)
-    plot_compartments(path_results, path_plots, modes,
-                      icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
-    plot_compartments(path_results, path_plots, modes,
-                      infected_compartment, [""], "Total Infected")
-    plot_compartments(path_results, path_plots, modes,
-                      dead_compartment, [""], "Total Deaths")
-    plot_flows(path_results, path_plots, modes,
-               flow_se, [""], "Daily Infections")
-    plot_icu_comp(path_results, path_plots, modes, path_icu_data)
+    # plot_risk(path_results, path_plots)
+    # plot_compartments(path_results, path_plots, modes,
+    #                   icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
+    # plot_compartments(path_results, path_plots, modes,
+    #                   infected_compartment, [""], "Total Infected")
+    # plot_compartments(path_results, path_plots, modes,
+    #                   dead_compartment, [""], "Total Deaths")
+    # plot_flows(path_results, path_plots, modes,
+    #            flow_se, [""], "Daily Infections")
+    # plot_icu_comp(path_results, path_plots, modes, path_icu_data)
+
+    plot_r0(path_results, path_plots, modes)
