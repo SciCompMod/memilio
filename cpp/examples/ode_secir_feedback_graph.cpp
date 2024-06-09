@@ -352,9 +352,9 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
 mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
     const auto start_date   = mio::Date(2020, 10, 15);
-    const auto num_days_sim = 100.0;
+    const auto num_days_sim = 10.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 10;
+    const auto num_runs     = 1;
 
     // auto const modes = {"ClassicDamping", "FeedbackDamping"};
     auto const modes = {"FeedbackDamping"};
@@ -393,17 +393,10 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
             printf("\n");
         }
 
-        auto save_single_run_result = mio::IOResult<void>(mio::success());
-
         auto result_dir_mode = result_dir / mode;
         // create directory for results
         if (mio::mpi::is_root()) {
-            boost::filesystem::path dir(result_dir_mode);
-            bool created_results_dir = boost::filesystem::create_directories(dir);
-
-            if (created_results_dir) {
-                mio::log_info("Directory '{:s}' was created.", dir.string());
-            }
+            boost::filesystem::create_directories(result_dir_mode);
         }
 
         if (std::strcmp(mode, "FeedbackDamping") == 0) {
@@ -470,7 +463,7 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                                            node.property.get_simulation()
                                                .get_model()
                                                .parameters.template get<mio::osecir::ContactPatterns>();
-                                       for (auto t_sim = 0.0; t_sim < 0.0; t_sim++) {
+                                       for (auto t_sim = 0.0; t_sim < num_days_sim; t_sim++) {
                                            auto t_sim_day = mio::SimulationTime(t_sim);
                                            for (size_t i = 0; i < num_groups; ++i) {
                                                for (size_t j = 0; j < num_groups; ++j) {
@@ -529,12 +522,7 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
                 auto result_dir_run_flows = result_dir_mode / "flows";
                 if (mio::mpi::is_root()) {
-                    boost::filesystem::path dir(result_dir_run_flows);
-                    bool created_flow_dir = boost::filesystem::create_directories(dir);
-
-                    if (created_flow_dir) {
-                        mio::log_info("Directory '{:s}' was created.", dir.string());
-                    }
+                    boost::filesystem::create_directories(result_dir_run_flows);
                     printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
                 }
                 BOOST_OUTCOME_TRY(
@@ -542,36 +530,21 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
                 auto result_dir_risk = result_dir_mode / "risk";
                 if (mio::mpi::is_root()) {
-                    boost::filesystem::path dir(result_dir_risk);
-                    bool created_risk_dir = boost::filesystem::create_directories(dir);
-
-                    if (created_risk_dir) {
-                        mio::log_info("Directory '{:s}' was created.", dir.string());
-                    }
+                    boost::filesystem::create_directories(result_dir_risk);
                     printf("Saving Risk results to \"%s\".\n", result_dir_risk.c_str());
                 }
                 BOOST_OUTCOME_TRY(save_results(ensemble_risks, ensemble_params, county_ids, result_dir_risk, false));
 
                 auto result_dir_r0 = result_dir_mode / "r0";
                 if (mio::mpi::is_root()) {
-                    boost::filesystem::path dir(result_dir_r0);
-                    bool created_r0_dir = boost::filesystem::create_directories(dir);
-
-                    if (created_r0_dir) {
-                        mio::log_info("Directory '{:s}' was created.", dir.string());
-                    }
+                    boost::filesystem::create_directories(result_dir_r0);
                     printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
                 }
                 BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
 
                 auto result_dir_contacts = result_dir_mode / "contacts";
                 if (mio::mpi::is_root()) {
-                    boost::filesystem::path dir(result_dir_contacts);
-                    bool created_contacts_dir = boost::filesystem::create_directories(dir);
-
-                    if (created_contacts_dir) {
-                        mio::log_info("Directory '{:s}' was created.", dir.string());
-                    }
+                    boost::filesystem::create_directories(result_dir_contacts);
                     printf("Saving Contact results to \"%s\".\n", result_dir_contacts.c_str());
                 }
                 BOOST_OUTCOME_TRY(
@@ -621,10 +594,35 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                             auto interpolated_r0 = mio::interpolate_simulation_result(r0_node);
                             return mio::interpolate_simulation_result(interpolated_r0);
                         });
+
+                    auto contacts = std::vector<mio::TimeSeries<ScalarType>>{};
+                    contacts.reserve(results_graph.nodes().size());
+                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                                   std::back_inserter(contacts), [num_groups, num_days_sim](auto&& node) {
+                                       Eigen::VectorXd contact_rate_ages(num_groups);
+                                       auto contacts_node = mio::TimeSeries<ScalarType>(num_groups);
+                                       mio::ContactMatrixGroup const& contact_matrix =
+                                           node.property.get_simulation()
+                                               .get_model()
+                                               .parameters.template get<mio::osecir::ContactPatterns>();
+                                       for (auto t_sim = 0.0; t_sim < num_days_sim; t_sim++) {
+                                           auto t_sim_day = mio::SimulationTime(t_sim);
+                                           for (size_t i = 0; i < num_groups; ++i) {
+                                               for (size_t j = 0; j < num_groups; ++j) {
+                                                   contact_rate_ages(i) += contact_matrix.get_matrix_at(t_sim_day)(
+                                                       static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j));
+                                               }
+                                           }
+                                           contacts_node.add_time_point(t_sim, contact_rate_ages);
+                                       }
+                                       auto interpolated_contacts = mio::interpolate_simulation_result(contacts_node);
+                                       return interpolated_contacts;
+                                   });
+
                     std::cout << "run " << run_idx << " done" << std::endl;
 
                     return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows),
-                                           std::move(r0));
+                                           std::move(r0), std::move(contacts));
                 });
             if (ensemble.size() > 0) {
                 auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
@@ -635,22 +633,21 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
                 ensemble_flows.reserve(ensemble.size());
                 auto ensemble_r0 = std::vector<std::vector<mio::TimeSeries<double>>>{};
                 ensemble_r0.reserve(ensemble.size());
+                auto ensemble_contacts = std::vector<std::vector<mio::TimeSeries<double>>>{};
+                ensemble_contacts.reserve(ensemble.size());
+
                 for (auto&& run : ensemble) {
                     ensemble_results.emplace_back(std::move(std::get<0>(run)));
                     ensemble_params.emplace_back(std::move(std::get<1>(run)));
                     ensemble_flows.emplace_back(std::move(std::get<2>(run)));
                     ensemble_r0.emplace_back(std::move(std::get<3>(run)));
+                    ensemble_contacts.emplace_back(std::move(std::get<4>(run)));
                 }
                 BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir_mode, false));
 
                 auto result_dir_run_flows = result_dir_mode / "flows";
                 if (mio::mpi::is_root()) {
-                    boost::filesystem::path dir(result_dir_run_flows);
-                    bool created_flow_dir = boost::filesystem::create_directories(dir);
-
-                    if (created_flow_dir) {
-                        mio::log_info("Directory '{:s}' was created.", dir.string());
-                    }
+                    boost::filesystem::create_directories(result_dir_run_flows);
                     printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
                 }
                 BOOST_OUTCOME_TRY(
@@ -658,15 +655,18 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
                 auto result_dir_r0 = result_dir_mode / "r0";
                 if (mio::mpi::is_root()) {
-                    boost::filesystem::path dir(result_dir_r0);
-                    bool created_r0_dir = boost::filesystem::create_directories(dir);
-
-                    if (created_r0_dir) {
-                        mio::log_info("Directory '{:s}' was created.", dir.string());
-                    }
+                    boost::filesystem::create_directories(result_dir_r0);
                     printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
                 }
                 BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
+
+                auto result_dir_contacts = result_dir_mode / "contacts";
+                if (mio::mpi::is_root()) {
+                    boost::filesystem::create_directories(result_dir_contacts);
+                    printf("Saving Contact results to \"%s\".\n", result_dir_contacts.c_str());
+                }
+                BOOST_OUTCOME_TRY(
+                    save_results(ensemble_contacts, ensemble_params, county_ids, result_dir_contacts, false));
             }
         }
     }
