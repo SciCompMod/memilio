@@ -309,7 +309,7 @@ if __name__ == '__main__':
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
 
-    modes = ["NormalSim", "FeedbackSim"]
+    modes = ["ClassicDamping", "FeedbackDamping"]
 
     icu_compartment = [[7]]
     infected_compartment = [[1, 2, 3, 4, 5, 6, 7]]

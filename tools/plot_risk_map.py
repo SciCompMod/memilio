@@ -22,7 +22,7 @@ def plot_risk_map(path_results, path_plots, days, percentile):
               days=days, min_val=0, max_val=1, filename="risk_map", relative=False, age_groups={0: '0-4'})
 
 
-def plot_icu_map(path_results, path_plots, days, percentile, mode):
+def plot_icu_map(path_results, path_plots, days, percentile, modes):
     for mode in modes:
         path = os.path.join(path_plots, mode)
         if not os.path.exists(path):
@@ -167,7 +167,7 @@ def plot_maps(path_results, path_plots, compartments, percentile, days, min_val,
 
 
 if __name__ == '__main__':
-    modes = ["NormalSim", "FeedbackSim"]
+    modes = ["ClassicDamping", "FeedbackDamping"]
     path_cwd = os.getcwd()
     path_results = os.path.join(path_cwd, "results")
     path_plots = os.path.join(path_cwd, "plots")
@@ -177,8 +177,8 @@ if __name__ == '__main__':
     percentile = "p50"
     days = list(range(0, num_days + 1, 10))
 
-    plot_risk_map(os.path.join(path_results, "FeedbackSim"),
-                  os.path.join(path_plots, "FeedbackSim"), days, percentile)
+    plot_risk_map(os.path.join(path_results, "FeedbackDamping"),
+                  os.path.join(path_plots, "FeedbackDamping"), days, percentile)
     plot_icu_map(path_results, path_plots, days, percentile, modes)
 
     plot_flows(path_results, path_plots, days,

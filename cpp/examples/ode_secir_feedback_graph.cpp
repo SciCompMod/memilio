@@ -299,7 +299,9 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
     mio::osecir::Parameters params(num_age_groups);
     params.get<mio::osecir::StartDay>() = start_day;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
-    BOOST_OUTCOME_TRY(set_feedback_parameters(params));
+    if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
+        BOOST_OUTCOME_TRY(set_feedback_parameters(params));
+    }
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(params, mode));
 
@@ -337,6 +339,186 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
     return mio::success(params_graph);
 }
 
+mio::TimeSeries<ScalarType>
+get_risk(mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>& simulation)
+{
+    auto& risk = simulation.get_perceived_risk();
+    return mio::interpolate_simulation_result(risk);
+}
+
+mio::TimeSeries<ScalarType> get_risk(mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>& /*simulation*/)
+{
+    return mio::TimeSeries<ScalarType>(6);
+}
+
+template <typename ParameterStudy>
+mio::IOResult<void> run_parameter_study(ParameterStudy parameter_study, std::vector<int> county_ids,
+                                        const fs::path& result_dir, const ScalarType num_days_sim,
+                                        const std::string mode)
+{
+
+    // parameter_study.get_rng().seed(
+    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+    if (mio::mpi::is_root()) {
+        printf("Seeds: ");
+        for (auto s : parameter_study.get_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
+    }
+
+    auto ensemble = parameter_study.run(
+        [](auto&& graph) {
+            return draw_sample(graph);
+        },
+        [&](auto results_graph, auto&& run_idx) {
+            auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+
+            auto params = std::vector<mio::osecir::Model>{};
+            params.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                           [](auto&& node) {
+                               return node.property.get_simulation().get_model();
+                           });
+
+            auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
+            flows.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(flows),
+                           [](auto&& node) {
+                               auto& flow_node         = node.property.get_simulation().get_flows();
+                               auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
+                               return interpolated_flows;
+                           });
+
+            // save the perceived risk for each run
+            auto risks = std::vector<mio::TimeSeries<ScalarType>>{};
+            if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
+                risks.reserve(results_graph.nodes().size());
+                std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(risks),
+                               [](auto&& node) {
+                                   auto interpolated_risk = get_risk(node.property.get_simulation());
+                                   return mio::interpolate_simulation_result(interpolated_risk);
+                               });
+            }
+
+            const auto num_groups =
+                (size_t)results_graph.nodes()[0].property.get_simulation().get_model().parameters.get_num_groups();
+            auto r0 = std::vector<mio::TimeSeries<ScalarType>>{};
+            r0.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(r0),
+                           [num_groups](auto&& node) {
+                               auto r0_node   = mio::TimeSeries<ScalarType>(num_groups);
+                               auto r0_values = mio::osecir::get_reproduction_numbers(node.property.get_simulation());
+                               for (int i = 0; i < node.property.get_simulation().get_result().get_num_time_points();
+                                    i++) {
+                                   r0_node.add_time_point(node.property.get_simulation().get_result().get_time(i),
+                                                          Eigen::VectorXd::Constant(num_groups, r0_values[i]));
+                               }
+                               auto interpolated_r0 = mio::interpolate_simulation_result(r0_node);
+                               return mio::interpolate_simulation_result(interpolated_r0);
+                           });
+
+            auto contacts = std::vector<mio::TimeSeries<ScalarType>>{};
+            contacts.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(contacts),
+                           [num_groups, num_days_sim](auto&& node) {
+                               Eigen::VectorXd contact_rate_ages(num_groups);
+                               auto contacts_node = mio::TimeSeries<ScalarType>(num_groups);
+                               mio::ContactMatrixGroup const& contact_matrix =
+                                   node.property.get_simulation()
+                                       .get_model()
+                                       .parameters.template get<mio::osecir::ContactPatterns>();
+                               for (auto t_sim = 0.0; t_sim < num_days_sim; t_sim++) {
+                                   auto t_sim_day = mio::SimulationTime(t_sim);
+                                   for (size_t i = 0; i < num_groups; ++i) {
+                                       for (size_t j = 0; j < num_groups; ++j) {
+                                           contact_rate_ages(i) += contact_matrix.get_matrix_at(t_sim_day)(
+                                               static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j));
+                                       }
+                                   }
+                                   contacts_node.add_time_point(t_sim, contact_rate_ages);
+                               }
+                               auto interpolated_contacts = mio::interpolate_simulation_result(contacts_node);
+                               return interpolated_contacts;
+                           });
+
+            // for (size_t i = 0; i < results_graph.nodes().size(); i++) {
+            //     auto& node = results_graph.nodes()[i];
+            //     std::stringstream output1;
+            //     node.property.get_simulation()
+            //         .get_model_ptr()
+            //         ->parameters.template get<mio::osecir::ICUOccupancyLocal>()
+            //         .print_table({}, 12, 15, output1);
+
+            //     std::string results_dir = "/localdata1/code_2024/memilio/test";
+
+            //     std::ofstream file1(results_dir + "/icu_occupancy_local_" + std::to_string(county_ids[i]) + ".txt");
+            //     file1 << output1.str();
+            //     file1.close();
+            // }
+
+            std::cout << "run " << run_idx << " done" << std::endl;
+
+            return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows),
+                                   std::move(risks), std::move(r0), std::move(contacts));
+        });
+    if (ensemble.size() > 0) {
+        auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_results.reserve(ensemble.size());
+        auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
+        ensemble_params.reserve(ensemble.size());
+        auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_flows.reserve(ensemble.size());
+        auto ensemble_risks = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_risks.reserve(ensemble.size());
+        auto ensemble_r0 = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_r0.reserve(ensemble.size());
+        auto ensemble_contacts = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_contacts.reserve(ensemble.size());
+        for (auto&& run : ensemble) {
+            ensemble_results.emplace_back(std::move(std::get<0>(run)));
+            ensemble_params.emplace_back(std::move(std::get<1>(run)));
+            ensemble_flows.emplace_back(std::move(std::get<2>(run)));
+            ensemble_risks.emplace_back(std::move(std::get<3>(run)));
+            ensemble_r0.emplace_back(std::move(std::get<4>(run)));
+            ensemble_contacts.emplace_back(std::move(std::get<5>(run)));
+        }
+        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, false));
+
+        auto result_dir_run_flows = result_dir / "flows";
+        if (mio::mpi::is_root()) {
+            boost::filesystem::create_directories(result_dir_run_flows);
+            printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
+        }
+        BOOST_OUTCOME_TRY(save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
+
+        if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
+            auto result_dir_risk = result_dir / "risk";
+            if (mio::mpi::is_root()) {
+                boost::filesystem::create_directories(result_dir_risk);
+                printf("Saving Risk results to \"%s\".\n", result_dir_risk.c_str());
+            }
+            BOOST_OUTCOME_TRY(save_results(ensemble_risks, ensemble_params, county_ids, result_dir_risk, false));
+        }
+
+        auto result_dir_r0 = result_dir / "r0";
+        if (mio::mpi::is_root()) {
+            boost::filesystem::create_directories(result_dir_r0);
+            printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
+        }
+        BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
+
+        auto result_dir_contacts = result_dir / "contacts";
+        if (mio::mpi::is_root()) {
+            boost::filesystem::create_directories(result_dir_contacts);
+            printf("Saving Contact results to \"%s\".\n", result_dir_contacts.c_str());
+        }
+        BOOST_OUTCOME_TRY(save_results(ensemble_contacts, ensemble_params, county_ids, result_dir_contacts, false));
+    }
+
+    return mio::success();
+}
+
 /**
  * Run the parameter study.
  * Load a previously stored graph or create a new one from data. 
@@ -351,17 +533,23 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
  */
 mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
-    const auto start_date   = mio::Date(2020, 10, 15);
-    const auto num_days_sim = 10.0;
-    const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
+    const auto start_date = mio::Date(2020, 10, 15);
 
-    // auto const modes = {"ClassicDamping", "FeedbackDamping"};
-    auto const modes = {"FeedbackDamping"};
+    const auto num_days_sim = 100.0;
+    const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
+    const auto num_runs     = 10;
+
+    auto const modes = {"ClassicDamping", "FeedbackDamping"};
 
     //create or load graph
     for (auto mode : modes) {
         mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+
+        auto result_dir_mode = result_dir / mode;
+        // create directory for results
+        if (mio::mpi::is_root()) {
+            boost::filesystem::create_directories(result_dir_mode);
+        }
 
         BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, mode));
         params_graph = created;
@@ -372,308 +560,23 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
         });
 
         //run parameter study
-        auto parameter_study_feedback_sim =
-            mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-
-        auto parameter_study_sim =
-            mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-
-        // parameter_study.get_rng().seed(
-        //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-        if (mio::mpi::is_root()) {
-            printf("Seeds: ");
-            for (auto s : parameter_study_feedback_sim.get_rng().get_seeds()) {
-                printf("%u, ", s);
-            }
-            for (auto s : parameter_study_sim.get_rng().get_seeds()) {
-                printf("%u, ", s);
-            }
-            printf("\n");
+        if (std::strcmp(mode, "ClassicDamping") == 0) {
+            auto parameter_study_sim =
+                mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+            BOOST_OUTCOME_TRY(
+                run_parameter_study(parameter_study_sim, county_ids, result_dir_mode, num_days_sim, mode));
         }
-
-        auto result_dir_mode = result_dir / mode;
-        // create directory for results
-        if (mio::mpi::is_root()) {
-            boost::filesystem::create_directories(result_dir_mode);
-        }
-
-        if (std::strcmp(mode, "FeedbackDamping") == 0) {
-            auto ensemble = parameter_study_feedback_sim.run(
-                [](auto&& graph) {
-                    return draw_sample(graph);
-                },
-                [&](auto results_graph, auto&& run_idx) {
-                    auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-
-                    auto params = std::vector<mio::osecir::Model>{};
-                    params.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                   std::back_inserter(params), [](auto&& node) {
-                                       return node.property.get_simulation().get_model();
-                                   });
-
-                    auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
-                    flows.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                   std::back_inserter(flows), [](auto&& node) {
-                                       auto& flow_node         = node.property.get_simulation().get_flows();
-                                       auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
-                                       return interpolated_flows;
-                                   });
-
-                    // save the perceived risk for each run
-                    auto risks = std::vector<mio::TimeSeries<ScalarType>>{};
-                    risks.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                   std::back_inserter(risks), [](auto&& node) {
-                                       auto& risk             = node.property.get_simulation().get_perceived_risk();
-                                       auto interpolated_risk = mio::interpolate_simulation_result(risk);
-                                       return mio::interpolate_simulation_result(interpolated_risk);
-                                   });
-
-                    const auto num_groups = (size_t)results_graph.nodes()[0]
-                                                .property.get_simulation()
-                                                .get_model()
-                                                .parameters.get_num_groups();
-                    auto r0 = std::vector<mio::TimeSeries<ScalarType>>{};
-                    r0.reserve(results_graph.nodes().size());
-                    std::transform(
-                        results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(r0),
-                        [num_groups](auto&& node) {
-                            auto r0_node   = mio::TimeSeries<ScalarType>(num_groups);
-                            auto r0_values = mio::osecir::get_reproduction_numbers(node.property.get_simulation());
-                            for (int i = 0; i < node.property.get_simulation().get_result().get_num_time_points();
-                                 i++) {
-                                r0_node.add_time_point(node.property.get_simulation().get_result().get_time(i),
-                                                       Eigen::VectorXd::Constant(num_groups, r0_values[i]));
-                            }
-                            auto interpolated_r0 = mio::interpolate_simulation_result(r0_node);
-                            return mio::interpolate_simulation_result(interpolated_r0);
-                        });
-
-                    auto contacts = std::vector<mio::TimeSeries<ScalarType>>{};
-                    contacts.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                   std::back_inserter(contacts), [num_groups, num_days_sim](auto&& node) {
-                                       Eigen::VectorXd contact_rate_ages(num_groups);
-                                       auto contacts_node = mio::TimeSeries<ScalarType>(num_groups);
-                                       mio::ContactMatrixGroup const& contact_matrix =
-                                           node.property.get_simulation()
-                                               .get_model()
-                                               .parameters.template get<mio::osecir::ContactPatterns>();
-                                       for (auto t_sim = 0.0; t_sim < num_days_sim; t_sim++) {
-                                           auto t_sim_day = mio::SimulationTime(t_sim);
-                                           for (size_t i = 0; i < num_groups; ++i) {
-                                               for (size_t j = 0; j < num_groups; ++j) {
-                                                   contact_rate_ages(i) += contact_matrix.get_matrix_at(t_sim_day)(
-                                                       static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j));
-                                               }
-                                           }
-                                           contacts_node.add_time_point(t_sim, contact_rate_ages);
-                                       }
-                                       auto interpolated_contacts = mio::interpolate_simulation_result(contacts_node);
-                                       return interpolated_contacts;
-                                   });
-
-                    // for (size_t i = 0; i < results_graph.nodes().size(); i++) {
-                    //     auto& node = results_graph.nodes()[i];
-                    //     std::stringstream output1;
-                    //     node.property.get_simulation()
-                    //         .get_model_ptr()
-                    //         ->parameters.template get<mio::osecir::ICUOccupancyLocal>()
-                    //         .print_table({}, 12, 15, output1);
-
-                    //     std::string results_dir = "/localdata1/code_2024/memilio/test";
-
-                    //     std::ofstream file1(results_dir + "/icu_occupancy_local_" + std::to_string(county_ids[i]) + ".txt");
-                    //     file1 << output1.str();
-                    //     file1.close();
-                    // }
-
-                    std::cout << "run " << run_idx << " done" << std::endl;
-
-                    return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows),
-                                           std::move(risks), std::move(r0), std::move(contacts));
-                });
-            if (ensemble.size() > 0) {
-                auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_results.reserve(ensemble.size());
-                auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
-                ensemble_params.reserve(ensemble.size());
-                auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_flows.reserve(ensemble.size());
-                auto ensemble_risks = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_risks.reserve(ensemble.size());
-                auto ensemble_r0 = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_r0.reserve(ensemble.size());
-                auto ensemble_contacts = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_contacts.reserve(ensemble.size());
-                for (auto&& run : ensemble) {
-                    ensemble_results.emplace_back(std::move(std::get<0>(run)));
-                    ensemble_params.emplace_back(std::move(std::get<1>(run)));
-                    ensemble_flows.emplace_back(std::move(std::get<2>(run)));
-                    ensemble_risks.emplace_back(std::move(std::get<3>(run)));
-                    ensemble_r0.emplace_back(std::move(std::get<4>(run)));
-                    ensemble_contacts.emplace_back(std::move(std::get<5>(run)));
-                }
-                BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir_mode, false));
-
-                auto result_dir_run_flows = result_dir_mode / "flows";
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_run_flows);
-                    printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
-                }
-                BOOST_OUTCOME_TRY(
-                    save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
-
-                auto result_dir_risk = result_dir_mode / "risk";
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_risk);
-                    printf("Saving Risk results to \"%s\".\n", result_dir_risk.c_str());
-                }
-                BOOST_OUTCOME_TRY(save_results(ensemble_risks, ensemble_params, county_ids, result_dir_risk, false));
-
-                auto result_dir_r0 = result_dir_mode / "r0";
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_r0);
-                    printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
-                }
-                BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
-
-                auto result_dir_contacts = result_dir_mode / "contacts";
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_contacts);
-                    printf("Saving Contact results to \"%s\".\n", result_dir_contacts.c_str());
-                }
-                BOOST_OUTCOME_TRY(
-                    save_results(ensemble_contacts, ensemble_params, county_ids, result_dir_contacts, false));
-            }
-        }
-        else if (std::strcmp(mode, "ClassicDamping") == 0) {
-            auto ensemble = parameter_study_sim.run(
-                [](auto&& graph) {
-                    return draw_sample(graph);
-                },
-                [&](auto results_graph, auto&& run_idx) {
-                    auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-
-                    auto params = std::vector<mio::osecir::Model>{};
-                    params.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                   std::back_inserter(params), [](auto&& node) {
-                                       return node.property.get_simulation().get_model();
-                                   });
-
-                    auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
-                    flows.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                   std::back_inserter(flows), [](auto&& node) {
-                                       auto& flow_node         = node.property.get_simulation().get_flows();
-                                       auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
-                                       return interpolated_flows;
-                                   });
-
-                    const auto num_groups = (size_t)results_graph.nodes()[0]
-                                                .property.get_simulation()
-                                                .get_model()
-                                                .parameters.get_num_groups();
-                    auto r0 = std::vector<mio::TimeSeries<ScalarType>>{};
-                    r0.reserve(results_graph.nodes().size());
-                    std::transform(
-                        results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(r0),
-                        [num_groups](auto&& node) {
-                            auto r0_node   = mio::TimeSeries<ScalarType>(num_groups);
-                            auto r0_values = mio::osecir::get_reproduction_numbers(node.property.get_simulation());
-                            for (int i = 0; i < node.property.get_simulation().get_result().get_num_time_points();
-                                 i++) {
-                                r0_node.add_time_point(node.property.get_simulation().get_result().get_time(i),
-                                                       Eigen::VectorXd::Constant(num_groups, r0_values[i]));
-                            }
-                            auto interpolated_r0 = mio::interpolate_simulation_result(r0_node);
-                            return mio::interpolate_simulation_result(interpolated_r0);
-                        });
-
-                    auto contacts = std::vector<mio::TimeSeries<ScalarType>>{};
-                    contacts.reserve(results_graph.nodes().size());
-                    std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                                   std::back_inserter(contacts), [num_groups, num_days_sim](auto&& node) {
-                                       Eigen::VectorXd contact_rate_ages(num_groups);
-                                       auto contacts_node = mio::TimeSeries<ScalarType>(num_groups);
-                                       mio::ContactMatrixGroup const& contact_matrix =
-                                           node.property.get_simulation()
-                                               .get_model()
-                                               .parameters.template get<mio::osecir::ContactPatterns>();
-                                       for (auto t_sim = 0.0; t_sim < num_days_sim; t_sim++) {
-                                           auto t_sim_day = mio::SimulationTime(t_sim);
-                                           for (size_t i = 0; i < num_groups; ++i) {
-                                               for (size_t j = 0; j < num_groups; ++j) {
-                                                   contact_rate_ages(i) += contact_matrix.get_matrix_at(t_sim_day)(
-                                                       static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j));
-                                               }
-                                           }
-                                           contacts_node.add_time_point(t_sim, contact_rate_ages);
-                                       }
-                                       auto interpolated_contacts = mio::interpolate_simulation_result(contacts_node);
-                                       return interpolated_contacts;
-                                   });
-
-                    std::cout << "run " << run_idx << " done" << std::endl;
-
-                    return std::make_tuple(std::move(interpolated_result), std::move(params), std::move(flows),
-                                           std::move(r0), std::move(contacts));
-                });
-            if (ensemble.size() > 0) {
-                auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_results.reserve(ensemble.size());
-                auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
-                ensemble_params.reserve(ensemble.size());
-                auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_flows.reserve(ensemble.size());
-                auto ensemble_r0 = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_r0.reserve(ensemble.size());
-                auto ensemble_contacts = std::vector<std::vector<mio::TimeSeries<double>>>{};
-                ensemble_contacts.reserve(ensemble.size());
-
-                for (auto&& run : ensemble) {
-                    ensemble_results.emplace_back(std::move(std::get<0>(run)));
-                    ensemble_params.emplace_back(std::move(std::get<1>(run)));
-                    ensemble_flows.emplace_back(std::move(std::get<2>(run)));
-                    ensemble_r0.emplace_back(std::move(std::get<3>(run)));
-                    ensemble_contacts.emplace_back(std::move(std::get<4>(run)));
-                }
-                BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir_mode, false));
-
-                auto result_dir_run_flows = result_dir_mode / "flows";
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_run_flows);
-                    printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
-                }
-                BOOST_OUTCOME_TRY(
-                    save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
-
-                auto result_dir_r0 = result_dir_mode / "r0";
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_r0);
-                    printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
-                }
-                BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
-
-                auto result_dir_contacts = result_dir_mode / "contacts";
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_contacts);
-                    printf("Saving Contact results to \"%s\".\n", result_dir_contacts.c_str());
-                }
-                BOOST_OUTCOME_TRY(
-                    save_results(ensemble_contacts, ensemble_params, county_ids, result_dir_contacts, false));
-            }
+        else {
+            auto parameter_study_feedback_sim =
+                mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+            BOOST_OUTCOME_TRY(
+                run_parameter_study(parameter_study_feedback_sim, county_ids, result_dir_mode, num_days_sim, mode));
         }
     }
-
     return mio::success();
 }
-
 int main()
 {
     mio::set_log_level(mio::LogLevel::warn);
