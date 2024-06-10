@@ -162,7 +162,7 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
         #plot real data
     if y_real is not None:
         x_real = np.linspace(0, y_real.shape[0]-1, y_real.shape[0])
-        plt.plot(x_real, y_real[:,4], '.', color=color_plot[i+1])
+        plt.plot(x_real, y_real[:,4], '.', color='tab:red')
 
     plt.legend(legend_plot)
 
@@ -210,7 +210,7 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
         y25 = p25_bs[j][()]
         y75 = p75_bs[j][()]
         y_real = real_bs[j][()]
-        print(y_real[0:5, 9])
+        
         # Severe
         ax_severe = ax[0, count]
         ax_severe.set_xlabel('time (days)')
@@ -293,7 +293,8 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
+    path = "/Users/david/Documents/HZI/memilio/data/results"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_cluster\results"

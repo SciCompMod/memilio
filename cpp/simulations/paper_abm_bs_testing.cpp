@@ -34,6 +34,7 @@
 #include "memilio/utils/miompi.h"
 #include "memilio/io/binary_serializer.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/io/io.h"
 
 namespace fs = boost::filesystem;
 
@@ -1590,6 +1591,25 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     return mio::success();
 }
 
+// From: https://en.cppreference.com/w/cpp/chrono/c/strftime
+const std::string currentDateTime()
+{
+    // Example of the very popular RFC 3339 format UTC time
+    std::time_t time = std::time({});
+    char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+    std::strftime(std::data(timeString), std::size(timeString), "%FT%TZ", std::gmtime(&time));
+    return timeString;
+}
+
+mio::IOResult<bool> create_result_folders(std::string result_dir)
+{
+    BOOST_OUTCOME_TRY(auto&& created, mio::create_directory(result_dir));
+    BOOST_OUTCOME_TRY(created, mio::create_directory(result_dir + "/infection_per_age_group/"));
+    BOOST_OUTCOME_TRY(created, mio::create_directory(result_dir + "/infection_per_location_type/"));
+    BOOST_OUTCOME_TRY(created, mio::create_directory(result_dir + "/infection_state_per_age_group/"));
+    return mio::success();
+}
+
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::err);
@@ -1597,9 +1617,12 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project/loki/memilio/memilio/data";
+    // std::string input_dir = "/p/project/loki/memilio/memilio/data";
     // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
-    std::string result_dir = input_dir + "/results";
+    std::string input_dir  = "/Users/david/Documents/HZI/memilio/data";
+    std::string result_dir = input_dir + "/results_" + currentDateTime();
+    auto created           = create_result_folders(result_dir);
+
     size_t num_runs;
     bool save_single_runs = true;
 
