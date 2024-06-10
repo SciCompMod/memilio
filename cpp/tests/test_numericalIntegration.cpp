@@ -426,7 +426,7 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
     using testing::Eq;
 
     const double dt_min  = 0.7;
-    const double t_max   = 3.0; // this must not be intiger divisable by dt_min
+    const double t_max   = 3.0; // This must not be integer divisible by dt_min.
     const auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     auto integrator      = mio::OdeIntegrator<double>(mock_core);
     auto y0              = Eigen::VectorXd::Constant(1, 0);
