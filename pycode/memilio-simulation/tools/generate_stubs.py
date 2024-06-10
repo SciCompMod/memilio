@@ -43,7 +43,7 @@ if __name__ == "__main__":
     except:
         pass
 
-    # get all submodules (models) from memilio.simulation
+    # get all model modules from memilio.simulation
     # if package structure changes this needs to be adjusted
     models = [m.name for m in pkgutil.iter_modules(
         memilio.simulation.__path__)]
