@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/utils/compiler_diagnostics.h"
 
 namespace mio
 {

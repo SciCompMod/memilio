@@ -132,7 +132,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                           const std::string& filename);
 
 /**
- * Save the results for the Edges obtained from the function condense_m_mobility.
+ * Saves the results of a simulation for each edge in the graph.
  * @param ensemble_edges Simulation results for each run for each edge.
  * @param pairs_edges Identifiers for the start and end node of the edges.
  * @param result_dir Top level directory for all results of the parameter study.

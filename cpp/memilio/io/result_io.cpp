@@ -89,6 +89,7 @@ IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const
     }
     return success();
 }
+
 IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
                           const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
                           bool save_single_runs, bool save_percentiles)
@@ -191,6 +192,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                              "Failed to create the DataSpace for End" + std::to_string(ids[edge_indx].second) +
                                  " in group " + h5group_name + " in the file: " + filename);
 
+            // End is the target node of the edge
             auto dset_name = "End" + std::to_string(ids[edge_indx].second);
             H5DataSet dset_values{H5Dcreate(start_node_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE,
                                             dspace_values.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
