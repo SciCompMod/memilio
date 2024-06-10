@@ -133,8 +133,8 @@ def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Indiv
     return 0
 
 
-def get_results(path_results, indx_comp, group_key='Total', results="total"):
-    percentiles = ["p25", "p50", "p75"]
+def get_results(path_results, indx_comp, group_key='Total', results="total", percentiles = ["p25", "p50", "p75"]):
+    
     y = {}
     for px in percentiles:
         if results == "total":
@@ -156,7 +156,7 @@ def plot_risk(path_results, path_plots, log_scale=False):
     if not os.path.exists(path_plots):
         os.makedirs(path_plots)
     num_counties = 400
-    path_risk_results = os.path.join(path_results, "FeedbackSim", "risk")
+    path_risk_results = os.path.join(path_results, "FeedbackDamping", "risk")
     # total risk
     plot_data = []
     plot_data.append(get_results(path_risk_results, [
@@ -301,11 +301,40 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
          log_scale=log_scale, ylabel="ICU Occupancy per 100_000")
     return 0
 
+def get_population_ratio_per_county():
+    df_pop = gpd.get_population_data(read_data = True)
+    df_pop = df_pop[['ID_County', 'Population']]
+    df_pop['Population_ratio'] = df_pop['Population']/(df_pop['Population'].sum())
+    return df_pop
+
+def plot_r0_total(path_results, path_plots):
+    plot_data_normal = np.zeros(101)
+    plot_data_feedback = np.zeros(101)
+    plot_data_normal_u = np.zeros(101)
+    plot_data_feedback_u = np.zeros(101)
+    plot_data_normal_l = np.zeros(101)
+    plot_data_feedback_l = np.zeros(101)
+    df_pop = get_population_ratio_per_county()
+    df_pop.replace(geoger.get_countyid_to_stateid_map(), inplace=True)
+    df_pop.rename({'ID_County':'ID_State'}, inplace =True, axis=1)
+    data_normal = get_results(os.path.join(path_results, 'ClassicDamping', 'r0'), [0], group_key='Total', results="state")
+    data_feedback = get_results(os.path.join(path_results, 'FeedbackDamping', 'r0'), [0], group_key='Total', results="state")
+    for i in range(16):
+        pop_percentage = df_pop.loc[df_pop['ID_State']==(i+1), 'Population_ratio'].sum()
+        plot_data_normal += data_normal[i]['p50']*pop_percentage
+        plot_data_feedback += data_feedback[i]['p50']*pop_percentage
+        plot_data_normal_u += data_normal[i]['p75']*pop_percentage
+        plot_data_feedback_u += data_feedback[i]['p75']*pop_percentage
+        plot_data_normal_l += data_normal[i]['p25']*pop_percentage
+        plot_data_feedback_l += data_feedback[i]['p25']*pop_percentage
+    plot_data = [{'p25':plot_data_normal_l,'p50':plot_data_normal,'p75':plot_data_normal_u}, {'p25':plot_data_feedback_l,'p50':plot_data_feedback,'p75':plot_data_feedback_u}]
+    plot(plot_data, labels=modes, path_plots=path_plots, title='R0', log_scale=False, ylabel='Number Individuals')
+
 
 if __name__ == '__main__':
     path_cwd = os.getcwd()
     path_results = os.path.join(path_cwd, "results")
-    path_plots = os.path.join(path_cwd, "plots")
+    path_plots = os.path.join(path_cwd, "plots_zunker")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
 
@@ -327,4 +356,12 @@ if __name__ == '__main__':
     #            flow_se, [""], "Daily Infections")
     # plot_icu_comp(path_results, path_plots, modes, path_icu_data)
 
-    plot_r0(path_results, path_plots, modes)
+    # plot_r0(path_results, path_plots, modes)
+    
+    plot_r0_total(path_results, path_plots)
+    plot_risk(path_results, path_plots)
+    plot_compartments(path_results, path_plots, modes,
+                      icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
+    plot_compartments(path_results, path_plots, modes,
+                      infected_compartment, [""], "Total Infected")
+    plot_icu_comp(path_results, path_plots, modes, path_icu_data)
