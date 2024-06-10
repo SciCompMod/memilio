@@ -35,4 +35,5 @@ setup(
             'numpy>=1.22,<1.25',
         ],
     },
-    long_description='', test_suite='memilio.simulation_test'
+    long_description='', test_suite='memilio.simulation_test',
+)
