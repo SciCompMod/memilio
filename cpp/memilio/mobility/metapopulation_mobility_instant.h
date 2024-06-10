@@ -359,7 +359,7 @@ public:
     }
 
     /**
-    * Retrieve the count of commuters in the infection states: InfectedNoSymptoms and InfectedSymptomsNaive, 
+    * Retrieve the count of commuters in selected infection states, 
     * along with the total number of commuter.
     */
     TimeSeries<ScalarType>& get_migrated()

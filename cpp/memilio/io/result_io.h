@@ -137,7 +137,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
  * @param pairs_edges Identifiers for the start and end node of the edges.
  * @param result_dir Top level directory for all results of the parameter study.
  * @param save_single_runs [Default: true] Defines if single run results are written.
- * @param save_single_runs [Default: true] Defines if percentiles are written.
+ * @param save_percentiles [Default: true] Defines if percentiles are written.
  * @return Any io errors that occur during writing of the files.
  */
 IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,

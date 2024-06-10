@@ -136,8 +136,11 @@ IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& en
 IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
                           const std::string& filename)
 {
-    const int num_edges = static_cast<int>(results.size());
-    int edge_indx       = 0;
+    const auto num_edges = results.size();
+    size_t edge_indx     = 0;
+    // H5Fcreate creates a new HDF5 file.
+    // H5F_ACC_TRUNC: If the file already exists, H5Fcreate fails. If the file does not exist, it is created and opened with read-write access.
+    // H5P_DEFAULT: default data transfer properties are used.
     H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
     MEMILIO_H5_CHECK(file.id, StatusCode::FileNotFound, filename);
     while (edge_indx < num_edges) {
@@ -146,7 +149,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
         H5Group start_node_h5group{H5Gcreate(file.id, h5group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
         MEMILIO_H5_CHECK(start_node_h5group.id, StatusCode::UnknownError,
                          "Group could not be created (" + h5group_name + ")");
-        const int num_timepoints          = static_cast<int>(result.get_num_time_points());
+        const auto num_timepoints         = result.get_num_time_points();
         constexpr int num_infectionstates = 3; // (int)result.get_num_elements() / num_groups;
 
         hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
