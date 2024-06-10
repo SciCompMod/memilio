@@ -2,9 +2,9 @@ import os
 import subprocess
 import sys
 import importlib.util
+import pkgutil
+import memilio.simulation
 
-# all current models
-models = ["osir", "oseir", "osecir", "osecirvvs", "abm"]
 setup_content = f"""
 from setuptools import setup, find_packages
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     file_path = os.path.dirname(os.path.abspath(__file__))
     package_dir = os.path.abspath(os.path.join(
-        file_path, "../memilio-simulation-stubs"))
+        file_path, "../../memilio-simulation-stubs"))
     output_dir = os.path.join(package_dir, "memilio-stubs/simulation")
     output_module_dir = os.path.join(output_dir, 'memilio')
 
@@ -42,6 +42,11 @@ if __name__ == "__main__":
         os.makedirs(output_dir)
     except:
         pass
+
+    # get all submodules (models) from memilio.simulation
+    # if package structure changes this needs to be adjusted
+    models = [m.name for m in pkgutil.iter_modules(
+        memilio.simulation.__path__)]
 
     # generate stubs and moce them into correct folder with right name
     # memilio-stubs/simulation module needs same structure as memilio/simulation

@@ -35,5 +35,4 @@ setup(
             'numpy>=1.22,<1.25',
         ],
     },
-    long_description='', test_suite='memilio.simulation_test',
-    package_data={"memilio.simulation": ["py.typed"]})
+    long_description='', test_suite='memilio.simulation_test'
