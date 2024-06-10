@@ -1435,10 +1435,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 }
                 if (location.get_type() == mio::abm::LocationType::Work ||
                     location.get_type() == mio::abm::LocationType::BasicsShop) {
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(23).seconds()), 0.2); // from 2021-03-15
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(30).seconds()), 0.8); // from 2021-04-12
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.2); // from 2021-04-12
-                    location.add_damping(mio::abm::TimePoint(mio::abm::days(72).seconds()), 1.0); // from 2021-04-12
+                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(23).seconds()), 0.2); // from 2021-03-15
+                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(30).seconds()), 0.8); // from 2021-04-01
+                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.2); // from 2021-04-12
+                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(72).seconds()), 1.0); // from 2021-05-10
                 }
             }
 
@@ -1485,6 +1485,16 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                     location.set_capacity(10, 0);
                 }
             }
+            sim.advance(mio::abm::TimePoint(mio::abm::days(23).seconds()), historyInfectionStatePerAgeGroup,
+                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
+            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+                3.5;
+            
+            sim.advance(mio::abm::TimePoint(mio::abm::days(37).seconds()), historyInfectionStatePerAgeGroup,
+                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
+            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+                5.5;
+
             sim.advance(mio::abm::TimePoint(mio::abm::days(42).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 42 finished" << std::endl; // date 2021-04-12
@@ -1493,19 +1503,23 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                     location.set_npi_active(false);
                 }
             }
-            // set infection from viral shed lower
+            // set infection from viral shed lower //Todo: change this "change of InfectionRateFromViralShed" to a parameter
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                4.5;
+                3.5;
+
             sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 72 finished (date 2021-05-10)" << std::endl;
+
+            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+                5.5;
             for (auto& location : location_it) {
                 if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
                               location.get_index()) != social_event_location_ids_small.end()) {
                     location.set_capacity(2, 0);
                 }
                 //90% of big social events get reopened and caopacity will be unlimited
-                int number_of_big_social_events = (int)(0.9 * social_event_location_ids_big.size());
+                int number_of_big_social_events = (int)(0.7 * social_event_location_ids_big.size());
                 if (std::find(social_event_location_ids_big.begin(), social_event_location_ids_big.end(),
                               location.get_index()) != social_event_location_ids_big.end()) {
                     number_of_big_social_events--;
