@@ -5,6 +5,7 @@ import imageio
 import numpy as np
 import pandas as pd
 
+from memilio.epidata import modifyDataframeSeries as mdfs
 import memilio.epidata.getPopulationData as gpd
 import memilio.plot.plotMap as pm
 from memilio.epidata import geoModificationGermany as geoger
@@ -266,6 +267,13 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
             out_folder='data/pydata/Germany/', no_raw=True,
             split_gender=False, merge_eisenach=True)
     total_pop = population['Population'].sum()
+    #adjust age groups
+    old_ages = [age.split()[0] for age in population.columns[2:]]
+    new_ages = ["0-4", "5-14", "15-34", "35-59", "60-79", ">80"]
+    population.rename(dict(zip(population.columns[2:].tolist(), old_ages)), axis=1, inplace =True)
+    for county in population.ID_County.unique():
+        population.loc[population.ID_County==county, new_ages] = mdfs.fit_age_group_intervals(population.loc[population.ID_County==county, old_ages], new_ages)
+    population.drop(old_ages, axis=1, inplace = True)
 
     contacts_nums = []
     contacts_avg = []
@@ -280,14 +288,13 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
                 key: population.index[population['ID_County'] == int(key)] for key in f.keys()}
             for key, group in f.items():
                 indx_key = indx_dict[key]
-                avg_contacts = (group['Group1'][()][:, 0] +
-                                group['Group2'][()][:, 0] +
-                                group['Group3'][()][:, 0] +
-                                group['Group4'][()][:, 0] +
-                                group['Group5'][()][:, 0] +
-                                group['Group6'][()][:, 0]) / 6
-                contacts_mode += avg_contacts * \
-                    population['Population'][indx_key].values[0] / total_pop
+                avg_contacts = (group['Group1'][()][:, 0]*population[new_ages[0]][indx_key].values[0]/population['Population'][indx_key].values[0] +
+                                group['Group2'][()][:, 0]*population[new_ages[1]][indx_key].values[0]/population['Population'][indx_key].values[0] +
+                                group['Group3'][()][:, 0]*population[new_ages[2]][indx_key].values[0]/population['Population'][indx_key].values[0] +
+                                group['Group4'][()][:, 0]*population[new_ages[3]][indx_key].values[0]/population['Population'][indx_key].values[0] +
+                                group['Group5'][()][:, 0]*population[new_ages[4]][indx_key].values[0]/population['Population'][indx_key].values[0] +
+                                group['Group6'][()][:, 0]*population[new_ages[5]][indx_key].values[0]/population['Population'][indx_key].values[0])
+                contacts_mode += avg_contacts * population['Population'][indx_key].values[0] / total_pop
 
             # contacts_mode is accumulated. Get the diffs
             contacts_mode = np.diff(contacts_mode)
@@ -364,6 +371,7 @@ if __name__ == '__main__':
     dead_compartment = [[9]]
     flow_se = [[0]]
 
+    plot_contacts(path_results, path_plots, modes)
     plot_risk(path_results, path_plots)
     plot_compartments(path_results, path_plots, modes,
                       icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
@@ -375,4 +383,3 @@ if __name__ == '__main__':
                flow_se, [""], "Daily Infections")
     plot_icu_comp(path_results, path_plots, modes, path_icu_data)
     plot_r0(path_results, path_plots, modes)
-    plot_contacts(path_results, path_plots, modes)
