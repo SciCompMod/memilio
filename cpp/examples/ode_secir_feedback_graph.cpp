@@ -134,8 +134,11 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
                                       timeInfectedCriticalMax);
 
     //probabilities
-    const double transmissionProbabilityOnContactMin[] = {0.02, 0.05, 0.05, 0.05, 0.08, 0.15};
-    const double transmissionProbabilityOnContactMax[] = {0.04, 0.07, 0.07, 0.07, 0.10, 0.20};
+    double fact                                        = 0.85;
+    const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
+                                                          fact * 0.05, fact * 0.08, fact * 0.15};
+    const double transmissionProbabilityOnContactMax[] = {fact * 0.04, fact * 0.07, fact * 0.07,
+                                                          fact * 0.07, fact * 0.10, fact * 0.20};
     const double relativeTransmissionNoSymptomsMin     = 1;
     const double relativeTransmissionNoSymptomsMax     = 1;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
@@ -191,7 +194,7 @@ mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params)
     params.get<mio::osecir::EpsilonContacts>()        = 0.1;
     params.get<mio::osecir::BlendingFactorLocal>()    = 1. / 3.;
     params.get<mio::osecir::BlendingFactorRegional>() = 1. / 3.;
-    params.get<mio::osecir::ContactReductionMin>()    = {0.4, 0.4, 0.4, 0.4};
+    params.get<mio::osecir::ContactReductionMin>()    = {0.45, 0.45, 0.45, 0.45};
     params.get<mio::osecir::ContactReductionMax>()    = {0.8, 0.8, 0.8, 0.8};
 
     return mio::success();
@@ -533,13 +536,14 @@ mio::IOResult<void> run_parameter_study(ParameterStudy parameter_study, std::vec
  */
 mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
-    const auto start_date = mio::Date(2020, 10, 15);
+    const auto start_date = mio::Date(2020, 11, 1);
 
     const auto num_days_sim = 100.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 10;
 
     auto const modes = {"ClassicDamping", "FeedbackDamping"};
+    // auto const modes = {"FeedbackDamping"};
 
     //create or load graph
     for (auto mode : modes) {

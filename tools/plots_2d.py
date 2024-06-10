@@ -19,7 +19,7 @@ import seaborn as sns
 
 sns.set_style("darkgrid")
 
-start_date = "2020-10-15"
+start_date = "2020-11-01"
 total_pop = 83278910.0
 opacity = 0.15
 lineWidth = 2
@@ -133,8 +133,8 @@ def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Indiv
     return 0
 
 
-def get_results(path_results, indx_comp, group_key='Total', results="total", percentiles = ["p25", "p50", "p75"]):
-    
+def get_results(path_results, indx_comp, group_key='Total', results="total", percentiles=["p25", "p50", "p75"]):
+
     y = {}
     for px in percentiles:
         if results == "total":
@@ -210,8 +210,9 @@ def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_sc
         for index, compartment in enumerate(flow_indx):
             labels_modes.append(labels[index] + f" {mode}")
             path_results_mode = os.path.join(path_results, mode, "flows")
-            plot_data.append(get_results(
-                path_results_mode, compartment, results="total"))
+            data = get_results(
+                path_results_mode, compartment, results="total")
+            plot_data.append(data)
     plot(plot_data, labels_modes, path_plots, title=title,
          log_scale=log_scale, ylabel="Number Individuals")
     return 0
@@ -234,27 +235,74 @@ def plot_r0(path_results, path_plots, modes, percentile="p50"):
     total_pop = population['Population'].sum()
 
     r0_nums = []
-
     for mode in modes:
-        r0_mode = []
         path_results_mode = os.path.join(path_results, mode, "r0")
         path = os.path.join(path_results_mode, percentile,  "Results.h5")
-        f = h5py.File(path, 'r')
-        num_days = f['1001']['Group1'].shape[0]
-        for day in range(num_days):
-            r0_val = 0
-            for key in f.keys():
-                group = f[key]
-                # search for key in population['ID_County]
-                indx_key = population.index[population['ID_County'] == int(
-                    key)]
-                r0_val += group['Group1'][()][day][0] * \
+        with h5py.File(path, 'r') as f:
+            num_days = f['1001']['Group1'].shape[0]
+            r0_mode = np.zeros(num_days)
+            indx_dict = {
+                key: population.index[population['ID_County'] == int(key)] for key in f.keys()}
+            for key, group in f.items():
+                indx_key = indx_dict[key]
+                r0_mode += group['Group1'][()][:, 0] * \
                     population['Population'][indx_key].values[0] / total_pop
-            r0_mode.append(r0_val)
-        f.close()
-        r0_nums.append(r0_mode)
+            r0_nums.append(r0_mode)
 
     plot(r0_nums, modes, path_plots, title="R0", ylabel="R0")
+
+
+def plot_contacts(path_results, path_plots, modes, percentile="p50"):
+    file_format = 'h5'
+    try:
+        population = pd.read_json(
+            'data/pydata/Germany/county_current_population.json')
+    # pandas>1.5 raise FileNotFoundError instead of ValueError
+    except (ValueError, FileNotFoundError):
+        print(
+            "Population data was not found. Download it from the internet.")
+        population = gpd.get_population_data(
+            read_data=False, file_format=file_format,
+            out_folder='data/pydata/Germany/', no_raw=True,
+            split_gender=False, merge_eisenach=True)
+    total_pop = population['Population'].sum()
+
+    contacts_nums = []
+    contacts_avg = []
+    for mode in modes:
+        path_results_mode = os.path.join(path_results, mode, "contacts")
+        path = os.path.join(path_results_mode, percentile,  "Results.h5")
+        with h5py.File(path, 'r') as f:
+            num_days = f['1001']['Group1'].shape[0]
+            contacts_mode = np.zeros(num_days)
+            # Berechne die Indizes einmal und speichere sie in einem Wörterbuch
+            indx_dict = {
+                key: population.index[population['ID_County'] == int(key)] for key in f.keys()}
+            for key, group in f.items():
+                indx_key = indx_dict[key]
+                avg_contacts = (group['Group1'][()][:, 0] +
+                                group['Group2'][()][:, 0] +
+                                group['Group3'][()][:, 0] +
+                                group['Group4'][()][:, 0] +
+                                group['Group5'][()][:, 0] +
+                                group['Group6'][()][:, 0]) / 6
+                contacts_mode += avg_contacts * \
+                    population['Population'][indx_key].values[0] / total_pop
+
+            # contacts_mode is accumulated. Get the diffs
+            contacts_mode = np.diff(contacts_mode)
+            contacts_nums.append(contacts_mode)
+
+        if mode != "ClassicDamping":
+            # get average of contacts_mode
+            avg_contacts_mode = np.mean(contacts_mode)
+            contacts_avg.append([avg_contacts_mode for _ in range(num_days-1)])
+
+    modes += ["Average FeedbackDamping"]
+    contacts_nums += contacts_avg
+
+    plot(contacts_nums, modes, path_plots,
+         title="Contacts", ylabel="Number of Contacts")
 
 
 def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=False):
@@ -301,40 +349,11 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
          log_scale=log_scale, ylabel="ICU Occupancy per 100_000")
     return 0
 
-def get_population_ratio_per_county():
-    df_pop = gpd.get_population_data(read_data = True)
-    df_pop = df_pop[['ID_County', 'Population']]
-    df_pop['Population_ratio'] = df_pop['Population']/(df_pop['Population'].sum())
-    return df_pop
-
-def plot_r0_total(path_results, path_plots):
-    plot_data_normal = np.zeros(101)
-    plot_data_feedback = np.zeros(101)
-    plot_data_normal_u = np.zeros(101)
-    plot_data_feedback_u = np.zeros(101)
-    plot_data_normal_l = np.zeros(101)
-    plot_data_feedback_l = np.zeros(101)
-    df_pop = get_population_ratio_per_county()
-    df_pop.replace(geoger.get_countyid_to_stateid_map(), inplace=True)
-    df_pop.rename({'ID_County':'ID_State'}, inplace =True, axis=1)
-    data_normal = get_results(os.path.join(path_results, 'ClassicDamping', 'r0'), [0], group_key='Total', results="state")
-    data_feedback = get_results(os.path.join(path_results, 'FeedbackDamping', 'r0'), [0], group_key='Total', results="state")
-    for i in range(16):
-        pop_percentage = df_pop.loc[df_pop['ID_State']==(i+1), 'Population_ratio'].sum()
-        plot_data_normal += data_normal[i]['p50']*pop_percentage
-        plot_data_feedback += data_feedback[i]['p50']*pop_percentage
-        plot_data_normal_u += data_normal[i]['p75']*pop_percentage
-        plot_data_feedback_u += data_feedback[i]['p75']*pop_percentage
-        plot_data_normal_l += data_normal[i]['p25']*pop_percentage
-        plot_data_feedback_l += data_feedback[i]['p25']*pop_percentage
-    plot_data = [{'p25':plot_data_normal_l,'p50':plot_data_normal,'p75':plot_data_normal_u}, {'p25':plot_data_feedback_l,'p50':plot_data_feedback,'p75':plot_data_feedback_u}]
-    plot(plot_data, labels=modes, path_plots=path_plots, title='R0', log_scale=False, ylabel='Number Individuals')
-
 
 if __name__ == '__main__':
     path_cwd = os.getcwd()
     path_results = os.path.join(path_cwd, "results")
-    path_plots = os.path.join(path_cwd, "plots_zunker")
+    path_plots = os.path.join(path_cwd, "plots")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
 
@@ -345,23 +364,15 @@ if __name__ == '__main__':
     dead_compartment = [[9]]
     flow_se = [[0]]
 
-    # plot_risk(path_results, path_plots)
-    # plot_compartments(path_results, path_plots, modes,
-    #                   icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
-    # plot_compartments(path_results, path_plots, modes,
-    #                   infected_compartment, [""], "Total Infected")
-    # plot_compartments(path_results, path_plots, modes,
-    #                   dead_compartment, [""], "Total Deaths")
-    # plot_flows(path_results, path_plots, modes,
-    #            flow_se, [""], "Daily Infections")
-    # plot_icu_comp(path_results, path_plots, modes, path_icu_data)
-
-    # plot_r0(path_results, path_plots, modes)
-    
-    plot_r0_total(path_results, path_plots)
     plot_risk(path_results, path_plots)
     plot_compartments(path_results, path_plots, modes,
                       icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
     plot_compartments(path_results, path_plots, modes,
                       infected_compartment, [""], "Total Infected")
+    plot_compartments(path_results, path_plots, modes,
+                      dead_compartment, [""], "Total Deaths")
+    plot_flows(path_results, path_plots, modes,
+               flow_se, [""], "Daily Infections")
     plot_icu_comp(path_results, path_plots, modes, path_icu_data)
+    plot_r0(path_results, path_plots, modes)
+    plot_contacts(path_results, path_plots, modes)

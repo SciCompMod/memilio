@@ -297,6 +297,28 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     return success();
 }
 
+IOResult<std::map<Date, std::vector<double>>> read_divi_data(const std::string& path, const std::vector<int>& vregion,
+                                                             Date start_date, Date end_date)
+{
+    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
+
+    std::map<Date, std::vector<double>> data_map;
+
+    for (const auto& entry : divi_data) {
+        if (entry.date < start_date || entry.date > end_date) {
+            continue; // Skip entries outside the desired date range
+        }
+        for (size_t region = 0; region < vregion.size(); ++region) {
+            if (vregion[region] == 0 || vregion[region] == get_region_id(entry)) {
+                data_map[entry.date].resize(vregion.size());
+                data_map[entry.date][region] = entry.num_icu;
+            }
+        }
+    }
+
+    return success(data_map);
+}
+
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {
@@ -433,11 +455,26 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
     // Initialize local ICU occupancy vector outside the loop
     Eigen::VectorXd icu_occupancy_local(num_groups_val);
 
+    // Define the date range
+    Date start_date = offset_date_by_days(date, -cutOffGamma);
+    Date end_date   = date;
+
+    // Preload all DIVI data within the date range
+    BOOST_OUTCOME_TRY(auto divi_data_map, read_divi_data(path, vregion, start_date, end_date));
+
     // Iterate over the days
     for (int offset_day = -cutOffGamma; offset_day <= 0; offset_day++) {
-        // Read DIVI data for the given date
+        // Calculate the date for the current offset
         auto date_icu = offset_date_by_days(date, offset_day);
-        BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date_icu, num_icu));
+
+        // Check if the date exists in the preloaded data
+        auto it = divi_data_map.find(date_icu);
+        if (it == divi_data_map.end()) {
+            log_error("Specified date does not exist in preloaded DIVI data.");
+            return failure(StatusCode::OutOfRange, path + ", specified date does not exist in preloaded DIVI data.");
+        }
+
+        num_icu = it->second;
 
         // Iterate over the regions
         for (size_t region = 0; region < vregion.size(); region++) {
