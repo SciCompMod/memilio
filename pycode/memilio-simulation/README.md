@@ -38,6 +38,16 @@ python setup.py install -- -DCMAKE_BUILD_TYPE=Debug -DMEMILIO_USE_BUNDLED_PYBIND
 
 Alternatively, the `CMakeCache.txt` in the directory created by Scikit-Build can be edited to set the options.
 
+## Stubs
+
+A stub file is a file containing a skeleton of the public interface of that Python module including classes, variables, functions and their types. They help by enabling autocompletes and type annotations. `pybind11-stubgen` is used to generate the stub files for the MEmilio Python Bindings and provide them as a separate stubs-only package.
+
+For installing stubs you first need to install our package `memilio.simulation` and the external dependency `pybind11-stubgen` for your python interpreter. Then run [generate_stubs.py](tools/generate_stubs.py) to generate the stubs-only package and install it as `memilio-stubs`, e.g. from the [current folder](.)
+
+```bash
+python ./tools/generate_stubs.py
+```
+
 ## Usage
 
 The package provides the following modules:
