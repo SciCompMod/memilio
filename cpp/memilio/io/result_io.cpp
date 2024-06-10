@@ -142,25 +142,33 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
     // H5F_ACC_TRUNC: If the file already exists, H5Fcreate fails. If the file does not exist, it is created and opened with read-write access.
     // H5P_DEFAULT: default data transfer properties are used.
     H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
-    MEMILIO_H5_CHECK(file.id, StatusCode::FileNotFound, filename);
+    MEMILIO_H5_CHECK(file.id, StatusCode::FileNotFound, "Failed to open the HDF5 file: " + filename);
+
     while (edge_indx < num_edges) {
         const auto& result = results[edge_indx];
         auto h5group_name  = "/" + std::to_string(ids[edge_indx].first);
         H5Group start_node_h5group{H5Gcreate(file.id, h5group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
         MEMILIO_H5_CHECK(start_node_h5group.id, StatusCode::UnknownError,
-                         "Group could not be created (" + h5group_name + ")");
+                         "Group could not be created (" + h5group_name + ") in the file: " + filename);
+
         const auto num_timepoints = result.get_num_time_points();
         const auto num_elements   = result.get_value(0).size();
 
         hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
         H5DataSpace dspace_t{H5Screate_simple(1, dims_t, NULL)};
-        MEMILIO_H5_CHECK(dspace_t.id, StatusCode::UnknownError, "Time DataSpace could not be created.");
+        MEMILIO_H5_CHECK(dspace_t.id, StatusCode::UnknownError,
+                         "Failed to create the DataSpace for 'Time' in group " + h5group_name +
+                             " in the file: " + filename);
+
         H5DataSet dset_t{H5Dcreate(start_node_h5group.id, "Time", H5T_NATIVE_DOUBLE, dspace_t.id, H5P_DEFAULT,
                                    H5P_DEFAULT, H5P_DEFAULT)};
-        MEMILIO_H5_CHECK(dset_t.id, StatusCode::UnknownError, "Time DataSet could not be created (Time).");
+        MEMILIO_H5_CHECK(dset_t.id, StatusCode::UnknownError,
+                         "Failed to create the 'Time' DataSet in group " + h5group_name + " in the file: " + filename);
+
         auto values_t = std::vector<double>(result.get_times().begin(), result.get_times().end());
         MEMILIO_H5_CHECK(H5Dwrite(dset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values_t.data()),
-                         StatusCode::UnknownError, "Time data could not be written.");
+                         StatusCode::UnknownError,
+                         "Failed to write 'Time' data in group " + h5group_name + " in the file: " + filename);
 
         int start_id = ids[edge_indx].first;
         auto total =
@@ -179,25 +187,35 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
 
             hsize_t dims_values[] = {static_cast<hsize_t>(num_timepoints), static_cast<hsize_t>(num_elements)};
             H5DataSpace dspace_values{H5Screate_simple(2, dims_values, NULL)};
-            MEMILIO_H5_CHECK(dspace_values.id, StatusCode::UnknownError, "Values DataSpace could not be created.");
+            MEMILIO_H5_CHECK(dspace_values.id, StatusCode::UnknownError,
+                             "Failed to create the DataSpace for End" + std::to_string(ids[edge_indx].second) +
+                                 " in group " + h5group_name + " in the file: " + filename);
+
             auto dset_name = "End" + std::to_string(ids[edge_indx].second);
             H5DataSet dset_values{H5Dcreate(start_node_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE,
                                             dspace_values.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
-            MEMILIO_H5_CHECK(dset_values.id, StatusCode::UnknownError, "Values DataSet could not be created.");
+            MEMILIO_H5_CHECK(dset_values.id, StatusCode::UnknownError,
+                             "Failed to create the DataSet for " + dset_name + " in group " + h5group_name +
+                                 " in the file: " + filename);
 
             MEMILIO_H5_CHECK(
                 H5Dwrite(dset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, edge_result.data()),
-                StatusCode::UnknownError, "Values data could not be written.");
+                StatusCode::UnknownError,
+                "Failed to write data for " + dset_name + " in group " + h5group_name + " in the file: " + filename);
 
-            // in the final iteration, we also save the total values
+            // In the final iteration, we also save the total values
             if (edge_indx == num_edges - 1 || ids[edge_indx + 1].first != start_id) {
                 dset_name = "Total";
                 H5DataSet dset_total{H5Dcreate(start_node_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE,
                                                dspace_values.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
-                MEMILIO_H5_CHECK(dset_total.id, StatusCode::UnknownError, "Values DataSet could not be created.");
+                MEMILIO_H5_CHECK(dset_total.id, StatusCode::UnknownError,
+                                 "Failed to create the Total DataSet in group " + h5group_name +
+                                     " in the file: " + filename);
+
                 MEMILIO_H5_CHECK(
                     H5Dwrite(dset_total.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, total.data()),
-                    StatusCode::UnknownError, "Values data could not be written.");
+                    StatusCode::UnknownError,
+                    "Failed to write Total data in group " + h5group_name + " in the file: " + filename);
             }
             edge_indx++;
         }
