@@ -169,6 +169,28 @@ public:
             this->get<TransmissionProbabilityOnContact>() = 0.0;
             corrected                                     = true;
         }
+        if (this->get<ImpactCommuters>() < 0.0 || this->get<ImpactCommuters>() > 1.0) {
+            log_warning("Constraint check: Parameter ImpactCommuters changed from {:.4f} to {:.4f}.",
+                        this->get<ImpactCommuters>(), 0.0);
+            this->get<ImpactCommuters>() = 0.0;
+            corrected                    = true;
+        }
+        for (auto& i : this->get<CommutingRatio>()) {
+            if (std::get<double>(i) < 0.0 || std::get<double>(i) > 1.0) {
+                log_warning("Constraint check: Parameter CommutingRatio changed from {:.4f} to {:.4f}.",
+                            std::get<double>(i), 0.0);
+                std::get<double>(i) = 0.0;
+                corrected           = true;
+            }
+            if (std::get<0>(i) < Region(0) || std::get<1>(i) < Region(0) || std::get<0>(i) >= m_num_regions ||
+                std::get<1>(i) >= m_num_regions) {
+                log_warning(
+                    "Constraint check: Removed entry of Parameter CommutingRatio because of non-existing Regions.");
+                auto it = std::find(this->get<CommutingRatio>().begin(), this->get<CommutingRatio>().end(), i);
+                this->get<CommutingRatio>().erase(it);
+                corrected = true;
+            }
+        }
         return corrected;
     }
 
@@ -194,6 +216,24 @@ public:
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
                 this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
             return true;
+        }
+        if (this->get<ImpactCommuters>() < 0.0 || this->get<ImpactCommuters>() > 1.0) {
+            log_error("Constraint check: Parameter ImpactCommuters {:.4f} smaller {:.4f} or greater {:.4f}",
+                      this->get<ImpactCommuters>(), 0.0, 1.0);
+            return true;
+        }
+        for (auto i : this->get<CommutingRatio>()) {
+            if (std::get<double>(i) < 0.0 || std::get<double>(i) > 1.0) {
+                log_error("Constraint check: Parameter CommutingRatio entry {:.4f} smaller {:.4f} or greater {:.4f}",
+                          std::get<double>(i), 0.0, 1.0);
+                return true;
+            }
+            if (std::get<0>(i) < Region(0) || std::get<1>(i) < Region(0) || std::get<0>(i) > m_num_regions ||
+                std::get<1>(i) > m_num_regions) {
+                log_error("Constraint check: Parameter CommutingRatio has an entry with start or end Region that does "
+                          "not appear in the model.");
+                return true;
+            }
         }
         return false;
     }

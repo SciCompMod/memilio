@@ -27,7 +27,7 @@ class Model : public FlowModel<InfectionState, Populations<Region, AgeGroup, Inf
     using Base = FlowModel<InfectionState, mio::Populations<Region, AgeGroup, InfectionState>, Parameters, Flows>;
 
 public:
-    Model(int num_regions, int num_agegroups)
+    Model(int num_regions, int num_agegroups = 1)
         : Base(Populations({Region(num_regions), AgeGroup(num_agegroups), InfectionState::Count}, 0.),
                ParameterSet(num_regions, num_agegroups))
     {
