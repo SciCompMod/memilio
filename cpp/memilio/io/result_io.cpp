@@ -149,8 +149,8 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
         H5Group start_node_h5group{H5Gcreate(file.id, h5group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
         MEMILIO_H5_CHECK(start_node_h5group.id, StatusCode::UnknownError,
                          "Group could not be created (" + h5group_name + ")");
-        const auto num_timepoints         = result.get_num_time_points();
-        constexpr int num_infectionstates = 3; // (int)result.get_num_elements() / num_groups;
+        const auto num_timepoints = result.get_num_time_points();
+        const auto num_elements   = result.get_value(0).size();
 
         hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
         H5DataSpace dspace_t{H5Screate_simple(1, dims_t, NULL)};
@@ -163,13 +163,13 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                          StatusCode::UnknownError, "Time data could not be written.");
 
         int start_id = ids[edge_indx].first;
-        auto total   = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
-                                                                                                  num_infectionstates)
-                         .eval();
+        auto total =
+            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints, num_elements)
+                .eval();
         while (edge_indx < num_edges && ids[edge_indx].first == start_id) {
             const auto& result_edge = results[edge_indx];
             auto edge_result        = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                                   num_timepoints, num_infectionstates)
+                                   num_timepoints, num_elements)
                                    .eval();
             for (Eigen::Index t_idx = 0; t_idx < result_edge.get_num_time_points(); ++t_idx) {
                 auto v                 = result_edge.get_value(t_idx).transpose().eval();
@@ -177,7 +177,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                 total.row(t_idx) += v;
             }
 
-            hsize_t dims_values[] = {static_cast<hsize_t>(num_timepoints), static_cast<hsize_t>(num_infectionstates)};
+            hsize_t dims_values[] = {static_cast<hsize_t>(num_timepoints), static_cast<hsize_t>(num_elements)};
             H5DataSpace dspace_values{H5Screate_simple(2, dims_values, NULL)};
             MEMILIO_H5_CHECK(dspace_values.id, StatusCode::UnknownError, "Values DataSpace could not be created.");
             auto dset_name = "End" + std::to_string(ids[edge_indx].second);
