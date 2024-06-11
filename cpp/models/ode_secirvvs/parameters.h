@@ -700,10 +700,10 @@ public:
             corrected = true;
         }
 
-        if (this->get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
             log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
-                        this->get<DynamicNPIsImplementationDelay<FP>>(), 0);
-            this->set<DynamicNPIsImplementationDelay<FP>>(0);
+                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
+            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
@@ -908,7 +908,7 @@ public:
             return true;
         }
 
-        if (this->get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
             log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
             return true;
         }

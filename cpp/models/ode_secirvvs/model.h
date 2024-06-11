@@ -695,7 +695,8 @@ public:
             }
 
             if (t > 0) {
-                delay_npi_implementation = this->get_model().parameters.template get<DynamicNPIsImplementationDelay>();
+                delay_npi_implementation =
+                    this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
             }
             else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
