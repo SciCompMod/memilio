@@ -415,7 +415,6 @@ TEST(TestSaveResult, save_edges)
     mio::osecir::Model model(1);
     auto& params            = model.parameters;
     mio::AgeGroup nb_groups = params.get_num_groups();
-    ;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
         params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
@@ -450,8 +449,14 @@ TEST(TestSaveResult, save_edges)
     mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge<double>> g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
-    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1));
-    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1));
+
+    // get indices of INS and ISy compartments.
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+    indices_save_edges[0] = {2, 3};
+    indices_save_edges[1] = {4, 5};
+
+    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
+    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
 
     // simulation
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
