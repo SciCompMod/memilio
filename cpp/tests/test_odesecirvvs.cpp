@@ -295,6 +295,7 @@ void set_contact_parameters(mio::osecirvvs::Model<double>::ParameterSet& paramet
     npis.set_interval(mio::SimulationTime(3.0));
     npis.set_duration(mio::SimulationTime(14.0));
     parameters.get_end_dynamic_npis() = 10.0; //required for dynamic NPIs to have effect in this model
+    parameters.template get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
 }
 
 void set_covid_parameters(mio::osecirvvs::Model<double>::ParameterSet& params, bool set_invalid_initial_value)

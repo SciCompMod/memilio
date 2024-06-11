@@ -1083,7 +1083,7 @@ private:
     double m_commuter_nondetection    = 0.0;
     double m_start_commuter_detection = 0.0;
     double m_end_commuter_detection   = 0.0;
-    double m_end_dynamic_npis         = 0.0;
+    double m_end_dynamic_npis         = std::numeric_limits<double>::max();
 };
 
 } // namespace osecirvvs
