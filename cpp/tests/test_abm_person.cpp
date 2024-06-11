@@ -233,21 +233,21 @@ TEST(TestPerson, applyMaskIntervention)
     person.get_mask().change_mask(mio::abm::MaskType::Community);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
-    target.set_is_mask_required(false);
+    target.set_mask_requirement(false);
     person.set_compliance(mio::abm::InterventionType::Mask, 0.);
-    person.is_apply_mask_intervention(rng_person, target);
-    ASSERT_FALSE(person.is_wear_mask());
+    person.is_compliant(rng_person, mio::abm::InterventionType::Mask, &target);
+    ASSERT_FALSE(person.is_wearing_mask());
 
     person.set_compliance(mio::abm::InterventionType::Mask, 1);
-    person.is_apply_mask_intervention(rng_person, target);
-    ASSERT_TRUE(person.is_wear_mask());
+    person.is_compliant(rng_person, mio::abm::InterventionType::Mask, &target);
+    ASSERT_TRUE(person.is_wearing_mask());
 
-    target.set_is_mask_required(true);
+    target.set_mask_requirement(true);
     target.set_required_mask(mio::abm::MaskType::Surgical);
     person.set_compliance(mio::abm::InterventionType::Mask, 1);
-    person.is_apply_mask_intervention(rng_person, target);
+    person.is_compliant(rng_person, mio::abm::InterventionType::Mask, &target);
     ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
-    ASSERT_TRUE(person.is_wear_mask());
+    ASSERT_TRUE(person.is_wearing_mask());
 }
 
 TEST(TestPerson, setWearMask)
@@ -255,11 +255,11 @@ TEST(TestPerson, setWearMask)
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
 
-    person.set_wear_mask(false);
-    ASSERT_FALSE(person.is_wear_mask());
+    person.set_wearing_mask(false);
+    ASSERT_FALSE(person.is_wearing_mask());
 
-    person.set_wear_mask(true);
-    ASSERT_TRUE(person.is_wear_mask());
+    person.set_wearing_mask(true);
+    ASSERT_TRUE(person.is_wearing_mask());
 }
 
 TEST(TestPerson, getMaskProtectiveFactor)
@@ -267,15 +267,15 @@ TEST(TestPerson, getMaskProtectiveFactor)
     mio::abm::Location location(mio::abm::LocationType::School, 0, 6);
     auto person_community = make_test_person(location);
     person_community.get_mask().change_mask(mio::abm::MaskType::Community);
-    person_community.set_wear_mask(true);
+    person_community.set_wearing_mask(true);
     auto person_surgical = make_test_person(location);
     person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
-    person_surgical.set_wear_mask(true);
+    person_surgical.set_wearing_mask(true);
     auto person_ffp2 = make_test_person(location);
     person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
-    person_ffp2.set_wear_mask(true);
+    person_ffp2.set_wearing_mask(true);
     auto person_without = make_test_person(location);
-    person_without.set_wear_mask(false);
+    person_without.set_wearing_mask(false);
 
     mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
@@ -347,18 +347,17 @@ TEST(TestPerson, applyTestIntervention)
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     person.set_compliance(mio::abm::InterventionType::Testing, 1);
-    ASSERT_TRUE(person.is_apply_test_intervention(rng_person));
+    ASSERT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
 
     person.set_compliance(mio::abm::InterventionType::Testing, 0.4);
-    ASSERT_FALSE(person.is_apply_test_intervention(rng_person));
+    ASSERT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
 }
 
 TEST(TestPerson, applyIsolationIntervention)
 {
     using testing::Return;
     auto rng = mio::RandomNumberGenerator();
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(6)
         .WillOnce(Return(0.8))
@@ -374,8 +373,8 @@ TEST(TestPerson, applyIsolationIntervention)
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     person.set_compliance(mio::abm::InterventionType::Isolation, 1);
-    ASSERT_TRUE(person.is_apply_isolation_intervention(rng_person));
+    ASSERT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
 
     person.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
-    ASSERT_FALSE(person.is_apply_isolation_intervention(rng_person));
+    ASSERT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
 }

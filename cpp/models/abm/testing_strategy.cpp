@@ -184,7 +184,7 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
         if (iter_schemes != m_location_to_schemes_map.end()) {
             //apply all testing schemes that are found
             auto& schemes = iter_schemes->second;
-            if (!person.is_apply_test_intervention(rng) ||
+            if (!person.is_compliant(rng, InterventionType::Testing) ||
                 !std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
                     return !ts.is_active() || ts.run_scheme(rng, person, t);
                 })) {

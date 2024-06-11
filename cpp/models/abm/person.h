@@ -386,15 +386,15 @@ public:
     ScalarType get_mask_protective_factor(const Parameters& params) const;
 
     /**
-     * @brief For every #InterventionType a Person has a compliance value between -1 and 1.
-     * -1 means that the Person never complies to the Intervention.
-     * 1 means that the Person always complies to the Intervention even if it is not required.
+     * @brief For every #InterventionType a Person has a compliance value between 0 and 1.
+     * 0 means that the Person never complies to the Intervention.
+     * 1 means that the Person always complies to the Intervention.
      * @param[in] intervention_type The intervention type. 
      * @param[in] value The compliance value.
      */
     void set_compliance(InterventionType intervention_type, ScalarType value)
     {
-        m_compliance[static_cast<int>(intervention_type)] = value;
+        m_compliance[static_cast<uint32_t>(intervention_type)] = value;
     }
 
     /**
@@ -404,36 +404,23 @@ public:
      */
     ScalarType get_compliance(InterventionType intervention_type) const
     {
-        return m_compliance[static_cast<int>(intervention_type)];
+        return m_compliance[static_cast<uint32_t>(intervention_type)];
     }
 
     /**
-     * @brief Checks whether the Person wears a Mask at the target Location.
+     * @brief Checks whether the Person following an intervention.
      * @param[inout] rng RandomNumberGenerator of the Person.
-     * @param[in] target The target Location.
-     * @return Whether a Person wears a Mask at the Location.
+     * @param[in] intervention The InterventionType.
+     * * @param[in] target The target Location.
+     * @return Checks whether the Person following an intervention.
      */
-    bool is_apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
-
-    /**
-     * @brief Checks whether the Person do the required test at the target Location.
-     * @param[inout] rng RandomNumberGenerator of the Person.
-     * @return Whether a Person do the required test at the target Location.
-     */
-    bool is_apply_test_intervention(RandomNumberGenerator& rng);
-
-    /**
-     * @brief Checks whether the Person isolates after a positive test.
-     * @param[inout] rng RandomNumberGenerator of the Person.
-     * @return Whether a Person isolates after a positive test.
-     */
-    bool is_apply_isolation_intervention(RandomNumberGenerator& rng);
+    bool is_compliant(RandomNumberGenerator& rng, InterventionType intervention, const Location* target = nullptr);
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
      * @param[in] wear_mask If true, the protection of the Mask is considered when computing the exposure rate.
      */
-    void set_wear_mask(bool wear_mask)
+    void set_wearing_mask(bool wear_mask)
     {
         m_wears_mask = wear_mask;
     }
@@ -442,7 +429,7 @@ public:
      * @brief Get the information if the Person is currently wearing a Mask.
      * @return True if the Person is currently wearing a Mask.
      */
-    bool is_wear_mask() const
+    bool is_wearing_mask() const
     {
         return m_wears_mask;
     }
@@ -537,7 +524,8 @@ private:
     TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
-    std::vector<ScalarType> m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
+    std::vector<ScalarType>
+        m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.

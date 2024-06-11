@@ -86,13 +86,14 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto target_type       = rule(personal_rng, *person, t, dt, parameters);
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
-            person->is_apply_mask_intervention(personal_rng, target_location);
-            // Check if the capacity of targeted Location is not reached
-            if (target_location != current_location &&
-                target_location.get_number_persons() < target_location.get_capacity().persons) {
-                // Check if the Person wears mask if required
-                if ((target_location.is_mask_required() && person->is_wear_mask()) ||
-                    !target_location.is_mask_required()) {
+            // Check if the Person wears mask if required
+            if ((target_location.is_mask_required() &&
+                 person->is_compliant(personal_rng, InterventionType::Testing, &target_location)) ||
+                !target_location.is_mask_required()) {
+                // Check if the capacity of targeted Location is not reached
+                if (target_location != current_location &&
+                    target_location.get_number_persons() < target_location.get_capacity().persons) {
+
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                         person->migrate_to(target_location);
@@ -138,9 +139,9 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
-                person->is_apply_mask_intervention(personal_rng, target_location);
                 // Check if the Person wears mask if required
-                if ((target_location.is_mask_required() && person->is_wear_mask()) ||
+                if ((target_location.is_mask_required() &&
+                     person->is_compliant(personal_rng, InterventionType::Testing, &target_location)) ||
                     !target_location.is_mask_required()) {
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {

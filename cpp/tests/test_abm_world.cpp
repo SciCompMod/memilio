@@ -470,7 +470,7 @@ TEST(TestWorld, evolveMigration)
             mock_exponential_dist;
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
 
-        work.set_is_mask_required(true);
+        work.set_mask_requirement(true);
         p_no_mask.set_compliance(mio::abm::InterventionType::Mask, 0.4);
         p_no_test.set_compliance(mio::abm::InterventionType::Testing, 0.4);
         p_no_isolation.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
@@ -481,7 +481,7 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(p_complied.get_location(), work);
 
         // The person, who does not wear mask, is not allowed to be in location
-        EXPECT_FALSE(p_no_mask.is_wear_mask());
+        EXPECT_FALSE(p_no_mask.is_wearing_mask());
         EXPECT_NE(p_no_mask.get_location(), work);
 
         // The person, who does not want test, is not allowed to be in location
@@ -650,7 +650,7 @@ TEST(TestWorld, copyWorld)
 
     auto& school1 = world.get_individualized_location(school_id1);
     school1.set_required_mask(mio::abm::MaskType::Surgical);
-    school1.set_is_mask_required(true);
+    school1.set_mask_requirement(true);
     auto& school2 = world.get_individualized_location(school_id2);
     school2.set_required_mask(mio::abm::MaskType::FFP2);
     auto& work = world.get_individualized_location(work_id);

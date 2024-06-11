@@ -299,10 +299,10 @@ TEST(TestLocation, setRequiredMask)
 TEST(TestLocation, setIsMaskRequired)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    location.set_is_mask_required(false);
+    location.set_mask_requirement(false);
     ASSERT_FALSE(location.is_mask_required());
 
-    location.set_is_mask_required(true);
+    location.set_mask_requirement(true);
     ASSERT_TRUE(location.is_mask_required());
 }
 

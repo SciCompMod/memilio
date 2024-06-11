@@ -327,7 +327,7 @@ public:
      * @brief Activate or deactivate mask wearing requirement at this Location.
      * @param[in] new_status Status of mask wearing requirement.
      */
-    void set_is_mask_required(bool new_status)
+    void set_mask_requirement(bool new_status)
     {
         m_is_mask_required = new_status;
     }

@@ -76,9 +76,9 @@ TEST(TestMasks, maskProtection)
     auto dt = mio::abm::days(1);
     infection_location.cache_exposure_rates(t, dt, num_age_groups);
     // susc_person1 wears a mask, default protection is 1
-    susc_person1.set_wear_mask(true);
+    susc_person1.set_wearing_mask(true);
     // susc_person2 does not wear a mask
-    susc_person2.set_wear_mask(false);
+    susc_person2.set_wearing_mask(false);
 
     //mock so person 2 will get infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
