@@ -20,6 +20,7 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
+#include "memilio/math/floating_point.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include <memory>
@@ -38,6 +39,12 @@ template <typename FP = double>
 class IntegratorCore
 {
 public:
+    IntegratorCore(const FP& dt_min, const FP& dt_max)
+        : m_dt_min(dt_min)
+        , m_dt_max(dt_max)
+    {
+    }
+
     virtual ~IntegratorCore(){};
 
     /**
@@ -65,6 +72,41 @@ public:
      */
     virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt,
                       Eigen::Ref<Vector<FP>> ytp1) const = 0;
+
+    /**
+     * @brief Access lower bound to the step size dt.
+     * These values will only be used by adaptive steppers. Fixed size steppers must ignore them.
+     * @return A reference to the minimum possible value of dt.
+     * @{
+     */
+    FP& get_dt_min()
+    {
+        return m_dt_min;
+    }
+    const FP& get_dt_min() const
+    {
+        return m_dt_min;
+    }
+    /** @} */
+
+    /**
+     * @brief Access upper bound to the step size dt.
+     * These values will only be used by adaptive steppers. Fixed size steppers must ignore them.
+     * @return A reference to the maximum possible value of dt.
+     * @{
+     */
+    FP& get_dt_max()
+    {
+        return m_dt_max;
+    }
+    const FP& get_dt_max() const
+    {
+        return m_dt_max;
+    }
+    /** @} */
+
+private:
+    FP m_dt_min, m_dt_max;
 };
 
 /**
@@ -100,6 +142,7 @@ public:
         // hint at std functions for ADL
         using std::fabs;
         using std::max;
+        using std::min;
         const FP t0 = results.get_last_time();
         assert(tmax > t0);
         assert(dt > 0);
@@ -112,8 +155,9 @@ public:
         bool step_okay = true;
 
         FP dt_copy; // used to check whether step sizing is adaptive
-        FP dt_restore = 0; // used to restore dt if dt was decreased to reach tmax
-        FP t          = t0;
+        FP dt_restore  = 0.0; // used to restore dt if dt was decreased to reach tmax
+        FP dt_min_copy = m_core->get_dt_min();
+        FP t           = t0;
 
         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
             //we don't make timesteps too small as the error estimator of an adaptive integrator
@@ -126,9 +170,20 @@ public:
             }
             dt_copy = dt;
 
+            if (tmax - t < dt_min_copy) {
+                // reduce minimal step size low enough such that we do not step past tmax
+                m_core->get_dt_min() = min((tmax - t0) * 1e-10, dt_min_copy);
+                // m_core->get_dt_min() = std::numeric_limits<FP>::min();
+            }
+
             results.add_time_point();
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
+
+            if (dt_copy < dt_min_copy) {
+                // dt_copy == tmax - t before the step call
+                m_core->get_dt_min() = dt_min_copy;
+            }
 
             // if dt has been changed (even slighly) by step, register the current m_core as adaptive
             m_is_adaptive |= !floating_point_equal(dt, dt_copy);
