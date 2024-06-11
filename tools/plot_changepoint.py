@@ -73,9 +73,18 @@ def plot_changepoint(files, legendplot, flows=True, save=True, save_dir='plots/'
                         top=None, wspace=None, hspace=0.6)
     # plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.3)
 
-    r_value, num_compartments, modus = files[0].split('/')[-1].split('_')[2:]
+    if len(files[0].split(
+            '/')[-1].split('_')[2:]) == 3:
+        r_value, num_compartments, modus = files[0].split(
+            '/')[-1].split('_')[2:]
+        filename = f'changepoint_R{r_value}_{num_compartments}_{modus}.png'
 
-    filename = f'changepoint_R{r_value}_{num_compartments}_{modus}.png'
+    if len(files[0].split(
+            '/')[-1].split('_')[2:]) == 4:
+        r_value, num_compartments, long, modus = files[0].split(
+            '/')[-1].split('_')[2:]
+
+        filename = f'changepoint_R{r_value}_{num_compartments}_long_{modus}.png'
 
     # save result
     if save:
@@ -106,4 +115,20 @@ if __name__ == '__main__':
 
     plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_compartments"),
                       os.path.join(data_dir, f"fictional_ide_2.0_20_compartments")],
+                     legendplot, flows=False, save=True, save_dir='plots/changepoints/')
+
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_long_flows"),
+                      os.path.join(data_dir, f"fictional_ide_0.5_20_long_flows")],
+                     legendplot, flows=True, save=True, save_dir='plots/changepoints/')
+
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_long_compartments"),
+                      os.path.join(data_dir, f"fictional_ide_0.5_20_long_compartments")],
+                     legendplot, flows=False, save=True, save_dir='plots/changepoints/')
+
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_long_flows"),
+                      os.path.join(data_dir, f"fictional_ide_2.0_20_long_flows")],
+                     legendplot, flows=True, save=True, save_dir='plots/changepoints/')
+
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_long_compartments"),
+                      os.path.join(data_dir, f"fictional_ide_2.0_20_long_compartments")],
                      legendplot, flows=False, save=True, save_dir='plots/changepoints/')

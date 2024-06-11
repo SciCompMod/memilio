@@ -82,7 +82,13 @@ def compare_results(files, dt_ode, dt_ide, setting, legendplot, flows=True, file
         data = h5file[list(h5file.keys())[0]]
 
         if flows:
-            total = data['Total'][:, :]
+            # As there should be only one Group, total is the simulation result
+            if len(data['Total'][0]) == 10:
+                total = data['Total'][:, :]
+            elif len(data['Total'][0]) == 15:
+                # in ODE: two compartments more are used which results in more flows;
+                # throw out additional flows
+                total = data['Total'][:, [0, 1, 2, 3, 6, 7, 10, 11, 13, 14]]
         else:
             if len(data['Total'][0]) == 8:
                 # As there should be only one Group, total is the simulation result
@@ -148,7 +154,7 @@ def compare_results(files, dt_ode, dt_ide, setting, legendplot, flows=True, file
 if __name__ == '__main__':
     # Path to simulation results
     data_dir = os.path.join(os.path.dirname(
-        __file__), "results")
+        __file__), "../results")
 
     dt_ode = '1e-1'
     dt_ide = '1e-1'
@@ -160,11 +166,22 @@ if __name__ == '__main__':
     files = [os.path.join(data_dir, f"fictional_ode_0.5_20_flows"),
              os.path.join(data_dir, f"fictional_ide_0.5_20_flows")]
 
+    # # For validation plot results without change in contact rate
+    # compare_results([os.path.join(data_dir, f"ode_constant_contacts_flows"),
+    #                  os.path.join(data_dir, f"ide_constant_contacts_flows")],
+    #                 '1e-4', '1e-3', setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=True, fileending="constant_contacts", save=True)
+
     # Plot comparison of ODE and IDE models
     compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_flows"),
                      os.path.join(data_dir, f"fictional_ide_2.0_20_flows")],
                     dt_ode, dt_ide, setting,
                     legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_20_flows", save=True)
+
+    compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_long_flows"),
+                     os.path.join(data_dir, f"fictional_ide_2.0_20_long_flows")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_20_long_flows", save=True)
 
     plt.close()
 
@@ -172,3 +189,8 @@ if __name__ == '__main__':
                      os.path.join(data_dir, f"fictional_ide_0.5_20_compartments")],
                     dt_ode, dt_ide, setting,
                     legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_20_compartments", save=True)
+
+    compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_long_compartments"),
+                     os.path.join(data_dir, f"fictional_ide_0.5_20_long_compartments")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_20_long_compartments", save=True)

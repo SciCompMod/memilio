@@ -204,6 +204,10 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, s
 
     model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
+    // mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    // contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+    // model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
     model_ide.parameters.get<mio::isecir::ContactPatterns>() = get_contact_matrix(R0);
 
     mio::ConstantFunction constfunc(simulation_parameter["TransmissionProbabilityOnContact"]);
@@ -236,6 +240,21 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, s
         mio::IOResult<void> save_result_status_c =
             mio::save_result({sim.get_result()}, {0}, 1, filename_ide_compartments);
     }
+
+    // if (!save_dir.empty()) {
+
+    //     std::string R0string     = std::to_string(R0);
+    //     std::string filename_ide = save_dir + "fictional_ide";
+    //     if (tmax > 50) {
+    //         filename_ide = filename_ide + "_long";
+    //     }
+    //     std::string filename_ide_flows = filename_ide + "_flows.h5";
+    //     mio::IOResult<void> save_result_status_f =
+    //         mio::save_result({sim.get_transitions()}, {0}, 1, filename_ide_flows);
+    //     std::string filename_ide_compartments = filename_ide + "_compartments.h5";
+    //     mio::IOResult<void> save_result_status_c =
+    //         mio::save_result({sim.get_result()}, {0}, 1, filename_ide_compartments);
+    // }
 
     // Return vector with initial compartments.
     return sim.get_result();
@@ -305,6 +324,9 @@ void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
 
+    // mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    // contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+    // model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
     model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = get_contact_matrix(R0);
 
     model_ode.check_constraints();
@@ -313,6 +335,32 @@ void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
     integrator->set_dt_min(simulation_parameter["dt_flows"]);
     integrator->set_dt_max(simulation_parameter["dt_flows"]);
+
+    auto idx_SE =
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed>(
+            {mio::AgeGroup(0)});
+    auto idx_EC = model_ode.get_flat_flow_index<mio::osecir::InfectionState::Exposed,
+                                                mio::osecir::InfectionState::InfectedNoSymptoms>({mio::AgeGroup(0)});
+    auto idx_CI = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedNoSymptoms,
+                                                mio::osecir::InfectionState::InfectedSymptoms>({mio::AgeGroup(0)});
+    auto idx_CR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedNoSymptoms,
+                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
+    auto idx_IH = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSymptoms,
+                                                mio::osecir::InfectionState::InfectedSevere>({mio::AgeGroup(0)});
+    auto idx_IR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSymptoms,
+                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
+    auto idx_HU = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSevere,
+                                                mio::osecir::InfectionState::InfectedCritical>({mio::AgeGroup(0)});
+    auto idx_HR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSevere,
+                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
+    auto idx_UD =
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedCritical, mio::osecir::InfectionState::Dead>(
+            {mio::AgeGroup(0)});
+    auto idx_UR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedCritical,
+                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
+
+    std::cout << "Indices: " << idx_SE << idx_EC << idx_CI << idx_CR << idx_IH << idx_IR << idx_HU << idx_HR << idx_UD
+              << idx_UR << std::endl;
 
     std::vector<mio::TimeSeries<ScalarType>> results_ode = mio::osecir::simulate_flows<ScalarType>(
         simulation_parameter["t0"], tmax, simulation_parameter["dt_flows"], model_ode, integrator);
@@ -332,6 +380,19 @@ void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax
         mio::IOResult<void> save_result_status_c =
             mio::save_result({results_ode[0]}, {0}, 1, filename_ode_compartments);
     }
+    // if (!save_dir.empty()) {
+    //     std::string R0string = std::to_string(R0);
+    //     // std::string filename_ode = save_dir + "ode_constant_contacts";
+    //     std::string filename_ode = save_dir + "fictional_ide";
+    //     if (tmax > 50) {
+    //         filename_ode = filename_ode + "_long";
+    //     }
+    //     std::string filename_ode_flows           = filename_ode + "_flows.h5";
+    //     mio::IOResult<void> save_result_status_f = mio::save_result({results_ode[1]}, {0}, 1, filename_ode_flows);
+    //     std::string filename_ode_compartments    = filename_ode + "_compartments.h5";
+    //     mio::IOResult<void> save_result_status_c =
+    //         mio::save_result({results_ode[0]}, {0}, 1, filename_ode_compartments);
+    // }
 }
 
 int main()
@@ -346,7 +407,7 @@ int main()
     // for R0=4 epidemic peak use tmax = 75.
     // For short things: 10 days and R0=0.5 or 2
     ScalarType R0   = 0.5;
-    ScalarType tmax = 10;
+    ScalarType tmax = 70;
 
     mio::TimeSeries<ScalarType> result = simulate_ide_model(R0, tmax, save_dir);
     // if (!result) {
@@ -360,7 +421,7 @@ int main()
     simulate_ode_model(compartments, R0, tmax, save_dir);
 
     R0   = 2.;
-    tmax = 10;
+    tmax = 70;
 
     result = simulate_ide_model(R0, tmax, save_dir);
     // if (!result) {
