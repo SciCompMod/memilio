@@ -1615,12 +1615,25 @@ const std::string currentDateTime()
     return timeString;
 }
 
-mio::IOResult<bool> create_result_folders(std::string result_dir)
+mio::IOResult<bool> create_result_folders(std::string const& result_dir)
 {
-    BOOST_OUTCOME_TRY(auto&& created, mio::create_directory(result_dir));
-    BOOST_OUTCOME_TRY(created, mio::create_directory(result_dir + "/infection_per_age_group/"));
-    BOOST_OUTCOME_TRY(created, mio::create_directory(result_dir + "/infection_per_location_type/"));
-    BOOST_OUTCOME_TRY(created, mio::create_directory(result_dir + "/infection_state_per_age_group/"));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir + "/infection_per_age_group/"));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir + "/infection_per_location_type/"));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir + "/infection_state_per_age_group/"));
+    return mio::success();
+}
+
+void copy_precomputed_results(std::string const& from_dir, std::string const& to_dir)
+{
+    fs::copy(from_dir + "/Results_rki.h5", to_dir, fs::copy_options::overwrite_existing);
+    fs::copy(from_dir + "/Results_rki_sum.h5", to_dir, fs::copy_options::overwrite_existing);
+}
+
+mio::IOResult<bool> copy_result_folder(std::string const& from_dir, std::string const& to_dir)
+{
+    BOOST_OUTCOME_TRY(mio::create_directory(to_dir));
+    fs::copy(from_dir, to_dir, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
     return mio::success();
 }
 
@@ -1634,11 +1647,14 @@ int main(int argc, char** argv)
     // std::string input_dir = "/p/project/loki/memilio/memilio/data";
     // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     std::string input_dir  = "/Users/david/Documents/HZI/memilio/data";
+    std::string precomputed_dir = input_dir + "/results";
     std::string result_dir = input_dir + "/results_" + currentDateTime();
-    auto created           = create_result_folders(result_dir);
-
+    auto created                = create_result_folders(result_dir);
+    if (created) {
+        copy_precomputed_results(precomputed_dir, result_dir);
+    }
     size_t num_runs;
-    bool save_single_runs = true;
+    //bool save_single_runs = true;
 
     if (argc == 2) {
         num_runs = atoi(argv[1]);
@@ -1672,11 +1688,17 @@ int main(int argc, char** argv)
     // }
     // printf("\n");
 
-    auto result = run(input_dir, result_dir, num_runs, save_single_runs);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        mio::mpi::finalize();
-        return -1;
+    // auto result = run(input_dir, result_dir, num_runs, save_single_runs);
+    // if (!result) {
+    //     printf("%s\n", result.error().formatted_message().c_str());
+    //     mio::mpi::finalize();
+    //     return -1;
+    // }
+
+    // copy results into a fixed name folder to have easier access
+    if (created) {
+        std::string last_run_dir = input_dir + "/results_last_run";
+        auto copied              = copy_result_folder(result_dir, last_run_dir);
     }
 
     mio::mpi::finalize();
