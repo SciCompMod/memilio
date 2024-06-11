@@ -405,99 +405,65 @@ TEST(TestSaveResult, save_percentiles_and_sums)
 
 TEST(TestSaveResult, save_edges)
 {
-    double t0        = 0;
-    double tmax      = 5;
-    double dt        = 0.1;
-    double cont_freq = 10.;
+    // create some results and pairs_edges
+    const auto n = Eigen::Index(3);
+    std::vector<mio::TimeSeries<double>> results_edges(3, mio::TimeSeries<double>(n));
+    results_edges[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0));
+    results_edges[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 1));
+    results_edges[0].add_time_point(2.0, Eigen::VectorXd::Constant(n, 1));
 
-    double pop_total = 10000;
+    results_edges[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 2));
+    results_edges[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 3));
+    results_edges[1].add_time_point(2.0, Eigen::VectorXd::Constant(n, 5));
 
-    mio::osecir::Model model(1);
-    auto& params            = model.parameters;
-    mio::AgeGroup nb_groups = params.get_num_groups();
+    results_edges[2].add_time_point(0.0, Eigen::VectorXd::Constant(n, 3));
+    results_edges[2].add_time_point(1.0, Eigen::VectorXd::Constant(n, 4));
+    results_edges[2].add_time_point(2.0, Eigen::VectorXd::Constant(n, 7));
 
-    for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2;
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.;
-        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 10.;
-        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
+    const std::vector<std::pair<int, int>> pairs_edges = {{0, 1}, {0, 2}, {1, 2}};
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = 100;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = 50;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = 20;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = 10;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = 10;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = 0;
-        model.populations.set_difference_from_total({i, mio::osecir::InfectionState::Susceptible}, pop_total);
-
-        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i] = 0.06;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
-    }
-
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
-
-    // setup graph
-    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge<double>> g;
-    g.add_node(0, model, t0);
-    g.add_node(1, model, t0);
-
-    // get indices of INS and ISy compartments.
-    std::vector<std::vector<size_t>> indices_save_edges(2);
-    indices_save_edges[0] = {2, 3};
-    indices_save_edges[1] = {4, 5};
-
-    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
-    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
-
-    // simulation
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
-    sim.advance(tmax);
-
-    // get_results and pair ids
-    auto& results_edge_0                               = sim.get_graph().edges()[0].property.get_migrated();
-    std::vector<mio::TimeSeries<double>> results_edges = {results_edge_0, results_edge_0};
-
-    auto pairs_edges = std::vector<std::pair<int, int>>{};
-    pairs_edges.push_back({0, 1});
-    pairs_edges.push_back({1, 0});
-
+    // save the results to a file
     TempFileRegister file_register;
     auto results_file_path = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
     auto save_edges_status = mio::save_edges(results_edges, pairs_edges, results_file_path);
     ASSERT_TRUE(save_edges_status);
 
+    // read the results back in and check that they are correct.
     auto results_from_file = mio::read_result(results_file_path);
     ASSERT_TRUE(results_from_file);
-    auto result_from_file = results_from_file.value()[0];
 
-    ASSERT_EQ(result_from_file.get_groups().get_num_time_points(), results_edge_0.get_num_time_points());
-    ASSERT_EQ(result_from_file.get_totals().get_num_time_points(), results_edge_0.get_num_time_points());
-    for (Eigen::Index i = 0; i < results_edge_0.get_num_time_points(); i++) {
-        ASSERT_EQ(result_from_file.get_groups().get_num_elements(), results_edge_0.get_num_elements())
-            << "at row " << i;
-        ASSERT_EQ(result_from_file.get_totals().get_num_elements(),
-                  results_edge_0.get_num_elements() / static_cast<Eigen::Index>((size_t)nb_groups))
-            << "at row " << i;
-        ASSERT_NEAR(results_edge_0.get_time(i), result_from_file.get_groups().get_time(i), 1e-10) << "at row " << i;
-        ASSERT_NEAR(results_edge_0.get_time(i), result_from_file.get_totals().get_time(i), 1e-10) << "at row " << i;
-        for (Eigen::Index l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
-            double total = 0.0;
-            for (Eigen::Index j = 0; j < Eigen::Index((size_t)nb_groups); j++) {
-                total += results_edge_0[i][j * (size_t)mio::osecir::InfectionState::Count + l];
-                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)mio::osecir::InfectionState::Count + l],
-                            results_edge_0[i][j * (size_t)mio::osecir::InfectionState::Count + l], 1e-10)
-                    << " at row " << i << " at row " << l << " at Group " << j;
-            }
-            EXPECT_NEAR(result_from_file.get_totals()[i][l], total, 1e-10) << " at row " << i << " at row " << l;
-        }
-    }
+    // group 0
+    auto result_from_file_group0 = results_from_file.value()[0];
+    ASSERT_EQ(result_from_file_group0.get_groups().get_num_time_points(), 3);
+    ASSERT_EQ(result_from_file_group0.get_groups().get_num_elements(), 6);
+    ASSERT_EQ(result_from_file_group0.get_groups().get_value(0), (Eigen::VectorXd(6) << 0, 0, 0, 2, 2, 2).finished());
+    ASSERT_EQ(result_from_file_group0.get_groups().get_value(1), (Eigen::VectorXd(6) << 1, 1, 1, 3, 3, 3).finished());
+    ASSERT_EQ(result_from_file_group0.get_groups().get_value(2), (Eigen::VectorXd(6) << 1, 1, 1, 5, 5, 5).finished());
+    ASSERT_EQ(result_from_file_group0.get_groups().get_time(0), 0.0);
+    ASSERT_EQ(result_from_file_group0.get_groups().get_time(1), 1.0);
+    ASSERT_EQ(result_from_file_group0.get_groups().get_time(2), 2.0);
+
+    ASSERT_EQ(result_from_file_group0.get_totals().get_num_time_points(), 3);
+    ASSERT_EQ(result_from_file_group0.get_totals().get_num_elements(), 3);
+    ASSERT_EQ(result_from_file_group0.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 2));
+    ASSERT_EQ(result_from_file_group0.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    ASSERT_EQ(result_from_file_group0.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 6));
+    ASSERT_EQ(result_from_file_group0.get_totals().get_time(0), 0.0);
+    ASSERT_EQ(result_from_file_group0.get_totals().get_time(1), 1.0);
+    ASSERT_EQ(result_from_file_group0.get_totals().get_time(2), 2.0);
+
+    // group 1
+    auto result_from_file_group1 = results_from_file.value()[1];
+    ASSERT_EQ(result_from_file_group1.get_groups().get_num_elements(), 3);
+    ASSERT_EQ(result_from_file_group1.get_groups().get_value(0), Eigen::VectorXd::Constant(3, 3));
+    ASSERT_EQ(result_from_file_group1.get_groups().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    ASSERT_EQ(result_from_file_group1.get_groups().get_value(2), Eigen::VectorXd::Constant(3, 7));
+    ASSERT_EQ(result_from_file_group1.get_groups().get_time(0), 0.0);
+    ASSERT_EQ(result_from_file_group1.get_groups().get_time(1), 1.0);
+    ASSERT_EQ(result_from_file_group1.get_groups().get_time(2), 2.0);
+
+    ASSERT_EQ(result_from_file_group1.get_totals().get_num_elements(), 3);
+    ASSERT_EQ(result_from_file_group1.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 3));
+    ASSERT_EQ(result_from_file_group1.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    ASSERT_EQ(result_from_file_group1.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 7));
 }
