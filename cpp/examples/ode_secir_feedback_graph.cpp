@@ -134,7 +134,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
                                       timeInfectedCriticalMax);
 
     //probabilities
-    double fact                                        = 0.85;
+    double fact                                        = 0.75;
     const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
                                                           fact * 0.05, fact * 0.08, fact * 0.15};
     const double transmissionProbabilityOnContactMax[] = {fact * 0.04, fact * 0.07, fact * 0.07,
@@ -189,13 +189,13 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
  */
 mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params)
 {
-    params.get<mio::osecir::ICUCapacity>()            = 12;
+    params.get<mio::osecir::ICUCapacity>()            = 9;
     params.get<mio::osecir::CutOffGamma>()            = 45;
     params.get<mio::osecir::EpsilonContacts>()        = 0.1;
     params.get<mio::osecir::BlendingFactorLocal>()    = 1. / 3.;
     params.get<mio::osecir::BlendingFactorRegional>() = 1. / 3.;
-    params.get<mio::osecir::ContactReductionMin>()    = {0.45, 0.45, 0.45, 0.45};
-    params.get<mio::osecir::ContactReductionMax>()    = {0.8, 0.8, 0.8, 0.8};
+    params.get<mio::osecir::ContactReductionMin>()    = {0.2, 0.2, 0.2, 0.2};
+    params.get<mio::osecir::ContactReductionMax>()    = {0.6, 0.6, 0.6, 0.6};
 
     return mio::success();
 }
@@ -220,11 +220,11 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
         BOOST_OUTCOME_TRY(auto&& baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        BOOST_OUTCOME_TRY(auto&& minimum,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+        // BOOST_OUTCOME_TRY(auto&& minimum,
+        //                   mio::read_mobility_plain(
+        //                       (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
-        contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
+        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
     }
     params.get<mio::osecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
 
@@ -261,9 +261,10 @@ void set_state_ids(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& gra
 mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string& mode)
 {
     if (std::strcmp(mode.c_str(), "ClassicDamping") == 0) {
-        auto& contacts                      = params.get<mio::osecir::ContactPatterns>();
-        auto& contact_dampings              = contacts.get_dampings();
-        const ScalarType reduc_fac_location = 0.5;
+        auto& contacts         = params.get<mio::osecir::ContactPatterns>();
+        auto& contact_dampings = contacts.get_dampings();
+
+        const ScalarType reduc_fac_location = 0.4470828626;
 
         const size_t locations       = static_cast<size_t>(ContactLocation::Count);
         const auto group_weights_all = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
@@ -275,10 +276,9 @@ mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string&
         };
 
         for (size_t loc = 0; loc < locations; ++loc) {
-
             contact_dampings.push_back(contact_reduction(reduc_fac_location, loc));
-            contacts.make_matrix();
         }
+        contacts.make_matrix();
     }
 
     return mio::success();
@@ -309,7 +309,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
     BOOST_OUTCOME_TRY(set_npis(params, mode));
 
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
-    auto scaling_factor_icu      = 1.0;
+    auto scaling_factor_icu      = 2.0;
     auto tnt_capacity_factor     = 7.5 / 100000.;
     auto migrating_compartments  = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
@@ -536,14 +536,14 @@ mio::IOResult<void> run_parameter_study(ParameterStudy parameter_study, std::vec
  */
 mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
-    const auto start_date = mio::Date(2020, 11, 1);
+    const auto start_date = mio::Date(2020, 12, 1);
 
     const auto num_days_sim = 100.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 10;
+    const auto num_runs     = 100;
 
-    auto const modes = {"ClassicDamping", "FeedbackDamping"};
-    // auto const modes = {"FeedbackDamping"};
+    // auto const modes = {"ClassicDamping", "FeedbackDamping"};
+    auto const modes = {"ClassicDamping"};
 
     //create or load graph
     for (auto mode : modes) {

@@ -20,7 +20,7 @@ import seaborn as sns
 
 sns.set_style("darkgrid")
 
-start_date = "2020-11-01"
+start_date = "2020-12-01"
 total_pop = 83278910.0
 opacity = 0.15
 lineWidth = 2
@@ -267,13 +267,15 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
             out_folder='data/pydata/Germany/', no_raw=True,
             split_gender=False, merge_eisenach=True)
     total_pop = population['Population'].sum()
-    #adjust age groups
+    # adjust age groups
     old_ages = [age.split()[0] for age in population.columns[2:]]
     new_ages = ["0-4", "5-14", "15-34", "35-59", "60-79", ">80"]
-    population.rename(dict(zip(population.columns[2:].tolist(), old_ages)), axis=1, inplace =True)
+    population.rename(
+        dict(zip(population.columns[2:].tolist(), old_ages)), axis=1, inplace=True)
     for county in population.ID_County.unique():
-        population.loc[population.ID_County==county, new_ages] = mdfs.fit_age_group_intervals(population.loc[population.ID_County==county, old_ages], new_ages)
-    population.drop(old_ages, axis=1, inplace = True)
+        population.loc[population.ID_County == county, new_ages] = mdfs.fit_age_group_intervals(
+            population.loc[population.ID_County == county, old_ages], new_ages)
+    population.drop(old_ages, axis=1, inplace=True)
 
     contacts_nums = []
     contacts_avg = []
@@ -294,7 +296,8 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
                                 group['Group4'][()][:, 0]*population[new_ages[3]][indx_key].values[0]/population['Population'][indx_key].values[0] +
                                 group['Group5'][()][:, 0]*population[new_ages[4]][indx_key].values[0]/population['Population'][indx_key].values[0] +
                                 group['Group6'][()][:, 0]*population[new_ages[5]][indx_key].values[0]/population['Population'][indx_key].values[0])
-                contacts_mode += avg_contacts * population['Population'][indx_key].values[0] / total_pop
+                contacts_mode += avg_contacts * \
+                    population['Population'][indx_key].values[0] / total_pop
 
             # contacts_mode is accumulated. Get the diffs
             contacts_mode = np.diff(contacts_mode)
@@ -305,10 +308,36 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
             avg_contacts_mode = np.mean(contacts_mode)
             contacts_avg.append([avg_contacts_mode for _ in range(num_days-1)])
 
-    modes += ["Average FeedbackDamping"]
+    labels = modes + ["Average FeedbackDamping"]
     contacts_nums += contacts_avg
 
-    plot(contacts_nums, modes, path_plots,
+    # calculate contacts needed to match average feedback
+    total_group0 = population[new_ages[0]].sum()
+    total_group1 = population[new_ages[1]].sum()
+    total_group2 = population[new_ages[2]].sum()
+    total_group3 = population[new_ages[3]].sum()
+    total_group4 = population[new_ages[4]].sum()
+    total_group5 = population[new_ages[5]].sum()
+
+    contacts_group1 = 10.4699
+    contacts_group2 = 7.3629
+    contacts_group3 = 10.1193
+    contacts_group4 = 9.3645
+    contacts_group5 = 3.7438
+    contacts_group6 = 2.5016
+
+    contacts_avg = contacts_avg[0][0]
+
+    x = contacts_avg / ((contacts_group1*total_group0/total_pop +
+                         contacts_group2*total_group1/total_pop +
+                         contacts_group3*total_group2/total_pop +
+                         contacts_group4*total_group3/total_pop +
+                         contacts_group5*total_group4/total_pop +
+                         contacts_group6*total_group5/total_pop))
+
+    print(f"Contact Reduction needed to match average feedback: {1- x:.10f}")
+
+    plot(contacts_nums, labels, path_plots,
          title="Contacts", ylabel="Number of Contacts")
 
 
