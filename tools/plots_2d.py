@@ -71,6 +71,18 @@ def read_state_results_h5(path, comp, group_key='Total'):
     return arr
 
 
+def read_county_results_h5(path, comp, group_key='Total'):
+    data = {}
+    with h5py.File(path, 'r') as f:
+        for key in f.keys():
+            group = f[key]
+            total = group[group_key][()]
+            comp_simulated = np.sum(total[:, comp], axis=1)
+            data[key] = comp_simulated
+    df = pd.DataFrame(data)
+    return df
+
+
 def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Individuals"):
     num_data = len(ys)
 
@@ -386,6 +398,32 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
     return 0
 
 
+def plot_peaks(path_results, path_plots, modes, target_indx, percentile="p50", flows=True):
+    if not os.path.exists(path_plots):
+        os.makedirs(path_plots)
+    peaks_modes = []
+
+    for mode in modes:
+        for index, compartment in enumerate(target_indx):
+            path_results_mode = os.path.join(path_results, mode)
+            if flows:
+                path_results_mode = os.path.join(path_results_mode, "flows")
+            df_data = read_county_results_h5(
+                os.path.join(path_results_mode, percentile, "Results.h5"), compartment, group_key='Total')
+            if flows:
+                # if flows, the data is accumulated.
+                df_data = df_data.diff(axis=0)
+                # set all first values to 0
+                df_data.iloc[0] = 0
+            # get the index of the max value in each column and append it to the list
+            peaks = df_data.idxmax().values
+            # count the number of peaks for each day
+            peaks_modes.append(np.bincount(peaks, minlength=df_data.shape[0]))
+
+    plot(peaks_modes, modes, path_plots,
+         title="Peaks for each County", ylabel="Day of Peak")
+
+
 if __name__ == '__main__':
     path_cwd = os.getcwd()
     path_results = os.path.join(path_cwd, "results")
@@ -412,3 +450,4 @@ if __name__ == '__main__':
                flow_se, [""], "Daily Infections")
     plot_icu_comp(path_results, path_plots, modes, path_icu_data)
     plot_r0(path_results, path_plots, modes)
+    plot_peaks(path_results, path_plots, modes, flow_se)

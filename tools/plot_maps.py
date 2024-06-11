@@ -53,8 +53,8 @@ def plot_r0_map(path_results, path_plots, days, percentile, mode):
         if not os.path.exists(path_p):
             os.makedirs(path_p)
         plot_maps(path_r, path_p, compartments=[0], percentile=percentile,
-                days=days, min_val=0, max_val=50, filename="r0_map", relative=False)
-    x=1
+                  days=days, min_val=0, max_val=50, filename="r0_map", relative=False)
+    x = 1
 
 
 def create_colorbar(path_plots, norm):
@@ -192,7 +192,8 @@ if __name__ == '__main__':
 
     plot_risk_map(os.path.join(path_results, "FeedbackDamping"),
                   os.path.join(path_plots, "FeedbackDamping"), days, percentile)
-    plot_r0_map(path_results, path_plots, np.arange(0,101, 5), percentile, modes)
+    plot_r0_map(path_results, path_plots, np.arange(
+        0, 101, 5), percentile, modes)
     plot_icu_map(path_results, path_plots, days, percentile, modes)
 
     plot_flows(path_results, path_plots, days,
