@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Sascha Korf, Carlotta Gerstein
+* Authors: Sascha Korf, David Kerkmann, Khoa Nguyen, Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -1488,8 +1488,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             sim.advance(mio::abm::TimePoint(mio::abm::days(23).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                3.5;
-            
+                4.5;
+
             sim.advance(mio::abm::TimePoint(mio::abm::days(37).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
@@ -1505,7 +1505,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             }
             // set infection from viral shed lower //Todo: change this "change of InfectionRateFromViralShed" to a parameter
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                3.5;
+                4.5;
 
             sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
@@ -1646,9 +1646,9 @@ int main(int argc, char** argv)
 
     // std::string input_dir = "/p/project/loki/memilio/memilio/data";
     // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
-    std::string input_dir  = "/Users/david/Documents/HZI/memilio/data";
+    std::string input_dir       = "/Users/david/Documents/HZI/memilio/data";
     std::string precomputed_dir = input_dir + "/results";
-    std::string result_dir = input_dir + "/results_" + currentDateTime();
+    std::string result_dir      = input_dir + "/results_" + currentDateTime();
     auto created                = create_result_folders(result_dir);
     if (created) {
         copy_precomputed_results(precomputed_dir, result_dir);

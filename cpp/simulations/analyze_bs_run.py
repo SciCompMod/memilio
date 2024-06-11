@@ -78,6 +78,7 @@ def plot_infection_per_location_type(df):
    
    # x axis should be titled Time in days
     plt.xlabel('Time (days)')
+    plt.ylabel('New infections')
     
 
 
@@ -154,7 +155,7 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     color_plot = cmx.get_cmap('Set1').colors
 
     states_plot = [1, 2, 3, 4, 5, 7]
-    legend_plot = ['E', 'I_NS', 'I_S', 'I_Sev', 'I_Crit', 'Dead', 'real_infected']
+    legend_plot = ['E', 'I_NSymp', 'I_Symp', 'I_Sev', 'I_Crit', 'Dead', 'Sm. rep. Sympt.']
 
     for i in states_plot:
         plt.plot(x, y50[:, i], color=color_plot[i])
@@ -293,9 +294,9 @@ def plot_mean_and_std(Y):
 
 if __name__ == "__main__":
     # path to results
-    path = "/Users/david/Documents/HZI/memilio/data/results"
+    # path = "/Users/david/Documents/HZI/memilio/data/results"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-06-10T21:35:59Z"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_cluster\results"
     if (len(sys.argv) > 1):
