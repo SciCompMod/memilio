@@ -8,7 +8,7 @@
         "target_folder": "${memilio-python_SOURCE_DIR}/../memilio-generation/memilio/tools",
         "optional": {
             "libclang_library_path": "${LIBCLANG_PATH}",
-            "simulation_class": "Simulation",
+            "simulation_class": "",
             "age_group": false,
             "parameterset_wrapper": true
         }

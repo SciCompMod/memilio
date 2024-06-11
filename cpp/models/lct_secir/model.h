@@ -43,8 +43,8 @@ namespace lsecir
  * @tparam NumInfectedSevere The number of subcompartents used for the InfectedSevere compartment.
  * @tparam NumInfectedCritical The number of subcompartents used for the InfectedCritical compartment.
  */
-template <unsigned int NumExposed, unsigned int NumInfectedNoSymptoms, unsigned int NumInfectedSymptoms,
-          unsigned int NumInfectedSevere, unsigned int NumInfectedCritical>
+template <int NumExposed, int NumInfectedNoSymptoms, int NumInfectedSymptoms, int NumInfectedSevere,
+          int NumInfectedCritical>
 class Model
 {
 
@@ -75,7 +75,7 @@ public:
             log_error("Size of the initial values does not match subcompartments.");
             return true;
         }
-        for (unsigned int i = 0; i < LctState::Count; i++) {
+        for (int i = 0; i < LctState::Count; i++) {
             if (m_initial_values[i] < 0) {
                 log_warning(
                     "Initial values for one subcompartment are less than zero. Simulation results are not realistic.");
@@ -114,9 +114,8 @@ public:
                 .sum();
 
         // S'
-        ScalarType season_val =
-            1 + parameters.get<Seasonality>() *
-                    sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + t), 365.0) / 182.5 + 0.5));
+        ScalarType season_val = 1 + parameters.get<Seasonality>() *
+                                        sin(3.141592653589793 * ((parameters.get<StartDay>() + t) / 182.5 + 0.5));
         dydt[0] = -y[0] / (m_N0 - y[LctState::template get_first_index<InfectionState::Dead>()]) * season_val *
                   parameters.get<TransmissionProbabilityOnContact>() *
                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(0, 0) *
@@ -291,7 +290,7 @@ public:
     void set_initial_values(Eigen::VectorXd init)
     {
         m_initial_values = init;
-        m_N0 = m_initial_values.sum();
+        m_N0             = m_initial_values.sum();
     }
 
     Parameters parameters{}; ///< Parameters of the model.

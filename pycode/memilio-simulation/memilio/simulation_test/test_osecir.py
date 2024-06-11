@@ -24,9 +24,9 @@ import numpy as np
 import pandas as pd
 
 from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import Index_InfectionState
-from memilio.simulation.secir import InfectionState as State
-from memilio.simulation.secir import Model, Simulation, simulate, simulate_flows
+from memilio.simulation.osecir import Index_InfectionState
+from memilio.simulation.osecir import InfectionState as State
+from memilio.simulation.osecir import Model, Simulation, simulate, simulate_flows
 
 
 class Test_osecir_integration(unittest.TestCase):
@@ -117,11 +117,11 @@ class Test_osecir_integration(unittest.TestCase):
         """
         Tests the correctness of the python bindings. The results of a simulation
         in python get compared to the results of a cpp simulation. Cpp simulation
-        results contained in the file secihurd-compare.csv.
+        results contained in the file ode-secihurd-compare.csv.
         If cpp model changes this test needs to be adjusted accordingly.
         """
         refData = pd.read_csv(
-            os.path.join(self.here + '/data/secihurd-compare.csv'),
+            os.path.join(self.here + '/data/ode-secihurd-compare.csv'),
             sep=r'(?<!#)\s+', engine='python')
         refData.columns = pd.Series(refData.columns.str.replace(
             r"#\s", "", regex=True))

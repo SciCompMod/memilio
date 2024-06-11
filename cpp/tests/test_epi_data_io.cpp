@@ -384,11 +384,11 @@ TEST(TestEpiData, set_vaccination_data)
     auto num_days       = 10;
 
     std::vector<int> county_ids = {1001};
-    mio::osecirvvs::Model model(num_age_groups);
-    model.parameters.set<mio::osecirvvs::VaccinationGap>(3);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(1);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(2);
-    std::vector<mio::osecirvvs::Model> model_vector{model};
+    mio::osecirvvs::Model<double> model(num_age_groups);
+    model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(3);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(1);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(2);
+    std::vector<mio::osecirvvs::Model<double>> model_vector{model};
 
     auto f = mio::osecirvvs::details::set_vaccination_data(model_vector,
                                                            mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
@@ -400,10 +400,12 @@ TEST(TestEpiData, set_vaccination_data)
     auto expected_values_FV =
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 2, 4, 5, 5, 7, 8, 9, 9, 10, 12, 14).finished();
 
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
 }
 
 TEST(TestEpiData, vaccination_data)
