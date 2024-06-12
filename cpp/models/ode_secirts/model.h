@@ -120,7 +120,7 @@ public:
                    Eigen::Ref<Vector<FP>> flows) const override
     {
         auto const& params   = this->parameters;
-        AgeGroup n_agegroups = params.template get_num_groups();
+        AgeGroup n_agegroups = params.get_num_groups();
 
         ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns<FP>>();
 
@@ -586,7 +586,7 @@ public:
         const ScalarType ub = (size_t)t + 1.0;
         const ScalarType lb = ub - eps;
 
-        Eigen::VectorXd smoothed_vaccinations((size_t)params.template get_num_groups());
+        Eigen::VectorXd smoothed_vaccinations((size_t)params.get_num_groups());
         smoothed_vaccinations.setZero();
 
         if (t > ub) {
@@ -598,10 +598,7 @@ public:
         }
         // check if t is in the range of the interval [lb,ub]
         if (t >= lb) {
-            // need a eigen vector of size params.template get_num_groups() to store the number of vaccinations per age group
-
-            // ToDo: Find a way to Iterate over all three vaccination types
-            for (AgeGroup age = AgeGroup(0); age < params.template get_num_groups(); age++) {
+            for (AgeGroup age = AgeGroup(0); age < params.get_num_groups(); age++) {
                 const auto num_vaccinations_ub = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub + 1))}] -
                                                  daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub))}];
                 const auto num_vaccinations_lb = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(lb + 1))}] -
@@ -611,7 +608,7 @@ public:
             }
         }
         else {
-            for (auto age = AgeGroup(0); age < params.template get_num_groups(); age++) {
+            for (auto age = AgeGroup(0); age < params.get_num_groups(); age++) {
                 smoothed_vaccinations[(size_t)age] = daily_vaccinations[{age, SimulationDay((size_t)t + 1)}] -
                                                      daily_vaccinations[{age, SimulationDay((size_t)t)}];
             }
@@ -874,13 +871,12 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
     auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic<FP>>().array().template cast<double>();
     auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>().array().template cast<double>();
     //slice of InfectedNoSymptoms
-    auto y_INS =
-        slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
-                  Eigen::Index(size_t(params.template get_num_groups())), Eigen::Index(InfectionState::Count)}) +
-        slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsPartialImmunity),
-                  Eigen::Index(size_t(params.template get_num_groups())), Eigen::Index(InfectionState::Count)}) +
-        slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsImprovedImmunity),
-                  Eigen::Index(size_t(params.template get_num_groups())), Eigen::Index(InfectionState::Count)});
+    auto y_INS = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
+                           Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
+                 slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsPartialImmunity),
+                           Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
+                 slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsImprovedImmunity),
+                           Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)});
 
     //compute isolation, same as infection risk from main model
     auto test_and_trace_required =
@@ -893,14 +889,14 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
-    slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsNaive),
-                    Eigen::Index(size_t(params.template get_num_groups())), Eigen::Index(InfectionState::Count)})
+    slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsNaive), Eigen::Index(size_t(params.get_num_groups())),
+                    Eigen::Index(InfectionState::Count)})
         .array() = riskFromInfectedSymptomatic;
     slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsPartialImmunity),
-                    Eigen::Index(size_t(params.template get_num_groups())), Eigen::Index(InfectionState::Count)})
+                    Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)})
         .array() = riskFromInfectedSymptomatic;
     slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsImprovedImmunity),
-                    Eigen::Index(size_t(params.template get_num_groups())), Eigen::Index(InfectionState::Count)})
+                    Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)})
         .array() = riskFromInfectedSymptomatic;
     return factors;
 }
