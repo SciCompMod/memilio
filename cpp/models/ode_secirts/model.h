@@ -836,7 +836,7 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
 }
 
 //see declaration above.
-template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
+template <typename FP, class Base>
 FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
 {
     double sum_inf = 0;

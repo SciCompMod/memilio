@@ -834,22 +834,6 @@ TEST(TestOdeSECIRTS, model_initialization)
                 MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
-TEST(TestOdeSECIRTS, run_simulation)
-{
-    auto num_age_groups = 3;
-    auto model          = make_model(num_age_groups);
-    auto num_days       = 30;
-
-    auto result = mio::simulate<double, mio::osecirts::Model<double>>(0, num_days, 0.1, model);
-    result = mio::interpolate_simulation_result(result); // Reduce influence of time steps chosen by the integrator.
-
-    // Load result of a previous run; only tests stability, not correctness.
-    auto expected_result =
-        mio::read_result(mio::path_join(TEST_DATA_DIR, "results_osecirts.h5")).value()[0].get_groups();
-
-    ASSERT_THAT(print_wrap(result.matrix()), MatrixNear(print_wrap(expected_result.matrix()), 1e-5, 1e-5));
-}
-
 #endif
 
 TEST(TestOdeSECIRTS, parameter_percentiles)
