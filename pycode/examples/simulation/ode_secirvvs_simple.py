@@ -30,9 +30,9 @@ from memilio.simulation.osecirvvs import InfectionState, interpolate_simulation_
 from memilio.simulation.osecirvvs import Model, simulate
 
 
-def run_secirvvs_simulation(show_plot=True):
+def run_ode_secirvvs_simulation(show_plot=True):
     """
-    Runs the c++ SECIRVVS model using a single age group 
+    Runs the c++ ODE SECIRVVS model using a single age group 
     and plots the results
     """
 
@@ -159,7 +159,7 @@ def run_secirvvs_simulation(show_plot=True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'osecirvvs_simple',
-        description='Simple example demonstrating the setup and simulation of the SECIRVVS model with a single age group.')
+        'ode_secirvvs_simple',
+        description='Simple example demonstrating the setup and simulation of the ODE SECIRVVS model with a single age group.')
     args = arg_parser.parse_args()
-    run_secirvvs_simulation(**args.__dict__)
+    run_ode_secirvvs_simulation(**args.__dict__)
