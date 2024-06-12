@@ -39,6 +39,13 @@ template <typename FP = double>
 class IntegratorCore
 {
 public:
+    /**
+     * @brief Initialize an IntegratorCore.
+     * Step size bound are needed for adaptive integrators, see the step method for more detail.
+     * Fixed size steppers ignore those bounds and may use the default constructor for FP.
+     * @param dt_min Lower bound to the step size dt, as used in the step method.
+     * @param dt_max Upper bound to the step size dt, as used in the step method.
+     */
     IntegratorCore(const FP& dt_min, const FP& dt_max)
         : m_dt_min(dt_min)
         , m_dt_max(dt_max)
@@ -106,7 +113,7 @@ public:
     /** @} */
 
 private:
-    FP m_dt_min, m_dt_max;
+    FP m_dt_min, m_dt_max; /// Bounds to step size dt.
 };
 
 /**
