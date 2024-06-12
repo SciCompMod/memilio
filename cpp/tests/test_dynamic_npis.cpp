@@ -19,6 +19,7 @@
 */
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "ode_secir/model.h"
 #include "matchers.h"
 
@@ -419,4 +420,57 @@ TEST(DynamicNPIs, secir_threshold_exceeded)
                   .get_dampings()
                   .size(),
               2);
+}
+
+TEST(DynamicNPIs, secir_delayed_implementation)
+{
+    mio::osecir::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
+
+    mio::ContactMatrixGroup& cm = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    cm[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.0));
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(
+        0.05 * 50'000,
+        {mio::DampingSampling<double>{
+            0.5, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime(5.0));
+    npis.set_base_value(50'000);
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+              0);
+
+    // start with t0 = 0.0
+    mio::osecir::Simulation<double, mio_test::MockSimulation> sim(model, 0.0);
+    sim.advance(3.0);
+    mio::ContactMatrixGroup const& contact_matrix =
+        sim.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
+    ASSERT_EQ(contact_matrix.get_matrix_at(0.0)(0, 0), 1.0);
+    ASSERT_EQ(contact_matrix.get_matrix_at(1.0)(0, 0), 1.0);
+    ASSERT_EQ(contact_matrix.get_matrix_at(2.0)(0, 0), 1.0);
+    ASSERT_EQ(contact_matrix.get_matrix_at(3.0)(0, 0), 0.5);
+
+    // second simulation with t0 = 1.0, so the NPIs are implemented at tmax + delay = 6.0
+    const auto tmax                                                             = 4.0;
+    model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 2.0;
+    mio::osecir::Simulation<double, mio_test::MockSimulation> sim_2(model, 1.0);
+    sim_2.advance(tmax);
+    mio::ContactMatrixGroup const& contact_matrix_sim_2 =
+        sim_2.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
+    ASSERT_EQ(contact_matrix_sim_2.get_matrix_at(3.0)(0, 0), 1.0);
+    ASSERT_EQ(contact_matrix_sim_2.get_matrix_at(4.0)(0, 0), 1.0);
+    ASSERT_EQ(contact_matrix_sim_2.get_matrix_at(5.0)(0, 0), 1.0);
+    ASSERT_EQ(contact_matrix_sim_2.get_matrix_at(6.0)(0, 0), 0.5);
+
+    // third simulation with t0 = 1.0, so the NPIs are implemented at tmax + delay = 14.0
+    model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 10.0;
+    mio::osecir::Simulation<double, mio_test::MockSimulation> sim_3(model, 1.0);
+    sim_3.advance(4.0);
+    mio::ContactMatrixGroup const& contact_matrix_sim_3 =
+        sim_3.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
+    ASSERT_EQ(contact_matrix_sim_3.get_matrix_at(13.0)(0, 0), 1.0);
+    ASSERT_EQ(contact_matrix_sim_3.get_matrix_at(14.0)(0, 0), 0.5);
 }
