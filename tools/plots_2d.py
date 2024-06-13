@@ -508,18 +508,17 @@ if __name__ == '__main__':
     dead_compartment = [[9]]
     flow_se = [[0]]
 
-    # plot_contacts(path_results, path_plots, modes)
-    # plot_risk(path_results, path_plots)
-    # plot_compartments(path_results, path_plots, modes,
-    #                   icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
-    # plot_compartments(path_results, path_plots, modes,
-    #                   infected_compartment, [""], "Total Infected")
-    # plot_compartments(path_results, path_plots, modes,
-    #                   dead_compartment, [""], "Total Deaths")
-    # plot_flows(path_results, path_plots, modes,
-    #            flow_se, [""], "Daily Infections")
-    # plot_icu_comp(path_results, path_plots, modes, path_icu_data)
-    # plot_r0(path_results, path_plots, modes)
-    # plot_peaks(path_results, path_plots, modes, flow_se)
-
+    plot_contacts(path_results, path_plots, modes)
+    plot_risk(path_results, path_plots)
+    plot_compartments(path_results, path_plots, modes,
+                      icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
+    plot_compartments(path_results, path_plots, modes,
+                      infected_compartment, [""], "Total Infected")
+    plot_compartments(path_results, path_plots, modes,
+                      dead_compartment, [""], "Total Deaths")
+    plot_flows(path_results, path_plots, modes,
+               flow_se, [""], "Daily Infections")
+    plot_icu_comp(path_results, path_plots, modes, path_icu_data)
+    plot_r0(path_results, path_plots, modes)
+    plot_peaks(path_results, path_plots, modes, flow_se)
     plot_r0_county_level(path_results, path_plots, modes)

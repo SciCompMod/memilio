@@ -414,14 +414,13 @@ public:
         for (size_t i = num_time_points - n; i < num_time_points; ++i) {
             const size_t day       = i - (num_time_points - n);
             const ScalarType gamma = std::pow(b, a) * std::pow(day, a - 1) * std::exp(-b * day) / std::tgamma(a);
-            auto mixed_regional_national_icu_occupancy =
-                m_model_ptr->parameters.template get<BlendingFactorRegional>() * icu_regional.row(i).sum() +
-                (1.0 - m_model_ptr->parameters.template get<BlendingFactorRegional>()) * icu_national.row(i).sum();
+            const auto blending_fact_national = 1.0 - m_model_ptr->parameters.template get<BlendingFactorRegional>() -
+                                                m_model_ptr->parameters.template get<BlendingFactorLocal>();
 
             auto icu_occupancy_adjusted_rel =
-                (m_model_ptr->parameters.template get<BlendingFactorLocal>() * icu_occupancy.get_value(i).sum() +
-                 (1.0 - m_model_ptr->parameters.template get<BlendingFactorRegional>()) *
-                     mixed_regional_national_icu_occupancy) /
+                (m_model_ptr->parameters.template get<BlendingFactorRegional>() * icu_regional.row(i).sum() +
+                 blending_fact_national * icu_national.row(i).sum() +
+                 m_model_ptr->parameters.template get<BlendingFactorLocal>() * icu_occupancy.get_value(i).sum()) /
                 m_model_ptr->parameters.template get<ICUCapacity>();
 
             // TODO: Should we allow values > 1.0? Maximal Reduction later is limited, but it may outweight other factors

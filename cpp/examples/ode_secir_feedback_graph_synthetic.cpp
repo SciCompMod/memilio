@@ -197,6 +197,12 @@ mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params)
     params.get<mio::osecir::ContactReductionMin>()    = {0.2, 0.2, 0.2, 0.2};
     params.get<mio::osecir::ContactReductionMax>()    = {0.6, 0.6, 0.6, 0.6};
 
+    auto& icu_occupancy     = params.get<mio::osecir::ICUOccupancyLocal>();
+    Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 0.0);
+    for (int t = -50; t <= 0; ++t) {
+        icu_occupancy.add_time_point(t, icu_day);
+    }
+
     return mio::success();
 }
 
@@ -264,7 +270,7 @@ mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string&
         auto& contacts         = params.get<mio::osecir::ContactPatterns>();
         auto& contact_dampings = contacts.get_dampings();
 
-        const ScalarType reduc_fac_location = 0.4514380487;
+        const ScalarType reduc_fac_location = 0.2110414236;
 
         const size_t locations       = static_cast<size_t>(ContactLocation::Count);
         const auto group_weights_all = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
@@ -544,7 +550,7 @@ mio::IOResult<void> run_parameter_study(ParameterStudy parameter_study, std::vec
     return mio::success();
 }
 
-mio::IOResult<void> set_infected_state(mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph,
+mio::IOResult<void> set_infected_state(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
                                        const size_t state_id, const double initially_infected_per_100k,
                                        const double initially_icu_per_100k)
 {
@@ -552,26 +558,29 @@ mio::IOResult<void> set_infected_state(mio::Graph<mio::osecir::Model, mio::Migra
         if (node.property.parameters.get<mio::osecir::StateID>() == state_id) {
             auto& populations                  = node.property.populations;
             auto total_population              = populations.get_total();
-            auto infected                      = initially_infected_per_100k / 100000.0 * total_population;
-            auto icu                           = initially_icu_per_100k / 100000.0 * total_population;
+            const auto infected                = initially_infected_per_100k / 100000.0 * total_population;
+            const auto icu                     = initially_icu_per_100k / 100000.0 * total_population;
+            const auto num_groups              = size_t(node.property.parameters.get_num_groups());
             const size_t infected_compartments = 4;
-            for (size_t age = 0; age < size_t(node.property.parameters.get_num_groups()); age++) {
+            for (size_t age = 0; age < num_groups; age++) {
                 populations[{mio::AgeGroup(age), mio::osecir::InfectionState::Exposed}] =
-                    infected / infected_compartments;
+                    infected / (infected_compartments * num_groups);
                 populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedNoSymptoms}] =
-                    infected / infected_compartments;
+                    infected / (infected_compartments * num_groups);
                 populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedSymptoms}] =
-                    infected / infected_compartments;
+                    infected / (infected_compartments * num_groups);
                 populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedSevere}] =
-                    infected / infected_compartments;
-                populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedCritical}] = icu;
+                    infected / (infected_compartments * num_groups);
+                populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedCritical}] = icu / num_groups;
             }
 
             // set history icu data
-            auto& icu_occupancy     = node.property.parameters.get<mio::osecir::ICUOccupancyLocal>();
-            Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(size_t(node.property.parameters.get_num_groups()), icu);
-            for (int t = -50; t <= 0; ++t) {
-                icu_occupancy.add_time_point(t, icu_day);
+            auto& icu_occupancy = node.property.parameters.get<mio::osecir::ICUOccupancyLocal>();
+            // set all values to icu
+            for (auto t_indx = 0; t_indx < icu_occupancy.get_num_time_points(); t_indx++) {
+                for (size_t age = 0; age < num_groups; age++) {
+                    icu_occupancy.get_value(t_indx)(age) = icu / num_groups;
+                }
             }
         }
     }
@@ -594,11 +603,12 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
     const auto start_date = mio::Date(2020, 12, 1);
 
-    const auto num_days_sim = 100.0;
-    const auto num_runs     = 10;
+    const auto num_days_sim = 150.0;
+    const auto num_runs     = 100;
 
-    auto const modes = {"ClassicDamping", "FeedbackDamping"};
-    // auto const modes = {"ClassicDamping"};
+    // auto const modes = {"ClassicDamping", "FeedbackDamping"};
+
+    auto const modes = {"FeedbackDamping"};
 
     const double initially_infected_per_100k = 100;
     const double initially_icu_per_100k      = 2.0;
@@ -647,7 +657,7 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 }
 int main()
 {
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::err);
     mio::mpi::init();
 
     std::string data_dir   = "/localdata1/code_2024/memilio/data";
