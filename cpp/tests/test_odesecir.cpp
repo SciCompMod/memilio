@@ -1090,6 +1090,11 @@ TEST(Secir, check_constraints_parameters)
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(0.5);
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.0);
+    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(-4);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -1158,6 +1163,10 @@ TEST(Secir, apply_constraints_parameters)
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[indx_agegroup], 0);
+
+    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(-4);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>(), 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
