@@ -266,6 +266,73 @@ def plot_r0(path_results, path_plots, modes, percentile="p50"):
     plot(r0_nums, modes, path_plots, title="R0", ylabel="R0")
 
 
+def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
+    df_modes = []
+    for mode in modes:
+        path_results_mode = os.path.join(path_results, mode, "r0")
+        path = os.path.join(path_results_mode, percentile,  "Results.h5")
+        data = {}
+        with h5py.File(path, 'r') as f:
+            for key in f.keys():
+                group = f[key]
+                total = group['Group1'][()]
+                data[key] = np.sum(total[:], axis=1)
+        df = pd.DataFrame(data)
+        df_modes.append(df)
+
+    # Box Plot
+    plt.figure(figsize=(12 * len(modes), 6))
+    y_min, y_max = float('inf'), float('-inf')
+
+    for i, mode in enumerate(modes):
+        df = df_modes[i]
+        # every second day
+        # df = df.iloc[::2]
+        df = df.T
+        plt.subplot(1, len(modes), i + 1)
+        sns.boxplot(data=df, orient="v")
+        plt.xlabel('Time', fontsize=fontsize)
+        if i == 0:  # Nur im ersten Plot das y-Label setzen
+            plt.ylabel('Reproduction Number', fontsize=fontsize)
+        tick_positions = np.arange(0, len(df.columns), 5)
+        tick_labels = df.columns[tick_positions]
+        plt.xticks(ticks=tick_positions, labels=tick_labels, fontsize=ticks)
+        plt.title(f'Distribution of Reproduction Numbers Over Time {mode}')
+        y_min = min(y_min, df.min().min())
+        y_max = max(y_max, df.max().max())
+
+    for i in range(len(modes)):  # Setzen der gleichen Skala für alle Plots
+        plt.subplot(1, len(modes), i + 1)
+        plt.ylim(y_min, y_max)
+
+    plt.savefig(os.path.join(path_plots, 'box_plots.png'))
+
+    # Violin Plot
+    plt.figure(figsize=(12 * len(modes), 6))
+    y_min, y_max = float('inf'), float('-inf')
+
+    for i, mode in enumerate(modes):
+        df = df_modes[i]
+        df = df.T
+        plt.subplot(1, len(modes), i + 1)
+        sns.violinplot(data=df, orient="v")
+        plt.xlabel('Time', fontsize=fontsize)
+        if i == 0:  # Nur im ersten Plot das y-Label setzen
+            plt.ylabel('Reproduction Number', fontsize=fontsize)
+        tick_positions = np.arange(0, len(df.columns), 5)
+        tick_labels = df.columns[tick_positions]
+        plt.xticks(ticks=tick_positions, labels=tick_labels, fontsize=ticks)
+        plt.title(f'Distribution of Reproduction Numbers Over Time {mode}')
+        y_min = min(y_min, df.min().min())
+        y_max = max(y_max, df.max().max())
+
+    for i in range(len(modes)):  # Setzen der gleichen Skala für alle Plots
+        plt.subplot(1, len(modes), i + 1)
+        plt.ylim(y_min, y_max)
+
+    plt.savefig(os.path.join(path_plots, 'violin_plots.png'))
+
+
 def plot_contacts(path_results, path_plots, modes, percentile="p50"):
     file_format = 'h5'
     try:
@@ -441,16 +508,18 @@ if __name__ == '__main__':
     dead_compartment = [[9]]
     flow_se = [[0]]
 
-    plot_contacts(path_results, path_plots, modes)
-    plot_risk(path_results, path_plots)
-    plot_compartments(path_results, path_plots, modes,
-                      icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
-    plot_compartments(path_results, path_plots, modes,
-                      infected_compartment, [""], "Total Infected")
-    plot_compartments(path_results, path_plots, modes,
-                      dead_compartment, [""], "Total Deaths")
-    plot_flows(path_results, path_plots, modes,
-               flow_se, [""], "Daily Infections")
-    plot_icu_comp(path_results, path_plots, modes, path_icu_data)
-    plot_r0(path_results, path_plots, modes)
-    plot_peaks(path_results, path_plots, modes, flow_se)
+    # plot_contacts(path_results, path_plots, modes)
+    # plot_risk(path_results, path_plots)
+    # plot_compartments(path_results, path_plots, modes,
+    #                   icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
+    # plot_compartments(path_results, path_plots, modes,
+    #                   infected_compartment, [""], "Total Infected")
+    # plot_compartments(path_results, path_plots, modes,
+    #                   dead_compartment, [""], "Total Deaths")
+    # plot_flows(path_results, path_plots, modes,
+    #            flow_se, [""], "Daily Infections")
+    # plot_icu_comp(path_results, path_plots, modes, path_icu_data)
+    # plot_r0(path_results, path_plots, modes)
+    # plot_peaks(path_results, path_plots, modes, flow_se)
+
+    plot_r0_county_level(path_results, path_plots, modes)
