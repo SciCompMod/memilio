@@ -217,7 +217,7 @@ def compute_R_eff_old_method(counties, out_folder=dd.defaultDict['out_folder']):
 
 class NPIRegression():
 
-    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0, delay=0, fixed_effects=False, clustering=None, rki=False, state_level = False):
+    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0, delay=0, fixed_effects=False, clustering=None, rki=False, state_level=False):
         self.counties = counties
         self.min_date = min_date
         self.max_date = max_date
@@ -243,8 +243,8 @@ class NPIRegression():
             gd.check_dir(directory)
 
             if self.rki:
-                filepath = os.path.join(directory + 'clustered_npis_rki.json')
-                self.clustering = 'clustered_npis_rki'
+                filepath = os.path.join(directory + 'cluster_rki.json')
+                self.clustering = 'cluster_rki'
 
                 if not os.path.exists(filepath):
                     print('Clustering analogous to RKI not found.')
@@ -298,17 +298,25 @@ class NPIRegression():
                 county_to_state_map = geoger.get_countyid_to_stateid_map()
                 # aggregate npi data to state level
                 # npis are county population weighted mean of all npis in state
-                df_population[self.dict_entry] = df_population[dd.EngEng['idState'] if not self.state_level else dd.EngEng['idCounty']].map(county_to_state_map)
-                state_pop_dict = pd.Series(df_population.groupby(self.dict_entry).sum()['Population'].values, index = df_population['ID_State'].unique()).to_dict()
-                df_population['Ratio per State'] = df_population['Population']/(df_population['ID_State'].map(state_pop_dict))
-                ratio_dict = pd.Series(df_population['Ratio per State'].values, index = df_population['ID_County']).to_dict()
-                self.df_npis.iloc[:,2:]=self.df_npis.iloc[:,2:].mul(self.df_npis['ID_County'].astype(float).map(ratio_dict).values, axis=0)
-                self.df_npis['ID_State'] = self.df_npis.ID_County.map(county_to_state_map)
-                self.df_npis=self.df_npis.groupby(['Date','ID_State']).sum().reset_index(drop=False).drop('ID_County', axis=1)
+                df_population[self.dict_entry] = df_population[dd.EngEng['idState']
+                                                               if not self.state_level else dd.EngEng['idCounty']].map(county_to_state_map)
+                state_pop_dict = pd.Series(df_population.groupby(self.dict_entry).sum(
+                )['Population'].values, index=df_population['ID_State'].unique()).to_dict()
+                df_population['Ratio per State'] = df_population['Population'] / \
+                    (df_population['ID_State'].map(state_pop_dict))
+                ratio_dict = pd.Series(
+                    df_population['Ratio per State'].values, index=df_population['ID_County']).to_dict()
+                self.df_npis.iloc[:, 2:] = self.df_npis.iloc[:, 2:].mul(
+                    self.df_npis['ID_County'].astype(float).map(ratio_dict).values, axis=0)
+                self.df_npis['ID_State'] = self.df_npis.ID_County.map(
+                    county_to_state_map)
+                self.df_npis = self.df_npis.groupby(['Date', 'ID_State']).sum(
+                ).reset_index(drop=False).drop('ID_County', axis=1)
 
-                df_population.drop(dd.EngEng['idState'] if not self.state_level else dd.EngEng['idCounty'], axis=1, inplace =True)
-                df_population = df_population.groupby(self.dict_entry).sum().reset_index(drop=False)
-
+                df_population.drop(
+                    dd.EngEng['idState'] if not self.state_level else dd.EngEng['idCounty'], axis=1, inplace=True)
+                df_population = df_population.groupby(
+                    self.dict_entry).sum().reset_index(drop=False)
 
             # read vaccination data
             filepath = os.path.join(
@@ -321,17 +329,19 @@ class NPIRegression():
                 self.df_vaccinations = pd.read_json(filepath)
             if not self.state_level:
                 self.df_vaccinations = self.df_vaccinations[self.df_vaccinations[self.dict_entry].isin(
-                self.counties)]
+                    self.counties)]
             else:
-                self.df_vaccinations = self.df_vaccinations.groupby(['Date', 'ID_State']).sum().reset_index()
-                self.df_vaccinations.drop('ID_County', axis = 1, inplace = True)
+                self.df_vaccinations = self.df_vaccinations.groupby(
+                    ['Date', 'ID_State']).sum().reset_index()
+                self.df_vaccinations.drop('ID_County', axis=1, inplace=True)
 
             # read inkar data
             if not self.state_level:
                 # TODO: Which year do we want to use for INKAR data?
                 filepath = os.path.join(
                     directory, 'inkar_2022.xls')
-                self.df_inkar = pd.read_excel(filepath) #TODO: aggregate on state level
+                # TODO: aggregate on state level
+                self.df_inkar = pd.read_excel(filepath)
 
             # read values for effective reproduction number
             if self.state_level == False:
@@ -342,8 +352,10 @@ class NPIRegression():
                     directory, "r_eff_state_multiple_c.json")
 
             if not os.path.exists(filepath):
-                self.df_r = compute_R_eff(iter_ids=self.iter_ids, state_level = self.state_level)
+                self.df_r = compute_R_eff(
+                    iter_ids=self.iter_ids, state_level=self.state_level)
             else:
+                # TODO: not working
                 self.df_r = pd.read_json(filepath=self.states)
 
             # shift column 'Date' for a certain number of days given by delay
@@ -361,7 +373,7 @@ class NPIRegression():
             for idx in unique_ids:
                 for vacc_state in self.all_vacc_states:
                     self.df_vaccinations.loc[(self.df_vaccinations[self.dict_entry] == idx), vacc_state] = self.df_vaccinations.loc[self.df_vaccinations[self.dict_entry]
-                                                                                                                                   == idx, vacc_state]/df_population.loc[df_population[self.dict_entry] == idx, 'Population'].iloc[0]
+                                                                                                                                    == idx, vacc_state]/df_population.loc[df_population[self.dict_entry] == idx, 'Population'].iloc[0]
             # add rows for missing dates if self.min_date is smaller than first date in self.df_vaccinations
             min_date_vacc = min(self.df_vaccinations.Date).strftime("%Y-%m-%d")
             if self.min_date < min_date_vacc:
@@ -382,7 +394,8 @@ class NPIRegression():
 
         with progress_indicator.Spinner(message="Preparing seasonality data"):
             # variable for seasonality
-            self.df_seasonality = self.df_vaccinations.loc[:, [self.dict_entry, dd.EngEng['date']]]
+            self.df_seasonality = self.df_vaccinations.loc[:, [
+                self.dict_entry, dd.EngEng['date']]]
             self.df_seasonality.insert(2, "sin", np.sin(
                 2*np.pi*self.df_seasonality['Date'].dt.dayofyear/365))
             self.df_seasonality.insert(3, "cos", np.cos(
@@ -427,15 +440,16 @@ class NPIRegression():
                 self.df_agestructure = self.df_vaccinations.loc[:, [
                     dd.EngEng['idCounty'], dd.EngEng['date']]]
 
-                self.age_categories = ['Unter 18', 'Über 65', 'Altersdurchschnitt']
+                self.age_categories = ['Unter 18',
+                                       'Über 65', 'Altersdurchschnitt']
                 for county in self.counties:
                     self.df_agestructure.loc[self.df_agestructure['ID_County'] == county,
-                                            self.age_categories[0]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Einwohner unter 6 Jahre'].values[0] + self.df_inkar.loc[self.df_inkar['Kennziffer'] ==
-                                                                                                                                                                                        county]['Einwohner von 6 bis unter 18 Jahren'].values[0]
+                                             self.age_categories[0]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Einwohner unter 6 Jahre'].values[0] + self.df_inkar.loc[self.df_inkar['Kennziffer'] ==
+                                                                                                                                                                                         county]['Einwohner von 6 bis unter 18 Jahren'].values[0]
                     self.df_agestructure.loc[self.df_agestructure['ID_County'] == county,
-                                            self.age_categories[1]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Einwohner 65 Jahre und älter'].values[0]
+                                             self.age_categories[1]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Einwohner 65 Jahre und älter'].values[0]
                     self.df_agestructure.loc[self.df_agestructure['ID_County'] == county,
-                                            self.age_categories[2]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Durchschnittsalter der Bevölkerung'].values[0]
+                                             self.age_categories[2]] = self.df_inkar.loc[self.df_inkar['Kennziffer'] == county]['Durchschnittsalter der Bevölkerung'].values[0]
 
         if not self.state_level:
             with progress_indicator.Spinner(message="Preparing region types"):
@@ -458,7 +472,7 @@ class NPIRegression():
                             break
                     else:
                         print("WARNING: County " + str(county) +
-                            " not found in RegioStaR7 dictionary")
+                              " not found in RegioStaR7 dictionary")
                     # add 1 or each county in the respective column
                     self.df_regions.loc[self.df_regions[self.dict_entry] ==
                                         county, self.region_types[key-1]] += 1
@@ -502,14 +516,19 @@ class NPIRegression():
             if (not self.state_level) or (not self.rki):
                 self.df_agestructure['Date'] = pd.to_datetime(
                     self.df_agestructure['Date'])
-                self.df_regions['Date'] = pd.to_datetime(self.df_regions['Date'])
+                self.df_regions['Date'] = pd.to_datetime(
+                    self.df_regions['Date'])
 
             # remove all dates where the r-value could not be computed
+            # check if whole counties are removed due to missing R value
+            removed_counties = []
             for idx in self.iter_ids:
                 df_r_c = self.df_r[self.df_r[self.dict_entry] == idx]
                 # use region dataframe for reference (smallest of other dfs)
                 df_seasonality_c = self.df_seasonality[self.df_seasonality[self.dict_entry] == idx]
                 missing_dates = set(df_seasonality_c.Date)-set(df_r_c.Date)
+                if len(df_r_c.Date) == 0:
+                    removed_counties.append(idx)
                 self.df_npis = self.df_npis.drop(self.df_npis[(self.df_npis.Date.isin(
                     missing_dates)) & (self.df_npis[self.dict_entry] == idx)].index)
                 self.df_vaccinations = self.df_vaccinations.drop(self.df_vaccinations[(
@@ -592,7 +611,7 @@ class NPIRegression():
                                                  self.df_r.Date.dt.day_of_year.values/365)))
 
         # TODO: discuss which vaccination states we want to include
-        self.used_vacc_states = list(self.all_vacc_states[0:3])
+        self.used_vacc_states = list(self.all_vacc_states[0:1])
 
         # TODO: discuss which region type we want to use as reference
         # for now use Metropole
@@ -826,14 +845,14 @@ class NPIRegression():
             fig, ax = plt.subplots()
 
             # vertical line at x=0
-            ax.axvline(color='gray')
+            ax.axvline(x=1, color='gray')
 
             for i in range(plotted_variables_begin, plotted_variables_end):
                 # plot cofidence interval
-                ax.plot((self.df_pvalues['conf_int_min'].iloc[i],
-                         self.df_pvalues['conf_int_max'].iloc[i]), (i, i), '-o', color='teal', markersize=3)
+                ax.plot((np.exp(self.df_pvalues['conf_int_min'].iloc[i]),
+                         np.exp(self.df_pvalues['conf_int_max'].iloc[i])), (i, i), '-o', color='teal', markersize=3)
                 # plot coefficient
-                ax.scatter(self.df_pvalues['coeffs'].iloc[i],
+                ax.scatter(np.exp(self.df_pvalues['coeffs'].iloc[i]),
                            i, color='teal', marker='x')
 
                 # different colors for background
@@ -844,7 +863,7 @@ class NPIRegression():
                           list(self.df_pvalues['columns'])[plotted_variables_begin: plotted_variables_end], fontsize=5)
             ax.invert_yaxis()
 
-            ax.set_xlabel('Values of coefficients')
+            ax.set_xlabel('Effect on R-value')
             ax.set_ylabel('Variables')
 
             if not os.path.isdir(f'plots/{self.min_date}to{self.max_date}/{self.clustering}/regression_results'):
@@ -886,7 +905,7 @@ class NPIRegression():
                 self.df_pvalues['columns'][plotted_variables_begin: plotted_variables_end]), fontsize=5)
             axes[plot_number].invert_yaxis()
 
-            axes[plot_number].set_xlim(0,self.df_pvalues['pvalues'].max()*1.4)
+            axes[plot_number].set_xlim(0, self.df_pvalues['pvalues'].max()*1.4)
 
         # get index of npi_of interest and change color of that bar
         index = self.df_pvalues.index.get_loc(
@@ -977,8 +996,8 @@ class NPIRegression():
 def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
-    min_date = '2020-03-01' #as in rki
-    max_date = '2021-08-31' #as in rki
+    min_date = '2020-03-01'  # as in rki
+    max_date = '2021-08-31'  # as in rki
 
     fine_resolution = 2
 
@@ -988,11 +1007,21 @@ def main():
 
     clustering = 'clustered_npis.json'
 
-    npi_regression = NPIRegression(
-        counties, min_date, max_date, fine_resolution, delay, fixed_effects, clustering=None, rki=True, state_level = True)
+    rki = True
 
-    df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
-        plot=True)
+    if rki:
+        npi_regression = NPIRegression(
+            counties, min_date, max_date, fine_resolution, delay, fixed_effects, clustering=None, rki=True, state_level=True)
+
+        df_pvalues, results, aic_initial, aic_final = npi_regression.regression_with_all_variables(
+            plot=True)
+
+    else:
+        npi_regression = NPIRegression(
+            counties, min_date, max_date, fine_resolution, delay, fixed_effects, clustering=None, rki=False)
+
+        df_pvalues, results, aic_initial, aic_final = npi_regression.backward_selection(
+            plot=True)
 
 
 if __name__ == "__main__":
