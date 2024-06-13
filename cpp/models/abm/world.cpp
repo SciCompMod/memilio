@@ -65,7 +65,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-    PRAGMA_OMP(parallel for)
+    // PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
@@ -75,7 +75,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    PRAGMA_OMP(parallel for)
+    // PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
@@ -132,20 +132,23 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person           = m_persons[trip.person_id];
             auto& current_location = person->get_location();
             auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);
-            if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
-                auto& target_location = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    if (target_location != current_location &&
-                        target_location.get_number_persons() < target_location.get_capacity().persons &&
-                        target_location.entry_allowed(personal_rng, t)) {
-                        person->apply_mask_intervention(personal_rng, target_location);
-                        person->migrate_to(target_location);
+             if (current_location.get_type() != LocationType::Hospital && current_location.get_type() != LocationType::ICU && current_location.get_type() != LocationType::Cemetery) {
+                if (!person->is_in_quarantine(t, parameters)) {
+                    auto& target_location = get_individualized_location(trip.migration_destination);
+                    if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                        if (target_location != current_location &&
+                            target_location.get_number_persons() < target_location.get_capacity().persons &&
+                            target_location.entry_allowed(personal_rng, t)) {
+                            person->apply_mask_intervention(personal_rng, target_location);
+                            person->migrate_to(target_location);
+                        }
                     }
                 }
-            }
-            m_trip_list.increase_index();
+             }
         }
+        m_trip_list.increase_index();
     }
+
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
     }
@@ -154,7 +157,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
-    PRAGMA_OMP(parallel for)
+    // PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
         location->adjust_contact_rates(parameters.get_num_groups());
