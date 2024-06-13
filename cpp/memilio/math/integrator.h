@@ -179,22 +179,19 @@ public:
 
             if (tmax - t < dt_min_copy) {
                 // reduce minimal step size low enough such that we do not step past tmax
-                m_core->get_dt_min() = min((tmax - t0) * 1e-10, dt_min_copy);
-                // m_core->get_dt_min() = std::numeric_limits<FP>::min();
+                // m_core->get_dt_min() = min((tmax - t0) * 1e-10, dt_min_copy);
+                m_core->get_dt_min() = dt; // == tmax - t
+                // the following step will be the last. dt_min must be reset after this loop.
             }
 
             results.add_time_point();
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
-            if (dt_copy < dt_min_copy) {
-                // dt_copy == tmax - t before the step call
-                m_core->get_dt_min() = dt_min_copy;
-            }
-
             // if dt has been changed (even slighly) by step, register the current m_core as adaptive
             m_is_adaptive |= !floating_point_equal(dt, dt_copy);
         }
+        m_core->get_dt_min() = dt_min_copy; // reset dt_min
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
         dt = max(dt, dt_restore);
