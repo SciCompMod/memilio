@@ -676,7 +676,7 @@ public:
 
         ScalarType delay_npi_implementation;
         auto t        = BaseT::get_result().get_last_time();
-        const auto dt = dyn_npis.get_interval().get();
+        const auto dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
         while (t < tmax) {
 
             auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});

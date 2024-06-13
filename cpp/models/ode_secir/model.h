@@ -290,7 +290,7 @@ public:
 
         FP delay_npi_implementation; // delay which is needed to implement a NPI that is criterion-dependent
         auto t        = BaseT::get_result().get_last_time();
-        const auto dt = dyn_npis.get_interval().get();
+        const auto dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
 
         while (t < tmax) {
             auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
