@@ -39,10 +39,12 @@ def summarize_dates(dates):
 
 
 #import the first excel file with the measures and ther abbreviations 
-df_abb = pd.read_excel('/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/datensatzbeschreibung_massnahmen.xlsx', sheet_name='DSB BL')
+df_abb = pd.read_excel(
+    '/Users/david/Documents/HZI/memilio/data/npi_data/datensatzbeschreibung_massnahmen.xlsx', sheet_name='DSB BL')
 
 #read in the matrix which tells us which measure is active on which day
-df_measure_matrix = pd.read_csv(r'/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/germany_counties_npi_subcat.csv')
+df_measure_matrix = pd.read_csv(
+    r'/Users/david/Documents/HZI/memilio/data/npi_data/germany_counties_npi_subcat.csv', header=None, skiprows=1)
 
 zip_code_brunswick = 3101
 start_date = '2021-03-01'
@@ -81,4 +83,10 @@ for measure in df_measure_matrix.axes[1][3:]:
     f.write(measure + ': ' + str(days) + ' days ' + 'Dates: ' + str(date_ranges) + '\n\n')
     
 
-x=1
+f.close()
+
+df_measure_matrix = df_measure_matrix.iloc[:, measure_by_days.axes[0]]
+sns.heatmap(df_measure_matrix.iloc[:, 3:], cmap='coolwarm', cbar=False)
+plt.show()
+
+x = 1

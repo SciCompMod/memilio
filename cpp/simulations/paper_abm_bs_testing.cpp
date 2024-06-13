@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Sascha Korf, Carlotta Gerstein
+* Authors: Sascha Korf, David Kerkmann, Khoa Nguyen, Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -34,6 +34,7 @@
 #include "memilio/utils/miompi.h"
 #include "memilio/io/binary_serializer.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/io/io.h"
 
 namespace fs = boost::filesystem;
 
@@ -1487,8 +1488,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             sim.advance(mio::abm::TimePoint(mio::abm::days(23).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                3.5;
-            
+                4.5;
+
             sim.advance(mio::abm::TimePoint(mio::abm::days(37).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
@@ -1504,7 +1505,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             }
             // set infection from viral shed lower //Todo: change this "change of InfectionRateFromViralShed" to a parameter
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                3.5;
+                4.5;
 
             sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
@@ -1604,6 +1605,38 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     return mio::success();
 }
 
+// From: https://en.cppreference.com/w/cpp/chrono/c/strftime
+const std::string currentDateTime()
+{
+    // Example of the very popular RFC 3339 format UTC time
+    std::time_t time = std::time({});
+    char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+    std::strftime(std::data(timeString), std::size(timeString), "%FT%TZ", std::gmtime(&time));
+    return timeString;
+}
+
+mio::IOResult<bool> create_result_folders(std::string const& result_dir)
+{
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir + "/infection_per_age_group/"));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir + "/infection_per_location_type/"));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir + "/infection_state_per_age_group/"));
+    return mio::success();
+}
+
+void copy_precomputed_results(std::string const& from_dir, std::string const& to_dir)
+{
+    fs::copy(from_dir + "/Results_rki.h5", to_dir, fs::copy_options::overwrite_existing);
+    fs::copy(from_dir + "/Results_rki_sum.h5", to_dir, fs::copy_options::overwrite_existing);
+}
+
+mio::IOResult<bool> copy_result_folder(std::string const& from_dir, std::string const& to_dir)
+{
+    BOOST_OUTCOME_TRY(mio::create_directory(to_dir));
+    fs::copy(from_dir, to_dir, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
+    return mio::success();
+}
+
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::err);
@@ -1611,11 +1644,17 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project/loki/memilio/memilio/data";
+    // std::string input_dir = "/p/project/loki/memilio/memilio/data";
     // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
-    std::string result_dir = input_dir + "/results";
+    std::string input_dir       = "/Users/david/Documents/HZI/memilio/data";
+    std::string precomputed_dir = input_dir + "/results";
+    std::string result_dir      = input_dir + "/results_" + currentDateTime();
+    auto created                = create_result_folders(result_dir);
+    if (created) {
+        copy_precomputed_results(precomputed_dir, result_dir);
+    }
     size_t num_runs;
-    bool save_single_runs = true;
+    //bool save_single_runs = true;
 
     if (argc == 2) {
         num_runs = atoi(argv[1]);
@@ -1649,11 +1688,17 @@ int main(int argc, char** argv)
     // }
     // printf("\n");
 
-    auto result = run(input_dir, result_dir, num_runs, save_single_runs);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        mio::mpi::finalize();
-        return -1;
+    // auto result = run(input_dir, result_dir, num_runs, save_single_runs);
+    // if (!result) {
+    //     printf("%s\n", result.error().formatted_message().c_str());
+    //     mio::mpi::finalize();
+    //     return -1;
+    // }
+
+    // copy results into a fixed name folder to have easier access
+    if (created) {
+        std::string last_run_dir = input_dir + "/results_last_run";
+        auto copied              = copy_result_folder(result_dir, last_run_dir);
     }
 
     mio::mpi::finalize();
