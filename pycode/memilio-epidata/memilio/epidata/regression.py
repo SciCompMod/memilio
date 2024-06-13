@@ -478,8 +478,11 @@ class NPIRegression():
                                         county, self.region_types[key-1]] += 1
 
         if self.rki:
-            dict_schoolholidays = {
-                1: [["30.03.2020", "17.04.2020"], ["22.05.2020", "22.05.2020"]]}
+            filepath = os.path.join(directory, 'holidays.json')
+            df_holidays_temp = pd.read_json(filepath)
+
+            dict_states = {1: 'SH', 2: 'HH', 3: 'NI', 4: 'HB', 5: 'NW', 6: 'HE', 7: 'RP', 8: 'BW',
+                           9: 'BY', 10: 'SL', 11: 'BE', 12: 'BB', 13: 'MV', 14: 'SN', 15: 'ST', 16: 'TH'}
 
             self.df_holidays = self.df_vaccinations.loc[:, [
                 self.dict_entry, dd.EngEng['date']]]
@@ -491,12 +494,18 @@ class NPIRegression():
             # variable for second half of school holidays
             self.df_holidays['second_half_effect'] = 0
 
-            for state in [1]:
-                for holiday in range(len(dict_schoolholidays[state])):
-                    start_date = dict_schoolholidays[state][holiday][0]
-                    end_date = dict_schoolholidays[state][holiday][1]
-                    length_of_holidays = datetime.strptime(end_date, '%d.%m.%Y').date(
-                    )-datetime.strptime(start_date, '%d.%m.%Y').date()
+            for state in self.states:
+                # get lists for start and end dates of holidays for particular state
+                start_dates = list(df_holidays_temp.loc[(df_holidays_temp['stateCode'] == dict_states[state]) & (
+                    (df_holidays_temp['year'] == 2020) | (df_holidays_temp['year'] == 2021)), 'start'])
+                end_dates = list(df_holidays_temp.loc[(df_holidays_temp['stateCode'] == dict_states[state]) & (
+                    (df_holidays_temp['year'] == 2020) | (df_holidays_temp['year'] == 2021)), 'end'])
+                for holiday in range(len(start_dates)):
+                    start_date = start_dates[holiday]
+                    end_date = end_dates[holiday]
+
+                    length_of_holidays = datetime.strptime(end_date, '%Y-%m-%d').date(
+                    )-datetime.strptime(start_date, '%Y-%m-%d').date()
 
                     self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
                         self.df_holidays['Date'] >= start_date) & (
@@ -506,13 +515,14 @@ class NPIRegression():
                     if length_of_holidays.days >= 5:
                         self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
                             self.df_holidays['Date'] > end_date) & (
-                            self.df_holidays['Date'] <= np.datetime64(datetime.strptime(end_date, '%d.%m.%Y').date() + timedelta(days=5)))), 'after_holiday_effect'] = 1
+                            self.df_holidays['Date'] <= np.datetime64(datetime.strptime(end_date, '%Y-%m-%d').date() + timedelta(days=5)))), 'after_holiday_effect'] = 1
 
                     # only add an effect for the second half of school holidays if they are at least 12 days long
+                    print('length of holidays: ', length_of_holidays.days)
                     if length_of_holidays.days >= 12:
                         self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
-                            self.df_holidays['Date'] >= np.datetime64(datetime.strptime(start_date, '%d.%m.%Y').date() + timedelta(days=int(0.5*length_of_holidays.days)))) & (
-                            self.df_holidays['Date'] <= end_date)), 'after_holiday_effect'] = 1
+                            self.df_holidays['Date'] >= np.datetime64(datetime.strptime(start_date, '%Y-%m-%d').date() + timedelta(days=int(0.5*length_of_holidays.days)))) & (
+                            self.df_holidays['Date'] <= end_date)), 'second_half_effect'] = 1
 
             # variable for Easter and Christmas
             dates_easter_christmas = [["2020-04-10", "2020-04-13"], ["2020-12-24", "2021-01-01"], [
