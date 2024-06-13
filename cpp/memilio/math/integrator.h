@@ -41,7 +41,7 @@ class IntegratorCore
 public:
     /**
      * @brief Initialize an IntegratorCore.
-     * Step size bound are needed for adaptive integrators, see the step method for more detail.
+     * Step size bounds are needed for adaptive integrators, see the step method for more detail.
      * Fixed size steppers ignore those bounds and may use the default constructor for FP.
      * @param dt_min Lower bound to the step size dt, as used in the step method.
      * @param dt_max Upper bound to the step size dt, as used in the step method.
@@ -82,7 +82,7 @@ public:
 
     /**
      * @brief Access lower bound to the step size dt.
-     * These values will only be used by adaptive steppers. Fixed size steppers must ignore them.
+     * These values will only be used by adaptive steppers. Fixed size steppers ignore them.
      * @return A reference to the minimum possible value of dt.
      * @{
      */
@@ -98,7 +98,7 @@ public:
 
     /**
      * @brief Access upper bound to the step size dt.
-     * These values will only be used by adaptive steppers. Fixed size steppers must ignore them.
+     * These values will only be used by adaptive steppers. Fixed size steppers ignore them.
      * @return A reference to the maximum possible value of dt.
      * @{
      */
@@ -179,7 +179,6 @@ public:
 
             if (tmax - t < dt_min_copy) {
                 // reduce minimal step size low enough such that we do not step past tmax
-                // m_core->get_dt_min() = min((tmax - t0) * 1e-10, dt_min_copy);
                 m_core->get_dt_min() = dt; // == tmax - t
                 // the following step will be the last. dt_min must be reset after this loop.
             }
