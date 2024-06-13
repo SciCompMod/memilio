@@ -710,13 +710,17 @@ def get_clustering_rki(directory, file_format):
                 ind += 1
                 continue
             else:
-                cluster_name = name + '; Level ' + str(ind)
-                df_out[cluster_name] = df_merged.loc[:, [
-                    column for column in df_merged.columns if column in level]].sum(axis=1).values
-                ind += 1
+                # do not include clusters with level 1 (analagous to RKI)
+                if ind == 1:
+                    ind += 1
+                else:
+                    cluster_name = name + '; Level ' + str(ind)
+                    df_out[cluster_name] = df_merged.loc[:, [
+                        column for column in df_merged.columns if column in level]].sum(axis=1).values
+                    ind += 1
     # merge maincodes as in rki
     # Schools
-    for i in range(1, 5):  # =1,2,3,4
+    for i in range(2, 5):  # =1,2,3,4
         df_out['Schools; Level ' +
                str(i)] = df_out["Primary Schools; Level "+str(i)]
     # ps level 5 and not fes level 5
@@ -744,7 +748,7 @@ def get_clustering_rki(directory, file_format):
     df_out['Sports; Level 5'] *= (df_out["Outdoor Sports; Level 5"])
     # drop old columns
     for drop_name in ['Public Events Indoor', 'Public Events Outdoor', "Primary Schools", "Further Education Schools", "Indoor Sports", "Outdoor Sports"]:
-        for i in range(1, 7):
+        for i in range(2, 7):
             try:
                 df_out.drop(drop_name + '; Level ' +
                             str(i), inplace=True, axis=1)
