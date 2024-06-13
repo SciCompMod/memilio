@@ -225,6 +225,7 @@ def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_sc
             path_results_mode = os.path.join(path_results, mode, "flows")
             data = get_results(
                 path_results_mode, compartment, results="total")
+            data = {key: np.diff(data[key]) for key in data.keys()}
             plot_data.append(data)
     plot(plot_data, labels_modes, path_plots, title=title,
          log_scale=log_scale, ylabel="Number Individuals")
@@ -413,8 +414,10 @@ def plot_peaks(path_results, path_plots, modes, target_indx, percentile="p50", f
             if flows:
                 # if flows, the data is accumulated.
                 df_data = df_data.diff(axis=0)
+                df_data = df_data.iloc[1:]
+                df_data.reset_index(drop=True, inplace=True)
                 # set all first values to 0
-                df_data.iloc[0] = 0
+                # df_data.iloc[0] = 0
             # get the index of the max value in each column and append it to the list
             peaks = df_data.idxmax().values
             # count the number of peaks for each day
