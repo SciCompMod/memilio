@@ -28,7 +28,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getVariantsData as gvsd
 from memilio.epidata import progress_indicator
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 import math
 import pandas as pd
@@ -477,6 +477,59 @@ class NPIRegression():
                     self.df_regions.loc[self.df_regions[self.dict_entry] ==
                                         county, self.region_types[key-1]] += 1
 
+        if self.rki:
+            dict_schoolholidays = {
+                1: [["30.03.2020", "17.04.2020"], ["22.05.2020", "22.05.2020"]]}
+
+            self.df_holidays = self.df_vaccinations.loc[:, [
+                self.dict_entry, dd.EngEng['date']]]
+
+            # variable for school holidays
+            self.df_holidays['schoolholidays'] = 0
+            # variable for after the school holidays
+            self.df_holidays['after_holiday_effect'] = 0
+            # variable for second half of school holidays
+            self.df_holidays['second_half_effect'] = 0
+
+            for state in [1]:
+                for holiday in range(len(dict_schoolholidays[state])):
+                    start_date = dict_schoolholidays[state][holiday][0]
+                    end_date = dict_schoolholidays[state][holiday][1]
+                    length_of_holidays = datetime.strptime(end_date, '%d.%m.%Y').date(
+                    )-datetime.strptime(start_date, '%d.%m.%Y').date()
+
+                    self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
+                        self.df_holidays['Date'] >= start_date) & (
+                        self.df_holidays['Date'] <= end_date)), 'schoolholidays'] = 1
+
+                    # only add an after effect to holidays if holidays are at least 5 days long
+                    if length_of_holidays.days >= 5:
+                        self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
+                            self.df_holidays['Date'] > end_date) & (
+                            self.df_holidays['Date'] <= np.datetime64(datetime.strptime(end_date, '%d.%m.%Y').date() + timedelta(days=5)))), 'after_holiday_effect'] = 1
+
+                    # only add an effect for the second half of school holidays if they are at least 12 days long
+                    if length_of_holidays.days >= 12:
+                        self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
+                            self.df_holidays['Date'] >= np.datetime64(datetime.strptime(start_date, '%d.%m.%Y').date() + timedelta(days=int(0.5*length_of_holidays.days)))) & (
+                            self.df_holidays['Date'] <= end_date)), 'after_holiday_effect'] = 1
+
+            # variable for Easter and Christmas
+            dates_easter_christmas = [["2020-04-10", "2020-04-13"], ["2020-12-24", "2021-01-01"], [
+                "2021-04-02", "2021-04-05"], ["2021-12-24", "2022-01-01"]]
+
+            self.df_holidays['easter_christmas'] = 0
+
+            for holiday in range(len(dates_easter_christmas)):
+                start_date = dates_easter_christmas[holiday][0]
+                end_date = dates_easter_christmas[holiday][1]
+                self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
+                    self.df_holidays['Date'] >= start_date) & (
+                    self.df_holidays['Date'] <= end_date)), 'easter_christmas'] = 1
+
+            self.holiday_variables = [
+                'schoolholidays', 'after_holiday_effect', 'second_half_effect', 'easter_christmas']
+
         with progress_indicator.Spinner(message="Handle datetimes"):
             # TODO: check if this works as expected
             # make dates consistent, use df_vaccinations as reference
@@ -505,6 +558,9 @@ class NPIRegression():
                     self.df_agestructure, self.min_date, self.max_date)
                 self.df_regions = mdfs.extract_subframe_based_on_dates(
                     self.df_regions, self.min_date, self.max_date)
+            if self.rki:
+                self.df_holidays = mdfs.extract_subframe_based_on_dates(
+                    self.df_holidays, self.min_date, self.max_date)
 
             self.df_npis['Date'] = pd.to_datetime(self.df_npis['Date'])
             self.df_vaccinations['Date'] = pd.to_datetime(
@@ -518,6 +574,9 @@ class NPIRegression():
                     self.df_agestructure['Date'])
                 self.df_regions['Date'] = pd.to_datetime(
                     self.df_regions['Date'])
+            if self.rki:
+                self.df_holidays['Date'] = pd.to_datetime(
+                    self.df_holidays['Date'])
 
             # remove all dates where the r-value could not be computed
             # check if whole counties are removed due to missing R value
@@ -542,6 +601,9 @@ class NPIRegression():
                         missing_dates)) & (self.df_agestructure[self.dict_entry] == idx)].index)
                     self.df_regions = self.df_regions.drop(self.df_regions[(self.df_regions.Date.isin(
                         missing_dates)) & (self.df_regions[self.dict_entry] == idx)].index)
+                if self.rki:
+                    self.df_holidays = self.df_holidays.drop(self.df_holidays[(self.df_holidays.Date.isin(
+                        missing_dates)) & (self.df_holidays[self.dict_entry] == idx)].index)
 
             # drop columns where no NPIs are assigned
             num_dropped = 0
@@ -567,6 +629,9 @@ class NPIRegression():
                     [self.dict_entry, 'Date'])
                 self.df_regions.sort_values(
                     [self.dict_entry, 'Date'])
+            if self.rki:
+                self.df_holidays.sort_values(
+                    [self.dict_entry, 'Date'])
 
             # reset index so that we can concatenate dataframes without problems
             self.df_r.reset_index(inplace=True)
@@ -577,6 +642,8 @@ class NPIRegression():
             if (not self.state_level) or (not self.rki):
                 self.df_agestructure.reset_index(inplace=True)
                 self.df_regions.reset_index(inplace=True)
+            if self.rki:
+                self.df_holidays.reset_index(inplace=True)
 
     # define variables that will be used in every regression
 
@@ -636,7 +703,8 @@ class NPIRegression():
             self.df_allvariables = pd.DataFrame([self.df_vaccinations[vacc_state]
                                                  for vacc_state in self.used_vacc_states] +
                                                 [self.df_seasonality['sin'], self.df_seasonality['cos']] +
-                                                [self.df_npis[npi] for npi in self.used_npis]).transpose()
+                                                [self.df_npis[npi] for npi in self.used_npis] +
+                                                [self.df_holidays[holiday] for holiday in self.holiday_variables]).transpose()
         else:
             self.df_allvariables = pd.DataFrame([self.df_vaccinations[vacc_state]
                                                  for vacc_state in self.used_vacc_states] +
@@ -680,7 +748,8 @@ class NPIRegression():
         elif self.rki:
             regression_variables = self.used_vacc_states + \
                 ['sin', 'cos'] + \
-                self.used_npis
+                self.used_npis + \
+                self.holiday_variables
         else:
             regression_variables = self.used_vacc_states + \
                 self.region_types + ['sin', 'cos'] + \
