@@ -98,11 +98,11 @@ TEST(TestTestingScheme, runScheme)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::Exactly(5))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5));
+        .WillOnce(testing::Return(0.7)) // Person got tested
+        .WillOnce(testing::Return(0.7)) // Test is positive
+        .WillOnce(testing::Return(0.5)) // Person complies to isolation
+        .WillOnce(testing::Return(0.7)) // Person got tested
+        .WillOnce(testing::Return(0.5)); // Test is negative
     EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
     EXPECT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
     EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
@@ -137,13 +137,13 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(6)) //only sampled twice, testing criteria don't apply to third person
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5));
+        .Times(testing::Exactly(6)) //testing criteria don't apply to third person
+        .WillOnce(testing::Return(0.7)) // Person complies to testing
+        .WillOnce(testing::Return(0.7)) // Person is tested positive
+        .WillOnce(testing::Return(0.7)) // Test is positive
+        .WillOnce(testing::Return(0.7)) // Person complies to isolation
+        .WillOnce(testing::Return(0.7)) // Person complies to testing
+        .WillOnce(testing::Return(0.5)); // Person is tested negative
 
     mio::abm::TestingStrategy test_strategy =
         mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
