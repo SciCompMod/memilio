@@ -29,27 +29,27 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 
     mio::abm::TimePoint t{0};
     auto testing_criteria = mio::abm::TestingCriteria();
-    ASSERT_EQ(testing_criteria.evaluate(person, t), true);
+    EXPECT_EQ(testing_criteria.evaluate(person, t), true);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
 
     testing_criteria.add_age_group(age_group_35_to_59);
-    ASSERT_EQ(testing_criteria.evaluate(person, t),
+    EXPECT_EQ(testing_criteria.evaluate(person, t),
               false); // now it isn't empty and get's evaluated against age group
     testing_criteria.remove_age_group(age_group_35_to_59);
-    ASSERT_EQ(testing_criteria.evaluate(person, t), true);
+    EXPECT_EQ(testing_criteria.evaluate(person, t), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    ASSERT_EQ(testing_criteria.evaluate(person, t), false);
+    EXPECT_EQ(testing_criteria.evaluate(person, t), false);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
 
     auto testing_criteria_manual = mio::abm::TestingCriteria(
         std::vector<mio::AgeGroup>({age_group_15_to_34}),
         std::vector<mio::abm::InfectionState>({mio::abm::InfectionState::InfectedNoSymptoms}));
-    ASSERT_EQ(testing_criteria == testing_criteria_manual, false);
+    EXPECT_EQ(testing_criteria == testing_criteria_manual, false);
     testing_criteria_manual.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria_manual.remove_age_group(age_group_15_to_34);
-    ASSERT_EQ(testing_criteria == testing_criteria_manual, true);
+    EXPECT_EQ(testing_criteria == testing_criteria_manual, true);
 }
 
 TEST(TestTestingScheme, runScheme)
@@ -76,11 +76,11 @@ TEST(TestTestingScheme, runScheme)
     auto testing_scheme1 =
         mio::abm::TestingScheme(testing_criteria1, testing_min_time, start_date, end_date, test_type, probability);
 
-    ASSERT_EQ(testing_scheme1.is_active(), false);
+    EXPECT_EQ(testing_scheme1.is_active(), false);
     testing_scheme1.update_activity_status(mio::abm::TimePoint(10));
-    ASSERT_EQ(testing_scheme1.is_active(), true);
+    EXPECT_EQ(testing_scheme1.is_active(), true);
     testing_scheme1.update_activity_status(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200));
-    ASSERT_EQ(testing_scheme1.is_active(), false);
+    EXPECT_EQ(testing_scheme1.is_active(), false);
     testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
 
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
@@ -103,9 +103,9 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5));
-    ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
-    ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
+    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
+    EXPECT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
+    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
               true); // Person doesn't test
 }
 
@@ -149,9 +149,9 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
         mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
-    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
               false); // Person tests and tests positive
-    ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
-    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
+    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
 }

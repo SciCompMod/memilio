@@ -398,9 +398,9 @@ public:
     }
 
     /**
-     * @brief Get the compliance of the Person for an intervention at a LocationType.
+     * @brief Get the compliance of the Person for an intervention.
      * @param[in] intervention_type The intervention type. 
-     * @return The probability that the Person complies to an intervention at a LocationType.
+     * @return The probability that the Person complies to an intervention.
      */
     ScalarType get_compliance(InterventionType intervention_type) const
     {
@@ -408,32 +408,19 @@ public:
     }
 
     /**
-     * @brief Checks whether the Person following an intervention.
+     * @brief Checks whether the Person is following an intervention.
      * @param[inout] rng RandomNumberGenerator of the Person.
      * @param[in] intervention The InterventionType.
-     * * @param[in] target The target Location.
      * @return Checks whether the Person following an intervention.
      */
-    bool is_compliant(RandomNumberGenerator& rng, InterventionType intervention, const Location* target = nullptr);
+    bool is_compliant(RandomNumberGenerator& rng, InterventionType intervention);
 
     /**
-     * @brief Decide if a Person is currently wearing a Mask.
-     * @param[in] wear_mask If true, the protection of the Mask is considered when computing the exposure rate.
+     * @brief Change the mask to new type.
+     * @param[in] type The required mask type.
      */
-    void set_wearing_mask(bool wear_mask)
-    {
-        m_wears_mask = wear_mask;
-    }
-
-    /**
-     * @brief Get the information if the Person is currently wearing a Mask.
-     * @return True if the Person is currently wearing a Mask.
-     */
-    bool is_wearing_mask() const
-    {
-        return m_wears_mask;
-    }
-
+    void set_mask(MaskType type);
+    
     /**
      * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
      * @param[in] t TimePoint of check.
@@ -523,7 +510,6 @@ private:
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
     TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
-    bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType>
         m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
     uint32_t m_person_id; ///< Id of the Person.

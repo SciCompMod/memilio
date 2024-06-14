@@ -40,7 +40,6 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_time_at_location(0)
     , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_mask(Mask(MaskType::Community))
-    , m_wears_mask(false)
     , m_compliance((uint32_t)InterventionType::Count, 1.)
     , m_person_id(person_id)
     , m_cells{0}
@@ -232,7 +231,7 @@ const std::vector<uint32_t>& Person::get_cells() const
 
 ScalarType Person::get_mask_protective_factor(const Parameters& params) const
 {
-    if (m_wears_mask == false) {
+    if (m_mask.get_type() == MaskType::None) {
         return 0.;
     }
     else {
@@ -240,30 +239,10 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
     }
 }
 
-bool Person::is_compliant(RandomNumberGenerator& rng, InterventionType intervention, const Location* target)
+bool Person::is_compliant(RandomNumberGenerator& rng, InterventionType intervention)
 {
     ScalarType compliance_check = UniformDistribution<double>::get_instance()(rng);
-    if (compliance_check <= get_compliance(intervention)) {
-        switch (intervention) {
-        case InterventionType::Mask:
-            m_wears_mask = true;
-            if (target != nullptr &&
-                static_cast<int>(m_mask.get_type()) < static_cast<int>(target->get_required_mask())) {
-                m_mask.change_mask(target->get_required_mask());
-            }
-            break;
-        default:
-            // For now, there no Additional logic for testing and isolation intervention
-            break;
-        }
-        return true;
-    }
-    else {
-        if (intervention == InterventionType::Mask) {
-            m_wears_mask = false;
-        }
-        return false;
-    }
+    return compliance_check <= get_compliance(intervention);
 }
 
 std::pair<ExposureType, TimePoint> Person::get_latest_protection() const
@@ -290,6 +269,11 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
     }
     return params.get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
         t.days() - latest_protection.second.days());
+}
+
+void Person::set_mask(MaskType type)
+{
+        m_mask.change_mask(type);
 }
 
 } // namespace abm

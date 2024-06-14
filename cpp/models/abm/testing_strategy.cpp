@@ -184,6 +184,8 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
         if (iter_schemes != m_location_to_schemes_map.end()) {
             //apply all testing schemes that are found
             auto& schemes = iter_schemes->second;
+            // If the Person does not comply to Testing where there is a testing scheme at the target location, it is not allowed to enter.
+            // Otherwise, whether the Person is allowed to enter or not depends on the test result(s).
             if (!person.is_compliant(rng, InterventionType::Testing) ||
                 !std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
                     return !ts.is_active() || ts.run_scheme(rng, person, t);

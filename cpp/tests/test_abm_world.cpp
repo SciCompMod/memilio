@@ -27,7 +27,7 @@ TEST(TestWorld, init)
 
     EXPECT_EQ(world.get_locations().size(), 1);
     EXPECT_EQ(world.get_locations()[0].get_type(), mio::abm::LocationType::Cemetery);
-    ASSERT_THAT(world.get_persons(), testing::ElementsAre());
+    EXPECT_THAT(world.get_persons(), testing::ElementsAre());
 }
 
 TEST(TestWorld, addLocation)
@@ -38,8 +38,8 @@ TEST(TestWorld, addLocation)
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
     auto home_id    = world.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ((int)school_id1.index, 1);
-    ASSERT_EQ((int)school_id2.index, 2);
+    EXPECT_EQ((int)school_id1.index, 1);
+    EXPECT_EQ((int)school_id2.index, 2);
 
     auto& school1 = world.get_individualized_location(school_id1);
     auto& school2 = world.get_individualized_location(school_id2);
@@ -52,12 +52,12 @@ TEST(TestWorld, addLocation)
             count_schools++;
         }
     }
-    ASSERT_EQ(count_schools, 2);
+    EXPECT_EQ(count_schools, 2);
 
-    ASSERT_EQ(world.get_locations()[1], school1);
-    ASSERT_EQ(world.get_locations()[2], school2);
-    ASSERT_EQ(world.get_locations()[3], work);
-    ASSERT_EQ(world.get_locations()[4], home);
+    EXPECT_EQ(world.get_locations()[1], school1);
+    EXPECT_EQ(world.get_locations()[2], school2);
+    EXPECT_EQ(world.get_locations()[3], work);
+    EXPECT_EQ(world.get_locations()[4], home);
 }
 
 TEST(TestWorld, addPerson)
@@ -68,9 +68,9 @@ TEST(TestWorld, addPerson)
     auto& p1 = world.add_person(location, age_group_15_to_34);
     auto& p2 = world.add_person(location, age_group_35_to_59);
 
-    ASSERT_EQ(world.get_persons().size(), 2);
-    ASSERT_EQ(&world.get_persons()[0], &p1);
-    ASSERT_EQ(&world.get_persons()[1], &p2);
+    EXPECT_EQ(world.get_persons().size(), 2);
+    EXPECT_EQ(&world.get_persons()[0], &p1);
+    EXPECT_EQ(&world.get_persons()[1], &p2);
 }
 
 TEST(TestWorld, getSubpopulationCombined)
@@ -88,13 +88,13 @@ TEST(TestWorld, getSubpopulationCombined)
     add_test_person(world, school3, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     add_test_person(world, home1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
-    ASSERT_EQ(world.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
+    EXPECT_EQ(world.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
                                                                  mio::abm::LocationType::School),
               3);
-    ASSERT_EQ(world.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
+    EXPECT_EQ(world.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
                                                                  mio::abm::LocationType::School),
               2);
-    ASSERT_EQ(world.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
+    EXPECT_EQ(world.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 }
 
 TEST(TestWorld, findLocation)
@@ -111,14 +111,14 @@ TEST(TestWorld, findLocation)
     person.set_assigned_location(work);
     person.set_assigned_location(school);
 
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person), work);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person), school);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person), home);
+    EXPECT_EQ(world.find_location(mio::abm::LocationType::Work, person), work);
+    EXPECT_EQ(world.find_location(mio::abm::LocationType::School, person), school);
+    EXPECT_EQ(world.find_location(mio::abm::LocationType::Home, person), home);
 
     auto&& world_test = std::as_const(world);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Work, person), work);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::School, person), school);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Home, person), home);
+    EXPECT_EQ(world_test.find_location(mio::abm::LocationType::Work, person), work);
+    EXPECT_EQ(world_test.find_location(mio::abm::LocationType::School, person), school);
+    EXPECT_EQ(world_test.find_location(mio::abm::LocationType::Home, person), home);
 }
 
 TEST(TestWorld, evolveStateTransition)
@@ -403,95 +403,6 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
         EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Cemetery);
     }
-
-    // Test when the NPIs are applied, people cannot enter targeted location
-    {
-        auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
-        auto dt    = mio::abm::hours(1);
-        auto world = mio::abm::World(num_age_groups);
-        auto rng   = mio::RandomNumberGenerator();
-        world.parameters
-            .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-            2 * dt.days();
-        world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
-
-        auto home_id = world.add_location(mio::abm::LocationType::Home);
-        auto work_id = world.add_location(mio::abm::LocationType::Work);
-
-        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-            mock_uniform_dist;
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-            .Times(testing::AtLeast(8))
-            .WillOnce(testing::Return(0.8)) // draw random work group
-            .WillOnce(testing::Return(0.8)) // draw random school group
-            .WillOnce(testing::Return(0.8)) // draw random work hour
-            .WillOnce(testing::Return(0.8)) // draw random school hour
-            .WillOnce(testing::Return(0.8)) // draw random work group
-            .WillOnce(testing::Return(0.8)) // draw random school group
-            .WillOnce(testing::Return(0.8)) // draw random work hour
-            .WillOnce(testing::Return(0.8)) // draw random school hour
-            .WillRepeatedly(testing::Return(1.0));
-
-        auto& p_complied =
-            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-        auto& p_no_mask =
-            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-        auto& p_no_test =
-            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-        auto& p_no_isolation =
-            add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-        auto rng_p_no_isolation = mio::abm::Person::RandomNumberGenerator(rng, p_no_isolation);
-
-        p_complied.set_assigned_location(work_id);
-        p_complied.set_assigned_location(home_id);
-        p_no_mask.set_assigned_location(work_id);
-        p_no_mask.set_assigned_location(home_id);
-        p_no_test.set_assigned_location(work_id);
-        p_no_test.set_assigned_location(home_id);
-        p_no_isolation.set_assigned_location(work_id);
-        p_no_isolation.set_assigned_location(home_id);
-
-        auto& work = world.get_individualized_location(work_id);
-
-        auto testing_criteria = mio::abm::TestingCriteria(
-            {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
-        const auto testing_min_time = mio::abm::days(1);
-        const auto start_date       = mio::abm::TimePoint(0);
-        const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
-        const auto probability      = 0.8;
-        const auto test_type        = mio::abm::PCRTest();
-        auto testing_scheme =
-            mio::abm::TestingScheme({testing_criteria}, testing_min_time, start_date, end_date, test_type, probability);
-        mio::abm::TestingStrategy test_strategy =
-            mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
-        test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-
-        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
-            mock_exponential_dist;
-        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
-
-        work.set_mask_requirement(true);
-        p_no_mask.set_compliance(mio::abm::InterventionType::Mask, 0.4);
-        p_no_test.set_compliance(mio::abm::InterventionType::Testing, 0.4);
-        p_no_isolation.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
-
-        world.evolve(t, dt);
-
-        // The complied person is allowed to be in location
-        EXPECT_EQ(p_complied.get_location(), work);
-
-        // The person, who does not wear mask, is not allowed to be in location
-        EXPECT_FALSE(p_no_mask.is_wearing_mask());
-        EXPECT_NE(p_no_mask.get_location(), work);
-
-        // The person, who does not want test, is not allowed to be in location
-        EXPECT_NE(p_no_test.get_location(), work);
-
-        // The person does not want to isolate
-        ASSERT_EQ(test_strategy.run_strategy(rng_p_no_isolation, p_no_isolation, work, start_date),
-                  true); // Person tests and tests negative
-        EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, world.parameters));
-    }
 }
 
 TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
@@ -529,7 +440,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
 
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    EXPECT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
     world.get_testing_strategy().update_activity_status(current_time);
@@ -538,12 +449,12 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
+    EXPECT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
 
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
                                                     testing_scheme); //doesn't get added because of == operator
     world.get_testing_strategy().remove_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    EXPECT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no more testing_schemes
 }
 
@@ -572,67 +483,67 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
-    ASSERT_EQ(params.check_constraints(), false);
+    EXPECT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]             = 1.;
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -2.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 2.;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -3.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 3.;
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = -4.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 4.;
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = -5.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 5.;
     params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]         = -6.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 6.;
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -7.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 7.;
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = -8.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 8.;
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -9.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = 9.;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -10.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 10.;
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]        = 1.1;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.3;
 
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59] = mio::abm::hours(4);
     params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59] = mio::abm::hours(8);
     params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4] = mio::abm::hours(3);
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(6);
 
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]     = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
 }
 
 TEST(TestWorld, copyWorld)
@@ -678,135 +589,225 @@ TEST(TestWorld, copyWorld)
         copied_world.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]
             .value();
 
-    // Assert the parameters, trips, locations and persons of copied world are logically equal to that of original world
-    ASSERT_EQ(copied_infection_params, infection_params);
-    ASSERT_EQ(copied_world.use_migration_rules(), world.use_migration_rules());
+    // EXPECT the parameters, trips, locations and persons of copied world are logically equal to that of original world
+    EXPECT_EQ(copied_infection_params, infection_params);
+    EXPECT_EQ(copied_world.use_migration_rules(), world.use_migration_rules());
 
     mio::abm::TripList& copied_trip_data = copied_world.get_trip_list();
-    ASSERT_EQ(copied_trip_data.num_trips(), trip_data.num_trips());
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
+    EXPECT_EQ(copied_trip_data.num_trips(), trip_data.num_trips());
+    EXPECT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
+    EXPECT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
               trip_data.get_next_trip(false).migration_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
+    EXPECT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
     copied_trip_data.increase_index();
     trip_data.increase_index();
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
+    EXPECT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
+    EXPECT_EQ(copied_trip_data.get_next_trip(false).migration_destination,
               trip_data.get_next_trip(false).migration_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
+    EXPECT_EQ(copied_trip_data.get_next_trip(false).migration_origin, trip_data.get_next_trip(false).migration_origin);
 
-    ASSERT_EQ(copied_world.get_locations().size(), world.get_locations().size());
-    ASSERT_EQ(copied_world.get_locations()[1].get_index(), world.get_locations()[1].get_index());
-    ASSERT_EQ(copied_world.get_locations()[2].get_index(), world.get_locations()[2].get_index());
-    ASSERT_EQ(copied_world.get_locations()[3].get_index(), world.get_locations()[3].get_index());
-    ASSERT_EQ(copied_world.get_locations()[4].get_index(), world.get_locations()[4].get_index());
-    ASSERT_EQ(copied_world.get_locations()[1].get_number_persons(), world.get_locations()[1].get_number_persons());
-    ASSERT_EQ(copied_world.get_locations()[2].get_number_persons(), world.get_locations()[2].get_number_persons());
-    ASSERT_EQ(copied_world.get_locations()[3].get_number_persons(), world.get_locations()[3].get_number_persons());
-    ASSERT_EQ(copied_world.get_locations()[4].get_number_persons(), world.get_locations()[4].get_number_persons());
-    ASSERT_EQ(copied_world.get_locations()[1].is_mask_required(), world.get_locations()[1].is_mask_required());
-    ASSERT_EQ(copied_world.get_locations()[2].is_mask_required(), world.get_locations()[2].is_mask_required());
-    ASSERT_EQ(copied_world.get_locations()[3].is_mask_required(), world.get_locations()[3].is_mask_required());
-    ASSERT_EQ(copied_world.get_locations()[4].is_mask_required(), world.get_locations()[4].is_mask_required());
-    ASSERT_EQ(copied_world.get_locations()[1].get_required_mask(), world.get_locations()[1].get_required_mask());
-    ASSERT_EQ(copied_world.get_locations()[2].get_required_mask(), world.get_locations()[2].get_required_mask());
-    ASSERT_EQ(
+    EXPECT_EQ(copied_world.get_locations().size(), world.get_locations().size());
+    EXPECT_EQ(copied_world.get_locations()[1].get_index(), world.get_locations()[1].get_index());
+    EXPECT_EQ(copied_world.get_locations()[2].get_index(), world.get_locations()[2].get_index());
+    EXPECT_EQ(copied_world.get_locations()[3].get_index(), world.get_locations()[3].get_index());
+    EXPECT_EQ(copied_world.get_locations()[4].get_index(), world.get_locations()[4].get_index());
+    EXPECT_EQ(copied_world.get_locations()[1].get_number_persons(), world.get_locations()[1].get_number_persons());
+    EXPECT_EQ(copied_world.get_locations()[2].get_number_persons(), world.get_locations()[2].get_number_persons());
+    EXPECT_EQ(copied_world.get_locations()[3].get_number_persons(), world.get_locations()[3].get_number_persons());
+    EXPECT_EQ(copied_world.get_locations()[4].get_number_persons(), world.get_locations()[4].get_number_persons());
+    EXPECT_EQ(copied_world.get_locations()[1].is_mask_required(), world.get_locations()[1].is_mask_required());
+    EXPECT_EQ(copied_world.get_locations()[2].is_mask_required(), world.get_locations()[2].is_mask_required());
+    EXPECT_EQ(copied_world.get_locations()[3].is_mask_required(), world.get_locations()[3].is_mask_required());
+    EXPECT_EQ(copied_world.get_locations()[4].is_mask_required(), world.get_locations()[4].is_mask_required());
+    EXPECT_EQ(copied_world.get_locations()[1].get_required_mask(), world.get_locations()[1].get_required_mask());
+    EXPECT_EQ(copied_world.get_locations()[2].get_required_mask(), world.get_locations()[2].get_required_mask());
+    EXPECT_EQ(
         copied_world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
         world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(
+    EXPECT_EQ(
         copied_world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0),
                                                           mio::abm::InfectionState::Susceptible),
         world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(
+    EXPECT_EQ(
         copied_world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
         world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(
+    EXPECT_EQ(
         copied_world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0),
                                                           mio::abm::InfectionState::Susceptible),
         world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(
+    EXPECT_EQ(
         copied_world.get_locations()[3].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
         world.get_locations()[3].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(
+    EXPECT_EQ(
         copied_world.get_locations()[4].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
         world.get_locations()[4].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_world.get_locations()[1].get_cells().size(), world.get_locations()[1].get_cells().size());
-    ASSERT_EQ(copied_world.get_locations()[2].get_cells().size(), world.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_world.get_locations()[3].get_cells().size(), world.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_world.get_locations()[4].get_cells().size(), world.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_world.get_locations()[1].get_cells()[0].m_persons.size(),
+    EXPECT_EQ(copied_world.get_locations()[1].get_cells().size(), world.get_locations()[1].get_cells().size());
+    EXPECT_EQ(copied_world.get_locations()[2].get_cells().size(), world.get_locations()[2].get_cells().size());
+    EXPECT_EQ(copied_world.get_locations()[3].get_cells().size(), world.get_locations()[2].get_cells().size());
+    EXPECT_EQ(copied_world.get_locations()[4].get_cells().size(), world.get_locations()[2].get_cells().size());
+    EXPECT_EQ(copied_world.get_locations()[1].get_cells()[0].m_persons.size(),
               world.get_locations()[1].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_world.get_locations()[2].get_cells()[0].m_persons.size(),
+    EXPECT_EQ(copied_world.get_locations()[2].get_cells()[0].m_persons.size(),
               world.get_locations()[2].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_world.get_locations()[3].get_cells()[0].m_persons.size(),
+    EXPECT_EQ(copied_world.get_locations()[3].get_cells()[0].m_persons.size(),
               world.get_locations()[3].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_world.get_locations()[4].get_cells()[0].m_persons.size(),
+    EXPECT_EQ(copied_world.get_locations()[4].get_cells()[0].m_persons.size(),
               world.get_locations()[4].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_world.get_locations()[1].get_cells()[0].m_persons[0],
+    EXPECT_EQ(copied_world.get_locations()[1].get_cells()[0].m_persons[0],
               world.get_locations()[1].get_cells()[0].m_persons[0]);
-    ASSERT_EQ(copied_world.get_locations()[2].get_cells()[0].m_persons[0],
+    EXPECT_EQ(copied_world.get_locations()[2].get_cells()[0].m_persons[0],
               world.get_locations()[2].get_cells()[0].m_persons[0]);
 
-    ASSERT_EQ(copied_world.get_persons().size(), world.get_persons().size());
-    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_index(),
+    EXPECT_EQ(copied_world.get_persons().size(), world.get_persons().size());
+    EXPECT_EQ(copied_world.get_persons()[0].get_location().get_index(),
               world.get_persons()[0].get_location().get_index());
-    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_index(),
+    EXPECT_EQ(copied_world.get_persons()[1].get_location().get_index(),
               world.get_persons()[1].get_location().get_index());
-    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(),
+    EXPECT_EQ(copied_world.get_persons()[0].get_location().get_type(),
               world.get_persons()[0].get_location().get_type());
-    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(),
+    EXPECT_EQ(copied_world.get_persons()[1].get_location().get_type(),
               world.get_persons()[1].get_location().get_type());
-    ASSERT_EQ(copied_world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
+    EXPECT_EQ(copied_world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
               world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)));
-    ASSERT_EQ(copied_world.get_persons()[0].get_compliance(mio::abm::InterventionType::Mask),
+    EXPECT_EQ(copied_world.get_persons()[0].get_compliance(mio::abm::InterventionType::Mask),
               world.get_persons()[0].get_compliance(mio::abm::InterventionType::Mask));
-    ASSERT_EQ(copied_world.get_persons()[0].get_compliance(mio::abm::InterventionType::Mask),
+    EXPECT_EQ(copied_world.get_persons()[0].get_compliance(mio::abm::InterventionType::Mask),
               world.get_persons()[0].get_compliance(mio::abm::InterventionType::Mask));
-    ASSERT_EQ(copied_world.get_persons()[1].get_compliance(mio::abm::InterventionType::Mask),
+    EXPECT_EQ(copied_world.get_persons()[1].get_compliance(mio::abm::InterventionType::Mask),
               world.get_persons()[1].get_compliance(mio::abm::InterventionType::Mask));
-    ASSERT_EQ(copied_world.get_persons()[1].get_compliance(mio::abm::InterventionType::Mask),
+    EXPECT_EQ(copied_world.get_persons()[1].get_compliance(mio::abm::InterventionType::Mask),
               world.get_persons()[1].get_compliance(mio::abm::InterventionType::Mask));
 
-    // Assert the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
-    ASSERT_NE(&(copied_world.parameters), &world.parameters);
-    ASSERT_NE(&(copied_world.get_trip_list()), &trip_data);
+    // EXPECT the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
+    EXPECT_NE(&(copied_world.parameters), &world.parameters);
+    EXPECT_NE(&(copied_world.get_trip_list()), &trip_data);
 
-    ASSERT_NE(&copied_world.get_locations()[1], &world.get_locations()[1]);
-    ASSERT_NE(&copied_world.get_locations()[2], &world.get_locations()[2]);
-    ASSERT_NE(&copied_world.get_locations()[3], &world.get_locations()[3]);
-    ASSERT_NE(&copied_world.get_locations()[4], &world.get_locations()[4]);
-    ASSERT_NE(&copied_world.get_locations()[1].get_cells(), &world.get_locations()[1].get_cells());
-    ASSERT_NE(&copied_world.get_locations()[2].get_cells(), &world.get_locations()[2].get_cells());
-    ASSERT_NE(&copied_world.get_locations()[3].get_cells(), &world.get_locations()[3].get_cells());
-    ASSERT_NE(&copied_world.get_locations()[4].get_cells(), &world.get_locations()[4].get_cells());
-    ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0]), &(world.get_locations()[1].get_cells()[0]));
-    ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0]), &(world.get_locations()[2].get_cells()[0]));
-    ASSERT_NE(&(copied_world.get_locations()[1].get_cells()[0].m_persons[0]),
+    EXPECT_NE(&copied_world.get_locations()[1], &world.get_locations()[1]);
+    EXPECT_NE(&copied_world.get_locations()[2], &world.get_locations()[2]);
+    EXPECT_NE(&copied_world.get_locations()[3], &world.get_locations()[3]);
+    EXPECT_NE(&copied_world.get_locations()[4], &world.get_locations()[4]);
+    EXPECT_NE(&copied_world.get_locations()[1].get_cells(), &world.get_locations()[1].get_cells());
+    EXPECT_NE(&copied_world.get_locations()[2].get_cells(), &world.get_locations()[2].get_cells());
+    EXPECT_NE(&copied_world.get_locations()[3].get_cells(), &world.get_locations()[3].get_cells());
+    EXPECT_NE(&copied_world.get_locations()[4].get_cells(), &world.get_locations()[4].get_cells());
+    EXPECT_NE(&(copied_world.get_locations()[1].get_cells()[0]), &(world.get_locations()[1].get_cells()[0]));
+    EXPECT_NE(&(copied_world.get_locations()[2].get_cells()[0]), &(world.get_locations()[2].get_cells()[0]));
+    EXPECT_NE(&(copied_world.get_locations()[1].get_cells()[0].m_persons[0]),
               &(world.get_locations()[1].get_cells()[0].m_persons[0]));
-    ASSERT_NE(&(copied_world.get_locations()[2].get_cells()[0].m_persons[0]),
+    EXPECT_NE(&(copied_world.get_locations()[2].get_cells()[0].m_persons[0]),
               &(world.get_locations()[2].get_cells()[0].m_persons[0]));
 
-    ASSERT_NE(&copied_world.get_persons()[0], &world.get_persons()[0]);
-    ASSERT_NE(&copied_world.get_persons()[1], &world.get_persons()[1]);
-    ASSERT_NE(&(copied_world.get_persons()[0].get_location()), &world.get_persons()[0].get_location());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_location()), &world.get_persons()[1].get_location());
-    ASSERT_NE(&(copied_world.get_locations()[1]), &(world.get_locations()[1]));
-    ASSERT_NE(&(copied_world.get_locations()[2]), &(world.get_locations()[2]));
-    ASSERT_NE(&(copied_world.get_persons()[0].get_assigned_locations()),
+    EXPECT_NE(&copied_world.get_persons()[0], &world.get_persons()[0]);
+    EXPECT_NE(&copied_world.get_persons()[1], &world.get_persons()[1]);
+    EXPECT_NE(&(copied_world.get_persons()[0].get_location()), &world.get_persons()[0].get_location());
+    EXPECT_NE(&(copied_world.get_persons()[1].get_location()), &world.get_persons()[1].get_location());
+    EXPECT_NE(&(copied_world.get_locations()[1]), &(world.get_locations()[1]));
+    EXPECT_NE(&(copied_world.get_locations()[2]), &(world.get_locations()[2]));
+    EXPECT_NE(&(copied_world.get_persons()[0].get_assigned_locations()),
               &world.get_persons()[0].get_assigned_locations());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_assigned_locations()),
+    EXPECT_NE(&(copied_world.get_persons()[1].get_assigned_locations()),
               &world.get_persons()[1].get_assigned_locations());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_infection()), &world.get_persons()[0].get_infection());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_mask()), &world.get_persons()[0].get_mask());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_mask()), &world.get_persons()[1].get_mask());
-    ASSERT_NE(&(copied_world.get_persons()[0].get_cells()), &world.get_persons()[0].get_cells());
-    ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &world.get_persons()[1].get_cells());
+    EXPECT_NE(&(copied_world.get_persons()[0].get_infection()), &world.get_persons()[0].get_infection());
+    EXPECT_NE(&(copied_world.get_persons()[0].get_mask()), &world.get_persons()[0].get_mask());
+    EXPECT_NE(&(copied_world.get_persons()[1].get_mask()), &world.get_persons()[1].get_mask());
+    EXPECT_NE(&(copied_world.get_persons()[0].get_cells()), &world.get_persons()[0].get_cells());
+    EXPECT_NE(&(copied_world.get_persons()[1].get_cells()), &world.get_persons()[1].get_cells());
 
     // Evolve the world and check that the copied world has not evolved
     copied_world.get_persons()[0].migrate_to(work, {0});
     copied_world.get_persons()[1].migrate_to(home, {0});
-    ASSERT_NE(copied_world.get_persons()[0].get_location().get_type(),
+    EXPECT_NE(copied_world.get_persons()[0].get_location().get_type(),
               world.get_persons()[0].get_location().get_type());
-    ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(),
+    EXPECT_NE(copied_world.get_persons()[1].get_location().get_type(),
               world.get_persons()[1].get_location().get_type());
+}
+
+TEST(TestWorld, applyNPIsToLocation)
+{
+    using testing::Return;
+    // Test when the NPIs are applied, people cannot enter targeted location
+    auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
+    auto dt    = mio::abm::hours(1);
+    auto world = mio::abm::World(num_age_groups);
+    auto rng   = mio::RandomNumberGenerator();
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        2 * dt.days();
+    world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+
+    auto home_id = world.add_location(mio::abm::LocationType::Home);
+    auto work_id = world.add_location(mio::abm::LocationType::Work);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillRepeatedly(testing::Return(1.0));
+
+    auto& p_complied =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto& p_no_mask =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto& p_no_test =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto& p_no_isolation =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto rng_p_no_isolation = mio::abm::Person::RandomNumberGenerator(rng, p_no_isolation);
+
+    p_complied.set_assigned_location(work_id);
+    p_complied.set_assigned_location(home_id);
+    p_no_mask.set_assigned_location(work_id);
+    p_no_mask.set_assigned_location(home_id);
+    p_no_test.set_assigned_location(work_id);
+    p_no_test.set_assigned_location(home_id);
+    p_no_isolation.set_assigned_location(work_id);
+    p_no_isolation.set_assigned_location(home_id);
+
+    auto& work = world.get_individualized_location(work_id);
+
+    auto testing_criteria = mio::abm::TestingCriteria(
+        {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
+    const auto testing_min_time = mio::abm::days(1);
+    const auto start_date       = mio::abm::TimePoint(0);
+    const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability      = 0.8;
+    const auto test_type        = mio::abm::PCRTest();
+    auto testing_scheme =
+        mio::abm::TestingScheme({testing_criteria}, testing_min_time, start_date, end_date, test_type, probability);
+    mio::abm::TestingStrategy test_strategy =
+        mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
+    test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+
+    work.set_mask_requirement(true);
+    p_no_mask.set_compliance(mio::abm::InterventionType::Mask, 0.4);
+    p_no_test.set_compliance(mio::abm::InterventionType::Testing, 0.4);
+    p_no_isolation.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
+
+    world.evolve(t, dt);
+
+    // The complied person is allowed to be in location
+    EXPECT_EQ(p_complied.get_location(), work);
+
+    // The person, who does not wear mask, is not allowed to be in location
+    EXPECT_EQ(p_no_mask.get_mask().get_type(), mio::abm::MaskType::None);
+    EXPECT_NE(p_no_mask.get_location(), work);
+
+    // The person, who does not want test, is not allowed to be in location
+    EXPECT_NE(p_no_test.get_location(), work);
+
+    // The person does not want to isolate
+    EXPECT_EQ(test_strategy.run_strategy(rng_p_no_isolation, p_no_isolation, work, start_date),
+              true); // Person tests and tests negative
+    EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, world.parameters));
 }

@@ -33,7 +33,8 @@ namespace abm
  */
 enum class MaskType : std::uint32_t
 {
-    Community = 0,
+    None = 0,
+    Community,
     Surgical,
     FFP2,
 

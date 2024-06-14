@@ -29,7 +29,7 @@ TEST(TestLocation, init)
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
-        ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
+        EXPECT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
     }
     EXPECT_EQ(location.get_number_persons(), 0);
 }
@@ -43,22 +43,22 @@ TEST(TestLocation, copyLocation)
     EXPECT_EQ(location.get_number_persons(), 1);
 
     auto copied_location = location.copy_location_without_persons(num_age_groups);
-    ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
-    ASSERT_EQ(copied_location.get_index(), location.get_index());
-    ASSERT_EQ(copied_location.get_cells().size(), location.get_cells().size());
+    EXPECT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
+    EXPECT_EQ(copied_location.get_index(), location.get_index());
+    EXPECT_EQ(copied_location.get_cells().size(), location.get_cells().size());
     EXPECT_EQ(copied_location.get_number_persons(), 0);
 }
 
 TEST(TestLocation, initCell)
 {
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
-    ASSERT_EQ(location.get_cells().size(), 2);
+    EXPECT_EQ(location.get_cells().size(), 2);
 }
 
 TEST(TestLocation, getIndex)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    ASSERT_EQ((int)location.get_index(), 0);
+    EXPECT_EQ((int)location.get_index(), 0);
 }
 
 TEST(TestLocation, addRemovePerson)
@@ -79,21 +79,21 @@ TEST(TestLocation, addRemovePerson)
     person3.migrate_to(location, {0, 1});
 
     auto t = mio::abm::TimePoint(0);
-    ASSERT_EQ(home.get_number_persons(), 0u);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 2);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
-    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 3u);
-    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
+    EXPECT_EQ(home.get_number_persons(), 0u);
+    EXPECT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 2);
+    EXPECT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
+    EXPECT_EQ(location.get_cells()[0].m_persons.size(), 3u);
+    EXPECT_EQ(location.get_cells()[1].m_persons.size(), 2u);
+    EXPECT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 
     location.remove_person(person2);
 
     EXPECT_EQ(location.get_number_persons(), 2u);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 1);
-    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
-    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
+    EXPECT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::InfectedSymptoms), 1);
+    EXPECT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
+    EXPECT_EQ(location.get_cells()[0].m_persons.size(), 2u);
+    EXPECT_EQ(location.get_cells()[1].m_persons.size(), 2u);
+    EXPECT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 }
 
 TEST(TestLocation, CacheExposureRate)
@@ -202,10 +202,10 @@ TEST(TestLocation, reachCapacity)
 
     world.evolve(t, dt);
 
-    ASSERT_EQ(p1.get_location(), school);
-    ASSERT_EQ(p2.get_location(), home); // p2 should not be able to enter the school
-    ASSERT_EQ(school.get_number_persons(), 1);
-    ASSERT_EQ(home.get_number_persons(), 1);
+    EXPECT_EQ(p1.get_location(), school);
+    EXPECT_EQ(p2.get_location(), home); // p2 should not be able to enter the school
+    EXPECT_EQ(school.get_number_persons(), 1);
+    EXPECT_EQ(home.get_number_persons(), 1);
 }
 
 TEST(TestLocation, computeSpacePerPersonRelative)
@@ -218,9 +218,9 @@ TEST(TestLocation, computeSpacePerPersonRelative)
     home.set_capacity(0, 0, 2); // Capacity for Cell 3
 
     auto cells = home.get_cells();
-    ASSERT_EQ(cells[0].compute_space_per_person_relative(), 0.25);
-    ASSERT_EQ(cells[1].compute_space_per_person_relative(), 0.5);
-    ASSERT_EQ(cells[2].compute_space_per_person_relative(), 1.);
+    EXPECT_EQ(cells[0].compute_space_per_person_relative(), 0.25);
+    EXPECT_EQ(cells[1].compute_space_per_person_relative(), 0.5);
+    EXPECT_EQ(cells[2].compute_space_per_person_relative(), 1.);
 }
 
 TEST(TestLocation, interact)
@@ -283,27 +283,27 @@ TEST(TestLocation, setCapacity)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
     location.set_capacity(4, 200);
-    ASSERT_EQ(location.get_capacity().persons, (uint32_t)4);
-    ASSERT_EQ(location.get_capacity().volume, (uint32_t)200);
+    EXPECT_EQ(location.get_capacity().persons, (uint32_t)4);
+    EXPECT_EQ(location.get_capacity().volume, (uint32_t)200);
 }
 
 TEST(TestLocation, setRequiredMask)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
+    EXPECT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
 
     location.set_required_mask(mio::abm::MaskType::FFP2);
-    ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::FFP2);
+    EXPECT_EQ(location.get_required_mask(), mio::abm::MaskType::FFP2);
 }
 
 TEST(TestLocation, setIsMaskRequired)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
     location.set_mask_requirement(false);
-    ASSERT_FALSE(location.is_mask_required());
+    EXPECT_FALSE(location.is_mask_required());
 
     location.set_mask_requirement(true);
-    ASSERT_TRUE(location.is_mask_required());
+    EXPECT_TRUE(location.is_mask_required());
 }
 
 TEST(TestLocation, getGeographicalLocation)
@@ -312,5 +312,5 @@ TEST(TestLocation, getGeographicalLocation)
     mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
 
-    ASSERT_EQ(location.get_geographical_location(), geographical_location);
+    EXPECT_EQ(location.get_geographical_location(), geographical_location);
 }

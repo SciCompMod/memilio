@@ -32,9 +32,9 @@ TEST(TestPerson, init)
     auto t      = mio::abm::TimePoint(0);
     auto person = mio::abm::Person(rng, location, age_group_60_to_79);
 
-    ASSERT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
-    ASSERT_EQ(person.get_location(), location);
-    ASSERT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
+    EXPECT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
+    EXPECT_EQ(person.get_location(), location);
+    EXPECT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
 
 TEST(TestPerson, copyPerson)
@@ -46,9 +46,9 @@ TEST(TestPerson, copyPerson)
     auto copied_location = location.copy_location_without_persons(num_age_groups);
     auto copied_person   = person.copy_person(copied_location);
 
-    ASSERT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
-    ASSERT_EQ(copied_person.get_location(), copied_location);
-    ASSERT_EQ(copied_person.get_person_id(), mio::abm::INVALID_PERSON_ID);
+    EXPECT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
+    EXPECT_EQ(copied_person.get_location(), copied_location);
+    EXPECT_EQ(copied_person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
 
 TEST(TestPerson, migrate)
@@ -63,28 +63,28 @@ TEST(TestPerson, migrate)
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
     person.migrate_to(loc1, {0});
 
-    ASSERT_EQ(person.get_location(), loc1);
-    ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
-    ASSERT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
-    ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
-    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
+    EXPECT_EQ(person.get_location(), loc1);
+    EXPECT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
+    EXPECT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
+    EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
+    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
     person.migrate_to(loc2, mio::abm::TransportMode::Walking);
 
-    ASSERT_EQ(person.get_location(), loc2);
-    ASSERT_EQ(loc2.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
-    ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
-    ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
-    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
+    EXPECT_EQ(person.get_location(), loc2);
+    EXPECT_EQ(loc2.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
+    EXPECT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
+    EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
+    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
     person.migrate_to(loc3, mio::abm::TransportMode::Bike, {0, 1});
 
-    ASSERT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
-    ASSERT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
-    ASSERT_EQ(person.get_cells().size(), 2);
-    ASSERT_EQ(person.get_cells()[0], 0u);
-    ASSERT_EQ(person.get_cells()[1], 1u);
-    ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
+    EXPECT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
+    EXPECT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
+    EXPECT_EQ(person.get_cells().size(), 2);
+    EXPECT_EQ(person.get_cells()[0], 0u);
+    EXPECT_EQ(person.get_cells()[1], 1u);
+    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
 }
 
 TEST(TestPerson, setGetAssignedLocation)
@@ -93,10 +93,10 @@ TEST(TestPerson, setGetAssignedLocation)
     mio::abm::Location location(mio::abm::LocationType::Work, 2, num_age_groups);
     auto person = mio::abm::Person(rng, location, age_group_35_to_59);
     person.set_assigned_location(location);
-    ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
+    EXPECT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
 
     person.set_assigned_location({4, mio::abm::LocationType::Work});
-    ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 4);
+    EXPECT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 4);
 }
 
 TEST(TestPerson, quarantine)
@@ -133,12 +133,12 @@ TEST(TestPerson, quarantine)
 
     person.get_tested(rng_person, t_morning, test_params);
 
-    ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
-    ASSERT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
+    EXPECT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
               mio::abm::LocationType::Home);
-    ASSERT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
+    EXPECT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
     person.remove_quarantine();
-    ASSERT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
+    EXPECT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
               mio::abm::LocationType::Work);
 }
 
@@ -169,16 +169,16 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.6))
         .WillOnce(Return(0.999))
         .WillOnce(Return(0.8));
-    ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), true);
-    ASSERT_EQ(infected.is_in_quarantine(t, params), true);
+    EXPECT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), true);
+    EXPECT_EQ(infected.is_in_quarantine(t, params), true);
     infected.remove_quarantine();
-    ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), false);
-    ASSERT_EQ(infected.is_in_quarantine(t, params), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), false);
-    ASSERT_EQ(susceptible.is_in_quarantine(t, params), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), true);
-    ASSERT_EQ(susceptible.is_in_quarantine(t, params), true);
-    ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
+    EXPECT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), false);
+    EXPECT_EQ(infected.is_in_quarantine(t, params), false);
+    EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), false);
+    EXPECT_EQ(susceptible.is_in_quarantine(t, params), false);
+    EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), true);
+    EXPECT_EQ(susceptible.is_in_quarantine(t, params), true);
+    EXPECT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 
     // Test antigen test
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
@@ -191,11 +191,11 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.6))
         .WillOnce(Return(0.999))
         .WillOnce(Return(0.8));
-    ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), true);
-    ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), false);
-    ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), true);
-    ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
+    EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), true);
+    EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), false);
+    EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), false);
+    EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), true);
+    EXPECT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 }
 
 TEST(TestPerson, getCells)
@@ -205,7 +205,7 @@ TEST(TestPerson, getCells)
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     home.add_person(person);
     person.migrate_to(location, {0, 1});
-    ASSERT_EQ(person.get_cells().size(), 2);
+    EXPECT_EQ(person.get_cells().size(), 2);
 }
 
 TEST(TestPerson, interact)
@@ -229,25 +229,38 @@ TEST(TestPerson, applyMaskIntervention)
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto person = make_test_person(home);
-    person.get_mask().change_mask(mio::abm::MaskType::Community);
+    auto person     = make_test_person(home);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     target.set_mask_requirement(false);
     person.set_compliance(mio::abm::InterventionType::Mask, 0.);
-    person.is_compliant(rng_person, mio::abm::InterventionType::Mask, &target);
-    ASSERT_FALSE(person.is_wearing_mask());
+    if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
+        person.set_mask(mio::abm::MaskType::Community);
+    }
+    else {
+        person.set_mask(mio::abm::MaskType::None);
+    }
+    EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::None);
 
     person.set_compliance(mio::abm::InterventionType::Mask, 1);
-    person.is_compliant(rng_person, mio::abm::InterventionType::Mask, &target);
-    ASSERT_TRUE(person.is_wearing_mask());
+    if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
+        person.set_mask(mio::abm::MaskType::Community);
+    }
+    else {
+        person.set_mask(mio::abm::MaskType::None);
+    }
+    EXPECT_NE(person.get_mask().get_type(), mio::abm::MaskType::None);
 
     target.set_mask_requirement(true);
     target.set_required_mask(mio::abm::MaskType::Surgical);
     person.set_compliance(mio::abm::InterventionType::Mask, 1);
-    person.is_compliant(rng_person, mio::abm::InterventionType::Mask, &target);
-    ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
-    ASSERT_TRUE(person.is_wearing_mask());
+    if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
+        person.set_mask(target.get_required_mask());
+    }
+    else {
+        person.set_mask(mio::abm::MaskType::None);
+    }
+    EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
 }
 
 TEST(TestPerson, setWearMask)
@@ -255,37 +268,34 @@ TEST(TestPerson, setWearMask)
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
 
-    person.set_wearing_mask(false);
-    ASSERT_FALSE(person.is_wearing_mask());
+    person.set_mask(mio::abm::MaskType::None);
+    EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::None);
 
-    person.set_wearing_mask(true);
-    ASSERT_TRUE(person.is_wearing_mask());
+    person.set_mask(mio::abm::MaskType::Community);
+    EXPECT_NE(person.get_mask().get_type(), mio::abm::MaskType::None);
 }
 
 TEST(TestPerson, getMaskProtectiveFactor)
 {
     mio::abm::Location location(mio::abm::LocationType::School, 0, 6);
     auto person_community = make_test_person(location);
-    person_community.get_mask().change_mask(mio::abm::MaskType::Community);
-    person_community.set_wearing_mask(true);
+    person_community.set_mask(mio::abm::MaskType::Community);
     auto person_surgical = make_test_person(location);
-    person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
-    person_surgical.set_wearing_mask(true);
+    person_surgical.set_mask(mio::abm::MaskType::Surgical);
     auto person_ffp2 = make_test_person(location);
-    person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
-    person_ffp2.set_wearing_mask(true);
+    person_ffp2.set_mask(mio::abm::MaskType::FFP2);
     auto person_without = make_test_person(location);
-    person_without.set_wearing_mask(false);
+    person_without.set_mask(mio::abm::MaskType::None);
 
     mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;
 
-    ASSERT_EQ(person_community.get_mask_protective_factor(params), 0.5);
-    ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
-    ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
-    ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
+    EXPECT_EQ(person_community.get_mask_protective_factor(params), 0.5);
+    EXPECT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
+    EXPECT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
+    EXPECT_EQ(person_without.get_mask_protective_factor(params), 0.);
 }
 
 TEST(TestPerson, getLatestProtection)
@@ -299,15 +309,15 @@ TEST(TestPerson, getLatestProtection)
     auto t = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
     auto latest_protection = person.get_latest_protection();
-    ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
-    ASSERT_EQ(latest_protection.second.days(), t.days());
+    EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
+    EXPECT_EQ(latest_protection.second.days(), t.days());
 
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
                                                  params, t, mio::abm::InfectionState::Exposed));
     latest_protection = person.get_latest_protection();
-    ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
-    ASSERT_EQ(latest_protection.second.days(), t.days());
+    EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
+    EXPECT_EQ(latest_protection.second.days(), t.days());
 }
 
 TEST(Person, rng)
@@ -316,14 +326,14 @@ TEST(Person, rng)
     mio::abm::Location loc(mio::abm::LocationType::Home, 0);
     auto p = mio::abm::Person(rng, loc, age_group_35_to_59, 13);
 
-    ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
+    EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 
     auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
-    ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
+    EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
 
     p_rng();
-    ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
-    ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
+    EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
+    EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }
 
 TEST(TestPerson, applyTestIntervention)
@@ -347,10 +357,10 @@ TEST(TestPerson, applyTestIntervention)
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     person.set_compliance(mio::abm::InterventionType::Testing, 1);
-    ASSERT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
+    EXPECT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
 
     person.set_compliance(mio::abm::InterventionType::Testing, 0.4);
-    ASSERT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
+    EXPECT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
 }
 
 TEST(TestPerson, applyIsolationIntervention)
@@ -373,8 +383,8 @@ TEST(TestPerson, applyIsolationIntervention)
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     person.set_compliance(mio::abm::InterventionType::Isolation, 1);
-    ASSERT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
+    EXPECT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
 
     person.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
-    ASSERT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
+    EXPECT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
 }
