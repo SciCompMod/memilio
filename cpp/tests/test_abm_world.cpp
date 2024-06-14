@@ -722,10 +722,10 @@ TEST(TestWorld, copyWorld)
               world.get_persons()[1].get_location().get_type());
 }
 
-TEST(TestWorld, applyNPIsToLocation)
+TEST(TestWorld, migrateWithAppliedNPIs)
 {
     using testing::Return;
-    // Test when the NPIs are applied, people cannot enter targeted location
+    // Test when the NPIs are applied, people can enter targeted location if they comply to the rules.
     auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt    = mio::abm::hours(1);
     auto world = mio::abm::World(num_age_groups);
@@ -771,25 +771,25 @@ TEST(TestWorld, applyNPIsToLocation)
     p_no_isolation.set_assigned_location(home_id);
 
     auto& work = world.get_individualized_location(work_id);
+    auto& home = world.get_individualized_location(home_id);
 
     auto testing_criteria = mio::abm::TestingCriteria(
         {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
-    const auto testing_min_time = mio::abm::days(1);
+    const auto testing_min_time = mio::abm::minutes(3);
     const auto start_date       = mio::abm::TimePoint(0);
     const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability      = 0.8;
+    const auto probability      = 1;
     const auto test_type        = mio::abm::PCRTest();
     auto testing_scheme =
         mio::abm::TestingScheme({testing_criteria}, testing_min_time, start_date, end_date, test_type, probability);
-    mio::abm::TestingStrategy test_strategy =
-        mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
-    test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.));
 
     work.set_mask_requirement(true);
+    work.set_required_mask(mio::abm::MaskType::FFP2);
     p_no_mask.set_compliance(mio::abm::InterventionType::Mask, 0.4);
     p_no_test.set_compliance(mio::abm::InterventionType::Testing, 0.4);
     p_no_isolation.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
@@ -798,6 +798,7 @@ TEST(TestWorld, applyNPIsToLocation)
 
     // The complied person is allowed to be in location
     EXPECT_EQ(p_complied.get_location(), work);
+    EXPECT_EQ(p_complied.get_mask().get_type(), mio::abm::MaskType::FFP2);
 
     // The person, who does not wear mask, is not allowed to be in location
     EXPECT_EQ(p_no_mask.get_mask().get_type(), mio::abm::MaskType::None);
@@ -806,8 +807,34 @@ TEST(TestWorld, applyNPIsToLocation)
     // The person, who does not want test, is not allowed to be in location
     EXPECT_NE(p_no_test.get_location(), work);
 
-    // The person does not want to isolate
-    EXPECT_EQ(test_strategy.run_strategy(rng_p_no_isolation, p_no_isolation, work, start_date),
-              true); // Person tests and tests negative
+    // The person does not want to isolate when the test is positive
+    EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, world.parameters));
+
+    // Using trip list
+    mio::abm::TripList& trip_list = world.get_trip_list();
+    mio::abm::Trip trip1(p_complied.get_person_id(), t, work_id, home_id);
+    mio::abm::Trip trip2(p_no_mask.get_person_id(), t, work_id, home_id);
+    mio::abm::Trip trip3(p_no_test.get_person_id(), t, work_id, home_id);
+    mio::abm::Trip trip4(p_no_isolation.get_person_id(), t, work_id, home_id);
+    trip_list.add_trip(trip1);
+    trip_list.add_trip(trip2);
+    trip_list.add_trip(trip3);
+    trip_list.add_trip(trip4);
+    p_complied.migrate_to(home);
+    world.use_migration_rules(false);
+    world.evolve(t, dt);
+
+    // The complied person is allowed to be in location
+    EXPECT_EQ(p_complied.get_location(), work);
+    EXPECT_EQ(p_complied.get_mask().get_type(), mio::abm::MaskType::FFP2);
+
+    // The person, who does not wear mask, is not allowed to be in location
+    EXPECT_EQ(p_no_mask.get_mask().get_type(), mio::abm::MaskType::None);
+    EXPECT_NE(p_no_mask.get_location(), work);
+
+    // The person, who does not want test, is not allowed to be in location
+    EXPECT_NE(p_no_test.get_location(), work);
+
+    // The person does not want to isolate when the test is positive
     EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, world.parameters));
 }

@@ -418,8 +418,9 @@ public:
     /**
      * @brief Change the mask to new type.
      * @param[in] type The required mask type.
+     * @param[in] t The TimePoint of mask change.
      */
-    void set_mask(MaskType type);
+    void set_mask(MaskType type, TimePoint t);
     
     /**
      * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.

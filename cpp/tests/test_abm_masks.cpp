@@ -23,35 +23,29 @@
 
 TEST(TestMasks, init)
 {
-    auto mask = mio::abm::Mask(mio::abm::MaskType::Count);
-    EXPECT_EQ(mask.get_time_used().seconds(), 0.);
+    auto t    = mio::abm::TimePoint(0);
+    auto mask = mio::abm::Mask(mio::abm::MaskType::Count, t);
+    EXPECT_EQ(mask.get_time_used(t).seconds(), 0.);
 }
 
 TEST(TestMasks, getType)
 {
-    auto mask = mio::abm::Mask(mio::abm::MaskType::Community);
+    auto t    = mio::abm::TimePoint(0);
+    auto mask = mio::abm::Mask(mio::abm::MaskType::Community, t);
     auto type = mask.get_type();
     EXPECT_EQ(type, mio::abm::MaskType::Community);
 }
 
-TEST(TestMasks, increaseTimeUsed)
-{
-    auto mask = mio::abm::Mask(mio::abm::MaskType::Community);
-    auto dt   = mio::abm::hours(2);
-    mask.increase_time_used(dt);
-    EXPECT_EQ(mask.get_time_used(), mio::abm::hours(2));
-}
-
 TEST(TestMasks, changeMask)
 {
-    auto mask = mio::abm::Mask(mio::abm::MaskType::Community);
-    mask.increase_time_used(mio::abm::hours(2));
+    auto t    = mio::abm::TimePoint(2 * 60 * 60);
+    auto mask = mio::abm::Mask(mio::abm::MaskType::Community, mio::abm::TimePoint(0));
     EXPECT_EQ(mask.get_type(), mio::abm::MaskType::Community);
-    EXPECT_EQ(mask.get_time_used(), mio::abm::hours(2));
+    EXPECT_EQ(mask.get_time_used(t), mio::abm::hours(2));
 
-    mask.change_mask(mio::abm::MaskType::Surgical);
+    mask.change_mask(mio::abm::MaskType::Surgical, t);
     EXPECT_EQ(mask.get_type(), mio::abm::MaskType::Surgical);
-    EXPECT_EQ(mask.get_time_used(), mio::abm::hours(0));
+    EXPECT_EQ(mask.get_time_used(t), mio::abm::hours(0));
 }
 
 TEST(TestMasks, maskProtection)
@@ -76,9 +70,9 @@ TEST(TestMasks, maskProtection)
     auto dt = mio::abm::days(1);
     infection_location.cache_exposure_rates(t, dt, num_age_groups);
     // susc_person1 wears a mask, default protection is 1
-    susc_person1.set_mask(mio::abm::MaskType::FFP2);
+    susc_person1.set_mask(mio::abm::MaskType::FFP2, t);
     // susc_person2 does not wear a mask
-    susc_person2.set_mask(mio::abm::MaskType::None);
+    susc_person2.set_mask(mio::abm::MaskType::None, t);
 
     //mock so person 2 will get infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>

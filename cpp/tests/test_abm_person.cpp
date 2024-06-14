@@ -163,12 +163,12 @@ TEST(TestPerson, get_tested)
         mock_uniform_dist_pcr;
     EXPECT_CALL(mock_uniform_dist_pcr.get_mock(), invoke)
         .Times(6)
-        .WillOnce(Return(0.4))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.95))
-        .WillOnce(Return(0.6))
-        .WillOnce(Return(0.999))
-        .WillOnce(Return(0.8));
+        .WillOnce(Return(0.4)) // Draw for agent's test true positive
+        .WillOnce(Return(0.8)) // Draw for is_compliant() return true
+        .WillOnce(Return(0.95)) // Draw for agent's test false negative
+        .WillOnce(Return(0.6)) // Draw for agent's test true negative
+        .WillOnce(Return(0.999)) // Draw for agent's test false negative
+        .WillOnce(Return(0.8)); // Draw for is_compliant() return true
     EXPECT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), true);
     EXPECT_EQ(infected.is_in_quarantine(t, params), true);
     infected.remove_quarantine();
@@ -185,12 +185,12 @@ TEST(TestPerson, get_tested)
         mock_uniform_dist_antigen;
     EXPECT_CALL(mock_uniform_dist_antigen.get_mock(), invoke)
         .Times(6)
-        .WillOnce(Return(0.4))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.95))
-        .WillOnce(Return(0.6))
-        .WillOnce(Return(0.999))
-        .WillOnce(Return(0.8));
+        .WillOnce(Return(0.4)) // Draw for agent's test true positive
+        .WillOnce(Return(0.8)) // Draw for is_compliant() return true
+        .WillOnce(Return(0.95)) // Draw for agent's test false negative
+        .WillOnce(Return(0.6)) // Draw for agent's test true negative
+        .WillOnce(Return(0.999)) // Draw for agent's test false negative
+        .WillOnce(Return(0.8)); // Draw for is_compliant() return true
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), true);
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), false);
@@ -226,6 +226,7 @@ TEST(TestPerson, interact)
 TEST(TestPerson, applyMaskIntervention)
 {
     auto rng = mio::RandomNumberGenerator();
+    auto t   = mio::abm::TimePoint(0);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
@@ -235,19 +236,19 @@ TEST(TestPerson, applyMaskIntervention)
     target.set_mask_requirement(false);
     person.set_compliance(mio::abm::InterventionType::Mask, 0.);
     if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
-        person.set_mask(mio::abm::MaskType::Community);
+        person.set_mask(mio::abm::MaskType::Community, t);
     }
     else {
-        person.set_mask(mio::abm::MaskType::None);
+        person.set_mask(mio::abm::MaskType::None, t);
     }
     EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::None);
 
     person.set_compliance(mio::abm::InterventionType::Mask, 1);
     if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
-        person.set_mask(mio::abm::MaskType::Community);
+        person.set_mask(mio::abm::MaskType::Community, t);
     }
     else {
-        person.set_mask(mio::abm::MaskType::None);
+        person.set_mask(mio::abm::MaskType::None, t);
     }
     EXPECT_NE(person.get_mask().get_type(), mio::abm::MaskType::None);
 
@@ -255,37 +256,39 @@ TEST(TestPerson, applyMaskIntervention)
     target.set_required_mask(mio::abm::MaskType::Surgical);
     person.set_compliance(mio::abm::InterventionType::Mask, 1);
     if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
-        person.set_mask(target.get_required_mask());
+        person.set_mask(target.get_required_mask(), t);
     }
     else {
-        person.set_mask(mio::abm::MaskType::None);
+        person.set_mask(mio::abm::MaskType::None, t);
     }
     EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
 }
 
 TEST(TestPerson, setWearMask)
 {
+    auto t = mio::abm::TimePoint(0);
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
 
-    person.set_mask(mio::abm::MaskType::None);
+    person.set_mask(mio::abm::MaskType::None, t);
     EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::None);
 
-    person.set_mask(mio::abm::MaskType::Community);
+    person.set_mask(mio::abm::MaskType::Community, t);
     EXPECT_NE(person.get_mask().get_type(), mio::abm::MaskType::None);
 }
 
 TEST(TestPerson, getMaskProtectiveFactor)
 {
+    auto t = mio::abm::TimePoint(0);
     mio::abm::Location location(mio::abm::LocationType::School, 0, 6);
     auto person_community = make_test_person(location);
-    person_community.set_mask(mio::abm::MaskType::Community);
+    person_community.set_mask(mio::abm::MaskType::Community, t);
     auto person_surgical = make_test_person(location);
-    person_surgical.set_mask(mio::abm::MaskType::Surgical);
+    person_surgical.set_mask(mio::abm::MaskType::Surgical, t);
     auto person_ffp2 = make_test_person(location);
-    person_ffp2.set_mask(mio::abm::MaskType::FFP2);
+    person_ffp2.set_mask(mio::abm::MaskType::FFP2, t);
     auto person_without = make_test_person(location);
-    person_without.set_mask(mio::abm::MaskType::None);
+    person_without.set_mask(mio::abm::MaskType::None, t);
 
     mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
@@ -336,55 +339,48 @@ TEST(Person, rng)
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }
 
-TEST(TestPerson, applyTestIntervention)
+TEST(TestPerson, isCompliant)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist_antigen;
-    EXPECT_CALL(mock_uniform_dist_antigen.get_mock(), invoke)
-        .Times(6)
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8));
 
+    // Initialize the random number generator
+    auto rng = mio::RandomNumberGenerator();
+
+    // Create locations
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
+
+    // Create test person and associated random number generator
     auto person     = make_test_person(home);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
-    person.set_compliance(mio::abm::InterventionType::Testing, 1);
-    EXPECT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
+    // Test cases with a complete truth table for compliance levels
+    struct TestCase {
+        mio::abm::InterventionType intervention_type;
+        double compliance_level;
+        bool expected_compliance;
+    };
 
-    person.set_compliance(mio::abm::InterventionType::Testing, 0.4);
-    EXPECT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Testing));
-}
+    std::vector<TestCase> test_cases = {
+        {mio::abm::InterventionType::Mask, 1.0, true},       {mio::abm::InterventionType::Mask, 0.4, false},
+        {mio::abm::InterventionType::Mask, 0.2, false},      {mio::abm::InterventionType::Mask, 0.9, true},
+        {mio::abm::InterventionType::Mask, 0.5, false},      {mio::abm::InterventionType::Mask, 0.1, false},
+        {mio::abm::InterventionType::Testing, 1.0, true},    {mio::abm::InterventionType::Testing, 0.4, false},
+        {mio::abm::InterventionType::Testing, 0.2, false},   {mio::abm::InterventionType::Testing, 0.9, true},
+        {mio::abm::InterventionType::Testing, 0.5, false},   {mio::abm::InterventionType::Testing, 0.1, false},
+        {mio::abm::InterventionType::Isolation, 1.0, true},  {mio::abm::InterventionType::Isolation, 0.4, false},
+        {mio::abm::InterventionType::Isolation, 0.2, false}, {mio::abm::InterventionType::Isolation, 0.9, true},
+        {mio::abm::InterventionType::Isolation, 0.5, false}, {mio::abm::InterventionType::Isolation, 0.1, false},
+    };
 
-TEST(TestPerson, applyIsolationIntervention)
-{
-    using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
+    // Return mock values for all tests.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(6)
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8))
-        .WillOnce(Return(0.8));
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(18).WillRepeatedly(Return(0.8));
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto person     = make_test_person(home);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    for (const auto& test_case : test_cases) {
+        // Set the compliance level for the person
+        person.set_compliance(test_case.intervention_type, test_case.compliance_level);
 
-    person.set_compliance(mio::abm::InterventionType::Isolation, 1);
-    EXPECT_TRUE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
-
-    person.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
-    EXPECT_FALSE(person.is_compliant(rng_person, mio::abm::InterventionType::Isolation));
+        // Check if the person is compliant
+        EXPECT_EQ(person.is_compliant(rng_person, test_case.intervention_type), test_case.expected_compliance);
+    }
 }

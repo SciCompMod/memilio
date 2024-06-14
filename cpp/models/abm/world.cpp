@@ -91,12 +91,11 @@ void World::migration(TimePoint t, TimeSpan dt)
                 // If the current MaskProtection level is lower than required, the Person changes mask
                 if (parameters.get<MaskProtection>()[person->get_mask().get_type()] <
                     parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                    person->set_mask(target_location.get_required_mask());
+                    person->set_mask(target_location.get_required_mask(), t);
                 }
-                person->get_mask().increase_time_used(dt);
             }
             else {
-                person->set_mask(MaskType::None);
+                person->set_mask(MaskType::None, t);
             }
             // Check if the Person wears mask if required at targeted location
             if ((target_location.is_mask_required() && person->get_mask().get_type() != MaskType::None) ||
@@ -155,12 +154,11 @@ void World::migration(TimePoint t, TimeSpan dt)
                     // If the current MaskProtection level is lower than required, the Person changes mask
                     if (parameters.get<MaskProtection>()[person->get_mask().get_type()] <
                         parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                        person->set_mask(target_location.get_required_mask());
+                        person->set_mask(target_location.get_required_mask(), t);
                     }
-                    person->get_mask().increase_time_used(dt);
                 }
                 else {
-                    person->set_mask(MaskType::None);
+                    person->set_mask(MaskType::None, t);
                 }
                 // Check if the Person wears mask if required at targeted location
                 if ((target_location.is_mask_required() && person->get_mask().get_type() != MaskType::None) ||
