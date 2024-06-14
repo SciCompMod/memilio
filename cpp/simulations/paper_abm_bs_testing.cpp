@@ -36,7 +36,21 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 
+#include <chrono>
+#define TIME_TYPE std::chrono::steady_clock::time_point
+#define TIME_NOW std::chrono::steady_clock::now()
+#define PRINTABLE_TIME(_time) (std::chrono::duration_cast<std::chrono::duration<double>>(_time)).count()
+
+#define restart_timer(timer, description) {\
+    TIME_TYPE new_time = TIME_NOW;\
+    std::cout << "\r" << description << " :: " << PRINTABLE_TIME(new_time - timer) << std::endl << std::flush;\
+    timer = new_time;\
+}
+#define DEBUG(cout_args) std::cerr << cout_args << std::endl << std::flush;
+
 namespace fs = boost::filesystem;
+
+TIME_TYPE timer;
 
 // Assign the name to general age group.
 size_t num_age_groupss        = 6;
@@ -203,17 +217,17 @@ void prepare_vaccination_state(mio::Date simulation_end, const std::string& file
                 }
                 // we need to add the number of persons to the vector of the date, but these are cumulative so we need to substract the day before
                 vacc_map[vacc_entry.date][determine_age_group_from_rki(vacc_entry.age_group)].first =
-                    vacc_entry.num_vaccinations_partially -
-                    vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].first;
+                    (int)vacc_entry.num_vaccinations_partially -
+                    (int)vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].first;
                 vacc_map[vacc_entry.date][determine_age_group_from_rki(vacc_entry.age_group)].second =
-                    vacc_entry.num_vaccinations_completed -
-                    vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].second;
+                    (int)vacc_entry.num_vaccinations_completed -
+                    (int)vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].second;
 
                 //update the vector for the next iteration
                 vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].first =
-                    vacc_entry.num_vaccinations_partially;
+                    (int)vacc_entry.num_vaccinations_partially;
                 vacc_vector_prev[determine_age_group_from_rki(vacc_entry.age_group)].second =
-                    vacc_entry.num_vaccinations_completed;
+                    (int)vacc_entry.num_vaccinations_completed;
             }
         }
     }
@@ -1034,20 +1048,24 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
                           int max_num_persons, mio::Date start_date_sim)
 {
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-
+    restart_timer(timer, "till set_paraemters");
     set_parameters(world.parameters);
     set_local_parameters(world);
+    
 
     // Create the world object from statistical data.
+    restart_timer(timer, "till create_world_from_data");
     create_world_from_data(world, (input_dir / "mobility/braunschweig_result_ffa8_modified.csv").generic_string(), t0,
                            max_num_persons);
 
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
+    restart_timer(timer, "till assing infection state");
     assign_infection_state(world, t0);
 
     // Assign vaccination status to each person.
+    restart_timer(timer, "till assing vaccination state");
     assign_vaccination_state(world, start_date_sim);
 
     // add_testing_strategies(world, true, false);
@@ -1270,7 +1288,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 400000;
+    auto max_num_persons = 40000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1296,14 +1314,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     // Determine inital infection state distribution
     //Time this
-    auto start0 = std::chrono::high_resolution_clock::now();
+    restart_timer(timer, "till determine_initial_infection_states_world");
     determine_initial_infection_states_world(input_dir, start_date);
+    restart_timer(timer, "till prepare_vaccination_state");
     prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
                               (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
-    auto stop0     = std::chrono::high_resolution_clock::now();
-    auto duration0 = std::chrono::duration<double>(stop0 - start0);
-    std::cout << "Time taken by determine_initial_infection_states_world: " << duration0.count() << " seconds"
-              << std::endl;
 
     // Loop over a number of runs
     for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
@@ -1646,7 +1661,8 @@ int main(int argc, char** argv)
 
     // std::string input_dir = "/p/project/loki/memilio/memilio/data";
     // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
-    std::string input_dir       = "/Users/david/Documents/HZI/memilio/data";
+    // std::string input_dir       = "/Users/david/Documents/HZI/memilio/data";
+    std::string input_dir       = "C:\\Users\\korf_sa\\Documents\\rep\\data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
     auto created                = create_result_folders(result_dir);
@@ -1654,7 +1670,7 @@ int main(int argc, char** argv)
         copy_precomputed_results(precomputed_dir, result_dir);
     }
     size_t num_runs;
-    //bool save_single_runs = true;
+    bool save_single_runs = true;
 
     if (argc == 2) {
         num_runs = atoi(argv[1]);
@@ -1687,8 +1703,8 @@ int main(int argc, char** argv)
     //     printf("%u, ", s);
     // }
     // printf("\n");
-
-    // auto result = run(input_dir, result_dir, num_runs, save_single_runs);
+    timer = TIME_NOW;
+    auto result = run(input_dir, result_dir, num_runs, save_single_runs);
     // if (!result) {
     //     printf("%s\n", result.error().formatted_message().c_str());
     //     mio::mpi::finalize();
