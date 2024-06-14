@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Maximilian Betz
 *
@@ -32,10 +32,11 @@ namespace pymio
 template <class Model>
 void bind_write_graph(pybind11::module_& m)
 {
-    m.def("write_graph", [&](const mio::Graph<Model, mio::MigrationParameters>& graph, const std::string& directory) {
-        int ioflags = mio::IOF_None;
-        mio::write_graph<Model>(graph, directory, ioflags);
-    });
+    m.def("write_graph",
+          [&](const mio::Graph<Model, mio::MigrationParameters<double>>& graph, const std::string& directory) {
+              int ioflags   = mio::IOF_None;
+              auto ioresult = mio::write_graph<double, Model>(graph, directory, ioflags);
+          });
 }
 
 } // namespace pymio
