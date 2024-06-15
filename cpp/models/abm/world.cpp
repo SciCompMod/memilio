@@ -132,7 +132,9 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person           = m_persons[trip.person_id];
             auto& current_location = person->get_location();
             auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);
-             if (current_location.get_type() != LocationType::Hospital && current_location.get_type() != LocationType::ICU && current_location.get_type() != LocationType::Cemetery) {
+            if (current_location.get_type() != LocationType::Hospital &&
+                current_location.get_type() != LocationType::ICU &&
+                current_location.get_type() != LocationType::Cemetery) {
                 if (!person->is_in_quarantine(t, parameters)) {
                     auto& target_location = get_individualized_location(trip.migration_destination);
                     if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
@@ -144,9 +146,9 @@ void World::migration(TimePoint t, TimeSpan dt)
                         }
                     }
                 }
-             }
+            }
+            m_trip_list.increase_index();
         }
-        m_trip_list.increase_index();
     }
 
     if (((t).days() < std::floor((t + dt).days()))) {
