@@ -104,10 +104,10 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
 {
     //times
     const double incubationTime            = 5.2;
-    const double serialIntervalMin         = 0.5 * 2.67 + 0.5 * 5.2;
-    const double serialIntervalMax         = 0.5 * 4.00 + 0.5 * 5.2;
-    const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
-    const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
+    const double serialIntervalMin         = 0.1 * 2.67 + 0.4 * 5.2;
+    const double serialIntervalMax         = 0.1 * 2.67 + 0.4 * 5.2;
+    const double timeInfectedSymptomsMin[] = {6.6255, 6.6255, 6.6646, 6.5631, 6.501, 6.465};
+    const double timeInfectedSymptomsMax[] = {6.6255, 6.6255, 6.6646, 6.5631, 6.501, 6.465};
     const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
     const double timeInfectedSevereMax[]   = {6.075, 6.075, 7., 8.7, 9.8, 13.};
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
@@ -134,8 +134,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double riskOfInfectionFromSymptomaticMax    = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    const double recoveredPerInfectedNoSymptomsMin[]  = {0.15, 0.15, 0.15, 0.15, 0.15, 0.15};
+    const double recoveredPerInfectedNoSymptomsMax[]  = {0.15, 0.15, 0.15, 0.15, 0.15, 0.15};
     const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
     const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
     const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
