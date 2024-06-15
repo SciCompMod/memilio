@@ -41,11 +41,12 @@
 #define TIME_NOW std::chrono::steady_clock::now()
 #define PRINTABLE_TIME(_time) (std::chrono::duration_cast<std::chrono::duration<double>>(_time)).count()
 
-#define restart_timer(timer, description) {\
-    TIME_TYPE new_time = TIME_NOW;\
-    std::cout << "\r" << description << " :: " << PRINTABLE_TIME(new_time - timer) << std::endl << std::flush;\
-    timer = new_time;\
-}
+#define restart_timer(timer, description)                                                                              \
+    {                                                                                                                  \
+        TIME_TYPE new_time = TIME_NOW;                                                                                 \
+        std::cout << "\r" << description << " :: " << PRINTABLE_TIME(new_time - timer) << std::endl << std::flush;     \
+        timer = new_time;                                                                                              \
+    }
 #define DEBUG(cout_args) std::cerr << cout_args << std::endl << std::flush;
 
 namespace fs = boost::filesystem;
@@ -1051,7 +1052,6 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     restart_timer(timer, "till set_paraemters");
     set_parameters(world.parameters);
     set_local_parameters(world);
-    
 
     // Create the world object from statistical data.
     restart_timer(timer, "till create_world_from_data");
@@ -1288,7 +1288,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 40000;
+    auto max_num_persons = 400000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1322,17 +1322,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     // Loop over a number of runs
     for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
-        // Start the clock before create_sampled_world
-        auto start1 = std::chrono::high_resolution_clock::now();
-        // Create the sampled simulation with start time t0.
         auto world = mio::abm::World(num_age_groupss);
+        restart_timer(timer, "till create_world");
         create_sampled_world(world, input_dir, t0, max_num_persons, start_date);
-        // Stop the clock after create_sampled_world and calculate the duration
-        auto stop1     = std::chrono::high_resolution_clock::now();
-        auto duration1 = std::chrono::duration<double>(stop1 - start1);
-        std::cout << "Time taken by create_sampled_world: " << duration1.count() << " seconds" << std::endl;
         auto sim     = mio::abm::Simulation(t0, std::move(world));
-        bool npis_on = true;
+        bool npis_on = false;
         //output object
         // mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
         //              mio::abm::LogDataForMovement>
@@ -1346,7 +1340,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
 
         // / NPIS//
-        auto start2 = std::chrono::high_resolution_clock::now();
         if (npis_on) {
 
             const auto location_it = sim.get_world().get_locations();
@@ -1490,6 +1483,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                     location.set_capacity(10, 0);
                 }
             }
+            restart_timer(timer, "till advance 14");
             sim.advance(mio::abm::TimePoint(mio::abm::days(14).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 14 finished" << std::endl;
@@ -1500,16 +1494,17 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                     location.set_capacity(10, 0);
                 }
             }
+            restart_timer(timer, "till advance 23");
             sim.advance(mio::abm::TimePoint(mio::abm::days(23).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
                 4.5;
-
+            restart_timer(timer, "till advance 37");
             sim.advance(mio::abm::TimePoint(mio::abm::days(37).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
                 5.5;
-
+            restart_timer(timer, "till advance 42");
             sim.advance(mio::abm::TimePoint(mio::abm::days(42).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 42 finished" << std::endl; // date 2021-04-12
@@ -1521,7 +1516,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             // set infection from viral shed lower //Todo: change this "change of InfectionRateFromViralShed" to a parameter
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
                 4.5;
-
+            restart_timer(timer, "till advance 72");
             sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 72 finished (date 2021-05-10)" << std::endl;
@@ -1548,21 +1543,19 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                     location.set_npi_active(true);
                 }
             }
+            restart_timer(timer, "till advance tmax");
             sim.advance(tmax, historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
                         historyInfectionPerAgeGroup);
             std::cout << "day 90 finished" << std::endl;
         }
         else {
-            sim.advance(tmax, historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
-                        historyInfectionPerAgeGroup);
+            sim.advance(mio::abm::TimePoint(mio::abm::days(10).seconds()), historyInfectionStatePerAgeGroup,
+                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
         }
         ////Advance till here
 
         // Stop the clock after sim.advance and calculate the duration
-        auto stop2     = std::chrono::high_resolution_clock::now();
-        auto duration2 = std::chrono::duration<double>(stop2 - start2);
-        std::cout << "Time taken by sim.advance: " << duration2.count() << " seconds" << std::endl;
-
+        restart_timer(timer, "till data gathering");
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_infection_per_loc_tpye =
             std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
@@ -1592,7 +1585,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             }
         }
     }
-
     printf("Saving results ... ");
 
 #ifdef MEMILIO_ENABLE_MPI
@@ -1615,6 +1607,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                                    result_dir / "infection_per_location_type/", save_single_runs));
 
 #endif
+    restart_timer(timer, "till complete end of simulation");
     printf("done.\n");
     //write_txt_file_for_graphical_compartment_output(ensemble_infection_state_per_age_group);
     return mio::success();
@@ -1660,9 +1653,9 @@ int main(int argc, char** argv)
 #endif
 
     // std::string input_dir = "/p/project/loki/memilio/memilio/data";
-    // std::string input_dir  = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir       = "/Users/david/Documents/HZI/memilio/data";
-    std::string input_dir       = "C:\\Users\\korf_sa\\Documents\\rep\\data";
+    // std::string input_dir       = "C:\\Users\\korf_sa\\Documents\\rep\\data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
     auto created                = create_result_folders(result_dir);
@@ -1703,7 +1696,7 @@ int main(int argc, char** argv)
     //     printf("%u, ", s);
     // }
     // printf("\n");
-    timer = TIME_NOW;
+    timer       = TIME_NOW;
     auto result = run(input_dir, result_dir, num_runs, save_single_runs);
     // if (!result) {
     //     printf("%s\n", result.error().formatted_message().c_str());

@@ -296,7 +296,7 @@ if __name__ == "__main__":
     # path to results
     # path = "/Users/david/Documents/HZI/memilio/data/results"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-06-10T21:35:59Z"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_cluster\results"
     if (len(sys.argv) > 1):
