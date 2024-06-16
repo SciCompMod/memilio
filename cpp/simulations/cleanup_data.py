@@ -389,6 +389,11 @@ def assign_location_type(pd):
             pd.at[index, 'location_type'] = location_type_from_keys_and_values( row['map_feature_key'], row['map_feature_value'], row['activity_end'], test_pd)
     return pd
 
+def add_time_if_null(pd):
+    # if start_time is null we set it to 0
+    pd['start_time'] = pd['start_time'].fillna("12:30")
+    return pd
+
 PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result_ffa8.csv"
 
 bd = pd.read_csv(PATH)
@@ -416,8 +421,11 @@ print('School IDs set.')
 # print('External location IDs set.')
 bd_new = assign_location_type(bd_new)
 print('Location types assigned.')
+bd_new = add_time_if_null(bd_new)
 
-# we need to delete the column map_feature_key and map_feature_value because we dont need them anymore
-bd_new = bd_new.drop(columns=['map_feature_key', 'map_feature_value'])
+# we need to remove unnecessary columns
+bd_new = bd_new.drop(columns= ['start_zone', 'end_zone', 'loc_id_start', 'start_county', 'end_county', 'trip_distance', 'travel_time_sec', 'lon_start', 'lat_start', 'travel_mode', 'activity_start', 'activity_end', 'map_feature_key','map_feature_value'])
+# sort for better search performance
+bd_new = bd_new.sort_values(by=['puid', 'start_time'])
 # Write data back to disk
-bd_new.to_csv('braunschweig_result_ffa8_modified.csv', index=False)
+bd_new.to_csv('braunschweig_result_ffa8_modified2.csv', index=False)
