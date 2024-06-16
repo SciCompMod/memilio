@@ -1082,7 +1082,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     mio::Date start_date{2021, 3, 1};
     auto t0              = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax            = mio::abm::TimePoint(0) + mio::abm::days(90); // End time per simulation
-    auto max_num_persons = 200000;
+    auto max_num_persons = 400000;
 
     auto ensemble_infection_per_loc_type =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
@@ -1119,13 +1119,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         auto world = mio::abm::World(num_age_groupss);
         restart_timer(timer, "till create_world");
         create_sampled_world(world, input_dir, t0, max_num_persons, start_date);
-        auto sim     = mio::abm::Simulation(t0, std::move(world));
-        bool npis_on = false;
-        //output object
-        // mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
-        //              mio::abm::LogDataForMovement>
-        //     historyPersonInf;
-        // mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
+        auto sim = mio::abm::Simulation(t0, std::move(world));
+
+        //Logger
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerLocationType> historyInfectionPerLocationType{
             Eigen::Index(mio::abm::LocationType::Count)};
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerAgeGroup> historyInfectionPerAgeGroup{
@@ -1134,6 +1130,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
 
         // / NPIS//
+        bool npis_on = false;
         if (npis_on) {
 
             const auto location_it = sim.get_world().get_locations();
