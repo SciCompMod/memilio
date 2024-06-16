@@ -1119,6 +1119,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         auto world = mio::abm::World(num_age_groupss);
         restart_timer(timer, "till create_world");
         create_sampled_world(world, input_dir, t0, max_num_persons, start_date);
+
+        restart_timer(timer, "till run_simulation");
         auto sim = mio::abm::Simulation(t0, std::move(world));
 
         //Logger
