@@ -22,6 +22,7 @@
 #include "abm/random_events.h"
 
 #include <numeric>
+#include <vector>
 
 namespace mio
 {
@@ -29,41 +30,49 @@ namespace abm
 {
 
 TripList::TripList()
-    : m_trips_weekday({})
-    , m_trips_weekend({})
+    : m_trips({})
     , m_current_index(0)
 {
 }
 
-const Trip& TripList::get_next_trip(bool weekend) const
+const Trip& TripList::get_next_trip() const
 {
-    return weekend ? m_trips_weekend[m_current_index] : m_trips_weekday[m_current_index];
+    return m_trips[m_current_index];
 }
 
-TimePoint TripList::get_next_trip_time(bool weekend) const
+TimePoint TripList::get_next_trip_time() const
 {
-    return weekend ? m_trips_weekend[m_current_index].time : m_trips_weekday[m_current_index].time;
+    return m_trips[m_current_index].time;
 }
 
-void TripList::use_weekday_trips_on_weekend()
-{
-    m_trips_weekend = m_trips_weekday;
-}
-
-void TripList::add_trip(Trip trip, bool weekend)
+void TripList::add_trip(Trip trip)
 {
     //Trips are sorted by time.
     //Also include the person id in the comparison so different persons can make trips at the same time.
     //The same person can only make one trip at the same time.
-    if (!weekend) {
-        insert_sorted_replace(m_trips_weekday, trip, [](auto& trip1, auto& trip2) {
-            return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
-        });
+
+    insert_sorted_replace(m_trips, trip, [](auto& trip1, auto& trip2) {
+        return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+    });
+}
+
+void TripList::add_several_trips(std::vector<Trip> trip)
+{
+    //Trips are sorted by time.
+    //Also include the person id in the comparison so different persons can make trips at the same time.
+    //The same person can only make one trip at the same time.
+
+    std::sort(trip.begin(), trip.end(), [](auto& trip1, auto& trip2) {
+        return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+    });
+    if (m_trips.empty()) {
+        m_trips = trip;
     }
     else {
-        insert_sorted_replace(m_trips_weekend, trip, [](auto& trip1, auto& trip2) {
-            return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
-        });
+        std::merge(m_trips.begin(), m_trips.end(), trip.begin(), trip.end(), std::back_inserter(m_trips),
+                   [](auto& trip1, auto& trip2) {
+                       return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+                   });
     }
 }
 

@@ -122,13 +122,12 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 
     // check if a person makes a trip
-    bool weekend     = t.is_weekend();
-    size_t num_trips = m_trip_list.num_trips(weekend);
+    size_t num_trips = m_trip_list.num_trips();
 
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip             = m_trip_list.get_next_trip(weekend);
+               m_trip_list.get_next_trip_time().seconds() < (t + dt).time_since_midnight().seconds()) {
+            auto& trip             = m_trip_list.get_next_trip();
             auto& person           = m_persons[trip.person_id];
             auto& current_location = person->get_location();
             auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);

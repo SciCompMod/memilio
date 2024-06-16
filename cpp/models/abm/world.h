@@ -110,13 +110,13 @@ public:
         obj.add_element("num_agegroups", parameters.get_num_groups());
         std::vector<Trip> trips;
         TripList trip_list = get_trip_list();
-        for (size_t i = 0; i < trip_list.num_trips(false); i++) {
-            trips.push_back(trip_list.get_next_trip(false));
+        for (size_t i = 0; i < trip_list.num_trips(); i++) {
+            trips.push_back(trip_list.get_next_trip());
             trip_list.increase_index();
         }
         trip_list.reset_index();
-        for (size_t i = 0; i < trip_list.num_trips(true); i++) {
-            trips.push_back(trip_list.get_next_trip(true));
+        for (size_t i = 0; i < trip_list.num_trips(); i++) {
+            trips.push_back(trip_list.get_next_trip());
             trip_list.increase_index();
         }
         obj.add_list("trips", trips.begin(), trips.end());

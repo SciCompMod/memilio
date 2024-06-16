@@ -149,25 +149,26 @@ public:
      * @brief Get the next Trip.
      * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    const Trip& get_next_trip(bool weekend) const;
+    const Trip& get_next_trip() const;
 
     /**
      * @brief Get the time at which the next Trip will happen.
      * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    TimePoint get_next_trip_time(bool weekend) const;
+    TimePoint get_next_trip_time() const;
 
     /**
      * @brief Add a Trip to migration data.
      * @param[in] trip The Trip to be added.
      * @param[in] weekend If the Trip is made on a weekend day.     
      */
-    void add_trip(Trip trip, bool weekend = false);
+    void add_trip(Trip trip);
 
     /**
-     * @brief Use the same TripList for weekend and weekday.
+     * @brief Add several Trip%s to migration data.
+     * @param[in] trip The Trip%s to be added.
      */
-    void use_weekday_trips_on_weekend();
+    void add_several_trips(std::vector<Trip> trip);
 
     /**
      * @brief Increment the current index to select the next Trip.
@@ -189,9 +190,9 @@ public:
      * @brief Get the length of the TripList.
      * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    size_t num_trips(bool weekend = false) const
+    size_t num_trips() const
     {
-        return weekend ? m_trips_weekend.size() : m_trips_weekday.size();
+        return m_trips.size();
     }
 
     /**
@@ -203,8 +204,7 @@ public:
     }
 
 private:
-    std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
-    std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.
+    std::vector<Trip> m_trips; ///< The list of Trip%s a Person makes on a weekday.
     uint32_t m_current_index; ///< The index of the Trip a Person makes next.
 };
 
