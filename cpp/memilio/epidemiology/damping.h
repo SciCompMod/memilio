@@ -528,7 +528,7 @@ private:
     {
         assert(!v.empty());
         auto& m  = std::get<Matrix>(v.front());
-        auto sum = m.eval();
+        Matrix sum = m;
         inclusive_exclusive_sum_rec(v.begin() + 1, v.end(), sum);
         return sum;
     }
