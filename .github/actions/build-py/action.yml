@@ -13,7 +13,7 @@ runs:
         yum install ninja-build -qy
         # install compilers for simulation package
         # if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
-        sudo dnf install gcc-toolset-11
+        dnf install gcc-toolset-11
         # fi
     - name: Make artifact dir
       shell: bash
