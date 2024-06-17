@@ -46,8 +46,8 @@ def compute_R_eff(iter_ids, state_level, out_folder=dd.defaultDict['out_folder']
         dict_entry = dd.EngEng['idState'] if state_level else dd.EngEng['idCounty']
         # TODO: discuss how we want to compute R value
 
-        start_date_npis = date(2020, 3, 1)
-        end_date_npis = date(2022, 2, 15)
+        start_date_npis = date(2020, 1, 1)
+        end_date_npis = date(2023, 1, 1)
 
         directory = out_folder
         directory = os.path.join(directory, 'Germany/')
@@ -217,7 +217,7 @@ def compute_R_eff_old_method(counties, out_folder=dd.defaultDict['out_folder']):
 
 class NPIRegression():
 
-    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0, delay=0, fixed_effects=False, clustering=None, rki=False, state_level=False):
+    def __init__(self, counties, min_date='2020-03-01', max_date='2022-03-01', fine_resolution=0, delay=0, fixed_effects=False, clustering=None, rki=False, state_level=False, chow=False):
         self.counties = counties
         self.min_date = min_date
         self.max_date = max_date
@@ -228,11 +228,13 @@ class NPIRegression():
             self.clustering = clustering
         else:
             self.clustering = 'clustering_xxx'
+        # TODO: does it make sense to have both self.rki and self.state_level?
         self.rki = rki
         self.state_level = state_level
         self.states = geoger.get_state_ids()
         self.iter_ids = self.states if state_level else self.counties
         self.dict_entry = dd.EngEng['idState'] if state_level else dd.EngEng['idCounty']
+        self.chow = chow
 
     # read data that is relevant for regression and store in dataframes
 
@@ -478,67 +480,67 @@ class NPIRegression():
                                         county, self.region_types[key-1]] += 1
 
         if self.rki:
-            filepath = os.path.join(directory, 'holidays.json')
-            df_holidays_temp = pd.read_json(filepath)
+            with progress_indicator.Spinner(message="Preparing holiday data"):
+                filepath = os.path.join(directory, 'holidays.json')
+                df_holidays_temp = pd.read_json(filepath)
 
-            dict_states = {1: 'SH', 2: 'HH', 3: 'NI', 4: 'HB', 5: 'NW', 6: 'HE', 7: 'RP', 8: 'BW',
-                           9: 'BY', 10: 'SL', 11: 'BE', 12: 'BB', 13: 'MV', 14: 'SN', 15: 'ST', 16: 'TH'}
+                dict_states = {1: 'SH', 2: 'HH', 3: 'NI', 4: 'HB', 5: 'NW', 6: 'HE', 7: 'RP', 8: 'BW',
+                               9: 'BY', 10: 'SL', 11: 'BE', 12: 'BB', 13: 'MV', 14: 'SN', 15: 'ST', 16: 'TH'}
 
-            self.df_holidays = self.df_vaccinations.loc[:, [
-                self.dict_entry, dd.EngEng['date']]]
+                self.df_holidays = self.df_vaccinations.loc[:, [
+                    self.dict_entry, dd.EngEng['date']]]
 
-            # variable for school holidays
-            self.df_holidays['schoolholidays'] = 0
-            # variable for after the school holidays
-            self.df_holidays['after_holiday_effect'] = 0
-            # variable for second half of school holidays
-            self.df_holidays['second_half_effect'] = 0
+                # variable for school holidays
+                self.df_holidays['schoolholidays'] = 0
+                # variable for after the school holidays
+                self.df_holidays['after_holiday_effect'] = 0
+                # variable for second half of school holidays
+                self.df_holidays['second_half_effect'] = 0
 
-            for state in self.states:
-                # get lists for start and end dates of holidays for particular state
-                start_dates = list(df_holidays_temp.loc[(df_holidays_temp['stateCode'] == dict_states[state]) & (
-                    (df_holidays_temp['year'] == 2020) | (df_holidays_temp['year'] == 2021)), 'start'])
-                end_dates = list(df_holidays_temp.loc[(df_holidays_temp['stateCode'] == dict_states[state]) & (
-                    (df_holidays_temp['year'] == 2020) | (df_holidays_temp['year'] == 2021)), 'end'])
-                for holiday in range(len(start_dates)):
-                    start_date = start_dates[holiday]
-                    end_date = end_dates[holiday]
+                for state in self.states:
+                    # get lists for start and end dates of holidays for particular state
+                    start_dates = list(df_holidays_temp.loc[(df_holidays_temp['stateCode'] == dict_states[state]) & (
+                        (df_holidays_temp['year'] == 2020) | (df_holidays_temp['year'] == 2021)), 'start'])
+                    end_dates = list(df_holidays_temp.loc[(df_holidays_temp['stateCode'] == dict_states[state]) & (
+                        (df_holidays_temp['year'] == 2020) | (df_holidays_temp['year'] == 2021)), 'end'])
+                    for holiday in range(len(start_dates)):
+                        start_date = start_dates[holiday]
+                        end_date = end_dates[holiday]
 
-                    length_of_holidays = datetime.strptime(end_date, '%Y-%m-%d').date(
-                    )-datetime.strptime(start_date, '%Y-%m-%d').date()
+                        length_of_holidays = datetime.strptime(end_date, '%Y-%m-%d').date(
+                        )-datetime.strptime(start_date, '%Y-%m-%d').date()
 
+                        self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
+                            self.df_holidays['Date'] >= start_date) & (
+                            self.df_holidays['Date'] <= end_date)), 'schoolholidays'] = 1
+
+                        # only add an after effect to holidays if holidays are at least 5 days long
+                        if length_of_holidays.days >= 5:
+                            self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
+                                self.df_holidays['Date'] > end_date) & (
+                                self.df_holidays['Date'] <= np.datetime64(datetime.strptime(end_date, '%Y-%m-%d').date() + timedelta(days=5)))), 'after_holiday_effect'] = 1
+
+                        # only add an effect for the second half of school holidays if they are at least 12 days long
+                        if length_of_holidays.days >= 12:
+                            self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
+                                self.df_holidays['Date'] >= np.datetime64(datetime.strptime(start_date, '%Y-%m-%d').date() + timedelta(days=int(0.5*length_of_holidays.days)))) & (
+                                self.df_holidays['Date'] <= end_date)), 'second_half_effect'] = 1
+
+                # variable for Easter and Christmas
+                dates_easter_christmas = [["2020-04-10", "2020-04-13"], ["2020-12-24", "2021-01-01"], [
+                    "2021-04-02", "2021-04-05"], ["2021-12-24", "2022-01-01"]]
+
+                self.df_holidays['easter_christmas'] = 0
+
+                for holiday in range(len(dates_easter_christmas)):
+                    start_date = dates_easter_christmas[holiday][0]
+                    end_date = dates_easter_christmas[holiday][1]
                     self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
                         self.df_holidays['Date'] >= start_date) & (
-                        self.df_holidays['Date'] <= end_date)), 'schoolholidays'] = 1
+                        self.df_holidays['Date'] <= end_date)), 'easter_christmas'] = 1
 
-                    # only add an after effect to holidays if holidays are at least 5 days long
-                    if length_of_holidays.days >= 5:
-                        self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
-                            self.df_holidays['Date'] > end_date) & (
-                            self.df_holidays['Date'] <= np.datetime64(datetime.strptime(end_date, '%Y-%m-%d').date() + timedelta(days=5)))), 'after_holiday_effect'] = 1
-
-                    # only add an effect for the second half of school holidays if they are at least 12 days long
-                    print('length of holidays: ', length_of_holidays.days)
-                    if length_of_holidays.days >= 12:
-                        self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
-                            self.df_holidays['Date'] >= np.datetime64(datetime.strptime(start_date, '%Y-%m-%d').date() + timedelta(days=int(0.5*length_of_holidays.days)))) & (
-                            self.df_holidays['Date'] <= end_date)), 'second_half_effect'] = 1
-
-            # variable for Easter and Christmas
-            dates_easter_christmas = [["2020-04-10", "2020-04-13"], ["2020-12-24", "2021-01-01"], [
-                "2021-04-02", "2021-04-05"], ["2021-12-24", "2022-01-01"]]
-
-            self.df_holidays['easter_christmas'] = 0
-
-            for holiday in range(len(dates_easter_christmas)):
-                start_date = dates_easter_christmas[holiday][0]
-                end_date = dates_easter_christmas[holiday][1]
-                self.df_holidays.loc[((self.df_holidays['ID_State'] == state) & (
-                    self.df_holidays['Date'] >= start_date) & (
-                    self.df_holidays['Date'] <= end_date)), 'easter_christmas'] = 1
-
-            self.holiday_variables = [
-                'schoolholidays', 'after_holiday_effect', 'second_half_effect', 'easter_christmas']
+                self.holiday_variables = [
+                    'schoolholidays', 'after_holiday_effect', 'second_half_effect', 'easter_christmas']
 
         with progress_indicator.Spinner(message="Handle datetimes"):
             # TODO: check if this works as expected
@@ -615,14 +617,15 @@ class NPIRegression():
                     self.df_holidays = self.df_holidays.drop(self.df_holidays[(self.df_holidays.Date.isin(
                         missing_dates)) & (self.df_holidays[self.dict_entry] == idx)].index)
 
-            # drop columns where no NPIs are assigned
-            num_dropped = 0
-            null_idx = np.where(self.df_npis[self.used_npis].sum() == 0)[0]
-            for null_item in null_idx:
-                dropped = self.used_npis.pop(null_item-num_dropped)
-                print('No Data for NPI: ' + str(dropped))
-                self.df_npis = self.df_npis.drop(dropped, axis=1)
-                num_dropped += 1
+            if not self.chow:
+                # drop columns where no NPIs are assigned
+                num_dropped = 0
+                null_idx = np.where(self.df_npis[self.used_npis].sum() == 0)[0]
+                for null_item in null_idx:
+                    dropped = self.used_npis.pop(null_item-num_dropped)
+                    print('No Data for NPI: ' + str(dropped))
+                    self.df_npis = self.df_npis.drop(dropped, axis=1)
+                    num_dropped += 1
 
             # sort all dataframes first by county and then by date so that all dataframes are aligned
             self.df_r.sort_values([self.dict_entry, 'Date'])
@@ -1076,7 +1079,7 @@ def main():
     counties = geoger.get_county_ids(merge_eisenach=True, merge_berlin=True)
 
     min_date = '2020-03-01'  # as in rki
-    max_date = '2021-08-31'  # as in rki
+    max_date = '2020-05-01'  # as in rki
 
     fine_resolution = 2
 
