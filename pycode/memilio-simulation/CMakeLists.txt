@@ -31,7 +31,7 @@ endif()
 
 # remove use-after-free warning treated as error
 # compilation of bindings fails without this option, eventhough cpp build works 
-add_compile_options(-Wno-use-after-free)
+# add_compile_options(-Wno-use-after-free)
 
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
