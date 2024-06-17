@@ -141,9 +141,9 @@ int main()
     double tmax = 50.;
     double dt   = 1;
 
-    size_t number_regions              = 4;
+    size_t number_regions              = 1;
     size_t number_age_groups           = 1;
-    size_t total_population_per_region = 5000;
+    size_t total_population_per_region = 10;
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
@@ -154,7 +154,7 @@ int main()
 
     for (size_t i = 0; i < number_regions; i++) {
         model.populations[{mio::Index<mio::osirmobility::Region, mio::AgeGroup, mio::osirmobility::InfectionState>(
-            mio::osirmobility::Region(i), mio::AgeGroup(0), mio::osirmobility::InfectionState::Infected)}]  = 50;
+            mio::osirmobility::Region(i), mio::AgeGroup(0), mio::osirmobility::InfectionState::Infected)}]  = 1;
         model.populations[{mio::Index<mio::osirmobility::Region, mio::AgeGroup, mio::osirmobility::InfectionState>(
             mio::osirmobility::Region(i), mio::AgeGroup(0), mio::osirmobility::InfectionState::Recovered)}] = 0;
         model.populations[{mio::Index<mio::osirmobility::Region, mio::AgeGroup, mio::osirmobility::InfectionState>(
@@ -200,7 +200,7 @@ int main()
     model.parameters.get<mio::osirmobility::PathIntersections>()[{mio::osirmobility::Region(3),
                                                                   mio::osirmobility::Region(1)}] = {2};
 
-    auto result_preprocess = set_mobility_weights(mobility_data, trip_chain_data, model, number_regions);
+    // auto result_preprocess = set_mobility_weights(mobility_data, trip_chain_data, model, number_regions);
 
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
 

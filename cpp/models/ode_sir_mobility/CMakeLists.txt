@@ -3,6 +3,7 @@ add_library(ode_sir_mobility
     model.h
     model.cpp
     parameters.h
+    regions.h
 )
 target_link_libraries(ode_sir_mobility PUBLIC memilio)
 target_include_directories(ode_sir_mobility PUBLIC
