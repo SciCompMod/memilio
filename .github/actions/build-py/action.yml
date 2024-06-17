@@ -14,6 +14,7 @@ runs:
         # install compilers for simulation package
         # if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
         dnf install gcc-toolset-11 -qy
+        scl enable gcc-toolset-11 bash
         # fi
     - name: Make artifact dir
       shell: bash
