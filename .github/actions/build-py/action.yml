@@ -9,7 +9,14 @@ runs:
   steps:    
     - name: Install dependencies
       shell: bash
-      run: yum install ninja-build -qy
+      run: |
+        yum install ninja-build -qy
+        # install compilers for simulation package
+        # if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
+        dnf install gcc-toolset-11 -qy
+        whereis gcc-toolset-11-gcc
+        whereis gcc-toolset-11-gcc-c++
+        # fi
     - name: Make artifact dir
       shell: bash
       run: |
@@ -18,6 +25,10 @@ runs:
     - name: Build Python Wheels
       shell: bash
       run: |
+        # if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
+        export CC=gcc-toolset-11-gcc
+        export CXX=gcc-toolset-11-gcc-c++
+        # fi
         cd pycode/memilio-${{ inputs.package }}/
         /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
         /opt/python/cp311-cp311/bin/python setup.py bdist_wheel
@@ -31,7 +42,7 @@ runs:
         fi
         cp -r wheelhouse ..
     - name: Upload Python Wheels Simulation # See Issue #939
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: inputs.package == 'simulation'
       with:
         name: python-wheels-${{ inputs.package }}
