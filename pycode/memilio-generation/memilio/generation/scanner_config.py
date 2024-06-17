@@ -58,8 +58,6 @@ class ScannerConfig:
     skbuild_path_to_database: str
     target_folder: str
     optional: dict = field(default_factory=dict)
-    model_class: str = field(init=False)
-    parameterset: str = field(init=False)
 
     def __post_init__(self: Self) -> None:
         """

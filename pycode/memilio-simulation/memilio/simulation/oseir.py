@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-Python bindings for MEmilio oseir model.
+Python bindings for MEmilio ODE SEIR model.
 """
 
 from memilio._simulation_oseir import *
