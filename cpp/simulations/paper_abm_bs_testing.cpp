@@ -951,7 +951,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
                           int max_num_persons, mio::Date start_date_sim)
 {
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    
+
     set_parameters(world.parameters);
     set_local_parameters(world);
     restart_timer(timer, "time taken for setting up parameters and local parameters");
@@ -1114,7 +1114,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     // Loop over a number of runs
     for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
         auto world = mio::abm::World(num_age_groupss);
-        
+
         create_sampled_world(world, input_dir, t0, max_num_persons, start_date);
 
         restart_timer(timer, "time taken for create sampled world");
@@ -1231,7 +1231,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 if (location.get_type() == mio::abm::LocationType::BasicsShop) {
                     location.add_damping(mio::abm::TimePoint(mio::abm::days(14).seconds()), 0.8); // from 2021-03-15
                 }
-                
             }
 
             // 5. add capacity limits to some locations
@@ -1271,70 +1270,70 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             sim.advance(mio::abm::TimePoint(mio::abm::days(14).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType, historyInfectionPerAgeGroup);
             std::cout << "day 14 finished" << std::endl;
-            // small social events to capacity 5
-            for (auto& location : location_it) {
-                if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
-                              location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(10, 0);
-                }
-            }
-            restart_timer(timer, "till advance 23");
-            sim.advance(mio::abm::TimePoint(mio::abm::days(23).seconds()), historyInfectionStatePerAgeGroup,
-                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
-            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                4.5;
-            restart_timer(timer, "till advance 37");
-            sim.advance(mio::abm::TimePoint(mio::abm::days(37).seconds()), historyInfectionStatePerAgeGroup,
-                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
-            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                5.5;
-            restart_timer(timer, "till advance 42");
-            sim.advance(mio::abm::TimePoint(mio::abm::days(42).seconds()), historyInfectionStatePerAgeGroup,
-                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
-            std::cout << "day 42 finished" << std::endl; // date 2021-04-12
-            for (auto& location : location_it) {
-                if (location.get_type() != mio::abm::LocationType::School) {
-                    location.set_npi_active(false);
-                }
-            }
-            // set infection from viral shed lower //Todo: change this "change of InfectionRateFromViralShed" to a parameter
-            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                4.5;
-            restart_timer(timer, "till advance 72");
-            sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
-                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
-            std::cout << "day 72 finished (date 2021-05-10)" << std::endl;
+            // // small social events to capacity 5
+            // for (auto& location : location_it) {
+            //     if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
+            //                   location.get_index()) != social_event_location_ids_small.end()) {
+            //         location.set_capacity(10, 0);
+            //     }
+            // }
+            // restart_timer(timer, "till advance 23");
+            // sim.advance(mio::abm::TimePoint(mio::abm::days(23).seconds()), historyInfectionStatePerAgeGroup,
+            //             historyInfectionPerLocationType, historyInfectionPerAgeGroup);
+            // sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+            //     4.5;
+            // restart_timer(timer, "till advance 37");
+            // sim.advance(mio::abm::TimePoint(mio::abm::days(37).seconds()), historyInfectionStatePerAgeGroup,
+            //             historyInfectionPerLocationType, historyInfectionPerAgeGroup);
+            // sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+            //     5.5;
+            // restart_timer(timer, "till advance 42");
+            // sim.advance(mio::abm::TimePoint(mio::abm::days(42).seconds()), historyInfectionStatePerAgeGroup,
+            //             historyInfectionPerLocationType, historyInfectionPerAgeGroup);
+            // std::cout << "day 42 finished" << std::endl; // date 2021-04-12
+            // for (auto& location : location_it) {
+            //     if (location.get_type() != mio::abm::LocationType::School) {
+            //         location.set_npi_active(false);
+            //     }
+            // }
+            // // set infection from viral shed lower //Todo: change this "change of InfectionRateFromViralShed" to a parameter
+            // sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+            //     4.5;
+            // restart_timer(timer, "till advance 72");
+            // sim.advance(mio::abm::TimePoint(mio::abm::days(72).seconds()), historyInfectionStatePerAgeGroup,
+            //             historyInfectionPerLocationType, historyInfectionPerAgeGroup);
+            // std::cout << "day 72 finished (date 2021-05-10)" << std::endl;
 
-            sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
-                5.5;
-            for (auto& location : location_it) {
-                if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
-                              location.get_index()) != social_event_location_ids_small.end()) {
-                    location.set_capacity(2, 0);
-                }
-                //90% of big social events get reopened and caopacity will be unlimited
-                int number_of_big_social_events = (int)(0.7 * social_event_location_ids_big.size());
-                if (std::find(social_event_location_ids_big.begin(), social_event_location_ids_big.end(),
-                              location.get_index()) != social_event_location_ids_big.end()) {
-                    number_of_big_social_events--;
-                    if (number_of_big_social_events >= 0) {
-                        location.set_capacity(std::numeric_limits<int>::max(), 0);
-                    }
-                }
-            }
-            for (auto& location : location_it) {
-                if (location.get_type() != mio::abm::LocationType::School) {
-                    location.set_npi_active(true);
-                }
-            }
-            restart_timer(timer, "till advance tmax");
-            sim.advance(tmax, historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
-                        historyInfectionPerAgeGroup);
-            std::cout << "day 90 finished" << std::endl;
+            // sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] =
+            //     5.5;
+            // for (auto& location : location_it) {
+            //     if (std::find(social_event_location_ids_small.begin(), social_event_location_ids_small.end(),
+            //                   location.get_index()) != social_event_location_ids_small.end()) {
+            //         location.set_capacity(2, 0);
+            //     }
+            //     //90% of big social events get reopened and caopacity will be unlimited
+            //     int number_of_big_social_events = (int)(0.7 * social_event_location_ids_big.size());
+            //     if (std::find(social_event_location_ids_big.begin(), social_event_location_ids_big.end(),
+            //                   location.get_index()) != social_event_location_ids_big.end()) {
+            //         number_of_big_social_events--;
+            //         if (number_of_big_social_events >= 0) {
+            //             location.set_capacity(std::numeric_limits<int>::max(), 0);
+            //         }
+            //     }
+            // }
+            // for (auto& location : location_it) {
+            //     if (location.get_type() != mio::abm::LocationType::School) {
+            //         location.set_npi_active(true);
+            //     }
+            // }
+            // restart_timer(timer, "till advance tmax");
+            // sim.advance(tmax, historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
+            //             historyInfectionPerAgeGroup);
+            // std::cout << "day 90 finished" << std::endl;
         }
         else {
-            sim.advance(mio::abm::TimePoint(mio::abm::days(1).seconds()), historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
-                        historyInfectionPerAgeGroup);
+            sim.advance(mio::abm::TimePoint(mio::abm::days(1).seconds()), historyInfectionStatePerAgeGroup,
+                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
         }
         ////Advance till here
 
@@ -1398,7 +1397,7 @@ const std::string currentDateTime()
 {
     // Example of the very popular RFC 3339 format UTC time
     std::time_t time = std::time({});
-    char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+    char timeString[std::size("yyyy-mm-dddddddd")];
     std::strftime(std::data(timeString), std::size(timeString), "%F%H%M%S", std::gmtime(&time));
     return timeString;
 }
@@ -1433,9 +1432,9 @@ int main(int argc, char** argv)
 #endif
 
     // std::string input_dir        = "/p/project/loki/memilio/memilio/data";
-    // std::string input_dir        = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir        = "/Users/david/Documents/HZI/memilio/data";
-    std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
+    // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
     auto created                = create_result_folders(result_dir);
