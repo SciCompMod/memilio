@@ -13,9 +13,8 @@ runs:
         yum install ninja-build -qy
         # install compilers for simulation package
         # if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
-        sudo apt-get -qq update
-        sudo apt-get -qq -y install gcc-11
-        sudo apt-get -qq -y install g++-11
+        yum install gcc-11 -qy
+        yum install g++-11 -qy
         # fi
     - name: Make artifact dir
       shell: bash
