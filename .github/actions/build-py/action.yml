@@ -14,8 +14,8 @@ runs:
         # install compilers for simulation package
         # if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
         dnf install gcc-toolset-11 -qy
-        whereis gcc-11
-        whereis g++-11
+        whereis gcc-toolset-11-gcc
+        whereis gcc-toolset-11-gcc-c++
         # fi
     - name: Make artifact dir
       shell: bash
@@ -26,8 +26,8 @@ runs:
       shell: bash
       run: |
         # if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
-        export CC=/usr/bin/gcc-11
-        export CXX=/usr/bin/g++-11
+        export CC=gcc-toolset-11-gcc
+        export CXX=gcc-toolset-11-gcc-c++
         # fi
         cd pycode/memilio-${{ inputs.package }}/
         /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
