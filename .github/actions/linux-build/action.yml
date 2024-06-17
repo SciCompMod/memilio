@@ -1,6 +1,8 @@
 name: "Linux Build"
 description: "Build the C++ library on Linux. Produces artifact build-cpp-linux-$compiler-$version-$config."
 inputs:
+  #take care to adapt the unique cache keys and artifact names below when adding new inputs that affect compilation
+  #keys also need to be adapted in the other jobs of the pipeline that use the artifacts
   config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
@@ -21,20 +23,8 @@ inputs:
     description: "Turn coverage on (ON or OFF, default OFF)"
     required: false
     default: "OFF"
-  sanitize-ub:
-    description: "Turn on UB sanitzer (ON or OFF, default OFF)"
-    required: false
-    default: "OFF"
-  sanitize-addr:
-    description: "Turn on address sanitzer (ON or OFF, default OFF)"
-    required: false
-    default: "OFF"
-  build-tests:
-    description: "Build tests"
-    required: false
-    default: "ON"
-  build-benchmarks:
-    description: "Build benchmarks"
+  sanitizers:
+    description: "Turn on sanitzers (ON or OFF, default OFF)"
     required: false
     default: "OFF"
   openmp:
@@ -48,12 +38,15 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install lcov
+        sudo apt-get -qq -y install lcov ccache
         if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
           sudo apt-get -qq -y install libhdf5-dev 
         fi
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
-          if [[ "${{ inputs.version }}" == "latest" ]]; then   
+          if [[ "${{ inputs.version }}" == "min" ]]; then
+            sudo apt-get -qq -y install gcc-9
+            sudo apt-get -qq -y install g++-9
+          else        
             sudo apt-get -qq -y install gcc-11
             sudo apt-get -qq -y install g++-11
           fi
@@ -64,6 +57,21 @@ runs:
             sudo apt-get -qq -y install clang-14
           fi
         fi
+    - name: ccache 
+      id: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        # free total space for cache available on github is limited to 10GB, so only save on main branch;
+        # other branches will try to use cache from main, but branches that are too old won't benefit;
+        save: ${{ github.ref_name == 'main' }} 
+        # set enough space per build cache to keep a few previous versions to be used by older branches
+        # debug builds require more space
+        max-size: ${{ inputs.config == 'Release' && '200M' || '1G' }} 
+        # saves cache as `ccache-<key>-<timestamp>` (timestamp added automatically, key must be unique, github caches are never overwritten)
+        # key should be a composite of all options that affect the compilation
+        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-cov${{ inputs.coverage }}-dep${{ inputs.optional-dependencies }}-omp${{ inputs.openmp }}-san${{ inputs.sanitizers }}
+        # load most recent cache where a prefix of the key matches a restore-key, e.g. from the most recent nightly run of the same build
+        restore-keys: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-cov${{ inputs.coverage }}-dep${{ inputs.optional-dependencies }}-omp${{ inputs.openmp }}-san${{ inputs.sanitizers }}
     - name: Build
       shell: bash
       run: |
@@ -73,8 +81,8 @@ runs:
             export CC=/usr/bin/gcc-9
             export CXX=/usr/bin/g++-9
           else        
-            export CC=/usr/bin/gcc-10
-            export CXX=/usr/bin/g++-10
+            export CC=/usr/bin/gcc-11
+            export CXX=/usr/bin/g++-11
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
@@ -89,7 +97,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_BUILD_TESTS=${{ inputs.build-tests }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.build-benchmarks }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
+        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
     - name: create build dir archive
       shell: bash

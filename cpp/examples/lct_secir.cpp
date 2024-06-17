@@ -47,26 +47,26 @@ int main()
                                                                 {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
     // Assert that initial_populations has the right shape.
-    if (initial_populations.size() != (int)LctState::InfectionState::Count) {
+    if (initial_populations.size() != (size_t)LctState::InfectionState::Count) {
         mio::log_error("The number of vectors in initial_populations does not match the number of InfectionStates.");
         return 1;
     }
     if ((initial_populations[(int)LctState::InfectionState::Susceptible].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Susceptible>()) ||
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Susceptible>()) ||
         (initial_populations[(int)LctState::InfectionState::Exposed].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Exposed>()) ||
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Exposed>()) ||
         (initial_populations[(int)LctState::InfectionState::InfectedNoSymptoms].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>()) ||
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>()) ||
         (initial_populations[(int)LctState::InfectionState::InfectedSymptoms].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>()) ||
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>()) ||
         (initial_populations[(int)LctState::InfectionState::InfectedSevere].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>()) ||
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>()) ||
         (initial_populations[(int)LctState::InfectionState::InfectedCritical].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>()) ||
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>()) ||
         (initial_populations[(int)LctState::InfectionState::Recovered].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Recovered>()) ||
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Recovered>()) ||
         (initial_populations[(int)LctState::InfectionState::Dead].size() !=
-         LctState::get_num_subcompartments<LctState::InfectionState::Dead>())) {
+         (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Dead>())) {
         mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
                        "subcompartments.");
         return 1;
@@ -74,32 +74,31 @@ int main()
 
     // Transfer the initial values in initial_populations to the vector init.
     Eigen::VectorXd init = Eigen::VectorXd::Zero(LctState::Count);
-    init[(int)LctState::get_first_index<LctState::InfectionState::Susceptible>()] =
+    init[LctState::get_first_index<LctState::InfectionState::Susceptible>()] =
         initial_populations[(int)LctState::InfectionState::Susceptible][0];
-    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(); i++) {
-        init[(int)LctState::get_first_index<LctState::InfectionState::Exposed>() + i] =
+    for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(); i++) {
+        init[LctState::get_first_index<LctState::InfectionState::Exposed>() + i] =
             initial_populations[(int)LctState::InfectionState::Exposed][i];
     }
-    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>();
-         i++) {
-        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + i] =
+    for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>(); i++) {
+        init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + i] =
             initial_populations[(int)LctState::InfectionState::InfectedNoSymptoms][i];
     }
-    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>(); i++) {
-        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + i] =
+    for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>(); i++) {
+        init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + i] =
             initial_populations[(int)LctState::InfectionState::InfectedSymptoms][i];
     }
-    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>(); i++) {
-        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + i] =
+    for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>(); i++) {
+        init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + i] =
             initial_populations[(int)LctState::InfectionState::InfectedSevere][i];
     }
-    for (unsigned int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>(); i++) {
-        init[(int)LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + i] =
+    for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>(); i++) {
+        init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + i] =
             initial_populations[(int)LctState::InfectionState::InfectedCritical][i];
     }
-    init[(int)LctState::get_first_index<LctState::InfectionState::Recovered>()] =
+    init[LctState::get_first_index<LctState::InfectionState::Recovered>()] =
         initial_populations[(int)LctState::InfectionState::Recovered][0];
-    init[(int)LctState::get_first_index<LctState::InfectionState::Dead>()] =
+    init[LctState::get_first_index<LctState::InfectionState::Dead>()] =
         initial_populations[(int)LctState::InfectionState::Dead][0];
 
     // Initialize model.

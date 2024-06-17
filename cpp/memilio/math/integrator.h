@@ -21,7 +21,7 @@
 #define INTEGRATOR_H
 
 #include "memilio/utils/time_series.h"
-
+#include "memilio/utils/logging.h"
 #include <memory>
 #include <functional>
 
@@ -31,9 +31,10 @@ namespace mio
 /**
  * Function template to be integrated
  */
-using DerivFunction =
-    std::function<void(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)>;
+template <typename FP = double>
+using DerivFunction = std::function<void(Eigen::Ref<const mio::Vector<FP>> y, FP t, Eigen::Ref<mio::Vector<FP>> dydt)>;
 
+template <typename FP = double>
 class IntegratorCore
 {
 public:
@@ -62,13 +63,15 @@ public:
      * @return Always true for nonadaptive methods.
      *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
-    virtual bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
-                      Eigen::Ref<Eigen::VectorXd> ytp1) const = 0;
+    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt,
+                      Eigen::Ref<Vector<FP>> ytp1) const = 0;
 };
 
 /**
  * Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
+ * tparam FP a floating point type accepted by Eigen
  */
+template <typename FP = double>
 class OdeIntegrator
 {
 public:
@@ -76,8 +79,9 @@ public:
      * @brief create an integrator for a specific IVP
      * @param[in] core implements the solution method
      */
-    OdeIntegrator(std::shared_ptr<IntegratorCore> core)
+    OdeIntegrator(std::shared_ptr<IntegratorCore<FP>> core)
         : m_core(core)
+        , m_is_adaptive(false)
     {
     }
 
@@ -90,16 +94,73 @@ public:
      * intitial time and value. A new entry is added for each integration step.
      * @return A reference to the last value in the results time series.
      */
-    Eigen::Ref<Eigen::VectorXd> advance(const DerivFunction& f, const double tmax, double& dt,
-                                        TimeSeries<double>& results);
 
-    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    Eigen::Ref<Vector<FP>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
-        m_core = integrator;
+        // hint at std functions for ADL
+        using std::fabs;
+        using std::max;
+        const FP t0 = results.get_last_time();
+        assert(tmax > t0);
+        assert(dt > 0);
+
+        const size_t num_steps =
+            static_cast<size_t>(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
+
+        results.reserve(results.get_num_time_points() + num_steps);
+
+        bool step_okay = true;
+
+        FP dt_copy; // used to check whether step sizing is adaptive
+        FP dt_restore = 0; // used to restore dt if dt was decreased to reach tmax
+        FP t          = t0;
+
+        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
+            //we don't make timesteps too small as the error estimator of an adaptive integrator
+            //may not be able to handle it. this is very conservative and maybe unnecessary,
+            //but also unlikely to happen. may need to be reevaluated
+
+            if (dt > tmax - t) {
+                dt_restore = dt;
+                dt         = tmax - t;
+            }
+            dt_copy = dt;
+
+            results.add_time_point();
+            step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
+            results.get_last_time() = t;
+
+            // if dt has been changed (even slighly) by step, register the current m_core as adaptive
+            m_is_adaptive |= !floating_point_equal(dt, dt_copy);
+        }
+        // if dt was decreased to reach tmax in the last time iteration,
+        // we restore it as it is now probably smaller than required for tolerances
+        dt = max(dt, dt_restore);
+
+        if (m_is_adaptive) {
+            if (!step_okay) {
+                log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
+            }
+            else if (fabs((tmax - t) / (tmax - t0)) > 1e-14) {
+                log_warning("Last time step too small. Could not reach tmax exactly.");
+            }
+            else {
+                log_info("Adaptive step sizing successful to tolerances.");
+            }
+        }
+
+        return results.get_last_value();
+    }
+
+    void set_integrator(std::shared_ptr<IntegratorCore<FP>> integrator)
+    {
+        m_core        = integrator;
+        m_is_adaptive = false;
     }
 
 private:
-    std::shared_ptr<IntegratorCore> m_core;
+    std::shared_ptr<IntegratorCore<FP>> m_core;
+    bool m_is_adaptive;
 };
 
 } // namespace mio

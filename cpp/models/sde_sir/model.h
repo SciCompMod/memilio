@@ -39,9 +39,9 @@ namespace ssir
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
-class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
+class Model : public FlowModel<ScalarType, InfectionState, Populations<ScalarType, InfectionState>, Parameters, Flows>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
+    using Base = FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>;
 
 public:
     Model()
@@ -49,33 +49,34 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                   Eigen::Ref<Eigen::VectorXd> flows) const
+    void get_flows(Eigen::Ref<const Vector<>> pop,
+                   Eigen::Ref<const Vector<>> y, ScalarType t,
+                   Eigen::Ref<Vector<>> flows) const
     {
-        auto& params     = this->parameters;
-        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        auto& params         = this->parameters;
+        ScalarType coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                               params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        double si = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
-        double ir = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType si = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType ir = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
 
         // Assuming that no person can change its InfectionState twice in a single time step,
         // take the minimum of the calculated flow and the source compartment, to ensure that
         // no compartment attains negative values.
 
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = std::min(
+        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = std::clamp(
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
                 sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) /
                     sqrt(step_size) * si,
-            y[(size_t)InfectionState::Susceptible] / step_size);
+            0.0, y[(size_t)InfectionState::Susceptible] / step_size);
 
-        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] = std::min(
+        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] = std::clamp(
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected] +
                 sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(step_size) * ir,
-            y[(size_t)InfectionState::Infected] / step_size);
+            0.0, y[(size_t)InfectionState::Infected] / step_size);
     }
 
-    ScalarType step_size = 0.1; ///< A step size of the model with which the stochastic process is realized.
+    ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.
     mutable RandomNumberGenerator rng;
 
 private:

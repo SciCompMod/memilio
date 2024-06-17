@@ -3,8 +3,10 @@ add_library(ide_secir
     model.h
     model.cpp
     simulation.h
-    simulation.cpp    
+    simulation.cpp
     parameters.h
+    parameters_io.h
+    parameters_io.cpp
 )
 target_link_libraries(ide_secir PUBLIC memilio)
 target_include_directories(ide_secir PUBLIC

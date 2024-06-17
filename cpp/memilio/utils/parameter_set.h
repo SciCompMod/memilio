@@ -21,7 +21,7 @@
 #define EPI_UTILS_PARAMETER_SET_H
 
 #include "memilio/io/io.h"
-#include "memilio/utils/stl_util.h"
+
 #include <tuple>
 #include <utility>
 
@@ -239,13 +239,14 @@ public:
      @tparam T1 First argument of get_default(...) function called on the parameters, e.g., T1=AgeGroup&.
      @tparam TN Further arguments passed to get_default(...) functions. 
      */
-    template <class T1, class... TN,
-              class = std::enable_if_t<
-              // Avoid erroneous template deduction for T1=ParameterSet as this constructor could falsely be considered
-              // as a copy constructor for non-const lvalue references.
-                  conjunction_v<negation<std::is_same<std::decay_t<T1>, ParameterSet>>, 
-                        details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
-                                 ParameterTagTraits<Tags>...>>>>
+    template <
+        class T1, class... TN,
+        class = std::enable_if_t<
+            // Avoid erroneous template deduction for T1=ParameterSet as this constructor could falsely be considered
+            // as a copy constructor for non-const lvalue references.
+            conjunction_v<negation<std::is_same<std::decay_t<T1>, ParameterSet>>,
+                          details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                                         ParameterTagTraits<Tags>...>>>>
     explicit ParameterSet(T1&& arg1, TN&&... argn)
         : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
@@ -336,7 +337,8 @@ public:
         foreach (*this, [&obj](auto& p, auto t) mutable {
             using Tag = decltype(t);
             obj.add_element(Tag::name(), p);
-        });
+        })
+            ;
     }
 
 private:
@@ -349,25 +351,30 @@ private:
     //IOContext: serializer
     //IOObject: object that stores the serialized ParameterSet
     //Rs: IOResult<T> for each Parameter Tag that has already been deserialized
-    template<class IOContext, class IOObject, class... Rs, std::enable_if_t<(sizeof...(Rs) < sizeof...(Tags)), void*> = nullptr>
+    template <class IOContext, class IOObject, class... Rs,
+              std::enable_if_t<(sizeof...(Rs) < sizeof...(Tags)), void*> = nullptr>
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& obj, Rs&&... rs)
     {
         //read current parameter, append result to results of previous parameters, recurse to next parameter
-        const size_t I = sizeof...(Rs);
+        const size_t I        = sizeof...(Rs);
         using TaggedParameter = std::tuple_element_t<I, decltype(ParameterSet::m_tup)>;
         auto r = obj.expect_element(TaggedParameter::Tag::name(), mio::Tag<typename TaggedParameter::Type>{});
         return deserialize_recursive(io, obj, std::forward<Rs>(rs)..., std::move(r));
     }
 
     //end of recursion to deserialize parameters in the ParameterSet
-    template<class IOContext, class IOObject, class... Rs, std::enable_if_t<(sizeof...(Rs) == sizeof...(Tags)), void*> = nullptr>
+    template <class IOContext, class IOObject, class... Rs,
+              std::enable_if_t<(sizeof...(Rs) == sizeof...(Tags)), void*> = nullptr>
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& /*obj*/, Rs&&... rs)
     {
         //one result for each parameters, so no more parameters to read
         //expand results, build finished ParameterSet, stop recursion
-        return mio::apply(io, [](const typename Tags::Type&... t) {
-            return ParameterSet(t...);
-        }, std::forward<Rs>(rs)...);
+        return mio::apply(
+            io,
+            [](const typename Tags::Type&... t) {
+                return ParameterSet(t...);
+            },
+            std::forward<Rs>(rs)...);
     }
 
 public:

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Henrik Zunker, Maximilian Betz
 #
@@ -22,7 +22,7 @@ import unittest
 import numpy as np
 
 import memilio.simulation as mio
-from memilio.simulation.secir import Model
+from memilio.simulation.osecir import Model
 
 
 class Test_DynamicNPIs(unittest.TestCase):
