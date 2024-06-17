@@ -11,13 +11,11 @@ runs:
       shell: bash
       run: |
         yum install ninja-build -qy
-        # export supported gnu compilers for simulation package
+        # install compilers for simulation package
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
           sudo apt-get -qq update
           sudo apt-get -qq -y install gcc-11
           sudo apt-get -qq -y install g++-11
-          export CC=/usr/bin/gcc-11
-          export CXX=/usr/bin/g++-11
         fi
     - name: Make artifact dir
       shell: bash
@@ -27,6 +25,10 @@ runs:
     - name: Build Python Wheels
       shell: bash
       run: |
+        if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
+          export CC=/usr/bin/gcc-11
+          export CXX=/usr/bin/g++-11
+        fi
         cd pycode/memilio-${{ inputs.package }}/
         /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
         /opt/python/cp311-cp311/bin/python setup.py bdist_wheel
