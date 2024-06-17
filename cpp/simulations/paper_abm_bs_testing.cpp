@@ -453,7 +453,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
                                                         std::numeric_limits<uint32_t>::max());
 
     // First we determine the persons number and their starting locations
-    restart_timer(timer, "first while loop");
     // Add all home locations to the world and count persons
     uint32_t last_person_id       = 0;
     int number_of_persons_read_in = 0;
@@ -524,7 +523,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     last_person_id            = 0;
     number_of_persons_read_in = 0;
     std::vector<mio::abm::Trip> trip_vec;
-    restart_timer(timer, "last while loop");
     while (std::getline(fin, line)) {
         row.clear();
 
@@ -566,7 +564,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
                                           mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location));
     }
     world.get_trip_list().add_several_trips(trip_vec);
-    restart_timer(timer, "end of while loops");
 }
 
 std::pair<double, double> get_my_and_sigma(std::pair<double, double> mean_and_std)
@@ -954,24 +951,24 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
                           int max_num_persons, mio::Date start_date_sim)
 {
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    restart_timer(timer, "till set_paraemters");
+    
     set_parameters(world.parameters);
     set_local_parameters(world);
+    restart_timer(timer, "time taken for setting up parameters and local parameters");
 
     // Create the world object from statistical data.
-    restart_timer(timer, "till create_world_from_data");
     create_world_from_data(world, (input_dir / "mobility/braunschweig_result_ffa8_modified2.csv").generic_string(),
                            max_num_persons);
-
     world.use_migration_rules(false);
+    restart_timer(timer, "time taken for braunschweig trip input");
 
     // Assign an infection state to each person.
-    restart_timer(timer, "till assing infection state");
     assign_infection_state_prob(world, t0);
+    restart_timer(timer, "time taken for assigning infection state");
 
     // Assign vaccination status to each person.
-    restart_timer(timer, "till assing vaccination state");
     assign_vaccination_state(world, start_date_sim);
+    restart_timer(timer, "time taken for assigning vaccination state");
 
     // add_testing_strategies(world, true, false);
 }
@@ -1108,19 +1105,19 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
     // Determine inital infection state distribution
     //Time this
-    restart_timer(timer, "till determine_initial_infection_states_world");
+    restart_timer(timer, "time for initial setup");
     determine_initial_infection_states_world(input_dir, start_date);
-    restart_timer(timer, "till prepare_vaccination_state");
+    restart_timer(timer, "time for determine_initial_infection_states_world");
     prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
                               (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
-
+    restart_timer(timer, "time for vaccinaiton state");
     // Loop over a number of runs
     for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
         auto world = mio::abm::World(num_age_groupss);
-        restart_timer(timer, "till create_world");
+        
         create_sampled_world(world, input_dir, t0, max_num_persons, start_date);
 
-        restart_timer(timer, "till run_simulation");
+        restart_timer(timer, "time taken for create sampled world");
         auto sim = mio::abm::Simulation(t0, std::move(world));
 
         //Logger
@@ -1132,25 +1129,25 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
 
         // / NPIS//
-        bool npis_on = false;
+        bool npis_on = true;
         if (npis_on) {
 
             const auto location_it = sim.get_world().get_locations();
             // Advance the world with respective npis
             // 1. testing schemes in schools
-            auto testing_min_time_school = mio::abm::days(7);
-            auto probability_school      = 1.0;
-            auto start_date_test_school  = mio::abm::TimePoint(mio::abm::days(42).seconds()); // 2021-04-12
-            auto end_date_test_school    = mio::abm::TimePoint(tmax); // 2021-05-30
-            auto test_type_school        = mio::abm::TestType::Antigen; // Antigen test
-            auto test_parameters =
-                sim.get_world().parameters.get<mio::abm::TestData>()[test_type_school]; // Test parameters
-            auto testing_criteria_school = mio::abm::TestingCriteria();
-            auto testing_scheme_school =
-                mio::abm::TestingScheme(testing_criteria_school, testing_min_time_school, start_date_test_school,
-                                        end_date_test_school, test_parameters, probability_school);
-            sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School,
-                                                                      testing_scheme_school);
+            // auto testing_min_time_school = mio::abm::days(7);
+            // auto probability_school      = 1.0;
+            // auto start_date_test_school  = mio::abm::TimePoint(mio::abm::days(42).seconds()); // 2021-04-12
+            // auto end_date_test_school    = mio::abm::TimePoint(tmax); // 2021-05-30
+            // auto test_type_school        = mio::abm::TestType::Antigen; // Antigen test
+            // auto test_parameters =
+            //     sim.get_world().parameters.get<mio::abm::TestData>()[test_type_school]; // Test parameters
+            // auto testing_criteria_school = mio::abm::TestingCriteria();
+            // auto testing_scheme_school =
+            //     mio::abm::TestingScheme(testing_criteria_school, testing_min_time_school, start_date_test_school,
+            //                             end_date_test_school, test_parameters, probability_school);
+            // sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School,
+            //                                                           testing_scheme_school);
 
             // 2. testing schemes in work places for 35% of random workplaces
 
@@ -1167,21 +1164,21 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             auto num_work_locations = (int)(0.35 * work_location_ids.size());
             std::vector<uint32_t> work_location_ids_35(work_location_ids.begin(),
                                                        work_location_ids.begin() + num_work_locations);
-            auto testing_min_time_work = mio::abm::days(1);
-            auto probability_work      = 1.0;
-            auto start_date_test_work  = mio::abm::TimePoint(mio::abm::days(72).seconds());
-            auto end_date_test_work    = mio::abm::TimePoint(tmax);
-            auto test_type_work        = mio::abm::TestType::Antigen; // Antigen test
-            auto test_parameters_work =
-                sim.get_world().parameters.get<mio::abm::TestData>()[test_type_work]; // Test parameters
-            auto testing_criteria_work = mio::abm::TestingCriteria();
-            auto testing_scheme_work =
-                mio::abm::TestingScheme(testing_criteria_work, testing_min_time_work, start_date_test_work,
-                                        end_date_test_work, test_parameters_work, probability_work);
-            for (auto& location_id : work_location_ids_35) {
-                sim.get_world().get_testing_strategy().add_testing_scheme(
-                    mio::abm::LocationId{location_id, mio::abm::LocationType::Work}, testing_scheme_work);
-            }
+            // auto testing_min_time_work = mio::abm::days(1);
+            // auto probability_work      = 1.0;
+            // auto start_date_test_work  = mio::abm::TimePoint(mio::abm::days(72).seconds());
+            // auto end_date_test_work    = mio::abm::TimePoint(tmax);
+            // auto test_type_work        = mio::abm::TestType::Antigen; // Antigen test
+            // auto test_parameters_work =
+            //     sim.get_world().parameters.get<mio::abm::TestData>()[test_type_work]; // Test parameters
+            // auto testing_criteria_work = mio::abm::TestingCriteria();
+            // auto testing_scheme_work =
+            //     mio::abm::TestingScheme(testing_criteria_work, testing_min_time_work, start_date_test_work,
+            //                             end_date_test_work, test_parameters_work, probability_work);
+            // for (auto& location_id : work_location_ids_35) {
+            //     sim.get_world().get_testing_strategy().add_testing_scheme(
+            //         mio::abm::LocationId{location_id, mio::abm::LocationType::Work}, testing_scheme_work);
+            // }
 
             // 2.5 plus testing schemes at 20 % of basics shops
             std::vector<uint32_t> basics_shop_location_ids;
@@ -1191,25 +1188,25 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 }
             }
             //take 20% of basics shop locations
-            std::shuffle(basics_shop_location_ids.begin(), basics_shop_location_ids.end(), g);
-            auto num_basics_shop_locations = (int)(0.2 * basics_shop_location_ids.size());
-            std::vector<uint32_t> basics_shop_location_ids_20(
-                basics_shop_location_ids.begin(), basics_shop_location_ids.begin() + num_basics_shop_locations);
-            auto testing_min_time_basics_shop = mio::abm::days(2);
-            auto probability_basics_shop      = 1.0;
-            auto start_date_test_basics_shop  = mio::abm::TimePoint(mio::abm::days(14).seconds());
-            auto end_date_test_basics_shop    = mio::abm::TimePoint(tmax);
-            auto test_type_basics_shop        = mio::abm::TestType::Antigen; // Antigen test
-            auto test_parameters_basics_shop =
-                sim.get_world().parameters.get<mio::abm::TestData>()[test_type_basics_shop]; // Test parameters
-            auto testing_criteria_basics_shop = mio::abm::TestingCriteria();
-            auto testing_scheme_basics_shop   = mio::abm::TestingScheme(
-                testing_criteria_basics_shop, testing_min_time_basics_shop, start_date_test_basics_shop,
-                end_date_test_basics_shop, test_parameters_basics_shop, probability_basics_shop);
-            for (auto& location_id : basics_shop_location_ids_20) {
-                sim.get_world().get_testing_strategy().add_testing_scheme(
-                    mio::abm::LocationId{location_id, mio::abm::LocationType::BasicsShop}, testing_scheme_basics_shop);
-            }
+            // std::shuffle(basics_shop_location_ids.begin(), basics_shop_location_ids.end(), g);
+            // auto num_basics_shop_locations = (int)(0.2 * basics_shop_location_ids.size());
+            // std::vector<uint32_t> basics_shop_location_ids_20(
+            //     basics_shop_location_ids.begin(), basics_shop_location_ids.begin() + num_basics_shop_locations);
+            // auto testing_min_time_basics_shop = mio::abm::days(2);
+            // auto probability_basics_shop      = 1.0;
+            // auto start_date_test_basics_shop  = mio::abm::TimePoint(mio::abm::days(14).seconds());
+            // auto end_date_test_basics_shop    = mio::abm::TimePoint(tmax);
+            // auto test_type_basics_shop        = mio::abm::TestType::Antigen; // Antigen test
+            // auto test_parameters_basics_shop =
+            //     sim.get_world().parameters.get<mio::abm::TestData>()[test_type_basics_shop]; // Test parameters
+            // auto testing_criteria_basics_shop = mio::abm::TestingCriteria();
+            // auto testing_scheme_basics_shop   = mio::abm::TestingScheme(
+            //     testing_criteria_basics_shop, testing_min_time_basics_shop, start_date_test_basics_shop,
+            //     end_date_test_basics_shop, test_parameters_basics_shop, probability_basics_shop);
+            // for (auto& location_id : basics_shop_location_ids_20) {
+            //     sim.get_world().get_testing_strategy().add_testing_scheme(
+            //         mio::abm::LocationId{location_id, mio::abm::LocationType::BasicsShop}, testing_scheme_basics_shop);
+            // }
 
             // 3. Mask schemes for all locations
             // First set all locations to have mask usage, we need ffp2 masks
@@ -1234,13 +1231,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 if (location.get_type() == mio::abm::LocationType::BasicsShop) {
                     location.add_damping(mio::abm::TimePoint(mio::abm::days(14).seconds()), 0.8); // from 2021-03-15
                 }
-                if (location.get_type() == mio::abm::LocationType::Work ||
-                    location.get_type() == mio::abm::LocationType::BasicsShop) {
-                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(23).seconds()), 0.2); // from 2021-03-15
-                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(30).seconds()), 0.8); // from 2021-04-01
-                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(42).seconds()), 0.2); // from 2021-04-12
-                    // location.add_damping(mio::abm::TimePoint(mio::abm::days(72).seconds()), 1.0); // from 2021-05-10
-                }
+                
             }
 
             // 5. add capacity limits to some locations
@@ -1342,13 +1333,13 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::cout << "day 90 finished" << std::endl;
         }
         else {
-            sim.advance(mio::abm::TimePoint(mio::abm::days(10).seconds()), historyInfectionStatePerAgeGroup,
-                        historyInfectionPerLocationType, historyInfectionPerAgeGroup);
+            sim.advance(mio::abm::TimePoint(mio::abm::days(1).seconds()), historyInfectionStatePerAgeGroup, historyInfectionPerLocationType,
+                        historyInfectionPerAgeGroup);
         }
         ////Advance till here
 
         // Stop the clock after sim.advance and calculate the duration
-        restart_timer(timer, "till data gathering");
+        restart_timer(timer, "time taken for simulation end");
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_infection_per_loc_tpye =
             std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
@@ -1397,7 +1388,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                                    result_dir / "infection_per_location_type/", save_single_runs));
 
 #endif
-    restart_timer(timer, "till complete end of simulation");
+    restart_timer(timer, "time taken for data gathering and saving results");
     printf("done.\n");
     return mio::success();
 }
@@ -1408,7 +1399,7 @@ const std::string currentDateTime()
     // Example of the very popular RFC 3339 format UTC time
     std::time_t time = std::time({});
     char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
-    std::strftime(std::data(timeString), std::size(timeString), "%FT%TZ", std::gmtime(&time));
+    std::strftime(std::data(timeString), std::size(timeString), "%F%H%M%S", std::gmtime(&time));
     return timeString;
 }
 
@@ -1441,10 +1432,10 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    // std::string input_dir = "/p/project/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
-    // std::string input_dir       = "/Users/david/Documents/HZI/memilio/data";
-    // std::string input_dir       = "C:\\Users\\korf_sa\\Documents\\rep\\data";
+    // std::string input_dir        = "/p/project/loki/memilio/memilio/data";
+    // std::string input_dir        = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir        = "/Users/david/Documents/HZI/memilio/data";
+    std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
     auto created                = create_result_folders(result_dir);
