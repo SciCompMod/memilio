@@ -127,9 +127,15 @@ def compare_results(files, dt_ode, dt_ide, setting, legendplot, flows=True, file
     for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
         # axs[int(i/2), i % 2].set_ylim(bottom=0)
-        axs[int(i/2), i % 2].set_xlim(left=0, right=10)
+        axs[int(i/2), i % 2].set_xlim(left=0, right=dates[-1])
         axs[int(i/2), i % 2].grid(True, linestyle='--')
-        axs[int(i/2), i % 2].legend(fontsize=8)
+        # axs[int(i/2), i % 2].legend(fontsize=8)
+        axs[int(i/2), i % 2].ticklabel_format(axis='y',
+                                              style='sci', scilimits=(0, 0))
+
+    labels = ['ODE', 'IDE']
+    fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
+               fancybox=False, shadow=False, ncol=1)  # bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
 
     fig.supxlabel(' Time')
     fig.supylabel('Number of persons')
@@ -149,6 +155,18 @@ def compare_results(files, dt_ode, dt_ide, setting, legendplot, flows=True, file
                 os.makedirs('plots/compartments')
             plt.savefig(f'plots/compartments/ide_ode_dt={dt_ode}_{fileending}.png',
                         bbox_inches='tight', dpi=500)
+
+    plt.close()
+
+    # # plot legend separately
+    # figsize = (2, 0.5)
+    # fig_leg = plt.figure(figsize=figsize)
+    # ax_leg = fig_leg.add_subplot(111)
+    # # add the legend from the previous axes
+    # ax_leg.legend(*axs[0, 0].get_legend_handles_labels(), loc='center', ncol=2)
+    # # hide the axes frame and the x/y labels
+    # ax_leg.axis('off')
+    # fig_leg.savefig('plots/legend.png', dpi=500)
 
 
 if __name__ == '__main__':
@@ -183,7 +201,15 @@ if __name__ == '__main__':
                     dt_ode, dt_ide, setting,
                     legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_20_long_flows", save=True)
 
-    plt.close()
+    compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_flows"),
+                     os.path.join(data_dir, f"fictional_ide_0.5_20_flows")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_20_flows", save=True)
+
+    compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_long_flows"),
+                     os.path.join(data_dir, f"fictional_ide_0.5_20_long_flows")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_20_long_flows", save=True)
 
     compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_compartments"),
                      os.path.join(data_dir, f"fictional_ide_0.5_20_compartments")],
@@ -194,3 +220,13 @@ if __name__ == '__main__':
                      os.path.join(data_dir, f"fictional_ide_0.5_20_long_compartments")],
                     dt_ode, dt_ide, setting,
                     legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_20_long_compartments", save=True)
+
+    compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_compartments"),
+                     os.path.join(data_dir, f"fictional_ide_2.0_20_compartments")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_20_compartments", save=True)
+
+    compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_long_compartments"),
+                     os.path.join(data_dir, f"fictional_ide_2.0_20_long_compartments")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_20_long_compartments", save=True)

@@ -133,7 +133,8 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     return init;
 }
 
-mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
+mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, bool contact_scaling = true,
+                                               std::string save_dir = "")
 {
     // Initialize model.
     mio::isecir::Model model_ide(std::move(get_initial_flows()), simulation_parameter["total_population"],
@@ -204,11 +205,14 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, s
 
     model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    // mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    // contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-    // model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
-    model_ide.parameters.get<mio::isecir::ContactPatterns>() = get_contact_matrix(R0);
+    if (contact_scaling) {
+        model_ide.parameters.get<mio::isecir::ContactPatterns>() = get_contact_matrix(R0);
+    }
+    else {
+        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+        model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    }
 
     mio::ConstantFunction constfunc(simulation_parameter["TransmissionProbabilityOnContact"]);
     mio::StateAgeFunctionWrapper StateAgeFunctionWrapperide(constfunc);
@@ -260,7 +264,8 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, s
     return sim.get_result();
 }
 
-void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax, std::string save_dir = "")
+void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax, bool contact_scaling = true,
+                        std::string save_dir = "")
 {
     // auto init_compartments = init_compartments2.get_value(0);
     // Use FlowModel to make results directly comparable to IDE model.
@@ -324,10 +329,15 @@ void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
 
-    // mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    // contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-    // model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
-    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = get_contact_matrix(R0);
+    if (contact_scaling) {
+        model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = get_contact_matrix(R0);
+    }
+    else {
+        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+        model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() =
+            mio::UncertainContactMatrix(contact_matrix);
+    }
 
     model_ode.check_constraints();
 
@@ -402,34 +412,34 @@ int main()
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directory(dir);
+    bool contact_scaling = true;
 
     // Options used: For R0=2 epidemic peak use tmax=150,
     // for R0=4 epidemic peak use tmax = 75.
     // For short things: 10 days and R0=0.5 or 2
     ScalarType R0   = 0.5;
-    ScalarType tmax = 70;
+    ScalarType tmax = 180;
 
-    mio::TimeSeries<ScalarType> result = simulate_ide_model(R0, tmax, save_dir);
+    mio::TimeSeries<ScalarType> result = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
     // if (!result) {
     //     printf("%s\n", result.error().formatted_message().c_str());
     //     return -1;
     // }
 
     Vector compartments = result.get_value(0);
-    ;
 
-    simulate_ode_model(compartments, R0, tmax, save_dir);
+    simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
 
     R0   = 2.;
-    tmax = 70;
+    tmax = 180;
 
-    result = simulate_ide_model(R0, tmax, save_dir);
+    result = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
     // if (!result) {
     //     printf("%s\n", result.error().formatted_message().c_str());
     //     return -1;
     // }
     compartments = result.get_value(0);
-    simulate_ode_model(compartments, R0, tmax, save_dir);
+    simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
 
     return 0;
 }
