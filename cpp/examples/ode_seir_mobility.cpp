@@ -12,7 +12,7 @@
 
 mio::IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(num_lines, mio::count_lines(filename));
+    BOOST_OUTCOME_TRY(auto&& num_lines, mio::count_lines(filename));
 
     if (num_lines == 0) {
         std::vector<std::vector<std::vector<int>>> arr(0, std::vector<std::vector<int>>(0));
@@ -66,9 +66,10 @@ mio::IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(con
     return mio::success(arr);
 }
 
-mio::IOResult<void> preprocess(const std::string& filename, mio::oseirmobility::Model& model)
+template <typename FP = ScalarType>
+mio::IOResult<void> preprocess(const std::string& filename, mio::oseirmobility::Model<FP>& model)
 {
-    BOOST_OUTCOME_TRY(mobility_paths, read_path_mobility(filename));
+    BOOST_OUTCOME_TRY(auto&& mobility_paths, read_path_mobility(filename));
     size_t n_regions = (size_t)model.parameters.get_num_regions();
     for (size_t i = 0; i < n_regions; i++) {
         for (size_t j = 0; j < n_regions; j++) {
@@ -94,20 +95,21 @@ mio::IOResult<void> preprocess(const std::string& filename, mio::oseirmobility::
                 }
             }
             if (intersection_region.begin() != intersection_region.end()) {
-                model.parameters.get<mio::oseirmobility::PathIntersections>()[mio::Index(
-                    mio::oseirmobility::Region(i), mio::oseirmobility::Region(j))] = intersection_region;
+                model.parameters.template get<mio::oseirmobility::PathIntersections>()[{
+                    mio::oseirmobility::Region(i), mio::oseirmobility::Region(j)}] = intersection_region;
             }
         }
     }
     return mio::success();
 }
 
+template <typename FP = ScalarType>
 mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, const std::string& trip_chains,
-                                         mio::oseirmobility::Model& model, size_t number_regions)
+                                         mio::oseirmobility::Model<FP>& model, size_t number_regions)
 {
     BOOST_OUTCOME_TRY(preprocess(trip_chains, model));
     // mobility between nodes
-    BOOST_OUTCOME_TRY(mobility_data_commuter,
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
                       mio::read_mobility_plain(mobility_data + "mobility" + "commuter_migration_scaled.txt"));
     if (mobility_data_commuter.rows() != Eigen::Index(number_regions) ||
         mobility_data_commuter.cols() != Eigen::Index(number_regions)) {
@@ -123,7 +125,7 @@ mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, const
                 auto population_i      = model.populations.get_group_total(mio::oseirmobility::Region(county_idx_i));
                 auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / population_i;
                 if (commuter_coeff_ij > 4e-5) {
-                    model.parameters.get<mio::oseirmobility::CommutingRatio>().push_back(
+                    model.parameters.template get<mio::oseirmobility::CommutingRatio>().push_back(
                         {mio::oseirmobility::Region(county_idx_i), mio::oseirmobility::Region(county_idx_j),
                          commuter_coeff_ij});
                 }
@@ -137,43 +139,43 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0.;
-    double tmax = 50.;
-    double dt   = 1;
+    ScalarType t0   = 0.;
+    ScalarType tmax = 50.;
+    ScalarType dt   = 1;
 
-    size_t number_regions              = 4;
-    size_t number_age_groups           = 1;
-    size_t total_population_per_region = 10;
+    ScalarType number_regions              = 4;
+    ScalarType number_age_groups           = 1;
+    ScalarType total_population_per_region = 10;
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     const std::string& mobility_data   = "";
     const std::string& trip_chain_data = "";
 
-    mio::oseirmobility::Model model(number_regions, number_age_groups);
+    mio::oseirmobility::Model<ScalarType> model(number_regions, number_age_groups);
 
     for (size_t i = 0; i < number_regions; i++) {
-        model.populations[{mio::Index<mio::oseirmobility::Region, mio::AgeGroup, mio::oseirmobility::InfectionState>(
-            mio::oseirmobility::Region(i), mio::AgeGroup(0), mio::oseirmobility::InfectionState::Infected)}]  = 1;
-        model.populations[{mio::Index<mio::oseirmobility::Region, mio::AgeGroup, mio::oseirmobility::InfectionState>(
-            mio::oseirmobility::Region(i), mio::AgeGroup(0), mio::oseirmobility::InfectionState::Recovered)}] = 0;
-        model.populations[{mio::Index<mio::oseirmobility::Region, mio::AgeGroup, mio::oseirmobility::InfectionState>(
-            mio::oseirmobility::Region(i), mio::AgeGroup(0), mio::oseirmobility::InfectionState::Susceptible)}] =
+        model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(0),
+                           mio::oseirmobility::InfectionState::Infected}]  = 1;
+        model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(0),
+                           mio::oseirmobility::InfectionState::Recovered}] = 0;
+        model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(0),
+                           mio::oseirmobility::InfectionState::Susceptible}] =
             total_population_per_region -
-            model
-                .populations[{mio::Index<mio::oseirmobility::Region, mio::AgeGroup, mio::oseirmobility::InfectionState>(
-                    mio::oseirmobility::Region(i), mio::AgeGroup(0), mio::oseirmobility::InfectionState::Infected)}] -
-            model
-                .populations[{mio::Index<mio::oseirmobility::Region, mio::AgeGroup, mio::oseirmobility::InfectionState>(
-                    mio::oseirmobility::Region(i), mio::AgeGroup(0), mio::oseirmobility::InfectionState::Recovered)}];
+            model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(0),
+                               mio::oseirmobility::InfectionState::Infected}] -
+            model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(0),
+                               mio::oseirmobility::InfectionState::Recovered}];
     }
 
-    model.parameters.set<mio::oseirmobility::TimeExposed>(1);
-    model.parameters.set<mio::oseirmobility::TimeInfected>(2);
-    model.parameters.set<mio::oseirmobility::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.set<mio::oseirmobility::ImpactCommuters>(1.);
-    model.parameters.get<mio::oseirmobility::ContactPatterns>().get_baseline()(0, 0) = 1.;
-    model.parameters.get<mio::oseirmobility::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.set<mio::oseirmobility::TimeExposed<>>(1);
+    model.parameters.set<mio::oseirmobility::TimeInfected<>>(2);
+    model.parameters.set<mio::oseirmobility::TransmissionProbabilityOnContact<>>(0.04);
+    model.parameters.set<mio::oseirmobility::ImpactCommuters<>>(1.);
+    mio::ContactMatrixGroup& contact_matrix =
+        model.parameters.get<mio::oseirmobility::ContactPatterns<ScalarType>>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(1.0);
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
 
     model.parameters.get<mio::oseirmobility::CommutingRatio>().push_back(
         {mio::oseirmobility::Region(1), mio::oseirmobility::Region(0), 0.2});
@@ -205,7 +207,8 @@ int main()
 
     // auto result_preprocess = set_mobility_weights(mobility_data, trip_chain_data, model, number_regions);
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator =
+        std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
 
     model.check_constraints();
 
@@ -234,5 +237,6 @@ int main()
                 }
             }
         }
+        printf("\n");
     }
 }

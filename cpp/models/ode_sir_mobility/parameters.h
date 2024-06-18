@@ -2,8 +2,8 @@
 #ifndef SIRMOBILITY_PARAMETERS_H
 #define SIRMOBILITY_PARAMETERS_H
 
+#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/uncertain_value.h"
-#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/custom_index_array.h"
@@ -23,11 +23,12 @@ namespace osirmobility
 /**
  * @brief Probability of getting infected from a contact.
  */
+template <typename FP = ScalarType>
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue;
-    static Type get_default(Region)
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(Region, AgeGroup size)
     {
-        return Type(1.0);
+        return Type(size, 1.0);
     }
     static std::string name()
     {
@@ -36,13 +37,14 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-     * @brief The infectious time in day unit.
-     */
+ * @brief The infectious time in day unit.
+ */
+template <typename FP = ScalarType>
 struct TimeInfected {
-    using Type = UncertainValue;
-    static Type get_default(Region)
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(Region, AgeGroup size)
     {
-        return Type(6.0);
+        return Type(size, 6.0);
     }
     static std::string name()
     {
@@ -53,11 +55,12 @@ struct TimeInfected {
 /**
      * @brief The contact patterns within the society are modelled using a ContactMatrix.
      */
+template <typename FP = ScalarType>
 struct ContactPatterns {
-    using Type = ContactMatrix;
-    static Type get_default(Region)
+    using Type = UncertainContactMatrix<FP>;
+    static Type get_default(Region, AgeGroup size)
     {
-        return Type{1};
+        return Type(1, static_cast<Eigen::Index>((size_t)size));
     }
     static std::string name()
     {
@@ -70,7 +73,7 @@ struct ContactPatterns {
  */
 struct CommutingRatio {
     using Type = std::vector<std::tuple<Region, Region, double>>;
-    static Type get_default(Region)
+    static Type get_default(Region, AgeGroup)
     {
         return Type({{Region(0), Region(0), 0.}});
     }
@@ -83,9 +86,10 @@ struct CommutingRatio {
 /**
  * @brief The ratio that regulates the infections during commuting.
 */
+template <typename FP = ScalarType>
 struct ImpactCommuters {
-    using Type = UncertainValue;
-    static Type get_default(Region)
+    using Type = UncertainValue<FP>;
+    static Type get_default(Region, AgeGroup)
     {
         return Type(0.);
     }
@@ -100,7 +104,7 @@ struct ImpactCommuters {
 */
 struct PathIntersections {
     using Type = CustomIndexArray<std::vector<Region>, Region, Region>;
-    static Type get_default(Region size)
+    static Type get_default(Region size, AgeGroup)
     {
         return Type({size, size});
     }
@@ -110,17 +114,19 @@ struct PathIntersections {
     }
 };
 
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeInfected, ContactPatterns, CommutingRatio,
-                                    ImpactCommuters, PathIntersections>;
+template <typename FP = ScalarType>
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>,
+                                    CommutingRatio, ImpactCommuters<FP>, PathIntersections>;
 
 /**
  * @brief Parameters of SIR model.
  */
-class Parameters : public ParametersBase
+template <typename FP = ScalarType>
+class Parameters : public ParametersBase<FP>
 {
 public:
     Parameters(Region num_regions, AgeGroup num_agegroups)
-        : ParametersBase(num_regions)
+        : ParametersBase<FP>(num_regions, num_agegroups)
         , m_num_regions{num_regions}
         , m_num_agegroups(num_agegroups)
     {
@@ -154,28 +160,33 @@ public:
         double tol_times = 1e-1;
 
         int corrected = false;
-        if (this->get<TimeInfected>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
-                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                        "and reset parameters.",
-                        this->get<TimeInfected>(), tol_times);
-            this->get<TimeInfected>() = tol_times;
-            corrected                 = true;
+
+        for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
+            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
+                log_warning(
+                    "Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                    "and reset parameters.",
+                    this->template get<TimeInfected<FP>>()[i], tol_times);
+                this->template get<TimeInfected<FP>>()[i] = tol_times;
+                corrected                                 = true;
+            }
+            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
+                log_warning(
+                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                    this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
+                this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
+                corrected                                                  = true;
+            }
         }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                        this->get<TransmissionProbabilityOnContact>(), 0.0);
-            this->get<TransmissionProbabilityOnContact>() = 0.0;
-            corrected                                     = true;
-        }
-        if (this->get<ImpactCommuters>() < 0.0 || this->get<ImpactCommuters>() > 1.0) {
+        if (this->template get<ImpactCommuters<FP>>() < 0.0 || this->template get<ImpactCommuters<FP>>() > 1.0) {
             log_warning("Constraint check: Parameter ImpactCommuters changed from {:.4f} to {:.4f}.",
-                        this->get<ImpactCommuters>(), 0.0);
-            this->get<ImpactCommuters>() = 0.0;
-            corrected                    = true;
+                        this->template get<ImpactCommuters<FP>>(), 0.0);
+            this->template get<ImpactCommuters<FP>>() = 0.0;
+            corrected                                 = true;
         }
-        for (auto& i : this->get<CommutingRatio>()) {
+        for (auto& i : this->template get<CommutingRatio>()) {
             if (std::get<double>(i) < 0.0 || std::get<double>(i) > 1.0) {
                 log_warning("Constraint check: Parameter CommutingRatio changed from {:.4f} to {:.4f}.",
                             std::get<double>(i), 0.0);
@@ -186,8 +197,9 @@ public:
                 std::get<1>(i) >= m_num_regions) {
                 log_warning(
                     "Constraint check: Removed entry of Parameter CommutingRatio because of non-existing Regions.");
-                auto it = std::find(this->get<CommutingRatio>().begin(), this->get<CommutingRatio>().end(), i);
-                this->get<CommutingRatio>().erase(it);
+                auto it = std::find(this->template get<CommutingRatio>().begin(),
+                                    this->template get<CommutingRatio>().end(), i);
+                this->template get<CommutingRatio>().erase(it);
                 corrected = true;
             }
         }
@@ -203,26 +215,30 @@ public:
     {
         double tol_times = 1e-1;
 
-        if (this->get<TimeInfected>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->get<TimeInfected>(), 0.0);
-            return true;
+        for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
+
+            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
+                log_error(
+                    "Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                    "and reset parameters.",
+                    this->template get<TimeInfected<FP>>()[i], 0.0);
+                return true;
+            }
+            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
+                          "greater {:.4f}",
+                          this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
+                return true;
+            }
         }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
-            return true;
-        }
-        if (this->get<ImpactCommuters>() < 0.0 || this->get<ImpactCommuters>() > 1.0) {
+        if (this->template get<ImpactCommuters<FP>>() < 0.0 || this->template get<ImpactCommuters<FP>>() > 1.0) {
             log_error("Constraint check: Parameter ImpactCommuters {:.4f} smaller {:.4f} or greater {:.4f}",
-                      this->get<ImpactCommuters>(), 0.0, 1.0);
+                      this->template get<ImpactCommuters<FP>>(), 0.0, 1.0);
             return true;
         }
-        for (auto i : this->get<CommutingRatio>()) {
+        for (auto i : this->template get<CommutingRatio>()) {
             if (std::get<double>(i) < 0.0 || std::get<double>(i) > 1.0) {
                 log_error("Constraint check: Parameter CommutingRatio entry {:.4f} smaller {:.4f} or greater {:.4f}",
                           std::get<double>(i), 0.0, 1.0);
@@ -230,8 +246,8 @@ public:
             }
             if (std::get<0>(i) < Region(0) || std::get<1>(i) < Region(0) || std::get<0>(i) > m_num_regions ||
                 std::get<1>(i) > m_num_regions) {
-                log_error("Constraint check: Parameter CommutingRatio has an entry with start or end Region that does "
-                          "not appear in the model.");
+                log_error("Constraint check: Parameter CommutingRatio has an entry with start or end Region "
+                          "that does not appear in the model.");
                 return true;
             }
         }
@@ -252,7 +268,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 
