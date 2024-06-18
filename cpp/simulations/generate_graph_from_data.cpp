@@ -104,8 +104,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
 {
     //times
     const double incubationTime            = 5.2;
-    const double serialIntervalMin         = 0.1 * 2.67 + 0.4 * 5.2;
-    const double serialIntervalMax         = 0.1 * 2.67 + 0.4 * 5.2;
+    const double serialIntervalMin         = 1.1;
+    const double serialIntervalMax         = 1.1;
     const double timeInfectedSymptomsMin[] = {6.6255, 6.6255, 6.6646, 6.5631, 6.501, 6.465};
     const double timeInfectedSymptomsMax[] = {6.6255, 6.6255, 6.6646, 6.5631, 6.501, 6.465};
     const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};

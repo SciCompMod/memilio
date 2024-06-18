@@ -53,10 +53,10 @@ def main(path, n_runs):
         # read in txt file
 
         if file.startswith("infection_per_location_type.txt"):
-            df = pd.read_csv(file_path, delim_whitespace=True)
+            df = pd.read_csv(file_path, sep='\s+')
             plot_infection_per_location_type(df)
         if file.startswith("infection_per_age_group.txt"):
-            df = pd.read_csv(file_path, delim_whitespace=True)
+            df = pd.read_csv(file_path,sep='\s+')
             # plot_infection_per_age_group(df)
         # if file.startswith("run_"):
             # convert to numpy array
@@ -152,7 +152,7 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     plt.figure('Infection_states')
     plt.title('Infection states')
 
-    color_plot = cmx.get_cmap('Set1').colors
+    color_plot = matplotlib.colormaps.get_cmap('Set1').colors
 
     states_plot = [1, 2, 3, 4, 5, 7]
     legend_plot = ['E', 'I_NSymp', 'I_Symp', 'I_Sev', 'I_Crit', 'Dead', 'Sm. rep. Sympt.']
@@ -201,7 +201,7 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
 
     age_group_access = ['Group1', 'Group2', 'Group3', 'Group4', 'Group5', 'Group6', 'Total']
 
-    color_plot = cmx.get_cmap('Set1').colors
+    color_plot = matplotlib.colormaps.get_cmap('Set1').colors
 
     fig, ax = plt.subplots(3, len(age_group_access), constrained_layout = True)
     fig.set_figwidth(20)
