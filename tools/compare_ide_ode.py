@@ -37,7 +37,7 @@ secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'H
               5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
 
-def compare_results(files, dt_ode, dt_ide, setting, legendplot, flows=True, fileending="", save=True):
+def compare_results(files, dt_ode, dt_ide, setting, legendplot, flows=True, fileending="", save=True, save_dir=None):
     """ Creates a 4x2 Plot with one subplot per compartment and one line per result one wants to compare.
     @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
         Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
@@ -145,16 +145,10 @@ def compare_results(files, dt_ode, dt_ide, setting, legendplot, flows=True, file
 
     # save result
     if save:
-        if flows:
-            if not os.path.isdir('plots/flows'):
-                os.makedirs('plots/flows')
-            plt.savefig(f'plots/flows/ide_ode_dt_={dt_ode}_{fileending}.png',
-                        bbox_inches='tight', dpi=500)
-        else:
-            if not os.path.isdir('plots/compartments'):
-                os.makedirs('plots/compartments')
-            plt.savefig(f'plots/compartments/ide_ode_dt={dt_ode}_{fileending}.png',
-                        bbox_inches='tight', dpi=500)
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+        plt.savefig(save_dir + f'ide_ode_dt={dt_ode}_{fileending}.png',
+                    bbox_inches='tight', dpi=500)
 
     plt.close()
 
@@ -181,52 +175,86 @@ if __name__ == '__main__':
 
     flows = True
 
-    files = [os.path.join(data_dir, f"fictional_ode_0.5_20_flows"),
-             os.path.join(data_dir, f"fictional_ide_0.5_20_flows")]
-
-    # # For validation plot results without change in contact rate
-    # compare_results([os.path.join(data_dir, f"ode_constant_contacts_flows"),
-    #                  os.path.join(data_dir, f"ide_constant_contacts_flows")],
-    #                 '1e-4', '1e-3', setting,
-    #                 legendplot=list(["ODE", "IDE"]), flows=True, fileending="constant_contacts", save=True)
-
     # Plot comparison of ODE and IDE models
-    compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_flows"),
-                     os.path.join(data_dir, f"fictional_ide_2.0_20_flows")],
-                    dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_20_flows", save=True)
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_long_flows"),
-                     os.path.join(data_dir, f"fictional_ide_2.0_20_long_flows")],
-                    dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_20_long_flows", save=True)
+    # # Simulations based on LEOSS data
+    # compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_2.0_20_flows")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_20_flows", save=True, save_dir='plots/leoss/flows/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_flows"),
-                     os.path.join(data_dir, f"fictional_ide_0.5_20_flows")],
-                    dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_20_flows", save=True)
+    # compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_long_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_2.0_20_long_flows")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_20_long_flows", save=True, save_dir='plots/leoss/flows/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_long_flows"),
-                     os.path.join(data_dir, f"fictional_ide_0.5_20_long_flows")],
-                    dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_20_long_flows", save=True)
+    # compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_0.5_20_flows")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_20_flows", save=True, save_dir='plots/leoss/flows/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_compartments"),
-                     os.path.join(data_dir, f"fictional_ide_0.5_20_compartments")],
-                    dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_20_compartments", save=True)
+    # compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_long_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_0.5_20_long_flows")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_20_long_flows", save=True, save_dir='plots/leoss/flows/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_long_compartments"),
-                     os.path.join(data_dir, f"fictional_ide_0.5_20_long_compartments")],
-                    dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_20_long_compartments", save=True)
+    # compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_compartments"),
+    #                  os.path.join(data_dir, f"fictional_ide_0.5_20_compartments")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_20_compartments", save=True, save_dir='plots/leoss/compartments/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_compartments"),
-                     os.path.join(data_dir, f"fictional_ide_2.0_20_compartments")],
-                    dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_20_compartments", save=True)
+    # compare_results([os.path.join(data_dir, f"fictional_ode_0.5_20_long_compartments"),
+    #                  os.path.join(data_dir, f"fictional_ide_0.5_20_long_compartments")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_20_long_compartments", save=True, save_dir='plots/leoss/compartments/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_long_compartments"),
-                     os.path.join(data_dir, f"fictional_ide_2.0_20_long_compartments")],
+    # compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_compartments"),
+    #                  os.path.join(data_dir, f"fictional_ide_2.0_20_compartments")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_20_compartments", save=True, save_dir='plots/leoss/compartments/')
+
+    # compare_results([os.path.join(data_dir, f"fictional_ode_2.0_20_long_compartments"),
+    #                  os.path.join(data_dir, f"fictional_ide_2.0_20_long_compartments")],
+    #                 dt_ode, dt_ide, setting,
+    #                 legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_20_long_compartments", save=True, save_dir='plots/leoss/compartments/')
+
+    # Simulations based on Covasim data
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_2.0_flows"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_2.0_flows")],
                     dt_ode, dt_ide, setting,
-                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_20_long_compartments", save=True)
+                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_flows", save=True, save_dir='plots/covasim/flows/')
+
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_2.0_long_flows"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_2.0_long_flows")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_long_flows", save=True, save_dir='plots/covasim/flows/')
+
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_0.5_flows"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_0.5_flows")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_flows", save=True, save_dir='plots/covasim/flows/')
+
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_0.5_long_flows"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_0.5_long_flows")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_long_flows", save=True, save_dir='plots/covasim/flows/')
+
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_0.5_compartments"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_0.5_compartments")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_compartments", save=True, save_dir='plots/covasim/compartments/')
+
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_0.5_long_compartments"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_0.5_long_compartments")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="0.5_long_compartments", save=True, save_dir='plots/covasim/compartments/')
+
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_2.0_compartments"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_2.0_compartments")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_compartments", save=True, save_dir='plots/covasim/compartments/')
+
+    compare_results([os.path.join(data_dir, f"covasim_fictional_ode_2.0_long_compartments"),
+                     os.path.join(data_dir, f"covasim_fictional_ide_2.0_long_compartments")],
+                    dt_ode, dt_ide, setting,
+                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_long_compartments", save=True, save_dir='plots/covasim/compartments/')
