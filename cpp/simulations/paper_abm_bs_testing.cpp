@@ -963,7 +963,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     restart_timer(timer, "time taken for braunschweig trip input");
 
     // Assign an infection state to each person.
-    assign_infection_state_prob(world, t0);
+    assign_infection_state(world, t0);
     restart_timer(timer, "time taken for assigning infection state");
 
     // Assign vaccination status to each person.
