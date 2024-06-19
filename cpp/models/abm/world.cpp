@@ -103,7 +103,6 @@ void World::migration(TimePoint t, TimeSpan dt)
                 // Check if the capacity of targeted Location is not reached
                 if (target_location != current_location &&
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
-
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                         person->migrate_to(target_location);
