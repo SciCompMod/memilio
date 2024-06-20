@@ -230,9 +230,3 @@ if __name__ == "__main__":
                      if os.path.isfile(os.path.join(path, entry))])
     plot_infectoin_states_results(path)
     plot_infections_loc_types_avarage(path)
-
-    for file in os.listdir(path):
-        file_path = os.path.join(path, file)
-        if file.startswith("infection_per_location_type.txt"):
-                df = pd.read_csv(file_path, sep='\s+')
-                plot_infection_per_location_type(df)
